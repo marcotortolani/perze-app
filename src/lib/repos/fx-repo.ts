@@ -1,0 +1,168 @@
+import { getDb } from "../db/client";
+import type { FxRateRow } from "../db/schema";
+import { type FxRateRecord, type FxResolution, resolveFxRate } from "../fx/resolve";
+import { parseRate, type ScaledRate } from "../fx/rate";
+import { nowIso, todayIso } from "./ids";
+
+const MANUAL_PROVIDER = "manual";
+
+function toRecord(row: FxRateRow): FxRateRecord {
+  return {
+    base: row.base,
+    quote: row.quote,
+    asOf: row.asOf,
+    provider: row.provider,
+    quoteKind: row.quoteKind,
+    rate: row.rate,
+    fetchedAt: row.fetchedAt,
+  };
+}
+
+async function ratesForPair(base: string, quote: string): Promise<FxRateRow[]> {
+  return getDb()
+    .fxRates.where("[base+quote]")
+    .equals([base, quote])
+    .toArray();
+}
+
+export const fxRepo = {
+  async getPreference(
+    householdId: string,
+    currencyPair: string
+  ): Promise<{ preferredProvider?: string | undefined; preferredQuoteKind?: string | undefined }> {
+    const row = await getDb().householdFxPreferences.get([householdId, currencyPair]);
+    return {
+      preferredProvider: row?.preferredProvider ?? undefined,
+      preferredQuoteKind: row?.preferredQuoteKind ?? undefined,
+    };
+  },
+
+  async setPreference(
+    householdId: string,
+    currencyPair: string,
+    preferredProvider: string | null,
+    preferredQuoteKind: string | null
+  ): Promise<void> {
+    await getDb().householdFxPreferences.put({ householdId, currencyPair, preferredProvider, preferredQuoteKind });
+  },
+
+  /** Override manual "con vigencia": se guarda como una cotización más, con `provider: 'manual'`, y gana siempre hasta que se reemplace. */
+  async getManualOverride(base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
+    const rows = await ratesForPair(base, quote);
+    const manual = rows.filter((r) => r.provider === MANUAL_PROVIDER).sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1))[0];
+    return manual ? { rate: manual.rate, quoteKind: manual.quoteKind } : null;
+  },
+
+  async setManualOverride(base: string, quote: string, rate: ScaledRate, quoteKind = "custom"): Promise<void> {
+    const row: FxRateRow = {
+      base,
+      quote,
+      asOf: todayIso(),
+      provider: MANUAL_PROVIDER,
+      quoteKind,
+      rate,
+      bid: null,
+      ask: null,
+      fetchedAt: nowIso(),
+    };
+    await getDb().fxRates.put(row);
+  },
+
+  async clearManualOverride(base: string, quote: string): Promise<void> {
+    const rows = await ratesForPair(base, quote);
+    const manualKeys = rows
+      .filter((r) => r.provider === MANUAL_PROVIDER)
+      .map((r): [string, string, string, string, string] => [r.base, r.quote, r.asOf, r.provider, r.quoteKind]);
+    await getDb().fxRates.bulkDelete(manualKeys);
+  },
+
+  async cacheQuotes(records: FxRateRecord[]): Promise<void> {
+    const rows: FxRateRow[] = records.map((r) => ({ ...r, bid: null, ask: null }));
+    await getDb().fxRates.bulkPut(rows);
+  },
+
+  /**
+   * Resuelve el rate para `base -> quote` en `date`: override manual >
+   * cache local > `/api/fx` si hay red y no había nada > `pending`. Nunca
+   * llama a un proveedor externo directo — siempre pasa por la ruta.
+   */
+  async resolve(params: {
+    householdId: string;
+    base: string;
+    quote: string;
+    date: string;
+  }): Promise<FxResolution> {
+    const { householdId, base, quote, date } = params;
+    if (base === quote) {
+      return resolveFxRate({ base, quote, date, ratesForPair: [] });
+    }
+
+    const pair = `${base}/${quote}`;
+    const [manualOverride, preference, cachedRows] = await Promise.all([
+      fxRepo.getManualOverride(base, quote),
+      fxRepo.getPreference(householdId, pair),
+      ratesForPair(base, quote),
+    ]);
+
+    let resolution = resolveFxRate({
+      base,
+      quote,
+      date,
+      manualOverride,
+      ratesForPair: cachedRows.map(toRecord),
+      preferredProvider: preference.preferredProvider,
+      preferredQuoteKind: preference.preferredQuoteKind,
+    });
+
+    const isOnline = typeof navigator === "undefined" || navigator.onLine;
+    if (resolution.source === "pending" && isOnline) {
+      try {
+        const url = new URL("/api/fx", typeof window !== "undefined" ? window.location.origin : "http://localhost");
+        url.searchParams.set("base", base);
+        url.searchParams.set("quote", quote);
+        url.searchParams.set("date", date);
+        if (preference.preferredProvider) url.searchParams.set("provider", preference.preferredProvider);
+        if (preference.preferredQuoteKind) url.searchParams.set("quoteKind", preference.preferredQuoteKind);
+
+        const res = await fetch(url.toString());
+        if (res.ok) {
+          const data = (await res.json()) as {
+            rate: string | null;
+            provider: string | null;
+            quoteKind: string | null;
+            asOf: string | null;
+          };
+          if (data.rate !== null && data.provider && data.quoteKind && data.asOf) {
+            await fxRepo.cacheQuotes([
+              {
+                base,
+                quote,
+                asOf: data.asOf,
+                provider: data.provider,
+                quoteKind: data.quoteKind,
+                rate: parseRate(data.rate),
+                fetchedAt: nowIso(),
+              },
+            ]);
+            resolution = resolveFxRate({
+              base,
+              quote,
+              date,
+              manualOverride,
+              ratesForPair: [
+                ...cachedRows.map(toRecord),
+                { base, quote, asOf: data.asOf, provider: data.provider, quoteKind: data.quoteKind, rate: parseRate(data.rate), fetchedAt: nowIso() },
+              ],
+              preferredProvider: preference.preferredProvider,
+              preferredQuoteKind: preference.preferredQuoteKind,
+            });
+          }
+        }
+      } catch {
+        // Sin red o la API falló: se guarda igual sin conversión (needs_fx). Nunca bloquea.
+      }
+    }
+
+    return resolution;
+  },
+};

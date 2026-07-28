@@ -1,0 +1,313 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { toast } from "sonner";
+import { useLocale, useTranslations } from "next-intl";
+import { Button, EmptyState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow } from "@/design-system";
+import { useCategoryLabel } from "@/hooks/use-category-label";
+import type { Locale } from "@/i18n/formatting";
+import type { IconName } from "@/design-system/core/Icon";
+import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useAccounts } from "@/hooks/use-accounts";
+import { useCategories } from "@/hooks/use-categories";
+import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { transactionsRepo } from "@/lib/repos/transactions-repo";
+import { add, money, subtract, zero } from "@/lib/money/money";
+import { formatAmountCompact } from "@/lib/money/format";
+import { SwipeableRow } from "@/features/movements/SwipeableRow";
+import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
+import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
+
+type ListItem = { type: "header"; date: string; total: bigint; currency: string } | { type: "row"; tx: TransactionRecord };
+
+function periodStartFor(preset: MovementsFilters["datePreset"], now: Date): { from?: string; to?: string } {
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  switch (preset) {
+    case "this-month":
+      return { from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() };
+    case "last-month":
+      return { from: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(), to: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() };
+    case "last-7":
+      return { from: startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)).toISOString() };
+    case "last-30":
+      return { from: startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)).toISOString() };
+    default:
+      return {};
+  }
+}
+
+function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string): string {
+  if (tx.kind === "transfer") return account ? `${account.name} · ${transferLabel}` : transferLabel;
+  return [account?.name, categoryLabel].filter(Boolean).join(" · ");
+}
+
+/** D1/D2/D6/D7 — lista de movimientos. Bloque D, Fase 7. */
+export default function MovementsPage() {
+  const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const categoryLabel = useCategoryLabel();
+  const router = useRouter();
+  const { data: household } = useCurrentHousehold();
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
+  const { data: categories = [] } = useCategories(household?.id);
+  const { data: transactions, isLoading: txLoading } = useTransactions(household?.id);
+  const invalidateTransactions = useInvalidateTransactions(household?.id);
+
+  const [filters, setFilters] = useState<MovementsFilters>(defaultMovementsFilters());
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selection, setSelection] = useState<Set<string> | null>(null);
+
+  const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
+  const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+
+  const now = new Date();
+  const { from, to } = periodStartFor(filters.datePreset, now);
+
+  const filtered = useMemo(() => {
+    if (!transactions) return [];
+    return transactions.filter((t) => {
+      if (from && t.occurredAt < from) return false;
+      if (to && t.occurredAt >= to) return false;
+      if (filters.kind !== "all" && t.kind !== filters.kind) return false;
+      if (filters.accountIds.length > 0 && !filters.accountIds.includes(t.accountId)) return false;
+      if (filters.categoryIds.length > 0 && (!t.categoryId || !filters.categoryIds.includes(t.categoryId))) return false;
+      if (filters.onlyPending && t.fxRate !== null) return false;
+      return true;
+    });
+  }, [transactions, from, to, filters]);
+
+  const baseCurrency = household?.baseCurrency ?? "UYU";
+  let periodIncome = zero(baseCurrency);
+  let periodExpense = zero(baseCurrency);
+  for (const t of filtered) {
+    if (t.kind === "transfer" || t.amountBase === null) continue;
+    const m = money(t.amountBase, baseCurrency);
+    if (t.kind === "income") periodIncome = add(periodIncome, m);
+    else if (t.kind === "expense") periodExpense = add(periodExpense, m);
+  }
+  const periodBalance = subtract(periodIncome, periodExpense);
+
+  const items = useMemo<ListItem[]>(() => {
+    const byDay = new Map<string, TransactionRecord[]>();
+    for (const t of filtered) {
+      const day = t.occurredAt.slice(0, 10);
+      const list = byDay.get(day) ?? [];
+      list.push(t);
+      byDay.set(day, list);
+    }
+    const days = [...byDay.keys()].sort((a, b) => (a < b ? 1 : -1));
+    const result: ListItem[] = [];
+    for (const day of days) {
+      const dayTx = byDay.get(day)!;
+      const dayTotal = dayTx.reduce((s, t) => (t.kind === "transfer" || t.amountBase === null ? s : s + (t.kind === "income" ? t.amountBase : -t.amountBase)), 0n);
+      result.push({ type: "header", date: day, total: dayTotal, currency: baseCurrency });
+      for (const t of dayTx) result.push({ type: "row", tx: t });
+    }
+    return result;
+  }, [filtered, baseCurrency]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (i) => (items[i]?.type === "header" ? 40 : 68),
+    overscan: 8,
+  });
+
+  const handleDelete = async (tx: TransactionRecord) => {
+    await transactionsRepo.softDelete(tx.id);
+    invalidateTransactions();
+    toast(t("transactions.list.deleted"), {
+      duration: 5000,
+      action: { label: t("transactions.list.undo"), onClick: async () => { await transactionsRepo.restore(tx.id); invalidateTransactions(); } },
+    });
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelection((s) => {
+      const next = new Set(s ?? []);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selection) return;
+    const ids = [...selection];
+    await Promise.all(ids.map((id) => transactionsRepo.softDelete(id)));
+    invalidateTransactions();
+    setSelection(null);
+    toast(t("transactions.list.deletedBulk", { count: ids.length }), {
+      duration: 5000,
+      action: { label: t("transactions.list.undo"), onClick: async () => { await Promise.all(ids.map((id) => transactionsRepo.restore(id))); invalidateTransactions(); } },
+    });
+  };
+
+  if (!household || accountsLoading || txLoading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 16 }}>
+        <Skeleton width={220} height={16} style={{ marginBottom: 12 }} />
+        <SkeletonRow />
+        <SkeletonRow />
+        <SkeletonRow />
+        <SkeletonRow />
+      </div>
+    );
+  }
+
+  if ((transactions ?? []).length === 0) {
+    return <EmptyState icon="list" message={t("transactions.list.empty")} actionLabel={t("transactions.list.emptyAction")} onAction={() => router.push("/add")} />;
+  }
+
+  const activeFilterCount = countActiveFilters(filters);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", paddingTop: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12 }}>
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-chip)", padding: "8px 14px", cursor: "pointer" }}
+        >
+          <Icon name="filter" size={16} color="var(--text-secondary)" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.filters")}</span>
+          {activeFilterCount > 0 ? <StatusBadge status="good">{activeFilterCount}</StatusBadge> : null}
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push("/transactions/calendar")}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-chip)", padding: "8px 14px", cursor: "pointer" }}
+        >
+          <Icon name="calendar" size={16} color="var(--text-secondary)" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.calendar")}</span>
+        </button>
+        <div style={{ flex: 1 }} />
+        {selection ? (
+          <button type="button" onClick={() => setSelection(null)} style={{ background: "none", border: 0, color: "var(--primary-ink)", fontSize: 13, cursor: "pointer" }}>
+            {t("transactions.list.cancel")}
+          </button>
+        ) : null}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 12px", borderBottom: "1px solid var(--border)" }}>
+        <div>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.income")}</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--money-positive)" }}>{formatAmountCompact(periodIncome, { showSign: false })}</div>
+        </div>
+        <div>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.expenses")}</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>{formatAmountCompact(periodExpense, { showSign: false })}</div>
+        </div>
+        <div>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.balance")}</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>{formatAmountCompact(periodBalance, { showSign: true })}</div>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <EmptyState icon="filter" message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
+      ) : (
+        <div ref={parentRef} style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = items[virtualRow.index];
+              if (!item) return null;
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${virtualRow.start}px)` }}
+                >
+                  {item.type === "header" ? (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0 6px", background: "var(--page)" }}>
+                      <span className="t-label" style={{ color: "var(--text-secondary)" }}>
+                        {new Date(`${item.date}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" })}
+                      </span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: item.total >= 0n ? "var(--money-positive)" : "var(--text-muted)" }}>
+                        {formatAmountCompact(money(item.total, item.currency), { showSign: true })}
+                      </span>
+                    </div>
+                  ) : (
+                    <SwipeableRow
+                      disabled={!!selection}
+                      onSwipeLeftCommit={() => handleDelete(item.tx)}
+                      onSwipeRightCommit={() => router.push(`/transactions/${item.tx.id}/edit`)}
+                      onLongPress={() => setSelection(new Set([item.tx.id]))}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {selection ? (
+                          <input
+                            type="checkbox"
+                            checked={selection.has(item.tx.id)}
+                            onChange={() => toggleSelected(item.tx.id)}
+                            style={{ width: 20, height: 20, flexShrink: 0, accentColor: "var(--primary-fill)" }}
+                          />
+                        ) : null}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <TransactionRow
+                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "transfer" ? "refresh" : "cart")}
+                            merchant={
+                              (item.tx.categoryId ? categoryById.get(item.tx.categoryId) : undefined)
+                                ? categoryLabel(categoryById.get(item.tx.categoryId!)!)
+                                : item.tx.kind === "transfer"
+                                  ? t("transactions.list.transfer")
+                                  : t("transactions.list.movement")
+                            }
+                            meta={buildMeta(
+                              item.tx,
+                              accountById.get(item.tx.accountId),
+                              item.tx.categoryId ? (categoryById.has(item.tx.categoryId) ? categoryLabel(categoryById.get(item.tx.categoryId)!) : undefined) : undefined,
+                              t("transactions.list.transfer")
+                            )}
+                            value={money(item.tx.kind === "expense" ? -item.tx.amount : item.tx.amount, item.tx.currencyCode)}
+                            secondary={
+                              item.tx.currencyCode !== baseCurrency && item.tx.amountBase !== null
+                                ? formatAmountCompact(money(item.tx.amountBase, baseCurrency), { showSign: false })
+                                : undefined
+                            }
+                            polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" ? "neutral" : "negative"}
+                            onClick={() => (selection ? toggleSelected(item.tx.id) : router.push(`/transactions/${item.tx.id}`))}
+                          />
+                        </div>
+                      </div>
+                    </SwipeableRow>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {selection && selection.size > 0 ? (
+        <div style={{ position: "sticky", bottom: 0, display: "flex", gap: 12, padding: "12px 0", background: "var(--page)" }}>
+          <Button variant="danger" fullWidth={false} onClick={handleBulkDelete} style={{ flex: 1 }}>
+            {t("transactions.list.deleteCount", { count: selection.size })}
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            onClick={() => toast(t("transactions.list.categorizeComingSoon"))}
+            style={{ flex: 1 }}
+          >
+            {t("transactions.list.categorize")}
+          </Button>
+        </div>
+      ) : null}
+
+      <MovementsFiltersSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+        accounts={accounts}
+        categories={categories}
+        resultCount={filtered.length}
+      />
+    </div>
+  );
+}

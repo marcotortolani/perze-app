@@ -2,173 +2,510 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Tokens del design system de PERZE, portados 1:1 desde
+ * perze-design/PERZE-Design-System/tokens/. Ver docs/02-design-system.md
+ * para los valores numéricos y el porqué de cada uno.
+ *
+ * El sistema es DARK-FIRST: `:root` ES el tema oscuro (ver readme del DS,
+ * "Modos"). El claro se activa agregando la clase `.light` (o
+ * `[data-theme="light"]`) en `<html>` — nunca al revés. Esto invierte la
+ * convención habitual de Tailwind (donde `.dark` es la excepción); acá la
+ * excepción es `.light`. `@custom-variant dark` se declara igual para poder
+ * usar `dark:` en utilities de Tailwind cuando haga falta, pero la gran
+ * mayoría del color de esta app no pasa por ahí: los componentes del
+ * design-system leen las CSS vars directamente (`var(--surface-1)`, etc.),
+ * que ya resuelven solas según el modo activo.
+ */
+@custom-variant dark (&:not(.light, .light *));
 
+/* ---- tokens/palette.css — valores crudos, nunca referenciados directo ---- */
+:root {
+  /* warm neutrals — dark */
+  --n-page-dark: #0a0a0b;
+  --n-s1-dark: #131315;
+  --n-s2-dark: #1b1b1e;
+  --n-s3-dark: #26262a;
+  --n-border-dark: #2e2e33;
+  --n-grid-dark: #232326;
+  --n-ink1-dark: #fafaf9;
+  --n-ink2-dark: #a1a1a6;
+  --n-ink3-dark: #6e6e76;
+  /* warm neutrals — light */
+  --n-page-light: #fafaf9;
+  --n-s1-light: #ffffff;
+  --n-s2-light: #f5f5f4;
+  --n-s3-light: #eeeeec;
+  --n-border-light: #e4e4e1;
+  --n-grid-light: #efefed;
+  --n-ink1-light: #131315;
+  --n-ink2-light: #5a5a60;
+  --n-ink3-light: #8a8a90;
+
+  /* brand — indigo violet: exactamente dos hexes por modo, uno de tinta uno de relleno */
+  --violet-ink-dark: #8b7cf6;
+  --violet-ink-light: #5d45e8;
+  --violet-fill: #6d55f0;
+
+  /* polaridad del dinero */
+  --aqua-dark: #199e70;
+  --aqua-light: #12916a;
+  --orange-dark: #e06a35;
+  --orange-light: #d95926;
+
+  /* estado — fijo en ambos modos, nunca tematizado */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  /* slots de datos */
+  --data-blue-dark: #3987e5;
+  --data-blue-light: #2a78d6;
+  --data-magenta-dark: #d55181;
+  --data-magenta-light: #c9457a;
+
+  /* rampa secuencial violeta */
+  --violet-100: #e1e3ff;
+  --violet-150: #d2d3ff;
+  --violet-200: #c4c3ff;
+  --violet-250: #afabff;
+  --violet-300: #9c92ff;
+  --violet-350: #8a7bff;
+  --violet-400: #7964ff;
+  --violet-450: #6950eb;
+  --violet-500: #5a3fd0;
+  --violet-550: #4a30b4;
+  --violet-600: #3b2395;
+  --violet-650: #2d1975;
+  --violet-700: #21125b;
+
+  /* extremos divergentes */
+  --diverge-aqua-3: #0b6b4e;
+  --diverge-aqua-2: #12916a;
+  --diverge-aqua-1: #5cbf9b;
+  --diverge-orange-1: #efa07b;
+  --diverge-orange-2: #d95926;
+  --diverge-orange-3: #a63d14;
+}
+
+/* ---- tokens/colors.css — alias semánticos por modo ---- */
+:root {
+  color-scheme: dark;
+  --page: var(--n-page-dark);
+  --surface-1: var(--n-s1-dark);
+  --surface-2: var(--n-s2-dark);
+  --surface-3: var(--n-s3-dark);
+  --border: var(--n-border-dark);
+  --gridline: var(--n-grid-dark);
+  --text-primary: var(--n-ink1-dark);
+  --text-secondary: var(--n-ink2-dark);
+  --text-muted: var(--n-ink3-dark);
+
+  --primary-ink: var(--violet-ink-dark);
+  --primary-fill: var(--violet-fill);
+  --primary-on-fill: #ffffff;
+  --secondary: var(--aqua-dark);
+  --accent: var(--orange-dark);
+
+  --money-positive: var(--aqua-dark);
+  --money-negative: var(--n-ink1-dark);
+  --money-negative-emphasis: var(--orange-dark);
+
+  --good: var(--status-good);
+  --warning: var(--status-warning);
+  --serious: var(--status-serious);
+  --critical: var(--status-critical);
+
+  --shadow-sheet: 0 8px 32px rgba(0, 0, 0, 0.32);
+  --scrim: rgba(0, 0, 0, 0.6);
+}
+.light,
+[data-theme="light"] {
+  color-scheme: light;
+  --page: var(--n-page-light);
+  --surface-1: var(--n-s1-light);
+  --surface-2: var(--n-s2-light);
+  --surface-3: var(--n-s3-light);
+  --border: var(--n-border-light);
+  --gridline: var(--n-grid-light);
+  --text-primary: var(--n-ink1-light);
+  --text-secondary: var(--n-ink2-light);
+  --text-muted: var(--n-ink3-light);
+
+  --primary-ink: var(--violet-ink-light);
+  --primary-fill: var(--violet-fill);
+  --secondary: var(--aqua-light);
+  --accent: var(--orange-light);
+
+  --money-positive: var(--aqua-light);
+  --money-negative: var(--n-ink1-light);
+  --money-negative-emphasis: var(--orange-light);
+
+  --shadow-sheet: 0 8px 32px rgba(11, 11, 11, 0.1);
+  --scrim: rgba(11, 11, 11, 0.45);
+}
+
+/* ---- tokens/charts.css — paleta de datos, 5 slots fijos + "Otros" ---- */
+:root {
+  --data-1: var(--violet-ink-dark);
+  --data-2: var(--aqua-dark);
+  --data-3: var(--orange-dark);
+  --data-4: var(--data-blue-dark);
+  --data-5: var(--data-magenta-dark);
+  --data-other: var(--n-ink3-dark);
+  --chart-diverge-mid: var(--n-border-dark);
+  --chart-separator: var(--n-s1-dark);
+  --bar-radius: 4px;
+  --line-width: 2px;
+  --marker-size: 8px;
+}
+.light,
+[data-theme="light"] {
+  --data-1: var(--violet-ink-light);
+  --data-2: var(--aqua-light);
+  --data-3: var(--orange-light);
+  --data-4: var(--data-blue-light);
+  --data-5: var(--data-magenta-light);
+  --data-other: var(--n-ink3-light);
+  --chart-diverge-mid: var(--n-border-light);
+  --chart-separator: var(--n-s1-light);
+}
+
+/* ---- tokens/typography.css ---- */
+:root {
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --text-hero-xl-size: 64px;
+  --text-hero-xl-line: 60px;
+  --text-hero-xl-track: -0.02em;
+  --text-hero-size: 40px;
+  --text-hero-line: 44px;
+  --text-hero-track: -0.015em;
+  --text-title-size: 22px;
+  --text-title-line: 28px;
+  --text-title-track: -0.01em;
+  --text-body-size: 16px;
+  --text-body-line: 24px;
+  --text-body-track: 0;
+  --text-label-size: 13px;
+  --text-label-line: 18px;
+  --text-label-track: 0.01em;
+  --text-caption-size: 11px;
+  --text-caption-line: 16px;
+  --text-caption-track: 0.02em;
+}
+.t-hero-xl {
+  font: var(--weight-semibold) var(--text-hero-xl-size) / var(--text-hero-xl-line) var(--font-sans);
+  letter-spacing: var(--text-hero-xl-track);
+}
+.t-hero {
+  font: var(--weight-semibold) var(--text-hero-size) / var(--text-hero-line) var(--font-sans);
+  letter-spacing: var(--text-hero-track);
+}
+.t-title {
+  font: var(--weight-semibold) var(--text-title-size) / var(--text-title-line) var(--font-sans);
+  letter-spacing: var(--text-title-track);
+}
+.t-body {
+  font: var(--weight-regular) var(--text-body-size) / var(--text-body-line) var(--font-sans);
+  letter-spacing: var(--text-body-track);
+}
+.t-label {
+  font: var(--weight-medium) var(--text-label-size) / var(--text-label-line) var(--font-sans);
+  letter-spacing: var(--text-label-track);
+}
+.t-caption {
+  font: var(--weight-medium) var(--text-caption-size) / var(--text-caption-line) var(--font-sans);
+  letter-spacing: var(--text-caption-track);
+  text-transform: uppercase;
+}
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- tokens/spacing.css — grid de 4px ---- */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --screen-padding: 20px;
+  --block-gap: 24px;
+  --tabbar-height: 64px;
+  --header-height: 56px;
+  --fab-size: 64px;
+  --thumb-zone: 200px;
+  --touch-min: 44px;
+  --primary-button-height: 56px;
+  --primary-button-height-lg: 64px;
+  --keypad-key-height: 64px;
+
+  /*
+   * Responsive — el diseño de origen es mobile-first (390px); a partir de
+   * `--bp-tablet` el contenido queda centrado en una sola columna de ancho
+   * fijo (nunca multi-columna) y la navegación pasa de TabBar inferior a
+   * `Sidebar` fijo. Ver `docs/02-design-system.md` § 8 y
+   * `src/design-system/nav/Sidebar.tsx`.
+   */
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+  --content-max-width: 560px;
+  --sidebar-width: 248px;
+
+  /* --radius-* declarados arriba, en `@theme` (ver comentario de esa sección) */
+
+  --border-hairline: 1px;
+}
+
+/* ---- tokens/motion.css — springs, no easings ---- */
+:root {
+  --spring-snappy: 500, 32, 0.7; /* chips, toggles, keypad */
+  --spring-default: 400, 30, 1; /* cards, listas */
+  --spring-soft: 260, 26, 1.1; /* sheets, pantallas */
+  --spring-bouncy: 420, 18, 0.9; /* solo celebraciones */
+
+  --duration-micro: 120ms;
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+
+  --ease-spring-snappy: cubic-bezier(0.22, 1.2, 0.36, 1);
+  --ease-spring-default: cubic-bezier(0.24, 1.05, 0.32, 1);
+  --ease-spring-soft: cubic-bezier(0.28, 0.9, 0.3, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --press-scale: 0.96;
+  --stagger-list: 24ms;
+  --stagger-keypad: 12ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-micro: 100ms;
+    --duration-fast: 100ms;
+    --duration-base: 120ms;
+    --duration-slow: 120ms;
+    --press-scale: 1;
+  }
+}
+
+/*
+ * Los radios de tokens/spacing.css se declaran directo dentro de `@theme`
+ * (sin `inline`): son estáticos, no cambian entre modos, y Tailwind v4
+ * espera exactamente estos nombres (`--radius-card` para la utility
+ * `rounded-card`). Como `@theme` también los deja disponibles como custom
+ * properties normales, son el mismo `var(--radius-card)` que ya usan los
+ * componentes portados del design system.
+ */
+@theme {
+  --radius-input: 14px;
+  --radius-button: 16px;
+  --radius-card: 20px;
+  --radius-keypad-key: 20px;
+  --radius-sheet: 28px;
+  --radius-chip: 999px;
+}
+
+/*
+ * tokens/fonts.css — el DS original carga Geist desde un @import de Google
+ * Fonts (no venían binarios en las fuentes). Acá se reemplaza por el
+ * upgrade que ese mismo readme invita a hacer: `geist` (paquete oficial de
+ * Vercel) autohospedado vía `next/font/local`, cero request externo, cero
+ * CLS. `GeistSans`/`GeistMono` se aplican en `src/app/layout.tsx` como
+ * className en `<html>`, que es lo que define `--font-geist-sans` /
+ * `--font-geist-mono` ahí. Por eso esto va con `inline`: el valor depende
+ * de esa var, no es literal.
+ */
 @theme inline {
-  --font-sans: var(--font-outfit);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
 
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
+/*
+ * Exposición del resto de los tokens a Tailwind v4. `@theme inline` mantiene
+ * la referencia en runtime en vez de hornear el valor: hace falta acá porque
+ * estos SÍ cambian entre `:root` (oscuro) y `.light` (claro), y las
+ * utilities de Tailwind (`bg-surface-1`, `text-secondary`, etc.) tienen que
+ * re-resolver solas cuando cambia el modo.
+ */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --color-gridline: var(--gridline);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-primary-text: var(--primary-ink);
+  --color-primary-fill: var(--primary-fill);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+
+  --color-status-good: var(--good);
+  --color-status-warning: var(--warning);
+  --color-status-serious: var(--serious);
+  --color-status-critical: var(--critical);
+
+  --color-data-1: var(--data-1);
+  --color-data-2: var(--data-2);
+  --color-data-3: var(--data-3);
+  --color-data-4: var(--data-4);
+  --color-data-5: var(--data-5);
+  --color-data-other: var(--data-other);
+
+  --color-seq-100: var(--violet-100);
+  --color-seq-150: var(--violet-150);
+  --color-seq-200: var(--violet-200);
+  --color-seq-250: var(--violet-250);
+  --color-seq-300: var(--violet-300);
+  --color-seq-350: var(--violet-350);
+  --color-seq-400: var(--violet-400);
+  --color-seq-450: var(--violet-450);
+  --color-seq-500: var(--violet-500);
+  --color-seq-550: var(--violet-550);
+  --color-seq-600: var(--violet-600);
+  --color-seq-650: var(--violet-650);
+  --color-seq-700: var(--violet-700);
+
+  --spacing-screen-padding: var(--screen-padding);
+  --spacing-block-gap: var(--block-gap);
+  --spacing-tabbar-height: var(--tabbar-height);
+  --spacing-header-height: var(--header-height);
+  --spacing-fab-size: var(--fab-size);
+  --spacing-thumb-zone: var(--thumb-zone);
+  --spacing-touch-min: var(--touch-min);
+
+  /*
+   * Charts — mapeo directo, sin colisión de significado: el slot 1 de
+   * datos es el mismo violeta de marca en ambos sistemas.
+   */
+  --color-chart-1: var(--data-1);
+  --color-chart-2: var(--data-2);
+  --color-chart-3: var(--data-3);
+  --color-chart-4: var(--data-4);
+  --color-chart-5: var(--data-5);
+}
+
+/*
+ * Puente de compatibilidad para `shadcn/ui` (`src/components/ui/*`).
+ * Esos primitivos vienen con su propio vocabulario de tokens
+ * (background/foreground/card/popover/primary/secondary/accent/muted/
+ * destructive/ring/radius) que NO es el vocabulario de PERZE. Van acá,
+ * separados, en vez de reusar los nombres de arriba, porque hay dos
+ * colisiones de significado reales que NO hay que resolver alias-ando:
+ *
+ * - El "secondary" de shadcn es un tono neutro para una variante de botón;
+ *   el `--secondary` de PERZE es el aqua de ingresos. No son lo mismo.
+ * - El "accent" de shadcn es un realce neutro de hover/selección; el
+ *   `--accent` de PERZE es el naranja de gasto/atención. Tampoco.
+ *
+ * Por eso acá ambos apuntan a superficie neutra, nunca a aqua/naranja.
+ * Esto es un puente, no una decisión final: a medida que el Bloque L
+ * (Fase 3) reemplaza cada primitivo por su equivalente del design system
+ * portado, va desapareciendo de acá.
+ */
+@theme inline {
+  --color-background: var(--page);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface-1);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface-2);
+  --color-popover-foreground: var(--text-primary);
+
+  --color-primary: var(--primary-fill);
+  --color-primary-foreground: var(--primary-on-fill);
+  /* neutro a propósito — ver comentario arriba */
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--text-muted);
+  /* neutro a propósito — ver comentario arriba */
+  --color-accent: var(--surface-3);
+  --color-accent-foreground: var(--text-primary);
+
+  --color-destructive: var(--critical);
+  --color-input: var(--surface-3);
+  --color-ring: var(--primary-ink);
+}
+@theme {
+  --radius: 16px;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.4);
-  /* Custom tokens */
-  --color-income: var(--income);
-  --color-expense: var(--expense);
-  --color-investment: var(--investment);
-  --color-app-accent: var(--app-accent);
-  --color-surface: var(--surface);
 }
 
-/* ─── Light mode ──────────────────────────────────────────────── */
-:root {
-  --app-accent: oklch(0.65 0.18 162);
-  --app-accent-foreground: oklch(0.99 0 0);
-
-  --background: oklch(0.97 0.004 265);
-  --foreground: oklch(0.12 0.02 265);
-  --surface: oklch(1 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.12 0.02 265);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.12 0.02 265);
-  --primary: var(--app-accent);
-  --primary-foreground: var(--app-accent-foreground);
-  --secondary: oklch(0.94 0.006 265);
-  --secondary-foreground: oklch(0.25 0.02 265);
-  --muted: oklch(0.94 0.006 265);
-  --muted-foreground: oklch(0.52 0.01 265);
-  --accent: oklch(0.94 0.006 265);
-  --accent-foreground: oklch(0.25 0.02 265);
-  --destructive: oklch(0.62 0.22 22);
-  --border: oklch(0.88 0.008 265);
-  --input: oklch(0.91 0.006 265);
-  --ring: var(--app-accent);
-  --radius: 0.75rem;
-  --chart-1: oklch(0.65 0.18 162);
-  --chart-2: oklch(0.62 0.22 22);
-  --chart-3: oklch(0.62 0.18 264);
-  --chart-4: oklch(0.75 0.16 85);
-  --chart-5: oklch(0.62 0.2 300);
-
-  /* Transaction colors */
-  --income: oklch(0.65 0.18 162);
-  --income-foreground: oklch(0.99 0 0);
-  --expense: oklch(0.62 0.22 22);
-  --expense-foreground: oklch(0.99 0 0);
-  --investment: oklch(0.62 0.18 264);
-  --investment-foreground: oklch(0.99 0 0);
-}
-
-/* ─── Dark mode ───────────────────────────────────────────────── */
-.dark {
-  --background: oklch(0.095 0.018 265);
-  --foreground: oklch(0.93 0.008 265);
-  --surface: oklch(0.13 0.018 265);
-  --card: oklch(0.13 0.018 265);
-  --card-foreground: oklch(0.93 0.008 265);
-  --popover: oklch(0.15 0.018 265);
-  --popover-foreground: oklch(0.93 0.008 265);
-  --primary: var(--app-accent);
-  --primary-foreground: var(--app-accent-foreground);
-  --secondary: oklch(0.19 0.016 265);
-  --secondary-foreground: oklch(0.88 0.008 265);
-  --muted: oklch(0.17 0.016 265);
-  --muted-foreground: oklch(0.58 0.012 265);
-  --accent: oklch(0.19 0.016 265);
-  --accent-foreground: oklch(0.88 0.008 265);
-  --destructive: oklch(0.7 0.2 22);
-  --border: oklch(0.24 0.016 265 / 55%);
-  --input: oklch(0.22 0.016 265 / 70%);
-  --ring: var(--app-accent);
-  --chart-1: oklch(0.72 0.18 162);
-  --chart-2: oklch(0.68 0.22 22);
-  --chart-3: oklch(0.68 0.18 264);
-  --chart-4: oklch(0.78 0.16 85);
-  --chart-5: oklch(0.68 0.2 300);
-
-  /* Transaction colors — slightly brighter in dark */
-  --income: oklch(0.72 0.18 162);
-  --income-foreground: oklch(0.1 0 0);
-  --expense: oklch(0.68 0.22 22);
-  --expense-foreground: oklch(0.99 0 0);
-  --investment: oklch(0.68 0.18 264);
-  --investment-foreground: oklch(0.99 0 0);
-}
-
-/* ─── Accent color system ─────────────────────────────────────── */
-.accent-emerald { --app-accent: oklch(0.72 0.18 162); --app-accent-foreground: oklch(0.1 0 0); }
-.accent-violet  { --app-accent: oklch(0.67 0.22 300); --app-accent-foreground: oklch(0.99 0 0); }
-.accent-blue    { --app-accent: oklch(0.65 0.2 264);  --app-accent-foreground: oklch(0.99 0 0); }
-.accent-rose    { --app-accent: oklch(0.67 0.23 15);  --app-accent-foreground: oklch(0.99 0 0); }
-.accent-amber   { --app-accent: oklch(0.8 0.17 85);   --app-accent-foreground: oklch(0.15 0 0); }
-
-/* ─── Base styles ─────────────────────────────────────────────── */
+/* ---- tokens/base.css — defaults mínimos de elemento. Sin sombras. ---- */
 @layer base {
-  * {
-    border-color: var(--border);
-    outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
-  html {
-    font-family: var(--font-sans), system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
+  html,
+  body {
+    margin: 0;
+    padding: 0;
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background: var(--page);
+    color: var(--text-primary);
+    font: var(--weight-regular) var(--text-body-size) / var(--text-body-line) var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     min-height: 100svh;
   }
-  /* Custom scrollbar */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-  /* Text selection */
-  ::selection { background: color-mix(in oklch, var(--app-accent) 25%, transparent); }
-  /* Numbers: tabular figures */
-  .tabular-nums { font-variant-numeric: tabular-nums; }
+  a {
+    color: var(--primary-ink);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--primary-fill);
+  }
+  button {
+    font: inherit;
+    color: inherit;
+  }
+  :where(button, [role="button"], a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--primary-ink);
+    outline-offset: 2px;
+    border-radius: var(--radius-input);
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary-fill) 32%, transparent);
+  }
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
 }
 
-/* ─── Utilities ───────────────────────────────────────────────── */
-@utility glass {
-  background: color-mix(in oklch, var(--card) 80%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-@utility card-shadow {
-  box-shadow: 0 1px 3px oklch(0 0 0 / 0.12), 0 1px 2px oklch(0 0 0 / 0.08);
-}
-@utility card-shadow-lg {
-  box-shadow: 0 4px 24px oklch(0 0 0 / 0.18), 0 1px 4px oklch(0 0 0 / 0.1);
-}
+/* ---- utilities propias ---- */
 @utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

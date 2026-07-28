@@ -1,0 +1,70 @@
+"use client";
+
+import { useRef } from "react";
+import type { ClipboardEvent, CSSProperties, KeyboardEvent } from "react";
+
+export interface OtpInputProps {
+  length?: number | undefined;
+  value: string;
+  onChange: (value: string) => void;
+  invalid?: boolean | undefined;
+  style?: CSSProperties | undefined;
+}
+
+/** Seis casillas de un dígito con autofill — código de verificación de A3. */
+export function OtpInput({ length = 6, value, onChange, invalid = false, style }: OtpInputProps) {
+  const refs = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length }, (_, i) => value[i] ?? "");
+
+  const setDigit = (i: number, d: string) => {
+    const next = digits.slice();
+    next[i] = d;
+    onChange(next.join(""));
+    if (d && i < length - 1) refs.current[i + 1]?.focus();
+  };
+
+  const onKeyDown = (i: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
+  };
+
+  const onPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    onChange(pasted.padEnd(length, "").slice(0, length).trimEnd());
+    refs.current[Math.min(pasted.length, length - 1)]?.focus();
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8, ...style }}>
+      {digits.map((d, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          value={d}
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          maxLength={1}
+          onChange={(e) => setDigit(i, e.target.value.replace(/\D/g, "").slice(-1))}
+          onKeyDown={(e) => onKeyDown(i, e)}
+          onPaste={onPaste}
+          style={{
+            width: 44,
+            height: 56,
+            textAlign: "center",
+            background: "var(--surface-3)",
+            color: "var(--text-primary)",
+            border: `1px solid ${invalid ? "var(--critical)" : "var(--border)"}`,
+            borderRadius: "var(--radius-input)",
+            fontFamily: "var(--font-mono)",
+            fontVariantNumeric: "tabular-nums",
+            fontSize: 22,
+            fontWeight: 600,
+            outline: "none",
+          }}
+        />
+      ))}
+    </div>
+  );
+}

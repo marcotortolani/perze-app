@@ -1,0 +1,500 @@
+{
+  "app": {
+    "name": "PERZE",
+    "description": "Finanças pessoais multi-conta, multi-moeda e multi-país. Minimalista, mobile-first, offline-first.",
+    "shortcutAddExpense": "Lançar um gasto",
+    "shortcutAddExpenseShort": "Gasto",
+    "shortcutAddExpenseDescription": "Ir direto ao teclado de captura"
+  },
+  "nav": {
+    "home": "Início",
+    "homeShort": "Início",
+    "movements": "Movimentações",
+    "movementsShort": "Moviment.",
+    "add": "Adicionar",
+    "analysis": "Análise",
+    "more": "Mais",
+    "accounts": "Contas",
+    "investments": "Investimentos",
+    "budgets": "Orçamentos",
+    "scope": {
+      "personal": "Pessoal",
+      "shared": "Compartilhado",
+      "all": "Tudo"
+    }
+  },
+  "common": {
+    "loading": "Carregando…",
+    "retry": "Tentar de novo",
+    "undo": "Desfazer",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "seeAll": "Ver todos"
+  },
+  "ds": {
+    "errorState": {
+      "retry": "Tentar de novo"
+    },
+    "progressSteps": {
+      "skip": "Pular"
+    },
+    "resultGroup": {
+      "seeAll": "Ver todos"
+    },
+    "offlineBanner": {
+      "default": "Sem conexão — você continua operando normalmente.",
+      "pending": "{count, plural, one {# pendente} other {# pendentes}}"
+    },
+    "undoToast": {
+      "undo": "Desfazer"
+    },
+    "dismissibleNotice": {
+      "dismiss": "Descartar"
+    },
+    "insightCard": {
+      "dismiss": "Descartar"
+    },
+    "appHeader": {
+      "back": "Voltar",
+      "search": "Buscar"
+    },
+    "tabBar": {
+      "add": "Adicionar"
+    },
+    "contextualTooltip": {
+      "gotIt": "Entendi"
+    },
+    "lockScreen": {
+      "enterPin": "Digite seu PIN",
+      "wrongPin": "PIN incorreto, tente de novo",
+      "useBiometrics": "Usar biometria"
+    },
+    "fxEditor": {
+      "ageHours": "há {hours} h",
+      "source": "DolarApi · oficial"
+    }
+  },
+  "reference": {
+    "category": {
+      "groceries": "Supermercado",
+      "restaurants": "Restaurantes",
+      "transport": "Transporte",
+      "housing": "Moradia",
+      "health": "Saúde",
+      "entertainment": "Entretenimento",
+      "salary": "Salário",
+      "otherIncome": "Outras receitas"
+    },
+    "accountKind": {
+      "cash": "Dinheiro",
+      "checking": "Conta corrente",
+      "savings": "Poupança",
+      "credit_card": "Cartão de crédito",
+      "wallet": "Carteira digital",
+      "broker": "Conta de investimento",
+      "loan": "Empréstimo",
+      "receivable": "A receber",
+      "other": "Outra conta"
+    },
+    "country": {
+      "UY": "Uruguai",
+      "AR": "Argentina",
+      "BR": "Brasil",
+      "US": "Estados Unidos",
+      "MX": "México",
+      "CL": "Chile"
+    },
+    "currency": {
+      "UYU": "Peso uruguaio",
+      "ARS": "Peso argentino",
+      "USD": "Dólar americano",
+      "BRL": "Real brasileiro",
+      "MXN": "Peso mexicano",
+      "CLP": "Peso chileno",
+      "EUR": "Euro"
+    }
+  },
+  "capture": {
+    "close": "Fechar",
+    "back": "Voltar",
+    "burstCount": "{count} lançados",
+    "kind": {
+      "expense": "Gasto",
+      "income": "Receita",
+      "transfer": "Transferência"
+    },
+    "chooseAccount": "Escolher conta",
+    "from": "DE",
+    "to": "PARA",
+    "invert": "Inverter",
+    "voice": "Voz",
+    "photo": "Foto",
+    "details": "Detalhes",
+    "voiceLabel": "Lançar por voz",
+    "photoLabel": "Foto do recibo",
+    "photoComingSoon": "A foto do recibo ainda não está disponível — em breve.",
+    "next": "Avançar",
+    "save": "Salvar",
+    "savedPendingFx": "Salvo sem taxa de câmbio — resolve sozinho ao reconectar.",
+    "saved": "Movimentação salva",
+    "undo": "Desfazer",
+    "accountPicker": {
+      "sourceTitle": "Escolher conta",
+      "destinationTitle": "Conta de destino"
+    },
+    "details_sheet": {
+      "title": "Detalhes",
+      "account": "Conta",
+      "date": "Data",
+      "payee": "Estabelecimento",
+      "payeePlaceholder": "Onde foi?",
+      "note": "Nota",
+      "notePlaceholder": "Opcional",
+      "burstMode": "Continuar lançando (modo rajada)",
+      "today": "Hoje",
+      "yesterday": "Ontem"
+    },
+    "voice_sheet": {
+      "title": "Captura por voz",
+      "unsupported": "Seu navegador não suporta reconhecimento de voz. Você pode lançar o gasto pelo teclado.",
+      "listening": "Ouvindo…",
+      "prompt": "Diga algo como “gastei 1200 no mercado”",
+      "summary": "Valor: {amount} · Estabelecimento: {payee}",
+      "empty": "—",
+      "useThis": "Usar isto"
+    }
+  },
+  "movements": {
+    "filters": {
+      "title": "Filtros",
+      "period": "Período",
+      "type": "Tipo",
+      "accounts": "Contas",
+      "categories": "Categorias",
+      "onlyPending": "Somente sem taxa de câmbio resolvida",
+      "clearAll": "Limpar tudo",
+      "seeResults": "Ver {count, plural, one {# resultado} other {# resultados}}",
+      "date": {
+        "all": "Tudo",
+        "thisMonth": "Este mês",
+        "lastMonth": "Mês passado",
+        "last7": "Últimos 7 dias",
+        "last30": "Últimos 30 dias"
+      },
+      "kindAll": "Tudo"
+    },
+    "editFlow": {
+      "title": "Editar movimentação",
+      "stale": "Essa movimentação é antiga — se você mudar o valor, a taxa de câmbio é resolvida de novo.",
+      "next": "Avançar",
+      "saveChanges": "Salvar alterações",
+      "updated": "Movimentação atualizada",
+      "voiceUnavailable": "A captura por voz não está disponível ao editar.",
+      "photoComingSoon": "A foto do recibo ainda não está disponível."
+    }
+  },
+  "accounts": {
+    "form": {
+      "back": "Voltar",
+      "close": "Fechar",
+      "editTitle": "Editar conta",
+      "newTitle": "Nova conta",
+      "change": "trocar",
+      "name": "Nome",
+      "namePlaceholder": "Ex: Itaú Poupança",
+      "country": "País",
+      "currency": "Moeda",
+      "openingBalance": "Saldo inicial",
+      "statementDay": "Dia de fechamento",
+      "dayPlaceholder": "1-31",
+      "dueDay": "Dia de vencimento",
+      "interestRate": "Taxa anual (%)",
+      "interestRatePlaceholder": "Ex: 45.5",
+      "termMonths": "Prazo (meses)",
+      "termMonthsPlaceholder": "Ex: 12",
+      "includeInNetWorth": "Incluir no patrimônio líquido",
+      "visibility": "Visibilidade",
+      "private": "Privada",
+      "shared": "Compartilhada",
+      "saveChanges": "Salvar alterações",
+      "createAccount": "Criar conta",
+      "updated": "Conta atualizada",
+      "created": "Conta criada",
+      "kindDescription": {
+        "cash": "Notas e moedas",
+        "checking": "Débito do banco",
+        "savings": "Poupança do banco",
+        "credit_card": "Com ciclo de fechamento",
+        "wallet": "Mercado Pago, PayPal…",
+        "broker": "Corretora, cripto",
+        "loan": "Com taxa e prazo",
+        "receivable": "Um fiado, um empréstimo feito",
+        "other": "O que não se encaixa acima"
+      },
+      "kindLabel": {
+        "loan": "Empréstimo (devo)",
+        "receivable": "A receber (me devem)",
+        "other": "Outro"
+      }
+    }
+  },
+  "transactions": {
+    "list": {
+      "filters": "Filtros",
+      "calendar": "Calendário",
+      "cancel": "Cancelar",
+      "income": "Receitas",
+      "expenses": "Gastos",
+      "balance": "Saldo",
+      "empty": "Você ainda não lançou nenhuma movimentação.",
+      "emptyAction": "Lançar meu primeiro gasto",
+      "emptyFiltered": "Nenhuma movimentação corresponde a esses filtros.",
+      "clearFilters": "Limpar filtros",
+      "transfer": "Transferência",
+      "movement": "Movimentação",
+      "deleted": "Movimentação excluída",
+      "undo": "Desfazer",
+      "deletedBulk": "{count, plural, one {# movimentação excluída} other {# movimentações excluídas}}",
+      "deleteCount": "Excluir {count}",
+      "categorize": "Categorizar",
+      "categorizeComingSoon": "Categorizar em lote ainda não está disponível."
+    },
+    "detail": {
+      "notFound": "Não encontramos essa movimentação.",
+      "backToList": "Voltar às movimentações",
+      "back": "Voltar",
+      "notIncludedInTotal": "Não soma ao total",
+      "category": "Categoria",
+      "noCategory": "Sem categoria",
+      "account": "Conta",
+      "toAccount": "Para {account}",
+      "date": "Data",
+      "payee": "Estabelecimento",
+      "note": "Nota",
+      "fxRateUsed": "Taxa de câmbio usada",
+      "fxUnresolved": "Não resolvida — needs_fx",
+      "createdOn": "Lançado em {date}",
+      "editedOn": " · Editado em {date}",
+      "edit": "Editar",
+      "duplicate": "Duplicar",
+      "duplicated": "Movimentação duplicada — com a data de hoje.",
+      "recurring": "Tornar recorrente",
+      "recurringComingSoon": "Movimentações recorrentes ainda não estão disponíveis.",
+      "split": "Dividir em categorias",
+      "splitComingSoon": "Dividir uma movimentação ainda não está disponível.",
+      "delete": "Excluir",
+      "fxSource": {
+        "identity": "Mesma moeda",
+        "manual": "Ajuste manual",
+        "api": "Cotação do dia",
+        "inherited": "Última cotação conhecida",
+        "pending": "Não resolvida"
+      }
+    },
+    "calendar": {
+      "back": "Voltar",
+      "prevMonth": "Mês anterior",
+      "nextMonth": "Próximo mês",
+      "empty": "Sem movimentações nesse dia."
+    },
+    "edit": {
+      "notFound": "Não encontramos essa movimentação.",
+      "back": "Voltar"
+    }
+  },
+  "accountsPage": {
+    "list": {
+      "netWorth": "Patrimônio líquido",
+      "assets": "Ativos",
+      "liabilities": "Passivos",
+      "empty": "Você ainda não criou nenhuma conta.",
+      "emptyAction": "Criar conta",
+      "newAccount": "Nova conta",
+      "currenciesAndRates": "Moedas e taxas de câmbio",
+      "resolvePendingFx": "Resolver taxas de câmbio pendentes",
+      "pendingFxCount": "{count, plural, one {# movimentação} other {# movimentações}}",
+      "archived": "Arquivadas",
+      "creditLimitUsage": "{percent}% do limite"
+    },
+    "detail": {
+      "back": "Voltar",
+      "notFound": "Não encontramos essa conta.",
+      "backToList": "Voltar às contas",
+      "cycleSummary": "Resumo do ciclo",
+      "cycleOf": "{spent} de {limit}",
+      "cycleConsumption": "Consumo do ciclo: {amount}",
+      "cycleCloses": "Fecha em {statementDay} · Vence em {dueDay}",
+      "cycleProjection": "Projeção a debitar: {amount}",
+      "edit": "Editar",
+      "reconcile": "Conciliar",
+      "transfer": "Transferir",
+      "archive": "Arquivar",
+      "archived": "Conta arquivada",
+      "transactionsTitle": "Movimentações desta conta",
+      "noTransactions": "Ainda não há movimentações."
+    },
+    "reconcile": {
+      "back": "Voltar",
+      "notFound": "Não encontramos essa conta.",
+      "prompt": "Quanto {account} diz que você tem?",
+      "yourRecord": "Seu registro diz",
+      "difference": "Diferença:",
+      "createAdjustment": "Criar ajuste",
+      "noDifference": "Sem diferença",
+      "reconciled": "Conta conciliada — um ajuste foi criado",
+      "adjustmentNote": "Ajuste por conciliação"
+    },
+    "resolveFx": {
+      "back": "Voltar",
+      "empty": "Não há movimentações esperando taxa de câmbio.",
+      "emptyAction": "Voltar às contas",
+      "explanation": "Essas movimentações foram salvas sem taxa de câmbio. Escolha uma por moeda e ela se aplica a todas as pendentes dessa moeda.",
+      "count": "{count, plural, one {# movimentação} other {# movimentações}} · {total}",
+      "unresolved": "Não resolvida",
+      "resolve": "Resolver",
+      "applyToAll": "Aplicar a todas",
+      "resolvedCount": "{count, plural, one {# movimentação resolvida} other {# movimentações resolvidas}}"
+    }
+  },
+  "onboarding": {
+    "auth": {
+      "tagline": "Finanças pessoais, sem fricção.",
+      "continueWithGoogle": "Continuar com Google",
+      "continueWithApple": "Continuar com Apple",
+      "connectedWith": "Conectado com {provider}",
+      "orWithEmail": "ou com seu email",
+      "emailPlaceholder": "voce@email.com",
+      "sendLink": "Enviar link de acesso",
+      "loadingDemo": "Carregando dados de exemplo…",
+      "tryDemo": "Testar com dados de exemplo"
+    },
+    "verify": {
+      "back": "Voltar",
+      "title": "Confira seu email",
+      "sentTo": "Enviamos um código para <b>{email}</b>.",
+      "yourEmail": "seu email",
+      "invalidCode": "Esse código expirou ou não é válido. Peça um novo.",
+      "resend": "Reenviar código",
+      "resent": "Reenviamos o código",
+      "changeEmail": "Trocar email"
+    },
+    "country": {
+      "back": "Voltar",
+      "title": "Onde você mora?",
+      "subtitle": "Usamos isso para sua moeda e os bancos que oferecemos depois.",
+      "yourCurrency": "Sua moeda: {currency}",
+      "continue": "Continuar"
+    },
+    "usage": {
+      "back": "Voltar",
+      "title": "Como você vai usar o app?",
+      "continue": "Continuar",
+      "options": {
+        "solo": { "title": "Sozinho", "description": "Suas contas, seus gastos" },
+        "pareja": { "title": "Com meu parceiro(a)", "description": "Ativa o grupo familiar" },
+        "familia": { "title": "Com minha família", "description": "Ativa o grupo familiar" }
+      }
+    },
+    "account": {
+      "back": "Voltar",
+      "title": "Sua primeira conta",
+      "subtitle": "Escolha de onde sai o dinheiro — você pode adicionar mais depois.",
+      "searchPlaceholder": "Buscar seu banco ou carteira",
+      "continue": "Continuar"
+    },
+    "success": {
+      "title": "Pronto!",
+      "subtitle": "Sua conta foi criada. Lance seu primeiro gasto para começar a ver seu resumo.",
+      "cta": "Lançar meu primeiro gasto"
+    },
+    "complete": {
+      "balanceTitle": "Quanto você tem em {account}?",
+      "yourAccount": "sua conta",
+      "balanceSubtitle": "Para que seu patrimônio comece correto. Você pode deixar em 0 e ajustar depois.",
+      "continue": "Continuar",
+      "installTitle": "Instale o PERZE",
+      "installPromptAvailable": "Acesse mais rápido, como um app nativo.",
+      "installPromptIos": "Toque no ícone de compartilhar do Safari e escolha \"Adicionar à Tela de Início\".",
+      "installPromptOther": "Procure \"Instalar app\" no menu do seu navegador.",
+      "install": "Instalar",
+      "later": "Agora não",
+      "laterToast": "Você pode instalar depois em Ajustes"
+    }
+  },
+  "morePage": {
+    "money": "Dinheiro",
+    "accounts": "Contas",
+    "budgets": "Orçamentos",
+    "goals": "Metas",
+    "recurring": "Recorrentes",
+    "debts": "Dívidas",
+    "people": "Pessoas",
+    "family": "Grupo familiar",
+    "system": "Sistema",
+    "settings": "Ajustes",
+    "importExport": "Importar / Exportar",
+    "about": "Sobre",
+    "enableMoreFeatures": "Ativar mais funções",
+    "comingSoon": "{label} ainda não está disponível nesta versão.",
+    "version": "PERZE v{version}",
+    "language": "Idioma",
+    "languageSheetTitle": "Escolha o idioma",
+    "languageNames": {
+      "es": "Español",
+      "en": "English",
+      "pt": "Português"
+    }
+  },
+  "home": {
+    "empty": "Você ainda não lançou nenhuma movimentação. Registre seu primeiro gasto para ver seu resumo aqui.",
+    "emptyAction": "Lançar meu primeiro gasto",
+    "netWorth": "Patrimônio líquido",
+    "showAmounts": "Mostrar valores",
+    "hideAmounts": "Ocultar valores",
+    "vsLastWeek": "vs. semana passada",
+    "excludedAccounts": "{count} conta(s) sem taxa de câmbio, excluída(s) do total.",
+    "convertedTotal": "Total convertido",
+    "accountsCount": "{count} contas",
+    "spentThisPeriod": "Gasto neste período",
+    "incomeThisPeriod": "Recebido neste período",
+    "needsFxInsight": "Você tem {count, plural, one {# movimentação} other {# movimentações}} sem taxa de câmbio resolvida.",
+    "seeTransactions": "Ver movimentações",
+    "topCategoryInsight": "Sua categoria com mais gasto neste período é <b>{category}</b>.",
+    "recentTransactions": "Últimas movimentações",
+    "transfer": "Transferência",
+    "movement": "Movimentação"
+  },
+  "analyticsPage": {
+    "unavailable": "A análise ainda não está disponível nesta versão."
+  },
+  "offlinePage": {
+    "message": "Sem conexão — essa tela ainda não foi carregada uma vez. As que você já visitou continuam funcionando."
+  },
+  "search": {
+    "placeholder": "Buscar movimentações, contas, categorias…",
+    "prompt": "Digite para buscar em suas movimentações, contas, categorias e estabelecimentos.",
+    "noResults": "Não encontramos nada para \"{query}\".",
+    "transactions": "Movimentações",
+    "accounts": "Contas",
+    "categories": "Categorias",
+    "merchants": "Estabelecimentos",
+    "movement": "Movimentação"
+  },
+  "currenciesPage": {
+    "back": "Voltar",
+    "refresh": "Atualizar",
+    "empty": "Com uma única moeda em uso, não há taxa de câmbio para gerenciar.",
+    "emptyAction": "Voltar às contas",
+    "noQuote": "Sem cotação — toque para inserir manualmente",
+    "manualOverride": "Ajuste manual",
+    "noProvider": "Sem provedor",
+    "asOf": "de {date}",
+    "today": "hoje",
+    "overrideSaved": "Ajuste salvo para {pair}",
+    "howManyWorth": "Quantos {base} vale 1 {quote}",
+    "ratePlaceholder": "Ex: 40",
+    "saveOverride": "Salvar ajuste"
+  }
+}

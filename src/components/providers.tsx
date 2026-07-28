@@ -1,55 +1,48 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useSettingsStore } from "@/stores/settings-store"
-import { Toaster } from "@/components/ui/sonner"
+import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "@/components/ui/sonner";
+import { OnboardingGate } from "@/components/onboarding-gate";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
+
+/**
+ * Todo el estado de dominio (cuentas, movimientos, household…) vive en Dexie
+ * y se lee/escribe a través de `lib/repos/*` detrás de TanStack Query — no
+ * hay datos que prefetchear desde el servidor todavía (local-first, ver
+ * docs/perze-plan-redesign-first-5-blocks.md). Por eso un solo QueryClient
+ * de cliente alcanza: nada de la variante server/browser de las guías de
+ * SSR de TanStack Query, que resuelve un problema que acá no existe.
+ */
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30 * 1000,
+        retry: (failureCount, error) => {
+          // Sin red: no tiene sentido reintentar contra un servidor que no
+          // existe hoy. Cuando se conecte Supabase, esto vuelve a un backoff normal.
+          if (error instanceof Error && error.message === "offline") return false;
+          return failureCount < 2;
+        },
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const { theme, accentColor } = useSettingsStore()
-
-  useEffect(() => {
-    const root = document.documentElement
-
-    // Apply theme
-    root.classList.remove("dark", "light")
-    if (theme === "dark") {
-      root.classList.add("dark")
-    } else if (theme === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      if (prefersDark) root.classList.add("dark")
-    }
-    // "light" needs no class
-
-    // Apply accent
-    root.classList.remove(
-      "accent-emerald",
-      "accent-violet",
-      "accent-blue",
-      "accent-rose",
-      "accent-amber"
-    )
-    root.classList.add(`accent-${accentColor}`)
-  }, [theme, accentColor])
-
-  // Also listen for system theme changes when mode is "system"
-  useEffect(() => {
-    if (theme !== "system") return
-
-    const mq = window.matchMedia("(prefers-color-scheme: dark)")
-    const handler = (e: MediaQueryListEvent) => {
-      const root = document.documentElement
-      root.classList.remove("dark", "light")
-      if (e.matches) root.classList.add("dark")
-    }
-
-    mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
-  }, [theme])
+  const [queryClient] = useState(makeQueryClient);
 
   return (
-    <>
-      {children}
+    <QueryClientProvider client={queryClient}>
+      <ServiceWorkerRegister />
+      <OnboardingGate>{children}</OnboardingGate>
       <Toaster richColors position="top-center" />
-    </>
-  )
+      {process.env.NODE_ENV === "development" && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
+  );
 }

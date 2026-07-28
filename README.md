@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PERZE
 
-## Getting Started
+PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con grupo familiar y módulo
+opcional de inversiones. Minimalista, mobile-first, offline-first.
 
-First, run the development server:
+> Registrar un gasto cuesta menos de 5 segundos y 3 decisiones. Todo lo demás se subordina a eso.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Estado del proyecto
+
+El código actual está en rediseño completo contra el paquete de diseño en `perze-design/`. El
+MVP anterior (v0.1.1) quedó archivado en `src/app-old/` como referencia histórica, sin migrar.
+
+Ver el plan de implementación de los primeros cinco bloques (Onboarding, Home, Captura,
+Movimientos, Cuentas y monedas) en
+[`docs/perze-plan-redesign-first-5-blocks.md`](docs/perze-plan-redesign-first-5-blocks.md).
+
+## Stack
+
+- **Next.js 16** (App Router) · **TypeScript strict** · **Tailwind CSS v4**
+- **shadcn/ui** customizado sobre un design system propio (`perze-design/PERZE-Design-System/`)
+- **Motion** (ex Framer Motion) para animación · **Lucide** para íconos
+- **Dexie.js** (IndexedDB) como persistencia local-first, detrás de una capa de repositorios
+  pensada para enchufar **Supabase** (Postgres + Auth + Storage) más adelante
+- **TanStack Query v5** · **Zustand** (solo UI efímera) · **Zod v4**
+- **next-intl** — ES (rioplatense, idioma fuente) / EN / PT
+- **Serwist** (PWA) · **ESLint** (lint) · **Vitest** + **Playwright** (tests)
+
+## Documentación
+
+Todo el paquete de producto y diseño vive en `perze-design/` y se referencia también, copiado,
+desde `docs/`:
+
+| Doc                                                                                          | Qué es                                             |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [`docs/00-producto.md`](docs/00-producto.md)                                                 | Análisis de producto: features, módulos, roadmap   |
+| [`docs/01-arquitectura-datos.md`](docs/01-arquitectura-datos.md)                             | Stack, schema, RLS, estrategia FX y offline        |
+| [`docs/02-design-system.md`](docs/02-design-system.md)                                       | Tokens, paleta, tipografía, motion, componentes    |
+| [`docs/03-prompts-wireframes.md`](docs/03-prompts-wireframes.md)                             | Mapa de pantallas de baja fidelidad, por bloque    |
+| [`docs/04-prompts-ui.md`](docs/04-prompts-ui.md)                                             | Prompts de diseño de alta fidelidad                |
+| [`docs/05-prompts-desarrollo.md`](docs/05-prompts-desarrollo.md)                             | `CLAUDE.md` de origen + prompts de implementación  |
+| [`docs/perze-plan-redesign-first-5-blocks.md`](docs/perze-plan-redesign-first-5-blocks.md)   | Plan vigente: bloques A–E                          |
+| [`perze-design/Mapa-estructural-del-producto/`](perze-design/Mapa-estructural-del-producto/) | Mapa completo del sistema (82 vistas, 12 bloques)  |
+| [`perze-design/PERZE-Design-System/`](perze-design/PERZE-Design-System/)                     | Design system empaquetado: tokens + 36 componentes |
+| [`perze-design/Bloque-*/`](perze-design/)                                                    | Entregables de alta fidelidad por bloque (A–E)     |
+
+## Estado por bloque
+
+| Bloque | Nombre                                     | Estado         |
+| ------ | ------------------------------------------ | -------------- |
+| —      | Documentación, tooling y núcleo de dominio | 🔄 En progreso |
+| C      | Captura rápida                             | ⬜ Pendiente   |
+| B      | Home y navegación                          | ⬜ Pendiente   |
+| D      | Movimientos                                | ⬜ Pendiente   |
+| E      | Cuentas y monedas                          | ⬜ Pendiente   |
+| A      | Onboarding y auth                          | ⬜ Pendiente   |
+
+**Estados posibles:** ⬜ Pendiente · 🔄 En progreso · ✅ Completada
+
+## Estructura
+
+```text
+docs/                  documentos de producto/arquitectura/diseño, versionados con el código
+perze-design/          paquete de diseño original (wireframes, alta fidelidad, design system)
+src/
+  app/                 rutas de la app (App Router)
+  app-old/             MVP anterior, archivado — no se migra
+  design-system/        componentes propios portados desde perze-design/PERZE-Design-System
+  lib/
+    money/             bigint math, formateo, parser del keypad
+    fx/                proveedores de tipo de cambio + resolución de rate
+    db/                schema de Dexie
+    repos/             capa de repositorios (Dexie hoy, Supabase después)
+    offline/           outbox de mutaciones optimistas
+  stores/              Zustand (solo estado de UI efímera)
+  i18n/                mensajes es/en/pt (next-intl)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Empezar a desarrollar
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abrí [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+```bash
+pnpm build   # build de producción
+pnpm lint    # ESLint
+pnpm test    # Vitest
+pnpm e2e     # Playwright
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Licencia
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+A definir antes de liberar como open source (MIT o AGPL — ver `docs/00-producto.md` § 5).

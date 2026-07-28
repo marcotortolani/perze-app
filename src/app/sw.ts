@@ -1,5 +1,6 @@
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist } from "serwist";
+import { defaultCache } from "@serwist/turbopack/worker";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -9,35 +10,28 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+/**
+ * `defaultCache` (`@serwist/turbopack/worker`) ya trae estrategias razonables
+ * para lo que Next.js sirve: NetworkFirst para navegaciones/RSC, CacheFirst
+ * para fonts/imágenes/JS/CSS con hash. Encima de eso: `/offline` como
+ * fallback de navegación (`src/app/offline/page.tsx`) — la app en sí es
+ * local-first (Dexie/outbox), así que esto solo cubre una navegación nueva
+ * a una ruta que todavía no está en caché sin red, nunca el guardado de datos.
+ */
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [
-    {
-      matcher: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "google-fonts-cache",
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365,
-        },
+  runtimeCaching: defaultCache,
+  fallbacks: {
+    entries: [
+      {
+        url: "/offline",
+        matcher: ({ request }) => request.destination === "document",
       },
-    },
-    {
-      matcher: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "gstatic-fonts-cache",
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365,
-        },
-      },
-    },
-  ],
+    ],
+  },
 });
 
 serwist.addEventListeners();

@@ -6,6 +6,273 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.0] — 2026-07-28
+
+### Corregido
+
+#### Botones de Google/Apple en el onboarding con logo real
+
+- `design-system/core/Icon.tsx`: sumados `google` (`GoogleLogoIcon`) y `apple`
+  (`AppleLogoIcon`) de Phosphor — antes ambos botones de OAuth en
+  `onboarding/page.tsx` usaban el ícono genérico de `mail`, sin distinguir un
+  proveedor del otro
+
+### Agregado
+
+#### Versión de la app visible en el front
+
+- `src/lib/version.ts` — única fuente de verdad, lee `version` directo de `package.json`
+  (nada hardcodeado en un segundo lugar que se pueda desincronizar en el próximo bump)
+- Expuesta en la metadata de `src/app/layout.tsx` (`generator`, `other["app-version"]`)
+- Visible para el usuario como footer en "Más" (`(app)/mas/page.tsx` → ahora
+  `(app)/more/page.tsx`), formato `PERZE v{version}`, se actualiza sola en cada bump
+
+### Cambiado
+
+#### Rutas de navegación traducidas al inglés
+
+Todos los segmentos de URL bajo `src/app/` pasan de español a inglés — cambia el path, no
+las pantallas ni los textos de la interfaz (que siguen en `next-intl`, ES/EN/PT):
+
+| Antes | Ahora |
+|---|---|
+| `/agregar`, `(.)agregar` (interceptada) | `/add`, `(.)add` |
+| `/cuentas` | `/accounts` |
+| `/cuentas/nueva` | `/accounts/new` |
+| `/cuentas/[id]/editar` | `/accounts/[id]/edit` |
+| `/cuentas/[id]/conciliar` | `/accounts/[id]/reconcile` |
+| `/cuentas/resolver-fx` | `/accounts/resolve-fx` |
+| `/movimientos` | `/transactions` |
+| `/movimientos/[id]/editar` | `/transactions/[id]/edit` |
+| `/movimientos/calendario` | `/transactions/calendar` |
+| `/mas` | `/more` |
+| `/monedas` | `/currencies` |
+| `/analisis` | `/analytics` |
+| `/buscar` | `/search` |
+| `/onboarding/pais` | `/onboarding/country` |
+| `/onboarding/uso` | `/onboarding/usage` |
+| `/onboarding/cuenta` | `/onboarding/account` |
+| `/onboarding/exito` | `/onboarding/success` |
+| `/onboarding/completar` | `/onboarding/complete` |
+| `/onboarding/verificar` | `/onboarding/verify` |
+
+- También traducidos, aunque las pantallas todavía no existen: `/inversiones` →
+  `/investments`, `/presupuestos` → `/budgets` (`FOURTH_TAB_ROUTE` en `(app)/layout.tsx`)
+- Actualizados todos los `router.push`/`router.back` de las pantallas afectadas, el shortcut
+  de la PWA en `manifest.webmanifest`, y los cuatro tests E2E (`page.goto`/`waitForURL`)
+
+### Técnico
+
+- `package.json` `0.2.0` → `0.3.0`
+- Build, lint, suite de Vitest (116 tests) y los 4 E2E de Playwright verificados en verde
+  después del rename de rutas
+
+---
+
+## [0.2.0] — 2026-07-28
+
+Rediseño completo de la app contra `perze-design/` — nueva base de código, nuevo modelo de
+datos, nuevo sistema de diseño. El MVP anterior (`[0.1.0]`/`[0.1.1]`) queda archivado en
+`src/app-old/` (ignorado por git, no se toca ni se migra) y este changelog documenta la app
+que lo reemplaza: PERZE, PWA de finanzas personales multi-cuenta, multi-moneda y multi-país.
+Plan completo en [`docs/perze-plan-redesign-first-5-blocks.md`](docs/perze-plan-redesign-first-5-blocks.md).
+
+Cubre las Fases 0 a 9 del plan — fundaciones, y los Bloques C, B, D, E y A en ese orden de
+construcción (C primero porque sus componentes los consume todo el resto; A último porque es
+el único bloque que se podía saltear con un household de demo mientras se construía todo lo
+demás) — más el trabajo posterior de responsive, auditoría PWA, migración de íconos y tests E2E.
+
+### Infraestructura y stack (Fase 0-1)
+
+- Next.js 16 (App Router, Turbopack como bundler por defecto), TypeScript estricto
+  (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`,
+  `verbatimModuleSyntax`), Tailwind CSS v4 con `@theme inline`
+- **Dexie.js** (IndexedDB) como persistencia local-first, detrás de una capa de repositorios
+  (`lib/repos/*`) pensada para enchufar Supabase más adelante sin rediseñar pantallas
+- TanStack Query v5 para estado de servidor/Dexie; Zustand solo para estado de UI efímera
+  (scope activo, borrador de captura, estado del keypad, intensidad de animación) — nunca
+  datos de dominio
+- `next-intl` con ES rioplatense como idioma fuente, EN y PT (`messages/{es,en,pt}.json`);
+  cero strings hardcodeadas en toda la app
+- Zod v4 como fuente de tipos de validación; Serwist para el service worker; ESLint (no Biome)
+  como único linter/formateador
+- Vitest + Testing Library para unitarios, Playwright para E2E
+- `src/app/globals.css`: tokens portados de `perze-design/PERZE-Design-System/tokens/`; DS
+  dark-first (`:root` es oscuro, `.light` invierte) con `@custom-variant dark` para no pelear
+  contra la convención por defecto de Tailwind
+- `src/lib/motion/springs.ts`: las 4 curvas y 4 duraciones exactas del design system
+
+### Núcleo de dominio (Fase 2)
+
+- `lib/money/` — `Money = { amount: bigint; currency: CurrencyCode }`. Cero `number`, cero
+  `parseFloat`, cero `toFixed` sobre montos; parser de expresiones del keypad
+  (`1200+350*2`), redondeo bancario explícito, formateo vía `Intl.NumberFormat`
+- `lib/fx/` — `convert()` con resolución en orden estricto: override manual > cotización del
+  día > último valor conocido (`isStale`) > `pending`. Nunca cae a rate = 1. `needs_fx`
+  completo, con ascenso `neutral → warning` a los 7 días sin resolver
+- `lib/db/` — schema completo de Dexie (households, accounts, transactions, categories,
+  payees, tags, fx_rates, outbox, meta), versionado, con IDs UUID v7 generados en el cliente
+  antes de la mutación (idempotencia)
+- `lib/repos/` — una interfaz por agregado (`AccountsRepo`, `TransactionsRepo`, …); ninguna
+  pantalla toca Dexie directo
+- `lib/offline/outbox.ts` — cola de mutaciones + `createOptimisticMutation()`, lista para
+  cuando exista un backend real que la drene
+- `lib/seed/demo-household.ts` — household de demo (5 cuentas, incluida una en USD distinta a
+  la moneda base, ~40 movimientos verosímiles en UYU/USD/ARS) accesible desde "Probar con
+  datos de ejemplo" en el onboarding
+
+### Sistema de diseño (Fase 3)
+
+Portado desde `perze-design/PERZE-Design-System/` a `src/design-system/{core,money,finance,
+nav,feedback,charts}/` con inline styles sobre CSS vars (fidelidad 1:1, sin traducir a clases
+de Tailwind dentro del DS). Componentes: `Button`, `Card`, `Chip`, `Input`, `ListRow`,
+`OtpInput`, `ProgressSteps`, `ResultGroup`, `SegmentedControl`, `Sheet`, `StatusBadge`,
+`Switch`, `DismissibleNotice`; `Amount`, `AmountScrubber`, `CurrencyChip`, `FxEditor`,
+`Keypad`, `PinKeypad`, `PrivacyBlur`; `AccountCarousel`, `AccountRow`, `BudgetRing`,
+`CategoryBubble`, `DateStrip`, `GroupCard`, `InsightCard`, `InstitutionTile`, `OptionCard`,
+`ProgressBar`, `RateRow`, `ResolutionChain`, `SplitBar`, `StatTile`, `TransactionRow`;
+`EmptyState`, `ErrorState`, `OfflineBanner`, `Skeleton`/`SkeletonRow`, `UndoToast`;
+`BarChart`, `LineChart`, `SeriesLegend`, `Sparkline`.
+
+- Selección por **superficie** como default (segmentados, día activo, cuenta activa,
+  categoría activa); el relleno violeta reservado para chip activo, tab activo y switch
+  encendido — corregido en `SegmentedControl`, `CategoryBubble`, `DateStrip`,
+  `AccountCarousel` y el slider de `FxEditor`, que originalmente gastaban el violeta sin ser
+  la acción primaria de la pantalla
+- `Amount` recibe `Money` (bigint + moneda), no `number` — único lugar de la app que formatea
+  plata
+- `aria-checked` agregado a `SegmentedControl` (accesibilidad real, no cosmética)
+- `ScopeSwitcher` eliminado (quedó como alias trivial de `SegmentedControl`)
+- Primitivas de motion en `components/motion/`: `Pressable` (scale 0.96 + haptic 8 ms),
+  `CountUp` (odómetro 400 ms), `StaggerList`, `MorphButton` (botón → círculo → check),
+  `useHaptics()`, `useMotionIntensity()` (completa/reducida/mínima + `prefers-reduced-motion`)
+- Referencia viva en `/dev/components` (todos los estados de cada componente) y `/dev/tokens`
+
+### Bloque C — Captura rápida (Fase 5)
+
+- Ruta interceptada `/(app)/@modal/(.)agregar` con URL propia y back nativo; acceso directo
+  por `/agregar` también funciona (shortcut de la PWA, share target)
+- C1: monto con `Keypad` de pantalla completa + fila de categorías frecuentes **sobre** el
+  keypad — el camino feliz baja a 2 taps (monto + categoría frecuente guarda directo, sin
+  pasar por la grilla de categorías ni un botón "Guardar")
+- C2: grid de burbujas de categoría como fallback, no camino principal
+- C3: detalles en sheet (cuenta, fecha, comercio, nota, tags, modo ráfaga) — todo con default,
+  nada obligatorio
+- C5/C6: ingreso y transferencia (entre monedas partida en dos pasos: salida en pantalla,
+  entrada confirmada en sheet; nunca cuenta como gasto ni ingreso)
+- C7: guardado y deshacer en 4 frames, ≤700 ms, interactivo desde el frame 1
+- C8: modo ráfaga con `Switch` real y contador, para cargar varios gastos sin volver a home
+- C9: captura por voz (Web Speech API, parser rioplatense, todo editable antes de confirmar)
+- C11: los tres badges — pendiente de sincronizar, sin conversión (`needs_fx`), rechazado —
+  ninguno cancela el guardado
+- **Invariante duro**: guardar no puede fallar. Sin red o sin tipo de cambio disponible, el
+  movimiento se guarda igual (`needs_fx`); no existe el estado "no se guardó", solo "no se subió"
+- Defaults inteligentes: cuenta más usada en la categoría con fallback a la última,
+  frecuentes ponderadas por hora/día, comercio autocompletado desde `payees`
+
+### Bloque B — Home y navegación (Fase 6)
+
+- Home (B1) en sus variantes por flags ortogonales (monedas > 1, miembros > 1, módulos
+  activos): hero de una cifra (patrimonio neto, con delta y sparkline) → tira de cuentas con
+  snap → estado del mes → una insight card → últimos 5 movimientos
+- Estados vacío, skeleton, offline con contador, scope abierto
+- Tab bar con FAB central y regla del cuarto slot elegible (Análisis por default) — la
+  navegación nunca se reconfigura sola
+- Búsqueda global (`/buscar`, B8) agrupada por movimientos, cuentas, categorías y comercios
+
+### Bloque D — Movimientos (Fase 7)
+
+- Lista agrupada por día, headers sticky, resumen del período, virtualizada
+  (`@tanstack/react-virtual`)
+- Swipe para editar/borrar con deshacer de 5 s (equivalente por tap en el detalle)
+- Filtros en bottom sheet con contador de resultados en vivo; calendario del mes con total
+  por día; selección múltiple
+- Sin un solo separador de fila ni borde de caja: densidad resuelta con espaciado y
+  tipografía. Gastos en tinta neutra; el aqua reservado solo para ingresos; transferencias
+  marcadas "no suma al total"
+- Detalle de movimiento con el rate de cambio usado, su fuente y badge `needs_fx` cuando
+  corresponde
+
+### Bloque E — Cuentas y monedas (Fase 8)
+
+- Lista de cuentas agrupada por moneda con subtotales; detalle con evolución del saldo a 90
+  días; nueve tipos de cuenta con campos condicionales (incluye tarjeta de crédito: ciclo,
+  cierre, vencimiento, proyección)
+- Conciliación de saldo; monedas y tipos de cambio por par (proveedor, cotización preferida,
+  override manual con vigencia, histórico)
+- Resolución en lote de tipos de cambio pendientes (`/cuentas/resolver-fx`), la vista que
+  cierra el estado `needs_fx`
+- Estados: sin cuentas, rate viejo, API caída — nunca bloquean la pantalla
+
+### Bloque A — Onboarding y auth (Fase 9)
+
+- Camino crítico recortado: auth → país → uso (define si el grupo familiar arranca
+  encendido) → primera cuenta → éxito → primer gasto. Google/Apple como camino visualmente
+  principal (simulados, sin backend real todavía), magic link como alternativa
+- Saldo inicial de la cuenta e instalación de la PWA se piden **después** del primer gasto,
+  nunca antes — el primer contacto real con el keypad es el gasto, no un formulario
+- Abandono a mitad de camino: al volver, entra directo a un home vacío con cuenta "Efectivo"
+  por default; el onboarding no se repite
+- Al terminar: household + primera cuenta con saldo inicial + plantilla de categorías Básica,
+  todo en una sola transacción de Dexie
+- Atajo "Probar con datos de ejemplo" para construir B/D/E antes de tener el flujo completo
+
+### Responsive — tablet y desktop
+
+- Navegación: `Sidebar` fijo a partir de `md`, reemplaza la `TabBar` inferior (mismos tabs,
+  mismo handler)
+- Contenido en una sola columna centrada (`--content-max-width`) en cualquier tamaño de
+  pantalla — nunca multi-columna
+- `ScreenShell` para las rutas standalone (onboarding, `/agregar` sin modal); `Sheet` capado a
+  `position: relative` de su contenedor para no desbordar en pantallas grandes
+
+### PWA — auditoría de instalación
+
+- Service worker migrado de `@serwist/next` (nunca generaba `sw.js` real bajo Turbopack) a
+  `@serwist/turbopack` (`createSerwistRoute` en `src/app/serwist/[path]/route.ts`), con
+  `defaultCache` + fallback de navegación a `/offline`
+- Registro manual del service worker (`ServiceWorkerRegister`, Serwist no lo inyecta solo a
+  diferencia de `next-pwa`)
+- Assets de marca completos desde `perze-brand/`: íconos `any`/`maskable`/`monochrome`,
+  splash screens de iOS generados por dispositivo (`scripts/generate-splash-screens.mjs`,
+  cubre el catálogo vigente de iPhone/iPad), `apple-touch-startup-image` vía Metadata API
+- `manifest.webmanifest`: sin lock de orientación portrait, shortcut "Cargar un gasto" con
+  ícono propio (`scripts/generate-shortcut-icon.mjs`, ícono de la app + insignia violeta con
+  "+"), `metadataBase` configurado para que las URLs de `og:image` resuelvan en producción
+
+### Migración de íconos: Lucide → Phosphor
+
+- `design-system/core/Icon.tsx` migrado íntegro de `lucide-react` a `@phosphor-icons/react`
+  (variante `/dist/ssr` para no forzar `"use client"` en las pantallas que lo consumen desde
+  Server Components), preservando la API pública (`IconName`, props de `Icon`)
+- Ícono propio para cuenta corriente (`bank`), distinto de caja de ahorro (`piggy-bank`) —
+  antes ambos compartían el mismo glifo genérico y se veían igual en la lista de cuentas y en
+  el picker de cuenta de la captura
+- `lucide-react` eliminado por completo del `package.json`; los toasts de `sonner.tsx`
+  migrados a sus equivalentes Phosphor; borrados los componentes de `shadcn/ui` que quedaron
+  sin uso (`sheet`, `command`, `select`, `dialog`, `dropdown-menu`) por ser la única otra
+  fuente de imports de Lucide en el repo
+
+### Testing
+
+- 4 tests E2E (Playwright, viewport mobile 390×844): gasto en 2 taps con cronómetro, gasto en
+  moneda extranjera sin cotización disponible (`needs_fx`), 3 gastos con la red cortada y
+  reconexión sin duplicados, onboarding completo → primer gasto en menos de 90 s
+- Suite de Vitest existente (dominio, repos, componentes) manteniendo cobertura sobre
+  `lib/money`, `lib/fx` y sus fallbacks, y la máquina de estados del borrador de captura
+
+### Pendiente
+
+- Backend real (Supabase: Postgres, Auth, Storage, Realtime, Edge Functions) — hoy todo es
+  local-first sobre Dexie
+- Bloques F en adelante (Presupuestos, Metas, Recurrentes, Deudas, Inversiones, Grupo
+  familiar) y features diferidas de captura (C4 completo, C10 foto de ticket)
+- Ajustes / Importar-Exportar / Acerca de siguen como stubs
+- `src/app-old/` (MVP `[0.1.0]`/`[0.1.1]`) sigue en el repo, ignorado por git, pendiente de
+  borrado definitivo al cerrar el bloque A original del plan
+
+---
+
 ## [0.1.1] — 2026-05-30
 
 Resuelve los cuatro ítems pendientes de la Fase 0 identificados en la revisión de código.

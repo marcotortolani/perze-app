@@ -1,4 +1,9 @@
-# Plan de desarrollo — App de Finanzas Personales
+# Plan de desarrollo — App de Finanzas Personales (histórico)
+
+> **Histórico — superado.** Este plan describe el MVP v0.1.x, construido antes del rediseño
+> contra el paquete de diseño de `perze-design/`. Ese código quedó archivado en `src/app-old/`
+> y no se está desarrollando más. El plan vigente es
+> [`docs/perze-plan-redesign-first-5-blocks.md`](perze-plan-redesign-first-5-blocks.md).
 
 **Última actualización:** 2026-05-30 (pendientes de Fase 0 resueltos)  
 **Stack:** Next.js 16 · Tailwind v4 · shadcn/ui · Zustand · Gemini AI · PWA
@@ -423,9 +428,9 @@ Reemplazar la infraestructura mock y local-only con una solución real. Prerequi
 
 ## Registro de versiones
 
-| Versión | Fecha      | Descripción                                                                                   |
-| ------- | ---------- | --------------------------------------------------------------------------------------------- |
-| v0.1.0  | 2026-05-30 | MVP inicial — dashboard, movimientos, inversiones, análisis IA, configuración, auth mock, PWA |
+| Versión | Fecha      | Descripción                                                                                            |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| v0.1.0  | 2026-05-30 | MVP inicial — dashboard, movimientos, inversiones, análisis IA, configuración, auth mock, PWA          |
 | v0.1.1  | 2026-05-30 | Pendientes Fase 0: íconos PWA PNG, hash de contraseñas, formatMoney negativos, validación Zod en store |
 
 ---
