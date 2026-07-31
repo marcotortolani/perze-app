@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PERZE — Sistema de marca</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5/index.css">
+<style>
+:root{
+  --page:#0A0A0B; --s1:#131315; --s2:#1B1B1E; --s3:#26262A;
+  --border:#2E2E33; --tx:#FAFAF9; --tx2:#A1A1A6; --tx3:#6E6E76;
+  --ink:#8B7CF6; --fill:#6D55F0; --aqua:#199E70; --orange:#E06A35;
+  --warn:#FAB219; --crit:#D03B3B;
+}
+html.light{
+  --page:#FAFAF9; --s1:#FFFFFF; --s2:#F5F5F4; --s3:#EEEEEC;
+  --border:#E4E4E1; --tx:#131315; --tx2:#5A5A60; --tx3:#8A8A90;
+  --ink:#5D45E8; --fill:#6D55F0; --aqua:#12916A; --orange:#D95926;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--page); color:var(--tx);
+  font-family:'Geist Variable','Geist','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-weight:400; -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:56px 24px 120px}
+h1{font-size:40px;line-height:44px;letter-spacing:-.015em;font-weight:600;margin:0 0 8px}
+h2{font-size:22px;line-height:28px;letter-spacing:-.01em;font-weight:600;margin:0 0 6px}
+h3{font-size:16px;line-height:24px;font-weight:600;margin:0 0 4px}
+p{font-size:15px;line-height:25px;color:var(--tx2);margin:0 0 14px;max-width:74ch}
+.cap{font-size:11px;line-height:16px;letter-spacing:.02em;text-transform:uppercase;color:var(--tx3);font-weight:500}
+.sec{margin-top:72px;padding-top:32px;border-top:1px solid var(--border)}
+.sec:first-of-type{border-top:0;margin-top:40px;padding-top:0}
+hr{border:0;border-top:1px solid var(--border);margin:32px 0}
+code{font-family:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--s2);padding:1px 6px;border-radius:6px;color:var(--tx)}
+a{color:var(--ink)}
+
+.bar{position:sticky;top:0;z-index:9;background:var(--page);border-bottom:1px solid var(--border);
+     padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bar .l{display:flex;align-items:center;gap:10px}
+.toggle{display:flex;background:var(--s2);border-radius:999px;padding:3px;gap:2px}
+.toggle button{border:0;background:transparent;color:var(--tx2);font:inherit;font-size:13px;font-weight:500;
+  padding:6px 16px;border-radius:999px;cursor:pointer}
+.toggle button.on{background:var(--s3);color:var(--tx)}
+
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}}
+
+.card{background:var(--s1);border-radius:20px;padding:24px}
+.stage{background:var(--s2);border-radius:16px;display:flex;align-items:center;justify-content:center;
+  min-height:150px;margin:16px 0 14px}
+.sizes{display:flex;align-items:flex-end;gap:22px;padding:14px 18px;background:var(--s2);border-radius:16px}
+.sizes .u{display:flex;flex-direction:column;align-items:center;gap:7px}
+.sizes .u span{font-size:10px;color:var(--tx3);font-weight:500}
+.verdict{font-size:13px;line-height:20px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--tx2)}
+.verdict b{color:var(--tx);font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--fill) 18%,transparent);color:var(--ink)}
+.pill.no{background:color-mix(in srgb,var(--crit) 16%,transparent);color:var(--crit)}
+.pill.mid{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+
+.wm{font-weight:600;letter-spacing:-.02em;color:var(--tx);white-space:nowrap}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.02em;color:var(--tx3);
+   font-weight:600;padding:0 12px 10px 0;border-bottom:1px solid var(--border)}
+td{padding:11px 12px 11px 0;border-bottom:1px solid var(--border);color:var(--tx2);vertical-align:top;line-height:20px}
+td:first-child{color:var(--tx);font-weight:500;white-space:nowrap}
+td code{font-size:12px;white-space:nowrap}
+
+.phone{width:190px;height:auto;aspect-ratio:390/844;background:var(--page);border:1px solid var(--border);
+  border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;overflow:hidden}
+.tile{border-radius:22.37%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.mask{position:absolute;inset:0;border-radius:22.37%}
+.mask::after{content:'';position:absolute;left:10%;top:10%;width:80%;height:80%;
+  border:1px dashed color-mix(in srgb,var(--tx) 45%,transparent);border-radius:50%}
+.note{background:var(--s2);border-radius:16px;padding:18px 20px;margin-top:18px}
+.note p{margin:0;font-size:14px;line-height:23px}
+.note p+p{margin-top:10px}
+ul{margin:0 0 14px;padding-left:20px;color:var(--tx2);font-size:15px;line-height:25px;max-width:74ch}
+li{margin-bottom:6px}
+li b{color:var(--tx);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="l">
+    <svg viewBox="0 0 144.34 42.00" width="65.3" height="19"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg>
+    <span class="cap" style="margin-left:8px">Sistema de marca · v2</span>
+  </div>
+  <div class="toggle">
+    <button id="bd" class="on" onclick="setMode('dark')">Oscuro</button>
+    <button id="bl" onclick="setMode('light')">Claro</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<h1>El sistema de marca</h1>
+<p>Hasta acá PERZE era un wordmark tipográfico sin símbolo. Esto propone el símbolo — que resultó ser la Z del propio nombre —, lo evalúa contra el presupuesto de ruido del sistema, y cierra el inventario completo de imágenes que el repo necesita para ser una PWA instalable de verdad.</p>
+
+<!-- ══════════════════ 1 ══════════════════ -->
+<div class="sec">
+<span class="cap">01 · El razonamiento</span>
+<h2>Por qué el símbolo tiene que ser la Z</h2>
+<p>El nombre pasó por PERFIN, PEFIN, PECU, PERCE y PERSE antes de llegar acá. Lo que sobrevivió de todo ese proceso es exactamente una letra: la <b style="color:var(--tx)">Z</b>. Es la única consonante rara del nombre, es lo que lo hace pronunciable y buscable, y es la razón por la que PERZE no colisiona con nada en fintech.</p>
+<p>Y hay una coincidencia que conviene aprovechar: una Z geométrica <b style="color:var(--tx)">ya es un diagrama de flujo</b>. Una barra arriba, una barra abajo, una diagonal que las conecta. Entró de acá, se movió, quedó allá. Ese es literalmente el modelo de datos de la app — el movimiento con dos lados, la transferencia, el <code>amount_original → fx_rate → amount_base</code>.</p>
+<p>Las tres reglas que el símbolo tiene que respetar salen del design system, no de mi gusto: un solo violeta de marca (sin degradados, sin segundo violeta), cero sombras y cero ornamento, y legibilidad a <b style="color:var(--tx)">16 píxeles</b> — que es el tamaño real de un favicon en una pestaña, no una prueba teórica.</p>
+</div>
+
+<!-- ══════════════════ 2 ══════════════════ -->
+<div class="sec">
+<span class="cap">02 · Cuatro conceptos</span>
+<h2>Los candidatos, a los tres tamaños que importan</h2>
+<p>Cada uno está dibujado sobre la misma grilla de 48 y con el mismo peso de trazo. Miralos primero a 16 px: ahí se cae el 80% de los logos.</p>
+
+<div class="grid2" style="margin-top:24px">
+
+  <!-- A -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>A · Z de flujo</h3><span class="pill">Recomendado</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Z monolineal, diagonal a 45°, terminaciones cortadas en vertical. Peso idéntico en las tres partes.</p>
+    <div class="stage">
+      <svg width="104" height="104" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg>
+    </div>
+    <div class="sizes">
+      <div class="u"><svg width="48" height="48" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>48</span></div>
+      <div class="u"><svg width="32" height="32" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>32</span></div>
+      <div class="u"><svg width="16" height="16" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>16</span></div>
+      <div class="u"><svg width="12" height="12" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>12</span></div>
+    </div>
+    <div class="verdict"><b>Aguanta.</b> A 12 px sigue siendo una Z y no una mancha. Es el único de los cuatro que funciona sin el wordmark al lado.</div>
+  </div>
+
+  <!-- B -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>B · Z del keypad</h3><span class="pill mid">Interesante, riesgoso</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Grilla 3×3 de teclas. Las siete que forman el camino de la Z encendidas, dos apagadas.</p>
+    <div class="stage">
+      <svg width="104" height="104" viewBox="0 0 48 48">
+        <g fill="var(--ink)">
+          <rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/>
+          <rect x="18" y="18" width="12" height="12" rx="3.5"/>
+          <rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/>
+        </g>
+        <g fill="var(--tx3)" opacity=".35">
+          <rect x="3" y="18" width="12" height="12" rx="3.5"/><rect x="33" y="18" width="12" height="12" rx="3.5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="u"><svg width="48" height="48" viewBox="0 0 48 48"><g fill="var(--ink)"><rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="18" width="12" height="12" rx="3.5"/><rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/></g><g fill="var(--tx3)" opacity=".35"><rect x="3" y="18" width="12" height="12" rx="3.5"/><rect x="33" y="18" width="12" height="12" rx="3.5"/></g></svg><span>48</span></div>
+      <div class="u"><svg width="32" height="32" viewBox="0 0 48 48"><g fill="var(--ink)"><rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="18" width="12" height="12" rx="3.5"/><rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/></g><g fill="var(--tx3)" opacity=".35"><rect x="3" y="18" width="12" height="12" rx="3.5"/><rect x="33" y="18" width="12" height="12" rx="3.5"/></g></svg><span>32</span></div>
+      <div class="u"><svg width="16" height="16" viewBox="0 0 48 48"><g fill="var(--ink)"><rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="18" width="12" height="12" rx="3.5"/><rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/></g><g fill="var(--tx3)" opacity=".35"><rect x="3" y="18" width="12" height="12" rx="3.5"/><rect x="33" y="18" width="12" height="12" rx="3.5"/></g></svg><span>16</span></div>
+      <div class="u"><svg width="12" height="12" viewBox="0 0 48 48"><g fill="var(--ink)"><rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="18" width="12" height="12" rx="3.5"/><rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/></g><g fill="var(--tx3)" opacity=".35"><rect x="3" y="18" width="12" height="12" rx="3.5"/><rect x="33" y="18" width="12" height="12" rx="3.5"/></g></svg><span>12</span></div>
+    </div>
+    <div class="verdict"><b>Dice más, pero se rompe antes.</b> Es el concepto más "de esta app": teclado y Z en un solo dibujo. Abajo de 24 px las dos teclas apagadas desaparecen y queda un patrón que puede leerse como código QR o como spinner.</div>
+  </div>
+
+  <!-- C -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>C · Z de saldo</h3><span class="pill mid">Concepto lindo, forma débil</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Misma Z, pero la barra de abajo es más corta: lo que entró arriba, lo que queda abajo.</p>
+    <div class="stage">
+      <svg width="104" height="104" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H31V39H9V32L28 16H9Z" fill="var(--ink)"/></svg>
+    </div>
+    <div class="sizes">
+      <div class="u"><svg width="48" height="48" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H31V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>48</span></div>
+      <div class="u"><svg width="32" height="32" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H31V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>32</span></div>
+      <div class="u"><svg width="16" height="16" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H31V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>16</span></div>
+      <div class="u"><svg width="12" height="12" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H31V39H9V32L28 16H9Z" fill="var(--ink)"/></svg><span>12</span></div>
+    </div>
+    <div class="verdict"><b>La idea no se ve, el defecto sí.</b> Nadie va a leer "esto es tu saldo". Lo que se lee es una Z a la que le falta un pedazo. Un logo asimétrico necesita que la asimetría sea obviamente intencional, y acá no lo es.</div>
+  </div>
+
+  <!-- D -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>D · Sólo wordmark</h3><span class="pill">Válido de verdad</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Sin símbolo. Geist Sans 600, tracking −2%, y el ícono de app es la Z recortada del propio wordmark.</p>
+    <div class="stage">
+      <span class="wm" style="font-size:42px">PERZE</span>
+    </div>
+    <div class="sizes">
+      <div class="u"><span class="wm" style="font-size:26px">PERZE</span><span>wordmark</span></div>
+      <div class="u"><span class="wm" style="font-size:16px">PERZE</span><span>mínimo</span></div>
+      <div class="u"><span class="wm" style="font-size:11px;color:var(--tx3)">PERZE</span><span>límite real</span></div>
+    </div>
+    <div class="verdict"><b>Es la respuesta más honesta y la peor para una PWA.</b> Un wordmark de cinco letras no entra en un favicon ni en un ícono de home screen: vas a tener que recortar la Z igual. Si vas a terminar con una Z sola, mejor dibujarla bien desde el principio — que es el concepto A.</div>
+  </div>
+
+</div>
+
+<div class="note">
+  <p><b style="color:var(--tx)">Mi voto: A.</b> No por descarte. Es el único que sobrevive a 12 px, el único que no necesita el nombre al lado para funcionar, y el único que se puede animar sin trucos — la diagonal se dibuja de arriba a la derecha hacia abajo a la izquierda en 400 ms y ya tenés el splash y el estado de carga resueltos con el mismo trazo.</p>
+  <p>B lo guardaría, pero no como logo: <b style="color:var(--tx)">la grilla 3×3 con la Z encendida es un excelente spinner y un excelente empty state</b>. Ahí el tamaño nunca baja de 40 px y el concepto se lee.</p>
+</div>
+</div>
+
+<!-- ══════════════════ 3 ══════════════════ -->
+<div class="sec">
+<span class="cap">03 · El logotipo</span>
+<h2>Una sola Z: la del nombre</h2>
+<p>La primera versión ponía el símbolo al lado de la palabra y el resultado decía la Z dos veces — <b style="color:var(--tx)">Z PERZE</b>. Eso es tartamudeo, y es justo el tipo de ruido que el presupuesto del sistema prohíbe. La fusión lo arregla: el símbolo <b style="color:var(--tx)">es</b> la Z de la palabra, y el logotipo es simplemente el nombre.</p>
+
+<div class="card" style="margin-top:20px">
+  <span class="cap">Logotipo · el único uso horizontal</span>
+  <div class="stage" style="min-height:150px"><svg viewBox="0 0 144.34 42.00" width="171.8" height="50"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg></div>
+  <div class="sizes">
+    <div class="u"><svg viewBox="0 0 144.34 42.00" width="103.1" height="30"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg><span>cómodo</span></div>
+    <div class="u"><svg viewBox="0 0 144.34 42.00" width="68.7" height="20"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg><span>mínimo</span></div>
+    <div class="u"><svg viewBox="0 0 144.34 42.00" width="48.1" height="14"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg><span>límite</span></div>
+  </div>
+  <div class="verdict">Por debajo de <b>14 px de altura de mayúscula</b> el violeta empieza a mezclarse con el blanco por antialiasing y la Z pierde su condición de color. Ese es el piso: más chico que eso, va el logotipo monocromático o directamente el símbolo solo.</div>
+</div>
+
+<h3 style="margin-top:34px">La Z tiene dos cortes ópticos, no dos dibujos</h3>
+<p>La Z del ícono no puede ser la misma que la de la palabra. Dentro del logotipo tiene que convivir con la P, la E y la R sin sobresalir; sola a 16 px necesita masa o se evapora. Es la misma construcción —terminaciones cortadas en vertical, peso uniforme, diagonal recta— en dos cortes, exactamente como una familia tipográfica tiene un corte de texto y uno de display.</p>
+
+<div class="grid2" style="margin-top:18px">
+  <div class="card">
+    <span class="cap">Corte de texto · dentro de la palabra</span>
+    <div class="stage" style="min-height:150px">
+      <svg viewBox="0 0 626 710" height="104"><g transform="translate(0 710) scale(1 -1)"><path d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--ink)"/></g></svg>
+    </div>
+    <div class="verdict">Ancho 0.80 de la altura, barra 0.18. Un 9% más ancha y un 10% más pesada que la Z que Geist trae de fábrica: lo suficiente para que se lea como decisión y no como accidente, no tanto como para deformar la palabra.</div>
+  </div>
+  <div class="card">
+    <span class="cap">Corte de display · ícono, favicon, loader</span>
+    <div class="stage" style="min-height:150px">
+      <svg viewBox="0 0 48 48" height="104"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--ink)"/></svg>
+    </div>
+    <div class="verdict">Ancho 1.0 de la altura, barra 0.23. Cuadrada y pesada porque tiene que aguantar 16 px sola y llenar una baldosa sin verse flaca. Nunca entra en la palabra.</div>
+  </div>
+</div>
+
+<div class="note">
+  <p><b style="color:var(--tx)">Se retiran las dos versiones anteriores del lockup.</b> La horizontal la reemplaza el logotipo fusionado. La vertical —símbolo arriba, nombre abajo— tenía el mismo tartamudeo y ya no hace falta: donde antes iba, ahora va el logotipo solo.</p>
+  <p>La regla de adentro no cambia: el logotipo <b style="color:var(--tx)">no aparece dentro de la app</b>. Vive en el splash, en el README del repo, en la pantalla de "acerca de" y en la preview al compartir el link. El único violeta de cada pantalla lo sigue ocupando la acción primaria.</p>
+</div>
+
+<h3 style="margin-top:34px">Cuando el violeta no está disponible</h3>
+<p>Impresión a un color, sellos, watermarks, fondos de foto. El logotipo monocromático usa el mismo dibujo con la Z del mismo color que el resto — no una Z gris, que se leería como un error.</p>
+<div class="grid2" style="margin-top:16px">
+  <div class="card"><span class="cap">Mono sobre oscuro</span><div class="stage" style="min-height:110px"><svg viewBox="0 0 144.34 42.00" height="34" role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="var(--tx)"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="var(--tx)"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="var(--tx)"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="var(--tx)"/></g></svg></div></div>
+  <div class="card"><span class="cap">Sobre color de marca</span><div class="stage" style="min-height:110px;background:#6D55F0"><svg viewBox="0 0 144.34 42.00" height="34" role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="#FFFFFF"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#FFFFFF"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="#FFFFFF"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="#FFFFFF"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#FFFFFF"/></g></svg></div></div>
+</div>
+</div>
+
+<!-- ══════════════════ 4 ══════════════════ -->
+<div class="sec">
+<span class="cap">04 · Ícono de app</span>
+<h2>Las dos versiones, y por qué elijo la oscura</h2>
+
+<div class="grid2" style="margin-top:20px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>Tinta sobre superficie</h3><span class="pill">Recomendado</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Baldosa <code>#131315</code>, marca <code>#8B7CF6</code>. Contraste 5.58:1.</p>
+    <div class="stage" style="min-height:180px;gap:20px">
+      <div class="tile" style="width:112px;height:112px;background:#131315"><svg width="60" height="60" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div>
+      <div class="tile" style="width:60px;height:60px;background:#131315"><svg width="32" height="32" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div>
+      <div class="tile" style="width:38px;height:38px;background:#131315"><svg width="20" height="20" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div>
+    </div>
+    <div class="verdict">Casi todo lo que hay en una home screen es saturado y claro. Una baldosa casi negra se distingue justamente por callarse, y además es la app tal cual se ve al abrirla — el ícono no promete un color que adentro no existe.</div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>Relleno de marca</h3><span class="pill mid">Alternativa</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 0">Baldosa <code>#6D55F0</code>, marca <code>#FAFAF9</code>. Contraste 4.99:1.</p>
+    <div class="stage" style="min-height:180px;gap:20px">
+      <div class="tile" style="width:112px;height:112px;background:#6D55F0"><svg width="60" height="60" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#FAFAF9"/></svg></div>
+      <div class="tile" style="width:60px;height:60px;background:#6D55F0"><svg width="32" height="32" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#FAFAF9"/></svg></div>
+      <div class="tile" style="width:38px;height:38px;background:#6D55F0"><svg width="20" height="20" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#FAFAF9"/></svg></div>
+    </div>
+    <div class="verdict">Más fuerte a 38 px y más fácil de encontrar en una grilla llena. El costo es que se parece a media fintech, y que si el household cambia el color primario el ícono queda mintiendo.</div>
+  </div>
+</div>
+
+<h3 style="margin-top:32px">Maskable: el que casi todos entregan mal</h3>
+<p>Android recorta el ícono con la forma que elija el fabricante — círculo, squircle, gota. Sólo se garantiza el <b style="color:var(--tx)">80% central</b>. Si entregás el mismo PNG para <code>any</code> y para <code>maskable</code>, en la mitad de los teléfonos la Z sale con los extremos comidos.</p>
+
+<div class="grid3" style="margin-top:18px">
+  <div class="card">
+    <span class="cap">purpose: any · 512</span>
+    <div class="stage" style="min-height:160px">
+      <div class="tile" style="width:120px;height:120px;background:#131315"><svg width="66" height="66" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div>
+    </div>
+    <div class="verdict" style="border:0;padding:0;margin:0">Marca al 55% del lienzo. Es el que ve iOS.</div>
+  </div>
+  <div class="card">
+    <span class="cap">purpose: maskable · 512</span>
+    <div class="stage" style="min-height:160px">
+      <div class="tile" style="width:120px;height:120px;background:#131315">
+        <svg width="49" height="49" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg>
+        <div class="mask"></div>
+      </div>
+    </div>
+    <div class="verdict" style="border:0;padding:0;margin:0">Marca al 41%. El círculo punteado es la zona segura.</div>
+  </div>
+  <div class="card">
+    <span class="cap">purpose: monochrome · 512</span>
+    <div class="stage" style="min-height:160px">
+      <div class="tile" style="width:120px;height:120px;background:var(--s3)">
+        <svg width="49" height="49" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="var(--tx)"/></svg>
+      </div>
+    </div>
+    <div class="verdict" style="border:0;padding:0;margin:0">Silueta plana sobre transparente. Android 13+ la tiñe con el wallpaper; es también el ícono de notificación.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════ 5 ══════════════════ -->
+<div class="sec">
+<span class="cap">05 · Favicon</span>
+<h2>Lo que pasa en una pestaña de 16 píxeles</h2>
+<p>El favicon no es el ícono de app en chico. A 16 px la baldosa oscura contra el fondo de la pestaña se convierte en un cuadrado sucio. Ahí va la <b style="color:var(--tx)">Z sola, sin baldosa, sobre transparente</b>, y con un peso de trazo un poco mayor para compensar el antialiasing.</p>
+
+<div class="grid2" style="margin-top:18px">
+  <div class="card">
+    <span class="cap">Correcto · Z sobre transparente</span>
+    <div class="stage" style="min-height:120px;gap:26px;align-items:center">
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 48 48"><path d="M8 8H40V16L20 32H40V40H8V32L28 16H8Z" fill="var(--ink)"/></svg><span style="font-size:10px;color:var(--tx3)">16</span></div>
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg width="32" height="32" viewBox="0 0 48 48"><path d="M8 8H40V16L20 32H40V40H8V32L28 16H8Z" fill="var(--ink)"/></svg><span style="font-size:10px;color:var(--tx3)">32</span></div>
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg width="48" height="48" viewBox="0 0 48 48"><path d="M8 8H40V16L20 32H40V40H8V32L28 16H8Z" fill="var(--ink)"/></svg><span style="font-size:10px;color:var(--tx3)">48</span></div>
+    </div>
+    <div class="verdict">Un solo <code>icon.svg</code> con <code>fill: currentColor</code> y una media query de <code>prefers-color-scheme</code> adentro del propio SVG: se adapta a la pestaña clara y a la oscura sin dos archivos.</div>
+  </div>
+  <div class="card">
+    <span class="cap">Incorrecto · baldosa reducida</span>
+    <div class="stage" style="min-height:120px;gap:26px;align-items:center">
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><div class="tile" style="width:16px;height:16px;background:#131315"><svg width="9" height="9" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div><span style="font-size:10px;color:var(--tx3)">16</span></div>
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><div class="tile" style="width:32px;height:32px;background:#131315"><svg width="18" height="18" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div><span style="font-size:10px;color:var(--tx3)">32</span></div>
+      <div class="u" style="display:flex;flex-direction:column;align-items:center;gap:8px"><div class="tile" style="width:48px;height:48px;background:#131315"><svg width="26" height="26" viewBox="0 0 48 48"><path d="M9 9H39V16L20 32H39V39H9V32L28 16H9Z" fill="#8B7CF6"/></svg></div><span style="font-size:10px;color:var(--tx3)">48</span></div>
+    </div>
+    <div class="verdict">A 16 px la marca queda a 9 px dentro de la baldosa: se pierde. Y en una pestaña oscura la baldosa desaparece contra el fondo y sólo se ve el violeta flotando.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════ 6 ══════════════════ -->
+<div class="sec">
+<span class="cap">06 · Splash</span>
+<h2>Arranque: quieto, corto y sin logo grande</h2>
+<p>Android arma el splash solo con <code>background_color</code> y el ícono de 512 del manifest — no hay archivo que entregar. iOS es el problema: si no hay <code>apple-touch-startup-image</code>, la PWA abre con un flash blanco que arruina la sensación de app nativa.</p>
+
+<div class="grid4" style="margin-top:20px">
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <span class="cap" style="align-self:flex-start;margin-bottom:14px">Splash · oscuro</span>
+    <div class="phone" style="background:#0A0A0B">
+      <svg viewBox="0 0 144.34 42.00" width="68.7" height="20"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="#FAFAF9"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#FAFAF9"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="#FAFAF9"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="#8B7CF6"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#FAFAF9"/></g></svg>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <span class="cap" style="align-self:flex-start;margin-bottom:14px">Splash · claro</span>
+    <div class="phone" style="background:#FAFAF9;border-color:#E4E4E1">
+      <svg viewBox="0 0 144.34 42.00" width="68.7" height="20"  role="img" aria-label="PERZE"><g transform="translate(6.0 36.0) scale(0.042254 -0.042254)"><path transform="translate(0 0)" d="M354 710H80V0H211V255H354C521 255 621 341 621 484C621 625 521 710 354 710ZM211 370V595H349C438 595 485 558 485 484C485 408 437 370 349 370Z" fill="#131315"/><path transform="translate(645 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#131315"/><path transform="translate(1241 0)" d="M377 710H80V0H211V268H357C447 268 483 247 488 186L503 0H635L617 205C610 280 578 317 505 328C575 348 629 409 629 496C629 632 525 710 377 710ZM211 382V595H363C447 595 493 557 493 488C493 420 447 382 363 382Z" fill="#131315"/><path transform="translate(1910 0)" d="M48 710H590V583L204 127H598V0H28V127L422 583H28Z" fill="#5D45E8"/><path transform="translate(2516 0)" d="M80 710V0H567V115H211V300H547V412H211V595H559V710Z" fill="#131315"/></g></svg>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <span class="cap" style="align-self:flex-start;margin-bottom:14px">Loader in-app</span>
+    <div class="phone" style="background:#0A0A0B">
+      <svg width="40" height="40" viewBox="0 0 48 48">
+        <g fill="#8B7CF6">
+          <rect x="3" y="3" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin="0s" repeatCount="indefinite"/></rect>
+          <rect x="18" y="3" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".12s" repeatCount="indefinite"/></rect>
+          <rect x="33" y="3" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".24s" repeatCount="indefinite"/></rect>
+          <rect x="18" y="18" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".36s" repeatCount="indefinite"/></rect>
+          <rect x="3" y="33" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".48s" repeatCount="indefinite"/></rect>
+          <rect x="18" y="33" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".6s" repeatCount="indefinite"/></rect>
+          <rect x="33" y="33" width="12" height="12" rx="3.5"><animate attributeName="opacity" values=".25;1;.25" dur="1.4s" begin=".72s" repeatCount="indefinite"/></rect>
+        </g>
+      </svg>
+      <span style="font-size:11px;color:#6E6E76">Sincronizando</span>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center">
+    <span class="cap" style="align-self:flex-start;margin-bottom:14px">Empty state</span>
+    <div class="phone" style="background:#0A0A0B">
+      <svg width="34" height="34" viewBox="0 0 48 48" opacity=".2">
+        <g fill="#FAFAF9">
+          <rect x="3" y="3" width="12" height="12" rx="3.5"/><rect x="18" y="3" width="12" height="12" rx="3.5"/><rect x="33" y="3" width="12" height="12" rx="3.5"/>
+          <rect x="18" y="18" width="12" height="12" rx="3.5"/>
+          <rect x="3" y="33" width="12" height="12" rx="3.5"/><rect x="18" y="33" width="12" height="12" rx="3.5"/><rect x="33" y="33" width="12" height="12" rx="3.5"/>
+        </g>
+      </svg>
+      <span style="font-size:11px;color:#6E6E76;text-align:center;padding:0 22px;line-height:17px">Todavía no cargaste ningún gasto</span>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <p><b style="color:var(--tx)">El splash no lleva la Z grande ni tagline.</b> Dura entre 200 y 600 ms: cualquier cosa que el ojo alcance a leer en ese tiempo es una cosa que le estás cobrando al usuario cada vez que abre la app. Marca chica, centrada, y afuera.</p>
+  <p>Y el splash oscuro y el claro tienen que existir los dos, con <code>media="(prefers-color-scheme: dark)"</code>. Si entregás uno solo, la mitad de los arranques flashean el fondo contrario.</p>
+</div>
+</div>
+
+<!-- ══════════════════ 7 ══════════════════ -->
+<div class="sec">
+<span class="cap">07 · Inventario</span>
+<h2>Todos los archivos que el repo necesita</h2>
+<p>Convenciones de Next.js 16 (App Router) más lo que el manifest exige. Todo sale de un único SVG maestro; los PNG se generan con un script, no a mano.</p>
+
+<table>
+<thead><tr><th style="width:30%">Archivo</th><th style="width:14%">Medida</th><th>Para qué, y qué pasa si falta</th></tr></thead>
+<tbody>
+<tr><td><code>app/icon.svg</code></td><td>escalable</td><td>Favicon principal. Con <code>prefers-color-scheme</code> adentro del SVG cubre pestaña clara y oscura con un solo archivo.</td></tr>
+<tr><td><code>app/favicon.ico</code></td><td>16·32·48</td><td>Navegadores viejos y, sobre todo, el <b>bookmark bar</b>. Sin esto Safari muestra la inicial en un cuadrado gris.</td></tr>
+<tr><td><code>app/apple-icon.png</code></td><td>180</td><td>Home screen de iOS. Sin transparencia y <b>sin esquinas redondeadas propias</b>: iOS aplica su squircle y si vos ya lo redondeaste queda doble borde.</td></tr>
+<tr><td><code>icon-192.png</code> · <code>icon-512.png</code></td><td>192 · 512</td><td><code>purpose: "any"</code>. Marca al 55% del lienzo.</td></tr>
+<tr><td><code>icon-maskable-192</code> · <code>-512</code></td><td>192 · 512</td><td><code>purpose: "maskable"</code>. Marca al 41%, dentro del círculo de zona segura. <b>Archivos distintos</b>, no el mismo PNG declarado dos veces.</td></tr>
+<tr><td><code>icon-mono.svg</code></td><td>escalable</td><td><code>purpose: "monochrome"</code> para íconos temáticos de Android 13+, y el mismo archivo sirve de ícono de notificación (blanco sobre transparente, 24 dp).</td></tr>
+<tr><td><code>shortcut-gasto.png</code></td><td>96</td><td>Ícono del shortcut del manifest que entra directo al keypad. Es uno de los cuatro puntos de entrada pre-auth de L6.</td></tr>
+<tr><td><code>shortcut-movimientos.png</code></td><td>96</td><td>Segundo shortcut. Éste sí queda detrás del gate si el bloqueo está encendido.</td></tr>
+<tr><td><code>apple-splash-*.png</code></td><td>~15 pares</td><td>Splash de iOS, un par claro/oscuro por resolución de dispositivo. Es la única parte del inventario que conviene generar con un script en el build.</td></tr>
+<tr><td><code>app/opengraph-image.png</code></td><td>1200×630</td><td>Preview al compartir el link del repo o del deploy. Sin esto, el link se ve como texto pelado en WhatsApp y en X.</td></tr>
+<tr><td><code>og-fallback.png</code></td><td>1200×1200</td><td>Cuadrado para WhatsApp, que recorta el 1200×630 al centro y se come el wordmark.</td></tr>
+<tr><td><code>wordmark-dark.svg</code> · <code>-light.svg</code></td><td>escalable</td><td>El logotipo fusionado, en curvas: no depende de que Geist esté instalada. README, splash y "acerca de". <b>No</b> va dentro de la app.</td></tr>
+<tr><td><code>wordmark-mono-*.svg</code></td><td>escalable</td><td>Un solo color, para impresión, sellos y fondos de foto. El README de GitHub se ve en claro y en oscuro: por eso cada uno viene en las dos versiones.</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ══════════════════ 8 ══════════════════ -->
+<div class="sec">
+<span class="cap">08 · Los dos problemas que nadie ve venir</span>
+<h2>Logos de bancos y banderas de país</h2>
+
+<div class="grid2" style="margin-top:20px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>Logos de instituciones</h3><span class="pill no">Problema legal</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 14px">A6 muestra presets de BROU, Itaú, Santander, Prex y Mi Dinero. Esos logos son marcas registradas de terceros. En un repo privado no pasa nada; el día que lo abrís como open source estás distribuyendo propiedad intelectual ajena, y además la deuda del bloque A ya avisó que hoy todos usan el mismo ícono genérico y se ven iguales.</p>
+    <span class="cap">La salida: baldosa de monograma generada</span>
+    <div class="stage" style="min-height:120px;gap:14px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:46px;height:46px;border-radius:14px;background:#0A5FA8;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px">BR</div><span style="font-size:10px;color:var(--tx3)">BROU</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:46px;height:46px;border-radius:14px;background:#D8531F;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px">IT</div><span style="font-size:10px;color:var(--tx3)">Itaú</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:46px;height:46px;border-radius:14px;background:#B3272D;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px">SA</div><span style="font-size:10px;color:var(--tx3)">Santander</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:46px;height:46px;border-radius:14px;background:#1E9E58;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px">PR</div><span style="font-size:10px;color:var(--tx3)">Prex</span></div>
+    </div>
+    <div class="verdict">Dos letras sobre el color de la institución, que es un dato de la tabla <code>institutions</code> y no un archivo. Se distinguen entre sí —que era el problema real—, no hay ningún binario de terceros en el repo, y funciona sin conexión porque no hay nada que descargar. Si alguien quiere los logos reales, una carpeta local en <code>.gitignore</code>.</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <h3>Banderas de país</h3><span class="pill no">Se rompe en Windows</span>
+    </div>
+    <p style="font-size:14px;line-height:22px;margin:2px 0 14px">A4 y las cuentas en moneda extranjera muestran 🇺🇾 como emoji. En Chrome sobre Windows los emoji de bandera <b style="color:var(--tx)">no se renderizan</b>: aparecen las dos letras del código regional en un recuadro. No es un detalle cosmético — es la pantalla donde el usuario confirma su moneda.</p>
+    <span class="cap">Las tres opciones</span>
+    <div class="stage" style="min-height:120px;gap:22px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="font-size:26px">🇺🇾</span><span style="font-size:10px;color:var(--crit)">emoji · falla</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <svg width="30" height="21" viewBox="0 0 30 21"><rect width="30" height="21" rx="3" fill="#fff"/><g fill="#0F4EA5"><rect y="10.5" width="30" height="2.6"/><rect y="15.7" width="30" height="2.6"/><rect x="14" y="2.6" width="16" height="2.6"/><rect x="14" y="7.8" width="16" height="2.6"/></g><circle cx="7" cy="5.2" r="3.4" fill="#F0C420"/></svg>
+        <span style="font-size:10px;color:var(--aqua)">SVG · robusto</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600;letter-spacing:.06em;padding:5px 10px;border-radius:8px;background:var(--s3);color:var(--tx2)">UYU</span><span style="font-size:10px;color:var(--tx3)">código · sobrio</span></div>
+    </div>
+    <div class="verdict">Yo iría al <b>chip de código</b>. Es la única de las tres que respeta el "cero íconos decorativos": el código de moneda es información, la bandera es adorno — y encima la bandera es del país, no de la moneda, cosa que se rompe apenas aparecen el dólar y el euro. Si querés bandera igual, tiene que ser el set SVG; emoji no es una opción.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════ 9 ══════════════════ -->
+<div class="sec">
+<span class="cap">09 · Íconos de interfaz</span>
+<h2>Los huecos que ya sabemos que existen</h2>
+<p>Esto no es marca, pero es imagen y va en el mismo pase. Sale de la deuda acumulada de los bloques A y E.</p>
+<ul>
+  <li><b>Cinco íconos faltan en el set:</b> <code>mail</code>, <code>lock</code>, <code>fingerprint</code>, <code>install</code> y <code>flag/globe</code>. Hoy están reemplazados por texto o por el ícono más parecido — <code>eye-off</code> haciendo de privacidad y <code>clock</code> haciendo de espera.</li>
+  <li><b>Los nueve tipos de cuenta tienen ocho íconos.</b> Dos de ellos comparten el mismo <code>bank</code>: caja de ahorro y cuenta corriente se ven idénticas en la grilla de A6 y en la lista de cuentas de E1.</li>
+  <li><b>El keypad de A7 arrastra × y ÷.</b> Para contar efectivo sirven <code>+</code> y <code>−</code>; los otros dos son ruido heredado de la pantalla de captura. Hace falta la variante <code>PinKeypad</code> sin operadores ni coma, que además es la que pide L6.</li>
+  <li><b>Ninguna ilustración de empty state.</b> Y está bien: el presupuesto de ruido no las permite. El patrón es la grilla 3×3 al 20% de opacidad, que ya está dibujada arriba y no agrega un solo archivo nuevo.</li>
+</ul>
+</div>
+
+<div class="sec">
+<p style="color:var(--tx3);font-size:13px">PERZE · sistema de marca v1 · todos los símbolos de este documento son SVG de un solo path y ninguno usa degradado, sombra ni segundo color.</p>
+</div>
+
+</div>
+
+<script>
+function setMode(m){
+  document.documentElement.className = m;
+  document.getElementById('bd').classList.toggle('on', m==='dark');
+  document.getElementById('bl').classList.toggle('on', m==='light');
+}
+</script>
+</body>
+</html>

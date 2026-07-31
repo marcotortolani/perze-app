@@ -9,7 +9,7 @@
 
 La app se llama **PERZE**. El wordmark es tipográfico: Geist Sans 600 con tracking −2%, sin símbolo dibujado.
 
-Los wireframes son de **baja fidelidad a propósito**: grises, sin color de marca, sin ilustraciones, sin sombras. El objetivo de esta fase es resolver *estructura, jerarquía, flujo y estados*, no estética. Si en esta fase discutís colores, perdiste el foco.
+Los wireframes son de **baja fidelidad a propósito**: grises, sin color de marca, sin ilustraciones, sin sombras. El objetivo de esta fase es resolver _estructura, jerarquía, flujo y estados_, no estética. Si en esta fase discutís colores, perdiste el foco.
 
 ---
 
@@ -114,9 +114,7 @@ En el header hay un ScopeSwitcher: Personal / Compartido / Todo.
   arriba a abajo, todos los estados (vacío / cargando / error / offline / con
   datos), y de dónde se llega y adónde se va.
 - Anotaciones numeradas al costado explicando las interacciones no obvias.
-- Señalá explícitamente qué elementos se ocultan cuando el flag correspondiente
-  está en cero (una sola moneda, un solo miembro, módulo apagado). No existe un
-  campo "perfil": la UI se revela por flags ortogonales.
+- Señalá explícitamente qué elementos se ocultan para el perfil SIMPLE.
 - Al final de cada pantalla, una línea de CHEQUEO DE RUIDO: cuántos elementos
   interactivos hay sobre el pliegue, cuántos niveles tipográficos y si cumple el
   presupuesto. Si no cumple, decime qué moverías a otra pantalla.
@@ -244,8 +242,7 @@ Requisitos:
   del onboarding es editable después en Ajustes; hay que decirlo.
 - Ningún paso puede tener más de una decisión.
 - Mostrá los estados de error de A2/A3 (email inválido, link vencido, sin conexión).
-- Indicá qué pasos se saltean solos cuando los flags están en su valor mínimo
-  (una moneda, un miembro, todos los módulos apagados).
+- Indicá qué pasos se saltean automáticamente para el perfil SIMPLE.
 
 Anotá numeradamente las decisiones de interacción.
 ```
@@ -347,7 +344,7 @@ C4. QUICK ADD — Moneda distinta a la de la cuenta
       cuando el país lo amerita
     - El rate es editable: tap abre keypad, o slider fino de ±5%
     - Badge de advertencia si el dato tiene más de 24h o si viene del cache offline
-    Esta pantalla NO EXISTE mientras haya una sola moneda en uso.
+    Esta pantalla NO EXISTE para el perfil SIMPLE.
 
 C5. QUICK ADD — Ingreso
     Igual que gasto pero: categorías de ingreso, y una fila explícita
@@ -438,8 +435,7 @@ E1. LISTA DE CUENTAS
     - Cards con: institución, nombre, últimos dígitos, moneda, bandera del país,
       saldo. Las tarjetas de crédito muestran el consumo del período y el límite.
     - Reordenables con drag. Archivadas colapsadas al final.
-    - Con una sola moneda en uso: sin agrupación por moneda, sin banderas, sin
-      conversión.
+    - Para el perfil SIMPLE: sin agrupación por moneda, sin banderas, sin conversión.
 
 E2. DETALLE DE CUENTA
     Saldo grande + gráfico de evolución del saldo (línea, 90 días) + transacciones de
@@ -469,7 +465,7 @@ E6. MONEDAS Y TIPOS DE CAMBIO
     - Botón de refrescar, con estado de última actualización.
     - Override manual con vigencia (fija un rate hasta que lo cambies).
     - Histórico del par en un gráfico de línea.
-    Esta pantalla NO EXISTE mientras haya una sola moneda en uso.
+    Esta pantalla NO EXISTE para el perfil SIMPLE.
 
 E7. Estados: sin cuentas · cotización desactualizada · API caída (mostrar el último
     valor conocido y el input manual, nunca bloquear).
@@ -738,8 +734,7 @@ acá que después de programarlo.
    - ¿Toda pantalla es alcanzable desde al menos dos lugares razonables?
 
 3. PROGRESIVIDAD
-   - Recorré la app COMPLETA con todos los flags en su mínimo (una moneda, un
-     miembro, cero módulos). ¿Ve algo que no debería?
+   - Recorré la app COMPLETA con los ojos del perfil SIMPLE. ¿Ve algo que no debería?
    - ¿Alguna pantalla se rompe si un módulo está apagado?
 
 4. DENSIDAD Y MINIMALISMO (la auditoría más importante)

@@ -71,7 +71,7 @@ Ver `docs/01-arquitectura-datos.md` § 5.
 
 ## PROMPT C1 — Setup del proyecto
 
-```text
+```
 Inicializá el proyecto PERZE.
 
 1. `create-next-app` con Next.js 16, TypeScript, Tailwind v4, App Router, pnpm.
@@ -81,8 +81,13 @@ Inicializá el proyecto PERZE.
    con lefthook.
 4. shadcn/ui inicializado, con el theme apuntando a nuestros tokens (no a los
    defaults de shadcn).
-5. Supabase: CLI, proyecto local con Docker, `supabase/migrations/` versionado,
-   script `db:types` que regenera los tipos.
+5. Supabase **SIN Docker**: se trabaja contra un proyecto remoto de desarrollo.
+   `supabase link` al proyecto, `supabase/migrations/` versionado, y los scripts
+   `db:push` (`supabase db push --linked`) y `db:types`
+   (`supabase gen types typescript --linked`). NO uses `supabase start`,
+   `supabase db reset` ni `supabase db diff` sin `--linked`: los tres necesitan
+   Docker. Las migraciones se escriben a mano desde `docs/01-arquitectura-datos.md`,
+   que ya tiene el schema completo — no hace falta generarlas por diff.
 6. Variables de entorno tipadas con `@t3-oss/env-nextjs` + `.env.example` completo.
 7. Vitest (unit) y Playwright (e2e, con el Chromium ya instalado del sistema).
 8. La estructura de carpetas de `docs/01-arquitectura-datos.md` § 5, con un
@@ -105,7 +110,7 @@ Al terminar: `pnpm build` tiene que pasar limpio y `pnpm check` sin warnings.
 
 ## PROMPT C2 — Schema y RLS
 
-```text
+```
 Implementá el schema completo de `docs/01-arquitectura-datos.md` § 2 como migraciones
 de Supabase.
 
@@ -165,7 +170,7 @@ Al final, generá los tipos TypeScript y verificá que compilen.
 
 ## PROMPT C3 — Capa de dinero y FX
 
-```text
+```
 Implementá `lib/money` y `lib/fx`. Es el núcleo del que depende toda la corrección
 de la app, así que va con cobertura de tests alta.
 
@@ -218,7 +223,7 @@ Nada de esto toca React. Es lógica pura y testeable.
 
 ## PROMPT C4 — Tokens, tema y primitivas de motion
 
-```text
+```
 Implementá el sistema visual de `docs/02-design-system.md`.
 
 1. `app/globals.css` con Tailwind v4. Ojo con la mecánica: `@theme` emite un único
@@ -259,7 +264,7 @@ declarada en el documento 02, para que no puedan divergir en silencio.
 
 ## PROMPT C5 — Capa offline y datos
 
-```text
+```
 Implementá la infraestructura de datos y offline.
 
 1. Clientes de Supabase: browser, server (con cookies async de Next 16), y
@@ -295,7 +300,7 @@ Tests e2e con Playwright:
 
 ## PROMPT C6 — Componentes propios
 
-```text
+```
 Implementá la biblioteca de componentes de `docs/02-design-system.md` § 6, en el
 orden en que los necesita la captura rápida.
 
@@ -333,7 +338,7 @@ menor a 44x44. Si un componente necesita romper esto, paralo y consultame.
 
 ## PROMPT C7 — Auth y onboarding
 
-```text
+```
 Implementá el bloque A (auth + onboarding), rutas `(auth)` y `(onboarding)`.
 
 1. Supabase Auth: magic link, OAuth con Google y Apple, y registro de passkey
@@ -358,7 +363,7 @@ menos de 90 segundos de interacciones simuladas.
 
 ## PROMPT C8 — Captura rápida
 
-```text
+```
 Implementá el bloque C. Es la funcionalidad más importante de la app.
 
 Ruta interceptada: `/add` abre como modal sobre la ruta actual, con URL propia y
@@ -418,7 +423,7 @@ Referencias por bloque (los números **no** coinciden entre archivos):
 | J Grupo familiar | `03` § W9 | `04` § D11 |
 | K+L Ajustes y estados | `03` § W10 | `04` § D12 |
 
-```text
+```
 Implementá el bloque [letra] — pantallas [lista explícita de IDs].
 Wireframe en `docs/03-prompts-wireframes.md`, alta fidelidad en
 `docs/04-prompts-ui.md` (ver la tabla de mapeo arriba).
@@ -441,8 +446,10 @@ C9  — Bloque L (sistemas transversales, PRIMERO porque todo lo demás los cons
       L5 onboarding contextual · L6 pantalla de bloqueo
 C10 — Bloque D: D1 lista · D2 filtros · D3 detalle · D4 editar · D5 calendario ·
       D6 estados · D7 selección múltiple
-C11 — Bloque B: B1-B8 (home en sus 3 variantes de perfil, scope switcher,
-      tab bar, pantalla "Más", búsqueda global)
+C11 — Bloque B: B1-B8 (home en sus 3 variantes de FLAGS —una moneda / varias
+      monedas / inversiones encendido—, tab bar, pantalla "Más", búsqueda
+      global). NO existe un campo perfil en el modelo de datos. El control de
+      alcance NO es ScopeSwitcher: ese componente está eliminado sin alias.
 C12 — Bloque E: E1-E7 (cuentas, tarjeta de crédito, conciliación, monedas y FX)
 C13 — Bloque H parte 1: H1 analytics home · H2 categorías · H3 tendencias ·
       H5 patrimonio neto · H8 calendario · H9 comercios · H14 estados
@@ -464,7 +471,7 @@ Los bloques A y C ya están cubiertos por C7 y C8.
 
 ## PROMPT CQ — Auditoría de código antes de liberar
 
-```text
+```
 Auditá PERZE antes de publicar el repositorio.
 
 1. SEGURIDAD

@@ -1,0 +1,36 @@
+/* Raw brand values. Never reference these directly in product code —
+   use the semantic aliases in colors.css / charts.css. */
+:root{
+  /* warm neutrals — dark */
+  --n-page-dark:#0A0A0B; --n-s1-dark:#131315; --n-s2-dark:#1B1B1E; --n-s3-dark:#26262A;
+  --n-border-dark:#2E2E33; --n-grid-dark:#232326;
+  --n-ink1-dark:#FAFAF9; --n-ink2-dark:#A1A1A6; --n-ink3-dark:#6E6E76;
+  /* warm neutrals — light */
+  --n-page-light:#FAFAF9; --n-s1-light:#FFFFFF; --n-s2-light:#F5F5F4; --n-s3-light:#EEEEEC;
+  --n-border-light:#E4E4E1; --n-grid-light:#EFEFED;
+  --n-ink1-light:#131315; --n-ink2-light:#5A5A60; --n-ink3-light:#8A8A90;
+
+  /* brand — indigo violet: exactly two hexes per mode, one ink one fill */
+  --violet-ink-dark:#8B7CF6; --violet-ink-light:#5D45E8; --violet-fill:#6D55F0;
+
+  /* money polarity */
+  --aqua-dark:#199E70; --aqua-light:#12916A;
+  --orange-dark:#E06A35; --orange-light:#D95926;
+
+  /* status — fixed in both modes, never themed */
+  --status-good:#0CA30C; --status-warning:#FAB219; --status-serious:#EC835A; --status-critical:#D03B3B;
+
+  /* data slots */
+  --data-blue-dark:#3987E5; --data-blue-light:#2A78D6;
+  --data-magenta-dark:#D55181; --data-magenta-light:#C9457A;
+
+  /* sequential violet ramp */
+  --violet-100:#E1E3FF; --violet-150:#D2D3FF; --violet-200:#C4C3FF; --violet-250:#AFABFF;
+  --violet-300:#9C92FF; --violet-350:#8A7BFF; --violet-400:#7964FF; --violet-450:#6950EB;
+  --violet-500:#5A3FD0; --violet-550:#4A30B4; --violet-600:#3B2395; --violet-650:#2D1975;
+  --violet-700:#21125B;
+
+  /* diverging ends */
+  --diverge-aqua-3:#0B6B4E; --diverge-aqua-2:#12916A; --diverge-aqua-1:#5CBF9B;
+  --diverge-orange-1:#EFA07B; --diverge-orange-2:#D95926; --diverge-orange-3:#A63D14;
+}

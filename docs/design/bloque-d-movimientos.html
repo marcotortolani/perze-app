@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/palette.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/colors.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/charts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/typography.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/motion.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/base.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/styles.css">
+<script src="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/_ds_bundle.js"></script>
+<style>
+html,body{margin:0;background:#0B0B0C}
+a{color:var(--primary-ink);text-decoration:none}
+a:hover{color:var(--text-primary)}
+</style>
+</helmet>
+
+<section id="1a" style="padding:64px;background:#0B0B0C;font-family:var(--font-sans);color:var(--text-primary)">
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+<span style="font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--primary-ink);border:1px solid var(--border);border-radius:999px;padding:4px 10px">1a</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Bloque D · alta fidelidad · modo oscuro</span>
+</div>
+<h1 style="margin:0;font-size:40px;line-height:44px;font-weight:600;letter-spacing:-.015em">Movimientos</h1>
+<p style="margin:12px 0 0;max-width:70ch;font-size:16px;line-height:24px;color:var(--text-secondary);text-wrap:pretty">Siete vistas: lista, filtros, detalle, edición, calendario, estados vacíos y selección múltiple. Sin un solo separador de fila y sin un solo borde de caja: la densidad se resuelve con espaciado, alineación de columnas y tres niveles tipográficos. Los gastos van en tinta neutra; el aqua queda reservado a los ingresos.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:48px;margin-top:48px;align-items:flex-start">
+
+<!-- ============ D1 · pantalla completa ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D1</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Lista de movimientos · 390×844 · scrolleá dentro del frame</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="pending" pending="1" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+
+<!-- toolbar: período + filtros -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 20px 0">
+<button type="button" style="display:flex;align-items:center;gap:6px;height:44px;margin-left:-8px;padding:0 8px;background:none;border:0;cursor:pointer;color:var(--text-primary);font-family:var(--font-sans);font-size:16px;font-weight:500">
+Julio 2026
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron-down" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</button>
+<button type="button" aria-label="Filtros" style="position:relative;width:44px;height:44px;margin-right:-10px;display:flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="filter" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+<span style="position:absolute;top:6px;right:4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--surface-3);color:var(--text-primary);font-family:var(--font-mono);font-size:10px;line-height:16px;text-align:center">2</span>
+</button>
+</div>
+
+<!-- resumen del período, una sola fila -->
+<div style="display:flex;gap:24px;padding:6px 20px 2px">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ingresos</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" show-sign="{{ false }}" privacy="{{ privacidad }}" hint-size="auto,18px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gastos</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-63740" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" show-sign="{{ false }}" privacy="{{ privacidad }}" hint-size="auto,18px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Neto</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="28660" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" privacy="{{ privacidad }}" hint-size="auto,18px"></x-import>
+</div>
+</div>
+
+<!-- lista -->
+<div style="flex:1;overflow-y:auto;padding:0 20px 88px">
+
+<div style="position:sticky;top:0;z-index:2;background:var(--page);display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy · martes 21</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 3.845</span>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="food" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px;color:var(--text-primary)">Pedidos Ya</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Mercado Pago</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="refresh" style="flex-shrink:0;white-space:nowrap" hint-size="auto,22px">Sin sincronizar</x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-745" currency="UYU" size="body" tabular="{{ true }}" hint-size="auto,24px"></x-import>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="tag" merchant="Spotify Familiar" meta="Itaú Crédito · Suscripciones" value="-700" hint-size="100%,62px"></x-import>
+
+<div style="position:sticky;top:0;z-index:2;background:var(--page);display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ayer · lunes 20</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 10.465</span>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Amazon" meta="Itaú Crédito · Compras" value="-39" currency="USD" secondary="$ 1.560" hint-size="100%,62px"></x-import>
+
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="cart" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px;color:var(--text-primary)">Disco Punta Carretas</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Itaú Caja de Ahorro</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="users" style="flex-shrink:0;white-space:nowrap" hint-size="auto,22px">Ana</x-import>
+</div>
+</div>
+<div style="text-align:right;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-3180" currency="UYU" size="body" tabular="{{ true }}" style="display:block" hint-size="auto,24px"></x-import>
+<span style="display:block;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-muted);margin-top:1px">tu parte $ 1.590</span>
+</div>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="pharmacy" merchant="Farmashop" meta="Mercado Pago · Farmacia" value="-890" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="invest" merchant="Notebook Dell" meta="Itaú Crédito · Cuota 4 de 12" value="-1960" secondary="total $ 23.520" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="bank" merchant="Abitab" meta="Efectivo · Servicios" value="-225" hint-size="100%,62px"></x-import>
+
+<div style="position:sticky;top:0;z-index:2;background:var(--page);display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Domingo 19</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">+ $ 88.770</span>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="arrow-up" merchant="Sueldo julio" meta="Brou Débito · Ingreso" value="92400" hint-size="100%,62px"></x-import>
+
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="refresh" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px;color:var(--text-primary)">Transferencia</div>
+<div style="font-size:13px;line-height:18px;color:var(--text-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Brou Débito → Itaú Caja de Ahorro</div>
+</div>
+<div style="text-align:right;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="40000" currency="UYU" size="body" show-sign="{{ false }}" tabular="{{ true }}" style="display:block" hint-size="auto,24px"></x-import>
+<span style="display:block;font-family:var(--font-mono);font-size:12px;color:var(--text-muted);margin-top:1px">no suma al total</span>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="home" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px;color:var(--text-primary)">Airbnb Buenos Aires</div>
+<div style="margin-top:3px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="alert" style="white-space:nowrap" hint-size="auto,22px">Falta tipo de cambio</x-import>
+</div>
+</div>
+<div style="text-align:right;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-78000" currency="ARS" size="body" tabular="{{ true }}" style="display:block" hint-size="auto,24px"></x-import>
+<span style="display:block;font-family:var(--font-mono);font-size:12px;color:var(--text-muted);margin-top:1px">sin conversión</span>
+</div>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="home" merchant="UTE" meta="Itaú Caja de Ahorro · Servicios" value="-2480" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="wifi" merchant="Antel" meta="Itaú Caja de Ahorro · Servicios" value="-1150" hint-size="100%,62px"></x-import>
+
+<div style="padding:20px 0 8px;text-align:center;font-size:13px;line-height:18px;color:var(--text-muted)">Julio 2026 · 15 movimientos</div>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+</div>
+
+<!-- ============ D1 · swipe ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D1 · swipe</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">4 frames</span>
+</div>
+
+<div style="width:390px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);padding:8px 20px 20px;display:flex;flex-direction:column;gap:14px">
+
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 2px">1 · reposo</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+</div>
+
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 2px">2 · derecha 96px → editar</div>
+<div style="position:relative;overflow:hidden;border-radius:16px">
+<div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:20px;background:var(--surface-2)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="edit" size="22" color="var(--text-secondary)" hint-size="22px,22px"></x-import>
+</div>
+<div style="position:relative;transform:translateX(96px);background:var(--page)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 2px">3 · izquierda 160px → ejecuta borrado</div>
+<div style="position:relative;overflow:hidden;border-radius:16px">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;background:color-mix(in srgb, var(--critical) 15%, transparent)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="trash" size="22" color="var(--critical)" hint-size="22px,22px"></x-import>
+</div>
+<div style="position:relative;transform:translateX(-160px);opacity:.5;background:var(--page)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);padding:10px 0 6px">4 · borrado, con deshacer 5 s</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Borraste Ancap Punta Carretas." on-dismiss="{{ null }}" hint-size="100%,52px"></x-import>
+</div>
+
+<p style="margin:6px 0 0;font-size:13px;line-height:18px;color:var(--text-muted);text-wrap:pretty">Resistencia hasta 96px con snap, ejecución a 160px, spring snappy, haptic de 8 ms. Cero diálogos: se ejecuta y se ofrece deshacer. Todo gesto tiene su equivalente por tap en el detalle.</p>
+</div>
+</div>
+
+<!-- ============ D2 · filtros ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D2</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Filtros · bottom sheet</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:0 20px;opacity:.5">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="tag" merchant="Spotify Familiar" meta="Itaú Crédito · Suscripciones" value="-700" hint-size="100%,62px"></x-import>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Filtros" height="640px" hint-size="100%,640px">
+<div style="display:flex;flex-direction:column;gap:20px">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Período</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ periodos }}" value="Mes" size="sm" hint-size="100%,42px"></x-import>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Tipo</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" selected="{{ true }}" on-click="{{ noop }}" hint-size="auto,36px">Gastos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Ingresos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Transferencias</x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuentas</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" selected="{{ true }}" on-click="{{ noop }}" hint-size="auto,36px">Itaú Caja de Ahorro</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Itaú Crédito</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Brou Débito</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Mercado Pago</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Efectivo</x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Moneda</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" show-chevron="{{ false }}" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="USD" show-chevron="{{ false }}" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="ARS" show-chevron="{{ false }}" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Estado</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="refresh" on-click="{{ noop }}" hint-size="auto,36px">Sin sincronizar</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="alert" on-click="{{ noop }}" hint-size="auto,36px">Falta tipo de cambio</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="users" on-click="{{ noop }}" hint-size="auto,36px">Compartidos</x-import>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+<button type="button" style="height:56px;padding:0 4px;background:none;border:0;cursor:pointer;color:var(--text-secondary);font-family:var(--font-sans);font-size:15px;font-weight:500">Limpiar</button>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Ver 42 movimientos</x-import>
+</div>
+</div>
+</x-import>
+</div>
+</div>
+
+<!-- ============ D3 · detalle ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D3</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Detalle · gasto en moneda extranjera</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+
+<div style="flex:1;overflow-y:auto;padding:8px 20px 0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gasto · lunes 20 de julio</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-39" currency="USD" size="hero" privacy="{{ privacidad }}" hint-size="auto,44px"></x-import>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary)">$ 1.560 · tipo de cambio 40,00</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:0;margin-top:24px">
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="cart" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px">Amazon</div>
+<div style="font-size:13px;line-height:18px;color:var(--text-muted)">Compras · Tecnología</div>
+</div>
+</div>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Cuenta</span>
+<span style="font-size:16px;line-height:22px">Itaú Crédito</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Fecha</span>
+<span style="font-size:16px;line-height:22px">Lunes 20 de julio, 19:42</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Tipo de cambio</span>
+<span style="font-size:16px;line-height:22px">40,00 · API oficial</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Visibilidad</span>
+<span style="font-size:16px;line-height:22px">Personal</span>
+</div>
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted);padding-top:2px">Nota</span>
+<span style="font-size:16px;line-height:22px;text-align:right">Teclado mecánico, regalo de Ana</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Tags</span>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" hint-size="auto,36px">importado</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" hint-size="auto,36px">regalo</x-import>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Adjunto</span>
+<span style="display:flex;align-items:center;gap:8px;font-size:16px;line-height:22px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="camera" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+Ticket
+</span>
+</div>
+</div>
+</div>
+
+<div style="padding:0 20px 8px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Editar</x-import>
+<button type="button" style="height:48px;background:none;border:0;cursor:pointer;color:var(--critical);font-family:var(--font-sans);font-size:15px;font-weight:500">Borrar movimiento</button>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+</div>
+
+<!-- ============ D4 · editar ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D4</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Editar movimiento</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Editar" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+
+<div style="flex:1;overflow-y:auto;padding:8px 20px 0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto · tocá para el keypad</span>
+<div style="display:flex;align-items:baseline;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-39" currency="USD" size="hero" decimals="2" hint-size="auto,44px"></x-import>
+<span style="width:2px;height:34px;background:var(--primary-ink);border-radius:2px"></span>
+</div>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Arrastrá sobre la cifra para el ajuste fino</span>
+</div>
+
+<div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Categoría</span>
+<div style="display:flex;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="cart" label="Compras" selected="{{ true }}" hint-size="88px,88px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="food" label="Comida" hint-size="88px,88px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="home" label="Casa" hint-size="88px,88px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="fuel" label="Nafta" hint-size="88px,88px"></x-import>
+</div>
+</div>
+
+<div style="margin-top:24px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Fecha</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.DateStrip" days="{{ dias }}" value="2026-07-20" hint-size="100%,72px"></x-import>
+</div>
+
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:0">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+<span style="font-size:16px;line-height:22px">Itaú Crédito</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="19" color="var(--text-muted)" hint-size="19px,19px"></x-import>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+<span style="font-size:16px;line-height:22px">Tipo de cambio 40,00</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="19" color="var(--text-muted)" hint-size="19px,19px"></x-import>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+<span style="font-size:16px;line-height:22px">Visible para el grupo familiar</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ false }}" hint-size="48px,28px"></x-import>
+</div>
+</div>
+</div>
+
+<div style="padding:0 20px calc(20px + env(safe-area-inset-bottom))">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar cambios</x-import>
+</div>
+</div>
+</div>
+
+<!-- ============ D5 · calendario ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D5</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Calendario del mes</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="synced" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+
+<div style="padding:2px 20px 0;display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:16px;line-height:22px;font-weight:500">Julio 2026</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ vistas }}" value="Calendario" size="sm" hint-size="auto,42px"></x-import>
+</div>
+
+<div style="padding:16px 20px 0">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">L</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">M</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">M</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">J</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">V</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">S</span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">D</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+<span></span><span></span>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 14%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">1</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 30%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">2</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:var(--surface-1);color:var(--text-muted);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">3</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 22%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">4</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 48%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">5</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 10%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">6</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 26%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">7</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:var(--surface-1);color:var(--text-muted);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">8</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 18%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">9</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 40%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">10</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 62%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">11</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 16%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">12</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 20%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">13</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:var(--surface-1);color:var(--text-muted);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">14</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 34%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">15</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 12%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">16</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 28%, var(--surface-1));color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">17</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 44%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">18</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 52%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">19</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:color-mix(in srgb, var(--data-1) 70%, var(--surface-1));color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">20</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:var(--surface-3);color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:600">21</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:pointer;background:var(--surface-1);color:var(--text-muted);font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">22</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:default;background:var(--surface-1);color:var(--text-muted);opacity:.4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">23</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:default;background:var(--surface-1);color:var(--text-muted);opacity:.4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">24</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:default;background:var(--surface-1);color:var(--text-muted);opacity:.4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">25</button>
+<button type="button" style="aspect-ratio:1;border:0;border-radius:14px;cursor:default;background:var(--surface-1);color:var(--text-muted);opacity:.4;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px">26</button>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Menos</span>
+<span style="flex:1;height:6px;border-radius:999px;background:linear-gradient(90deg, var(--surface-1), var(--data-1))"></span>
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Más</span>
+</div>
+</div>
+
+<div style="flex:1;overflow-y:auto;padding:16px 20px 88px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Martes 21 · 4 movimientos</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 3.845</span>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Mercado Pago · Delivery" value="-745" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="tag" merchant="Spotify Familiar" meta="Itaú Crédito · Suscripciones" value="-700" hint-size="100%,62px"></x-import>
+</div>
+
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+</div>
+
+<!-- ============ D7 · selección múltiple ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D7</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Selección múltiple · entra con long-press</span>
+</div>
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+<div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+<button type="button" style="height:44px;margin-left:-8px;padding:0 8px;background:none;border:0;cursor:pointer;color:var(--text-secondary);font-family:var(--font-sans);font-size:15px;font-weight:500">Cancelar</button>
+<span style="font-size:16px;line-height:22px;font-weight:500">3 seleccionados</span>
+<button type="button" style="height:44px;margin-right:-8px;padding:0 8px;background:none;border:0;cursor:pointer;color:var(--text-secondary);font-family:var(--font-sans);font-size:15px;font-weight:500">Todo</button>
+</div>
+
+<div style="flex:1;overflow-y:auto;padding:0 20px 120px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:12px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy · martes 21</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 3.845</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;background:var(--primary-fill);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="check" size="14" stroke-width="2.5" color="var(--primary-on-fill)" hint-size="14px,14px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;background:var(--primary-fill);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="check" size="14" stroke-width="2.5" color="var(--primary-on-fill)" hint-size="14px,14px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--border);flex-shrink:0"></span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Mercado Pago · Delivery" value="-745" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;background:var(--primary-fill);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="check" size="14" stroke-width="2.5" color="var(--primary-on-fill)" hint-size="14px,14px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="tag" merchant="Spotify Familiar" meta="Itaú Crédito · Suscripciones" value="-700" hint-size="100%,62px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ayer · lunes 20</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 10.465</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--border);flex-shrink:0"></span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Amazon" meta="Itaú Crédito · Compras" value="-39" currency="USD" secondary="$ 1.560" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="width:22px;height:22px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--border);flex-shrink:0"></span>
+<div style="flex:1;min-width:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface-2);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;padding:14px 20px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Seleccionado</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">− $ 3.100</span>
+</div>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="tag" on-click="{{ noop }}" hint-size="auto,36px">Categorizar</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="users" on-click="{{ noop }}" hint-size="auto,36px">Compartir</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="trash" on-click="{{ noop }}" hint-size="auto,36px">Borrar</x-import>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============ D6 · estados ============ -->
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D6</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Estados vacíos, carga, error y offline</span>
+</div>
+<div style="display:flex;gap:24px;flex-wrap:wrap">
+
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="list" message="Todavía no cargaste movimientos. El primero tarda cinco segundos." action-label="Cargar un gasto" hint-size="100%,200px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="synced" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0;display:flex;gap:8px;flex-wrap:wrap">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" selected="{{ true }}" icon="close" on-click="{{ noop }}" hint-size="auto,36px">Ingresos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" selected="{{ true }}" icon="close" on-click="{{ noop }}" hint-size="auto,36px">Efectivo</x-import>
+</div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="filter" message="Ningún movimiento coincide con estos filtros en julio." action-label="Limpiar filtros" hint-size="100%,200px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="syncing" hint-size="100%,56px"></x-import>
+<div style="padding:8px 20px 0;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="120px" height="16px" hint-size="120px,16px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="90px" height="16px" hint-size="90px,16px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+</div>
+<div style="flex:1"></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+
+<div style="width:390px;height:844px;background:var(--page);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="offline" pending="3" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="3" hint-size="100%,44px"></x-import>
+<div style="padding:8px 20px 0;opacity:.85">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:12px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy · martes 21</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 3.845</span>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+</div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="No pudimos sincronizar con Itaú." next="Tus movimientos locales están guardados y se van a subir solos." on-retry="{{ noop }}" hint-size="100%,200px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+</div>
+</div>
+
+<!-- ============ variantes claras ============ -->
+<sc-if value="{{ variantesClaras }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-primary)">D1 · D3 claro</span>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Las dos pantallas más importantes del bloque</span>
+</div>
+<div style="display:flex;gap:24px">
+
+<div class="light" style="width:390px;height:844px;background:var(--page);color:var(--text-primary);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Movimientos" show-scope="{{ false }}" sync-state="pending" pending="1" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="display:flex;gap:24px;padding:8px 20px 2px">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ingresos</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" show-sign="{{ false }}" hint-size="auto,18px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gastos</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-63740" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" show-sign="{{ false }}" hint-size="auto,18px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Neto</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="28660" currency="UYU" size="label" tabular="{{ true }}" polarity="neutral" hint-size="auto,18px"></x-import>
+</div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px 88px">
+<div style="position:sticky;top:0;z-index:2;background:var(--page);display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy · martes 21</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 3.845</span>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="-2140" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Efectivo · Café" value="-260" hint-size="100%,62px"></x-import>
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="food" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px;color:var(--text-primary)">Pedidos Ya</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Mercado Pago</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="refresh" style="flex-shrink:0;white-space:nowrap" hint-size="auto,22px">Sin sincronizar</x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-745" currency="UYU" size="body" tabular="{{ true }}" hint-size="auto,24px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="tag" merchant="Spotify Familiar" meta="Itaú Crédito · Suscripciones" value="-700" hint-size="100%,62px"></x-import>
+<div style="position:sticky;top:0;z-index:2;background:var(--page);display:flex;align-items:baseline;justify-content:space-between;padding:16px 0 4px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ayer · lunes 20</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--text-secondary)">− $ 10.465</span>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Amazon" meta="Itaú Crédito · Compras" value="-39" currency="USD" secondary="$ 1.560" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="-2650" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="arrow-up" merchant="Sueldo julio" meta="Brou Débito · Ingreso" value="92400" hint-size="100%,62px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+
+<div class="light" style="width:390px;height:844px;background:var(--page);color:var(--text-primary);border-radius:24px;box-shadow:0 0 0 1px var(--border);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="flex:1;padding:8px 20px 0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gasto · lunes 20 de julio</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="-39" currency="USD" size="hero" hint-size="auto,44px"></x-import>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary)">$ 1.560 · tipo de cambio 40,00</span>
+</div>
+<div style="margin-top:24px">
+<div style="display:flex;align-items:center;gap:14px;padding:11px 0">
+<span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="cart" size="19" color="var(--text-secondary)" hint-size="19px,19px"></x-import>
+</span>
+<div style="flex:1;min-width:0">
+<div style="font-size:16px;line-height:22px">Amazon</div>
+<div style="font-size:13px;line-height:18px;color:var(--text-muted)">Compras · Tecnología</div>
+</div>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Cuenta</span>
+<span style="font-size:16px;line-height:22px">Itaú Crédito</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Fecha</span>
+<span style="font-size:16px;line-height:22px">Lunes 20 de julio, 19:42</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Tipo de cambio</span>
+<span style="font-size:16px;line-height:22px">40,00 · API oficial</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:11px 0">
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Visibilidad</span>
+<span style="font-size:16px;line-height:22px">Personal</span>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 8px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Editar</x-import>
+<button type="button" style="height:48px;background:none;border:0;cursor:pointer;color:var(--critical);font-family:var(--font-sans);font-size:15px;font-weight:500">Borrar movimiento</button>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="movements" hint-size="100%,64px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ anotaciones + chequeo de ruido ============ -->
+<sc-if value="{{ anotaciones }}" hint-placeholder-val="{{ true }}">
+<div style="width:430px;display:flex;flex-direction:column;gap:32px">
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Decisiones no obvias</span>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">01</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Densidad sin separadores.</span> La fila mide 62px con 11px arriba y abajo; lo que separa un movimiento del siguiente es el bloque de 40px del ícono y la columna derecha alineada en mono. El header de día sticky actúa como el único divisor y además informa: lleva el total del día.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">02</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Un solo color en 15 filas.</span> Los catorce gastos van en tinta primaria con su signo −; el sueldo es el único aqua de la pantalla. Con los gastos coloreados, la lista se vuelve una alarma constante y el ingreso deja de destacarse.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">03</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Pendiente ≠ falta tipo de cambio.</span> Los dos son badges neutros porque ninguno es un problema: son datos que todavía no llegaron. Se distinguen por glifo y label — reloj-refresh «Sin sincronizar» contra alerta «Falta tipo de cambio» — y por la línea inferior del monto: la primera conserva su cifra, la segunda dice «sin conversión» y queda fuera del total del día. Distinguirlos por color sería usar color donde el label ya alcanza.</p>
+<p style="margin:8px 0 0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Enmienda a la regla de estados.</span> «Falta tipo de cambio» es neutro mientras sea reciente. Pasados <span style="color:var(--text-primary)">siete días</span> sube a <span style="color:var(--text-primary)">warning</span>: a esa altura el dato dejó de resolverse solo y requiere que el usuario cargue la cotización a mano. Es el único ascenso de nivel por antigüedad del sistema y modifica la regla de la guía («un dato pendiente va en neutro, nunca en naranja»), que queda acotada a los pendientes que sí se resuelven solos.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">04</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">La segunda línea del monto es una sola columna con tres usos.</span> Equivalente convertido (Amazon $ 1.560), tu parte de un gasto compartido ($ 1.590) y el total del plan de cuotas ($ 23.520). Mono 12px, tinta muted: nunca compite con la cifra.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">05</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">La transferencia no lleva signo.</span> No es gasto ni ingreso: se muestra en tinta neutra sin + ni −, con la dirección en el meta y la aclaración de que no suma al total. Se excluye por tipo, no por convención.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">06</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">El resumen del período es una fila, no una card.</span> Tres pares label/cifra en 13px sobre el fondo de página. Una card acá pediría una cifra héroe y la lista dejaría de ser el sujeto de la pantalla.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">07</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Filtros activos: un contador, no chips.</span> En D1 el estado del filtro vive como «2» sobre el ícono en superficie 3. Los chips violetas de filtro activo quedan dentro del sheet (D2), donde no compiten con el FAB.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">08</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Calendario: rampa de un solo hue.</span> La intensidad del día es la única superficie tintada de la app fuera de los gráficos, y es legítima porque es una rampa de datos. El día seleccionado usa superficie 3 sola, sin anillo violeta: contra la rampa, el salto de superficie ya lo distingue. Mismo criterio que el día activo de DateStrip.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">09</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Selección múltiple reemplaza el chrome.</span> Entra con long-press: el header pasa a Cancelar / 3 seleccionados / Todo y la tab bar se va, porque navegar en modo selección no tiene sentido. Las acciones viven en los últimos 200px. Los checks son el único violeta y cuentan como un grupo.</p>
+</div>
+
+<div style="display:flex;gap:12px">
+<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);width:20px;flex-shrink:0;padding-top:3px">10</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary)">Los cuatro estados son la misma familia.</span> Un ícono de línea de 32px, una oración, una acción. El error dice qué pasó, qué implica y qué hacer; el offline no bloquea la lista, la deja operar con la cola de 3 pendientes visible en el punto de sincronía.</p>
+</div>
+</div>
+
+<div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido · D1</span>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Cifra héroe</span><span style="font-family:var(--font-mono)">0 de 1</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Marca visible fuera de gráficos</span><span style="font-family:var(--font-mono)">1 de 1 · el FAB</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Acción primaria</span><span style="font-family:var(--font-mono)">1 de 1</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Niveles tipográficos</span><span style="font-family:var(--font-mono)">3 de 3</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono)">4 de 5</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Aqua visible</span><span style="font-family:var(--font-mono)">1 · el sueldo</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Bordes de caja evitables</span><span style="font-family:var(--font-mono)">0</span></div>
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px;line-height:22px"><span style="color:var(--text-secondary)">Íconos decorativos</span><span style="font-family:var(--font-mono)">0</span></div>
+</div>
+<p style="margin:0;font-size:13px;line-height:18px;color:var(--text-muted);text-wrap:pretty">Los cuatro interactivos son período, filtros, búsqueda y la lista completa (un grupo homogéneo). Header y tab bar son chrome. Caption 11 / label 13 / body 16: los montos usan label y body, no agregan nivel. Naranja: 0.</p>
+<p style="margin:0;font-size:13px;line-height:18px;color:var(--text-muted);text-wrap:pretty"><span style="color:var(--text-secondary)">Corregido en esta pasada.</span> El resumen del período tenía INGRESOS en aqua: eran dos apariciones y no una. Los tres agregados son saldos, no movimientos, así que van en tinta neutra, sin signo en ingresos y gastos — los labels ya dicen cuál es cuál — y con signo sólo en el neto, el único donde la dirección informa. El aqua vuelve a aparecer una sola vez en toda la pantalla, en el ingreso real de la lista. Y en D5 salió el anillo violeta del día 21.</p>
+</div>
+
+<div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Deuda de biblioteca · no se toca ahora</span>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty">Cuatro casos de este bloque no existen en la biblioteca y los armé con primitivos, con la misma geometría de la fila: el <span style="color:var(--text-primary)">header de día sticky con total</span>, el <span style="color:var(--text-primary)">contenedor de swipe</span>, el <span style="color:var(--text-primary)">check de selección</span> y el <span style="color:var(--text-primary)">badge dentro de la fila</span> — TransactionRow toma <span style="font-family:var(--font-mono);font-size:13px">meta</span> como texto plano, así que las tres filas con badge están compuestas a mano.</p>
+<p style="margin:0;font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty">No entran al sistema en esta pasada. Tocar el bundle deja a los proyectos ya generados con la versión vieja, y en el bloque C eso costó una capa de overrides. Quedan anotados y se consolidan en una sola pasada junto con lo que aparezca en los próximos bloques.</p>
+</div>
+</div>
+</sc-if>
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;anotaciones&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Entrega&quot;},&quot;variantesClaras&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Entrega&quot;},&quot;privacidad&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Entrega&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      noop: () => {},
+      periodos: ['Mes', '3M', 'Año', 'Todo'],
+      vistas: ['Lista', 'Calendario'],
+      dias: [
+        { date: '2026-07-17' }, { date: '2026-07-18' },
+        { date: '2026-07-19' }, { date: '2026-07-20', label: 'Ayer' },
+        { date: '2026-07-21', label: 'Hoy' },
+      ],
+      anotaciones: this.props.anotaciones ?? true,
+      variantesClaras: this.props.variantesClaras ?? true,
+      privacidad: this.props.privacidad ?? false,
+    };
+  }
+}
+</script>
+</body>
+</html>

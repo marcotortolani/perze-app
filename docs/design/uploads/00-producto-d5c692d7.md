@@ -23,7 +23,7 @@ Una app de finanzas personales **multi-cuenta / multi-moneda / multi-país**, PW
 | **Multi-moneda** (vos) | 2–3 países, 3–4 monedas, cuentas bancarias + billeteras + efectivo + broker, pareja | — |
 | **Inversor** | Todo lo anterior + portfolio con acciones, CEDEARs, bonos, ONs, crypto, clases de activo propias | — |
 
-**Regla de diseño derivada:** el modelo de datos es siempre completo; la UI es progresiva. Con una sola moneda en uso, la transacción igual guarda `currency`, `amount_base` y `fx_rate = 1` **con `fx_source = 'identity'`** — que es un 1 legítimo porque la moneda del movimiento es la moneda base, y por eso lleva su propio `fx_source`. Es lo contrario del 1 inventado que la regla de `needs_fx` prohíbe: cuando no hay cotización disponible, `fx_rate` y `amount_base` van en `NULL` con `fx_source = 'pending'`, nunca en 1. Distinguir los dos casos es exactamente para lo que existe `fx_source`. El día que el usuario agrega una segunda moneda, el histórico ya es consistente.
+**Regla de diseño derivada:** el modelo de datos es siempre completo; la UI es progresiva. Una transacción del perfil Simple igual guarda `currency`, `fx_rate = 1` y `amount_base`. El día que agrega una segunda moneda, el histórico ya es consistente.
 
 ---
 

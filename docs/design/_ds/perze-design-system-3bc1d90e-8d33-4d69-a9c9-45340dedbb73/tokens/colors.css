@@ -1,0 +1,56 @@
+/* Semantic color aliases. Dark-first: :root IS the dark theme.
+   Light mode = add class "light" (or [data-theme="light"]) on <html>. */
+:root{
+  color-scheme:dark;
+  --page:var(--n-page-dark);
+  --surface-1:var(--n-s1-dark);
+  --surface-2:var(--n-s2-dark);
+  --surface-3:var(--n-s3-dark);
+  --border:var(--n-border-dark);
+  --gridline:var(--n-grid-dark);
+  --text-primary:var(--n-ink1-dark);
+  --text-secondary:var(--n-ink2-dark);
+  --text-muted:var(--n-ink3-dark);
+
+  --primary-ink:var(--violet-ink-dark);
+  --primary-fill:var(--violet-fill);
+  --primary-on-fill:#FFFFFF;
+  --secondary:var(--aqua-dark);
+  --accent:var(--orange-dark);
+
+  --money-positive:var(--aqua-dark);
+  --money-negative:var(--n-ink1-dark);
+  --money-negative-emphasis:var(--orange-dark);
+
+  --good:var(--status-good);
+  --warning:var(--status-warning);
+  --serious:var(--status-serious);
+  --critical:var(--status-critical);
+
+  --shadow-sheet:0 8px 32px rgba(0,0,0,.32);
+  --scrim:rgba(0,0,0,.60);
+}
+.light,[data-theme="light"]{
+  color-scheme:light;
+  --page:var(--n-page-light);
+  --surface-1:var(--n-s1-light);
+  --surface-2:var(--n-s2-light);
+  --surface-3:var(--n-s3-light);
+  --border:var(--n-border-light);
+  --gridline:var(--n-grid-light);
+  --text-primary:var(--n-ink1-light);
+  --text-secondary:var(--n-ink2-light);
+  --text-muted:var(--n-ink3-light);
+
+  --primary-ink:var(--violet-ink-light);
+  --primary-fill:var(--violet-fill);
+  --secondary:var(--aqua-light);
+  --accent:var(--orange-light);
+
+  --money-positive:var(--aqua-light);
+  --money-negative:var(--n-ink1-light);
+  --money-negative-emphasis:var(--orange-light);
+
+  --shadow-sheet:0 8px 32px rgba(11,11,11,.10);
+  --scrim:rgba(11,11,11,.45);
+}

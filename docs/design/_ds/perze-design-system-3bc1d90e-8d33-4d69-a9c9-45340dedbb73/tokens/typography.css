@@ -1,0 +1,19 @@
+/* One family, three weights: 400 body, 500 labels, 600 figures + titles.
+   Max 3 type levels coexisting on any screen. */
+:root{
+  --weight-regular:400; --weight-medium:500; --weight-semibold:600;
+
+  --text-hero-xl-size:64px;   --text-hero-xl-line:60px;   --text-hero-xl-track:-.02em;
+  --text-hero-size:40px;      --text-hero-line:44px;      --text-hero-track:-.015em;
+  --text-title-size:22px;     --text-title-line:28px;     --text-title-track:-.01em;
+  --text-body-size:16px;      --text-body-line:24px;      --text-body-track:0;
+  --text-label-size:13px;     --text-label-line:18px;     --text-label-track:.01em;
+  --text-caption-size:11px;   --text-caption-line:16px;   --text-caption-track:.02em;
+}
+.t-hero-xl{font:var(--weight-semibold) var(--text-hero-xl-size)/var(--text-hero-xl-line) var(--font-sans);letter-spacing:var(--text-hero-xl-track)}
+.t-hero{font:var(--weight-semibold) var(--text-hero-size)/var(--text-hero-line) var(--font-sans);letter-spacing:var(--text-hero-track)}
+.t-title{font:var(--weight-semibold) var(--text-title-size)/var(--text-title-line) var(--font-sans);letter-spacing:var(--text-title-track)}
+.t-body{font:var(--weight-regular) var(--text-body-size)/var(--text-body-line) var(--font-sans);letter-spacing:var(--text-body-track)}
+.t-label{font:var(--weight-medium) var(--text-label-size)/var(--text-label-line) var(--font-sans);letter-spacing:var(--text-label-track)}
+.t-caption{font:var(--weight-medium) var(--text-caption-size)/var(--text-caption-line) var(--font-sans);letter-spacing:var(--text-caption-track);text-transform:uppercase}
+.tabular{font-family:var(--font-mono);font-variant-numeric:tabular-nums}

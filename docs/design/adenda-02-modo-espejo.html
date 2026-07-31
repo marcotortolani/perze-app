@@ -1,0 +1,1877 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="design_doc_mode" content="canvas" />
+        <script src="./ds-base.js"></script>
+        <style>
+          html,
+          body {
+            margin: 0;
+            background: var(--surface-1);
+          }
+          a {
+            color: var(--primary-ink);
+            text-decoration: none;
+          }
+          a:hover {
+            color: var(--text-primary);
+          }
+        </style>
+      </helmet>
+      <section
+        class="{{ themeClass }}"
+        style="
+          background: var(--surface-1);
+          color: var(--text-primary);
+          font-family: var(--font-sans);
+          padding: 56px 64px 96px;
+        "
+      >
+        <div id="1a" style="max-width: 1660px; margin: 0 auto">
+          <div
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              padding: 4px 10px;
+              border-radius: 999px;
+              background: var(--surface-2);
+              font: 500 12px/16px var(--font-sans);
+              color: var(--text-secondary);
+            "
+          >
+            1a · J4b · Modo espejo
+          </div>
+          <h1
+            style="
+              font: 600 44px/48px var(--font-sans);
+              letter-spacing: -0.025em;
+              margin: 20px 0 0;
+            "
+          >
+            Ver tus datos como los ve Ana
+          </h1>
+          <p
+            style="
+              font: 400 18px/28px var(--font-sans);
+              color: var(--text-secondary);
+              max-width: 78ch;
+              margin: 14px 0 0;
+              text-wrap: pretty;
+            "
+          >
+            Lo que convierte a J4 de promesa en prueba. El objetivo es la
+            confianza: después de usarlo no puede quedar ninguna duda, así que
+            la pantalla no explica, muestra. Cinco frames — el espejo sobre
+            inicio, movimientos y cuentas, el caso en que no hay nada oculto, y
+            qué pasa si Ana cambia sus permisos mientras estás adentro.
+          </p>
+
+          <div
+            style="display: flex; gap: 20px; margin-top: 36px; flex-wrap: wrap"
+          >
+            <div
+              style="
+                flex: 1 1 520px;
+                background: var(--surface-2);
+                border-radius: 20px;
+                padding: 24px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  line-height: 16px;
+                  font-weight: 500;
+                  letter-spacing: 0.08em;
+                  text-transform: uppercase;
+                  color: var(--text-muted);
+                "
+              >
+                La regla de arquitectura, dicha en el nombre
+              </div>
+              <div
+                style="
+                  margin-top: 14px;
+                  font: 400 16px/24px var(--font-sans);
+                  color: var(--text-secondary);
+                  text-wrap: pretty;
+                "
+              >
+                El espejo se llama
+                <span style="color: var(--text-primary)"
+                  >“tus datos como los ve Ana”</span
+                >
+                y no “la app de Ana”, y esa diferencia de tres palabras es toda
+                la seguridad del feature. El espejo
+                <span style="color: var(--text-primary)">intersecta</span>:
+                parte de lo tuyo y le aplica el filtro de Ana. Nunca
+                <span style="color: var(--text-primary)">une</span>: no agrega
+                nada de Ana. Como el conjunto de partida es tuyo, no existe
+                combinación de <code>private</code>, <code>household</code> y
+                <code>custom</code> que le muestre a Martín algo de Ana — ni
+                siquiera cuando Ana comparte de más.
+              </div>
+            </div>
+            <div
+              style="
+                flex: 1 1 320px;
+                background: var(--surface-2);
+                border-radius: 20px;
+                padding: 24px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  line-height: 16px;
+                  font-weight: 500;
+                  letter-spacing: 0.08em;
+                  text-transform: uppercase;
+                  color: var(--text-muted);
+                "
+              >
+                Las cinco decisiones
+              </div>
+              <div
+                style="
+                  margin-top: 14px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 9px;
+                  font: 400 15px/22px var(--font-sans);
+                  color: var(--text-secondary);
+                "
+              >
+                <div>
+                  La barra vive arriba y empuja el contenido; nunca flota ni
+                  tapa.
+                </div>
+                <div>
+                  Solo lectura por
+                  <span style="color: var(--text-primary)">ausencia</span>: el
+                  FAB y los primarios no existen, no están en gris.
+                </div>
+                <div>
+                  Lo oculto se ve como ausencia. El conteo va una sola vez, en
+                  la barra.
+                </div>
+                <div>
+                  Si no hay nada oculto, la barra lo dice con todas las letras.
+                </div>
+                <div>
+                  Si Ana cambia permisos mientras mirás, el espejo se congela y
+                  avisa.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style="
+              margin-top: 72px;
+              padding-top: 28px;
+              border-top: 1px solid var(--border);
+            "
+          >
+            <div
+              style="
+                font: 600 32px/38px var(--font-sans);
+                letter-spacing: -0.02em;
+              "
+            >
+              La barra, sobre tres pantallas
+            </div>
+            <p
+              style="
+                font: 400 16px/24px var(--font-sans);
+                color: var(--text-secondary);
+                max-width: 76ch;
+                margin: 10px 0 0;
+                text-wrap: pretty;
+              "
+            >
+              Misma barra, mismo alto, misma posición en las tres. Empuja el
+              contenido 56 px hacia abajo y no tapa nada: lo que queda debajo
+              del pliegue en el espejo es lo mismo que quedaba debajo del
+              pliegue sin él, porque el espejo siempre muestra menos filas,
+              nunca más.
+            </p>
+          </div>
+          <div
+            style="
+              display: flex;
+              gap: 20px;
+              align-items: flex-start;
+              margin-top: 32px;
+              flex-wrap: wrap;
+            "
+          >
+            <div>
+              <div
+                style="
+                  font: 600 15px/20px var(--font-sans);
+                  margin-bottom: 10px;
+                "
+              >
+                Espejo · Inicio
+              </div>
+              <div
+                style="
+                  width: 390px;
+                  height: 844px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  background: var(--page);
+                  border-radius: 24px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    min-height: 56px;
+                    padding: 8px 12px 8px 20px;
+                    background: var(--surface-3);
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      background: var(--data-5);
+                      color: #ffffff;
+                      font: 600 12px/28px var(--font-sans);
+                      text-align: center;
+                      flex-shrink: 0;
+                    "
+                    >A</span
+                  >
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      style="
+                        font: 500 14px/19px var(--font-sans);
+                        color: var(--text-primary);
+                      "
+                    >
+                      Tus datos como los ve Ana
+                    </div>
+                    <div
+                      style="
+                        font: 500 12px/16px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 1px;
+                      "
+                    >
+                      No ve 3 cuentas ni 6 categorías
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex-shrink: 0;
+                      height: 44px;
+                      min-width: 44px;
+                      padding: 0 14px;
+                      border-radius: 999px;
+                      background: var(--page);
+                      display: flex;
+                      align-items: center;
+                      font: 500 14px/19px var(--font-sans);
+                      color: var(--text-primary);
+                    "
+                  >
+                    Salir
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader"
+                  scope="Compartido"
+                  hint-size="100%,56px"
+                ></x-import>
+                <div style="padding: 6px 20px 0">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Patrimonio
+                  </div>
+                  <div style="margin-top: 6px">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount"
+                      value="117800"
+                      size="hero"
+                      show-sign="{{ false }}"
+                      hint-size="220px,44px"
+                    ></x-import>
+                  </div>
+                  <div
+                    style="
+                      font: 400 15px/22px var(--font-sans);
+                      color: var(--text-secondary);
+                      margin-top: 6px;
+                    "
+                  >
+                    2 cuentas compartidas
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      margin-top: 12px;
+                    "
+                  >
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge"
+                      status="neutral"
+                      icon="alert"
+                      hint-size="auto,22px"
+                      >1 sin cotización, afuera</x-import
+                    >
+                  </div>
+                </div>
+                <div style="padding: 20px 20px 0; flex: 1; overflow: hidden">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Últimos movimientos
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="cart"
+                    merchant="Disco Punta Carretas"
+                    meta="Hoy · Brou Débito · Supermercado"
+                    value="-3120"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="home"
+                    merchant="UTE"
+                    meta="Ayer · Brou Débito · Servicios"
+                    value="-2150"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="food"
+                    merchant="La Pulpería"
+                    meta="Martes 21 · Mercado Pago · Comidas afuera"
+                    value="-2140"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="cart"
+                    merchant="Tienda Inglesa"
+                    meta="Lunes 20 · Brou Débito · Supermercado"
+                    value="-4980"
+                    hint-size="100%,62px"
+                  ></x-import>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar"
+                  active="home"
+                  slots="{{ mirrorSlots }}"
+                  hint-size="100%,64px"
+                ></x-import>
+              </div>
+            </div>
+
+            <div>
+              <div
+                style="
+                  font: 600 15px/20px var(--font-sans);
+                  margin-bottom: 10px;
+                "
+              >
+                Espejo · Movimientos
+              </div>
+              <div
+                style="
+                  width: 390px;
+                  height: 844px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  background: var(--page);
+                  border-radius: 24px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    min-height: 56px;
+                    padding: 8px 12px 8px 20px;
+                    background: var(--surface-3);
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      background: var(--data-5);
+                      color: #ffffff;
+                      font: 600 12px/28px var(--font-sans);
+                      text-align: center;
+                      flex-shrink: 0;
+                    "
+                    >A</span
+                  >
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      style="
+                        font: 500 14px/19px var(--font-sans);
+                        color: var(--text-primary);
+                      "
+                    >
+                      Tus datos como los ve Ana
+                    </div>
+                    <div
+                      style="
+                        font: 500 12px/16px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 1px;
+                      "
+                    >
+                      No ve 3 cuentas ni 6 categorías
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex-shrink: 0;
+                      height: 44px;
+                      min-width: 44px;
+                      padding: 0 14px;
+                      border-radius: 999px;
+                      background: var(--page);
+                      display: flex;
+                      align-items: center;
+                      font: 500 14px/19px var(--font-sans);
+                      color: var(--text-primary);
+                    "
+                  >
+                    Salir
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader"
+                  title="Movimientos"
+                  show-scope="{{ false }}"
+                  on-search="{{ noop }}"
+                  hint-size="100%,56px"
+                ></x-import>
+                <div style="padding: 6px 20px 0">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Julio · lo que Ana ve
+                  </div>
+                  <div style="margin-top: 6px">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount"
+                      value="28640"
+                      size="hero"
+                      show-sign="{{ false }}"
+                      hint-size="200px,44px"
+                    ></x-import>
+                  </div>
+                  <div
+                    style="
+                      font: 400 15px/22px var(--font-sans);
+                      color: var(--text-secondary);
+                      margin-top: 6px;
+                    "
+                  >
+                    34 movimientos de 12 categorías
+                  </div>
+                </div>
+                <div style="padding: 20px 20px 0; flex: 1; overflow: hidden">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Hoy · $ 3.120
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="cart"
+                    merchant="Disco Punta Carretas"
+                    meta="Brou Débito · Supermercado"
+                    value="-3120"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                      margin-top: 12px;
+                    "
+                  >
+                    Ayer · $ 2.150
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="home"
+                    merchant="UTE"
+                    meta="Brou Débito · Servicios"
+                    value="-2150"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                      margin-top: 12px;
+                    "
+                  >
+                    Martes 21 · $ 2.140
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="food"
+                    merchant="La Pulpería"
+                    meta="Mercado Pago · Comidas afuera"
+                    value="-2140"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                      margin-top: 12px;
+                    "
+                  >
+                    Lunes 20 · $ 4.980
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="cart"
+                    merchant="Tienda Inglesa"
+                    meta="Brou Débito · Supermercado"
+                    value="-4980"
+                    hint-size="100%,62px"
+                  ></x-import>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar"
+                  active="movements"
+                  slots="{{ mirrorSlots }}"
+                  hint-size="100%,64px"
+                ></x-import>
+              </div>
+            </div>
+
+            <div>
+              <div
+                style="
+                  font: 600 15px/20px var(--font-sans);
+                  margin-bottom: 10px;
+                "
+              >
+                Espejo · Cuentas
+                <span style="color: var(--text-muted); font-weight: 400"
+                  >— 2 cuentas, no 5 con 3 tachadas</span
+                >
+              </div>
+              <div
+                style="
+                  width: 390px;
+                  height: 844px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  background: var(--page);
+                  border-radius: 24px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    min-height: 56px;
+                    padding: 8px 12px 8px 20px;
+                    background: var(--surface-3);
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      background: var(--data-5);
+                      color: #ffffff;
+                      font: 600 12px/28px var(--font-sans);
+                      text-align: center;
+                      flex-shrink: 0;
+                    "
+                    >A</span
+                  >
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      style="
+                        font: 500 14px/19px var(--font-sans);
+                        color: var(--text-primary);
+                      "
+                    >
+                      Tus datos como los ve Ana
+                    </div>
+                    <div
+                      style="
+                        font: 500 12px/16px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 1px;
+                      "
+                    >
+                      No ve 3 cuentas ni 6 categorías
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex-shrink: 0;
+                      height: 44px;
+                      min-width: 44px;
+                      padding: 0 14px;
+                      border-radius: 999px;
+                      background: var(--page);
+                      display: flex;
+                      align-items: center;
+                      font: 500 14px/19px var(--font-sans);
+                      color: var(--text-primary);
+                    "
+                  >
+                    Salir
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader"
+                  title="Cuentas"
+                  show-scope="{{ false }}"
+                  hint-size="100%,56px"
+                ></x-import>
+                <div style="padding: 6px 20px 0">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Patrimonio
+                  </div>
+                  <div style="margin-top: 6px">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount"
+                      value="117800"
+                      size="hero"
+                      show-sign="{{ false }}"
+                      hint-size="220px,44px"
+                    ></x-import>
+                  </div>
+                  <div
+                    style="
+                      font: 400 15px/22px var(--font-sans);
+                      color: var(--text-secondary);
+                      margin-top: 6px;
+                    "
+                  >
+                    2 cuentas · una sola moneda
+                  </div>
+                </div>
+                <div style="padding: 22px 20px 0; flex: 1; overflow: hidden">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Cuentas
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow"
+                    icon="bank"
+                    label="Cuenta conjunta Brou"
+                    meta="Gastos de casa"
+                    value="$ 86.400"
+                    chevron="{{ false }}"
+                    hint-size="100%,56px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow"
+                    icon="wallet"
+                    label="Mercado Pago"
+                    meta="Del día a día"
+                    value="$ 31.400"
+                    chevron="{{ false }}"
+                    hint-size="100%,56px"
+                  ></x-import>
+                  <div
+                    style="
+                      font: 400 15px/22px var(--font-sans);
+                      color: var(--text-secondary);
+                      margin-top: 18px;
+                      text-wrap: pretty;
+                    "
+                  >
+                    Para Ana, estas dos son todas tus cuentas. No hay ningún
+                    lugar de su app donde figure que existen otras.
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar"
+                  active="more"
+                  slots="{{ mirrorSlots }}"
+                  hint-size="100%,64px"
+                ></x-import>
+              </div>
+            </div>
+
+            <sc-if
+              value="{{ showAnnotations }}"
+              hint-placeholder-val="{{ true }}"
+            >
+              <div
+                style="
+                  width: 340px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    line-height: 16px;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                  "
+                >
+                  Anotaciones
+                </div>
+                <div
+                  style="
+                    font: 400 15px/23px var(--font-sans);
+                    color: var(--text-secondary);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                  "
+                >
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >1 · La barra va arriba de todo, arriba del header,</span
+                    >
+                    y empuja el contenido en vez de flotar. Ponerla abajo la
+                    haría competir con la tab bar y taparía la zona del pulgar;
+                    hacerla flotante la haría descartable de un swipe
+                    accidental, y este es exactamente el modo del que no te
+                    podés olvidar.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >2 · Superficie 3 sobre página, sin color de estado.</span
+                    >
+                    Es un modo, no una alerta: pintarla en warning diría que
+                    algo está mal. Se distingue porque es la única superficie de
+                    ancho completo de toda la app.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >3 · El avatar de Ana está en la barra en las tres
+                      pantallas.</span
+                    >
+                    Es lo mismo que en J4: la cara es el estado, y se procesa
+                    antes de leer.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >4 · El conteo de lo oculto va una sola vez, en la
+                      barra:</span
+                    >
+                    “no ve 3 cuentas ni 6 categorías”. Es el reemplazo del
+                    candado por fila. En Cuentas hay dos filas y no cinco:
+                    <span style="color: var(--text-primary)"
+                      >lo que Ana no ve, en el espejo no existe</span
+                    >, exactamente como en su teléfono.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >5 · “Salir” es un target de 44 px en las tres
+                      pantallas,</span
+                    >
+                    siempre en el mismo lugar. Un tap desde donde estés, sin
+                    buscar, sin volver atrás primero.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >6 · La solo-lectura se ve por ausencia.</span
+                    >
+                    El FAB no está: la tab bar del espejo tiene cuatro slots
+                    repartidos y ningún botón central. Un FAB en gris se lee
+                    como app rota; un FAB que no está se lee como “acá no se
+                    carga nada”. Tampoco hay chevrons de edición, ni swipe, ni
+                    botones primarios: en las tres pantallas el
+                    <span style="color: var(--text-primary)"
+                      >único violeta es el tab activo</span
+                    >, que es identidad de navegación.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >7 · Los agregados se recalculan, no se recortan.</span
+                    >
+                    El patrimonio del espejo es $ 117.800 y no tu patrimonio
+                    real tachado: es la suma de lo que Ana ve. Y como es un
+                    agregado, declara su conteo de movimientos sin cotización
+                    igual que cualquier otro.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >8 · La frase de Cuentas es la que cierra la duda:</span
+                    >
+                    “no hay ningún lugar de su app donde figure que existen
+                    otras”. Es la única cosa que el espejo no puede mostrar
+                    mostrando —la ausencia de una pista— y por eso se dice.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >9 · El scope queda en Compartido y no se puede
+                      mover.</span
+                    >
+                    Personal y Todo son alcances de Martín; en el espejo no
+                    significan nada.
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <div
+            style="
+              margin-top: 72px;
+              padding-top: 28px;
+              border-top: 1px solid var(--border);
+            "
+          >
+            <div
+              style="
+                font: 600 32px/38px var(--font-sans);
+                letter-spacing: -0.02em;
+              "
+            >
+              Los dos casos que rompen el espejo
+            </div>
+            <p
+              style="
+                font: 400 16px/24px var(--font-sans);
+                color: var(--text-secondary);
+                max-width: 76ch;
+                margin: 10px 0 0;
+                text-wrap: pretty;
+              "
+            >
+              Un espejo idéntico y un espejo que dejó de ser cierto mientras lo
+              mirabas. Los dos se resuelven en la barra, que es el único lugar
+              de la pantalla que puede hablar sin mentir sobre lo que hay
+              debajo.
+            </p>
+          </div>
+          <div
+            style="
+              display: flex;
+              gap: 20px;
+              align-items: flex-start;
+              margin-top: 32px;
+              flex-wrap: wrap;
+            "
+          >
+            <div>
+              <div
+                style="
+                  font: 600 15px/20px var(--font-sans);
+                  margin-bottom: 10px;
+                "
+              >
+                Espejo · no hay nada oculto
+              </div>
+              <div
+                style="
+                  width: 390px;
+                  height: 844px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  background: var(--page);
+                  border-radius: 24px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    min-height: 56px;
+                    padding: 8px 12px 8px 20px;
+                    background: var(--surface-3);
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      background: var(--data-5);
+                      color: #ffffff;
+                      font: 600 12px/28px var(--font-sans);
+                      text-align: center;
+                      flex-shrink: 0;
+                    "
+                    >A</span
+                  >
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      style="
+                        font: 500 14px/19px var(--font-sans);
+                        color: var(--text-primary);
+                      "
+                    >
+                      Tus datos como los ve Ana
+                    </div>
+                    <div
+                      style="
+                        font: 500 12px/16px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 1px;
+                      "
+                    >
+                      Ve todo · esta pantalla es igual a la tuya
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex-shrink: 0;
+                      height: 44px;
+                      min-width: 44px;
+                      padding: 0 14px;
+                      border-radius: 999px;
+                      background: var(--page);
+                      display: flex;
+                      align-items: center;
+                      font: 500 14px/19px var(--font-sans);
+                      color: var(--text-primary);
+                    "
+                  >
+                    Salir
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader"
+                  scope="Compartido"
+                  hint-size="100%,56px"
+                ></x-import>
+                <div style="padding: 6px 20px 0">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Patrimonio
+                  </div>
+                  <div style="margin-top: 6px">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount"
+                      value="428900"
+                      size="hero"
+                      show-sign="{{ false }}"
+                      hint-size="240px,44px"
+                    ></x-import>
+                  </div>
+                  <div
+                    style="
+                      font: 400 15px/22px var(--font-sans);
+                      color: var(--text-secondary);
+                      margin-top: 6px;
+                    "
+                  >
+                    Tus 5 cuentas · las 5 las ve Ana
+                  </div>
+                </div>
+                <div style="padding: 18px 20px 0">
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card"
+                    surface="2"
+                    padding="16"
+                    hint-size="100%,110px"
+                  >
+                    <div
+                      style="
+                        font: 400 15px/22px var(--font-sans);
+                        color: var(--text-primary);
+                        text-wrap: pretty;
+                      "
+                    >
+                      Esto no es un error:
+                      <span style="font-weight: 500"
+                        >compartís todo con Ana</span
+                      >, así que su vista y la tuya son idénticas. Las 5 cuentas
+                      y las 18 categorías están en <em>compartido</em>.
+                    </div>
+                    <div style="margin-top: 12px">
+                      <x-import
+                        component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip"
+                        icon="chevron"
+                        hint-size="auto,32px"
+                        >Elegir qué ocultar</x-import
+                      >
+                    </div>
+                  </x-import>
+                </div>
+                <div style="padding: 20px 20px 0; flex: 1; overflow: hidden">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Últimos movimientos
+                  </div>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="cart"
+                    merchant="Disco Punta Carretas"
+                    meta="Hoy · Brou Débito"
+                    value="-3120"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="fuel"
+                    merchant="Ancap Pocitos"
+                    meta="Ayer · Itaú Crédito"
+                    value="-2650"
+                    hint-size="100%,62px"
+                  ></x-import>
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow"
+                    icon="coffee"
+                    merchant="Café Gourmand"
+                    meta="Ayer · Mercado Pago"
+                    value="-410"
+                    hint-size="100%,62px"
+                  ></x-import>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar"
+                  active="home"
+                  slots="{{ mirrorSlots }}"
+                  hint-size="100%,64px"
+                ></x-import>
+              </div>
+            </div>
+
+            <div>
+              <div
+                style="
+                  font: 600 15px/20px var(--font-sans);
+                  margin-bottom: 10px;
+                "
+              >
+                Espejo · Ana cambió sus permisos
+              </div>
+              <div
+                style="
+                  width: 390px;
+                  height: 844px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  background: var(--page);
+                  border-radius: 24px;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    min-height: 56px;
+                    padding: 8px 12px 8px 20px;
+                    background: var(--surface-3);
+                    flex-shrink: 0;
+                  "
+                >
+                  <span
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      background: var(--data-5);
+                      color: #ffffff;
+                      font: 600 12px/28px var(--font-sans);
+                      text-align: center;
+                      flex-shrink: 0;
+                    "
+                    >A</span
+                  >
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      style="
+                        font: 500 14px/19px var(--font-sans);
+                        color: var(--text-primary);
+                      "
+                    >
+                      Tus datos como los ve Ana
+                    </div>
+                    <div
+                      style="
+                        font: 500 12px/16px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 1px;
+                      "
+                    >
+                      Congelado a las 14:02
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex-shrink: 0;
+                      height: 44px;
+                      min-width: 44px;
+                      padding: 0 14px;
+                      border-radius: 999px;
+                      background: var(--page);
+                      display: flex;
+                      align-items: center;
+                      font: 500 14px/19px var(--font-sans);
+                      color: var(--text-primary);
+                    "
+                  >
+                    Salir
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Banner"
+                  status="serious"
+                  icon="refresh"
+                  message="Cambió algo mientras mirabas."
+                  action-label="Actualizar"
+                  hint-size="100%,36px"
+                ></x-import>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader"
+                  scope="Compartido"
+                  hint-size="100%,56px"
+                ></x-import>
+                <div style="padding: 14px 20px 0">
+                  <x-import
+                    component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card"
+                    surface="2"
+                    padding="16"
+                    hint-size="100%,150px"
+                  >
+                    <div
+                      style="
+                        font: 400 15px/22px var(--font-sans);
+                        color: var(--text-primary);
+                        text-wrap: pretty;
+                      "
+                    >
+                      A las 14:02 sacaste
+                      <span style="font-weight: 500">Itaú Caja de Ahorro</span>
+                      de lo compartido. Lo que estás viendo es de antes de ese
+                      cambio.
+                    </div>
+                    <div
+                      style="
+                        font: 400 15px/22px var(--font-sans);
+                        color: var(--text-secondary);
+                        margin-top: 10px;
+                        text-wrap: pretty;
+                      "
+                    >
+                      Preferimos congelar y avisarte antes que cambiar la
+                      pantalla debajo de tu dedo sin que te enteres.
+                    </div>
+                    <div style="margin-top: 12px">
+                      <x-import
+                        component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip"
+                        icon="refresh"
+                        hint-size="auto,32px"
+                        >Ver cómo queda ahora</x-import
+                      >
+                    </div>
+                  </x-import>
+                </div>
+                <div style="padding: 20px 20px 0; flex: 1; overflow: hidden">
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                    "
+                  >
+                    Patrimonio · a las 14:02
+                  </div>
+                  <div style="margin-top: 6px; opacity: 0.55">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount"
+                      value="202000"
+                      size="hero"
+                      show-sign="{{ false }}"
+                      hint-size="220px,44px"
+                    ></x-import>
+                  </div>
+                  <div
+                    style="
+                      font-size: 11px;
+                      line-height: 16px;
+                      font-weight: 500;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: var(--text-muted);
+                      margin-top: 20px;
+                    "
+                  >
+                    Cuentas · a las 14:02
+                  </div>
+                  <div style="opacity: 0.55">
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow"
+                      icon="bank"
+                      label="Cuenta conjunta Brou"
+                      meta="Gastos de casa"
+                      value="$ 86.400"
+                      chevron="{{ false }}"
+                      hint-size="100%,56px"
+                    ></x-import>
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow"
+                      icon="wallet"
+                      label="Mercado Pago"
+                      meta="Del día a día"
+                      value="$ 31.400"
+                      chevron="{{ false }}"
+                      hint-size="100%,56px"
+                    ></x-import>
+                    <x-import
+                      component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow"
+                      icon="bank"
+                      label="Itaú Caja de Ahorro"
+                      meta="Ya no está compartida"
+                      value="$ 84.200"
+                      chevron="{{ false }}"
+                      hint-size="100%,56px"
+                    ></x-import>
+                  </div>
+                </div>
+                <x-import
+                  component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar"
+                  active="home"
+                  slots="{{ mirrorSlots }}"
+                  hint-size="100%,64px"
+                ></x-import>
+              </div>
+            </div>
+
+            <sc-if
+              value="{{ showAnnotations }}"
+              hint-placeholder-val="{{ true }}"
+            >
+              <div
+                style="
+                  width: 340px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 16px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    line-height: 16px;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                  "
+                >
+                  Anotaciones
+                </div>
+                <div
+                  style="
+                    font: 400 15px/23px var(--font-sans);
+                    color: var(--text-secondary);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                  "
+                >
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >10 · Cuando no hay nada oculto, la barra lo dice
+                      primero</span
+                    >
+                    —“ve todo · esta pantalla es igual a la tuya”— y la card lo
+                    confirma con los números. Una pantalla idéntica sin
+                    explicación se lee como que el modo no arrancó, y ese
+                    malentendido destruye la confianza más rápido que cualquier
+                    bug.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >11 · Y ofrece la salida útil:</span
+                    >
+                    “elegir qué ocultar” vuelve a J4. Alguien que entra al
+                    espejo por primera vez y descubre que comparte todo
+                    probablemente quiera cambiar algo justo ahí.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >12 · El cambio de permisos congela, no recarga.</span
+                    >
+                    Refrescar la pantalla debajo del dedo haría dudar de lo que
+                    se acaba de leer: en un feature cuyo único producto es la
+                    confianza, un cambio silencioso es peor que un dato viejo.
+                    La barra pasa a decir la hora del congelamiento.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >13 · Nivel serious, no critical.</span
+                    >
+                    Cambió algo que conviene mirar y nada se rompió — la misma
+                    escala que el aumento de precio de G1 y el conflicto de J10.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >14 · Lo congelado va al 55% y con la hora en el header de
+                      sección,</span
+                    >
+                    no en gris de deshabilitado: es un dato real de un momento
+                    real, no un control apagado.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >15 · La fila de Itaú dice “ya no está compartida”</span
+                    >
+                    mientras sigue visible en el espejo congelado. Es la única
+                    fila de todo el espejo que explica una ausencia futura, y
+                    sólo aparece en este estado.
+                  </div>
+                  <div>
+                    <span style="color: var(--text-primary); font-weight: 500"
+                      >16 · El cambio lo hizo Martín, no Ana.</span
+                    >
+                    Ana no puede cambiar qué ve de lo tuyo: eso lo decidís vos.
+                    Lo que Ana sí puede cambiar es su propio
+                    <code>custom</code> sobre lo de ella, y eso no toca este
+                    espejo — otra consecuencia de que el espejo intersecte y no
+                    una.
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+            <div
+              style="
+                display: flex;
+                gap: 20px;
+                margin-top: 24px;
+                flex-wrap: wrap;
+              "
+            >
+              <div>
+                <div
+                  style="
+                    font: 500 13px/18px var(--font-sans);
+                    color: var(--text-muted);
+                    margin-bottom: 8px;
+                  "
+                >
+                  Espejo · vacío — Ana no ve nada
+                </div>
+                <dc-import
+                  name="StateFrame"
+                  title="Tus datos como los ve Ana"
+                  kind="empty"
+                  icon="eye-off"
+                  message="Ana no ve nada tuyo: tus 5 cuentas y tus 18 categorías están en privado. Su app tiene solo lo de ella."
+                  action="Elegir qué compartir"
+                  tabs="{{ false }}"
+                  hint-size="390px,844px"
+                ></dc-import>
+              </div>
+              <div>
+                <div
+                  style="
+                    font: 500 13px/18px var(--font-sans);
+                    color: var(--text-muted);
+                    margin-bottom: 8px;
+                  "
+                >
+                  Espejo · cargando
+                </div>
+                <dc-import
+                  name="StateFrame"
+                  title="Tus datos como los ve Ana"
+                  kind="loading"
+                  tabs="{{ false }}"
+                  hint-size="390px,844px"
+                ></dc-import>
+              </div>
+              <div>
+                <div
+                  style="
+                    font: 500 13px/18px var(--font-sans);
+                    color: var(--text-muted);
+                    margin-bottom: 8px;
+                  "
+                >
+                  Espejo · error
+                </div>
+                <dc-import
+                  name="StateFrame"
+                  title="Tus datos como los ve Ana"
+                  kind="error"
+                  what="No pudimos armar la vista de Ana."
+                  next="Preferimos no mostrarte un espejo a medias: te haría creer que Ana ve menos de lo que ve. Probá de nuevo."
+                  tabs="{{ false }}"
+                  hint-size="390px,844px"
+                ></dc-import>
+              </div>
+              <div>
+                <div
+                  style="
+                    font: 500 13px/18px var(--font-sans);
+                    color: var(--text-muted);
+                    margin-bottom: 8px;
+                  "
+                >
+                  Espejo · offline
+                </div>
+                <dc-import
+                  name="StateFrame"
+                  title="Tus datos como los ve Ana"
+                  kind="offline"
+                  pending="3"
+                  offline-msg="Sin conexión — permisos del último sync."
+                  hero-label="Patrimonio que ve Ana"
+                  hero-value="$ 117.800"
+                  note="Los permisos son los del último sync, a las 09:41. Si cambiaste algo después desde otro teléfono, el espejo todavía no lo tiene."
+                  r1="Cuenta conjunta Brou"
+                  r1meta="Ana la ve"
+                  r1val="$ 86.400"
+                  r2="Mercado Pago"
+                  r2meta="Ana la ve"
+                  r2val="$ 31.400"
+                  r3="Oculto para Ana"
+                  r3meta="Cuentas y categorías"
+                  r3val="3 y 6"
+                  tabs="{{ false }}"
+                  hint-size="390px,844px"
+                ></dc-import>
+              </div>
+            </div>
+          </sc-if>
+          <div
+            style="
+              margin-top: 80px;
+              padding-top: 28px;
+              border-top: 1px solid var(--border);
+            "
+          >
+            <div
+              style="
+                font: 600 32px/38px var(--font-sans);
+                letter-spacing: -0.02em;
+              "
+            >
+              Cierre
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 20px; margin-top: 28px; flex-wrap: wrap"
+          >
+            <div
+              style="
+                flex: 1 1 420px;
+                background: var(--surface-2);
+                border-radius: 20px;
+                padding: 24px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  line-height: 16px;
+                  font-weight: 500;
+                  letter-spacing: 0.08em;
+                  text-transform: uppercase;
+                  color: var(--text-muted);
+                "
+              >
+                ¿Puede el espejo revelar algo de Ana?
+              </div>
+              <div
+                style="
+                  margin-top: 14px;
+                  font: 400 16px/24px var(--font-sans);
+                  color: var(--text-secondary);
+                  text-wrap: pretty;
+                "
+              >
+                <span style="color: var(--text-primary); font-weight: 500"
+                  >No, y no por una validación sino por la forma de la
+                  consulta.</span
+                >
+                El espejo se arma como
+                <em>lo mío filtrado por los permisos de Ana</em>: el conjunto de
+                partida son las cuentas y categorías cuyo dueño es Martín, y el
+                filtro sólo puede sacar elementos, nunca agregar. Como Ana nunca
+                está en el conjunto de partida, ningún valor de
+                <code>private</code>, <code>household</code> o
+                <code>custom</code> puede meterla.
+              </div>
+              <div
+                style="
+                  margin-top: 14px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 9px;
+                  font: 400 15px/22px var(--font-sans);
+                  color: var(--text-secondary);
+                "
+              >
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >El caso que parece peligroso y no lo es:</span
+                  >
+                  una cuenta <code>household</code> de Ana. Ana la comparte, así
+                  que Martín ya la ve en su propia app — el espejo no le agrega
+                  nada que no tuviera.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >El caso que sí sería un bug:</span
+                  >
+                  implementar el espejo como “correr la app con la sesión de
+                  Ana”. Ahí Martín vería lo privado de Ana. Por eso el nombre de
+                  la pantalla es <em>tus datos como los ve Ana</em> y no
+                  <em>la app de Ana</em>: el nombre es la especificación.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >La única fuga posible es indirecta</span
+                  >
+                  y la cerramos por diseño: el conteo de la barra habla sólo de
+                  <span style="color: var(--text-primary)">lo tuyo</span> —“no
+                  ve 3 cuentas ni 6 categorías”— y nunca de cuántas cosas tiene
+                  Ana. Un conteo del otro lado ya sería información suya.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >Y una nota para la implementación:</span
+                  >
+                  el espejo se resuelve en el cliente sobre datos que Martín ya
+                  tiene. Si se resolviera en el servidor pidiendo “la vista de
+                  Ana”, ese endpoint podría devolver de más y habría que
+                  auditarlo. No hace falta ese endpoint.
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                flex: 1 1 320px;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+              "
+            >
+              <div
+                style="
+                  background: var(--surface-2);
+                  border-radius: 20px;
+                  padding: 24px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    line-height: 16px;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                  "
+                >
+                  Taps hasta estar en espejo
+                </div>
+                <div
+                  style="
+                    margin-top: 12px;
+                    font: 600 40px/44px var(--font-sans);
+                    letter-spacing: -0.015em;
+                  "
+                >
+                  1
+                </div>
+                <div
+                  style="
+                    margin-top: 8px;
+                    font: 400 15px/22px var(--font-sans);
+                    color: var(--text-secondary);
+                    text-wrap: pretty;
+                  "
+                >
+                  Desde J4, el primario “Ver la app como Ana” entra directo. Sin
+                  sheet de confirmación y sin cartel explicativo: el modo es
+                  reversible con un tap y la barra explica dónde estás, así que
+                  un intersticial sólo agregaría fricción a la acción que prueba
+                  la promesa.
+                </div>
+                <div
+                  style="
+                    margin-top: 10px;
+                    font: 400 15px/22px var(--font-sans);
+                    color: var(--text-secondary);
+                    text-wrap: pretty;
+                  "
+                >
+                  Desde el inicio de la app son 4: Más → Grupo familiar → Qué ve
+                  Ana → el primario.
+                  <span style="color: var(--text-primary)">J2 no se tocó</span>,
+                  así que el índice de vistas no cambia por este prompt: la
+                  entrada ya existía en la fila “Qué ve Ana” que J2 tiene desde
+                  el bloque J, y la versión con J8 del archivo de huecos sigue
+                  siendo la vigente.
+                </div>
+              </div>
+              <div
+                style="
+                  background: var(--surface-2);
+                  border-radius: 20px;
+                  padding: 24px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 11px;
+                    line-height: 16px;
+                    font-weight: 500;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                  "
+                >
+                  Chequeo de ruido
+                </div>
+                <div
+                  style="
+                    margin-top: 12px;
+                    font: 400 15px/22px var(--font-sans);
+                    color: var(--text-secondary);
+                    text-wrap: pretty;
+                  "
+                >
+                  Las cinco pantallas:
+                  <span style="color: var(--text-primary)"
+                    >2 a 3 interactivos</span
+                  >
+                  (barra con Salir, lista, tab bar) — el espejo siempre tiene
+                  menos que la pantalla que refleja, porque le saca acciones.
+                  <span style="color: var(--text-primary)">1 cifra héroe</span>,
+                  <span style="color: var(--text-primary)">3 niveles</span>,
+                  <span style="color: var(--text-primary)">1 violeta</span>: el
+                  tab activo, y sólo porque es identidad de navegación. Cero
+                  íconos decorativos, cero bordes, cero candados. Los agregados
+                  declaran su conteo de needs_fx, sin monto.
+                  <span style="color: var(--text-primary)"
+                    >Cumplen las cinco.</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                flex: 1 1 100%;
+                background: var(--surface-2);
+                border-radius: 20px;
+                padding: 24px;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  line-height: 16px;
+                  font-weight: 500;
+                  letter-spacing: 0.08em;
+                  text-transform: uppercase;
+                  color: var(--text-muted);
+                "
+              >
+                Deuda de biblioteca · nuevo
+              </div>
+              <div
+                style="
+                  margin-top: 14px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 12px;
+                  font: 400 15px/22px var(--font-sans);
+                  color: var(--text-secondary);
+                "
+              >
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >1 · MirrorBanner.</span
+                  >
+                  Ya estaba pedido desde J y ahora tiene especificación:
+                  <code>member</code>, <code>hiddenSummary</code>,
+                  <code>frozenAt</code> y <code>onExit</code>; 56 px, superficie
+                  3, ancho completo, empuja el contenido, y “Salir” con target
+                  de 44. Lo escribí cinco veces a mano en este archivo.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >2 · TabBar en modo lectura.</span
+                  >
+                  Le pasé <code>slots</code> de cuatro items para sacar el FAB,
+                  y funciona, pero por accidente: el componente reparte los
+                  cuatro con <code>flex:1</code> y queda bien. Hace falta una
+                  prop <code>readOnly</code> declarada que saque el FAB y lo
+                  diga, en vez de depender de que nadie mande un slot
+                  <code>__fab</code>.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >3 · Un contexto de solo-lectura.</span
+                  >
+                  Hoy cada pantalla del espejo tiene que acordarse de no
+                  renderizar su primario, sus chevrons y sus swipes. Eso es
+                  exactamente lo que se olvida al programar. Debería ser un
+                  <code>ReadOnlyProvider</code> que los componentes lean:
+                  <code>Button variant="primary"</code> no renderiza,
+                  <code>ListRow</code> pierde el chevron,
+                  <code>TransactionRow</code> pierde el swipe. Es la pieza que
+                  hace que el espejo sea seguro por default y no por disciplina.
+                </div>
+                <div>
+                  <span style="color: var(--text-primary); font-weight: 500"
+                    >4 · Estado congelado.</span
+                  >
+                  El 55% de opacidad más la hora en el header de sección es un
+                  patrón nuevo que no tiene componente y que va a reaparecer en
+                  cualquier vista con datos de un momento anterior.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","tsType":"&apos;dark&apos;|&apos;light&apos;"},"showStates":{"editor":"boolean","default":true,"tsType":"boolean"},"showAnnotations":{"editor":"boolean","default":true,"tsType":"boolean"}}'
+    >
+      class Component extends DCLogic {
+        renderVals() {
+          return {
+            noop: () => {},
+            themeClass: (this.props.theme ?? 'dark') === 'light' ? 'light' : '',
+            showStates: this.props.showStates ?? true,
+            showAnnotations: this.props.showAnnotations ?? true,
+            mirrorSlots: [
+              { key: 'home', label: 'Inicio', icon: 'home' },
+              { key: 'movements', label: 'Movimientos', icon: 'list' },
+              { key: 'analytics', label: 'Análisis', icon: 'chart' },
+              { key: 'more', label: 'Más', icon: 'more' }
+            ]
+          };
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+/* Geist Sans + Geist Mono.
+   NOTE: no font binaries were provided with the brand sources, so the families are
+   loaded from the Google Fonts CDN. Replace this @import with local @font-face rules
+   pointing at assets/fonts/* if licensed files become available. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+
+:root{
+  --font-sans:"Geist","Geist Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}

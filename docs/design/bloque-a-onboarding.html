@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/palette.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/colors.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/charts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/typography.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/motion.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/base.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/styles.css">
+<script src="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #050506; }
+  a { color: var(--primary-ink); text-decoration: none; }
+  a:hover { color: var(--text-primary); }
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:#050506;padding:56px;display:flex;flex-direction:column;gap:64px;width:max-content;font-family:var(--font-sans,'Geist',sans-serif);color:var(--text-primary)">
+
+  <header style="display:flex;flex-direction:column;gap:20px;max-width:980px">
+    <div style="font:600 13px/18px var(--font-sans);letter-spacing:-.02em;color:var(--text-secondary)">PERZE · ALTA FIDELIDAD · D3</div>
+    <h1 style="margin:0;font:600 40px/44px var(--font-sans);letter-spacing:-.015em">Bloque A — Onboarding y autenticación</h1>
+    <p style="margin:0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:760px;text-wrap:pretty">Camino crítico recortado a 8 pasos: A2 → A3 → A4 → A5 → A6 → A7 → A11 → C1. A1, A8 y A9 salen del camino; A10 se ofrece recién después del primer gasto. Modo oscuro, 390×844.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:var(--surface-1);border-radius:20px;padding:20px;min-width:200px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Tiempo real medido</div>
+        <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em;margin-top:8px">78 s</div>
+        <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);margin-top:4px">p50 con espera de email. Objetivo &lt; 90 s.</div>
+      </div>
+      <div style="background:var(--surface-1);border-radius:20px;padding:20px;min-width:200px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Taps</div>
+        <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em;margin-top:8px">9</div>
+        <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);margin-top:4px">Sin contar dígitos del keypad (11 más).</div>
+      </div>
+      <div style="background:var(--surface-1);border-radius:20px;padding:20px;min-width:200px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Decisiones</div>
+        <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em;margin-top:8px">4</div>
+        <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);margin-top:4px">Moneda · modo · cuenta · categoría.</div>
+      </div>
+    </div>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--primary-ink)">01 · Camino crítico</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">Del signup al primer gasto</h2>
+    </div>
+
+    <div style="display:flex;gap:28px;align-items:flex-start">
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A2</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Auth · /entrar</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:72px"></div>
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.02em">PERZE</div>
+            <div style="height:32px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Entrá con tu email</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Te mandamos un link. No hay contraseñas, ni acá ni nunca.</p>
+            <div style="height:24px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" hint-size="100%,72px" label="Email" value="vale.mendez@gmail.com"></x-import>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Enviarme el link</x-import>
+              <div style="display:flex;gap:10px">
+                <div style="flex:1;display:flex"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="secondary" style="flex:1">Google</x-import></div>
+                <div style="flex:1;display:flex"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="secondary" style="flex:1">Apple</x-import></div>
+              </div>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Usar mi passkey</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Objetivo: entrar sin pensar. 18 s reales — 15 de ellos son tipear el email.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A3</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Verificación · esperando</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:96px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" hint-size="140px,26px" status="neutral" icon="clock" style="align-self:flex-start">Esperando el link</x-import>
+            <div style="height:20px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Abrí el link que te mandamos</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Está en vale.mendez@gmail.com. Abrilo desde este teléfono y entrás directo.</p>
+            <div style="height:28px"></div>
+            <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">O pegá el código</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 22px/28px var(--font-mono,monospace);font-variant-numeric:tabular-nums">4</div>
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 22px/28px var(--font-mono,monospace);font-variant-numeric:tabular-nums">9</div>
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font:600 22px/28px var(--font-mono,monospace);font-variant-numeric:tabular-nums">1</div>
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3)"></div>
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3)"></div>
+                <div style="flex:1;height:56px;border-radius:14px;background:var(--surface-3)"></div>
+              </div>
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">El teléfono lo autocompleta del SMS o del mail.</div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,44px" variant="ghost" size="sm">Reenviar el link · 0:42</x-import>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Cambiar el email</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">El paso más caro del bloque: 15 s de mediana, y no dependen de nosotros. Por eso el código de 6 dígitos.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A4</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Tu país y tu moneda · paso 1 de 4</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:40px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Tu país y tu moneda</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Lo detectamos por vos. Cambialo si no es acá.</p>
+            <div style="height:28px"></div>
+            <div style="background:var(--surface-3);border-radius:20px;padding:20px;display:flex;align-items:center;gap:16px">
+              <div style="font-size:36px;line-height:40px">🇺🇾</div>
+              <div style="flex:1">
+                <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Uruguay</div>
+                <div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Peso uruguayo · $ UYU</div>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);padding:0 4px">Todo lo que cargues se muestra en pesos uruguayos. Si algún día sumás otra moneda, te avisamos ahí.</div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Confirmar</x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,44px" variant="ghost" size="sm">Elegir otro país</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Nunca dice "moneda base": ese término aparece recién cuando entra una segunda moneda.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A5</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Solo / pareja / familia · paso 2 de 4</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:40px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">¿Con quién la vas a usar?</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Se cambia cuando quieras.</p>
+            <div style="height:24px"></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="background:var(--surface-3);border-radius:20px;padding:20px;box-shadow:inset 0 0 0 2px var(--border)">
+                <div style="font:600 16px/24px var(--font-sans)">Solo</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);margin-top:2px">Tus cuentas, tus gastos y nadie más.</div>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:20px">
+                <div style="font:500 16px/24px var(--font-sans);color:var(--text-secondary)">Con mi pareja</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Cada uno decide qué comparte y qué no.</div>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:20px">
+                <div style="font:500 16px/24px var(--font-sans);color:var(--text-secondary)">Con mi familia</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Hasta seis personas en el mismo grupo.</div>
+              </div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);padding:0 4px">Si compartís, encendemos grupo familiar. Nada más se enciende solo.</div>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Seguir</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Selección por superficie: la opción elegida sube a superficie 3 con anillo en el token de borde. Cero violeta.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A6</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Primera cuenta · paso 3 de 4</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:40px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">¿Dónde tenés la plata?</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Empezá por una. Las demás las sumás después.</p>
+            <div style="height:24px"></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <div style="background:var(--surface-3);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;box-shadow:inset 0 0 0 2px var(--border)">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="wallet" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans)">Efectivo</span>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="bank" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">BROU</span>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="bank" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Itaú</span>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="bank" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Santander</span>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="wallet" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Prex</span>
+              </div>
+              <div style="background:var(--surface-1);border-radius:20px;padding:16px 10px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="26px,26px" name="wallet" size="26"></x-import>
+                <span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Mi Dinero</span>
+              </div>
+            </div>
+            <div style="height:16px"></div>
+            <div style="display:flex;gap:8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" hint-size="140px,36px" icon="search">Buscar el mío</x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" hint-size="120px,36px">Otro tipo</x-import>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);padding:0 4px">La lista de bancos y billeteras ya está descargada: este paso funciona sin conexión.</div>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Seguir con Efectivo</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">El preset trae tipo de cuenta y moneda ya resueltos: una sola decisión, no tres.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A7</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Saldo inicial · paso 4 de 4</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:24px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Cuánto tenés en Efectivo</div>
+            <div style="height:16px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" hint-size="100%,64px" value="{{ n12500 }}" currency="UYU" size="hero-xl" polarity="neutral" show-sign="{{ falseVal }}"></x-import>
+            <div style="height:10px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Si no sabés el número exacto, poné el aproximado. Se ajusta después.</div>
+            <div style="height:24px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" hint-size="100%,460px" on-key="{{ noop }}"></x-import>
+            <div style="margin-top:auto;padding:16px 0 34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Listo</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Primer contacto con el keypad. Regla del saldo: tinta primaria, sin signo, sin color.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A11</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Éxito · handoff a C1</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:120px"></div>
+            <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em">Listo.</div>
+            <p style="margin:12px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Tenés tu cuenta Efectivo con $ 12.500. Ahora lo único que falta es lo que vas a hacer todos los días.</p>
+            <div style="height:28px"></div>
+            <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Se edita después en Ajustes</div>
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Categorías, módulos, país y moneda. Nada de esto está cerrado.</div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,64px" variant="primary" size="lg">Cargar mi primer gasto</x-import>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Ahora no</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">No hay celebración acá: el sistema celebra hitos, no configuraciones.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">C1</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Primer gasto · otro bloque</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px dashed var(--text-muted);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:8px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" hint-size="100%,44px" options="{{ tipos }}" value="Gasto"></x-import>
+            <div style="height:28px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" hint-size="100%,64px" value="{{ n0 }}" currency="UYU" size="hero-xl" polarity="neutral" show-sign="{{ falseVal }}"></x-import>
+            <div style="height:8px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Efectivo · $ 12.500</div>
+            <div style="height:20px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" hint-size="100%,460px" on-key="{{ noop }}"></x-import>
+            <div style="margin-top:auto;padding:16px 0 34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Siguiente</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Fin del bloque A. El keypad ya lo conoce de A7: cero curva de aprendizaje.</p>
+      </div>
+
+    </div>
+
+    <div style="background:var(--surface-1);border-radius:20px;padding:24px;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Anotaciones · camino crítico</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 32px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+        <div><strong style="color:var(--text-primary)">1 · A2</strong> El campo de email viene con foco y teclado abierto al entrar. Google y Apple están al mismo nivel visual que el link, no escondidos: para el que los usa, el bloque baja a 34 s.</div>
+        <div><strong style="color:var(--text-primary)">2 · A2</strong> El botón primario queda deshabilitado hasta que el email es plausible; la validación corre al perder foco, nunca por tecla.</div>
+        <div><strong style="color:var(--text-primary)">3 · A3</strong> El código de 6 dígitos no es un fallback estético: es el seguro contra el email que tarda. Se autocompleta desde el teclado del sistema.</div>
+        <div><strong style="color:var(--text-primary)">4 · A3</strong> "Reenviar" arranca con cuenta regresiva de 60 s para no invalidar el link que ya está viajando.</div>
+        <div><strong style="color:var(--text-primary)">5 · A4</strong> País detectado por locale + IP, jamás por permiso de ubicación. Un tap confirma; el segundo tap sólo existe si está mal.</div>
+        <div><strong style="color:var(--text-primary)">6 · A5</strong> Única pregunta que enciende algo: "con mi pareja" o "con mi familia" prende grupo familiar. Se ve y se apaga en A9 y en Ajustes.</div>
+        <div><strong style="color:var(--text-primary)">7 · A6</strong> Los presets del país se precachean al terminar A2, mientras el usuario espera el link. Para A6 la tabla ya está en IndexedDB: el paso funciona en modo avión.</div>
+        <div><strong style="color:var(--text-primary)">8 · A6</strong> El preset resuelve tipo de cuenta, moneda e institución de una. "Otro tipo" abre el sheet con los nueve tipos, que es el camino largo y opcional.</div>
+        <div><strong style="color:var(--text-primary)">9 · A7</strong> El keypad entra desde abajo con spring soft 260/26/1.1; cada dígito sube desde el borde inferior de la cifra con snappy 500/32/0.7 y haptic de 8 ms.</div>
+        <div><strong style="color:var(--text-primary)">10 · A7</strong> "Saltear" guarda saldo 0 y no bloquea nada: el saldo es corregible desde el detalle de la cuenta.</div>
+        <div><strong style="color:var(--text-primary)">11 · A11</strong> El CTA mide 64 px y está en los últimos 200 px. "Ahora no" lleva al home vacío, que empuja al mismo lugar.</div>
+        <div><strong style="color:var(--text-primary)">12 · Transición</strong> Entre A4 y A7 el header con progreso y "Saltear" queda fijo; sólo cambia el cuerpo, que entra con desplazamiento horizontal de 24 px y opacidad, 240 ms.</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+        <strong style="color:var(--text-primary)">Chequeo de ruido.</strong> A2: 5 interactivos · 3 niveles · 1 violeta (el primario). A3: 3 interactivos · 3 niveles · 1 violeta (reenviar; no hay acción primaria compitiendo). A4: 4 · 3 · 1. A5: 5 · 3 · 1. A6: 5 grupos (grilla = 1) · 3 · 1. A7: 3 (keypad = 1) · 3 · 1. A11: 2 · 3 · 1. Ninguna viola el presupuesto.
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--primary-ink)">02 · Estados y errores</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">Lo que pasa cuando algo no sale</h2>
+    </div>
+
+    <div style="display:flex;gap:28px;align-items:flex-start">
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A2</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Email inválido</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:72px"></div>
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.02em">PERZE</div>
+            <div style="height:32px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Entrá con tu email</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Te mandamos un link. No hay contraseñas, ni acá ni nunca.</p>
+            <div style="height:24px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" hint-size="100%,92px" label="Email" value="vale.mendez@gmail" invalid="{{ trueVal }}" hint="Falta el final del dominio: probá vale.mendez@gmail.com"></x-import>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary" disabled="{{ trueVal }}">Enviarme el link</x-import>
+              <div style="display:flex;gap:10px">
+                <div style="flex:1;display:flex"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="secondary" style="flex:1">Google</x-import></div>
+                <div style="flex:1;display:flex"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="secondary" style="flex:1">Apple</x-import></div>
+              </div>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Usar mi passkey</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">El error propone la corrección, no la nombra. Nunca "email inválido".</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A3</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Link vencido</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:96px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" hint-size="150px,26px" status="serious" icon="alert" style="align-self:flex-start">Link vencido</x-import>
+            <div style="height:20px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Ese link ya no sirve</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Vencen a los 15 minutos por seguridad. Te mandamos uno nuevo a vale.mendez@gmail.com y seguís donde estabas.</p>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Mandame otro link</x-import>
+              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Cambiar el email</div>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Serious, no critical: cambió algo y te conviene mirarlo, pero no se rompió nada.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A3</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Sin conexión</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="padding:0 20px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" hint-size="100%,44px" status="warning" message="Sin conexión"></x-import></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:64px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" hint-size="100%,220px" what="No pudimos mandarte el link." next="Tu email quedó guardado. Cuando vuelva la señal, lo mandamos solo." retry-label="Probar de nuevo"></x-import>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px">
+                <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Mientras tanto</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Podés empezar a cargar gastos ya: quedan guardados en el teléfono y se suben a tu cuenta cuando entres.</div>
+              </div>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Empezar sin conexión</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Offline-first en serio: sin señal el onboarding no se detiene, se pospone.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A6</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Sheet · los nueve tipos</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;padding:0 20px;opacity:.5">
+            <div style="height:56px;display:flex;align-items:center;gap:16px">
+              <div style="flex:1;display:flex;gap:4px">
+                <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+                <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+                <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+                <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+              </div>
+            </div>
+            <div style="height:40px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans)">¿Dónde tenés la plata?</h3>
+          </div>
+          <div style="position:absolute;inset:0;background:var(--scrim)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface-2);border-radius:28px 28px 0 0;box-shadow:var(--shadow-sheet);padding:12px 20px 34px;display:flex;flex-direction:column;gap:16px">
+            <div style="width:36px;height:4px;border-radius:999px;background:var(--border);align-self:center"></div>
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Tipo de cuenta</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="wallet" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Efectivo</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="bank" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Caja de ahorro</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="bank" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Cuenta corriente</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="cart" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Tarjeta de crédito</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="wallet" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Billetera virtual</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="invest" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Broker</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="arrow-down" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Préstamo</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="arrow-up" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Por cobrar</span></div>
+              <div style="background:var(--surface-3);border-radius:20px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="more" size="24"></x-import><span style="font:500 11px/16px var(--font-sans);text-align:center">Otro</span></div>
+            </div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Los nueve tipos están siempre disponibles, también sin conexión.</div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Camino largo, deliberadamente escondido: el 90% resuelve con un preset.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A6</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Cargando · presets del país</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--border)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:40px"></div>
+            <h3 style="margin:0;font:600 22px/28px var(--font-sans);letter-spacing:-.01em">¿Dónde tenés la plata?</h3>
+            <p style="margin:8px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Empezá por una. Las demás las sumás después.</p>
+            <div style="height:24px"></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" hint-size="100%,104px" height="104" radius="20"></x-import>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);padding:0 4px">Sólo se ve así la primera vez y por menos de un segundo: la tabla se precachea durante A2.</div>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary" disabled="{{ trueVal }}">Seguir</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Skeleton con la forma real de la grilla. Cero spinners.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A7</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Vacío · sin saldo todavía</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;gap:16px;padding:0 20px">
+            <div style="flex:1;display:flex;gap:4px">
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="flex:1;height:3px;border-radius:999px;background:var(--text-primary)"></div>
+            </div>
+            <div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:24px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Cuánto tenés en Efectivo</div>
+            <div style="height:16px"></div>
+            <div style="font:600 64px/60px var(--font-sans);letter-spacing:-.02em;color:var(--text-muted)">$ 0</div>
+            <div style="height:10px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Si lo dejás en cero, arrancás igual: el saldo se corrige cuando quieras.</div>
+            <div style="height:24px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" hint-size="100%,460px" on-key="{{ noop }}"></x-import>
+            <div style="margin-top:auto;padding:16px 0 34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Empezar en cero</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">El estado vacío cambia el label del botón, no bloquea: nunca hay un paso obligatorio.</p>
+      </div>
+
+    </div>
+
+    <div style="background:var(--surface-1);border-radius:20px;padding:24px;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Los cinco estados, vista por vista</div>
+      <div style="display:grid;grid-template-columns:80px repeat(5,1fr);gap:10px 16px;font:400 13px/18px var(--font-sans);color:var(--text-secondary);align-items:start">
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Vista</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Vacío</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Cargando</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Error</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Offline</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Con datos</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A2</div>
+        <div>Campo vacío, primario apagado</div>
+        <div>Primario con label "Mandando…", campo bloqueado 400 ms</div>
+        <div>Email mal escrito con la corrección propuesta</div>
+        <div>Banner + "Empezar sin conexión"</div>
+        <div>Email cargado, primario encendido</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A3</div>
+        <div>No aplica: siempre hay un email al que esperar</div>
+        <div>Badge neutro "Esperando el link", contador de reenvío</div>
+        <div>Link vencido · link ya usado · código incorrecto</div>
+        <div>"El link no se pudo mandar", con reintento automático</div>
+        <div>Link abierto: entra sin pantalla intermedia</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A4</div>
+        <div>País no detectado: lista de países con buscador</div>
+        <div>Skeleton en la fila del país, 1 línea</div>
+        <div>Detección fallida = estado vacío, nunca un error</div>
+        <div>Funciona: la tabla de países viene en el bundle</div>
+        <div>Uruguay detectado, un tap</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A5</div>
+        <div>Nada seleccionado; primario apagado</div>
+        <div>Instantáneo, sin red</div>
+        <div>Sin error posible</div>
+        <div>Se guarda local y sube después</div>
+        <div>Una opción en superficie 3</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A6</div>
+        <div>País sin presets: los nueve tipos directo</div>
+        <div>Seis skeletons con la forma de la grilla</div>
+        <div>Preset corrupto → cae al sheet de tipos</div>
+        <div>Presets precacheados en A2; badge "guardado en el teléfono"</div>
+        <div>Seis presets + buscar</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A7</div>
+        <div>$ 0 en tinta muted, botón "Empezar en cero"</div>
+        <div>No hay carga: es entrada local</div>
+        <div>Sin error posible</div>
+        <div>Se guarda local</div>
+        <div>$ 12.500 en tinta primaria, sin signo</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A11</div>
+        <div>No aplica</div>
+        <div>Skeleton de la cifra si la cuenta todavía no confirmó</div>
+        <div>Si falló la creación: se creó local, "se sube sola"</div>
+        <div>Igual, con SyncDot en offline</div>
+        <div>Cuenta creada, CTA gigante</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--primary-ink)">03 · Abandono y regreso</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">El que se fue a atender el timbre</h2>
+      <p style="margin:4px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:760px">Si abandona en cualquier punto después de A2, al volver no ve un solo paso de onboarding. Entra al home con una cuenta Efectivo ya creada y saldo 0.</p>
+    </div>
+
+    <div style="display:flex;gap:28px;align-items:flex-start">
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">B2′</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Regreso · home vacío</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" hint-size="100%,56px" title="Inicio" show-scope="{{ falseVal }}" sync-state="synced"></x-import>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:24px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Patrimonio neto</div>
+            <div style="height:8px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" hint-size="100%,44px" value="{{ n0 }}" currency="UYU" size="hero" polarity="neutral" show-sign="{{ falseVal }}"></x-import>
+            <div style="height:8px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Efectivo · tu única cuenta por ahora</div>
+            <div style="height:32px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" hint-size="100%,220px" icon="list" message="Todavía no cargaste ningún gasto. Empezá por el último que hiciste." action-label="Cargar un gasto"></x-import>
+            <div style="margin-top:auto;padding-bottom:96px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Terminá de configurar" meta="Tu moneda, tus cuentas y los módulos · 1 minuto" icon="chevron" variant="navigation"></x-import>
+            </div>
+          </div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" hint-size="100%,64px" active="inicio"></x-import>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Nada de "te faltan 3 pasos": una fila discreta, sin badge y sin color.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">A4′</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Retomar desde Ajustes</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" hint-size="100%,56px" title="Terminá de configurar" show-scope="{{ falseVal }}" on-back="{{ noop }}"></x-import>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:16px"></div>
+            <p style="margin:0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Lo que quedó a medias, en el orden en que conviene. Todo es opcional.</p>
+            <div style="height:16px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Tu moneda" meta="Hoy: peso uruguayo, detectado" variant="navigation"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Con quién la usás" meta="Hoy: solo" variant="navigation"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Tus cuentas" meta="Efectivo · $ 0" variant="navigation"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Categorías" meta="Básica, 8 categorías" variant="navigation"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" hint-size="100%,56px" label="Módulos" meta="Todos apagados" variant="navigation"></x-import>
+            <div style="margin-top:auto;padding-bottom:34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Cargar un gasto</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Los pasos que salieron del camino crítico viven acá, como filas, no como flujo.</p>
+      </div>
+
+      <div style="width:520px;flex:none;background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Anotaciones · abandono</div>
+        <div style="display:flex;flex-direction:column;gap:12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+          <div><strong style="color:var(--text-primary)">13</strong> El household, la moneda del locale y la cuenta "Efectivo" se crean al validar A3, no al terminar A7. Desde ese instante la app es usable, aunque no vuelva nunca al setup.</div>
+          <div><strong style="color:var(--text-primary)">14</strong> Al reabrir, ninguna pantalla del setup se muestra de nuevo, ni siquiera la que quedó a medias. El progreso parcial se guarda pero no se reclama.</div>
+          <div><strong style="color:var(--text-primary)">15</strong> La fila "Terminá de configurar" desaparece sola después del quinto gasto cargado o si el usuario la descarta. Nunca hay badge rojo ni contador.</div>
+          <div><strong style="color:var(--text-primary)">16</strong> El home vacío tiene una sola acción real: cargar un gasto. La fila de configuración es navegación, no acción primaria.</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)"><strong style="color:var(--text-primary)">Chequeo de ruido.</strong> B2′: 4 interactivos (header, empty, fila, tab bar como chrome no cuenta) · 3 niveles · 1 violeta (el FAB). A4′: 6 filas homogéneas = 1 grupo + primario = 2 · 3 niveles · 1 violeta. Cumplen.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <sc-if value="{{ showOffPath }}" hint-placeholder-val="{{ trueVal }}">
+  <section style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">04 · Fuera del camino crítico</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">Diseñadas, pero no en el medio</h2>
+      <p style="margin:4px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:760px">Cada una con dónde se ofrece. Ninguna aparece entre el signup y el primer gasto.</p>
+    </div>
+
+    <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font:600 13px/18px var(--font-sans)">A1</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Welcome</span>
+          <span style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:2px 10px">Fuera · sólo primera apertura desde la web</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="height:56px;display:flex;align-items:center;justify-content:flex-end;padding:0 20px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saltear</div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:80px"></div>
+            <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em;max-width:300px;text-wrap:pretty">Cargar un gasto: cinco segundos.</div>
+            <p style="margin:16px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:300px;text-wrap:pretty">Sin formularios, sin teclado del sistema, sin conexión si hace falta.</p>
+            <div style="height:40px"></div>
+            <div style="background:var(--surface-1);border-radius:20px;height:280px;display:flex;align-items:center;justify-content:center;font:400 13px/18px var(--font-sans);color:var(--text-muted)">Demo del keypad en loop, 3 s</div>
+            <div style="margin-top:auto;padding-bottom:34px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;gap:6px;justify-content:center">
+                <div style="width:24px;height:4px;border-radius:999px;background:var(--text-primary)"></div>
+                <div style="width:8px;height:4px;border-radius:999px;background:var(--border)"></div>
+                <div style="width:8px;height:4px;border-radius:999px;background:var(--border)"></div>
+              </div>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Empezar</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px"><strong style="color:var(--text-primary)">Dónde se ofrece:</strong> sólo si la app se abre sin sesión y sin haber venido de un link de invitación. El que llega desde la web ya vio la promesa; va directo a A2.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font:600 13px/18px var(--font-sans)">A8</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Plantilla de categorías</span>
+          <span style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:2px 10px">Fuera · Ajustes y tercer gasto</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" hint-size="100%,56px" title="Categorías" show-scope="{{ falseVal }}" on-back="{{ noop }}"></x-import>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:16px"></div>
+            <p style="margin:0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Arrancaste con la básica. Cambiala cuando quieras: no se pierde nada de lo cargado.</p>
+            <div style="height:20px"></div>
+            <div style="background:var(--surface-3);border-radius:20px;padding:20px;box-shadow:inset 0 0 0 2px var(--border);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <div style="font:600 16px/24px var(--font-sans)">Básica</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">8 categorías</div>
+              </div>
+              <div style="display:flex;gap:14px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="cart" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="food" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="car" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="home" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="pharmacy" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="coffee" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="fuel" size="20"></x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="20px,20px" name="tag" size="20"></x-import>
+              </div>
+            </div>
+            <div style="height:10px"></div>
+            <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <div style="font:500 16px/24px var(--font-sans);color:var(--text-secondary)">Completa</div>
+                <div style="font:400 13px/18px var(--font-sans);color:var(--text-muted)">20 categorías</div>
+              </div>
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-muted)">Con subcategorías de supermercado, transporte y salud.</div>
+            </div>
+            <div style="height:10px"></div>
+            <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 16px/24px var(--font-sans);color:var(--text-secondary)">Empezar de cero</div>
+              <div style="font:400 13px/18px var(--font-sans);color:var(--text-muted)">Las creás vos, a medida que cargás.</div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Guardar</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px"><strong style="color:var(--text-primary)">Dónde se ofrece:</strong> Ajustes → Categorías, y como fila en "Terminá de configurar". La plantilla básica se aplica sola: elegir categorías antes de tener un gasto es pedirle al usuario que adivine.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font:600 13px/18px var(--font-sans)">A9</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Módulos · los seis</span>
+          <span style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:2px 10px">Fuera · Ajustes → Módulos</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" hint-size="100%,56px" title="Módulos" show-scope="{{ falseVal }}" on-back="{{ noop }}"></x-import>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:12px"></div>
+            <p style="margin:0;font:400 16px/24px var(--font-sans);color:var(--text-secondary)">Lo que está apagado no aparece en ningún lado. Prendé sólo lo que vayas a usar.</p>
+            <div style="height:16px"></div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Presupuestos</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Un límite por categoría y cuánto te queda por día.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px"></x-import>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Metas</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Ahorrar para algo, con fecha estimada de llegada.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px"></x-import>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Recurrentes</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Suscripciones y débitos, con aviso de aumentos.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px"></x-import>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Deudas y cuotas</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Planes de cuotas y préstamos, con lo comprometido.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px"></x-import>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Inversiones</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Portfolio, operaciones y rendimiento.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px"></x-import>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;padding:12px 4px">
+                <div style="flex:1"><div style="font:400 16px/24px var(--font-sans)">Grupo familiar</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Encendido porque dijiste que la usás con tu pareja.</div></div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" hint-size="46px,28px" checked="{{ trueVal }}"></x-import>
+              </div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Si apagás uno, sus datos quedan guardados y vuelven intactos al prenderlo.</div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px"><strong style="color:var(--text-primary)">Dónde se ofrece:</strong> Ajustes → Módulos, y como insight cuando el uso lo pide ("cargaste 4 cuotas: ¿prendemos deudas?"). Grupo familiar llega ya encendido desde A5, visible y apagable.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font:600 13px/18px var(--font-sans)">A10</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Instalar la app</span>
+          <span style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:2px 10px">Movida · después del primer gasto</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;padding:0 20px;opacity:.45;display:flex;flex-direction:column">
+            <div style="height:24px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Patrimonio neto</div>
+            <div style="height:8px"></div>
+            <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em">$ 11.630</div>
+            <div style="height:24px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" hint-size="100%,64px" icon="cart" merchant="Disco" meta="Efectivo · Supermercado" value="{{ nGasto }}" currency="UYU"></x-import>
+          </div>
+          <div style="position:absolute;inset:0;background:var(--scrim)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface-2);border-radius:28px 28px 0 0;box-shadow:var(--shadow-sheet);padding:12px 20px 34px;display:flex;flex-direction:column;gap:16px">
+            <div style="width:36px;height:4px;border-radius:999px;background:var(--border);align-self:center"></div>
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Tenela a un toque</div>
+            <div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Instalada, se abre sin navegador, anda sin señal y podés cargar un gasto desde el ícono sin abrirla del todo.</div>
+            <div style="background:var(--surface-3);border-radius:20px;padding:16px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">En iPhone: tocá <strong style="color:var(--text-primary)">Compartir</strong> y después <strong style="color:var(--text-primary)">Agregar a inicio</strong>.</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Instalar</x-import>
+            <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Ahora no</div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px"><strong style="color:var(--text-primary)">Dónde se ofrece:</strong> al volver al home después del primer gasto guardado, una sola vez. Si dice "ahora no", vuelve recién al décimo gasto. En Android el botón dispara el prompt nativo; en iOS Safari se muestran las instrucciones y el botón dice "Entendido".</p>
+      </div>
+
+    </div>
+  </section>
+  </sc-if>
+
+  <section style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--primary-ink)">05 · L6 · Bloqueo</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">Escribir no revela nada; leer sí</h2>
+      <p style="margin:4px 0 0;font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:760px">Opcional y apagado por defecto. Con el bloqueo encendido, la captura queda pre-auth: shortcut, share target y widget entran directo al keypad. El gate aparece recién al querer ver saldos, movimientos o análisis.</p>
+    </div>
+
+    <div style="display:flex;gap:28px;align-items:flex-start">
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">L6a</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Gate al abrir para leer</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:80px"></div>
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.02em;text-align:center">PERZE</div>
+            <div style="height:24px"></div>
+            <div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-align:center">Ingresá tu PIN para ver tus saldos</div>
+            <div style="height:28px"></div>
+            <div style="display:flex;gap:16px;justify-content:center">
+              <div style="width:14px;height:14px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="width:14px;height:14px;border-radius:999px;background:var(--text-primary)"></div>
+              <div style="width:14px;height:14px;border-radius:999px;background:var(--surface-3)"></div>
+              <div style="width:14px;height:14px;border-radius:999px;background:var(--surface-3)"></div>
+            </div>
+            <div style="height:40px"></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">1</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">2</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">3</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">4</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">5</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">6</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">7</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">8</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">9</div>
+              <div style="height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Face ID</div>
+              <div style="height:64px;border-radius:20px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;font:500 32px/32px var(--font-mono,monospace)">0</div>
+              <div style="height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" hint-size="24px,24px" name="backspace" size="24"></x-import></div>
+            </div>
+            <div style="margin-top:auto;padding-bottom:34px;text-align:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Cargar un gasto sin desbloquear</div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Hasta el gate ofrece salida a la captura: bloquear no puede costar la acción principal.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">L6b</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Captura pre-auth · shortcut, share, widget</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:8px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" hint-size="220px,26px" status="neutral" icon="eye-off" style="align-self:flex-start">Modo captura · saldos ocultos</x-import>
+            <div style="height:20px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Nuevo gasto</div>
+            <div style="height:12px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" hint-size="100%,64px" value="{{ n0 }}" currency="UYU" size="hero-xl" polarity="neutral" show-sign="{{ falseVal }}"></x-import>
+            <div style="height:8px"></div>
+            <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Efectivo · saldo oculto</div>
+            <div style="height:20px"></div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" hint-size="100%,460px" on-key="{{ noop }}"></x-import>
+            <div style="margin-top:auto;padding:16px 0 34px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Siguiente</x-import>
+            </div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">Escribir no revela nada: no hay saldo, ni lista, ni patrimonio. Sólo el nombre de la cuenta.</p>
+      </div>
+
+      <div style="width:390px;flex:none">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+          <span style="font:600 13px/18px var(--font-sans)">L6c</span>
+          <span style="font:400 13px/18px var(--font-sans);color:var(--text-secondary)">Guardado y gate al leer</span>
+        </div>
+        <div style="width:390px;height:844px;background:var(--page);border:1px solid var(--border);border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)"><span>9:41</span><span>▮▮▮</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;padding:0 20px">
+            <div style="height:16px"></div>
+            <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Patrimonio neto</div>
+            <div style="height:8px"></div>
+            <div style="font:600 40px/44px var(--font-sans);letter-spacing:-.015em;filter:blur(8px);width:200px">$ 11.630</div>
+            <div style="height:24px"></div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:999px;background:var(--surface-1)"></div><div style="flex:1"><div style="font:400 16px/24px var(--font-sans);filter:blur(8px);width:120px">Disco</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);filter:blur(8px);width:90px">Efectivo</div></div><div style="font:500 16px/24px var(--font-mono,monospace);filter:blur(8px)">− $ 870</div></div>
+              <div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:999px;background:var(--surface-1)"></div><div style="flex:1"><div style="font:400 16px/24px var(--font-sans);filter:blur(8px);width:140px">Pedidos Ya</div><div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);filter:blur(8px);width:90px">Efectivo</div></div><div style="font:500 16px/24px var(--font-mono,monospace);filter:blur(8px)">− $ 640</div></div>
+            </div>
+          </div>
+          <div style="position:absolute;inset:0;background:var(--scrim)"></div>
+          <div style="position:absolute;left:20px;right:20px;bottom:34px;display:flex;flex-direction:column;gap:16px">
+            <div style="font:600 22px/28px var(--font-sans);letter-spacing:-.01em">Tu gasto quedó guardado</div>
+            <div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Para ver saldos y movimientos necesitás desbloquear. Cargar otro gasto no.</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" hint-size="100%,56px" variant="primary">Desbloquear con Face ID</x-import>
+            <div style="height:44px;display:flex;align-items:center;justify-content:center;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Cargar otro gasto</div>
+          </div>
+        </div>
+        <p style="margin:10px 0 0;font:400 13px/18px var(--font-sans);color:var(--text-secondary);max-width:390px">El blur de privacidad es el mismo de la app (8 px), no una pantalla aparte.</p>
+      </div>
+
+      <div style="width:520px;flex:none;background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Anotaciones · L6</div>
+        <div style="display:flex;flex-direction:column;gap:12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+          <div><strong style="color:var(--text-primary)">17</strong> Apagado por defecto. Se enciende en Ajustes → Seguridad, con una línea que explica exactamente esto: "El bloqueo tapa lo que se lee. Cargar un gasto sigue siendo directo."</div>
+          <div><strong style="color:var(--text-primary)">18</strong> Pre-auth alcanza a: shortcut de la PWA, share target, widget de Android y notificación persistente. Los cuatro caen en el keypad de C1 sin pasar por el gate.</div>
+          <div><strong style="color:var(--text-primary)">19</strong> Lo que queda del otro lado del gate: saldos, patrimonio, lista de movimientos, análisis, cuentas y ajustes. La transacción recién guardada se puede editar durante 60 s sin desbloquear; después, no.</div>
+          <div><strong style="color:var(--text-primary)">20</strong> Biometría primero, PIN como alternativa siempre visible. Tres PIN errados = espera de 30 s, nunca borrado de datos.</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)"><strong style="color:var(--text-primary)">Chequeo de ruido.</strong> L6a: 3 grupos (teclado = 1, Face ID, salida) · 3 niveles · 0 violeta. L6b: 3 (badge no es tocable… se saca del conteo) · 3 niveles · 1 violeta. L6c: 2 · 3 niveles · 1 violeta. Cumplen.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:24px;max-width:1240px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--primary-ink)">06 · Presupuesto de tiempo</div>
+      <h2 style="margin:0;font:600 22px/28px var(--font-sans)">El recuento, con el tiempo de escritura adentro</h2>
+    </div>
+
+    <div style="background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:70px 1fr 90px 70px 90px;gap:10px 16px;font:400 13px/18px var(--font-sans);color:var(--text-secondary);align-items:baseline">
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Paso</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Qué hace el usuario</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Segundos</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Taps</div>
+        <div style="font:500 11px/16px var(--font-sans);text-transform:uppercase;color:var(--text-muted)">Decisiones</div>
+
+        <div style="color:var(--text-primary);font-weight:500">A2</div><div>Leer, tipear vale.mendez@gmail.com (21 caracteres), enviar</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">18,5</div><div style="font-family:var(--font-mono,monospace)">2</div><div style="font-family:var(--font-mono,monospace)">0</div>
+        <div style="color:var(--text-primary);font-weight:500">A3</div><div>Salir al mail, encontrar el mensaje, abrir el link</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">15,0</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">0</div>
+        <div style="color:var(--text-primary);font-weight:500">A4</div><div>Leer el país detectado, confirmar</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">4,0</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">1</div>
+        <div style="color:var(--text-primary);font-weight:500">A5</div><div>Leer tres opciones, elegir, seguir</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">5,0</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">1</div>
+        <div style="color:var(--text-primary);font-weight:500">A6</div><div>Barrer seis presets, tocar uno</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">5,5</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">1</div>
+        <div style="color:var(--text-primary);font-weight:500">A7</div><div>Tipear 12500 en el keypad y confirmar</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">6,0</div><div style="font-family:var(--font-mono,monospace)">1<span style="color:var(--text-muted)"> +5</span></div><div style="font-family:var(--font-mono,monospace)">0</div>
+        <div style="color:var(--text-primary);font-weight:500">A11</div><div>Leer, tocar "Cargar mi primer gasto"</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">3,0</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">0</div>
+        <div style="color:var(--text-primary);font-weight:500">C1</div><div>Tipear 870 y seguir</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">4,0</div><div style="font-family:var(--font-mono,monospace)">1<span style="color:var(--text-muted)"> +3</span></div><div style="font-family:var(--font-mono,monospace)">0</div>
+        <div style="color:var(--text-primary);font-weight:500">C2</div><div>Tocar el chip "Supermercado" — guarda</div><div style="font-family:var(--font-mono,monospace);font-variant-numeric:tabular-nums">2,0</div><div style="font-family:var(--font-mono,monospace)">1</div><div style="font-family:var(--font-mono,monospace)">1</div>
+
+        <div style="color:var(--text-primary);font-weight:600">Total</div><div style="color:var(--text-primary)">Tiempo activo del usuario</div><div style="font-family:var(--font-mono,monospace);color:var(--text-primary);font-weight:600">63,0</div><div style="font-family:var(--font-mono,monospace);color:var(--text-primary);font-weight:600">9<span style="color:var(--text-muted)"> +8</span></div><div style="font-family:var(--font-mono,monospace);color:var(--text-primary);font-weight:600">4</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:10px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+        <div><strong style="color:var(--text-primary)">Los 9 taps y las 4 decisiones del mapa cierran.</strong> Los 60 segundos, no: al recontar con tipeo real dan 63 de tiempo activo, y encima hay latencia que no controlamos.</div>
+        <div><strong style="color:var(--text-primary)">Latencia de entrega del email:</strong> +12 s en la mediana, +35 s en el percentil 90. Total realista: <strong style="color:var(--text-primary)">75-78 s en p50</strong> y <strong style="color:var(--text-primary)">98-100 s en p90</strong>. En p90 el objetivo se rompe.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:24px;align-items:stretch;flex-wrap:wrap">
+      <div style="flex:1;min-width:440px;background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Qué más hay que sacar, en orden</div>
+        <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+          <div><strong style="color:var(--text-primary)">1 · Google y Apple pasan a ser el camino visualmente principal, y el magic link la alternativa.</strong> Saca los 18,5 s de tipeo y los 15 + 12 de espera. El bloque baja a <strong style="color:var(--text-primary)">35 s</strong> y el objetivo se cumple con margen. Es el único cambio que resuelve el p90.</div>
+          <div><strong style="color:var(--text-primary)">2 · Si el email tiene que seguir siendo el default, precargar A4-A6 durante la espera</strong> y dejar el código de 6 dígitos con autofill como está diseñado. Ahorra 6-8 s de la reentrada, no la espera.</div>
+          <div><strong style="color:var(--text-primary)">3 · A7 sale del camino crítico.</strong> El saldo inicial se pide después del primer gasto, en la misma pantalla donde hoy se ofrece A10. −6 s, −1 paso, y el primer contacto con el keypad pasa a ser el gasto real, que es más motivante que declarar cuánta plata tenés.</div>
+          <div><strong style="color:var(--text-primary)">No tocar:</strong> A5 (1 tap, decide un módulo entero) ni A6 (sin cuenta no hay gasto). Sacarlas ahorra 10 s y crea dos pantallas de reparación después.</div>
+          <div style="color:var(--text-primary)">Con 1 y 3 aplicados: <strong>35 s en p50, 48 s en p90.</strong> Sin ellos, el bloque cumple en la mediana y falla en la cola.</div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:440px;background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">Deuda de biblioteca · resuelto sin tocar el bundle</div>
+        <div style="font:400 13px/18px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:10px">
+          <div><strong style="color:var(--text-primary)">OptionCard</strong> — opción grande seleccionable por superficie, con título y una línea. La usé en A5 y A8 y la armé a mano tres veces. Es el hueco más caro del bloque.</div>
+          <div><strong style="color:var(--text-primary)">ProgressSteps</strong> — la barra de 4 segmentos de 3 px con "Saltear". Hoy es markup repetido en cinco pantallas.</div>
+          <div><strong style="color:var(--text-primary)">OtpInput</strong> — las seis casillas con autofill de A3.</div>
+          <div><strong style="color:var(--text-primary)">PinKeypad</strong> — variante del Keypad sin operadores ni coma, con puntos de progreso. El Keypad del sistema no sirve para un PIN.</div>
+          <div><strong style="color:var(--text-primary)">InstitutionTile</strong> — preset de banco o billetera, con slot de logo. Hoy va con ícono genérico "bank"/"wallet", que hace que BROU e Itaú se vean iguales.</div>
+          <div><strong style="color:var(--text-primary)">Íconos que faltan en el set:</strong> mail, lock, fingerprint / Face ID, install / download, flag / globe. Los reemplacé por texto o por el ícono más cercano (eye-off para privacidad, clock para espera).</div>
+          <div><strong style="color:var(--text-primary)">Sheet embebido</strong> — el Sheet del bundle es overlay de viewport; para maquetar dentro de un frame de 390×844 lo dibujé con los mismos tokens (superficie 2, radio 28, scrim 60%, sombra de sheet).</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface-1);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:10px">
+      <div style="font:500 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)">La vista peor resuelta</div>
+      <div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:900px;text-wrap:pretty"><strong style="color:var(--text-primary)">A3.</strong> Es una pantalla de espera que compite con el cliente de mail, y ninguna decisión de diseño la arregla: el usuario se va de la app y vuelve, o no vuelve. Le puse un badge neutro, un contador de reenvío y el código de 6 dígitos, y sigue siendo el único lugar del bloque donde el producto no controla su propio tiempo. La solución no es visual — es que el magic link deje de ser el camino principal.</div>
+    </div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1800,&quot;height&quot;:1100},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;,&quot;section&quot;:&quot;Vista&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Vista&quot;},&quot;showOffPath&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Vista&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.theme ?? 'dark',
+      falseVal: false,
+      trueVal: true,
+      showAnnotations: this.props.showAnnotations ?? true,
+      showOffPath: this.props.showOffPath ?? true,
+      noop: () => {},
+      tipos: ['Gasto', 'Ingreso', 'Transferencia'],
+      n0: 0,
+      n12500: 12500,
+      n8400: 8400,
+      nGasto: -870
+    };
+  }
+}
+</script>
+</body>
+</html>

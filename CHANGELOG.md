@@ -34,27 +34,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 Todos los segmentos de URL bajo `src/app/` pasan de español a inglés — cambia el path, no
 las pantallas ni los textos de la interfaz (que siguen en `next-intl`, ES/EN/PT):
 
-| Antes | Ahora |
-|---|---|
-| `/agregar`, `(.)agregar` (interceptada) | `/add`, `(.)add` |
-| `/cuentas` | `/accounts` |
-| `/cuentas/nueva` | `/accounts/new` |
-| `/cuentas/[id]/editar` | `/accounts/[id]/edit` |
-| `/cuentas/[id]/conciliar` | `/accounts/[id]/reconcile` |
-| `/cuentas/resolver-fx` | `/accounts/resolve-fx` |
-| `/movimientos` | `/transactions` |
-| `/movimientos/[id]/editar` | `/transactions/[id]/edit` |
-| `/movimientos/calendario` | `/transactions/calendar` |
-| `/mas` | `/more` |
-| `/monedas` | `/currencies` |
-| `/analisis` | `/analytics` |
-| `/buscar` | `/search` |
-| `/onboarding/pais` | `/onboarding/country` |
-| `/onboarding/uso` | `/onboarding/usage` |
-| `/onboarding/cuenta` | `/onboarding/account` |
-| `/onboarding/exito` | `/onboarding/success` |
-| `/onboarding/completar` | `/onboarding/complete` |
-| `/onboarding/verificar` | `/onboarding/verify` |
+| Antes                                   | Ahora                      |
+| --------------------------------------- | -------------------------- |
+| `/agregar`, `(.)agregar` (interceptada) | `/add`, `(.)add`           |
+| `/cuentas`                              | `/accounts`                |
+| `/cuentas/nueva`                        | `/accounts/new`            |
+| `/cuentas/[id]/editar`                  | `/accounts/[id]/edit`      |
+| `/cuentas/[id]/conciliar`               | `/accounts/[id]/reconcile` |
+| `/cuentas/resolver-fx`                  | `/accounts/resolve-fx`     |
+| `/movimientos`                          | `/transactions`            |
+| `/movimientos/[id]/editar`              | `/transactions/[id]/edit`  |
+| `/movimientos/calendario`               | `/transactions/calendar`   |
+| `/mas`                                  | `/more`                    |
+| `/monedas`                              | `/currencies`              |
+| `/analisis`                             | `/analytics`               |
+| `/buscar`                               | `/search`                  |
+| `/onboarding/pais`                      | `/onboarding/country`      |
+| `/onboarding/uso`                       | `/onboarding/usage`        |
+| `/onboarding/cuenta`                    | `/onboarding/account`      |
+| `/onboarding/exito`                     | `/onboarding/success`      |
+| `/onboarding/completar`                 | `/onboarding/complete`     |
+| `/onboarding/verificar`                 | `/onboarding/verify`       |
 
 - También traducidos, aunque las pantallas todavía no existen: `/inversiones` →
   `/investments`, `/presupuestos` → `/budgets` (`FOURTH_TAB_ROUTE` en `(app)/layout.tsx`)

@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<script src="./ds-base.js"></script>
+<style>html,body{margin:0;background:var(--surface-1)}a{color:var(--primary-ink);text-decoration:none}a:hover{color:var(--text-primary)}</style>
+</helmet>
+<section class="{{ themeClass }}" style="background:var(--surface-1);color:var(--text-primary);font-family:var(--font-sans);padding:56px 64px 96px">
+<div id="1a" style="max-width:1620px;margin:0 auto">
+
+<div style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:var(--surface-2);font:500 12px/16px var(--font-sans);color:var(--text-secondary)">1a · PROMPT D8 · bloques F+G</div>
+<h1 style="font:600 44px/48px var(--font-sans);letter-spacing:-.025em;margin:20px 0 0">Presupuestos, metas, recurrentes y deudas</h1>
+<p style="font:400 18px/28px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:14px 0 0;text-wrap:pretty">Alta fidelidad, modo oscuro, 390×844. Trece pantallas más las cuatro de activación y el sheet de apagado. El objetivo duro del bloque es el arranque en frío: los cuatro módulos van del switch al primer objeto útil creado en dos taps, y ninguna pantalla de activación es un cartel explicativo — todas llegan con la propuesta ya calculada sobre datos que el usuario ya tiene.</p>
+
+<div style="display:flex;gap:20px;margin-top:36px;flex-wrap:wrap">
+<div style="flex:1 1 300px;background:var(--surface-2);border-radius:20px;padding:20px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Arranque en frío</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">Presupuestos — 2 taps.</span> Switch → “Crear estos 6 presupuestos”. Montos propuestos = promedio de los últimos 3 meses cerrados por categoría.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Metas — 2 taps.</span> Switch → “Crear la meta colchón”. Objetivo = 3 meses de tu gasto promedio; ritmo = tu sobrante real.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Recurrentes — 2 taps.</span> Switch → “Confirmar los 5”. Los 5 vienen del detector de repetidos, ya con monto, día y cuenta.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Deudas y cuotas — 2 taps.</span> Switch → “Crear los 2 planes”. Los planes salen de dos compras con tarjeta que ya están cargadas.</div>
+</div>
+</div>
+<div style="flex:1 1 300px;background:var(--surface-2);border-radius:20px;padding:20px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Decisiones aplicadas, no rediscutidas</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div>Apagar oculta, nunca borra; las cuotas en curso siguen descontando porque son movimientos de la cuenta.</div>
+<div>F1: héroe “disponible para gastar hoy” + ritmo; excedidas primero, siempre ícono + label.</div>
+<div>Escala del sistema: warning al 80%, critical al excederlo. Nada intermedio.</div>
+<div>Presupuesto vs. real espera un período cerrado; hasta entonces se muestra cuánto falta.</div>
+<div>Todo agregado excluye <em>needs_fx</em> y muestra el conteo excluido con acceso a resolverlo.</div>
+<div>Dial radial de un pulgar: thumb de 56 px, arco neutro, total en vivo.</div>
+<div>Selección por superficie; el único violeta por pantalla es la acción primaria.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">F · Presupuestos</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Arranque en frío en 2 taps: el switch y “Crear estos 6 presupuestos”. La pantalla de activación ya trae los montos propuestos desde el promedio de abril, mayo y junio cerrados, así que prender el módulo y quedar frente a una lista vacía es imposible.</p>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:32px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F0 · Activar presupuestos <span style="color:var(--text-muted);font-weight:400">— la pantalla de activación ya es la de creación</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Presupuestos" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Presupuestos</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Poné un techo por categoría y seguí el ritmo</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Propuesta según abril, mayo y junio</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="46400" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px;text-wrap:pretty">Es tu gasto promedio de los tres meses cerrados, redondeado. Podés cambiar cualquier monto después.</div>
+<div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="alert" hint-size="auto,22px">3 sin cotización, afuera</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="chevron" hint-size="auto,32px">Resolver</x-import>
+</div>
+</div>
+<div style="padding:16px 20px 0;flex:1;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="cart" label="Supermercado" meta="Promedio $ 17.640" value="$ 18.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="food" label="Comidas afuera" meta="Promedio $ 7.980" value="$ 8.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="car" label="Transporte" meta="Promedio $ 5.870" value="$ 6.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="home" label="Servicios" meta="Promedio $ 7.410" value="$ 7.400" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="coffee" label="Ocio" meta="Promedio $ 4.120" value="$ 4.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="pharmacy" label="Salud" meta="Promedio $ 2.890" value="$ 3.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear estos 6 presupuestos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Ajustar montos primero</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El switch vive acá, no en Ajustes.</span> Se llega desde Más → “Activar más funciones”, y el switch es el tap 1. Al encenderse, el resto de la pantalla ya está calculado: no hay estado “módulo prendido y vacío”.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Tap 2 crea los seis.</span> “Crear estos 6 presupuestos” no abre un wizard: guarda y lleva a F1 con datos. Reversible con Deshacer por 5 segundos, sin diálogo de confirmación.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Promedio → monto redondeado.</span> La columna izquierda muestra el promedio real y la derecha el monto propuesto redondeado al centenar: el usuario ve de dónde sale el número.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · needs_fx en neutro.</span> Los 3 movimientos sin cotización quedan excluidos del promedio y se declaran en badge neutro con acceso a resolverlos. No es una advertencia: es un dato pendiente.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · “Ajustar montos primero”</span> es fantasma y va a F3 con el dial precargado. Es la salida para quien no quiere la propuesta, no el camino principal.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (switch, chip Resolver, lista, primario) · 3 niveles tipográficos (hero 40, body 16, caption 11) · 2 violetas declarados: el switch encendido —estado de un control binario, regla del sistema— y el primario · 0 bordes · 0 íconos decorativos. <span style="color:var(--text-primary)">Cumple, con la excepción del switch ya declarada en el sistema.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0 · vacío — sin historial suficiente</div><dc-import name="StateFrame" title="Presupuestos" kind="empty" icon="chart" message="Todavía no tenés un mes de movimientos para proponerte montos. Prendé el módulo y armá el primero a mano." action="A mano" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0 · cargando</div><dc-import name="StateFrame" title="Presupuestos" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0 · error</div><dc-import name="StateFrame" title="Presupuestos" kind="error" what="No pudimos calcular la propuesta." next="Tus movimientos están guardados. Probá de nuevo o armá el presupuesto a mano." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0 · offline</div><dc-import name="StateFrame" title="Presupuestos" kind="offline" pending="4" offline-msg="Sin conexión — la propuesta usa datos locales." hero-label="Propuesta con datos locales" hero-value="$ 46.400" note="Falta sincronizar 4 movimientos: cuando entren, los montos se recalculan solos." r1="Supermercado" r1meta="Promedio $ 17.640" r1val="$ 18.000" r2="Comidas afuera" r2meta="Promedio $ 7.980" r2val="$ 8.000" r3="Transporte" r3meta="Promedio $ 5.870" r3val="$ 6.000" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F1 · Presupuestos overview <span style="color:var(--text-muted);font-weight:400">— héroe “disponible para gastar hoy” + ritmo</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Presupuestos" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Disponible para gastar hoy</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="950" size="hero" show-sign="{{ false }}" hint-size="140px,44px"></x-import></div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="trend" hint-size="auto,22px">Adelantado $ 6.560</x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Día 19 de 31 · quedan 12</span>
+</div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px">Quedan $ 11.400 de $ 46.400. Sin asignar: $ 2.600.</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="alert" hint-size="auto,22px">3 sin cotización, excluidos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="chevron" hint-size="auto,32px">Resolver</x-import>
+</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Categorías · excedidas primero</div>
+
+<div style="padding:13px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Comidas afuera</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="critical" icon="alert" hint-size="auto,22px">Excedido</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 9.440</span> de $ 8.000 · +$ 1.440</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 15.7% 0 0;border-radius:999px;background:var(--critical)"></div>
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+</div>
+</div>
+
+<div style="padding:15px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Servicios</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="auto,22px">93% del límite</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 6.900</span> de $ 7.400</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 33.4% 0 0;border-radius:999px;background:var(--warning)"></div>
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+</div>
+</div>
+
+<div style="padding:15px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Transporte</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="auto,22px">86% del límite</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 5.160</span> de $ 6.000 · proyección $ 8.420</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 38.6% 0 0;border-radius:999px;background:var(--warning)"></div>
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+<div style="position:absolute;left:99%;top:-2px;height:12px;width:2px;background:var(--text-muted)"></div>
+</div>
+</div>
+
+<div style="padding:15px 0 0">
+<div style="font:400 16px/22px var(--font-sans)">Supermercado</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 12.300</span> de $ 18.000 · proyección $ 20.070</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 51.2% 0 0;border-radius:999px;background:var(--text-secondary)"></div>
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+<div style="position:absolute;left:79.6%;top:-2px;height:12px;width:2px;background:var(--text-muted)"></div>
+</div>
+</div>
+
+<div style="padding:15px 0 0">
+<div style="font:400 16px/22px var(--font-sans)">Ocio</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 1.200</span> de $ 4.000</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 78.6% 0 0;border-radius:999px;background:var(--text-secondary)"></div>
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+<div style="position:absolute;left:35%;top:-2px;height:12px;width:2px;background:var(--text-muted)"></div>
+</div>
+</div>
+
+<div style="padding:15px 0 0">
+<div style="font:400 16px/22px var(--font-sans)">Salud</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:5px">Sin movimientos este mes · $ 3.000 disponibles</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;left:71.4%;top:-4px;height:16px;width:2px;background:var(--text-primary)"></div>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Nuevo presupuesto</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El héroe es una decisión, no un total.</span> “Disponible para gastar hoy” = ($ 46.400 − $ 35.000) ÷ 12 días restantes. Es la única cifra de 40 px de la pantalla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Ritmo al lado del héroe.</span> Al día 19 de 31 te corresponde haber gastado $ 28.440 y gastaste $ 35.000: vas $ 6.560 adelantado. Badge warning con ícono + label; nunca color solo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Orden: excedidas → warning → resto.</span> Comidas afuera va primera por estado, no por monto. Dentro de cada grupo, por porcentaje.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Bullet chart con escala común.</span> El riel es 140% del presupuesto y el tic blanco marca el 100% en la misma posición en todas las filas, así las barras son comparables entre categorías. El tic gris es la proyección a fin de mes.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Escala del sistema, sin inventos.</span> warning al 80% (Servicios 93%, Transporte 86%), critical al excederlo (Comidas afuera 118%). Supermercado, con proyección de $ 20.070 sobre $ 18.000, sigue en neutro: la proyección se informa, no cambia el nivel.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · needs_fx visible y accionable.</span> Los presupuestos son agregados: 3 movimientos sin cotización quedan fuera de todas las barras y el chip lleva a resolverlos. En neutro, porque es un dato pendiente.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Sin tab bar, con back.</span> Las cuatro overviews de módulo se empujan desde Más, así que no llevan tab bar: el FAB no compite con la acción primaria de la pantalla y el único violeta queda siendo “Nuevo presupuesto”, en los últimos 200 px.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (chip Resolver, lista de categorías como grupo, back) · 3 niveles tipográficos (hero 40, body 16, caption 11; el mono de 13 comparte nivel con label) · colores no neutros: critical, warning y el violeta del primario, los tres portando significado · 0 bordes · 0 íconos decorativos. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F1 · vacío — módulo prendido, sin presupuestos</div><dc-import name="StateFrame" title="Presupuestos" kind="empty" icon="chart" message="Todavía no tenés presupuestos. Te propusimos seis con el promedio de tus últimos tres meses." action="Ver propuesta" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F1 · cargando</div><dc-import name="StateFrame" title="Presupuestos" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F1 · error</div><dc-import name="StateFrame" title="Presupuestos" kind="error" what="No pudimos recalcular el gasto del período." next="Los presupuestos y tus movimientos están guardados. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F1 · offline</div><dc-import name="StateFrame" title="Presupuestos" kind="offline" pending="4" hero-label="Disponible para gastar hoy" hero-value="$ 950" note="Calculado con lo que hay en el teléfono. 4 movimientos sin sincronizar todavía no están contados." r1="Comidas afuera" r1meta="Excedido · $ 9.440 de $ 8.000" r1val="118%" r2="Servicios" r2meta="93% del límite" r2val="93%" r3="Transporte" r3meta="86% del límite" r3val="86%" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F2 · Detalle por categoría <span style="color:var(--text-muted);font-weight:400">— sin período cerrado todavía</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Comidas afuera" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gastado en julio</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="9440" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="critical" icon="alert" hint-size="auto,22px">Excedido $ 1.440</x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">de $ 8.000 · quedan 12 días</span>
+</div>
+</div>
+<div style="padding:20px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" hint-size="100%,210px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:600 15px/20px var(--font-sans);color:var(--text-primary)">Acumulado del mes</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="position:relative;height:88px;margin-top:14px">
+<div style="position:absolute;inset:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ f2ideal }}" width="310" height="88" color="var(--text-muted)" hint-size="100%,88px"></x-import></div>
+<div style="position:absolute;inset:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ f2real }}" width="310" height="88" color="var(--data-1)" hint-size="100%,88px"></x-import></div>
+</div>
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;line-height:16px;color:var(--text-muted);margin-top:4px"><span>1 jul</span><span>hoy · $ 9.440</span></div>
+<div style="margin-top:12px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SeriesLegend" series="{{ f2Series }}" layout="inline" hint-size="100%,20px"></x-import></div>
+</x-import>
+</div>
+<div style="padding:16px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Presupuesto vs. real</div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px;text-wrap:pretty">Faltan 12 días para tu primer período cerrado. Cuando cierre julio vas a poder comparar mes contra mes; con dos puntos un gráfico no dice nada.</div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Lo que lo compone · 14 movimientos</div>
+<div style="margin-top:2px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Hoy · Itaú Crédito" value="-890" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Gourmand" meta="Ayer · Mercado Pago" value="-410" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="La Pulpería" meta="Martes 21 · Itaú Crédito" value="-2140" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Ajustar a $ 10.000</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Acumulado vs. línea ideal, dentro del período.</span> Esto sí se puede dibujar el primer mes: son 19 puntos reales contra una recta. Dos series ⇒ leyenda obligatoria y toggle de tabla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El histórico de 6 meses no se dibuja.</span> Decisión cuatro: “presupuesto vs. real” necesita un período cerrado. En lugar de un gráfico de dos puntos, la pantalla dice cuánto falta para tenerlo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Labels directos, no uno por punto.</span> Sólo primero y último (“1 jul”, “hoy · $ 9.440”), en tinta, nunca en el color de la serie.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La acción primaria es la reparación.</span> El monto sugerido ($ 10.000) sale de la proyección, así que el botón resuelve el problema que la pantalla acaba de contar en vez de abrir un formulario.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Sólo 3 movimientos en pantalla</span> con el conteo total en el header de sección; el resto está en Movimientos ya filtrado por categoría y período.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (chip Tabla, card del gráfico, lista) · 4 niveles tipográficos: hero 40, título de card 15/600, body 16, caption 11 — <span style="color:var(--text-primary)">se pasa por uno</span>. Partición propuesta: el título de la card se puede bajar a caption 11 y quedan 3, o el gráfico se mueve a su propia vista con período seleccionable. Recomiendo lo primero. · 1 violeta: el primario.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F2 · vacío — categoría sin gasto</div><dc-import name="StateFrame" title="Salud" kind="empty" icon="pharmacy" message="No cargaste gastos de Salud este mes. Tenés $ 3.000 disponibles." action="Cargar gasto" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F2 · cargando</div><dc-import name="StateFrame" title="Comidas afuera" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F2 · error</div><dc-import name="StateFrame" title="Comidas afuera" kind="error" what="No pudimos armar la curva del mes." next="El total de $ 9.440 es correcto y está guardado. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F2 · offline</div><dc-import name="StateFrame" title="Comidas afuera" kind="offline" pending="2" hero-label="Gastado en julio" hero-value="$ 9.440" note="2 movimientos de esta categoría están guardados en el teléfono y ya suman acá." r1="Pedidos Ya" r1meta="Hoy · pendiente de sincronizar" r1val="− $ 890" r2="Café Gourmand" r2meta="Ayer · pendiente de sincronizar" r2val="− $ 410" r3="La Pulpería" r3meta="Martes 21 · Itaú Crédito" r3val="− $ 2.140" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F3 · Crear presupuesto <span style="color:var(--text-muted);font-weight:400">— dial radial de un pulgar, total en vivo</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nuevo presupuesto" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ f3seg }}" value="Mensual" hint-size="100%,44px"></x-import>
+</div>
+<div style="padding:16px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Total asignado</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="46400" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Sin asignar $ 2.600. Se actualiza mientras arrastrás.</div>
+</div>
+<div style="position:relative;width:260px;height:260px;margin:14px auto 0">
+<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 225deg, var(--text-primary) 0turn 0.30turn, var(--surface-3) 0.30turn 0.75turn, transparent 0.75turn 1turn)"></div>
+<div style="position:absolute;inset:22px;border-radius:50%;background:var(--page)"></div>
+<div style="position:absolute;left:49px;top:-1px;width:56px;height:56px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center">
+<div style="width:14px;height:14px;border-radius:50%;background:var(--text-primary)"></div>
+</div>
+<div style="position:absolute;inset:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Comidas afuera</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="8000" size="hero" show-sign="{{ false }}" hint-size="160px,44px"></x-import>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Promedio $ 7.980</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;overflow:hidden;padding:18px 20px 0">
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;gap:8px;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Comidas afuera <span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary)">8.000</span></div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;gap:8px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Supermercado <span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">18.000</span></div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Transporte</div>
+</div>
+<div style="padding:14px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Rollover</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Lo que no gastás pasa al mes siguiente</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ false }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar presupuesto</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Dial de 260 px, thumb de 56.</span> Muy por encima del mínimo de 44. El recorrido es un arco de 270° que arranca abajo a la izquierda: se cubre entero con el pulgar derecho sin recolocar la mano.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Sin precisión requerida.</span> El paso es de $ 100 y el arco completo son $ 20.000, así que 1 mm ≈ $ 100: es imposible fallar por temblor. Tap largo en el centro abre el keypad para el monto exacto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Dos cifras, un solo nivel.</span> El total de arriba y el monto del dial comparten el nivel hero de 40 px; el total es el que manda (arriba, primero en la lectura) y el del dial vive dentro del control que lo produce. Es el único lugar de la app con dos cifras del mismo tamaño y está declarado como excepción.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Arco en tinta, no en violeta.</span> El único violeta es “Guardar presupuesto”. La selección de categoría en la tira también va por superficie (superficie 3 sobre superficie 2).</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El promedio queda a la vista mientras arrastrás</span> ($ 7.980), que es la única referencia que importa para decidir el techo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Haptic de 8 ms cada $ 500</span> y uno más marcado al pasar por el promedio histórico.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos (segmentado, dial, tira de categorías, switch) + primario · 2 cifras hero — <span style="color:var(--text-primary)">excepción declarada</span>, el dial es el objeto que se está creando · 3 niveles tipográficos · 1 violeta: el primario · 0 bordes.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F3 · vacío — sin categorías con gasto</div><dc-import name="StateFrame" title="Nuevo presupuesto" kind="empty" icon="chart" message="No tenemos promedio de ninguna categoría todavía. Elegí una y poné el techo con el dial." action="Elegir categoría" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F3 · cargando</div><dc-import name="StateFrame" title="Nuevo presupuesto" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F3 · error al guardar</div><dc-import name="StateFrame" title="Nuevo presupuesto" kind="error" what="No pudimos guardar el presupuesto en el servidor." next="Quedó guardado en el teléfono y se sincroniza solo. Podés seguir." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F3 · offline</div><dc-import name="StateFrame" title="Nuevo presupuesto" kind="offline" pending="1" offline-msg="Sin conexión — se guarda local." hero-label="Total asignado" hero-value="$ 46.400" note="El dial funciona igual: los promedios ya estaban en el teléfono." r1="Comidas afuera" r1meta="Promedio $ 7.980" r1val="$ 8.000" r2="Supermercado" r2meta="Promedio $ 17.640" r2val="$ 18.000" r3="Transporte" r3meta="Promedio $ 5.870" r3val="$ 6.000" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F4 · Alerta de excedido <span style="color:var(--text-muted);font-weight:400">— push, insight en el inicio y badge en la tab</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<div style="position:absolute;left:12px;right:12px;top:12px;z-index:2;background:var(--surface-2);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow-sheet)">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font:600 12px/16px var(--font-sans);letter-spacing:-.02em">PERZE</span>
+<span style="font:500 12px/16px var(--font-sans);color:var(--text-muted)">ahora</span>
+</div>
+<div style="font:400 15px/21px var(--font-sans);color:var(--text-primary);margin-top:6px;text-wrap:pretty">Comidas afuera se pasó de $ 8.000. Vas $ 1.440 arriba y quedan 12 días.</div>
+</div>
+<div style="height:96px;flex-shrink:0"></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" scope="Personal" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Disponible para gastar hoy</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="950" size="hero" show-sign="{{ false }}" hint-size="140px,44px"></x-import></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-secondary);margin-top:6px">↓ $ 1.440 por encima del ritmo del mes</div>
+</div>
+<div style="padding:20px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.InsightCard" status="critical" icon="alert" text="Comidas afuera se pasó de $ 8.000. Al ritmo de julio vas a cerrar en $ 15.400." action-label="Ver la categoría" on-dismiss="{{ noop }}" hint-size="100%,140px"></x-import>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+<div style="margin-top:2px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Hoy · Itaú Crédito · Comidas afuera" value="-890" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Disco Punta Carretas" meta="Hoy · Brou Débito · Supermercado" value="-3120" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Pocitos" meta="Ayer · Itaú Crédito · Transporte" value="-2650" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="position:relative">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+<div style="position:absolute;right:38px;top:8px;min-width:18px;height:18px;border-radius:999px;background:var(--critical);color:#FFFFFF;font:600 11px/18px var(--font-sans);text-align:center;padding:0 5px">1</div>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Tres avisos, un solo mensaje.</span> Push, insight card en el inicio y badge en la tab “Más” dicen exactamente lo mismo con las mismas cifras. El push se dispara una vez por categoría por período, nunca por cada gasto que la empuja más arriba.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El insight es critical, no warning.</span> Ya se excedió: algo está mal ahora. Al 80% el mismo lugar muestra el mismo insight en warning y sin push.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Qué pasó, qué implica, qué hacer.</span> Se pasó de $ 8.000 · vas a cerrar en $ 15.400 · ver la categoría. Una sola oración por parte.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Una insight card, nunca un stack.</span> Si hay dos categorías excedidas, la card las agrupa: “2 categorías excedidas · $ 2.310 arriba”.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El badge cuenta categorías, no eventos,</span> y se apaga solo cuando entrás a F1. Se descarta con swipe sobre la card.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (scope switcher, push, insight card con su acción, lista) · 3 niveles tipográficos · no neutros: critical en la card y en el badge, violeta sólo en el FAB · <span style="color:var(--text-primary)">cumple</span>. Nota: el scope switcher usa relleno de marca, así que en el inicio hay 2 violetas — es la excepción ya declarada del sistema para identidad de datos.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F4 · vacío — nada excedido</div><dc-import name="StateFrame" title="Inicio" kind="empty" icon="check" message="Ninguna categoría se pasó este mes. Vas $ 6.560 adelantado del ritmo, nada más." action="Ver presupuestos" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F4 · cargando</div><dc-import name="StateFrame" title="Inicio" kind="loading" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F4 · error</div><dc-import name="StateFrame" title="Inicio" kind="error" what="No pudimos revisar tus presupuestos." next="Los avisos pueden estar atrasados. Tus movimientos están todos guardados." hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F4 · offline</div><dc-import name="StateFrame" title="Inicio" kind="offline" pending="4" offline-msg="Sin conexión — el aviso se calculó local." hero-label="Disponible para gastar hoy" hero-value="$ 950" note="El excedido de Comidas afuera se detecta igual sin conexión: la cuenta se hace en el teléfono." r1="Comidas afuera" r1meta="Excedido $ 1.440" r1val="118%" r2="Pedidos Ya" r2meta="Hoy · pendiente" r2val="− $ 890" r3="Disco Punta Carretas" r3meta="Hoy · pendiente" r3val="− $ 3.120" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">F · Metas de ahorro</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Arranque en frío en 2 taps: el switch y “Crear la meta colchón”. El objetivo no lo inventa el usuario: son tres meses de su gasto promedio real, y el ritmo con el que se proyecta la fecha es su sobrante real de los últimos tres meses.</p>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:32px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F0m · Activar metas <span style="color:var(--text-muted);font-weight:400">— la meta ya viene calculada</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Metas" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Metas</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Guardá para algo y mirá cuánto falta</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Tu colchón de 3 meses</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="139200" size="hero" show-sign="{{ false }}" hint-size="240px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px;text-wrap:pretty">Gastás $ 46.400 por mes y te sobran $ 9.000. Aportando eso llegás en noviembre de 2027.</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="alert" hint-size="auto,22px">2 sin cotización, excluidos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="chevron" hint-size="auto,32px">Resolver</x-import>
+</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Se crea con esto</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="target" label="Colchón de 3 meses" meta="$ 139.200 · aporte de $ 9.000 por mes" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Brou Caja de Ahorro" meta="Cuenta vinculada · saldo $ 31.400" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:18px">O empezá por otra</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Vacaciones" meta="Vos ponés el monto" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="car" label="Cambio de auto" meta="Vos ponés el monto" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear la meta colchón</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Crear una meta desde cero</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Dos taps: switch y “Crear la meta colchón”.</span> El destino es F6, el detalle de la meta ya creada, con el 23% que la cuenta vinculada ya tiene ahorrado. El módulo nunca se estrena vacío.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El monto sale de los datos.</span> 3 × $ 46.400 de gasto promedio. Se explica en una oración y con las dos cifras que la componen a la vista.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · La cuenta se propone sola:</span> la de mayor saldo que no es tarjeta ni efectivo. Eso hace que la meta arranque con progreso real, no en cero.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · needs_fx.</span> El gasto promedio es un agregado: 2 movimientos sin cotización quedan afuera y se declaran en neutro.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Las otras dos plantillas no traen monto</span> porque no hay dato del que deducirlo. Van sin cifra en vez de con una inventada.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (switch, chip Resolver, lista, primario) · 3 niveles tipográficos · 2 violetas: switch encendido (excepción del sistema) y primario · 0 bordes · 0 íconos decorativos. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0m · vacío — sin historial</div><dc-import name="StateFrame" title="Metas" kind="empty" icon="target" message="Todavía no sabemos cuánto gastás por mes, así que no podemos proponerte el colchón. Poné vos el objetivo." action="Crear meta" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0m · cargando</div><dc-import name="StateFrame" title="Metas" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0m · error</div><dc-import name="StateFrame" title="Metas" kind="error" what="No pudimos calcular tu colchón." next="Nada se perdió. Probá de nuevo o poné el monto a mano." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F0m · offline</div><dc-import name="StateFrame" title="Metas" kind="offline" pending="2" hero-label="Tu colchón de 3 meses" hero-value="$ 139.200" note="Se calcula con lo que hay en el teléfono; los saldos de las cuentas pueden estar atrasados." r1="Colchón de 3 meses" r1meta="Aporte de $ 9.000 por mes" r1val="$ 139.200" r2="Brou Caja de Ahorro" r2meta="Último saldo conocido" r2val="$ 31.400" r3="Sobrante mensual" r3meta="Promedio de 3 meses" r3val="$ 9.000" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F5 · Metas <span style="color:var(--text-muted);font-weight:400">— progreso en aqua, fecha calculada con el ritmo real</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Metas" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ahorrado en metas</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="47900" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">de $ 439.200 · 3 metas · aportás $ 9.000 por mes</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="alert" hint-size="auto,22px">2 sin cotización, excluidos</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="chevron" hint-size="auto,32px">Resolver</x-import>
+</div>
+</div>
+<div style="padding:22px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Tus metas</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Colchón de 3 meses</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">23%</span>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 31.400</span> de $ 139.200 · faltan $ 107.800</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 77% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:7px">Llegás en noviembre de 2027</div>
+</div>
+
+<div style="padding:18px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Vacaciones a Búzios</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">28%</span>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px"><span style="color:var(--text-primary)">$ 16.500</span> de $ 60.000 · faltan $ 43.500</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 72% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="serious" icon="clock" hint-size="auto,22px">Llegás 2 meses tarde</x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Querías enero de 2027</span>
+</div>
+</div>
+
+<div style="padding:18px 0 0">
+<div style="font:400 16px/22px var(--font-sans)">Cambio de auto</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:5px">$ 0 de $ 240.000</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px"></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:7px">Sin aportes todavía · poné un aporte mensual para ver la fecha</div>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Nueva meta</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Progreso en aqua, no en violeta.</span> El sistema reserva el aqua para ingresos y progreso; así el único violeta de la pantalla sigue siendo “Nueva meta”. Es la razón por la que acá no se usa <em>BudgetRing</em> — ver panel de deuda.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La fecha no es la que pidió el usuario:</span> es la que da su ritmo real. Cuando llega tarde respecto de la fecha objetivo, lo dice con nivel serious — cambió algo que conviene mirar, pero nada está roto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Una meta sin aportes no muestra fecha.</span> Proyectar con ritmo cero da infinito: se dice qué falta para poder proyectar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El porcentaje va a la derecha del nombre</span> y en mono, para que las tres filas se lean como columna sin separadores.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · needs_fx otra vez:</span> el total ahorrado es un agregado sobre cuentas en dos monedas, así que declara los 2 movimientos sin cotización que quedan afuera.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (chip Resolver, lista de metas, back) + primario en el pie · 3 niveles tipográficos · no neutros: aqua de progreso, serious del atraso, violeta del primario · 0 bordes. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F5 · vacío</div><dc-import name="StateFrame" title="Metas" kind="empty" icon="target" message="Todavía no tenés metas. Te propusimos el colchón de 3 meses con tu gasto promedio." action="Ver propuesta" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F5 · cargando</div><dc-import name="StateFrame" title="Metas" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F5 · error</div><dc-import name="StateFrame" title="Metas" kind="error" what="No pudimos leer los saldos de las cuentas vinculadas." next="Tus metas y tus aportes están guardados. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F5 · offline</div><dc-import name="StateFrame" title="Metas" kind="offline" pending="2" offline-msg="Sin conexión — saldos del último sync." hero-label="Ahorrado en metas" hero-value="$ 47.900" note="Los saldos son los del último sync. Las fechas estimadas se recalculan cuando vuelva la conexión." r1="Colchón de 3 meses" r1meta="23% · faltan $ 107.800" r1val="nov 2027" r2="Vacaciones a Búzios" r2meta="28% · faltan $ 43.500" r2val="mar 2027" r3="Cambio de auto" r3meta="Sin aportes" r3val="—" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F6 · Detalle de meta <span style="color:var(--text-muted);font-weight:400">— con el simulador de aporte</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Colchón de 3 meses" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ahorrado</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="31400" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">de $ 139.200 · faltan $ 107.800</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:12px">
+<div style="position:absolute;inset:0 77% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+</div>
+<div style="display:flex;gap:12px;padding:18px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="Ritmo real" value="$ 9.000" delta-note="por mes, últimos 6" style="flex:1" hint-size="50%,84px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="Llegada" value="nov 2027" delta-note="16 meses" style="flex:1" hint-size="50%,84px"></x-import>
+</div>
+<div style="padding:16px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" hint-size="100%,150px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Si aporto por mes</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AmountScrubber" value="14000" step="500" on-change="{{ noop }}" on-open-keypad="{{ noop }}" hint-size="100%,56px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:10px">Llegás en <span style="color:var(--text-primary)">marzo de 2027</span>, ocho meses antes.</div>
+</x-import>
+</div>
+<div style="padding:16px 20px 0;flex:1;overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Aportes por mes</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.BarChart" data="{{ f6bars }}" height="120" color="var(--data-2)" hint-size="100%,120px"></x-import></div>
+<div style="margin-top:6px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Brou Caja de Ahorro" meta="Cuenta vinculada · $ 31.400" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Aportar a la meta</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El simulador es un scrub, no un formulario.</span> Se arrastra la cifra y la fecha de abajo cambia en vivo. Tap en la cifra abre el keypad. Es el mismo gesto físico del dial de F3.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Ritmo real vs. simulado.</span> El tile de arriba dice lo que efectivamente aportás; la card dice qué pasaría si aportaras otra cosa. Nunca se mezclan en la misma cifra.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Las barras de aportes van en el slot 2 de datos (aqua)</span> porque son ingresos a la meta. Mayo se ve corto solo, sin número encima: labels directos únicamente en el máximo y el último.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Sin celebración acá.</span> La única celebración de la app —12 partículas, 900 ms— se dispara al llegar al 100%, no al aportar.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos (scrubber, chip Tabla, fila de cuenta, primario) · 3 niveles tipográficos (hero 40, body 16, caption 11) · no neutros: aqua de progreso y de la serie, violeta del primario · 0 bordes evitables (las StatTile y la card son superficie, no borde). <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F6 · vacío — meta sin aportes</div><dc-import name="StateFrame" title="Cambio de auto" kind="empty" icon="car" message="Esta meta todavía no tiene aportes. Poné un aporte mensual y te decimos cuándo llegás." action="Definir aporte" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F6 · cargando</div><dc-import name="StateFrame" title="Colchón de 3 meses" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F6 · error</div><dc-import name="StateFrame" title="Colchón de 3 meses" kind="error" what="No pudimos proyectar la fecha de llegada." next="Los $ 31.400 ahorrados están bien. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F6 · offline</div><dc-import name="StateFrame" title="Colchón de 3 meses" kind="offline" pending="1" offline-msg="Sin conexión — el simulador funciona igual." hero-label="Ahorrado" hero-value="$ 31.400" note="El aporte que registres ahora queda guardado en el teléfono y sube a la meta cuando vuelva la conexión." r1="Ritmo real" r1meta="Últimos 6 meses" r1val="$ 9.000" r2="Llegada estimada" r2meta="Con el ritmo actual" r2val="nov 2027" r3="Brou Caja de Ahorro" r3meta="Último saldo conocido" r3val="$ 31.400" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">F7 · Crear meta <span style="color:var(--text-muted);font-weight:400">— una decisión por bloque</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nueva meta" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:8px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Nombre" default-value="Vacaciones a Búzios" hint-size="100%,64px"></x-import>
+</div>
+<div style="padding:18px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ícono</div>
+<div style="display:flex;gap:12px;margin-top:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="invest" label="Viaje" selected="{{ true }}" hint-size="64px,90px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="target" label="Colchón" hint-size="64px,90px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="car" label="Auto" hint-size="64px,90px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CategoryBubble" icon="home" label="Casa" hint-size="64px,90px"></x-import>
+</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto objetivo</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="plus" hint-size="auto,32px">Keypad</x-import>
+</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="60000" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Arrastrá la cifra para ajustar, o abrí el keypad.</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Fecha objetivo · opcional</div>
+<div style="display:flex;gap:8px;margin-top:10px">
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Sin fecha</div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Enero 2027</div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Marzo 2027</div>
+</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:10px">Para llegar en enero necesitás aportar $ 7.250 por mes.</div>
+</div>
+<div style="padding:14px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Brou Caja de Ahorro" meta="Cuenta vinculada · lo que haya acá cuenta" hint-size="100%,56px"></x-import>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear meta</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Nada es obligatorio menos el nombre y el monto.</span> Sin fecha objetivo la meta igual proyecta llegada con el ritmo real.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La fecha se elige por mes, no con un date picker.</span> Tres opciones vienen del cálculo: sin fecha, la que da tu ritmo actual y una más agresiva. Selección por superficie.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · La consecuencia se muestra al elegir:</span> “para llegar en enero necesitás $ 7.250 por mes”. Es el número que decide, y aparece antes de guardar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Cuatro burbujas, no veinte.</span> Las cuatro que las plantillas cubren; el resto está detrás del scroll horizontal del mismo carril.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El monto es keypad o scrub,</span> nunca <code>input type="number"</code>.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">5 interactivos (nombre, burbujas como grupo, cifra+keypad, chips de fecha como grupo, fila de cuenta) + primario — <span style="color:var(--text-primary)">al límite</span>. Si entra un campo más, la fecha objetivo se va a un segundo paso. 1 cifra hero · 3 niveles tipográficos · 1 violeta: el primario (la burbuja seleccionada va por superficie).</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F7 · vacío — pantalla en blanco</div><dc-import name="StateFrame" title="Nueva meta" kind="empty" icon="target" message="Poné un nombre y un monto. Si no sabés cuánto, empezá por el colchón de 3 meses: son $ 139.200." action="Usar colchón" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F7 · cargando</div><dc-import name="StateFrame" title="Nueva meta" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F7 · error</div><dc-import name="StateFrame" title="Nueva meta" kind="error" what="No pudimos crear la meta en el servidor." next="Quedó guardada en el teléfono y se sincroniza sola." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">F7 · offline</div><dc-import name="StateFrame" title="Nueva meta" kind="offline" pending="1" offline-msg="Sin conexión — se guarda local." hero-label="Monto objetivo" hero-value="$ 60.000" note="Se puede crear igual: la meta vive en el teléfono hasta el próximo sync." r1="Nombre" r1meta="Editable después" r1val="Búzios" r2="Fecha objetivo" r2meta="Opcional" r2val="ene 2027" r3="Cuenta vinculada" r3meta="Brou Caja de Ahorro" r3val="$ 31.400" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">G · Recurrentes y suscripciones</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Arranque en frío en 2 taps: el switch y “Confirmar los 5”. Los cinco recurrentes no los escribe el usuario: son movimientos repetidos que el detector ya encontró, con monto, día y cuenta de débito puestos.</p>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:32px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G0r · Activar recurrentes <span style="color:var(--text-muted);font-weight:400">— los cinco ya están detectados</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Recurrentes" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Recurrentes</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Lo que se repite todos los meses, sin cargarlo</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Encontramos 5 que se repiten</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="7940" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px;text-wrap:pretty">Es lo que ya te sale por mes. Las cinco entran; tocá una para dejarla afuera.</div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Netflix" meta="Mensual, día 1 · Itaú Crédito · 6 veces" value="$ 3.100" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="home" label="UTE" meta="Mensual, día 12 · Brou Débito · 6 veces" value="$ 2.150" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wifi" label="Antel" meta="Mensual, día 5 · Brou Débito · 6 veces" value="$ 1.290" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Gimnasio Bio" meta="Mensual, día 3 · Efectivo · 5 veces" value="$ 1.000" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Spotify" meta="Mensual, día 15 · Itaú Crédito · 6 veces" value="$ 400" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Confirmar los 5</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Revisar uno por uno</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Dos taps: switch y “Confirmar los 5”.</span> Cae en G1 con cinco recurrentes y un calendario que ya tiene marcas. Deshacer por 5 segundos, sin confirmación.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Nada de checkboxes.</span> Cinco switches serían cinco violetas. Todo entra por defecto y se saca tocando la fila: menos controles, misma libertad.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · “6 veces” es la evidencia.</span> Cada fila muestra cuántas veces se repitió el movimiento, que es lo que justifica la sugerencia. Sin eso, la lista parece adivinanza.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El día y la cuenta ya vienen puestos</span> desde el histórico, así que el auto-registro puede quedar prendido sin preguntar nada más.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Acá no hay needs_fx:</span> los cinco están en pesos. Si hubiera uno en dólares sin cotización, quedaría afuera del total con el badge neutro de siempre.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (switch, lista como grupo, primario) · 1 cifra hero · 3 niveles tipográficos · 2 violetas: switch encendido (excepción del sistema) y primario · 0 bordes. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0r · vacío — nada detectado</div><dc-import name="StateFrame" title="Recurrentes" kind="empty" icon="refresh" message="Todavía no encontramos movimientos que se repitan. Cargá el primero a mano y lo seguimos nosotros." action="Crear recurrente" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0r · cargando</div><dc-import name="StateFrame" title="Recurrentes" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0r · error</div><dc-import name="StateFrame" title="Recurrentes" kind="error" what="No pudimos buscar movimientos repetidos." next="Podés crear un recurrente a mano igual. Probá de nuevo cuando quieras." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0r · offline</div><dc-import name="StateFrame" title="Recurrentes" kind="offline" pending="3" offline-msg="Sin conexión — detección con datos locales." hero-label="Encontramos 5 que se repiten" hero-value="$ 7.940" note="La detección corre en el teléfono, así que funciona igual sin conexión." r1="Netflix" r1meta="Mensual, día 1 · 6 veces" r1val="$ 3.100" r2="UTE" r2meta="Mensual, día 12 · 6 veces" r2val="$ 2.150" r3="Antel" r3meta="Mensual, día 5 · 6 veces" r3val="$ 1.290" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G1 · Recurrentes <span style="color:var(--text-muted);font-weight:400">— el aumento de precio va en serious</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Recurrentes" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Comprometido por mes</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="7940" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Próximo: Netflix mañana, $ 3.100 de Itaú Crédito.</div>
+</div>
+<div style="padding:18px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.InsightCard" status="serious" icon="trend" text="Netflix pasó de $ 2.400 a $ 3.100 en junio. Son $ 8.400 más por año." action-label="Ver historial" on-dismiss="{{ noop }}" hint-size="100%,140px"></x-import>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Próximos 30 días · $ 7.940</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Netflix" meta="Mañana · Itaú Crédito" value="$ 3.100" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Gimnasio Bio" meta="Domingo 3 · Efectivo" value="$ 1.000" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wifi" label="Antel" meta="Martes 5 · Brou Débito" value="$ 1.290" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="home" label="UTE" meta="Miércoles 12 · Brou Débito" value="$ 2.150" hint-size="100%,56px"></x-import>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:16px">Detectadas, sin confirmar</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="food" label="Pedidos Ya" meta="4 veces en 4 semanas · ¿lo sumamos?" value="$ 890" hint-size="100%,56px"></x-import>
+<div style="margin-top:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="calendar" label="Ver el mes en calendario" meta="Vencimientos de agosto" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Nuevo recurrente</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El aumento es serious, no critical.</span> Cambió algo que conviene mirar y nada se rompió: no hay push, hay una card en la pantalla del módulo. Ícono de tendencia + label, nunca color solo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La card dice el impacto anual</span> ($ 8.400), que es la cifra con la que se decide si cancelás. El delta mensual solo es ruido.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El calendario del mes está a un tap, no en la pantalla.</span> Con el héroe, la card y dos listas ya hay tres trabajos: el cuarto se va a su vista. Es una partición, no una compresión.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Fechas nombradas</span> (“mañana”, “domingo 3”) mientras estén dentro de la semana; después, día y número.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Las detectadas van abajo y sin monto en la cabecera de sección,</span> para que no se sumen visualmente al comprometido: todavía no son recurrentes.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (card+acción, lista de próximos, back, primario) · 1 cifra hero · 3 niveles tipográficos · no neutros: serious de la card y violeta del primario · 0 bordes · 0 íconos decorativos (los de fila abren su detalle). <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G1 · vacío</div><dc-import name="StateFrame" title="Recurrentes" kind="empty" icon="refresh" message="No tenés recurrentes confirmados. Encontramos 5 candidatos en tus movimientos." action="Ver los 5" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G1 · cargando</div><dc-import name="StateFrame" title="Recurrentes" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G1 · error</div><dc-import name="StateFrame" title="Recurrentes" kind="error" what="No pudimos calcular los próximos vencimientos." next="Tus 5 recurrentes están guardados con su día y su cuenta. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G1 · offline</div><dc-import name="StateFrame" title="Recurrentes" kind="offline" pending="1" offline-msg="Sin conexión — próximos calculados local." hero-label="Comprometido por mes" hero-value="$ 7.940" note="Las fechas se calculan en el teléfono. El aviso de aumento de precio necesita conexión y puede estar atrasado." r1="Netflix" r1meta="Mañana · Itaú Crédito" r1val="$ 3.100" r2="Gimnasio Bio" r2meta="Domingo 3 · Efectivo" r2val="$ 1.000" r3="Antel" r3meta="Martes 5 · Brou Débito" r3val="$ 1.290" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G2 · Detalle de recurrente <span style="color:var(--text-muted);font-weight:400">— historial de montos</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Netflix" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Mensual, día 1</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="3100" size="hero" show-sign="{{ false }}" hint-size="160px,44px"></x-import></div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="serious" icon="trend" hint-size="auto,22px">Aumentó 29% en junio</x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">antes $ 2.400</span>
+</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto mes a mes</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.BarChart" data="{{ g2bars }}" height="130" color="var(--data-3)" hint-size="100%,130px"></x-import></div>
+</div>
+<div style="padding:14px 20px 0;flex:1;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="calendar" label="Mensual, día 1" meta="Próximas: 1 ago, 1 sep, 1 oct" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Itaú Crédito" meta="Cuenta de débito · categoría Ocio" hint-size="100%,56px"></x-import>
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Auto-registro</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Se carga solo el día 1, con Deshacer</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" hint-size="100%,64px">Recordarme cancelar</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Editar frecuencia o monto</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El escalón se ve solo.</span> Cuatro barras de $ 2.400 y dos de $ 3.100: el aumento no necesita anotación ni número sobre cada barra. Gasto en naranja, que es el slot de gastos en gráficos.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · “Recordarme cancelar” es un recordatorio, no una baja.</span> PERZE no puede cancelar nada por vos y no lo insinúa: agenda un aviso 3 días antes del próximo cobro.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Cero violetas en esta pantalla.</span> Ninguna acción es la primaria del módulo, así que el botón va secundario y el switch encendido es el único relleno de marca.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El auto-registro se explica en la fila:</span> se carga solo y siempre queda reversible por 5 segundos. Nunca hay un diálogo preguntando si querés registrarlo.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos (chip Tabla, dos filas, switch) + 2 botones en el pie · 1 cifra hero · 3 niveles tipográficos · no neutros: serious del badge, naranja de la serie, violeta del switch · 0 bordes. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G2 · vacío — recién creado, sin historial</div><dc-import name="StateFrame" title="Pedidos Ya" kind="empty" icon="refresh" message="Este recurrente todavía no tiene historial. Después del primer cobro vas a ver el monto mes a mes." action="Ver el origen" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G2 · cargando</div><dc-import name="StateFrame" title="Netflix" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G2 · error</div><dc-import name="StateFrame" title="Netflix" kind="error" what="No pudimos traer el historial de montos." next="El recurrente sigue activo y se va a cobrar el 1 de agosto igual." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G2 · offline</div><dc-import name="StateFrame" title="Netflix" kind="offline" pending="1" offline-msg="Sin conexión — historial del último sync." hero-label="Mensual, día 1" hero-value="$ 3.100" note="El historial es el del último sync. El auto-registro del 1 de agosto se ejecuta local igual." r1="Frecuencia" r1meta="Próxima: 1 ago" r1val="Mensual" r2="Cuenta" r2meta="Categoría Ocio" r2val="Itaú Crédito" r3="Aumento detectado" r3meta="Junio · antes $ 2.400" r3val="+29%" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G3 · Crear recurrente <span style="color:var(--text-muted);font-weight:400">— desde un movimiento que ya existe</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nuevo recurrente" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ g3seg }}" value="Desde un movimiento" hint-size="100%,44px"></x-import>
+</div>
+<div style="padding:16px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" hint-size="100%,124px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Movimiento de origen</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="12 jul · Itaú Crédito · Comidas afuera" value="-890" hint-size="100%,62px"></x-import></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Se repitió 4 veces en las últimas 4 semanas.</div>
+</x-import>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuencia</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Semanal</div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Quincenal</div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Mensual</div>
+<div style="flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Anual</div>
+</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Próxima vez</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.DateStrip" days="{{ g3days }}" value="2026-08-12" hint-size="100%,64px"></x-import></div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AmountScrubber" value="890" step="10" on-change="{{ noop }}" on-open-keypad="{{ noop }}" hint-size="100%,56px"></x-import></div>
+</div>
+<div style="padding:8px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Auto-registro</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Se carga solo cada semana</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear recurrente</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · “Desde un movimiento” es el default</span> y llega con todo cargado: comercio, monto, cuenta, categoría y frecuencia deducida de las 4 repeticiones. Sólo hay que confirmar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Frecuencia como chips, no como constructor de reglas.</span> Semanal viene preseleccionada porque el patrón detectado es semanal; “personalizada” está al final del carril.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Fecha con tira de días y snap,</span> nunca un date picker modal. Selección por superficie.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El monto se arrastra.</span> Un recurrente de delivery no es fijo: el scrub de $ 10 alcanza para ajustar sin abrir el keypad.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · “Desde cero” muestra la misma pantalla sin la card de origen</span> y con el comercio como primer campo. No es otro flujo.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">5 interactivos (segmentado, chips de frecuencia, tira de días, scrubber, switch) + primario — <span style="color:var(--text-primary)">al límite</span>; si entrara categoría editable, se va a un paso 2 · 0 cifras hero (el scrubber es title) · 3 niveles tipográficos · 2 violetas: switch y primario.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G3 · vacío — desde cero</div><dc-import name="StateFrame" title="Nuevo recurrente" kind="empty" icon="refresh" message="Elegí un movimiento de tu historial y lo convertimos en recurrente, o cargá uno nuevo." action="Buscar" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G3 · cargando</div><dc-import name="StateFrame" title="Nuevo recurrente" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G3 · error</div><dc-import name="StateFrame" title="Nuevo recurrente" kind="error" what="No pudimos guardar el recurrente." next="Quedó en el teléfono y se sincroniza solo. El primer cobro ya está agendado." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G3 · offline</div><dc-import name="StateFrame" title="Nuevo recurrente" kind="offline" pending="2" offline-msg="Sin conexión — se guarda local." hero-label="Monto" hero-value="$ 890" note="El movimiento de origen ya estaba en el teléfono, así que se puede crear sin conexión." r1="Origen" r1meta="12 jul · Itaú Crédito" r1val="Pedidos Ya" r2="Frecuencia" r2meta="Detectada en 4 semanas" r2val="Semanal" r3="Próxima vez" r3meta="Auto-registro prendido" r3val="12 ago" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">G · Deudas y cuotas</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Arranque en frío en 2 taps: el switch y “Crear los 2 planes”. Los planes salen de dos compras con tarjeta que ya están en los movimientos, con monto de cuota y cuotas restantes calculadas. Este es el módulo donde apagar tiene consecuencias reales, y están escritas con los números del usuario.</p>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:32px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G0d · Activar deudas y cuotas <span style="color:var(--text-muted);font-weight:400">— desde compras con tarjeta ya cargadas</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Deudas y cuotas" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Deudas y cuotas</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Qué debés, en cuántas cuotas y hasta cuándo</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Ya tenés 2 compras en cuotas</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="24800" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px;text-wrap:pretty">Es lo que se te va por mes en cuotas que ya estás pagando. Las encontramos en tus tarjetas.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="home" label="Heladera Samsung" meta="Tienda Inglesa · 12 cuotas · va la 4 · Itaú Crédito" value="$ 18.500" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Notebook Lenovo" meta="Mercado Pago · 6 cuotas · va la 2" value="$ 6.300" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:16px;text-wrap:pretty">Las cuotas que ya pagaste quedan como están: son movimientos de la tarjeta, no los toca el módulo.</div>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear los 2 planes</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Cargar una deuda a mano</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Dos taps: switch y “Crear los 2 planes”.</span> Se detectan por el patrón “N cuotas” del resumen de tarjeta y por compras iguales repetidas en la misma tarjeta. Cae en G4 con el compromiso de 12 meses ya dibujado.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La cifra héroe es el flujo mensual, no el total adeudado.</span> Al activar, lo que se quiere saber es cuánto te condiciona el mes. El total aparece en G4.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Se dice antes de tocar nada</span> que las cuotas pagas no se modifican. Es la mitad de la decisión uno, dicha en el momento en que importa.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · “Va la 4” en vez de “cuota 4 de 12”</span> en la fila: es más corto y no compite con el monto. El detalle completo está en G5.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (switch, lista, primario) · 1 cifra hero · 3 niveles tipográficos · 2 violetas: switch encendido y primario · 0 bordes · 0 íconos decorativos. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0d · vacío — sin cuotas detectadas</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="empty" icon="wallet" message="No encontramos compras en cuotas en tus tarjetas. Podés cargar una deuda o un préstamo a mano." action="Cargar deuda" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0d · cargando</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0d · error</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="error" what="No pudimos leer las cuotas de Itaú Crédito." next="Tus movimientos de tarjeta están guardados. Probá de nuevo o cargá el plan a mano." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G0d · offline</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="offline" pending="2" offline-msg="Sin conexión — detección con datos locales." hero-label="Ya tenés 2 compras en cuotas" hero-value="$ 24.800" note="Las dos compras estaban en el teléfono, así que los planes se pueden crear sin conexión." r1="Heladera Samsung" r1meta="12 cuotas · va la 4" r1val="$ 18.500" r2="Notebook Lenovo" r2meta="6 cuotas · va la 2" r2val="$ 6.300" r3="Total por mes" r3meta="Hasta diciembre" r3val="$ 24.800" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G4 · Deudas y cuotas <span style="color:var(--text-muted);font-weight:400">— “debo” separado de “me deben” + compromiso a 12 meses</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Deudas y cuotas" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Debo</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="198000" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">14 cuotas por pagar en 2 planes · sin interés · $ 24.800 este mes</div>
+</div>
+<div style="padding:18px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" hint-size="100%,96px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Me deben</div>
+<div style="display:flex;align-items:flex-end;gap:10px;margin-top:6px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12400" size="title" show-sign="{{ false }}" hint-size="120px,28px"></x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary);padding-bottom:3px">Ana · asado de junio</span>
+</div>
+</x-import>
+</div>
+<div style="padding:20px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Próximos 12 meses</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.BarChart" data="{{ g4bars }}" height="118" color="var(--data-3)" hint-size="100%,118px"></x-import></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">$ 24.800 por mes hasta diciembre, después $ 18.500. Libre a partir de mayo.</div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Planes activos</div>
+<div style="padding:12px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Heladera Samsung</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">4 de 12</span>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:4px"><span style="color:var(--text-primary)">$ 18.500</span> por mes · faltan $ 166.500</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 67% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+</div>
+<div style="padding:16px 0 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Notebook Lenovo</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">2 de 6</span>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:4px"><span style="color:var(--text-primary)">$ 6.300</span> por mes · faltan $ 31.500</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:8px">
+<div style="position:absolute;inset:0 67% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Nuevo plan de cuotas</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · “Debo” y “me deben” no comparten escala ni superficie.</span> Lo que debés es la cifra héroe sobre el plano de página; lo que te deben vive en una card de superficie 1, en nivel title. Nunca se restan en una sola cifra “neta”: son dos plata distintas y una depende de otra persona.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Ambas van en tinta neutra, sin signo.</span> Son saldos, no movimientos: el aqua marca polaridad de movimiento y acá no corresponde.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El compromiso a 12 meses es el gráfico que decide.</span> Barras finas ancladas a la baseline, en el slot naranja de gastos, con la lectura en una línea de texto abajo — no un número sobre cada barra. Los tres meses en cero se ven como el final del compromiso.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La barra de cada plan es progreso de pago, en aqua,</span> y el porcentaje va en mono a la derecha del nombre, igual que en Metas: la misma fila resuelve los dos módulos.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Lo que te deben es una sola línea</span> mientras haya un deudor. Con dos o más pasa a ser una lista de dos filas, sin cambiar la jerarquía.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (card de me deben, chip Tabla, lista de planes, back) + primario · 1 cifra hero (title no cuenta como segunda hero) · 4 niveles tipográficos: hero 40, title 22, body 16, caption 11 — <span style="color:var(--text-primary)">se pasa por uno</span>, y es deliberado: el title es lo que separa “me deben” de “debo”. Partición alternativa: mover “me deben” a su propia vista, pero entonces se pierde el contraste que hace entender la pantalla en 3 segundos.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G4 · vacío</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="empty" icon="wallet" message="No tenés deudas cargadas. Si compraste algo en cuotas, lo encontramos en tus tarjetas." action="Buscar cuotas" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G4 · cargando</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G4 · error</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="error" what="No pudimos proyectar los próximos 12 meses." next="Tus dos planes y sus cuotas están guardados. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G4 · offline</div><dc-import name="StateFrame" title="Deudas y cuotas" kind="offline" pending="2" offline-msg="Sin conexión — proyección local." hero-label="Debo" hero-value="$ 198.000" note="Las cuotas se descuentan igual: son movimientos de la tarjeta que ya están agendados en el teléfono." r1="Heladera Samsung" r1meta="Cuota 4 de 12" r1val="$ 18.500" r2="Notebook Lenovo" r2meta="Cuota 2 de 6" r2val="$ 6.300" r3="Me deben · Ana" r3meta="Asado de junio" r3val="$ 12.400" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G5 · Detalle de deuda <span style="color:var(--text-muted);font-weight:400">— cuotas y pago anticipado</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Heladera Samsung" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Saldo pendiente</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="166500" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">9 cuotas de $ 18.500 · sin interés · Itaú Crédito</div>
+<div style="position:relative;height:8px;border-radius:999px;background:var(--surface-3);margin-top:12px">
+<div style="position:absolute;inset:0 75% 0 0;border-radius:999px;background:var(--secondary)"></div>
+</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:7px">Pagaste 3 de 12 · $ 55.500 de $ 222.000</div>
+</div>
+<div style="display:flex;gap:12px;padding:18px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="Interés total" value="$ 0" delta-note="12 cuotas sin recargo" style="flex:1" hint-size="50%,84px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="Última cuota" value="abr 2027" delta-note="dentro de 9 meses" style="flex:1" hint-size="50%,84px"></x-import>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuotas</div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)"><span style="width:22px">01</span><span style="flex:1;font-family:var(--font-sans)">Mayo 2026</span><span>$ 18.500</span><span style="width:76px;text-align:right;font-family:var(--font-sans)">Pagada</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)"><span style="width:22px">02</span><span style="flex:1;font-family:var(--font-sans)">Junio 2026</span><span>$ 18.500</span><span style="width:76px;text-align:right;font-family:var(--font-sans)">Pagada</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)"><span style="width:22px">03</span><span style="flex:1;font-family:var(--font-sans)">Julio 2026</span><span>$ 18.500</span><span style="width:76px;text-align:right;font-family:var(--font-sans)">Pagada</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)"><span style="width:22px">04</span><span style="flex:1;font-family:var(--font-sans)">Agosto 2026</span><span>$ 18.500</span><span style="width:76px;text-align:right;font-family:var(--font-sans);color:var(--text-secondary)">Próxima</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)"><span style="width:22px">05</span><span style="flex:1;font-family:var(--font-sans)">Setiembre 2026</span><span>$ 18.500</span><span style="width:76px;text-align:right"></span></div>
+<div style="margin-top:2px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver las 12 cuotas" variant="action" hint-size="100%,56px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px;text-wrap:pretty">Cada cuota es un movimiento real de Itaú Crédito. Si apagás el módulo, las cuotas siguen descontando.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Pagar anticipado</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · La tabla de amortización es una lista, no una tabla con bordes.</span> Cuatro columnas alineadas en mono, sin separadores: número, mes, monto y estado. El estado es texto, no un badge de color, porque “pagada” no es una alerta.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La próxima cuota es la única fila en tinta primaria.</span> Es la jerarquía por contraste, sin usar color.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Interés $ 0 se muestra igual.</span> En Uruguay muchas compras son sin recargo y verlo explícito es lo que hace confiable el módulo. Con interés, el tile muestra el total y el detalle abre la composición.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · “Pagar anticipado” recalcula y no confirma:</span> ejecuta, muestra el nuevo plan y deja Deshacer 5 segundos. Si el pago anticipado cambia la cantidad de cuotas, lo dice en el toast.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · La línea sobre las cuotas como movimientos reales</span> es la decisión uno dicha en la pantalla donde el usuario podría dudar, no sólo en el sheet de apagado.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (lista de cuotas, “ver las 12”, back) + primario · 1 cifra hero · 3 niveles tipográficos · no neutros: aqua del progreso pagado y violeta del primario · 0 bordes de caja (la tabla se resuelve con alineación). <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G5 · vacío — plan sin cuotas pagas</div><dc-import name="StateFrame" title="Notebook Lenovo" kind="empty" icon="wallet" message="Este plan todavía no tiene cuotas pagas. La primera se debita el 15 de agosto." action="Ver calendario" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G5 · cargando</div><dc-import name="StateFrame" title="Heladera Samsung" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G5 · error</div><dc-import name="StateFrame" title="Heladera Samsung" kind="error" what="No pudimos recalcular el pago anticipado." next="El plan quedó como estaba: 9 cuotas de $ 18.500. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G5 · offline</div><dc-import name="StateFrame" title="Heladera Samsung" kind="offline" pending="1" offline-msg="Sin conexión — plan del último sync." hero-label="Saldo pendiente" hero-value="$ 166.500" note="El pago anticipado necesita conexión porque cambia el plan en el servidor. Todo lo demás se ve igual." r1="Cuota 04" r1meta="Agosto 2026 · próxima" r1val="$ 18.500" r2="Cuota 05" r2meta="Setiembre 2026" r2val="$ 18.500" r3="Interés total" r3meta="12 cuotas sin recargo" r3val="$ 0" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">G6 · Crear plan de cuotas <span style="color:var(--text-muted);font-weight:400">— desde la compra con tarjeta</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Plan de cuotas" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:8px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" hint-size="100%,110px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Compra de origen</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="home" merchant="Tienda Inglesa" meta="12 jul · Itaú Crédito · Hogar" value="-222000" hint-size="100%,62px"></x-import></div>
+</x-import>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuántas cuotas</div>
+<div style="display:flex;gap:8px;margin-top:10px">
+<div style="flex:0 0 auto;min-width:56px;height:56px;padding:0 14px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-secondary)">3</div>
+<div style="flex:0 0 auto;min-width:56px;height:56px;padding:0 14px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-secondary)">6</div>
+<div style="flex:0 0 auto;min-width:56px;height:56px;padding:0 14px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;color:var(--text-primary)">12</div>
+<div style="flex:0 0 auto;min-width:56px;height:56px;padding:0 14px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-secondary)">18</div>
+<div style="flex:0 0 auto;min-width:56px;height:56px;padding:0 14px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-secondary)">24</div>
+</div>
+</div>
+<div style="padding:22px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cada cuota</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18500" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">12 cuotas sin recargo · termina en julio de 2027</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Primera cuota</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.DateStrip" days="{{ g6days }}" value="2026-08-15" hint-size="100%,64px"></x-import></div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Calendario que se genera</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)"><span style="width:22px">01</span><span style="flex:1;font-family:var(--font-sans)">15 de agosto 2026</span><span>$ 18.500</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)"><span style="width:22px">02</span><span style="flex:1;font-family:var(--font-sans)">15 de setiembre 2026</span><span>$ 18.500</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)"><span style="width:22px">…</span><span style="flex:1;font-family:var(--font-sans)">9 cuotas más</span><span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)"><span style="width:22px">12</span><span style="flex:1;font-family:var(--font-sans)">15 de julio 2027</span><span>$ 18.500</span></div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear el plan</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · No se escribe ningún monto.</span> El total lo trae la compra y la cuota sale de dividir: tocando “12” la cifra héroe cambia en vivo. Cero keypad en esta pantalla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Las cuotas son targets de 56 px,</span> en mono para que 3-6-12-18-24 se lean como una escala y no como palabras.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El preview se resume, no se lista completo:</span> primera, segunda, “9 cuotas más” y la última. Con 24 cuotas la pantalla sería un scroll inútil.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La compra de origen queda visible arriba</span> para que se vea que el plan no inventa plata: reparte una compra que ya existe.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Si la tarjeta tiene día de cierre,</span> la tira de fechas ya viene con el vencimiento del resumen preseleccionado, no con “hoy”.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos (chips de cuotas, tira de fechas, primario) · 1 cifra hero · 3 niveles tipográficos · 1 violeta: el primario · 0 bordes · selección por superficie en los dos controles. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G6 · vacío — sin compra de origen</div><dc-import name="StateFrame" title="Plan de cuotas" kind="empty" icon="cart" message="Elegí una compra con tarjeta y la repartimos en cuotas. También podés cargar el plan a mano." action="Elegir compra" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G6 · cargando</div><dc-import name="StateFrame" title="Plan de cuotas" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G6 · error</div><dc-import name="StateFrame" title="Plan de cuotas" kind="error" what="No pudimos generar el calendario de cuotas." next="La compra de $ 222.000 sigue guardada como estaba. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">G6 · offline</div><dc-import name="StateFrame" title="Plan de cuotas" kind="offline" pending="1" offline-msg="Sin conexión — se guarda local." hero-label="Cada cuota" hero-value="$ 18.500" note="La división es una cuenta local: el plan se crea igual y sube en el próximo sync." r1="Compra de origen" r1meta="12 jul · Itaú Crédito" r1val="$ 222.000" r2="Cuotas" r2meta="Sin recargo" r2val="12" r3="Primera" r3meta="Vencimiento del resumen" r3val="15 ago" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:56px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">Apagar un módulo <span style="color:var(--text-muted);font-weight:400">— oculta, nunca borra; una línea por punto afectado, con números reales</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Módulos" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Presupuestos" meta="6 presupuestos activos" value="Prendido" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Metas" meta="3 metas · $ 47.900 ahorrados" value="Prendido" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Recurrentes" meta="5 recurrentes · $ 7.940 por mes" value="Prendido" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Deudas y cuotas" meta="2 planes · 14 cuotas por pagar" value="Apagando" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Se oculta, no se borra" on-close="{{ noop }}" hint-size="100%,470px">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Podés volver a prenderlo cuando quieras y todo vuelve como está. Mientras esté apagado:</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;font:400 15px/22px var(--font-sans);color:var(--text-primary)">
+<div>Tus 2 planes quedan guardados: Heladera Samsung (cuota 4 de 12) y Notebook Lenovo (cuota 2 de 6).</div>
+<div>Las 14 cuotas que faltan <span style="font-weight:500">siguen descontando</span> de Itaú Crédito y Mercado Pago: $ 24.800 este mes. Son movimientos de la cuenta, no del módulo.</div>
+<div>Los $ 12.400 que te debe Ana dejan de aparecer en Más.</div>
+<div>Se apagan 3 avisos de vencimiento y el aviso de cierre de Itaú Crédito.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" hint-size="100%,64px">Apagar deudas y cuotas</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Dejarlo prendido</x-import>
+</div>
+</x-import>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El título es la promesa, no la pregunta.</span> “Se oculta, no se borra” en vez de “¿Estás seguro?”. La acción es reversible, así que no hay diálogo de confirmación: hay una explicación con un botón.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Una línea por punto afectado, con los números del usuario.</span> Nombres de los planes, número de cuota, monto del mes, cuentas concretas, cuánto le deben y cuántos avisos se apagan. Nada de “podrías perder datos”.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Lo más contraintuitivo va segundo y en peso 500:</span> las cuotas siguen descontando. Es la única frase de la pantalla que cambia lo que el usuario cree que va a pasar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El botón de apagar es secundario, no destructivo.</span> No se pierde nada: pintarlo en critical mentiría sobre la gravedad. Cero violeta en la pantalla: acá no hay acción que el sistema quiera empujar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El mismo sheet existe para los otros tres módulos</span> con sus propias líneas: Presupuestos (“6 presupuestos guardados, dejás de recibir avisos de excedido”), Metas (“3 metas y $ 47.900 de progreso quedan guardados”), Recurrentes (“5 recurrentes se dejan de registrar solos; los ya registrados quedan”).</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Al apagar, el módulo desaparece de Más y de la navegación</span> y queda una entrada “Activar más funciones” — nunca una sección gris deshabilitada.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">2 interactivos en el sheet (apagar, dejarlo prendido) + scrim tocable · 0 cifras hero · 3 niveles tipográficos (title 22, body 15/16, caption 11) · 0 colores no neutros · 0 bordes. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">Apagar · vacío — módulo sin datos</div><dc-import name="StateFrame" title="Módulos" kind="empty" icon="wallet" message="Este módulo no tiene nada cargado todavía, así que apagarlo no afecta nada." action="Apagar" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">Apagar · cargando el impacto</div><dc-import name="StateFrame" title="Módulos" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">Apagar · error</div><dc-import name="StateFrame" title="Módulos" kind="error" what="No pudimos calcular qué se ve afectado." next="Preferimos no apagar el módulo a ciegas. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">Apagar · offline</div><dc-import name="StateFrame" title="Módulos" kind="offline" pending="2" offline-msg="Sin conexión — se aplica al sincronizar." hero-label="Deudas y cuotas" hero-value="2 planes" note="Se puede apagar sin conexión: es una preferencia local. Las cuotas siguen descontando igual." r1="Cuotas por pagar" r1meta="Siguen descontando" r1val="14" r2="Este mes" r2meta="Itaú Crédito y Mercado Pago" r2val="$ 24.800" r3="Me deben" r3meta="Deja de mostrarse" r3val="$ 12.400" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:80px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">Panel de deuda de biblioteca</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Lo que me faltó de D1 para armar estos 18 frames. Nada de esto tocó el bundle: todo se resolvió con superficies, tipografía y tokens dentro de las pantallas, y queda anotado acá para que entre a la biblioteca en el orden en que duele.</p>
+</div>
+<div style="display:flex;gap:20px;margin-top:28px;flex-wrap:wrap">
+<div style="flex:1 1 480px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Falta en la biblioteca · por costo de no tenerlo</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:14px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">1 · BulletBar.</span> El bullet de presupuesto (gastado, techo con escala común al 140%, marca de proyección) lo armé a mano en F1 y reaparece como barra de progreso en F5, F6, G4 y G5. Es el componente más repetido del bloque y hoy no existe: cinco pantallas con la misma geometría copiada.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · RadialDial.</span> El dial de F3 está hecho con un <code>conic-gradient</code> y un thumb posicionado. Le falta lo que sólo un componente puede dar: paso, mínimo y máximo, <code>onChange</code>, haptic cada N, tope al 0 y accesibilidad por teclado. Es input físico, no decoración.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Chip con selección por superficie.</span> El <code>Chip selected</code> del bundle se pinta con relleno de marca, que la decisión nueve prohíbe fuera de la acción primaria. Tuve que hacer pills de superficie 3 a mano en F3, F7, G3 y G6.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · BudgetRing con color y tamaño de fila.</span> El anillo fuerza violeta / warning / critical y 88 px. Para Metas necesitaba progreso en aqua a 56 px: terminé usando barra en lugar de anillo, o sea que el componente existe y no se usa en el módulo que más lo pedía.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · LineChart de dos series.</span> El acumulado vs. línea ideal de F2 son dos <code>Sparkline</code> superpuestos: sin ejes, sin tooltip táctil, sin marcador del cruce. Es el gráfico que más pide el bloque de presupuestos y hoy es un truco.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · MonthCalendar.</span> No hay calendario de mes con marcas de vencimiento. Por eso el calendario de G1 salió a su propia vista: la decisión de partición fue correcta, pero la tomó la biblioteca, no el diseño.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · DataList de columnas (tabla sin bordes).</span> La amortización de G5 y el preview de G6 son divs con mono alineado a mano. Cualquier “ver como tabla” de analytics va a necesitar exactamente esto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · ChartViewToggle expuesto.</span> El toggle gráfico/tabla existe en el UI kit interno pero no está en el bundle: lo sustituí por un <code>Chip</code> con ícono de lista en F2, F6, G2 y G4.</div>
+<div><span style="color:var(--text-primary);font-weight:500">9 · TabBar con badge.</span> El contador de F4 está posicionado a mano sobre la tab bar. Con un <code>badge</code> por slot se resuelve y deja de ser un parche.</div>
+<div><span style="color:var(--text-primary);font-weight:500">10 · ListRow variante “switch”.</span> <code>right</code> acepta un elemento, pero armar la fila con Switch requiere React en la lógica; hice la fila a mano cinco veces (F0, F0m, F3, G0r, G2, G3). Una variante declarada lo cierra.</div>
+</div>
+</div>
+<div style="flex:1 1 320px;display:flex;flex-direction:column;gap:20px">
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Arranque en frío, medido</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">Presupuestos: 2 taps.</span> Switch → “Crear estos 6 presupuestos” → F1 con 6 presupuestos.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Metas: 2 taps.</span> Switch → “Crear la meta colchón” → F6 con 23% ya ahorrado.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Recurrentes: 2 taps.</span> Switch → “Confirmar los 5” → G1 con 5 recurrentes y próximos 30 días.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Deudas: 2 taps.</span> Switch → “Crear los 2 planes” → G4 con el compromiso de 12 meses dibujado.</div>
+<div style="color:var(--text-muted)">Cero tipeo en los cuatro caminos: todos los montos vienen de datos que el usuario ya tiene. El tap 1 es el switch, y contarlo es lo honesto — sin él no hay módulo.</div>
+</div>
+</div>
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">La vista peor resuelta</div>
+<div style="margin-top:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary);font-weight:500">F2, detalle por categoría.</span> Es la única que se pasa del presupuesto de ruido sin una razón fuerte (4 niveles tipográficos por el título de card), su gráfico principal es un apilado de dos sparklines sin ejes ni tooltip, y el bloque “presupuesto vs. real” es correcto pero es texto: hoy la pantalla tiene un hueco que sólo se llena cuando cierra el primer mes. Con un LineChart de verdad y el título de card bajado a caption, cierra sola.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;showStates&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      noop: () => {},
+      g3seg: ['Desde un movimiento', 'Desde cero'],
+      g3days: [{ date: '2026-08-05' }, { date: '2026-08-09' }, { date: '2026-08-12' }, { date: '2026-08-16' }, { date: '2026-08-19' }, { date: '2026-08-23' }],
+      g6days: [{ date: '2026-08-01' }, { date: '2026-08-05' }, { date: '2026-08-10' }, { date: '2026-08-15' }, { date: '2026-08-20' }, { date: '2026-08-25' }],
+      f6bars: [{ label: 'feb', value: 4000 }, { label: 'mar', value: 9000 }, { label: 'abr', value: 9000 }, { label: 'may', value: 3400 }, { label: 'jun', value: 9000 }, { label: 'jul', value: 9000 }],
+      g2bars: [{ label: 'feb', value: 2400 }, { label: 'mar', value: 2400 }, { label: 'abr', value: 2400 }, { label: 'may', value: 2400 }, { label: 'jun', value: 3100 }, { label: 'jul', value: 3100 }],
+      g4bars: [{ label: 'ago', value: 24800 }, { label: 'sep', value: 24800 }, { label: 'oct', value: 24800 }, { label: 'nov', value: 24800 }, { label: 'dic', value: 24800 }, { label: 'ene', value: 18500 }, { label: 'feb', value: 18500 }, { label: 'mar', value: 18500 }, { label: 'abr', value: 18500 }, { label: 'may', value: 0 }, { label: 'jun', value: 0 }, { label: 'jul', value: 0 }],
+      f3seg: ['Mensual', 'Quincenal', 'Semanal'],
+      f2real: [0, 900, 1800, 2600, 3900, 4800, 6100, 7200, 8300, 9440],
+      f2ideal: [0, 890, 1780, 2670, 3550, 4440, 5330, 6220, 7110, 8000],
+      f2Series: [{ label: 'Gastado', color: 'var(--data-1)' }, { label: 'Línea ideal', color: 'var(--text-muted)' }],
+      themeClass: (this.props.theme ?? 'dark') === 'light' ? 'light' : '',
+      showStates: this.props.showStates ?? true,
+      showAnnotations: this.props.showAnnotations ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

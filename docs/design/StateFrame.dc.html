@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden;font-family:var(--font-sans);color:var(--text-primary)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="{{ title }}" show-scope="{{ false }}" sync-state="{{ syncState }}" pending="{{ pending }}" hint-size="100%,56px"></x-import>
+<sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="{{ pending }}" message="{{ offlineMsg }}" hint-size="100%,36px"></x-import>
+</sc-if>
+<sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 20px 0;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="{{ sk.w128 }}" height="{{ sk.h11 }}" hint-size="128px,11px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="{{ sk.w216 }}" height="{{ sk.h40 }}" radius="{{ sk.r12 }}" hint-size="216px,40px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="{{ sk.w150 }}" height="{{ sk.h13 }}" hint-size="150px,13px"></x-import>
+<div style="height:12px"></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="100%" height="{{ sk.h96 }}" radius="{{ sk.r20 }}" hint-size="100%,96px"></x-import>
+<div style="margin-top:4px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:56px 0 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="{{ icon }}" message="{{ message }}" action-label="{{ action }}" hint-size="100%,200px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+<div style="padding:48px 0 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="{{ what }}" next="{{ next }}" hint-size="100%,220px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">{{ heroLabel }}</div>
+<div style="font-size:40px;line-height:44px;font-weight:600;letter-spacing:-.015em;margin-top:6px">{{ heroValue }}</div>
+<div style="font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:8px;text-wrap:pretty">{{ note }}</div>
+<div style="margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="{{ r1 }}" meta="{{ r1meta }}" value="{{ r1val }}" variant="static" hint-size="100%,58px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="{{ r2 }}" meta="{{ r2meta }}" value="{{ r2val }}" variant="static" hint-size="100%,58px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="{{ r3 }}" meta="{{ r3meta }}" value="{{ r3val }}" variant="static" hint-size="100%,58px"></x-import>
+</div>
+</div>
+</sc-if>
+<div style="flex:1"></div>
+<sc-if value="{{ tabs }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="more" hint-size="100%,64px"></x-import>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props, kind = p.kind || 'loading';
+    return {
+      title: p.title || '',
+      loading: kind === 'loading',
+      empty: kind === 'empty',
+      error: kind === 'error',
+      offline: kind === 'offline',
+      icon: p.icon || 'wallet',
+      message: p.message || '',
+      action: p.action || null,
+      what: p.what || '',
+      next: p.next || '',
+      pending: p.pending ?? 3,
+      syncState: kind === 'offline' ? 'offline' : (p.syncState || 'synced'),
+      offlineMsg: p.offlineMsg || 'Sin conexión — seguís operando normalmente.',
+      heroLabel: p.heroLabel || '',
+      heroValue: p.heroValue || '',
+      note: p.note || '',
+      r1: p.r1 || '', r1meta: p.r1meta || '', r1val: p.r1val || '',
+      r2: p.r2 || '', r2meta: p.r2meta || '', r2val: p.r2val || '',
+      r3: p.r3 || '', r3meta: p.r3meta || '', r3val: p.r3val || '',
+      rows: [1, 2, 3, 4, 5],
+      sk: { h11: 11, h13: 13, h40: 40, h96: 96, r12: 12, r20: 20, w128: 128, w216: 216, w150: 150 },
+      tabs: p.tabs !== false && p.tabs !== 'false'
+    };
+  }
+}
+</script>
+</body>
+</html>

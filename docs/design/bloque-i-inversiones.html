@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<script src="./ds-base.js"></script>
+<style>html,body{margin:0;background:var(--surface-1)}a{color:var(--primary-ink);text-decoration:none}a:hover{color:var(--text-primary)}</style>
+</helmet>
+<section class="{{ themeClass }}" style="background:var(--surface-1);color:var(--text-primary);font-family:var(--font-sans);padding:56px 64px 96px">
+<div id="1a" style="max-width:1660px;margin:0 auto">
+
+<div style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:var(--surface-2);font:500 12px/16px var(--font-sans);color:var(--text-secondary)">1a · PROMPT D10 · bloque I</div>
+<h1 style="font:600 44px/48px var(--font-sans);letter-spacing:-.025em;margin:20px 0 0">Inversiones</h1>
+<p style="font:400 18px/28px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:14px 0 0;text-wrap:pretty">Doce vistas, modo oscuro, 390×844. El objetivo duro es I3: ocho posiciones heterogéneas —una acción de EE.UU., dos CEDEARs, un bono soberano, una ON, un FCI, bitcoin y un plazo fijo— leyéndose de un vistazo, sin scroll horizontal y sin parecer una planilla. La carga manual de precios no es un fallback: es el camino normal para ONs, FCI, plazos fijos e inmuebles, y está diseñada como tal.</p>
+
+<div style="display:flex;gap:20px;margin-top:36px;flex-wrap:wrap">
+<div style="flex:1 1 520px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">La fila de I3 · qué entra y qué se va al detalle</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">Entra:</span> símbolo, clase, cantidad × precio actual, valor en tu moneda y P&amp;L en porcentaje con signo y flecha. Cinco datos, dos líneas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Se va al detalle:</span> nombre completo, precio promedio de compra, P&amp;L absoluto, peso en el portfolio, país, sector, moneda de cotización y antigüedad del precio.</div>
+<div><span style="color:var(--text-primary);font-weight:500">El truco de la alineación:</span> las dos columnas que alinean verticalmente tienen precisión fija —valor sin decimales, porcentaje con uno—, así que la precisión variable (8 decimales de bitcoin, 4 de un FCI, 0 de una acción) vive en el texto que fluye a la izquierda y nunca rompe la columna.</div>
+</div>
+</div>
+<div style="flex:1 1 320px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Decisiones aplicadas, no rediscutidas</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div>Las clases de activo las define el usuario; las plantillas son un punto de partida y I8 es un CRUD completo.</div>
+<div>Precio por API cuando hay proveedor, a mano siempre: camino de primera clase, no excepción.</div>
+<div>Sin pasar por I1, el módulo no aparece en ningún lado de la app.</div>
+<div>Al apagarlo, las posiciones salen del patrimonio neto con aviso del monto excluido. Nada se borra.</div>
+<div>XIRR necesita 2 flujos y 30 días; hasta entonces se muestra qué falta.</div>
+<div>TWR y XIRR se explican en una línea cada uno, en la pantalla.</div>
+<div>Precio viejo = badge warning con “actualizar a mano”. Nunca un bloqueo ni un guion.</div>
+<div>Positivo en aqua, negativo en tinta o naranja, siempre con signo y flecha. Nunca verde/rojo.</div>
+<div>Selección por superficie; el único violeta de cada pantalla es la acción primaria.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">I1 · Activación y apagado</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Sin pasar por acá, el módulo no existe en ningún lado: no hay tab, no hay card en Análisis, no hay sección en Más. La activación no es un cartel: elegís las clases con las que arrancás y quedás listo para registrar la primera operación. Al apagarlo, el aviso lleva el monto exacto que sale del patrimonio neto.</p>
+</div>
+
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I1 · Activar inversiones</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Inversiones" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Inversiones</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Portfolio, posiciones y rendimiento</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:10px 20px 0">
+<div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Suma un tab propio con el valor de tu portfolio y tus posiciones, y empieza a contar las inversiones en tu patrimonio neto. Análisis pasa a la pantalla Más.</div>
+</div>
+<div style="padding:22px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Con qué clases arrancás</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Acciones</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">CEDEARs</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Bonos</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">ONs</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">FCI</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Plazo fijo</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-3);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-primary)">Crypto</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">ETFs</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Letras</div>
+<div style="height:44px;padding:0 16px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;white-space:nowrap;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Inmuebles</div>
+</div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:16px;text-wrap:pretty">Son una plantilla, no una lista cerrada: podés crear las tuyas, cambiarles el nombre, el ícono y el color, o borrar las que no uses.</div>
+<div style="margin-top:18px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="refresh" label="De dónde salen los precios" meta="Por API cuando hay proveedor · a mano siempre" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Registrar mi primera compra</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Activar y mirar después</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I1b · Apagar el módulo <span style="color:var(--text-muted);font-weight:400">— con el monto que sale del patrimonio</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Módulos" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Presupuestos" meta="6 presupuestos activos" value="Prendido" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Metas" meta="3 metas · $ 47.900 ahorrados" value="Prendido" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Inversiones" meta="8 posiciones · 34 operaciones" value="Apagando" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Se oculta, no se borra" on-close="{{ noop }}" hint-size="100%,450px">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Podés volver a prenderlo cuando quieras y todo vuelve como está. Mientras esté apagado:</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;font:400 15px/22px var(--font-sans);color:var(--text-primary)">
+<div>Tus 8 posiciones y 34 operaciones quedan guardadas, con sus precios y sus fechas.</div>
+<div><span style="font-weight:500">$ 958.220 salen de tu patrimonio neto:</span> pasa de $ 1.387.120 a $ 428.900.</div>
+<div>Se apagan 2 avisos de renta: el cupón de AL30 del 9 de setiembre y el de ON YPF del 30.</div>
+<div>El tab de Inversiones desaparece y Análisis vuelve a la tab bar.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" hint-size="100%,64px">Apagar inversiones</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Dejarlo prendido</x-import>
+</div>
+</x-import>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · La activación deja listo, no explicado.</span> El primario es “Registrar mi primera compra”: dos taps desde el switch a I5, con las clases ya elegidas. El fantasma es para quien sólo quiere prenderlo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Siete clases preseleccionadas, tres apagadas,</span> y la selección va por superficie: superficie 3 encendida, superficie 2 apagada. Diez chips de 44 px son un grupo, no diez elementos interactivos.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Se dice que las clases son editables</span> en la misma pantalla donde se eligen, porque es la única forma de que nadie sienta que se está casando con una taxonomía ajena.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La fila de precios está acá a propósito.</span> Antes de activar, el usuario entiende que un FCI o un plazo fijo se cargan a mano y que eso es normal. Es la expectativa que evita el abandono en I5.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Prender también cambia la navegación</span> y se avisa: el tab de Análisis se mueve a Más. Cambiar la tab bar sin decirlo es la clase de sorpresa que hace desconfiar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Al apagar, el número primero.</span> “$ 958.220 salen de tu patrimonio neto: pasa de $ 1.387.120 a $ 428.900”, con las dos cifras reales. Sin eso, apagar es una decisión a ciegas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Apagar es secundario, no destructivo.</span> No se borra nada, así que pintarlo de critical mentiría. Cero violeta en esa pantalla.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">I1: 4 interactivos (switch, grupo de chips, fila de precios, primario) · 0 cifras héroe · 3 niveles tipográficos · 2 violetas: switch encendido —excepción declarada del sistema para binarios— y el primario · 0 bordes. I1b: 2 interactivos + scrim · 0 violeta · 3 niveles. <span style="color:var(--text-primary)">Cumplen.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I1 · vacío — recién activado</div><dc-import name="StateFrame" title="Inversiones" kind="empty" icon="invest" message="El módulo está prendido y todavía no hay nada adentro. Registrá tu primera compra o cargá una posición que ya tenés." action="Registrar compra" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I1 · cargando</div><dc-import name="StateFrame" title="Inversiones" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I1 · error al activar</div><dc-import name="StateFrame" title="Inversiones" kind="error" what="No pudimos guardar las clases de activo." next="El módulo quedó prendido con la plantilla completa y podés editarla en Clases de activo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I1 · offline</div><dc-import name="StateFrame" title="Inversiones" kind="offline" pending="1" offline-msg="Sin conexión — se activa igual." hero-label="Clases elegidas" hero-value="7" note="Prender el módulo es una preferencia local: funciona sin conexión. Los precios de mercado llegan cuando vuelva." r1="Acciones, CEDEARs, Bonos" r1meta="Con proveedor de precios" r1val="API" r2="ONs, FCI, Plazo fijo" r2meta="Precio cargado por vos" r2val="a mano" r3="Crypto" r3meta="Con proveedor de precios" r3val="API" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:64px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I2 · Portfolio overview <span style="color:var(--text-muted);font-weight:400">— tab propio, moneda de visualización, allocation</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Portfolio" show-scope="{{ false }}" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0">
+<div style="display:flex;align-items:center;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" selected="{{ false }}" hint-size="auto,36px"></x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Mostrando todo en pesos</span>
+</div>
+</div>
+<div style="padding:14px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Valor del portfolio</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="958220" size="hero" show-sign="{{ false }}" hint-size="240px,44px"></x-import></div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="152400" size="label" show-arrow="{{ true }}" polarity="positive" hint-size="110px,18px"></x-import>
+<span>18,9% sin realizar · $ 13.500 realizado</span>
+</div>
+</div>
+<div style="padding:16px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,132px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">12 meses</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ i2spark }}" width="318" height="52" color="var(--data-1)" hint-size="100%,52px"></x-import></div>
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;color:var(--text-muted);margin-top:4px"><span>ago · $ 742.000</span><span>hoy · $ 958.220</span></div>
+</x-import>
+</div>
+<div style="padding:14px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,214px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ i2seg }}" value="Clase" size="sm" hint-size="100%,36px"></x-import>
+<div style="display:flex;align-items:center;gap:16px;margin-top:14px">
+<div style="width:104px;height:104px;flex-shrink:0;border-radius:50%;position:relative;background:conic-gradient(var(--data-1) 0 32.2%,var(--chart-separator) 32.2% 32.8%,var(--data-2) 32.8% 53.5%,var(--chart-separator) 53.5% 54.1%,var(--data-3) 54.1% 74.7%,var(--chart-separator) 74.7% 75.3%,var(--data-4) 75.3% 86.1%,var(--chart-separator) 86.1% 86.7%,var(--data-other) 86.7% 100%)">
+<div style="position:absolute;inset:19px;border-radius:50%;background:var(--surface-1)"></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-sans);color:var(--text-secondary)"><span style="width:9px;height:9px;border-radius:3px;background:var(--data-1)"></span><span style="flex:1">Bonos</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">32,2%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-sans);color:var(--text-secondary)"><span style="width:9px;height:9px;border-radius:3px;background:var(--data-2)"></span><span style="flex:1">Crypto</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">20,7%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-sans);color:var(--text-secondary)"><span style="width:9px;height:9px;border-radius:3px;background:var(--data-3)"></span><span style="flex:1">ONs</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">20,6%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-sans);color:var(--text-secondary)"><span style="width:9px;height:9px;border-radius:3px;background:var(--data-4)"></span><span style="flex:1">Acciones</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">10,8%</span></div>
+<div style="display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-sans);color:var(--text-secondary)"><span style="width:9px;height:9px;border-radius:3px;background:var(--data-other)"></span><span style="flex:1">Otros · 3 clases</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">15,7%</span></div>
+</div>
+</div>
+</x-import>
+</div>
+<div style="display:flex;gap:16px;padding:14px 20px 0;flex:1">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="TWR 12 meses" value="14,2%" delta-note="cómo rindió lo que tenés" style="flex:1" hint-size="50%,84px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatTile" label="Tu rendimiento" value="11,8%" delta-note="con tu timing incluido" style="flex:1" hint-size="50%,84px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:6px 20px 14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="clock" hint-size="auto,22px">1 precio de hace 9 días</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="edit" hint-size="auto,32px">Actualizar</x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" tabs="{{ invTabs }}" active="invest" hint-size="100%,64px"></x-import>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Con el módulo prendido, la tab bar cambia:</span> Inicio · Movimientos · [+] · Inversiones · Más. Análisis baja a Más, como se avisó en I1.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Una sola cifra héroe y el P&amp;L debajo, en label.</span> El no realizado va en aqua con signo y flecha; el realizado va en la misma línea en tinta, porque ya es plata que pasó por una cuenta.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · La moneda de visualización es un chip, no un ajuste.</span> Está arriba de todo porque cambia todos los números de la pantalla, y dice en texto qué está mostrando.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El selector de dimensión vive dentro de la card del donut,</span> no en el header: cambia sólo ese gráfico. Selección por superficie, 5 slots más “Otros” en gris.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Los dos KPI se explican en su sublabel,</span> sin las siglas: “cómo rindió lo que tenés” (TWR) y “con tu timing incluido” (XIRR). Las siglas y la explicación larga están en I10.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · El precio viejo se declara en el overview,</span> en warning, con acción de actualizar a mano. Nunca se reemplaza el valor por un guion: se muestra el último precio conocido y se avisa la antigüedad.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">5 interactivos sobre el pliegue (chip de moneda, buscar, chip Tabla, segmentado del donut, card de evolución) — al límite · 1 cifra héroe · 4 niveles tipográficos: hero 40, tile 30, body 16, caption 11 — <span style="color:var(--text-primary)">la misma excepción declarada de Análisis</span>, y la aporta la fila de KPI · violeta fuera de los gráficos: sólo el FAB · 0 bordes.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I2 · vacío — portfolio sin posiciones</div><dc-import name="StateFrame" title="Portfolio" kind="empty" icon="invest" message="Todavía no tenés posiciones. Registrá una compra o cargá lo que ya tenés con su precio de hoy." action="Registrar compra" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I2 · cargando</div><dc-import name="StateFrame" title="Portfolio" kind="loading" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I2 · error de proveedor</div><dc-import name="StateFrame" title="Portfolio" kind="error" what="No pudimos traer los precios de mercado." next="Te mostramos el portfolio con los últimos precios conocidos, del viernes. Podés actualizar cualquiera a mano." hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I2 · offline</div><dc-import name="StateFrame" title="Portfolio" kind="offline" pending="2" offline-msg="Sin conexión — precios del último sync." hero-label="Valor del portfolio" hero-value="$ 958.220" note="El valor es el del último sync. Podés registrar operaciones igual: se guardan en el teléfono y suben después." r1="Último precio de mercado" r1meta="Hoy 09:41" r1val="AAPL" r2="Precio más viejo" r2meta="Cargado a mano" r2val="9 días" r3="Operaciones sin subir" r3meta="Ya cuentan en el valor" r3val="2" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">I3 · Posiciones — el objetivo duro del bloque</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Ocho posiciones heterogéneas en 390 px, sin scroll horizontal, sin tipografía comprimida y sin parecer una tabla. Dos líneas por fila: identidad arriba con el valor, evidencia abajo con el rendimiento. Bitcoin con ocho decimales y una acción con cero conviven porque la precisión variable nunca entra en una columna alineada.</p>
+</div>
+
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:32px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I3 · Posiciones <span style="color:var(--text-muted);font-weight:400">— 8 posiciones reales, agrupables</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Posiciones" on-back="{{ noop }}" show-scope="{{ false }}" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ i3seg }}" value="Valor" size="sm" hint-size="100%,36px"></x-import>
+</div>
+<div style="padding:14px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">8 posiciones · $ 958.220</div>
+
+<div style="padding:12px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">AL30</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Bonos</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">308.900</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">12.000 × US$ 0,6420</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +2,8%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">BTC</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Crypto</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">198.600</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">0,04182500 × US$ 118.400</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +31,7%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">ON YPF 2029</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">ONs</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">197.400</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">5.000 × US$ 0,9850</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +1,2%</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="clock" hint-size="auto,22px">Precio de hace 9 días</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="edit" hint-size="auto,32px">Actualizar</x-import>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">AAPL</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Acciones</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">103.930</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">12 × US$ 214,60</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +18,4%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">Plazo fijo Itaú</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Plazo fijo</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">60.000</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">Vence 12 sep · 7,25% TNA</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +1,8%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">YPFD</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Acciones</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">58.900</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">150 × AR$ 39.850</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-negative-emphasis)">↓ −4,1%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">FCI Renta UYU</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">FCI</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">22.850</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">1.240,5832 × $ 18,4210</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +7,4%</span>
+</div>
+</div>
+
+<div style="padding:14px 0 0">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">MELI</span>
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">CEDEARs</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500;color:var(--text-primary)">7.640</span>
+</div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+<span style="flex:1;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">40 × AR$ 4.820</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ +6,2%</span>
+</div>
+</div>
+</div>
+<div style="padding:10px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Registrar operación</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Cinco datos por fila, en dos líneas.</span> Arriba, quién es y cuánto vale: símbolo, clase en caption y valor en tu moneda. Abajo, por qué vale eso: cantidad × precio actual, y el rendimiento en porcentaje.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Lo que saqué de la fila y por qué.</span> Nombre completo (“Bonar 2030”, “Apple Inc.”): el símbolo alcanza para reconocerla y el nombre duplicaría el ancho. Precio promedio de compra y P&amp;L absoluto: son la explicación del porcentaje, no la respuesta. Peso en el portfolio: lo da el orden, la lista está ordenada por valor. País, sector y moneda de cotización: la moneda ya está a la vista en el precio, y país y sector son dimensiones de análisis, no identidad. Todo eso vive en I4.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Sólo dos columnas alinean, y las dos tienen precisión fija:</span> el valor sin decimales y el porcentaje con uno. La precisión que varía —8 decimales de bitcoin, 4 del FCI, 0 de una acción— vive en el texto que fluye a la izquierda, donde no hay nada que alinear. Por eso 0,04182500 y 12 pueden convivir sin que la columna tiemble.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Todo en Geist Mono con tabular-nums,</span> a 16 px el valor y 13 px la línea de abajo. Nada se comprime: el símbolo de moneda del valor se saca del número —está declarado arriba en “$ 958.220” y en el chip de moneda— porque repetir “$” ocho veces no aporta y sí cuesta ancho.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El plazo fijo no tiene cantidad ni precio,</span> y no se fuerza: su línea de abajo dice vencimiento y tasa, que es la evidencia equivalente. La estructura de la fila es “identidad + valor / evidencia + rendimiento”, no “columnas fijas”. Eso es lo que la salva de ser una tabla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · El precio viejo agrega una tercera línea sólo en esa fila.</span> Badge warning con la antigüedad y chip para actualizar a mano. No bloquea, no reemplaza el número por un guion y no ensucia las otras siete filas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Polaridad sin verde ni rojo:</span> aqua para el positivo, naranja para el negativo, y siempre con signo y flecha. YPFD es la única en negativo y se distingue igual en escala de grises.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · Agrupar es un segmentado de superficie</span> —clase, moneda, valor— y agrupar por clase inserta headers de caption sin cambiar la fila.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (buscar, segmentado, lista como grupo, chip Actualizar) + primario · 0 cifras héroe: es una lista, y el total va en el header de sección · 3 niveles tipográficos (body 16, mono 13, caption 11) · no neutros: aqua, naranja y el warning del precio viejo, los tres con signo o label · 0 bordes, 0 separadores. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I3 · vacío</div><dc-import name="StateFrame" title="Posiciones" kind="empty" icon="invest" message="No tenés posiciones abiertas. Si ya compraste algo, cargalo con la cantidad y el precio de hoy." action="Cargar posición" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I3 · cargando</div><dc-import name="StateFrame" title="Posiciones" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I3 · error</div><dc-import name="StateFrame" title="Posiciones" kind="error" what="No pudimos valuar 3 de tus 8 posiciones." next="Las otras cinco están al día. Podés poner el precio a mano de las que faltan." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I3 · offline</div><dc-import name="StateFrame" title="Posiciones" kind="offline" pending="2" offline-msg="Sin conexión — precios del último sync." hero-label="8 posiciones" hero-value="$ 958.220" note="Las cantidades son exactas; los precios son los del último sync. Los que cargás a mano no cambian." r1="AL30" r1meta="12.000 × US$ 0,6420" r1val="308.900" r2="BTC" r2meta="0,04182500 × US$ 118.400" r2val="198.600" r3="ON YPF 2029" r3meta="Precio a mano de hace 9 días" r3val="197.400" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:64px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I4 · Detalle de instrumento <span style="color:var(--text-muted);font-weight:400">— una ON con precio cargado a mano</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="ON YPF 2029" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Tu posición</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="197400" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import></div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-top:8px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="2340" size="label" show-arrow="{{ true }}" polarity="positive" hint-size="90px,18px"></x-import>
+<span>1,2% · 5.000 nominales</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="clock" hint-size="auto,22px">Precio de hace 9 días</x-import>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Sin proveedor · lo cargás vos</span>
+</div>
+</div>
+<div style="padding:16px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,118px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">6 precios en 5 meses</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ i4prices }}" width="318" height="44" color="var(--data-1)" hint-size="100%,44px"></x-import></div>
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;color:var(--text-muted);margin-top:4px"><span>feb · US$ 0,9420</span><span>11 jul · US$ 0,9850</span></div>
+</x-import>
+</div>
+<div style="padding:14px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Lo que no entra en la fila</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Precio promedio de compra</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">US$ 0,9730</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Resultado sin realizar</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--money-positive)">+ $ 2.340</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Peso en el portfolio</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">20,6%</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Cupón cobrado en 2026</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--money-positive)">+ $ 8.960</span></div>
+</div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:18px">El instrumento</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Vence</span><span style="color:var(--text-primary)">15 de junio de 2029</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Renta</span><span style="color:var(--text-primary)">8,5% anual, semestral</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Próximo cupón</span><span style="color:var(--text-primary)">30 de setiembre</span></div>
+</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="list" label="Historial" meta="2 compras y 4 cupones cobrados" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Actualizar el precio</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Registrar una operación</x-import>
+</div>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Este detalle es el destino de lo que saqué de I3,</span> y el bloque se llama así en la pantalla: precio promedio de compra, resultado sin realizar, peso en el portfolio y renta cobrada. El usuario que quiera esos cuatro datos sabe exactamente dónde están.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El precio a mano no se disculpa.</span> “Sin proveedor · lo cargás vos” en tinta neutra, y el primario de la pantalla es “Actualizar el precio”. Para una ON poco líquida ése es el camino normal, así que es la acción principal, no una opción escondida.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El gráfico dice cuántos puntos tiene:</span> “6 precios en 5 meses”. Una línea de 6 puntos cargados a mano no es una serie de mercado y la card lo declara en vez de fingir continuidad.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El badge de 9 días es warning, no critical:</span> el número sirve, sólo está viejo. Nada se bloquea y en ningún lugar aparece un guion en lugar del precio.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Los datos de renta fija son texto, no gráfico:</span> vencimiento, tasa y próximo cupón. El calendario completo vive en I11.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · El cupón cobrado va en aqua</span> porque es un ingreso que efectivamente entró a una cuenta; el resultado sin realizar también, pero con signo, porque todavía no pasó por ninguna.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (chip Tabla, card del gráfico, fila de historial) + primario y fantasma · 1 cifra héroe · 3 niveles tipográficos + mono · no neutros: aqua del resultado y warning del precio viejo · 0 bordes de caja · 1 violeta: el primario. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I4 · vacío — instrumento sin precio</div><dc-import name="StateFrame" title="ON YPF 2029" kind="empty" icon="invest" message="Este instrumento no tiene ningún precio cargado, así que todavía no lo podemos valuar. Poné el último que conozcas." action="Cargar precio" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I4 · cargando</div><dc-import name="StateFrame" title="ON YPF 2029" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I4 · error</div><dc-import name="StateFrame" title="AAPL" kind="error" what="No pudimos traer el precio de AAPL." next="El último que tenemos es de ayer a las 17:00. Podés usar ése o cargar uno a mano." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I4 · offline</div><dc-import name="StateFrame" title="ON YPF 2029" kind="offline" pending="1" offline-msg="Sin conexión — precio cargado a mano." hero-label="Tu posición" hero-value="$ 197.400" note="Esta posición no depende de conexión: su precio lo cargás vos. Podés actualizarlo ahora mismo." r1="Precio actual" r1meta="Cargado el 11 de julio" r1val="US$ 0,9850" r2="Precio promedio" r2meta="2 compras" r2val="US$ 0,9730" r3="Próximo cupón" r3meta="8,5% anual, semestral" r3val="30 sep" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:64px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I5 · Registrar operación <span style="color:var(--text-muted);font-weight:400">— preview en vivo del impacto</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nueva operación" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ i5seg }}" value="Compra" hint-size="100%,44px"></x-import>
+</div>
+<div style="padding:14px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,86px">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="flex:1;min-width:0">
+<div style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">AAPL · Apple Inc.</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Acciones · Nasdaq · precio en US$</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="search" hint-size="auto,32px">Cambiar</x-import>
+</div>
+</x-import>
+</div>
+<div style="padding:18px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cantidad</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="plus" hint-size="auto,32px">Keypad</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;line-height:28px;font-weight:600;margin-top:4px">12</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Arrastrá para ajustar · admite hasta 8 decimales</div>
+</div>
+<div style="padding:18px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Precio por acción</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="plus" hint-size="auto,32px">Keypad</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;line-height:28px;font-weight:600;margin-top:4px">US$ 214,60</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Precio de mercado de hoy 09:41 · podés cambiarlo</div>
+</div>
+<div style="padding:14px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Comisiones e impuestos" meta="Estimadas por Balanz" value="US$ 3,60" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:10px 0 0">
+<div style="padding:0 20px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">De qué cuenta sale</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ i5accounts }}" active-id="balanz" hint-size="100%,116px"></x-import></div>
+</div>
+<div style="padding:16px 20px 0;flex:1">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,96px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Total</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">US$ 2.578,80</span>
+</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:4px">$ 103.930 al cambio de hoy · tu posición pasa de 0 a 12 AAPL</div>
+</x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Registrar compra</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I6 · Registrar renta <span style="color:var(--text-muted);font-weight:400">— dividendo, cupón o amortización</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Registrar renta" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ i6seg }}" value="Cupón" hint-size="100%,44px"></x-import>
+</div>
+<div style="padding:14px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,86px">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="flex:1;min-width:0">
+<div style="font:500 16px/22px var(--font-sans);color:var(--text-primary)">ON YPF 2029</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">5.000 nominales · 8,5% semestral</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="search" hint-size="auto,32px">Cambiar</x-import>
+</div>
+</x-import>
+</div>
+<div style="padding:18px 20px 0">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto bruto</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="plus" hint-size="auto,32px">Keypad</x-import>
+</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="212.5" currency="USD" size="hero" show-sign="{{ false }}" decimals="2" hint-size="200px,44px"></x-import></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:4px">Lo calculamos solo: 5.000 × 8,5% ÷ 2. Cambialo si el aviso dice otra cosa.</div>
+</div>
+<div style="padding:18px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Fecha de pago</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.DateStrip" days="{{ i6days }}" value="2026-07-20" hint-size="100%,64px"></x-import></div>
+</div>
+<div style="padding:16px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Retenciones" meta="7,5% sobre el bruto" value="US$ 15,94" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:8px 0 0">
+<div style="padding:0 20px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Dónde se acredita</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ i5accounts }}" active-id="balanz" hint-size="100%,116px"></x-import></div>
+</div>
+<div style="padding:16px 20px 0;flex:1">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Se acredita neto</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="196.56" currency="USD" size="title" polarity="positive" decimals="2" hint-size="120px,28px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Registrar cupón</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Cantidad y precio son keypad, nunca teclado del sistema.</span> La cantidad admite 8 decimales y lo dice, porque quien compra bitcoin necesita saber que puede escribirlos. Los dos campos se pueden arrastrar para ajustar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El precio de mercado viene puesto pero editable,</span> con su hora. Para un instrumento sin proveedor el mismo campo llega vacío y el texto de abajo cambia a “no hay precio de mercado: poné el que pagaste”. Es el mismo formulario, no otra pantalla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El preview en vivo es la última cosa antes del botón:</span> total en la moneda del instrumento, equivalente en pesos y cómo queda la posición. Es lo que evita registrar una compra de más ceros.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La cuenta es el carrusel de siempre,</span> el mismo de la captura de gastos, sangrando fuera del padding. Una operación mueve plata de una cuenta real: no hay una lista de brokers aparte.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · En I6 el monto se calcula solo</span> (5.000 × 8,5% ÷ 2) y se explica la cuenta en una línea. Editable, porque el aviso del emisor a veces no coincide.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · El neto acreditado va en aqua y en title, no en hero:</span> el bruto es el dato que se ingresa, el neto es la consecuencia. Un solo hero por pantalla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Comisiones y retenciones colapsadas con su monto a la vista.</span> Están calculadas por defecto, así que nadie tiene que abrirlas para completar la operación, pero el número no se esconde.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">I5: 6 interactivos (segmentado, chip Cambiar, 2 keypads, fila de comisiones, carrusel) + primario — <span style="color:var(--text-primary)">se pasa por uno</span>. Partición propuesta: comisiones e impuestos al paso 2 junto con la fecha, que hoy toma el default de hoy. 0 cifras héroe, dos cifras mono de 22 y el total de 22 · 3 niveles + mono. I6: 5 interactivos + primario, al límite; 1 cifra héroe. 1 violeta cada una: el primario.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I5 · vacío — sin instrumento elegido</div><dc-import name="StateFrame" title="Nueva operación" kind="empty" icon="search" message="Buscá el instrumento que compraste. Si no aparece, lo creás a mano con nombre, clase y moneda." action="Buscar" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I5 · cargando precio</div><dc-import name="StateFrame" title="Nueva operación" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I5 · error al guardar</div><dc-import name="StateFrame" title="Nueva operación" kind="error" what="No pudimos registrar la compra en el servidor." next="Quedó guardada en el teléfono con todos sus datos y ya cuenta en tu posición." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I6 · offline</div><dc-import name="StateFrame" title="Registrar renta" kind="offline" pending="1" offline-msg="Sin conexión — se guarda local." hero-label="Monto bruto" hero-value="US$ 212,50" note="El cálculo del cupón es local, así que se puede registrar sin conexión. La conversión a pesos usa el último tipo de cambio guardado." r1="Retenciones" r1meta="7,5% sobre el bruto" r1val="US$ 15,94" r2="Se acredita neto" r2meta="Balanz · USD" r2val="US$ 196,56" r3="Tipo de cambio" r3meta="Último guardado, de hoy 09:41" r3val="40,30" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<!--SLOT-I6-->
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:64px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I7 · Buscar o agregar instrumento <span style="color:var(--text-muted);font-weight:400">— crear a mano, al mismo nivel</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Instrumentos" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Buscar" default-value="ypf" hint-size="100%,64px"></x-import>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Con precio automático</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="chart" label="YPFD · YPF S.A." meta="Acciones · BYMA · AR$" value="Precio al día" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="chart" label="YPF · YPF S.A. ADR" meta="Acciones · NYSE · US$" value="Precio al día" hint-size="100%,56px"></x-import>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:18px">Sin proveedor · el precio lo cargás vos</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="ON YPF 2029" meta="ONs · 8,5% semestral · US$" value="Ya la tenés" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="ON YPF 2031" meta="ONs · 9,0% semestral · US$" hint-size="100%,56px"></x-import>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:20px">No aparece lo que buscás</div>
+<div style="margin-top:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,132px">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Crealo a mano</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:4px;text-wrap:pretty">Con cuatro datos alcanza: nombre, clase, moneda y precio inicial. Es lo normal para plazos fijos, FCI e inmuebles.</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:8px">Después le cargás el precio cuando quieras, sin depender de nadie.</div>
+</x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Crear instrumento a mano</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I8 · Clases de activo <span style="color:var(--text-muted);font-weight:400">— CRUD con ícono, color y orden</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Clases de activo" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Son tuyas: cambiá el nombre, el ícono, el color y el orden. El orden es el que usan el donut y las listas.</div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="invest" size="18" color="var(--data-1)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Bonos</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 308.900</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="trend" size="18" color="var(--data-2)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Crypto</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 198.600</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="bank" size="18" color="var(--data-3)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">ONs</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 197.400</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chart" size="18" color="var(--data-4)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Acciones</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">2 · 162.830</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="clock" size="18" color="var(--data-5)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">Plazo fijo</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 60.000</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="wallet" size="18" color="var(--data-other)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">FCI</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 22.850</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="list" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+<span style="width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="tag" size="18" color="var(--data-other)" hint-size="18px,18px"></x-import></span>
+<span style="flex:1;font:400 16px/22px var(--font-sans)">CEDEARs</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">1 · 7.640</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+</div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:18px">Sin usar</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Letras · ETFs · Inmuebles" meta="Sin posiciones · se pueden borrar" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Nueva clase</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Los resultados se agrupan por si tienen precio o no,</span> no por proveedor. Es la única distinción que le cambia la vida al usuario: “esto se actualiza solo” contra “esto lo cargás vos”.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · “Sin proveedor” no es un defecto</span> y el copy no se disculpa: es una categoría de resultados con la misma jerarquía visual que la otra.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Crear a mano es el primario de la pantalla,</span> incluso habiendo resultados. Para ONs, FCI, plazos fijos e inmuebles ése es el camino esperado, y esconderlo detrás de “no encontré nada” lo haría sentir un fracaso de la búsqueda.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Lo que ya tenés se marca en la fila</span> (“Ya la tenés”) para que nadie cree un duplicado del mismo instrumento.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · En I8 el color es identidad de datos,</span> no decoración: son los cinco slots más el gris de “Otros”, en el orden que el usuario elige. Ese orden es el que usan el donut de I2 y las agrupaciones de I3.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Cada fila dice cuántas posiciones tiene y cuánto valen,</span> que es lo que permite decidir si una clase sobra. Las que no tienen ninguna se agrupan al final como borrables.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Reordenar es arrastrar,</span> con el asa a la izquierda y target de 44 px; tocar la fila abre nombre, ícono y color. No hay menú de tres puntos.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">I7: 3 interactivos (búsqueda, lista de resultados, card) + primario · 0 cifras héroe · 3 niveles + mono · 0 colores no neutros · 1 violeta. I8: 2 interactivos (lista con asas, fila de sin usar) + primario · 7 colores de datos en íconos de 18 px, que <span style="color:var(--text-primary)">portan identidad y no son decorativos</span> · 3 niveles + mono · 1 violeta. Cumplen.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I7 · vacío — sin resultados</div><dc-import name="StateFrame" title="Instrumentos" kind="empty" icon="search" message="No encontramos nada con “obligacion mendoza”. Podés crearlo a mano con cuatro datos." action="Crear a mano" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I7 · buscando</div><dc-import name="StateFrame" title="Instrumentos" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I8 · error al reordenar</div><dc-import name="StateFrame" title="Clases de activo" kind="error" what="No pudimos guardar el orden nuevo." next="Tus clases y tus posiciones están intactas; el orden volvió al anterior." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I7 · offline</div><dc-import name="StateFrame" title="Instrumentos" kind="offline" pending="1" offline-msg="Sin conexión — buscador local." hero-label="Sin conexión" hero-value="Crear a mano" note="La búsqueda por proveedor necesita conexión. Crear un instrumento a mano funciona igual y después se puede vincular a un proveedor." r1="Instrumentos que ya tenés" r1meta="Buscables sin conexión" r1val="8" r2="Búsqueda por proveedor" r2meta="Vuelve al sincronizar" r2val="—" r3="Crear a mano" r3meta="Nombre, clase, moneda, precio" r3val="ok" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<!--SLOT-I8-->
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:64px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I9 · Allocation objetivo y rebalanceo <span style="color:var(--text-muted);font-weight:400">— barras arrastrables que suman 100</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Allocation objetivo" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Arrastrá las divisiones hasta que la mezcla sea la que querés. Siempre suma 100%.</div>
+<div style="margin-top:16px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SplitBar" parts="{{ i9parts }}" height="{{ i9barH }}" hint-size="100%,20px"></x-import></div>
+</div>
+<div style="padding:22px 20px 0;flex:1;overflow:hidden">
+<div style="display:flex;gap:12px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">
+<span style="flex:1">Clase</span><span style="width:52px;text-align:right">Real</span><span style="width:72px;text-align:right">Brecha</span>
+</div>
+<div style="display:flex;gap:12px;align-items:baseline;padding:11px 0;font:400 16px/22px var(--font-sans)">
+<span style="width:10px;height:10px;border-radius:3px;background:var(--data-1);flex-shrink:0"></span><span style="flex:1">Bonos</span>
+<span style="width:52px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">32,2%</span>
+<span style="width:72px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">en banda</span>
+</div>
+<div style="display:flex;gap:12px;align-items:baseline;padding:11px 0;font:400 16px/22px var(--font-sans)">
+<span style="width:10px;height:10px;border-radius:3px;background:var(--data-2);flex-shrink:0"></span><span style="flex:1">Crypto</span>
+<span style="width:52px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">20,7%</span>
+<span style="width:72px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-negative-emphasis)">↓ 5,7 pp</span>
+</div>
+<div style="display:flex;gap:12px;align-items:baseline;padding:11px 0;font:400 16px/22px var(--font-sans)">
+<span style="width:10px;height:10px;border-radius:3px;background:var(--data-3);flex-shrink:0"></span><span style="flex:1">ONs</span>
+<span style="width:52px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">20,6%</span>
+<span style="width:72px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">en banda</span>
+</div>
+<div style="display:flex;gap:12px;align-items:baseline;padding:11px 0;font:400 16px/22px var(--font-sans)">
+<span style="width:10px;height:10px;border-radius:3px;background:var(--data-4);flex-shrink:0"></span><span style="flex:1">Acciones</span>
+<span style="width:52px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">17,0%</span>
+<span style="width:72px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--money-positive)">↑ 8,0 pp</span>
+</div>
+<div style="display:flex;gap:12px;align-items:baseline;padding:11px 0;font:400 16px/22px var(--font-sans)">
+<span style="width:10px;height:10px;border-radius:3px;background:var(--data-other);flex-shrink:0"></span><span style="flex:1">Otros · 3 clases</span>
+<span style="width:52px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">9,4%</span>
+<span style="width:72px;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">en banda</span>
+</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:6px">Banda de tolerancia ±3 pp. Dentro de la banda no hace falta tocar nada.</div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:20px">Para cerrar la brecha</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="arrow-down" label="Vender US$ 1.360 de BTC" meta="Deja Crypto en 15,0%" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="arrow-up" label="Comprar US$ 1.900 de AAPL" meta="Lleva Acciones a 25,0%" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar objetivo</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I10 · Rendimiento <span style="color:var(--text-muted);font-weight:400">— TWR y XIRR explicados en una línea</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Rendimiento" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos 12 meses</div>
+</div>
+<div style="padding:12px 20px 0;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,104px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Rindió (TWR)</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">14,2%</span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px;text-wrap:pretty">Cómo rindió lo que tenés, sin importar cuándo pusiste la plata.</div>
+</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,104px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Te rindió a vos (XIRR)</span>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">11,8%</span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px;text-wrap:pretty">Lo mismo, pero contando cuándo pusiste y cuándo saliste. Es más bajo porque compraste BTC después de la subida.</div>
+</x-import>
+</div>
+<div style="padding:16px 20px 0;flex:1;overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Contra qué medirte</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans)">Tu portfolio</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-primary)">14,2%</span></div>
+<div style="height:8px;border-radius:999px;background:var(--data-1);width:100%;margin-top:7px"></div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Dólar MEP</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">9,8%</span></div>
+<div style="height:8px;border-radius:999px;background:var(--data-other);width:69%;margin-top:7px"></div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Plazo fijo en pesos</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">7,3%</span></div>
+<div style="height:8px;border-radius:999px;background:var(--data-other);width:51%;margin-top:7px"></div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Inflación</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">5,1%</span></div>
+<div style="height:8px;border-radius:999px;background:var(--data-other);width:36%;margin-top:7px"></div>
+</div>
+</div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:16px;text-wrap:pretty">Le ganaste a la inflación por 9,1 puntos y al dólar por 4,4. Con el S&amp;P 500 y otros benchmarks, tocá Tabla.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" hint-size="100%,64px">Elegir benchmarks</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · La barra de I9 es un solo control,</span> el <em>SplitBar</em> del sistema: cinco divisiones que se arrastran y que por construcción suman 100%. No hay campos numéricos que puedan quedar en 97%.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El objetivo lo dice la leyenda de la barra y la tabla dice lo real.</span> Cada porcentaje aparece una sola vez en la pantalla: objetivo arriba, junto a su color; real y brecha abajo. Los colores son los mismos que en el donut de I2 y en I8, porque el color sigue a la clase y no al orden de la barra.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · La brecha se dice en puntos porcentuales y con dirección,</span> y “en banda” es texto, no un tilde verde: dentro de ±3 pp no hay nada que hacer y decirlo con palabras evita cinco colores en la columna.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Las operaciones sugeridas son dos filas con monto,</span> no un botón de “rebalancear automáticamente”: PERZE no opera, sólo dice qué haría falta.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Los dos rendimientos son dos cards, no dos tiles,</span> justamente porque la explicación es el contenido: una línea cada uno, sin la palabra “ponderado”. Y el XIRR dice por qué es más bajo en este caso concreto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · XIRR necesita 2 flujos y 30 días.</span> Este portfolio tiene 34 operaciones y 3 años, así que se muestra. El estado de “todavía no” está en la fila de estados de I10: cifra tachada nunca, número inventado nunca.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · El portfolio va en el slot 1 y los benchmarks en gris.</span> Son referencia, no series propias: si cada benchmark tuviera color, el gráfico diría que compiten entre ellos.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · La conclusión en palabras debajo del gráfico</span> es lo que la mayoría va a leer: “le ganaste a la inflación por 9,1 puntos”. El gráfico es la prueba, no el mensaje.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">I9: 4 interactivos (SplitBar como grupo, tabla como grupo, 2 filas de operaciones) + primario · 0 cifras héroe · 3 niveles + mono · 5 colores de datos, 1 violeta · 0 bordes. I10: 3 interactivos (2 cards, chip Tabla) + secundario · 2 cifras de 22 px que comparten nivel · 2 colores de datos (slot 1 y gris) · <span style="color:var(--text-primary)">0 violeta</span>, porque no hay acción primaria: es una pantalla de lectura. Cumplen.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I9 · vacío — sin objetivo definido</div><dc-import name="StateFrame" title="Allocation objetivo" kind="empty" icon="target" message="Todavía no definiste una mezcla objetivo. Podés empezar con la que tenés hoy y ajustarla." action="Usar la actual" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I10 · vacío — XIRR sin flujos</div><dc-import name="StateFrame" title="Rendimiento" kind="empty" icon="chart" message="Tu rendimiento necesita 2 movimientos de plata y 30 días. Tenés 1 operación y 12 días: falta una y 18 días." action="Ver TWR" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I10 · error de benchmark</div><dc-import name="StateFrame" title="Rendimiento" kind="error" what="No pudimos traer la serie del dólar MEP." next="Tu rendimiento y la comparación con inflación están bien. Probá de nuevo para el resto." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I9 · offline</div><dc-import name="StateFrame" title="Allocation objetivo" kind="offline" pending="2" offline-msg="Sin conexión — con precios del último sync." hero-label="Fuera de banda" hero-value="2 clases" note="La mezcla real se calcula con los precios del último sync: cuando lleguen los de hoy, las brechas pueden cambiar." r1="Crypto" r1meta="Objetivo 15,0% · real 20,7%" r1val="↓ 5,7 pp" r2="Acciones" r2meta="Objetivo 25,0% · real 17,0%" r2val="↑ 8,0 pp" r3="Bonos, ONs, Otros" r3meta="Dentro de ±3 pp" r3val="en banda" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<!--SLOT-I10-->
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:64px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I11 · Calendario de renta futura <span style="color:var(--text-muted);font-weight:400">— cupones y amortizaciones proyectadas</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Renta futura" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Próximos 12 meses</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="56200" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Cupones, amortizaciones y dividendos que tendrían que entrar.</div>
+</div>
+<div style="padding:18px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,200px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Por mes</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="list" hint-size="auto,32px">Tabla</x-import>
+</div>
+<div style="margin-top:12px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.BarChart" data="{{ i11bars }}" height="128" color="var(--data-2)" hint-size="100%,128px"></x-import></div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:2px">Los meses vacíos no tienen pagos: no hay nada que cobrar.</div>
+</x-import>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Próximos pagos</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="AL30 · cupón y amortización" meta="9 de setiembre · Balanz" value="US$ 384" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="clock" label="Plazo fijo Itaú · vence" meta="12 de setiembre · $ 60.000 + $ 1.088" value="$ 61.088" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="ON YPF 2029 · cupón" meta="30 de setiembre · Balanz" value="US$ 213" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="chart" label="AAPL · dividendo estimado" meta="15 de diciembre · según el último pago" value="US$ 3" hint-size="100%,56px"></x-import>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:10px;text-wrap:pretty">Los bonos y las ONs tienen calendario fijo. Los dividendos son estimados con el último pago y se marcan como tales.</div>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">I12 · Estado de los precios <span style="color:var(--text-muted);font-weight:400">— los cuatro casos del bloque, en una vista</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Precios" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">De dónde viene cada precio y cuándo se actualizó. Nada de esto bloquea la app: siempre podés poner el precio a mano.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,112px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:500 16px/22px var(--font-sans)">ON YPF 2029</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="clock" hint-size="auto,22px">9 días</x-import>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px">US$ 0,9850 cargado por vos el 11 de julio. Sirve, pero está viejo.</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="edit" hint-size="auto,32px">Actualizar a mano</x-import></div>
+</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,112px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:500 16px/22px var(--font-sans)">FCI Renta UYU</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="clock" hint-size="auto,22px">Sin proveedor</x-import>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px">Nadie publica esta cuotaparte. El precio es el que ponés vos y así está bien.</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="edit" hint-size="auto,32px">Cargar precio</x-import></div>
+</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,96px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:500 16px/22px var(--font-sans)">AAPL · YPFD · MELI</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="clock" hint-size="auto,22px">Mercado cerrado</x-import>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px">Último cierre: viernes 17:00. Abre el lunes a las 9:30 y se actualizan solos.</div>
+</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,112px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font:500 16px/22px var(--font-sans)">Dólar para convertir</span>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="auto,22px">26 horas</x-import>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-secondary);margin-top:6px">40,30 de ayer 09:41. Afecta el total en pesos de 5 posiciones.</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" icon="refresh" hint-size="auto,32px">Reintentar</x-import></div>
+</x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Actualizar todo lo que se pueda</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El héroe de I11 es plata que todavía no cobraste,</span> así que va en tinta neutra y sin signo: es una proyección, no un ingreso.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Los meses vacíos se ven vacíos.</span> Cinco de doce no tienen pagos y eso es información: la renta fija es a los saltos. Nada de interpolar una curva suave.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Lo estimado se marca en la fila</span> (“dividendo estimado · según el último pago”). Bonos y ONs tienen calendario contractual; un dividendo no.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El plazo fijo aparece con capital e intereses separados</span> en el meta, porque el capital vuelve y no es renta: si se sumaran en una sola cifra, el mes de setiembre parecería un rendimiento enorme.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · I12 junta los cuatro estados de precio en una vista de consulta:</span> viejo (warning), sin proveedor (neutro), mercado cerrado (neutro) y cotización vieja (warning). Ninguno bloquea y ninguno reemplaza un número por un guion.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · “Sin proveedor” es neutro, no warning,</span> y el copy lo cierra: “el precio es el que ponés vos y así está bien”. Es un dato pendiente por diseño, no un problema.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · El primario hace lo posible y lo dice:</span> “actualizar todo lo que se pueda”. Prometer “actualizar todo” sería mentir cuando hay instrumentos sin proveedor.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">I11: 3 interactivos (chip Tabla, gráfico, lista) · 1 cifra héroe · 3 niveles + mono · 1 color de datos, 0 violeta · 0 bordes. I12: 5 interactivos (4 cards con su chip, primario) — <span style="color:var(--text-primary)">al límite</span>; con un quinto caso, la lista se agrupa por tipo de estado · 0 cifras héroe · 3 niveles · warning y neutro siempre con ícono y label · 1 violeta.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I11 · vacío — sin renta futura</div><dc-import name="StateFrame" title="Renta futura" kind="empty" icon="calendar" message="Ninguna de tus posiciones paga renta. Los bonos, las ONs y los plazos fijos aparecen acá con su calendario." action="Ver posiciones" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I11 · cargando</div><dc-import name="StateFrame" title="Renta futura" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I12 · error de todos los proveedores</div><dc-import name="StateFrame" title="Precios" kind="error" what="No pudimos actualizar ningún precio." next="Tu portfolio se muestra con los últimos precios conocidos y podés cargar a mano el que quieras." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">I12 · offline</div><dc-import name="StateFrame" title="Precios" kind="offline" pending="2" offline-msg="Sin conexión — nada se actualiza solo." hero-label="Precios al día" hero-value="3 de 8" note="Sin conexión no entra ningún precio de mercado, pero los que cargás a mano se guardan igual y valúan tus posiciones." r1="Cargados por vos" r1meta="No dependen de conexión" r1val="3" r2="Del último sync" r2meta="Hoy 09:41" r2val="3" r3="Mercado cerrado" r3meta="Cierre del viernes" r3val="2" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:80px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">Panel de deuda de biblioteca</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Lo que me faltó de D1 para el bloque I, sumado a lo que ya venía de F+G y de H. Nada de esto tocó el bundle: se resolvió con tokens, superficies y <code>Geist Mono</code> dentro de las pantallas.</p>
+</div>
+<div style="display:flex;gap:20px;margin-top:28px;flex-wrap:wrap">
+<div style="flex:1 1 480px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Falta en la biblioteca · nuevo del bloque I</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:14px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">1 · PositionRow.</span> La fila de I3 es el componente más cargado de reglas de todo el sistema: dos líneas, dos columnas de precisión fija, precisión variable en el texto, tercera línea condicional para el badge de precio viejo y una variante sin cantidad para plazos fijos. Hoy son ocho copias del mismo markup y cualquiera puede romper la alineación.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · QuantityInput.</span> El keypad del sistema está pensado para montos: acá hace falta cantidad, con hasta 8 decimales, formateo por instrumento (0 para una acción, 4 para un FCI, 8 para crypto) y scrub proporcional. Es la diferencia entre registrar 0,04182500 BTC y registrar 4.182.500.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · PriceStatus.</span> El par badge + chip “actualizar a mano” aparece en I2, I3, I4 y cuatro veces en I12, con cuatro variantes de estado (viejo, sin proveedor, mercado cerrado, cotización vieja). Es una regla del producto y debería tener un componente con la antigüedad como prop.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Sparkline discreta.</span> Para precios cargados a mano hace falta una serie con markers por punto y saltos, no una línea continua: seis precios en cinco meses dibujados como línea suave insinúan una continuidad que no existe.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Donut con selector de dimensión.</span> Ya lo pedí en H2; acá además necesita cambiar de dimensión (clase / moneda / país) sin recalcular colores, porque el color sigue a la entidad.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · SplitBar con etiquetas y bandas.</span> El componente existe, arrastra bien y acepta color por parte, pero su leyenda no se puede ocultar ni ordenar, no admite bandas de tolerancia y su <code>height</code> tiene que ser numérico o el riel se dibuja en cero: la tabla objetivo / real / brecha de I9 está armada a mano al lado de la barra.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · InfoCard de una línea (el “tooltip” del sistema).</span> TWR y XIRR tenían que explicarse en un tooltip y la biblioteca no tiene ninguno, así que terminaron siendo dos cards. Funciona y es más legible en mobile, pero no es lo que la especificación pedía: falta el patrón.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · ListRow con dos valores a la derecha.</span> En I7 cada resultado necesita monto/estado (“Precio al día”, “Ya la tenés”) además del chevron; en I11, monto y fecha. Hoy entra uno solo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">9 · DragRow.</span> No hay patrón de reordenamiento en la biblioteca: el asa de I8 es un <code>Icon name="list"</code> y el arrastre está anotado, no construido. Lo mismo va a hacer falta en categorías y cuentas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">10 · AccountCarousel con saldo en dos monedas.</span> Un broker tiene US$ 1.840 y su equivalente en pesos; la card muestra una sola moneda.</div>
+<div><span style="color:var(--text-primary);font-weight:500">11 · BenchmarkBars.</span> La comparación de I10 —una serie propia contra N referencias en gris— es un patrón distinto del ranking de H9 y merece su componente.</div>
+</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-muted);margin-top:16px">Sigue pendiente: ChartCard con toggle de tabla, tooltip táctil de 48 px, LineChart, StackedBar/DivergingBar, Waterfall, Sankey, CalendarHeatmap y la rampa secuencial como tokens, RankingBar, StoryFrame, StatTile compacto, NeedsFxBanner, BulletBar, RadialDial, Chip con selección por superficie, BudgetRing con color, MonthCalendar, DataList de columnas, TabBar con badge, ListRow variante switch.</div>
+</div>
+<div style="flex:1 1 320px;display:flex;flex-direction:column;gap:20px">
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Qué saqué de la fila de I3</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">Nombre completo.</span> El símbolo identifica; el nombre duplicaría el ancho de la línea 1 y empujaría el valor.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Precio promedio de compra y P&amp;L absoluto.</span> Son la explicación del porcentaje, no la respuesta a “cómo viene”. Van juntos en I4.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Peso en el portfolio.</span> Lo comunica el orden: la lista está ordenada por valor. Como número exacto vive en I4 y como reparto en el donut de I2.</div>
+<div><span style="color:var(--text-primary);font-weight:500">País y sector.</span> Son dimensiones de análisis, no identidad de la posición: viven en el selector de dimensión del donut.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Moneda de cotización y antigüedad del precio.</span> La moneda ya se ve en el precio de la línea 2; la antigüedad sólo aparece cuando molesta, como tercera línea de esa fila.</div>
+<div style="color:var(--text-muted)">Lo que quedó: símbolo, clase, cantidad × precio, valor y porcentaje. Cinco datos, dos líneas, cero scroll horizontal.</div>
+</div>
+</div>
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">La vista peor resuelta</div>
+<div style="margin-top:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary);font-weight:500">I5, registrar operación.</span> Es la única que se pasa del presupuesto de ruido sin una excusa buena: seis elementos interactivos, dos cifras de 22 px y una fecha que ni siquiera está en pantalla porque toma “hoy” por defecto y sólo se puede cambiar en un paso que no dibujé. Encima, la variante que más importa para este producto —instrumento sin proveedor, donde el precio lo pone el usuario— está descrita en las anotaciones y no dibujada: debería ser un frame propio, porque es el camino normal de la mitad de las clases. La partición es obvia y no la hice: paso 1 instrumento, cantidad y precio; paso 2 cuenta, fecha, comisiones e impuestos.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;showStates&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      noop: () => {},
+      invTabs: [{ id: 'home', label: 'Inicio', icon: 'home' }, { id: 'movements', label: 'Movim.', icon: 'list' }, { id: 'add', label: '', icon: 'plus', fab: true }, { id: 'invest', label: 'Inversiones', icon: 'invest' }, { id: 'more', label: 'Más', icon: 'more' }],
+      i2seg: ['Clase', 'Moneda', 'País'],
+      i5accounts: [{ id: 'balanz', institution: 'Balanz', currency: 'USD', balance: 1840, name: 'Broker', country: 'AR' }, { id: 'itau', institution: 'Itaú', currency: 'UYU', balance: 84200, name: 'Caja de ahorro', country: 'UY' }, { id: 'mp', institution: 'Mercado Pago', currency: 'ARS', balance: 96400, name: 'Billetera', country: 'AR' }],
+      i9barH: 20,
+      i9parts: [{ label: 'Bonos', value: 30, color: 'var(--data-1)' }, { label: 'Crypto', value: 15, color: 'var(--data-2)' }, { label: 'ONs', value: 20, color: 'var(--data-3)' }, { label: 'Acciones', value: 25, color: 'var(--data-4)' }, { label: 'Otros', value: 10, color: 'var(--data-other)' }],
+      i11bars: [{ label: 'ago', value: 0 }, { label: 'sep', value: 24800 }, { label: 'oct', value: 1200 }, { label: 'nov', value: 0 }, { label: 'dic', value: 8600 }, { label: 'ene', value: 1200 }, { label: 'feb', value: 0 }, { label: 'mar', value: 8900 }, { label: 'abr', value: 1200 }, { label: 'may', value: 0 }, { label: 'jun', value: 9100 }, { label: 'jul', value: 1200 }],
+      i6days: [{ date: '2026-07-17' }, { date: '2026-07-18' }, { date: '2026-07-19' }, { date: '2026-07-20' }, { date: '2026-07-21' }, { date: '2026-07-22' }],
+      i4prices: [0.9420, 0.9510, 0.9480, 0.9620, 0.9730, 0.9850],
+      i2spark: [742000, 768000, 794000, 781000, 812000, 848000, 866000, 851000, 889000, 913000, 936000, 958220],
+      i3seg: ['Clase', 'Moneda', 'Valor'],
+      i5seg: ['Compra', 'Venta'],
+      i6seg: ['Dividendo', 'Cupón', 'Amortización'],
+      themeClass: (this.props.theme ?? 'dark') === 'light' ? 'light' : '',
+      showStates: this.props.showStates ?? true,
+      showAnnotations: this.props.showAnnotations ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+/* 4px grid. Screen side padding 20px, block separation 24px. */
+:root{
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+  --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px;
+
+  --screen-padding:20px;
+  --block-gap:24px;
+  --tabbar-height:64px;
+  --header-height:56px;
+  --fab-size:64px;
+  --thumb-zone:200px;
+  --touch-min:44px;
+  --primary-button-height:56px;
+  --primary-button-height-lg:64px;
+  --keypad-key-height:64px;
+
+  --radius-input:14px;
+  --radius-button:16px;
+  --radius-card:20px;
+  --radius-keypad-key:20px;
+  --radius-sheet:28px;
+  --radius-chip:999px;
+
+  --border-hairline:1px;
+}

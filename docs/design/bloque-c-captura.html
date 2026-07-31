@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/palette.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/colors.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/charts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/typography.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/motion.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/base.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/styles.css">
+<script src="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/_ds_bundle.js"></script>
+<script src="ds-updates.js"></script>
+<style>
+html,body{margin:0;background:var(--surface-1)}
+a{color:var(--primary-ink);text-decoration:none}
+a:hover{color:var(--text-primary)}
+@keyframes d5-digit{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes d5-ring{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+
+<div style="width:2280px;font-family:var(--font-sans);color:var(--text-primary);background:var(--surface-1)">
+
+<section style="padding:72px 64px 56px;display:flex;gap:64px;align-items:flex-start">
+<div style="max-width:760px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">PERZE · D5 · Bloque C</div>
+<h1 style="margin:14px 0 0;font-size:40px;line-height:44px;font-weight:600;letter-spacing:-.015em">Captura rápida</h1>
+<p style="margin:18px 0 0;font-size:16px;line-height:26px;color:var(--text-secondary);text-wrap:pretty;max-width:62ch">Once vistas, diseñadas como si el resto de la app no existiera. La cifra de C1 es el objeto más grande del sistema (hero-xl, 64px) y el keypad es la única superficie que ocupa un tercio de pantalla: son los dos lugares donde este bloque se gana o se pierde.</p>
+<p style="margin:14px 0 0;font-size:16px;line-height:26px;color:var(--text-secondary);text-wrap:pretty;max-width:62ch">La métrica no son 3 taps: son <strong style="font-weight:600;color:var(--text-primary)">menos de 5 segundos y 3 decisiones</strong>. Los taps del camino feliz son 2 más la escritura de los dígitos, que también cuesta tiempo y está contada abajo.</p>
+</div>
+<div style="background:var(--page);border-radius:20px;padding:24px 28px;min-width:520px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Presupuesto de tiempo · camino feliz</div>
+<div style="display:grid;grid-template-columns:1fr auto auto;gap:10px 24px;margin-top:16px;font-size:14px;line-height:20px">
+<div style="color:var(--text-secondary)">FAB → C1 (transición soft 260ms)</div><div style="font-family:var(--font-mono);text-align:right">0,30 s</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">0 dec.</div>
+<div style="color:var(--text-secondary)">Escribir 4 dígitos · 0,35 s/tecla</div><div style="font-family:var(--font-mono);text-align:right">1,40 s</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">0 dec.</div>
+<div style="color:var(--text-secondary)">Leer y elegir chip frecuente</div><div style="font-family:var(--font-mono);text-align:right">0,80 s</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">1 dec.</div>
+<div style="color:var(--text-secondary)">Tap Guardar</div><div style="font-family:var(--font-mono);text-align:right">0,40 s</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">1 dec.</div>
+<div style="color:var(--text-muted)">Secuencia de guardado (no bloqueante)</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">0,70 s</div><div style="font-family:var(--font-mono);color:var(--text-muted);text-align:right">—</div>
+<div style="grid-column:1 / -1;height:1px;background:var(--border)"></div>
+<div style="font-weight:600">Total percibido</div><div style="font-family:var(--font-mono);font-weight:600;text-align:right">2,90 s</div><div style="font-family:var(--font-mono);font-weight:600;text-align:right">2 dec.</div>
+<div style="color:var(--text-secondary)">Peor caso (grid C2 + moneda distinta)</div><div style="font-family:var(--font-mono);text-align:right">4,60 s</div><div style="font-family:var(--font-mono);text-align:right">3 dec.</div>
+<div style="color:var(--text-secondary)">Cambiar de tipo de movimiento (segmentado)</div><div style="font-family:var(--font-mono);text-align:right">+0,40 s</div><div style="font-family:var(--font-mono);text-align:right">+1 dec.</div>
+<div style="color:var(--text-secondary)">Transferencia entre monedas (C6b → sheet C6c)</div><div style="font-family:var(--font-mono);text-align:right">3,90 s</div><div style="font-family:var(--font-mono);text-align:right">3 dec.</div>
+</div>
+<p style="margin:16px 0 0;font-size:13px;line-height:19px;color:var(--text-muted);text-wrap:pretty">El monto es entrada, no decisión: no se elige entre opciones. Por eso escribir 6 dígitos cuesta 2,1 s y no consume ninguna de las 3 decisiones — pero sí consume el presupuesto de 5 segundos, y por eso el keypad tiene teclas de 64px y no de 48. El segmentado de tipo no toca el camino feliz: Gasto ya viene activo, y cambiar de tipo pasó de 2 taps (chip → opción del sheet) a 1.</p>
+</div>
+</section>
+
+<section id="c1" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C1</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Monto con keypad</h2>
+<span style="font-size:14px;color:var(--text-muted)">La pantalla que abre el FAB. El primer frame es interactivo: escribí en el keypad.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C1a · vacío · interactivo</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="position:relative">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px;min-height:64px">
+<span style="{{ heroDim }}"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="{{ liveValue }}" decimals="{{ liveDecimals }}" currency="{{ liveCur }}" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import></span>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="{{ liveCur }}" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Itaú Caja de Ahorro · Hoy</span>
+</div>
+<span style="position:absolute;right:0;top:-9px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">ESCRIBIR · NO ES DECISIÓN</span>
+</div>
+</div>
+<div style="position:relative;padding:0 20px 14px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuentes a las 13:00</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="food" on-click="{{ noop }}" hint-size="auto,36px">Almuerzo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="fuel" on-click="{{ noop }}" hint-size="auto,36px">Nafta</x-import>
+</div>
+<span style="position:absolute;right:20px;top:-9px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">DECISIÓN 1 · TAP 1</span>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ onKey }}" on-clear="{{ onClear }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="position:relative;padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" disabled="{{ liveEmpty }}" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+<span style="position:absolute;right:20px;top:5px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">DECISIÓN 2 · TAP 2</span>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C1b · con un 1</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px;min-height:64px">
+<span style="animation:d5-digit 180ms cubic-bezier(.22,1.2,.36,1)"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import></span>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Itaú Caja de Ahorro · Hoy</span>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 14px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuentes a las 13:00</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="food" on-click="{{ noop }}" hint-size="auto,36px">Almuerzo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="fuel" on-click="{{ noop }}" hint-size="auto,36px">Nafta</x-import>
+</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C1c · 1.250,50</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px;min-height:64px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" currency="UYU" decimals="2" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Itaú Caja de Ahorro · Hoy</span>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 14px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuentes a las 13:00</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="food" on-click="{{ noop }}" hint-size="auto,36px">Almuerzo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="list" on-click="{{ noop }}" hint-size="auto,36px">Más</x-import>
+</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div class="light" style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C1c · variante clara</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px;min-height:64px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" currency="UYU" decimals="2" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Itaú Caja de Ahorro · Hoy</span>
+</div>
+</div>
+</div>
+<div style="padding:0 20px 14px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuentes a las 13:00</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="food" on-click="{{ noop }}" hint-size="auto,36px">Almuerzo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="list" on-click="{{ noop }}" hint-size="auto,36px">Más</x-import>
+</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:44px;max-width:1640px">
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El camino son 2 taps, no 3.</strong> Escribir el monto no es una decisión, así que el camino feliz es: dígitos → chip frecuente (decisión 1) → Guardar (decisión 2). El tercer tap aparece sólo cuando la categoría no está en los frecuentes y hay que ir al grid de C2.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La cifra manda por tamaño, no por color.</strong> hero-xl 64/60, cifras proporcionales, tinta neutra: es un gasto y el aqua marca polaridad de movimiento sólo cuando hay signo. El caret violeta de 3px es el único acento y hace que la cifra se lea como campo activo sin dibujar una caja de input.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Los decimales se apagan.</strong> Con <code style="font-family:var(--font-mono);font-size:13px">mutedDecimals</code> los centavos van en tinta muted: a un metro se leen los pesos y no el ruido.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Keypad: por qué es mejor que el del sistema.</strong> Teclas de 64px (el del SO da 42), dígitos de 32px, columna de operaciones fija para sumar tickets sin salir, coma decimal como tecla real (no hay punto de miles: lo pone el formateador), long-press en backspace = borrar todo, haptic de 8ms y press a scale .96. El dígito nuevo entra desde abajo en 180ms con stagger de 12ms.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Guardar existe siempre, deshabilitado en 0.</strong> Aparecer de golpe movería la fila de chips 78px hacia abajo justo cuando el pulgar apunta ahí.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Guardar nunca se bloquea por falta de categoría.</strong> Sin chip elegido el movimiento se guarda como “Sin categoría” y el toast de C7 ofrece clasificar. Se registra el gasto o no se registra nada.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Los frecuentes se ponderan por hora.</strong> A las 13:00 encabeza Almuerzo, a las 21:00 Delivery. El chip “Más” es la única puerta al grid, así la fila nunca crece más de tres.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">El tipo de movimiento es un segmentado.</strong> Gasto / Ingreso / Transferencia es una decisión de primer nivel y los tres slots están a la vista: cambiar de tipo cuesta 1 tap, no 2. El seleccionado se marca <em style="font-style:normal;color:var(--text-primary)">por superficie</em> —superficie 3 sobre superficie 1— así que no gasta el único violeta de la pantalla, que sigue siendo Guardar. El conflicto que me había hecho degradarlo a chip con sheet era falso.</li>
+</ol>
+</div>
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 7</strong> (segmentado de tipo = 1 · cifra scrubbable · chip de moneda · línea de detalles · fila de frecuentes = 1 · keypad = 1 · Guardar) — <span style="color:var(--warning)">excede el máximo de 5</span>. El segmentado es un grupo homogéneo y cuenta como uno, igual que antes contaba el chip.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (hero-xl 64 · label 13 · caption 11).</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — violeta en Guardar y en el caret, que son la misma decisión (el campo activo y su confirmación). Cero violeta decorativo, cero color en el keypad hasta que se presiona una tecla.</div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);color:var(--text-muted)">Excepción declarada, con el mismo motivo que la del propio sistema para Quick Add paso 2: en una pantalla de captura los targets <em>son</em> el contenido. Si hubiera que cumplir, lo que se va es el chip de moneda (queda sólo en C4, disparado por el chip de país) y la línea de detalles pasa a gesto de swipe-up. El segmentado no se toca: es la decisión de primer nivel de la pantalla. No se comprime nada.</div>
+</div>
+</div>
+</div>
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C1 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="opacity:.3"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import></div>
+<div style="font-size:13px;color:var(--text-muted)">Escribí el monto. El keypad ya está abierto: nunca hay un paso previo.</div>
+<div style="display:flex;gap:8px;margin-top:auto">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="food" on-click="{{ noop }}" hint-size="auto,36px">Almuerzo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" style="opacity:.3" hint-size="auto,44px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Cargan los defaults y los frecuentes. El keypad no espera a la red.</div>
+<div style="display:flex;gap:8px;margin-top:auto">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="112" height="36" radius="999" hint-size="112px,36px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="128" height="36" radius="999" hint-size="128px,36px"></x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,44px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="alert" hint-size="auto,22px">Frecuentes no disponibles</x-import></div>
+<div style="font-size:13px;color:var(--text-secondary);text-wrap:pretty">No pudimos traer tus categorías frecuentes. Podés elegir del grid completo. El monto no se pierde.</div>
+<div style="display:flex;gap:8px;margin-top:auto">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="list" on-click="{{ noop }}" hint-size="auto,36px">Elegir categoría</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="2" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:14px;flex:1">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,44px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Frecuentes desde caché. Guardar funciona igual: la cola replica al reconectar.</div>
+<div style="display:flex;gap:8px;margin-top:auto">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,44px"></x-import>
+<div style="display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;color:var(--text-muted)">Tienda Inglesa · Itaú Caja de Ahorro</span>
+</div>
+<div style="margin-top:auto">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c2" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C2</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Categoría</h2>
+<span style="font-size:14px;color:var(--text-muted)">Fallback del chip “Más”. Es el tap 2 del camino largo, y se vuelve solo.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C2 · grid</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="¿En qué?" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:0 20px 16px;display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="title" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,28px"></x-import>
+<span style="font-size:13px;color:var(--text-muted)">· Itaú Caja de Ahorro · Hoy</span>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" placeholder="Escribí para buscar" hint-size="100%,48px"></x-import>
+</div>
+<div style="position:relative;padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px 0;justify-items:center">
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="cart" label="Supermercado" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="food" label="Almuerzo" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="coffee" label="Café" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="fuel" label="Nafta" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="car" label="Transporte" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="home" label="Hogar" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="wallet" label="Servicios" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="refresh" label="Suscripciones" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="users" label="Familia" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="invest" label="Ahorro" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="bank" label="Banco" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="list" label="Otros" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<span style="position:absolute;right:20px;top:-11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">DECISIÓN 1 · TAP 2</span>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+<span style="position:absolute;right:20px;top:-9px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">DECISIÓN 2 · TAP 3</span>
+</div>
+</div>
+</div>
+
+<div class="light" style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C2 · variante clara</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="¿En qué?" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:0 20px 16px;display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="title" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,28px"></x-import>
+<span style="font-size:13px;color:var(--text-muted)">· Itaú Caja de Ahorro · Hoy</span>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" placeholder="Escribí para buscar" hint-size="100%,48px"></x-import>
+</div>
+<div style="padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px 0;justify-items:center">
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="cart" label="Supermercado" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="food" label="Almuerzo" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="coffee" label="Café" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="fuel" label="Nafta" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="car" label="Transporte" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="home" label="Hogar" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="wallet" label="Servicios" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="refresh" label="Suscripciones" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="users" label="Familia" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="invest" label="Ahorro" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="bank" label="Banco" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="list" label="Otros" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr;gap:40px;max-width:660px">
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La cifra viaja, no desaparece.</strong> El hero-xl de C1 se convierte en el título de 22px de C2 con shared element de 260ms: el usuario no pierde de vista lo que está clasificando y no hay un segundo hero compitiendo.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Elegir una burbuja guarda y vuelve.</strong> El tap en la categoría cierra C2 y ejecuta el guardado si el monto ya está: Guardar queda como salida secundaria para quien primero elige y después revisa detalles. Por eso el tap 3 del camino largo casi nunca se usa.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">12 burbujas, no 20.</strong> Tres columnas y cuatro filas es lo que entra sin scroll con el input de búsqueda arriba. La cola larga se resuelve escribiendo, no scrolleando: dos letras alcanzan para “Farmacia”.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Las burbujas no tienen color por categoría.</strong> El sistema pinta color sólo cuando significa; doce colores acá serían decoración y romperían la regla del 90% neutro. La identidad la da el ícono, y la selección se marca por superficie (superficie 3 más anillo de borde), no por violeta.</li>
+</ol>
+</div>
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 3</strong> (búsqueda · grid = 1 · Guardar). El grid cuenta como un grupo homogéneo, igual que la fila de chips.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (title 22 · label 13 · caption 11). El label de 12px de la burbuja es interno del componente y se cuenta con label.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — sólo el relleno de Guardar. El anillo de la burbuja pasó a selección por superficie, así que la excepción de “2 violetas en Quick Add paso 2” quedó cerrada acá.</div>
+</div>
+</div>
+</div>
+
+</div>
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C2 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="DSX.EmptyState" from="./ds-updates.js" icon="list" message="Todavía no tenés categorías propias. Podemos usar la plantilla de Uruguay." action-label="Usar la plantilla" on-action="{{ noop }}" hint-size="100%,180px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px 0;justify-items:center;align-content:start">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="64" height="64" radius="999" hint-size="64px,64px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="No pudimos abrir tus categorías." next="Tu gasto de $ 1.250,50 quedó guardado sin categoría. Podés clasificarlo después." on-retry="{{ noop }}" hint-size="100%,200px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="2" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px 0;justify-items:center;align-content:start">
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="cart" label="Supermercado" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="food" label="Almuerzo" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="fuel" label="Nafta" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+</div>
+<div style="padding:0 20px;font-size:13px;color:var(--text-muted)">Las categorías son locales: offline no cambia nada acá.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos · búsqueda</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" value="farma" hint-size="100%,48px"></x-import>
+<div style="display:flex;gap:18px">
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="pharmacy" label="Farmacia" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+<x-import component-from-global-scope="DSX.CategoryBubble" from="./ds-updates.js" icon="users" label="Farmacia · familia" on-click="{{ noop }}" hint-size="auto,96px"></x-import>
+</div>
+<div style="font-size:13px;color:var(--text-muted)">Dos letras y la cola larga aparece. Farmashop ya trae su categoría.</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c3" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C3</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Detalles colapsados</h2>
+<span style="font-size:14px;color:var(--text-muted)">Todo lo que tiene default vive acá. Nadie del camino feliz lo abre.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C3 · sheet abierto sobre C1</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="padding:28px 20px 0">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Detalles" height="620px" on-close="{{ noop }}" hint-size="100%,600px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Cuenta</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ accounts }}" active-id="itau" on-select="{{ noop }}" hint-size="100%,104px"></x-import>
+</div>
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Fecha</div>
+<x-import component-from-global-scope="DSX.DateStrip" from="./ds-updates.js" days="{{ days }}" value="{{ today }}" on-change="{{ noop }}" hint-size="100%,64px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Comercio" value="Tienda Inglesa" hint="Tienda Inglesa siempre cae en Supermercado." hint-size="100%,80px"></x-import>
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Visibilidad y tags</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="users" on-click="{{ noop }}" hint-size="auto,36px">Personal</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="tag" on-click="{{ noop }}" hint-size="auto,36px">Mensual</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="tag" on-click="{{ noop }}" hint-size="auto,36px">Reintegrable</x-import>
+</div>
+</div>
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" icon="camera" label="Foto del ticket" value="Fase futura" disabled="{{ yes }}" chevron="{{ no }}" hint-size="100%,56px"></x-import>
+</div>
+</x-import>
+</div>
+</div>
+
+<div style="max-width:660px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El sheet tapa el keypad, no la cifra.</strong> Snap a 600px: la cifra de 64px queda visible arriba del scrim. Editar detalles nunca hace perder de vista el monto.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Se entra por swipe-up sobre la línea de defaults</strong> (“Itaú Caja de Ahorro · Hoy”), y también por tap: todo gesto tiene alternativa por tap.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Cada control es físico.</strong> Carrusel de cuentas con snap (sangra fuera del padding para que se vea cortada la siguiente), tira de días con “Hoy” a la derecha —el pulgar está ahí—, y calendario sólo con long-press en un día.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Cerrar es guardar el borrador.</strong> No hay botón “Aceptar” en el sheet: los cambios se aplican al tocarlos y el sheet se cierra con swipe-down. Sin diálogos, sin confirmaciones.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La fila del ticket es un ListRow.</strong> Antes la armaba con divs; ahora es el componente del sistema, deshabilitado, con ícono de cámara y el valor a la derecha. Cuando llegue el adjunto sólo cambia el valor por un thumbnail.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Visibilidad es un chip, no un switch.</strong> “Personal” con ícono de personas y estado seleccionado se entiende mirando; un switch etiquetado “Compartir con el grupo” obliga a leer.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 5</strong> (carrusel = 1 · tira de días = 1 · comercio · grupo de chips = 1 · scrim para cerrar). Cumple.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> dentro del sheet (title 22 · body 16 · caption 11); la cifra de 64px queda en la capa de abajo, atenuada por el scrim.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 0</strong> — el día activo de la tira pasó a superficie. El único violeta posible acá es un chip de visibilidad o de tag seleccionado, y sólo puede haber uno de visibilidad activo.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C3 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--surface-2);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<div style="font-size:13px;color:var(--text-muted)">Primera vez: una sola cuenta, sin tags, sin comercios guardados.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Comercio" placeholder="¿Dónde fue?" hint-size="100%,80px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--surface-2);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<div style="display:flex;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="208" height="88" radius="20" hint-size="208px,88px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="120" height="88" radius="20" hint-size="120px,88px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="60%" height="14" hint-size="60%,14px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--surface-2);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="alert" hint-size="auto,22px">Saldos desactualizados</x-import></div>
+<div style="font-size:14px;line-height:20px;color:var(--text-secondary);text-wrap:pretty">No pudimos leer los saldos de tus cuentas. Podés elegir cuenta igual: el saldo se corrige al sincronizar.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ accounts }}" active-id="itau" privacy="{{ yes }}" on-select="{{ noop }}" hint-size="100%,104px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--surface-2);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="2" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<x-import component-from-global-scope="DSX.DateStrip" from="./ds-updates.js" days="{{ days }}" value="{{ today }}" on-change="{{ noop }}" hint-size="100%,64px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Cuentas, fechas y comercios son locales. Sólo el saldo puede estar viejo.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--surface-2);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ accounts }}" active-id="itau" on-select="{{ noop }}" hint-size="100%,104px"></x-import>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="users" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Personal</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="tag" on-click="{{ noop }}" hint-size="auto,36px">Mensual</x-import>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c4" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C4</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Moneda distinta y tipo de cambio</h2>
+<span style="font-size:14px;color:var(--text-muted)">La vista más compleja del bloque, partida en tres pantallas para que ninguna se sienta compleja.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C4a · país detectado</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Mercado Pago · Hoy</span>
+</div>
+</div>
+<div style="position:relative;padding:0 20px 14px">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="wifi" on-click="{{ noop }}" hint-size="auto,36px">Estás en Argentina · cobrar en AR$</x-import>
+<span style="position:absolute;right:20px;top:-11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">CHIP, NUNCA MODAL</span>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C4b · moneda cambiada</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="gasto" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="font-family:var(--font-mono);font-size:16px;color:var(--text-secondary);margin-top:10px">≈ $ 780</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="ARS" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Mercado Pago · Hoy</span>
+</div>
+</div>
+<div style="position:relative;padding:0 20px 14px">
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" label="Tipo de cambio · oficial" value="23,58" on-click="{{ noop }}" style="background:var(--surface-1);border-radius:16px;padding:0 16px" hint-size="100%,56px"></x-import>
+<span style="position:absolute;right:20px;top:-11px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">UNA LÍNEA, NO UNA PANTALLA</span>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C4c · editor de tipo de cambio</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:28px 20px 0">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Tipo de cambio" height="560px" on-close="{{ noop }}" hint-size="100%,560px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.FxEditor" dc-props="{{ fxProps }}" rate="{{ fxRate }}" suggested="{{ fxSuggested }}" source="DolarApi · oficial" age-hours="6" stale="{{ yes }}" on-change="{{ noop }}" on-open-keypad="{{ noop }}" hint-size="100%,150px"></x-import>
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Cotización</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Oficial</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" on-click="{{ noop }}" hint-size="auto,36px">MEP</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" on-click="{{ noop }}" hint-size="auto,36px">Blue</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" on-click="{{ noop }}" hint-size="auto,36px">Manual</x-import>
+</div>
+</div>
+<div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font-size:13px;color:var(--text-secondary)">AR$ 18.400 quedan como</span>
+<span style="font-family:var(--font-mono);font-size:22px;font-weight:600">$ 780</span>
+</div>
+<div style="font-size:12px;line-height:18px;color:var(--text-muted);margin-top:8px;text-wrap:pretty">Este valor se congela con el movimiento y no se recalcula nunca. Si lo pisás a mano queda marcado como manual.</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Usar 23,58</x-import>
+</div>
+</x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C4d · needs_fx (sin cotización)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="offline" pending="3" hint-size="100%,56px"></x-import>
+<div style="padding:28px 20px 0">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="No tenemos cotización" height="500px" on-close="{{ noop }}" hint-size="100%,500px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="neutral" icon="clock" hint-size="auto,22px">Sin conversión</x-import></div>
+<div style="font-size:16px;line-height:24px;color:var(--text-primary);text-wrap:pretty">No pudimos traer el AR$/UYU y no hay ninguno guardado. Tu gasto se guarda igual, en AR$ 18.400, sin convertir.</div>
+<div style="font-size:14px;line-height:20px;color:var(--text-secondary);text-wrap:pretty">Va a aparecer con el badge <em style="font-style:normal;color:var(--text-primary)">sin conversión</em> hasta que haya una cotización o la escribas vos. No entra en los totales en pesos hasta entonces, y nunca lo guardamos con tipo de cambio 1.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Guardar sin convertir</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Escribir el tipo de cambio</x-import>
+</div>
+</x-import>
+</div>
+</div>
+
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:44px;max-width:1640px">
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Partida en tres, y cada una hace una cosa.</strong> C4a sigue siendo C1 con un chip más. C4b agrega dos líneas: el equivalente y el rate. El editor completo (C4c) es un sheet que sólo ve quien lo pide. Nadie ve las tres.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El chip de país es el caso de uso, no el borde.</strong> Si el dispositivo detecta Argentina, aparece un chip sobre el keypad —jamás un modal, porque un modal en medio de la captura cuesta un tap y una lectura. Se ofrece una vez por sesión de viaje y después la moneda queda pegada a la cuenta usada allá.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El equivalente no compite con la cifra.</strong> AR$ 18.400 es hero-xl; “≈ $ 780” es body mono en tinta secundaria. Hay una sola cifra héroe: la que el usuario escribió, en la moneda en la que la pagó.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">needs_fx nunca bloquea.</strong> Sin cotización ni caché, el movimiento se guarda en su moneda original con badge <em style="font-style:normal;color:var(--text-primary)">sin conversión</em> en nivel <em style="font-style:normal;color:var(--text-primary)">neutral</em> (superficie 2, ícono de reloj), distinto del ámbar de <em style="font-style:normal;color:var(--text-primary)">pendiente de sincronizar</em>: uno dice “falta un dato que llega solo”, el otro “falta subirlo”. El naranja mentiría sobre la gravedad de needs_fx. Nunca se guarda rate 1.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">El rate viejo se muestra, no se esconde.</strong> Badge “hace 6 h” en warning. El slider de ±5% existe para ajustar contra el rate que te dieron en la caja, y el tap en la cifra abre el keypad para el valor exacto.</li>
+</ol>
+</div>
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">C4a/C4b — interactivos sobre el pliegue: 8</strong>, mismo exceso declarado que C1 más el chip de país y el ListRow del rate. Si hay que cumplir, lo que se va es el chip de moneda; el segmentado de tipo no se toca.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">C4c/C4d — interactivos: 4</strong> (cifra del rate · slider · grupo de cotizaciones = 1 · confirmar). Cumple.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> en C4a (hero-xl · label · caption); <span style="color:var(--warning)">4 en C4b</span>, porque el equivalente entra en body 16. Es el precio de no hacer una pantalla más, y es el único caso del bloque donde ese precio se paga: C6 ya se partió.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 2 en C4c</strong> — el chip “Oficial” seleccionado y el botón de confirmar, los dos violeta. Excepción: elegir la cotización y confirmarla son la misma decisión. Si hay que cerrarla, la elección de fuente se va a Ajustes → Fuentes de FX y acá queda sólo el valor.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">C4d: 0 no neutros</strong> — el badge de “sin conversión” pasó a nivel neutral: tinta secundaria sobre superficie 2, con ícono de reloj y label. El único violeta es el botón de guardar sin convertir.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C4 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="opacity:.3"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import></div>
+<div style="margin-top:auto"><x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="wifi" on-click="{{ noop }}" hint-size="auto,36px">Estás en Argentina · cobrar en AR$</x-import></div>
+<div style="font-size:13px;color:var(--text-muted)">Sin monto no mostramos equivalente: no hay nada que convertir.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="96" height="20" hint-size="96px,20px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Buscando cotización. La cifra original ya está firme; el equivalente llega después y no bloquea Guardar.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error · needs_fx</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="neutral" icon="clock" hint-size="auto,22px">Sin conversión</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary);text-wrap:pretty">Se guarda en AR$ y queda fuera de los totales en pesos hasta que haya cotización. Nunca con rate 1.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline · rate cacheado</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="3" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="font-family:var(--font-mono);font-size:16px;color:var(--text-secondary)">≈ $ 780</div>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">Cotización de ayer</x-import></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="18400" currency="ARS" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="font-family:var(--font-mono);font-size:16px;color:var(--text-secondary)">≈ $ 780</div>
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" label="Tipo de cambio · oficial" value="23,58" chevron="{{ no }}" style="background:var(--surface-1);border-radius:16px;padding:0 16px" hint-size="100%,56px"></x-import>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+<section id="c5" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C5</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Ingreso</h2>
+<span style="font-size:14px;color:var(--text-muted)">La misma pantalla. Cambian el signo, el color y los frecuentes.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C5 · ingreso</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Ingreso" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="ingreso" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="hero-xl" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.CurrencyChip" currency="UYU" on-click="{{ noop }}" hint-size="auto,36px"></x-import>
+<span style="font-size:13px;line-height:18px;color:var(--text-muted)">Brou Débito · Hoy</span>
+</div>
+</div>
+<div style="padding:0 20px 14px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Frecuentes</div>
+<div style="display:flex;gap:8px;margin-top:10px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="arrow-up" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Sueldo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="invest" on-click="{{ noop }}" hint-size="auto,36px">Freelance</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="undo" on-click="{{ noop }}" hint-size="auto,36px">Reintegro</x-import>
+</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="max-width:620px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Acá sí hay color en la cifra.</strong> El aqua marca la polaridad de un movimiento y el ingreso es el caso raro: aparece con signo <span style="font-family:var(--font-mono)">+</span> explícito, así el significado no viaja sólo en el color.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Los frecuentes cambian de set, no de forma.</strong> Sueldo, Freelance, Reintegro: tres, ponderados por día del mes (el 1 y el 5 encabeza Sueldo). Un ingreso se carga 2 veces por mes, así que el ahorro está en el default de cuenta, no en el keypad.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">La cuenta por defecto es otra.</strong> Los gastos caen en Itaú Caja de Ahorro; los ingresos, en la cuenta donde entró el último ingreso de esa categoría. Es el mismo mecanismo, no una regla nueva.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 7</strong>, igual que C1 y con la misma excepción declarada.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (hero-xl · label · caption).</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 2</strong> — aqua en la cifra (polaridad, con signo) y violeta en Guardar más el chip seleccionado. Es el único lugar del bloque donde el aqua aparece a 64px, y es correcto: un ingreso es noticia.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C5 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="opacity:.3"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import></div>
+<div style="font-size:13px;color:var(--text-muted)">En cero la cifra va neutra: todavía no es un ingreso, es un campo.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="hero" hint-size="auto,44px"></x-import>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="96" height="36" radius="999" hint-size="96px,36px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="112" height="36" radius="999" hint-size="112px,36px"></x-import>
+</div>
+<div style="font-size:13px;color:var(--text-muted)">Frecuentes de ingreso en camino.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="hero" hint-size="auto,44px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="alert" hint-size="auto,22px">Cuenta archivada</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">Brou Débito quedó archivada. Elegí otra cuenta para este ingreso.</div>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" on-click="{{ noop }}" hint-size="auto,36px">Elegir cuenta</x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="1" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="hero" hint-size="auto,44px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Sin cambios: el ingreso se guarda local y sale con la cola.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="92400" currency="UYU" size="hero" hint-size="auto,44px"></x-import>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="arrow-up" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Sueldo</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="invest" on-click="{{ noop }}" hint-size="auto,36px">Freelance</x-import>
+</div>
+<div style="margin-top:auto"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Guardar</x-import></div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c6" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C6</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Transferencia</h2>
+<span style="font-size:14px;color:var(--text-muted)">Un movimiento con dos lados, y una sola cifra héroe por pantalla. Entre monedas va partida en dos pasos.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C6 · misma moneda</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Transferencia" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="transferencia" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px;gap:20px">
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Sale de Itaú Caja de Ahorro</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<x-import component-from-global-scope="DSX.Icon" from="./ds-updates.js" name="arrow-down" size="20" color="var(--text-muted)" hint-size="20px,20px"></x-import>
+<span style="font-size:13px;color:var(--text-muted)">Entra en Abitab · Efectivo</span>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="refresh" on-click="{{ noop }}" hint-size="auto,36px">Invertir</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-size:22px;font-weight:600">$ 12.000</div>
+</div>
+<div style="padding:0 20px 14px">
+<div style="font-size:13px;color:var(--text-muted)">Las transferencias no cuentan como gasto ni como ingreso: se excluyen de los totales por tipo.</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C6b · entre monedas · paso 1, lo que sale</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Transferencia" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex">
+<x-import component-from-global-scope="DSX.SegmentedControl" from="./ds-updates.js" options="{{ tipos }}" value="transferencia" on-change="{{ noop }}" hint-size="auto,50px"></x-import>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px;gap:20px">
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Sale de Itaú Caja de Ahorro</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<x-import component-from-global-scope="DSX.Icon" from="./ds-updates.js" name="arrow-down" size="20" color="var(--text-muted)" hint-size="20px,20px"></x-import>
+<span style="font-size:13px;color:var(--text-muted)">Entra en Itaú Caja de Ahorro USD</span>
+</div>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);text-wrap:pretty">Lo que entra y el tipo de cambio se confirman en el paso siguiente.</div>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="position:relative;padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Continuar</x-import>
+<span style="position:absolute;right:20px;top:5px;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;background:var(--surface-3);color:var(--text-secondary);padding:3px 8px;border-radius:999px">CUESTA UN TAP</span>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C6c · paso 2, lo que entra</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Transferencia" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:28px 20px 0">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Sale de Itaú Caja de Ahorro</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sheet" title="Entra en Itaú Caja de Ahorro USD" height="480px" on-close="{{ noop }}" hint-size="100%,480px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div>
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto que entra</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="301" currency="USD" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+</div>
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" label="Tipo de cambio implícito" value="39,85" on-click="{{ noop }}" style="background:var(--surface-1);border-radius:16px;padding:0 16px" hint-size="100%,56px"></x-import>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary);text-wrap:pretty">Calculado con el rate del día. Tocá el monto para escribir el que te dio la casa de cambio: el tipo de cambio se recalcula y queda como manual.</div>
+<div style="margin-top:auto"></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar transferencia</x-import>
+</div>
+</x-import>
+</div>
+</div>
+
+<div style="max-width:600px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Un movimiento, dos lados, una cifra héroe.</strong> Lo que sale es hero-xl; lo que entra es title 22 mono. Dos cifras de 64px serían dos preguntas y la pantalla ya tiene una: cuánto sale.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Entre monedas se partió en dos pasos.</strong> Era la peor vista del bloque: cuatro niveles tipográficos y dos cifras compitiendo en la misma pantalla. Ahora el paso 1 muestra sólo lo que sale y el paso 2 confirma lo que entra en un sheet, donde esa cifra puede ser héroe sin competir con nada. Cuesta un tap, y una transferencia se hace dos veces por mes: puede permitírselo.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El rate sigue siendo un resultado, no una entrada.</strong> La app calcula lo que entra con el rate del día y muestra el implícito en un ListRow. Si te dieron otro número en la casa de cambio, tocás el monto de entrada y lo escribís: el tipo de cambio se recalcula solo y queda como manual.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Invertir el sentido es un chip.</strong> “Invertir” intercambia las dos cuentas sin salir de la pantalla. Elegir dos cuentas de una lista sería la parte lenta de una transferencia; por eso los dos lados vienen con el último par usado.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Sin categoría.</strong> Una transferencia no se clasifica, así que la fila de frecuentes desaparece y el camino es: dígitos → Guardar. Dos taps, una decisión.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 5 en C6b</strong> (segmentado = 1 · cifra · cuenta de salida · cuenta de entrada · keypad) más Continuar; baja de 6 a 5 porque el rate se fue al paso 2. <strong style="color:var(--text-primary);font-weight:600">C6c: 3</strong> (cifra de entrada · ListRow del rate · Guardar). Los dos cumplen.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3 en cada paso</strong> (hero-xl · label · caption en C6b; hero-xl · body · caption en C6c). <span style="color:var(--text-primary);font-weight:600">Cumple</span>: partirla cerró el exceso de 4 niveles y las dos cifras que competían. Una cifra héroe por pantalla, y en C6c la héroe es la de entrada porque es lo único que se está confirmando.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — violeta en el botón y el caret. Ninguna cifra va en aqua: una transferencia no tiene polaridad.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C6 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="DSX.EmptyState" from="./ds-updates.js" icon="wallet" message="Con una sola cuenta no hay adónde transferir. Creá una segunda cuenta y esto se activa." action-label="Crear cuenta" on-action="{{ noop }}" hint-size="100%,190px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="140" height="24" hint-size="140px,24px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Buscando el rate para calcular el lado de entrada.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="critical" icon="close" hint-size="auto,22px">Saldo insuficiente</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary);text-wrap:pretty">Itaú Caja de Ahorro tiene $ 8.240. Podés guardarla igual: la app avisa, no prohíbe.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="2" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">Rate de ayer</x-import></div>
+<div style="font-size:13px;color:var(--text-muted)">Los dos saldos se ajustan local y se reconcilian al sincronizar.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-family:var(--font-mono);font-size:22px;font-weight:600">US$ 301</span>
+<span style="font-size:13px;color:var(--text-muted)">1 US$ = 39,85</span>
+</div>
+<div style="margin-top:auto"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Guardar</x-import></div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+<section id="c7" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C7</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Confirmación y deshacer</h2>
+<span style="font-size:14px;color:var(--text-muted)">Cuatro frames, 700 ms, cero diálogos. La única animación larga del bloque, y no bloquea nada.</span>
+</div>
+
+<div style="display:flex;gap:24px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">frame 1 · 0 ms · press</div>
+<div style="width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import>
+<div style="font-size:13px;color:var(--text-muted);margin-top:12px">Supermercado · Itaú Caja de Ahorro · Hoy</div>
+<div style="margin-top:auto;transform:scale(.96)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+</div>
+<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:10px">scale .96 · snappy · haptic 8 ms</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">frame 2 · 140–380 ms · check</div>
+<div style="width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column">
+<div style="opacity:.35"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1250.5" decimals="2" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" muted-decimals="{{ yes }}" hint-size="auto,64px"></x-import></div>
+<div style="margin-top:auto;display:flex;justify-content:center;padding-bottom:8px">
+<span style="width:64px;height:64px;border-radius:999px;background:var(--primary-fill);display:flex;align-items:center;justify-content:center;animation:d5-ring 240ms cubic-bezier(.22,1.2,.36,1)">
+<x-import component-from-global-scope="DSX.Icon" from="./ds-updates.js" name="check" size="30" stroke-width="2.2" color="var(--primary-on-fill)" hint-size="30px,30px"></x-import>
+</span>
+</div>
+<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:10px">el botón colapsa a círculo de 64 · check dibujado 180 ms</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">frame 3 · 380–620 ms · vuela a la lista</div>
+<div style="width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:4px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy</div>
+<div style="animation:d5-digit 240ms cubic-bezier(.24,1.05,.32,1)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · Itaú Caja de Ahorro" value="-1250.5" hint-size="100%,62px"></x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Café · Efectivo" value="-180" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="wallet" merchant="Pedidos Ya" meta="Delivery · Mercado Pago" value="-640" hint-size="100%,62px"></x-import>
+<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:auto">shared element: la cifra es la misma, viaja de 64 a 16 px</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">frame 4 · 620–700 ms · deshacer</div>
+<div style="width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:4px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · Itaú Caja de Ahorro" value="-1250.5" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="coffee" merchant="Café Brasilero" meta="Café · Efectivo" value="-180" hint-size="100%,62px"></x-import>
+<div style="margin-top:auto">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Gasto guardado en Supermercado." on-undo="{{ noop }}" hint-size="100%,60px"></x-import>
+<div style="height:2px;border-radius:2px;background:var(--primary-fill);width:62%;margin-top:8px"></div>
+<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:8px">5 s de vida · la barra es el único cronómetro visible</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px;max-width:1640px">
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La secuencia no se espera.</strong> El movimiento está guardado en el frame 1: la UI es optimista y la fila aparece antes de que el servidor conteste. Los 700 ms son celebración, no latencia; se puede tocar el FAB a los 200 ms y arranca otra captura.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El botón se convierte en el check.</strong> No aparece un modal ni un spinner centrado: el mismo objeto que tocaste colapsa a un círculo de 64px en el lugar exacto donde estaba el pulgar. Es el único momento en que el violeta ocupa área.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Deshacer en vez de confirmar.</strong> Cinco segundos de toast con la barra de tiempo. Sin “¿estás seguro?”, porque la acción es reversible y preguntar cuesta un tap en el 100% de los casos para evitar un error en el 2%.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">El toast dice qué se guardó, no “Éxito”.</strong> “Gasto guardado en Supermercado” permite detectar la categoría equivocada sin abrir la fila.</li>
+</ol>
+</div>
+<div>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 2</strong> durante la secuencia (Deshacer y la fila nueva). Cumple con holgura: es el frame más tranquilo del bloque, a propósito.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (hero-xl que se apaga · body de las filas · caption).</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — violeta en el círculo del check y en la barra de 5 s. Ninguna cifra de gasto se colorea, ni en verde ni en rojo.</div>
+<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);color:var(--text-muted)">Timing: 700 ms totales, dentro de la excepción documentada de “secuencia de guardado ≤700 ms”. Ninguna transición de interfaz de este bloque pasa de 320 ms.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C7 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px;justify-content:center">
+<div style="font-size:15px;line-height:22px;color:var(--text-secondary);text-wrap:pretty">Este estado no existe: sin monto Guardar está deshabilitado y la secuencia no arranca. El primer gasto de la vida del usuario sí trae celebración (bouncy, 900 ms), y es la única del bloque.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px;justify-content:center;align-items:center">
+<span style="width:64px;height:64px;border-radius:999px;background:var(--primary-fill);display:flex;align-items:center;justify-content:center">
+<x-import component-from-global-scope="DSX.Icon" from="./ds-updates.js" name="check" size="30" stroke-width="2.2" color="var(--primary-on-fill)" hint-size="30px,30px"></x-import>
+</span>
+<div style="font-size:13px;color:var(--text-muted);text-align:center">Nunca hay spinner: el guardado local ya ocurrió. Lo que sigue es la cola, y la cola no se mira.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · no pudimos subirlo" value="-1250.5" hint-size="100%,62px"></x-import>
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">Pendiente de sincronizar</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">La fila queda en la lista con badge. Reintenta sola; ver C11.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="4" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Guardado en el teléfono. Sale al reconectar." on-undo="{{ noop }}" hint-size="100%,60px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">La secuencia es idéntica: el check no significa “subido”, significa “guardado”.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:6px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · Itaú Caja de Ahorro" value="-1250.5" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Nafta · Visa Crédito" value="-2650" hint-size="100%,62px"></x-import>
+<div style="margin-top:auto"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Gasto guardado en Supermercado." on-undo="{{ noop }}" hint-size="100%,60px"></x-import></div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+<section id="c8" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C8</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Modo ráfaga</h2>
+<span style="font-size:14px;color:var(--text-muted)">Para el domingo con seis tickets en el bolsillo. Cuenta y fecha quedan; el monto se va.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C8 · tercer gasto en curso</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="syncing" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex;gap:8px;align-items:center">
+<x-import component-from-global-scope="DSX.Switch" from="./ds-updates.js" checked="{{ yes }}" label="Seguir cargando" id="rafaga" on-change="{{ noop }}" hint-size="auto,44px"></x-import>
+<span style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">2 · $ 4.120</span>
+
+</div>
+<div style="padding:16px 20px 0">
+<div style="font-family:var(--font-mono);font-size:13px;line-height:18px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Devoto $ 2.870 · Farmashop $ 1.250</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="display:flex;align-items:baseline;gap:14px;margin-top:10px">
+<span style="opacity:.3"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import></span>
+<span style="width:3px;height:52px;border-radius:2px;background:var(--primary-fill)"></span>
+</div>
+<div style="font-size:13px;line-height:18px;color:var(--text-muted);margin-top:14px">Efectivo · Hoy — se mantienen</div>
+</div>
+<div style="padding:0 20px 14px;display:flex;gap:8px;overflow:hidden">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="pharmacy" on-click="{{ noop }}" hint-size="auto,36px">Farmacia</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="coffee" on-click="{{ noop }}" hint-size="auto,36px">Café</x-import>
+</div>
+<div style="padding:0 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,280px"></x-import>
+</div>
+<div style="padding:14px 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" disabled="{{ yes }}" on-click="{{ noop }}" hint-size="100%,64px">Guardar y seguir</x-import>
+</div>
+</div>
+</div>
+
+<div style="max-width:620px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El botón cambia de texto, no de lugar.</strong> “Guardar y seguir”: la etiqueta es el único aviso de que no vas a volver al home. Nada se mueve entre gasto y gasto, así el pulgar aprende una sola posición y el segundo ticket cuesta 1,9 s en vez de 2,9.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El toast de Deshacer se apaga en ráfaga.</strong> Sería un cartel tapando el keypad cada dos segundos. Lo reemplaza la línea de historial: es tocable y abre la lista, donde se edita o se borra sin interrumpir la carga.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El contador es dato, no premio.</strong> “2 · $ 4.120” en mono, tinta secundaria. No hay racha ni felicitación: el producto no celebra cargar un gasto.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El historial es una línea, no filas.</strong> Dos TransactionRow de 62px le peleaban 124px de zona del pulgar a la cifra y traían su propio nivel tipográfico. Ahora es una sola línea en mono, tinta muted, cortada con ellipsis: en modo ráfaga lo único que importa es el contador y seguir cargando. Lo demás vive en la lista de movimientos, a un tap.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">El modo ráfaga es un Switch, no un chip.</strong> Un <code style="font-family:var(--font-mono);font-size:13px">Chip selected</code> dice “filtro activo”; un switch dice “esto queda encendido hasta que lo apagues”, que es exactamente lo que hace el modo.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 6</strong> (switch · línea de historial · cifra · frecuentes = 1 · keypad · Guardar, más la línea de defaults); baja de 8 a 6 al perder las dos filas. <span style="color:var(--warning)">Sigue excediendo el máximo de 5</span>, con la misma excepción declarada que C1: es una pantalla de trabajo repetitivo donde todo lo visible se usa.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> — hero-xl, label y caption. <span style="color:var(--text-primary);font-weight:600">Cumple</span>: era exactamente el arreglo que había anotado como salida, y la línea de historial en mono cae dentro de label.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — el switch encendido, mismo violeta de relleno que Guardar (deshabilitado mientras el monto está en 0). Un control binario necesita relleno para leerse de un vistazo: es el criterio con el que el sistema declara la excepción de Apariencia.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C8 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío · primer gasto de la ráfaga</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:8px;align-items:center">
+<x-import component-from-global-scope="DSX.Switch" from="./ds-updates.js" checked="{{ yes }}" label="Seguir cargando" id="rafaga" on-change="{{ noop }}" hint-size="auto,44px"></x-import>
+<span style="font-family:var(--font-mono);font-size:13px;color:var(--text-muted)">0</span>
+</div>
+<div style="opacity:.3"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="0" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import></div>
+<div style="font-size:13px;color:var(--text-muted)">Sin filas arriba todavía: el modo se enciende antes de cargar, no después.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="200" height="14" hint-size="200px,14px"></x-import>
+<div style="font-family:var(--font-mono);font-size:13px;color:var(--text-muted)">Farmashop $ 1.250</div>
+<div style="font-size:13px;color:var(--text-muted)">La línea se redibuja recién cuando el guardado local termina. Tarda menos de 120 ms, así que casi nunca se ve el skeleton.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Devoto" meta="Supermercado · sin subir" value="-2870" hint-size="100%,62px"></x-import>
+<div style="display:flex;gap:8px"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">3 pendientes</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">La ráfaga no se corta por un error de red: la cola sigue creciendo y el badge cuenta.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="6" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Devoto" meta="Supermercado · Efectivo" value="-2870" hint-size="100%,62px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">El caso de uso real de la ráfaga es la feria, donde no hay señal. Offline es el estado normal acá.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center">
+<x-import component-from-global-scope="DSX.Switch" from="./ds-updates.js" checked="{{ yes }}" label="Seguir cargando" id="rafaga" on-change="{{ noop }}" hint-size="auto,44px"></x-import>
+<span style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">5 · $ 9.480</span>
+</div>
+<div style="font-family:var(--font-mono);font-size:13px;line-height:18px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Devoto $ 2.870 · Farmashop $ 1.250 · Café Brasilero $ 180 · Ancap $ 2.650 · Devoto $ 1.930</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c9" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C9</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Captura por voz</h2>
+<span style="font-size:14px;color:var(--text-muted)">Entra por long-press del FAB. Lo que se dicta se muestra como campos, no como texto.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C9a · escuchando</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dictar gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px;gap:28px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Escuchando</div>
+<div style="display:flex;gap:8px;align-items:flex-end;height:40px">
+<span style="width:6px;height:16px;border-radius:3px;background:var(--primary-fill)"></span>
+<span style="width:6px;height:34px;border-radius:3px;background:var(--primary-fill)"></span>
+<span style="width:6px;height:24px;border-radius:3px;background:var(--primary-fill)"></span>
+<span style="width:6px;height:40px;border-radius:3px;background:var(--primary-fill)"></span>
+<span style="width:6px;height:18px;border-radius:3px;background:var(--primary-fill)"></span>
+</div>
+<div style="font-size:22px;line-height:30px;font-weight:500;letter-spacing:-.01em;text-wrap:pretty">gasté mil doscientos en el súper</div>
+</div>
+<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:13px;color:var(--text-muted)">Podés seguir hablando o parar cuando quieras.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Listo</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C9b · interpretado</div>
+<div style="position:relative;width:390px;height:844px;border-radius:28px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dictar gasto" show-scope="{{ no }}" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:20px 20px 0;font-size:13px;line-height:19px;color:var(--text-muted);text-wrap:pretty">“gasté mil doscientos en el súper”</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 20px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Monto</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1200" currency="UYU" size="hero-xl" show-sign="{{ no }}" polarity="neutral" hint-size="auto,64px"></x-import>
+</div>
+<div style="display:flex;gap:8px;margin-top:24px;flex-wrap:wrap">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="bank" on-click="{{ noop }}" hint-size="auto,36px">Itaú Caja de Ahorro</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="calendar" on-click="{{ noop }}" hint-size="auto,36px">Hoy</x-import>
+</div>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);margin-top:20px;text-wrap:pretty">“el súper” lo mapeamos a Supermercado por tus últimas 40 cargas. Tocá cualquier chip para corregirlo.</div>
+</div>
+<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" on-click="{{ noop }}" hint-size="100%,64px">Guardar</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="sm" on-click="{{ noop }}" hint-size="100%,44px">Abrir el keypad</x-import>
+</div>
+</div>
+</div>
+
+<div style="max-width:560px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La voz no confirma en voz.</strong> Lo dictado se convierte en la misma cifra hero-xl y tres chips corregibles: el usuario verifica de un vistazo en vez de escuchar una repetición.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Las cinco barras son el nivel de audio real</strong>, no un adorno: si no se mueven, el micrófono no está tomando. Es el único gráfico de este bloque.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Salida al keypad siempre visible.</strong> El reconocimiento falla en la calle; “Abrir el keypad” conserva el monto ya entendido.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Voz es un atajo, no un modo.</strong> Termina en la misma secuencia de C7 y el mismo toast de Deshacer.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 5</strong> en C9b (3 chips = 1 grupo · Guardar · keypad · volver · transcripción tocable). Cumple al límite.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (hero-xl · label · caption); en C9a el título 22 reemplaza al hero: no coexisten.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 1</strong> — violeta en las barras de audio, el chip interpretado y Guardar. Las barras usan el relleno de marca porque son estado de escucha activa, no dato.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C9 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío · sin permiso</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="DSX.EmptyState" from="./ds-updates.js" icon="mic" message="Necesitamos el micrófono para dictar. Podés cargar con el keypad mientras lo decidís." action-label="Dar permiso" on-action="{{ noop }}" hint-size="100%,190px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando · interpretando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:13px;color:var(--text-muted)">“gasté mil doscientos en el súper”</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="180" height="44" hint-size="180px,44px"></x-import>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="120" height="36" radius="999" hint-size="120px,36px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="96" height="36" radius="999" hint-size="96px,36px"></x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error · no se entendió</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="No pescamos el monto." next="Escuchamos “en el súper” pero ningún número. Probá de nuevo o escribilo." retry-label="Dictar otra vez" on-retry="{{ noop }}" hint-size="100%,200px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" status="warning" message="Sin conexión — el dictado no funciona offline." hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:14px;line-height:20px;color:var(--text-secondary);text-wrap:pretty">El reconocimiento del navegador necesita red. Es el único punto del bloque que no funciona offline, así que la voz nunca es el único camino.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ no }}" on-click="{{ noop }}" hint-size="auto,44px">Usar el keypad</x-import>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1200" currency="UYU" size="hero" show-sign="{{ no }}" polarity="neutral" hint-size="auto,44px"></x-import>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="cart" selected="{{ yes }}" on-click="{{ noop }}" hint-size="auto,36px">Supermercado</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="bank" on-click="{{ noop }}" hint-size="auto,36px">Itaú</x-import>
+</div>
+<div style="margin-top:auto"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="md" on-click="{{ noop }}" hint-size="100%,56px">Guardar</x-import></div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+<section id="c10" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C10</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Foto de ticket</h2>
+<span style="font-size:14px;color:var(--text-muted)">Fase futura. Lo que se diseña hoy es el punto de entrada, para no rehacer C3 después.</span>
+</div>
+
+<div style="display:flex;gap:28px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C10a · punto de entrada (hoy)</div>
+<div style="width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--surface-2);padding:20px;display:flex;flex-direction:column;gap:18px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.01em">Detalles</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Comercio" value="Tienda Inglesa" hint-size="100%,80px"></x-import>
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" icon="camera" label="Foto del ticket" value="Próximamente" disabled="{{ yes }}" chevron="{{ no }}" hint-size="100%,56px"></x-import>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);text-wrap:pretty">La fila existe desde el día uno, deshabilitada y sin promesa de fecha. Cuando el adjunto llegue, aparece un thumbnail de 44px en el mismo lugar y nada más se mueve.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C10b · flujo previsto (fase futura)</div>
+<div style="position:relative;width:390px;height:420px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:16px;opacity:.62">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">Fase futura · no construir</x-import></div>
+<div style="height:150px;border-radius:16px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+<x-import component-from-global-scope="DSX.Icon" from="./ds-updates.js" name="camera" size="32" stroke-width="1.25" color="var(--text-muted)" hint-size="32px,32px"></x-import>
+<span style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Vista de cámara</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text-secondary)">Monto detectado</span><span style="font-family:var(--font-mono);font-weight:500">$ 1.250,50</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text-secondary)">Comercio</span><span>Tienda Inglesa</span></div>
+<div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--text-secondary)">Fecha del ticket</span><span>26/07</span></div>
+</div>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);text-wrap:pretty">Regla firmada de antemano: el OCR propone y el keypad decide. Ningún campo se guarda sin que la cifra pase por la pantalla de C1.</div>
+</div>
+</div>
+
+<div style="max-width:560px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El punto de entrada se reserva ahora.</strong> Una fila deshabilitada en Detalles con “Próximamente” cuesta nada y evita rediseñar el sheet cuando llegue el adjunto.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">La foto nunca es el camino rápido.</strong> Sacar, esperar OCR y corregir es más lento que escribir cuatro dígitos. El adjunto sirve para respaldo y gastos a reembolsar, no para capturar.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Sin promesa de fecha en la UI.</strong> “Próximamente” en caption, sin badge de color, sin “beta”. Un badge llamativo sobre algo que no existe es deuda visual.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 0 nuevos</strong> — la fila está deshabilitada y no suma target.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong>. <strong style="color:var(--text-primary);font-weight:600">Colores no neutros: 0</strong> en el punto de entrada.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C10 · cinco estados (previstos)</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="DSX.EmptyState" from="./ds-updates.js" icon="camera" message="Este movimiento no tiene foto. Vas a poder adjuntarla cuando la función esté lista." hint-size="100%,160px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando · subiendo</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="100%" height="120" radius="16" hint-size="100%,120px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">La imagen se comprime en el teléfono antes de subir. El movimiento ya está guardado: la foto llega después.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error · OCR dudoso</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="alert" hint-size="auto,22px">Monto poco confiable</x-import></div>
+<div style="font-size:14px;line-height:20px;color:var(--text-secondary);text-wrap:pretty">Leímos $ 1.250,50 con baja confianza. Se abre el keypad con el valor cargado para que lo confirmes.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ no }}" on-click="{{ noop }}" hint-size="auto,44px">Revisar en el keypad</x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="1" message="Sin conexión — la foto queda en cola." hint-size="100%,36px"></x-import>
+<div style="padding:20px;font-size:14px;line-height:20px;color:var(--text-secondary);text-wrap:pretty">La foto vive en IndexedDB hasta que haya red. Nunca se pierde y nunca bloquea el guardado del movimiento.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:14px">
+<x-import component-from-global-scope="DSX.ListRow" from="./ds-updates.js" icon="camera" label="Ticket · Tienda Inglesa" meta="Adjuntado al movimiento" on-click="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Thumbnail de 44px en la fila de Detalles. Tap para ver a pantalla completa.</div>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="c11" style="padding:56px 64px 64px;border-top:1px solid var(--border)">
+<div style="display:flex;align-items:baseline;gap:16px">
+<span style="font-family:var(--font-mono);font-size:13px;font-weight:500;background:var(--page);padding:5px 10px;border-radius:999px">C11</span>
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Error y sin conexión al guardar</h2>
+<span style="font-size:14px;color:var(--text-muted)">Tres badges distintos, tres significados distintos. Ninguno cancela el guardado.</span>
+</div>
+
+<div style="display:flex;gap:24px;margin-top:32px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C11a · offline al guardar</div>
+<div style="width:390px;height:520px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="3" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:8px;flex:1">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · pendiente" value="-1250.5" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Nafta · pendiente" value="-2650" hint-size="100%,62px"></x-import>
+<div style="display:flex;margin-top:4px"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">3 pendientes de sincronizar</x-import></div>
+<div style="margin-top:auto"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Guardado en el teléfono. Sale al reconectar." on-undo="{{ noop }}" hint-size="100%,60px"></x-import></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C11b · el servidor rechaza</div>
+<div style="width:390px;height:520px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" status="critical" message="No pudimos sincronizar con el servidor." hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:16px;flex:1">
+<div style="font-size:16px;line-height:24px;text-wrap:pretty">No pudimos guardar en el servidor. Tus 3 movimientos están guardados en el teléfono y reintentamos cada 30 segundos.</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · reintentando" value="-1250.5" hint-size="100%,62px"></x-import>
+<div style="display:flex;gap:8px">
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="refresh" on-click="{{ noop }}" hint-size="auto,36px">Reintentar ahora</x-import>
+<x-import component-from-global-scope="DSX.Chip" from="./ds-updates.js" icon="list" on-click="{{ noop }}" hint-size="auto,36px">Ver la cola</x-import>
+</div>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);margin-top:auto;text-wrap:pretty">Qué pasó · qué implica · qué hacer, en ese orden. Sin código de error en el titular.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">C11c · los tres badges juntos</div>
+<div style="width:390px;height:520px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:18px">
+<div style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cómo se distinguen</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="clock" hint-size="auto,22px">Pendiente de sincronizar</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">Está completo. Falta subirlo. Se resuelve solo.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="neutral" icon="clock" hint-size="auto,22px">Sin conversión</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">Está guardado. Falta el tipo de cambio, y llega solo. Nivel neutral: no es un problema, es un dato que todavía no llegó. No entra en los totales en pesos hasta que haya uno.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="critical" icon="close" hint-size="auto,22px">Rechazado</x-import></div>
+<div style="font-size:13px;line-height:19px;color:var(--text-secondary)">El servidor lo rechazó (cuenta borrada en otro dispositivo). Es el único que pide una decisión tuya.</div>
+</div>
+</div>
+<div style="font-size:13px;line-height:19px;color:var(--text-muted);margin-top:auto;text-wrap:pretty">Los tres llevan ícono y label: ninguno se distingue sólo por color. El neutro es un dato que falta y llega solo, el ámbar es tiempo, el rojo es acción requerida. El naranja <em style="font-style:normal;color:var(--text-primary)">serious</em> no aparece en este bloque: ningún estado de la captura llega a esa gravedad.</div>
+</div>
+</div>
+
+<div style="max-width:520px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<ol style="margin:16px 0 0;padding-left:26px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Guardar no puede fallar.</strong> El guardado es local; la red es un detalle de implementación. Por eso no existe un estado “no se guardó”: existe “no se subió”.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">El banner es del sistema, la fila es del dato.</strong> El estado de conexión vive arriba, una vez; el estado de cada movimiento vive en su fila. Nunca se repite la misma información en los dos lugares.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Nada de spinner a pantalla completa.</strong> Prohibido por el sistema y además mentiroso: no hay nada que esperar.</li>
+<li><strong style="color:var(--text-primary);font-weight:600">Reintentar es un chip, no un botón primario.</strong> La app ya reintenta sola cada 30 s; el chip es para el impaciente.</li>
+</ol>
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-top:28px">Chequeo de ruido</div>
+<div style="margin-top:16px;background:var(--page);border-radius:20px;padding:20px 24px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<div><strong style="color:var(--text-primary);font-weight:600">Interactivos sobre el pliegue: 4</strong> (filas = 1 grupo · dos chips · Deshacer).</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Niveles tipográficos: 3</strong> (body 16 · label 13 · caption 11). Sin cifra héroe: no es una pantalla de captura.</div>
+<div style="margin-top:10px"><strong style="color:var(--text-primary);font-weight:600">Colores no neutros visibles: 2</strong> en C11b — el crítico del banner y el violeta de Deshacer. En C11c hay tres, pero es una lámina de referencia, no una pantalla del producto.</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:52px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">C11 · cinco estados</div>
+<div style="display:flex;gap:24px;margin-top:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">vacío · cola limpia</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="DSX.EmptyState" from="./ds-updates.js" icon="check" message="Todo sincronizado. No hay nada esperando." hint-size="100%,150px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">cargando · sincronizando</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex"><x-import component-from-global-scope="DSX.StatusBadge" from="./ds-updates.js" status="warning" icon="refresh" hint-size="auto,22px">Subiendo 3</x-import></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · subiendo" value="-1250.5" hint-size="100%,62px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">El punto del header late. Nada más se mueve.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">error · rechazado</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;align-items:center">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="Un movimiento fue rechazado." next="La cuenta Efectivo se borró en otro dispositivo. Elegí otra cuenta para ese gasto." retry-label="Elegir cuenta" on-retry="{{ noop }}" hint-size="100%,210px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">offline</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);display:flex;flex-direction:column">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="6" hint-size="100%,36px"></x-import>
+<div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="wallet" merchant="Pedidos Ya" meta="Delivery · pendiente" value="-640" hint-size="100%,62px"></x-import>
+<div style="font-size:13px;color:var(--text-muted)">Seis en cola y la app se sigue usando igual. El contador está en el banner, no en cada fila.</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">con datos</div>
+<div style="width:390px;height:312px;border-radius:20px;overflow:hidden;background:var(--page);padding:20px;display:flex;flex-direction:column;gap:6px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado · Itaú Caja de Ahorro" value="-1250.5" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="wallet" merchant="Mercado Pago" meta="AR$ 18.400 · sin conversión" value="-780" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="arrow-up" merchant="Sueldo" meta="Brou Débito" value="92400" hint-size="100%,62px"></x-import>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="cierre" style="padding:56px 64px 88px;border-top:1px solid var(--border)">
+<h2 style="margin:0;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-.01em">Tres respuestas</h2>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:28px;max-width:1640px">
+<div style="background:var(--page);border-radius:20px;padding:24px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Dónde me alejé de la especificación</div>
+<ul style="margin:14px 0 0;padding-left:20px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px">La fila de categorías frecuentes vive <strong style="color:var(--text-primary);font-weight:600">en C1, sobre el keypad</strong>, no en C2. El orden monto → categoría → guardar se respeta, pero el camino feliz baja a 2 taps y C2 pasa a ser fallback. La especificación describía tres pasos; tres pasos costaban un tap de más en el 80% de los casos.</li>
+<li style="margin-bottom:10px">El tipo de movimiento es un <strong style="color:var(--text-primary);font-weight:600">SegmentedControl</strong> con selección por superficie. Lo había degradado a chip con sheet para no gastar dos violetas; el conflicto era falso y quedó corregido.</li>
+<li style="margin-bottom:10px">C4 se partió en <strong style="color:var(--text-primary);font-weight:600">tres pantallas</strong> (chip de país, moneda aplicada, editor en sheet) como el prompt autorizaba.</li>
+<li style="margin-bottom:10px">C6 entre monedas se partió en <strong style="color:var(--text-primary);font-weight:600">dos pasos</strong> (salida en pantalla, entrada confirmada en sheet). Cuesta un tap y cierra el exceso de 4 niveles y de dos cifras compitiendo.</li>
+<li>Se excede el presupuesto de interactivos en C1, C4a/b, C5 y C8, siempre declarado con motivo. <strong style="color:var(--text-primary);font-weight:600">Ya no se excede ningún presupuesto de niveles tipográficos salvo C4b</strong> (4 niveles por el equivalente en body): C6 se partió y C8 pasó el historial a una línea.</li>
+</ul>
+</div>
+<div style="background:var(--page);border-radius:20px;padding:24px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Qué componente me faltaba, y qué cambió</div>
+<ul style="margin:14px 0 0;padding-left:20px;font-size:14px;line-height:22px;color:var(--text-secondary)">
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Switch</strong> — el modo ráfaga de C8 dejó de ser un <code style="font-family:var(--font-mono);font-size:13px">Chip selected</code> y ahora es el interruptor real, con label.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">SegmentedControl</strong> — el tipo de movimiento volvió a ser segmentado en las 10 pantallas que lo tienen, con selección por superficie.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">ListRow</strong> — reemplaza los divs a mano: el rate de C4b y del estado con datos, la fila de ticket de C3, las dos filas de C10 y el rate del sheet de C6c.</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">Íconos</strong> — micrófono (permiso de C9), cámara (filas de ticket de C3 y C10, vista de cámara), farmacia (categoría y chip, antes <code style="font-family:var(--font-mono);font-size:13px">wallet</code>) y tag (chips de Mensual y Reintegrable).</li>
+<li style="margin-bottom:10px"><strong style="color:var(--text-primary);font-weight:600">StatusBadge neutral</strong> — “sin conversión” pasó de <code style="font-family:var(--font-mono);font-size:13px">serious</code> a <code style="font-family:var(--font-mono);font-size:13px">neutral</code> en C4d, en el estado de error de C4 y en la lámina de C11c.</li>
+<li>Dos cambios del sistema que llegaron solos: el anillo de <strong style="color:var(--text-primary);font-weight:600">CategoryBubble</strong> y el día activo de <strong style="color:var(--text-primary);font-weight:600">DateStrip</strong> ahora seleccionan por superficie. No tomaba esos colores a mano en ninguna vista, así que sólo cambió el conteo de violetas de C2 y C3.</li>
+</ul>
+</div>
+<div style="background:var(--page);border-radius:20px;padding:24px">
+<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)">Qué vista quedó peor resuelta</div>
+<p style="margin:14px 0 0;font-size:14px;line-height:22px;color:var(--text-secondary);text-wrap:pretty"><strong style="color:var(--text-primary);font-weight:600">Las dos que había marcado están arregladas.</strong> C6 entre monedas se partió en C6b y C6c: cada paso tiene una sola cifra héroe y tres niveles tipográficos. C8 pasó el historial a una línea en tinta muted y recuperó 124px de zona del pulgar. La peor que queda es <strong style="color:var(--text-primary);font-weight:600">C4b</strong>: cuatro niveles tipográficos porque el equivalente en body convive con hero-xl, label y caption. No la partiría —el equivalente es el punto de la pantalla— pero es la única deuda tipográfica del bloque. Y la que más ruido tiene sigue siendo <strong style="color:var(--text-primary);font-weight:600">C8</strong>, con 6 interactivos: es trabajo repetitivo y todo lo visible se usa.</p>
+</div>
+</div>
+</section>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:2280,&quot;height&quot;:1400},&quot;monedaViva&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;UYU&quot;,&quot;ARS&quot;,&quot;USD&quot;],&quot;default&quot;:&quot;UYU&quot;,&quot;tsType&quot;:&quot;'UYU'|'ARS'|'USD'&quot;,&quot;section&quot;:&quot;C1 interactivo&quot;}}">
+class Component extends DCLogic {
+  state = { digits: '' };
+
+  onKey = (k) => {
+    this.setState((s) => {
+      let d = s.digits;
+      if (k === 'backspace') return { digits: d.slice(0, -1) };
+      if (['+', '−', '×', '÷'].includes(k)) return { digits: d };
+      if (k === ',') return { digits: d.includes(',') ? d : (d || '0') + ',' };
+      const [int, frac] = d.split(',');
+      if (frac !== undefined && frac.length >= 2) return { digits: d };
+      if (int && int.replace(/\./g, '').length >= 9 && frac === undefined) return { digits: d };
+      return { digits: d + k };
+    });
+  };
+
+  onClear = () => this.setState({ digits: '' });
+
+  renderVals() {
+    const d = this.state.digits;
+    const [int = '', frac] = d.split(',');
+    const value = Number((int.replace(/\./g, '') || '0') + (frac ? '.' + frac : ''));
+    return {
+      noop: () => {},
+      tipos: [
+        { id: 'gasto', label: 'Gasto' },
+        { id: 'ingreso', label: 'Ingreso' },
+        { id: 'transferencia', label: 'Transferencia' },
+      ],
+      yes: true,
+      no: false,
+      onKey: this.onKey,
+      onClear: this.onClear,
+      liveCur: this.props.monedaViva ?? 'UYU',
+      liveEmpty: d === '' || value === 0,
+      liveValue: value,
+      liveDecimals: frac === undefined ? 0 : frac.length,
+      heroDim: { opacity: d === '' ? 0.3 : 1, transition: 'opacity 180ms linear' },
+      accounts: [
+        { id: 'itau', institution: 'Itaú', name: 'Caja de Ahorro', currency: 'UYU', balance: 63740, country: 'UY' },
+        { id: 'brou', institution: 'Brou', name: 'Débito', currency: 'UYU', balance: 18420, country: 'UY' },
+        { id: 'visa', institution: 'Itaú', name: 'Visa Crédito', currency: 'UYU', balance: -9860, country: 'UY' },
+        { id: 'mp', institution: 'Mercado Pago', name: 'Billetera', currency: 'ARS', balance: 214500, country: 'AR' },
+        { id: 'cash', institution: 'Efectivo', name: 'Billetera', currency: 'UYU', balance: 2300, country: 'UY' },
+      ],
+      days: [
+        { date: '2026-07-22', label: 'Mié' }, { date: '2026-07-23', label: 'Jue' },
+        { date: '2026-07-24', label: 'Vie' }, { date: '2026-07-25', label: 'Ayer' },
+        { date: '2026-07-26', label: 'Hoy' },
+      ],
+      today: '2026-07-26',
+      fxProps: { from: 'ARS', to: 'UYU' },
+      fxRate: 23.58,
+      fxSuggested: 23.58,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

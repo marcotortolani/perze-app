@@ -247,13 +247,13 @@ Diseñá también la transición entre pasos: qué se mantiene fijo y qué se mu
 ```
 [plantilla común]
 
-Bloque B: B1 Home (3 variantes por FLAGS: una moneda / varias monedas / inversiones encendido) ·
+Bloque B: B1 Home (3 variantes: perfil Simple / Multi-moneda / Inversor) ·
 B2 Home vacío · B3 Skeleton · B4 Offline · B5 ScopeSwitcher abierto ·
 B6 Tab bar en detalle · B7 Pantalla "Más" · B8 Búsqueda global.
 
 Foco: el home es la carta de presentación. UNA cifra héroe, un contexto, una acción.
-Quiero ver que la versión con todos los flags en el mínimo es dramáticamente más
-limpia que la de varias monedas más inversiones, y que ninguna de las dos se siente incompleta.
+Quiero ver que la versión del perfil Simple es dramáticamente más limpia que la del
+Inversor, y que ninguna de las dos se siente incompleta.
 
 Dedicale atención especial al FAB: es el objeto más usado de la app.
 ```

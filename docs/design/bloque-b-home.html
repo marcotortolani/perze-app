@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/palette.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/colors.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/charts.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/typography.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/motion.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/base.css">
+<link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/styles.css">
+<script src="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--page); }
+  a { color: var(--primary-ink); text-decoration: none; }
+  a:hover { color: var(--text-primary); }
+  ol, ul { margin: 0; }
+</style>
+</helmet>
+
+<section style="background:var(--page);padding:56px 48px 96px;font-family:var(--font-sans)">
+
+  <div style="max-width:2440px;margin:0 auto 56px;display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">PERZE · D4 · Bloque B — Home y navegación</div>
+    <h1 style="margin:0;font:600 40px/44px var(--font-sans);letter-spacing:-.02em;color:var(--text-primary)">Siete vistas y los estados de scope · 390 × 844</h1>
+    <p style="margin:0;max-width:74ch;font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Profundización del Inicio ya publicado en el UI kit, no un rediseño. Se conservan las cuatro particiones vigentes: anillos y tasa de ahorro viven en Presupuesto, los insights entran colapsados en una fila muted, "Más" es índice puro y la selección se resuelve por superficie. Lo nuevo es el eje de flags de <a href="#B1A">B1</a>, el cuarto slot elegible del tab bar (<a href="#B6">B6</a>) y la búsqueda global (<a href="#B8">B8</a>). Dos correcciones de esta pasada: el <strong style="color:var(--text-primary)">scope pasa a selección por superficie</strong> —el FAB vuelve a ser el único violeta de la app— y el ex-B5 se reclasifica como <a href="#B1S">estados de B1</a>, no como pantalla.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <span style="display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font:500 12px/1 var(--font-mono);color:var(--text-secondary)">7 vistas · 10 frames</span>
+      <span style="display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font:500 12px/1 var(--font-mono);color:var(--text-secondary)">2 en claro</span>
+      <span style="display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font:500 12px/1 var(--font-mono);color:var(--text-secondary)">Solo componentes del sistema</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:72px 64px;max-width:2440px;margin:0 auto;align-items:flex-start">
+
+    <!-- ============ B1 A ============ -->
+    <div id="B1A" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" show-scope="" sync-state="synced" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="63740" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">↑ 2,1% vs. junio</div>
+          </div>
+          <div style="margin-top:24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctA }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:24px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <sc-for list="{{ movsA }}" as="m" hint-placeholder-count="3">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" hint-size="100%,62px"></x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver todos los movimientos" style="min-height:44px" hint-size="100%,44px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:96px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:196px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:346px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;bottom:22px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B1 · Inicio</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">monedas = 1 · miembros = 1 · módulos = ∅</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">No es un perfil: es la combinación mínima de flags. Cada bloque que falta acá falta por una condición, no por una plantilla distinta.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>Sin <code style="font-family:var(--font-mono);color:var(--text-primary)">ScopeSwitcher</code>: con <code style="font-family:var(--font-mono);color:var(--text-primary)">miembros = 1</code> el scope no existe como concepto y el header queda con búsqueda y estado de sync nada más.</li>
+          <li>La cifra héroe es patrimonio neto, en tinta primaria y sin signo. El delta va abajo, en label secundario: es contexto, no una segunda cifra.</li>
+          <li>El carrusel con una sola cuenta no se degrada a texto suelto. Es el mismo componente y el mismo gesto el día que aparece la segunda.</li>
+          <li>Sin fila de novedades: el motor de insights necesita 30 días de historia. La fila aparece sola cuando hay algo que decir; no hay hueco reservado.</li>
+          <li>Cuarto slot del tab bar: Análisis, el default. Tres tabs fijos + configurable + Más.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Ver <a href="#B2">B2</a> — hero en $ 0 y una sola frase.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Ver <a href="#B3">B3</a> — chrome real, datos en skeleton.</span>
+            <span style="color:var(--text-muted)">Error</span><span>"No pudimos actualizar los saldos. Los últimos que tenemos son de las 9:40. Reintentar."</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Ver <a href="#B4">B4</a> — banner con pendientes, nada bloqueado.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">* El cuarto nivel lo aporta el carrusel de cuentas: excepción ya declarada en el sistema, se mantiene abierta.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B1 B ============ -->
+    <div id="B1B" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Personal" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="synced" hint-size="auto,20px"></x-import>
+          </div>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="428900" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:baseline;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">
+              <span>↑ 4,2% vs. junio</span>
+              <span style="font-family:var(--font-mono);color:var(--text-muted)">3 monedas · TC 39,85</span>
+            </div>
+          </div>
+          <div style="margin-top:24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctB }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:24px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <sc-for list="{{ movsB }}" as="m" hint-placeholder-count="3">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" currency="{{ m.currency }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver todos los movimientos" style="min-height:44px" hint-size="100%,44px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="2 novedades" style="min-height:44px" hint-size="100%,44px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:150px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:214px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:420px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;top:596px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B1 · Inicio</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">monedas = 3 · miembros = 2 · presupuestos + recurrentes</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Los dos módulos activos no agregan bloques al Inicio: agregan destinos. El presupuesto vive en su pantalla y los recurrentes aparecen como novedad cuando cambia algo.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+<li><code style="font-family:var(--font-mono);color:var(--text-primary)">miembros = 2</code> enciende el scope en el header, en <strong style="color:var(--text-primary)">selección por superficie</strong>: el segmento activo es superficie 3 sobre superficie 2. El scope está en el header de todas las pantallas, y un color que aparece siempre deja de significar algo — se vuelve chrome. El único violeta de la app es el FAB.</li>
+<li>Multi-moneda se declara en una línea mono al lado del delta, no en una card, y <strong style="color:var(--text-primary)">solo cuando monedas &gt; 1</strong> — en flags A no hay conversión y el TC sería ruido puro. Si mostrás un patrimonio que mezcla tres monedas sin decir a qué cambio se convirtió, la cifra héroe deja de ser auditable y el usuario tiene que creerte. Un número que exige fe no sirve en una app de plata.</li>
+          <li>El carrusel sangra fuera del padding para que se corte la card siguiente: es lo que dice que hay más cuentas sin agregar un contador.</li>
+          <li>Los insights son una fila muted "2 novedades" con chevron. Sin card, sin acción, sin dismiss: el Inicio no negocia con el usuario, solo le avisa.</li>
+          <li>Dos filas de salida seguidas, ambas en tinta secundaria: son navegación, no acciones. La única acción de la pantalla sigue siendo el FAB.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Cuentas cargadas y cero movimientos: hero real, lista con una frase.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Ver <a href="#B3">B3</a>.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Falla el TC: el hero se muestra igual y baja una línea neutra "sin conversión desde ayer".</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Ver <a href="#B4">B4</a>.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">5 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">* Carrusel de cuentas, excepción declarada. El scope pasó a selección por superficie en esta pasada, así que la pantalla cierra en un solo violeta: el FAB.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B1 C ============ -->
+    <div id="B1C" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Personal" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="synced" hint-size="auto,20px"></x-import>
+          </div>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="672800" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:baseline;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">
+              <span>↑ 5,8% vs. junio</span>
+              <span style="font-family:var(--font-mono);color:var(--text-muted)">36% invertido</span>
+            </div>
+          </div>
+          <div style="margin-top:24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctC }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="1" padding="16px" hint-size="100%,96px">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <span style="flex:1;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Activaste inversiones. Podés ponerlas en la barra desde Ajustes → Navegación; la barra no se cambia sola.</span>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="close" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Ir a Navegación</x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Chip" on-click="{{ noop }}" hint-size="auto,36px">Dejar como está</x-import>
+              </div>
+            </x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:20px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <sc-for list="{{ movsC }}" as="m" hint-placeholder-count="3">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" currency="{{ m.currency }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="2 novedades" style="min-height:44px" hint-size="100%,44px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:150px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:214px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:344px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:520px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;bottom:22px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B1 · Inicio</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">todo lo anterior + inversiones</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Inversiones activo no agrega una segunda cifra héroe ni una card de portfolio: agrega una cuenta al carrusel y un porcentaje al contexto del héroe.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>El patrimonio ya incluye el broker. "36% invertido" es la única lectura de portfolio que el Inicio da: el resto está a un tap.</li>
+          <li>PPI entra como una card más del carrusel. Un broker es una cuenta con saldo; no necesita un tratamiento propio en esta pantalla.</li>
+          <li>El aviso del cuarto slot aparece <strong style="color:var(--text-primary)">una sola vez</strong> y es descartable. La app nunca reconfigura la navegación sola: Análisis sigue en la barra hasta que el usuario diga lo contrario.</li>
+          <li>El aviso usa chips, no un botón primario: no puede competir con el FAB ni gastar el violeta de relleno.</li>
+          <li>Con el aviso en pantalla se cae la fila "Ver todos": el aviso es temporal y se le cede el lugar al bloque más nuevo, no se comprime la lista.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista, con el aviso ya descartado en la segunda sesión.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Portfolio sin posiciones: la card de PPI muestra US$ 0 y el "% invertido" no se dibuja.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Ver <a href="#B3">B3</a>; la card del broker es el último skeleton en resolverse.</span>
+            <span style="color:var(--text-muted)">Error</span><span>"No pudimos traer precios de PPI. El saldo es el del cierre de ayer. Reintentar."</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Igual que <a href="#B4">B4</a>, con la card del broker marcada "cierre de ayer".</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">7 / 5 ‡</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">* Carrusel de cuentas, excepción declarada. ‡ Solo mientras el aviso existe: suma 3 targets (dos chips y la cruz). Una vez descartado, la pantalla vuelve a 4. Es la única violación con fecha de vencimiento del bloque.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B2 ============ -->
+    <div id="B2" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" show-scope="" sync-state="synced" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="12000" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Saldo inicial de tu primera cuenta</div>
+          </div>
+          <div style="margin-top:24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctEmpty }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:24px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="wallet" message="Todavía no cargaste gastos. El botón violeta de abajo carga el primero en menos de cinco segundos." hint-size="100%,180px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:96px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:196px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:390px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;bottom:22px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B2 · Inicio vacío</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Cero movimientos, día uno</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Vacío no es "sin datos": el onboarding ya dejó una cuenta y un saldo inicial. Lo único que falta es el primer gasto, y la pantalla dice exactamente eso.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>El héroe se dibuja igual, con el saldo inicial real. Un $ 0 falso enseñaría mal la pantalla; acá el número ya es verdadero desde el primer minuto.</li>
+          <li>El carrusel <strong style="color:var(--text-primary)">se queda</strong>, con su única card. Vacío acá no significa "sin cuentas" —del onboarding no se sale sin una— sino sin movimientos, así que el cuarto nivel tipográfico es la excepción heredada aplicada bien, no una violación. Y hay una razón de producto además de una de reglas: un estado vacío que muestra que ya tenés algo (tu cuenta, tu saldo) y que falta una sola cosa —el primer gasto— desalienta mucho menos que una pantalla en cero. No sacarlo después por prolijidad.</li>
+          <li>Estado vacío del sistema — un ícono de línea, una frase. <strong style="color:var(--text-primary)">Sin botón</strong>: la acción ya está en pantalla y es el FAB. Poner un segundo botón partiría la atención entre dos objetos que hacen lo mismo.</li>
+          <li>El copy apunta al FAB por color y posición, no por una flecha ni un tooltip.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Es el vacío. El grado cero — sin cuentas — no existe: no se sale del onboarding sin una.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Ver <a href="#B3">B3</a>; el vacío recién se muestra cuando la consulta volvió sin filas.</span>
+            <span style="color:var(--text-muted)">Error</span><span>No se degrada a vacío. Si la consulta falla se muestra el error, nunca "no hay gastos".</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Banner arriba y el mismo vacío: cargar sin conexión es el caso normal.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">El ícono del estado vacío no es decorativo: es el único portador del bloque, y por eso está permitido.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B3 ============ -->
+    <div id="B3" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Personal" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="syncing" hint-size="auto,20px"></x-import>
+          </div>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:10px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="228px" height="34px" radius="10px" hint-size="228px,34px"></x-import>
+            </div>
+            <div style="margin-top:12px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="104px" height="12px" radius="6px" hint-size="104px,12px"></x-import>
+            </div>
+          </div>
+          <div style="margin-top:26px;display:flex;gap:12px;padding-left:20px;overflow:hidden">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="208px" height="104px" radius="20px" hint-size="208px,104px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="208px" height="104px" radius="20px" hint-size="208px,104px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:24px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,62px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" style="opacity:.72" hint-size="100%,62px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" style="opacity:.45" hint-size="100%,62px"></x-import>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:96px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:210px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:390px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B3 · Cargando</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Skeleton de arranque en frío</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Solo se ve en el primer arranque del día o tras limpiar caché. Con datos locales, el Inicio pinta valores viejos y los actualiza; nunca vuelve al esqueleto.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>El chrome no se esqueletiza: header, scope y tab bar son reales y tocables desde el primer frame. Podés abrir el keypad mientras carga.</li>
+          <li>Los headers de sección tampoco: son estructura, no datos. Lo que titila es exclusivamente lo que va a cambiar de valor.</li>
+          <li>Dos cards de carrusel, no cuatro: el skeleton promete el layout, no la cantidad. Prometer cuatro y traer dos es peor que no prometer.</li>
+          <li>Las filas se atenúan hacia abajo (100 / 72 / 45%) — la misma jerarquía que después tendrá el stagger de entrada de 24 ms. Sin spinner a pantalla completa, prohibido por el sistema.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista, máximo ~800 ms.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Resuelve a <a href="#B2">B2</a>, con crossfade de 160 ms.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Es el cargando. El punto de sync queda pulsando aparte.</span>
+            <span style="color:var(--text-muted)">Error</span><span>A los 8 s sin respuesta cae a error con reintento; el skeleton no se deja indefinido.</span>
+            <span style="color:var(--text-muted)">Offline</span><span>No aparece: sin conexión se lee de IndexedDB y se pinta directo.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 3</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">El estado de carga no cambia el presupuesto de la pantalla: un solo violeta, el FAB.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B4 ============ -->
+    <div id="B4" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Personal" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="offline" pending="3" hint-size="auto,20px"></x-import>
+          </div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="3" message="Sin conexión — seguís cargando normalmente." hint-size="100%,38px"></x-import>
+          <div style="padding:12px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="425300" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:baseline;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">
+              <span>Incluye los 3 pendientes</span>
+              <span style="font-family:var(--font-mono);color:var(--text-muted)">TC del martes</span>
+            </div>
+          </div>
+          <div style="margin-top:22px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctB }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:22px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <sc-for list="{{ movsOffline }}" as="m" hint-placeholder-count="3">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver todos los movimientos" style="min-height:44px" hint-size="100%,44px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:60px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:16px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:140px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:432px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;bottom:22px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B4 · Offline</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Sin conexión, con tres pendientes</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Offline es un estado normal de esta app, no una falla. Nada se bloquea, nada se deshabilita y ningún número se esconde.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>Banner en warning con el contador a la derecha en mono. No es un diálogo ni ocupa el lugar del héroe: empuja 38 px y devuelve el espacio al reconectar.</li>
+          <li>El punto de sync del header repite el estado con el número: quien scrollea y pierde el banner sigue teniendo el dato.</li>
+          <li>El patrimonio <strong style="color:var(--text-primary)">incluye</strong> los pendientes — la UI es optimista siempre. Y lo dice, para que el número no parezca mal calculado cuando sincronice.</li>
+          <li>"TC del martes" va en neutro, no en naranja: un dato pendiente de refresco no es una advertencia.</li>
+          <li>Cada fila pendiente lleva su marca en mono bajo el monto, en el mismo lugar donde una fila en moneda extranjera lleva el equivalente. Es la columna de "letra chica del monto".</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Offline sin movimientos: banner + el vacío de <a href="#B2">B2</a>, sin cambios.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Al reconectar el banner pasa a "Sincronizando 3…" y el contador baja de a uno.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Un pendiente que falla sube el banner a critical: "No pudimos subir 1 gasto. Está guardado. Reintentar."</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Es el offline.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">5 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Colores no neutros visibles</span><span style="font-family:var(--font-mono);color:var(--text-primary)">2 (violeta, warning)</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">El warning viene con ícono y label, como exige el sistema. Es el estado con más color del bloque y sigue siendo una sola banda de 38 px.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B1 · estados de scope ============ -->
+    <div id="B1S" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Todo" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="synced" hint-size="auto,20px"></x-import>
+          </div>
+          <div style="padding:8px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+            <div style="margin-top:6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="615400" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:baseline;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">
+              <span>↑ 3,4% vs. junio</span>
+              <span style="font-family:var(--font-mono);color:var(--text-muted)">6 cuentas · Ana y vos</span>
+            </div>
+          </div>
+          <div style="margin-top:24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctAll }}" active-id="itau" hint-size="100%,112px"></x-import>
+          </div>
+          <div style="padding:0 20px;margin-top:24px">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+            <div style="margin-top:6px">
+              <sc-for list="{{ movsAll }}" as="m" hint-placeholder-count="4">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver todos los movimientos" style="min-height:44px" hint-size="100%,44px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:96px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:214px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:420px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B1 · Estados de scope</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Personal → Compartido → Todo</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">No es una pantalla: son tres estados de <a href="#B1B">B1</a>. El segmentado está siempre visible y cambia en un tap, así que no hay nada que "abrir" — un sheet acá agregaría el tap que el bloque C ya nos hizo sacar del tipo de movimiento. El frame es "Todo"; la tabla de abajo es documentación del diff, no producto.</p>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="display:grid;grid-template-columns:1.1fr .9fr .9fr .9fr;gap:8px 10px;font:400 12px/17px var(--font-sans);color:var(--text-secondary)">
+            <span style="font:600 11px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Cifra</span>
+            <span style="font:600 11px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Personal</span>
+            <span style="font:600 11px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Compart.</span>
+            <span style="font:600 11px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)">Todo</span>
+            <span>Patrimonio</span><span style="font-family:var(--font-mono)">$ 428.900</span><span style="font-family:var(--font-mono)">$ 186.500</span><span style="font-family:var(--font-mono);color:var(--text-primary)">$ 615.400</span>
+            <span>Δ vs. junio</span><span style="font-family:var(--font-mono)">↑ 4,2%</span><span style="font-family:var(--font-mono)">↑ 1,6%</span><span style="font-family:var(--font-mono);color:var(--text-primary)">↑ 3,4%</span>
+            <span>Cuentas</span><span style="font-family:var(--font-mono)">4</span><span style="font-family:var(--font-mono)">2</span><span style="font-family:var(--font-mono);color:var(--text-primary)">6</span>
+            <span>Gasto de julio</span><span style="font-family:var(--font-mono)">$ 63.740</span><span style="font-family:var(--font-mono)">$ 28.900</span><span style="font-family:var(--font-mono);color:var(--text-primary)">$ 92.640</span>
+            <span>Movimientos</span><span style="font-family:var(--font-mono)">38</span><span style="font-family:var(--font-mono)">21</span><span style="font-family:var(--font-mono);color:var(--text-primary)">59</span>
+          </div>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>Cambia el header, el héroe, el carrusel y la lista — todo a la vez. El scope no filtra un bloque: cambia el universo de datos de la pantalla entera.</li>
+          <li>La cifra pasa por odómetro (400 ms, excepción documentada); el carrusel entra o saca cards con el spring default y vuelve a scroll 0.</li>
+          <li>En Compartido las filas dejan de mostrar la marca "compartido": ahí todas lo son, y una marca que se repite en cada fila no informa nada.</li>
+          <li>"Todo" no es la suma visual de dos vistas: es la única donde el meta de cada fila nombra al miembro cuando no sos vos.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Compartido sin nada compartido aún: "Todavía no compartiste ningún gasto con Ana."</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Al cambiar de scope no hay skeleton: la cifra vieja se mantiene y hace el count-up cuando llega la nueva.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Se revierte el segmento seleccionado y baja un toast: "No pudimos cambiar de alcance. Probá de nuevo."</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Los tres alcances funcionan: el filtro es local.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">5 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 3 *</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B6 ============ -->
+    <div id="B6" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Navegación" on-back="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="padding:8px 20px 0">
+            <p style="margin:0;font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Inicio, Movimientos y Más son fijos. El cuarto lugar lo elegís vos, entre los módulos que tengas activos.</p>
+          </div>
+          <div style="padding:0 20px;margin-top:20px;display:flex;flex-direction:column;gap:8px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="2" padding="4px 16px" hint-size="100%,64px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="chart" label="Análisis" meta="En la barra ahora · default" variant="static" hint-size="100%,56px"></x-import>
+            </x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="1" padding="4px 16px" hint-size="100%,64px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Inversiones" meta="Módulo activo desde el martes" variant="static" hint-size="100%,56px"></x-import>
+            </x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="1" padding="4px 16px" hint-size="100%,64px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wallet" label="Cuentas" meta="4 activas · 3 monedas" variant="static" hint-size="100%,56px"></x-import>
+            </x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="1" padding="4px 16px" hint-size="100%,64px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="target" label="Presupuestos" meta="julio · 4 categorías" variant="static" hint-size="100%,56px"></x-import>
+            </x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" surface="1" padding="4px 16px" hint-size="100%,64px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Grupo familiar" meta="Módulo apagado" variant="static" disabled="1" hint-size="100%,56px"></x-import>
+            </x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <div style="padding:0 20px 8px;font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:center">Vista previa</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="analytics" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:74px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:150px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:420px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;bottom:56px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;bottom:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B6 · Tab bar</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Tres fijos, uno elegible, Más</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">La barra es la única navegación de la app (no hay hamburguesa), así que su composición es un ajuste explícito y no una consecuencia de qué módulos tengas prendidos.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>La regla se explica en una oración arriba de todo. Si hace falta un párrafo, el ajuste está mal planteado.</li>
+          <li>Selección <strong style="color:var(--text-primary)">por superficie</strong>: la opción activa es una card en superficie 2 sobre superficie 1. Cero violeta, misma gramática que el carrusel de cuentas.</li>
+          <li>Los módulos apagados se listan en disabled con el motivo, en vez de desaparecer: así se entiende por qué la lista tiene cuatro opciones y no seis.</li>
+          <li>Vista previa en vivo, en el lugar exacto donde va a estar la barra. El cambio se aplica al tocar; no hay botón "Guardar".</li>
+          <li>La anatomía de la barra (64 px + safe area · FAB 64 px con <code style="font-family:var(--font-mono);color:var(--text-primary)">translateY(−18px)</code> · íconos 22 px · slots de 78 px) es documentación de diseño: su lugar es la ficha de <code style="font-family:var(--font-mono);color:var(--text-primary)">TabBar</code> en el sistema, no una pantalla del producto. Acá quedó solo el ajuste.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Sin módulos activos queda solo Análisis, seleccionado y sin alternativas: "Activá un módulo para poder elegir."</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>No aplica: es configuración local, se lee del dispositivo.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Si no sincroniza la preferencia, el cambio queda igual en local y sale en la cola de pendientes.</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Funciona completo.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">5 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 3</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">Las cinco cards cuentan como un grupo homogéneo = 1 interactivo, según la regla de conteo del sistema.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B7 ============ -->
+    <div id="B7" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Más" show-scope="" on-search="{{ noop }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="padding:4px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px">Tus módulos</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wallet" label="Cuentas" meta="4 activas · 3 monedas" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="target" label="Presupuesto" meta="julio · 4 categorías" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="refresh" label="Recurrentes" meta="7 suscripciones · próxima el 28" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="invest" label="Inversiones" meta="US$ 6.120 · PPI" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Grupo familiar" meta="Ana y vos" hint-size="100%,56px"></x-import>
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin:20px 0 2px">Ajustes</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="list" label="Navegación" meta="4.º lugar: Análisis" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Categorías y comercios" meta="24 categorías · 6 sin usar" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="eye" label="Apariencia" meta="Oscuro · privacidad activa" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Datos y respaldo" meta="Último backup: martes 21" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="more" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:66px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:106px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:414px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:462px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B7 · Más</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Índice puro, nueve destinos</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Ni un control de estado en toda la pantalla: solo filas que llevan a algún lado. Apariencia, con sus toggles, es pantalla propia y entra desde acá.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>Dos grupos con header caption, no nueve filas planas. "Tus módulos" es lo que cambia según la configuración; "Ajustes" es siempre igual.</li>
+          <li>Cada meta trae un dato real y fresco (saldo, próxima fecha, último backup). Una fila de índice sin meta obliga a entrar para saber si hacía falta entrar.</li>
+          <li>El orden dentro de cada grupo es por frecuencia de uso observada, no alfabético ni por importancia declarada.</li>
+          <li>"Navegación" muestra qué hay en el 4.º lugar sin abrirla: es el ajuste más nuevo y el que hay que hacer descubrible.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>Sin módulos activos, el grupo "Tus módulos" se reemplaza por una fila: "Activar módulos".</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Las filas se pintan enseguida; solo los metas entran como skeleton de 11 px.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Un meta que no se pudo leer queda vacío. Nunca se rompe la fila ni se muestra un error por un contador.</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Todo navegable; los metas quedan con el último valor conocido.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 3</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 · 0</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">Los íconos de fila no son decorativos: son el ancla de reconocimiento de un índice de nueve destinos y viven dentro del target.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ B8 ============ -->
+    <div id="B8" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div style="position:relative;width:390px;flex:0 0 auto">
+        <div style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border)">
+          <div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron-left" size="22" color="var(--text-secondary)" hint-size="22px,22px"></x-import>
+            <div style="flex:1;height:40px;border-radius:14px;background:var(--surface-3);border:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="17" color="var(--text-muted)" hint-size="17px,17px"></x-import>
+              <span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-primary)">mercado</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="close" size="17" color="var(--text-muted)" hint-size="17px,17px"></x-import>
+            </div>
+          </div>
+          <div style="padding:6px 20px 0">
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Movimientos · 14</div>
+            <sc-for list="{{ searchMovs }}" as="m" hint-placeholder-count="3">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+            </sc-for>
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:16px">Cuentas · 1</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wallet" label="Mercado Pago" meta="Billetera · AR · AR$ 96.400" hint-size="100%,56px"></x-import>
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Categorías · 1</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="cart" label="Supermercado" meta="14 movimientos en julio · $ 18.640" hint-size="100%,56px"></x-import>
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Comercios · 2</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Mercado Libre" meta="9 movimientos · $ 24.100 este año" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Supermercado Disco" meta="6 movimientos · $ 11.380 este año" hint-size="100%,56px"></x-import>
+            <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Acciones</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="plus" label="Cargar gasto en Mercado Pago" variant="action" chevron="" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="filter" label="Filtrar movimientos por “mercado”" variant="action" chevron="" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+          </div>
+        </div>
+        <span style="position:absolute;top:14px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">1</span>
+        <span style="position:absolute;top:64px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">2</span>
+        <span style="position:absolute;top:262px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">3</span>
+        <span style="position:absolute;top:556px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">4</span>
+        <span style="position:absolute;top:664px;left:-15px;width:26px;height:26px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border);color:var(--primary-ink);font:600 12px/24px var(--font-mono);text-align:center">5</span>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">B8 · Búsqueda global</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Cinco tipos, un solo campo</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Una consulta corta ("mercado") pega en cinco entidades distintas. El orden de los grupos es fijo y no se reordena por relevancia: la memoria muscular vale más que el ranking.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>El campo reemplaza al header entero, no se apila debajo: buscar es un modo, no un bloque. Volver es el chevron.</li>
+          <li>Cada grupo lleva su contador en el caption. Los movimientos muestran 3 de 14 y el grupo entero se abre tocando su header.</li>
+          <li>Los resultados usan el componente del tipo que representan — <code style="font-family:var(--font-mono);color:var(--text-primary)">TransactionRow</code> para movimientos, <code style="font-family:var(--font-mono);color:var(--text-primary)">ListRow</code> para el resto. Un resultado se ve igual acá que en su pantalla.</li>
+          <li>Comercios y categorías traen su agregado, que es lo que hace útil buscarlos: nadie busca una categoría para leer su nombre.</li>
+          <li>Acciones al final, en tinta violeta (variante <code style="font-family:var(--font-mono);color:var(--text-primary)">action</code> de ListRow) y sin chevron: no navegan, ejecutan. Es el único violeta de la pantalla porque acá no hay FAB.</li>
+        </ol>
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Los cinco estados</div>
+          <div style="display:grid;grid-template-columns:78px 1fr;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span style="color:var(--text-muted)">Default</span><span>Esta vista. Con el campo vacío: recientes y cinco comercios frecuentes.</span>
+            <span style="color:var(--text-muted)">Vacío</span><span>"No encontramos nada con «xyz». Probá con el comercio o el monto." + la acción de cargar un gasto con ese texto.</span>
+            <span style="color:var(--text-muted)">Cargando</span><span>Sin skeleton: se busca en local con debounce de 120 ms y la lista se reemplaza sin parpadeo.</span>
+            <span style="color:var(--text-muted)">Error</span><span>Solo puede fallar la parte remota: los grupos locales se muestran y baja una fila "No pudimos buscar en el servidor. Reintentar."</span>
+            <span style="color:var(--text-muted)">Offline</span><span>Idéntico: el índice es local.</span>
+          </div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:20px;padding:16px 18px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Chequeo de ruido</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font:400 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>Interactivos sobre el pliegue</span><span style="font-family:var(--font-mono);color:var(--text-primary)">4 / 5</span>
+            <span>Niveles tipográficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">3 / 3</span>
+            <span>Cifra héroe</span><span style="font-family:var(--font-mono);color:var(--text-primary)">0 / 1</span>
+            <span>Violeta fuera de gráficos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 / 1 †</span>
+            <span>Bordes de caja · íconos decorativos</span><span style="font-family:var(--font-mono);color:var(--text-primary)">1 · 0 ‡</span>
+          </div>
+          <p style="margin:10px 0 0;font:400 12px/17px var(--font-sans);color:var(--text-muted)">† Las dos acciones cuentan como <strong style="color:var(--text-primary)">una</strong> aparición: son un grupo homogéneo dentro del bloque ACCIONES, igual que un segmentado de tres opciones cuenta como un interactivo. Acá el violeta porta "ejecuta", no "estoy seleccionado". ‡ El borde del campo de búsqueda es el borde de input que el sistema sí permite.</p>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+
+    <!-- ============ CLARO ============ -->
+    <div id="LIGHT" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div class="light" style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border);flex:0 0 auto">
+        <div style="height:56px;display:flex;align-items:center;gap:12px;padding:0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopeOpts }}" value="Personal" size="sm" hint-size="252px,42px"></x-import>
+            <div style="flex:1"></div>
+            <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-right:-8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="20" color="var(--text-secondary)" hint-size="20px,20px"></x-import>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SyncDot" state="synced" hint-size="auto,20px"></x-import>
+          </div>
+        <div style="padding:8px 20px 0">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+          <div style="margin-top:6px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="428900" size="hero" show-sign="" polarity="neutral" hint-size="auto,44px"></x-import>
+          </div>
+          <div style="margin-top:6px;display:flex;gap:8px;align-items:baseline;font:500 13px/18px var(--font-sans);color:var(--text-secondary)">
+            <span>↑ 4,2% vs. junio</span>
+            <span style="font-family:var(--font-mono);color:var(--text-muted)">3 monedas · TC 39,85</span>
+          </div>
+        </div>
+        <div style="margin-top:24px">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AccountCarousel" accounts="{{ acctB }}" active-id="itau" hint-size="100%,112px"></x-import>
+        </div>
+        <div style="padding:0 20px;margin-top:24px">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+          <div style="margin-top:6px">
+            <sc-for list="{{ movsB }}" as="m" hint-placeholder-count="3">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" currency="{{ m.currency }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+            </sc-for>
+          </div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver todos los movimientos" style="min-height:44px" hint-size="100%,44px"></x-import>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="2 novedades" style="min-height:44px" hint-size="100%,44px"></x-import>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+        </div>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Variante clara</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">B1 · monedas = 3 · miembros = 2</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Misma composición, cero ajustes de layout: solo cambian los alias de color. El violeta de relleno es el mismo hex en los dos modos; lo que cambia es la tinta.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>En claro la jerarquía de superficies pierde contraste, y por eso importa más que las cards no tengan borde: la separación la da el color de página.</li>
+          <li>Los montos siguen en tinta neutra. En claro la tentación de "aprovechar" el aqua es mayor y sigue estando prohibida para saldos.</li>
+        </ol>
+      </div>
+      </sc-if>
+    </div>
+
+    <div id="LIGHT8" style="display:flex;gap:28px;align-items:flex-start;width:770px">
+      <div class="light" style="position:relative;width:390px;height:844px;background:var(--page);border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px var(--border);flex:0 0 auto">
+        <div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 20px">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron-left" size="22" color="var(--text-secondary)" hint-size="22px,22px"></x-import>
+          <div style="flex:1;height:40px;border-radius:14px;background:var(--surface-3);border:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="search" size="17" color="var(--text-muted)" hint-size="17px,17px"></x-import>
+            <span style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-primary)">mercado</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="close" size="17" color="var(--text-muted)" hint-size="17px,17px"></x-import>
+          </div>
+        </div>
+        <div style="padding:6px 20px 0">
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Movimientos · 14</div>
+          <sc-for list="{{ searchMovs }}" as="m" hint-placeholder-count="3">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="{{ m.icon }}" merchant="{{ m.merchant }}" meta="{{ m.meta }}" value="{{ m.value }}" secondary="{{ m.secondary }}" hint-size="100%,62px"></x-import>
+          </sc-for>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:16px">Cuentas · 1</div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wallet" label="Mercado Pago" meta="Billetera · AR · AR$ 96.400" hint-size="100%,56px"></x-import>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Categorías · 1</div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="cart" label="Supermercado" meta="14 movimientos en julio · $ 18.640" hint-size="100%,56px"></x-import>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Comercios · 2</div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Mercado Libre" meta="9 movimientos · $ 24.100 este año" hint-size="100%,56px"></x-import>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Supermercado Disco" meta="6 movimientos · $ 11.380 este año" hint-size="100%,56px"></x-import>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px">Acciones</div>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="plus" label="Cargar gasto en Mercado Pago" variant="action" chevron="" hint-size="100%,56px"></x-import>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="filter" label="Filtrar movimientos por “mercado”" variant="action" chevron="" hint-size="100%,56px"></x-import>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:var(--page)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+        </div>
+      </div>
+      <sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+      <div style="width:352px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Variante clara</div>
+          <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">B8 · Búsqueda global</h3>
+          <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">La segunda pantalla en claro es la búsqueda porque es la más densa del bloque: si los cinco grupos se leen acá, se leen en cualquier lado.</p>
+        </div>
+        <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;font:400 13px/19px var(--font-sans);color:var(--text-secondary)">
+          <li>El violeta de tinta en claro (#5D45E8) sobre página clara mantiene el contraste de las dos acciones sin subir de peso.</li>
+          <li>Los headers de grupo en muted son el único separador; en claro tampoco se agregan hairlines.</li>
+        </ol>
+      </div>
+      </sc-if>
+    </div>
+
+    <div id="DEUDA" style="width:770px;display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div style="font:600 11px/16px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Deuda de sistema · bloque B</div>
+        <h3 style="margin:6px 0 0;font:600 22px/28px var(--font-sans);color:var(--text-primary)">Cambios pendientes del design system</h3>
+        <p style="margin:8px 0 0;font:400 14px/20px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Nada de esto toca el bundle todavía. Se anota acá y se aplica en una pasada propia del sistema, junto con los cuatro faltantes de <code style="font-family:var(--font-mono);color:var(--text-primary)">TransactionRow</code> que salieron del bloque D.</p>
+      </div>
+      <div style="background:var(--surface-1);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:color-mix(in srgb, var(--critical) 15%, transparent);color:var(--critical);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Prioritario</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">SelectableRow</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Selección por superficie de una opción entre varias. Hoy se compone con <code style="font-family:var(--font-mono)">Card surface=2</code> + <code style="font-family:var(--font-mono)">ListRow</code> (ver <a href="#B6">B6</a>) y la selección no llega al árbol de accesibilidad: sin <code style="font-family:var(--font-mono)">aria-checked</code>, un lector de pantalla no puede decir cuál está elegida. Es un problema real, no una comodidad.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:var(--surface-3);color:var(--text-secondary);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Cambio</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">ScopeSwitcher → selección por superficie</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">El componente hoy es <code style="font-family:var(--font-mono)">SegmentedControl</code> con <code style="font-family:var(--font-mono)">emphasis="brand"</code>. Pasa a <code style="font-family:var(--font-mono)">"surface"</code>, y <code style="font-family:var(--font-mono)">AppHeader</code> lo hereda. Motivo: el scope vive en el header de todas las pantallas — un violeta permanente es chrome, no significado — y la excepción se estaba cobrando en 5 de 10 vistas de este bloque. Misma corrección que ya se hizo en <code style="font-family:var(--font-mono)">DateStrip</code> y <code style="font-family:var(--font-mono)">CategoryBubble</code>. En el board está anticipado componiendo el header a mano; el día que cambie el bundle, esos headers vuelven a ser <code style="font-family:var(--font-mono)">AppHeader</code>.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:var(--surface-3);color:var(--text-secondary);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Readme</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">Cómo se cuenta el color de marca</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Explicitar en la sección "Cómo se cuenta el presupuesto de ruido": un grupo homogéneo de controles cuenta como un elemento interactivo <strong style="color:var(--text-primary)">y también como una sola aparición del color de marca</strong>. Dos acciones sugeridas dentro de un mismo bloque etiquetado cuentan una vez (<a href="#B8">B8</a>). No es una excepción, es la regla de conteo que ya existía, aplicada al color.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:var(--surface-3);color:var(--text-secondary);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Nuevo</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">ResultGroup</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Header de grupo con label, contador y "ver todos". En <a href="#B8">B8</a> está armado con captions sueltos y números escritos a mano; el mismo patrón lo van a necesitar Movimientos y Análisis.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:var(--surface-3);color:var(--text-secondary);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Nuevo</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">DismissibleNotice</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Aviso de una sola vez, sin nivel de estado y sin acción primaria (<a href="#B1C">B1 flags C</a>). <code style="font-family:var(--font-mono)">InsightCard</code> no sirve: exige status y trae acción con dismiss.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:var(--surface-3);color:var(--text-secondary);font:600 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase">Ficha</span>
+          <div>
+            <div style="font:500 15px/22px var(--font-sans);color:var(--text-primary)">TabBar — anatomía y cuarto slot</div>
+            <p style="margin:2px 0 0;font:400 13px/19px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Documentar en la ficha del componente: tres slots fijos, cuarto elegible entre módulos activos, "Más" fijo, y la regla de que la app nunca reconfigura la navegación sola. Salió de <a href="#B6">B6</a>, donde estaba dibujada dentro del producto.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:2540,&quot;height&quot;:1400},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Board&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const acctA = [
+      { id: 'itau', institution: 'Itaú', name: 'Caja de Ahorro', balance: 63740, currency: 'UYU', country: 'UY' }
+    ];
+    const acctEmpty = [
+      { id: 'itau', institution: 'Itaú', name: 'Caja de Ahorro', balance: 12000, currency: 'UYU', country: 'UY' }
+    ];
+    const acctB = [
+      { id: 'itau', institution: 'Itaú', name: 'Caja de Ahorro', balance: 184200, currency: 'UYU', country: 'UY' },
+      { id: 'brou', institution: 'Brou', name: 'Débito', balance: 41800, currency: 'UYU', country: 'UY' },
+      { id: 'wise', institution: 'Wise', name: 'Multi-moneda', balance: 2340, currency: 'USD', country: 'BE' },
+      { id: 'mp', institution: 'Mercado Pago', name: 'Billetera', balance: 96400, currency: 'ARS', country: 'AR' }
+    ];
+    const acctC = acctB.concat([
+      { id: 'ppi', institution: 'PPI', name: 'Inversiones', balance: 6120, currency: 'USD', country: 'AR' }
+    ]);
+    const acctAll = acctB.concat([
+      { id: 'casa', institution: 'Itaú', name: 'Cuenta de la casa', balance: 148600, currency: 'UYU', country: 'UY' },
+      { id: 'efec', institution: 'Efectivo', name: 'Compartido', balance: 8300, currency: 'UYU', country: 'UY' }
+    ]);
+    return {
+      noop: () => {},
+      scopeOpts: ['Personal', 'Compartido', 'Todo'],
+      showAnnotations: this.props.showAnnotations ?? true,
+      acctA, acctB, acctC, acctAll, acctEmpty,
+      movsA: [
+        { icon: 'cart', merchant: 'Disco', meta: 'Efectivo · Supermercado', value: -1940 },
+        { icon: 'home', merchant: 'Antel', meta: 'Itaú Caja de Ahorro · Servicios', value: -1290 },
+        { icon: 'coffee', merchant: 'Café Brasilero', meta: 'Efectivo · Café', value: -180 }
+      ],
+      movsB: [
+        { icon: 'cart', merchant: 'Tienda Inglesa', meta: 'Itaú Caja de Ahorro · Supermercado', value: -4280 },
+        { icon: 'fuel', merchant: 'Ancap Punta Carretas', meta: 'Itaú Crédito · Nafta', value: -2650 },
+        { icon: 'food', merchant: 'PedidosYa', meta: 'Visa · Delivery', value: -1180, secondary: 'compartido' }
+      ],
+      movsC: [
+        { icon: 'invest', merchant: 'Aporte FCI', meta: 'PPI · Inversiones', value: -400, currency: 'USD', secondary: '$ 15.940' },
+        { icon: 'cart', merchant: 'Tienda Inglesa', meta: 'Itaú Caja de Ahorro · Supermercado', value: -4280 },
+        { icon: 'fuel', merchant: 'Ancap Punta Carretas', meta: 'Itaú Crédito · Nafta', value: -2650 }
+      ],
+      movsOffline: [
+        { icon: 'cart', merchant: 'Devoto', meta: 'Itaú Crédito · Supermercado', value: -2140, secondary: 'pendiente' },
+        { icon: 'coffee', merchant: 'La Farmacia', meta: 'Efectivo · Café', value: -320, secondary: 'pendiente' },
+        { icon: 'food', merchant: 'PedidosYa', meta: 'Visa · Delivery', value: -1180, secondary: 'pendiente' }
+      ],
+      movsAll: [
+        { icon: 'cart', merchant: 'Tienda Inglesa', meta: 'Itaú Caja de Ahorro · Supermercado', value: -4280 },
+        { icon: 'home', merchant: 'UTE', meta: 'Ana · Cuenta de la casa · Servicios', value: -3940 },
+        { icon: 'food', merchant: 'PedidosYa', meta: 'Visa · Delivery', value: -1180, secondary: 'compartido' },
+        { icon: 'cart', merchant: 'Devoto', meta: 'Ana · Cuenta de la casa · Supermercado', value: -2610 }
+      ],
+      searchMovs: [
+        { icon: 'tag', merchant: 'Mercado Libre', meta: 'Mercado Pago · Hogar', value: -3890 },
+        { icon: 'cart', merchant: 'Devoto', meta: 'Itaú Crédito · Supermercado', value: -2140 },
+        { icon: 'cart', merchant: 'Supermercado Disco', meta: 'Efectivo · Supermercado', value: -1940 }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

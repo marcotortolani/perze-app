@@ -1,0 +1,15 @@
+/* Minimal element defaults. No shadows: hierarchy comes from surface + spacing. */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page);color:var(--text-primary);
+  font:var(--weight-regular) var(--text-body-size)/var(--text-body-line) var(--font-sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:var(--primary-ink);text-decoration:none}
+a:hover{color:var(--primary-fill)}
+button{font:inherit;color:inherit}
+:where(button,[role="button"],a,input,select,textarea):focus-visible{
+  outline:2px solid var(--primary-ink);outline-offset:2px;border-radius:var(--radius-input);
+}
+::selection{background:color-mix(in srgb,var(--primary-fill) 32%,transparent)}

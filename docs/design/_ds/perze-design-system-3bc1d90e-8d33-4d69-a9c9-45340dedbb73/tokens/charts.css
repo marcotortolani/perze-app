@@ -1,0 +1,25 @@
+/* Data palette. Fixed order, never cycled, max 5 series + "Otros".
+   Color follows the entity, never the ranking. Never used to paint a control. */
+:root{
+  --data-1:var(--violet-ink-dark);
+  --data-2:var(--aqua-dark);
+  --data-3:var(--orange-dark);
+  --data-4:var(--data-blue-dark);
+  --data-5:var(--data-magenta-dark);
+  --data-other:var(--n-ink3-dark);
+  --chart-diverge-mid:var(--n-border-dark);
+  --chart-separator:var(--n-s1-dark);
+  --bar-radius:4px;
+  --line-width:2px;
+  --marker-size:8px;
+}
+.light,[data-theme="light"]{
+  --data-1:var(--violet-ink-light);
+  --data-2:var(--aqua-light);
+  --data-3:var(--orange-light);
+  --data-4:var(--data-blue-light);
+  --data-5:var(--data-magenta-light);
+  --data-other:var(--n-ink3-light);
+  --chart-diverge-mid:var(--n-border-light);
+  --chart-separator:var(--n-s1-light);
+}

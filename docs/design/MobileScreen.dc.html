@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Pantalla móvil PERZE" description="Shell de pantalla 390x844: header de 56px, cifra héroe, lista de movimientos y tab bar con FAB." -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0;background:var(--page)}</style></helmet>
+<div style="width:390px;min-height:844px;margin:0 auto;position:relative;display:flex;flex-direction:column;background:var(--page);font-family:var(--font-sans);color:var(--text-primary)">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" scope="Personal" sync-state="synced" hint-size="100%,56px"></x-import>
+<div style="padding:8px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio neto</div>
+<div style="font-size:40px;line-height:44px;font-weight:600;letter-spacing:-.015em;margin-top:6px">$ 428.900</div>
+<div style="font-size:13px;line-height:18px;font-weight:500;color:var(--text-secondary);margin-top:6px">↑ 4,2% vs. junio</div>
+</div>
+<div style="padding:0 20px;margin-top:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Últimos movimientos</div>
+<div style="margin-top:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value="{{ v1 }}" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="arrow-up" merchant="Sueldo" meta="Brou Débito · Ingreso" value="{{ v2 }}" hint-size="100%,62px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="fuel" merchant="Ancap Punta Carretas" meta="Itaú Crédito · Nafta" value="{{ v3 }}" hint-size="100%,62px"></x-import>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Cargar gasto</x-import>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="home" hint-size="100%,64px"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return { v1: -4280, v2: 92400, v3: -2650 };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,141 +1,97 @@
-# PERZE
+# PERZE — Paquete de diseño y desarrollo
 
-PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con grupo familiar y módulo
-opcional de inversiones. Minimalista, mobile-first, offline-first.
+App PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con grupo familiar y módulo opcional de inversiones. Minimalista, mobile-first, offline-first.
 
-> Registrar un gasto cuesta menos de 5 segundos y 3 decisiones. Todo lo demás se subordina a eso.
+## Los archivos, en orden de uso
 
-## Estado del proyecto
+| #   | Archivo                         | Qué es                                                                                                                                                            | Cuándo lo usás                                                  |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 00  | `00-producto.md`                | Análisis de producto: features, módulos, indicadores, gráficos, roadmap, riesgos                                                                                  | Léelo una vez. Es la fuente de verdad de _qué_ se construye.    |
+| 01  | `01-arquitectura-datos.md`      | Stack, schema completo de Supabase, RLS, estrategia FX y offline, APIs de datos                                                                                   | Antes de escribir la primera migración                          |
+| 02  | `02-design-system.md`           | Tokens, paleta validada, tipografía, motion, componentes, reglas de gráficos                                                                                      | Input obligatorio de los prompts de alta fidelidad y del código |
+| 03  | `03-prompts-wireframes.md`      | 13 prompts: contexto maestro, mapa de flujos, 10 bloques de pantallas (W1–W10), auditoría                                                                         | Fase 1 de diseño                                                |
+| 04  | `04-prompts-ui.md`              | 14 prompts: design system visual, componentes, motion, 10 bloques de alta fidelidad (D3–D12), auditoría. Incluye la tabla de mapeo W↔D — los números no coinciden | Fase 2 de diseño                                                |
+| 05  | `05-prompts-desarrollo.md`      | `CLAUDE.md` del proyecto + prompts de implementación por bloque + auditoría final                                                                                 | Fase 3                                                          |
+| 06  | `06-prompts-diseno-restante.md` | Los 8 prompts de los bloques F a L, la consolidación de biblioteca y la auditoría visual                                                                          | Fase 2 — ya ejecutado                                           |
+| 07  | `07-handoff-a-claude-code.md`   | Cómo se le entrega todo esto a Claude Code: layout del repo, orden corregido, gates y la sesión de reconciliación                                                 | Antes de la primera línea de código                             |
+| —   | `CLAUDE.md`                     | **Va en la raíz del repo.** Memoria de proyecto: decisiones cerradas y orden de autoridad entre documentos                                                        | Se lee en cada sesión                                           |
+| —   | `contrato-componentes.md`       | La biblioteca: props, estados, tokens y accesibilidad de cada componente. Manda sobre la API de toda pieza                                                        | Fase 3                                                          |
+| —   | `auditoria-visual.md`           | 49 defectos ordenados por costo de arreglarlos después. Corrige al diseño y al contrato                                                                           | Antes de programar pantallas                                    |
+| —   | `marca/`                        | Sistema de marca: logotipo, ícono, favicon, splash, y los assets ya generados para el repo                                                                        | Antes del primer deploy                                         |
 
-El rediseño completo contra el paquete de diseño en `perze-design/` está terminado: los cinco
-bloques del plan (Onboarding, Home, Captura, Movimientos, Cuentas y monedas) están
-implementados y verificados (build, lint, Vitest y Playwright en verde), más internacionalización
-de punta a punta (ES/EN/PT) sobre toda la app. El MVP anterior (v0.1.1) ya no está en el árbol de
-trabajo (vivía en `src/app-old/`, ignorado por git y borrado tras la migración).
+## Estado
 
-Ver el plan original en
-[`docs/perze-plan-redesign-first-5-blocks.md`](docs/perze-plan-redesign-first-5-blocks.md) y el
-detalle completo de lo entregado en cada bloque en [`CHANGELOG.md`](CHANGELOG.md) (`[0.2.0]` y
-`[0.3.0]`).
+**Los once bloques están diseñados y auditados**, con contrato de componentes y auditoría visual publicados. Lo que sigue es código: empezá por `07`.
 
-## Stack
+**Cinco defectos hay que resolver antes de programar pantallas.** Cuatro caen en las fases de tokens y biblioteca (C4 y C6); uno —cuatro pantallas sin diseñar y cinco vistas huérfanas— vuelve a Claude Design. Está todo en `07` § 2.
 
-- **Next.js 16** (App Router, Turbopack) · **TypeScript strict** · **Tailwind CSS v4**
-- Design system propio en `src/design-system/` (portado desde
-  `perze-design/PERZE-Design-System/`); `shadcn` queda solo como scaffolding puntual
-  (`src/components/ui/`, apenas `Toaster` en uso real)
-- **Motion** (ex Framer Motion) para animación · **Phosphor Icons** para íconos (reemplazó a
-  Lucide)
-- **Dexie.js** (IndexedDB) como persistencia local-first, detrás de una capa de repositorios
-  (`src/lib/repos/`) pensada para enchufar **Supabase** (Postgres + Auth + Storage) más adelante
-- **TanStack Query v5** · **Zustand** (solo UI efímera) · **Zod v4**
-- **next-intl** — ES (rioplatense, idioma fuente) / EN / PT, aplicado en toda la app (design
-  system, features, las 17 rutas, manifest de la PWA); selector de idioma en "Más"
-- **Serwist** (PWA) · **ESLint** (lint, incluye guardarraíl `react/jsx-no-literals` contra
-  strings sueltos) · **Vitest** (119 tests) + **Playwright** (4 E2E)
+## El camino
 
-## Documentación
-
-Todo el paquete de producto y diseño vive en `perze-design/` y se referencia también, copiado,
-desde `docs/`:
-
-| Doc                                                                                          | Qué es                                             |
-| -------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| [`docs/00-producto.md`](docs/00-producto.md)                                                 | Análisis de producto: features, módulos, roadmap   |
-| [`docs/01-arquitectura-datos.md`](docs/01-arquitectura-datos.md)                             | Stack, schema, RLS, estrategia FX y offline        |
-| [`docs/02-design-system.md`](docs/02-design-system.md)                                       | Tokens, paleta, tipografía, motion, componentes    |
-| [`docs/03-prompts-wireframes.md`](docs/03-prompts-wireframes.md)                             | Mapa de pantallas de baja fidelidad, por bloque    |
-| [`docs/04-prompts-ui.md`](docs/04-prompts-ui.md)                                             | Prompts de diseño de alta fidelidad                |
-| [`docs/05-prompts-desarrollo.md`](docs/05-prompts-desarrollo.md)                             | `CLAUDE.md` de origen + prompts de implementación  |
-| [`docs/perze-plan-redesign-first-5-blocks.md`](docs/perze-plan-redesign-first-5-blocks.md)   | Plan vigente: bloques A–E                          |
-| [`perze-design/Mapa-estructural-del-producto/`](perze-design/Mapa-estructural-del-producto/) | Mapa completo del sistema (82 vistas, 12 bloques)  |
-| [`perze-design/PERZE-Design-System/`](perze-design/PERZE-Design-System/)                     | Design system empaquetado: tokens + 36 componentes |
-| [`perze-design/Bloque-*/`](perze-design/)                                                    | Entregables de alta fidelidad por bloque (A–E)     |
-
-## Estado por bloque
-
-El mapa completo del producto son 12 bloques (82 vistas,
-[`perze-design/Mapa-estructural-del-producto/`](perze-design/Mapa-estructural-del-producto/)).
-Los primeros cinco (A–E) están implementados; F–K quedan por diseñar e implementar.
-
-| Bloque | Nombre                                     | Estado       |
-| ------ | ------------------------------------------ | ------------ |
-| —      | Documentación, tooling y núcleo de dominio | ✅ Completo  |
-| C      | Captura rápida                             | ✅ Completo  |
-| B      | Home y navegación                          | ✅ Completo  |
-| D      | Movimientos                                | ✅ Completo  |
-| E      | Cuentas y monedas                          | ✅ Completo  |
-| A      | Onboarding y auth                          | ✅ Completo  |
-| F      | Presupuestos y metas                       | ⬜ Pendiente |
-| G      | Recurrentes y deudas                       | ⬜ Pendiente |
-| H      | Análisis                                   | ⬜ Pendiente |
-| I      | Inversiones (módulo opcional)              | ⬜ Pendiente |
-| J      | Grupo familiar (módulo opcional)           | ⬜ Pendiente |
-| K      | Ajustes                                    | ⬜ Pendiente |
-
-**Estados posibles:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo
-
-Cross-cutting, aplicado sobre A–E: internacionalización completa (next-intl, ES/EN/PT),
-responsive (Sidebar de escritorio), auditoría PWA (manifest dinámico por idioma, splash screens,
-iconografía) y migración de íconos Lucide → Phosphor. Detalle en [`CHANGELOG.md`](CHANGELOG.md).
-El bloque **L — Estados transversales** (sistemas de estado vacío/skeleton, no pantallas propias)
-ya se ejecutó como parte del design system portado en la Fase 3 del redesign, antes de A–E.
-
-### Bloques pendientes de diseñar/implementar
-
-| Bloque | Qué cubre                                                                                                                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **F**  | Presupuestos y metas — overview con "disponible para gastar hoy", bullet charts por categoría, alertas de excedido; metas de ahorro con anillo de progreso y simulador de aportes (7 vistas) |
-| **G**  | Recurrentes y deudas — suscripciones detectadas automáticamente, calendario de vencimientos, planes de cuotas con tabla de amortización (6 vistas)            |
-| **H**  | Análisis — KPIs, categorías (drill-down), tendencias, flujo Sankey, patrimonio neto, multi-moneda/FX, inflación, calendario heatmap, comercios, insights, resumen semanal, Wrapped, exportar/reportes (14 vistas) |
-| **I**  | Inversiones (módulo opcional) — portfolio overview, posiciones, detalle de instrumento, registrar operación/renta, allocation/rebalanceo, rendimiento (TWR/XIRR), calendario de renta futura (12 vistas) |
-| **J**  | Grupo familiar (módulo opcional) — invitar miembro, permisos/visibilidad, gastos compartidos, dividir gasto, liquidar (settle up), comparativa entre miembros, actividad del household (10 vistas) |
-| **K**  | Ajustes — perfil, preferencias, módulos, categorías, tags, reglas de auto-categorización, fuentes FX, importar, exportar/backup, seguridad, notificaciones, acerca de (13 vistas) |
-
-Detalle vista por vista en `docs/03-prompts-wireframes.md` (PROMPT W6–W10). Además del backend
-real (Supabase, hoy todo local-first sobre Dexie) y de estos bloques, quedan diferidas dos
-features de captura (C4 completo — moneda distinta a la de la cuenta — y C10 — foto de ticket);
-"Ajustes", "Importar/Exportar" y "Acerca de" en "Más" siguen como stubs hasta que se implemente K.
-
-## Estructura
-
-```text
-docs/                  documentos de producto/arquitectura/diseño, versionados con el código
-perze-design/          paquete de diseño original (wireframes, alta fidelidad, design system)
-e2e/                   tests E2E (Playwright)
-messages/              diccionarios es/en/pt (next-intl)
-src/
-  app/                 rutas de la app (App Router) — ver CHANGELOG [0.3.0] para el mapa completo
-  design-system/       componentes propios portados desde perze-design/PERZE-Design-System
-  features/            flujos que componen varias pantallas (captura, movimientos, cuentas)
-  hooks/               data hooks (TanStack Query) sobre los repositorios
-  i18n/                routing, negociación de locale, Server Action de idioma, formateo
-  lib/
-    money/             bigint math, formateo, parser del keypad
-    fx/                proveedores de tipo de cambio + resolución de rate
-    db/                schema de Dexie + migraciones versionadas
-    repos/             capa de repositorios (Dexie hoy, Supabase después)
-    offline/           outbox de mutaciones optimistas
-    reference/         datos de referencia (categorías, países, monedas, tipos de cuenta)
-  stores/              Zustand (solo estado de UI efímera)
+```
+00 + 01 (leer)
+   ↓
+PROMPT 0  ──► PROMPT W0 (mapa y flujos) ──► W1…W10 ──► WV (auditoría)
+   ↓
+PROMPT D0 (estilo) ──► D1 (componentes) ──► D2 (motion) ──► D3…D12 ──► DV
+   ↓
+CLAUDE.md ──► C1…C8 (fundaciones + captura) ──► C9…C20 ──► CQ
 ```
 
-## Empezar a desarrollar
+**No saltees `W0` ni `WV`.** El mapa de flujos es el contrato que hace que el sistema sea un sistema y no una colección. La auditoría es donde encontrás barato lo que después sale caro.
 
-```bash
-pnpm install
-pnpm dev
-```
+Conteo por bloque: A=11 · B=8 · C=11 · D=7 · E=7 · F=7 · G=6 · H=14 · I=12 · J=10 · K=13 · L=6 = 112 items. Pero **112 no son 112 pantallas**: el bloque L son sistemas que viven dentro de otras vistas, y varios items son estados y no rutas. **Vistas navegables reales: 82** (más 26 variantes de estado y 6 sistemas transversales).
 
-Abrí [http://localhost:3000](http://localhost:3000).
+### Decisiones cerradas (no volver a abrirlas sin motivo nuevo)
 
-```bash
-pnpm build   # build de producción
-pnpm lint    # ESLint
-pnpm test    # Vitest
-pnpm e2e     # Playwright
-```
+| Tema                      | Decisión                                                                                                                                                                                                                                                                                                  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Progresividad             | Por **flags ortogonales** (monedas>1, miembros>1, módulos activos), no por "perfil". No existe un campo perfil.                                                                                                                                                                                           |
+| Grupo familiar            | **Módulo**, no núcleo                                                                                                                                                                                                                                                                                     |
+| Bloqueo por PIN           | **Opcional y apagado por defecto**. Encendido, la captura queda pre-auth: escribir no pide PIN, leer sí                                                                                                                                                                                                   |
+| Sin cotización disponible | El movimiento **se guarda igual**, sin conversión: `fx_rate` y `amount_base` en `NULL`, `fx_source = 'pending'`. Nunca rate = 1 inventado, nunca bloquear el guardado. El 1 legítimo (moneda del movimiento = moneda base) va con `fx_source = 'identity'`: distinguirlos es para lo que existe ese campo |
+| Métrica de captura        | **< 5 segundos y 3 decisiones.** "3 taps" es el proxy del camino feliz, no la meta                                                                                                                                                                                                                        |
+| Instalar la PWA           | **Después** del primer gasto, nunca antes                                                                                                                                                                                                                                                                 |
+| Flujos críticos           | Son **10**, no 8: se suman importar desde otra app y conflicto de sync entre miembros                                                                                                                                                                                                                     |
+| Cuarto slot del tab bar   | Lo **elige el usuario** (default Análisis). La app nunca reconfigura la navegación sola                                                                                                                                                                                                                   |
+| Apagar un módulo          | **Oculta, nunca borra.** Las cuotas en curso siguen descontando: ya son movimientos reales                                                                                                                                                                                                                |
+| Qué cuenta como "vista"   | Ruta propia + alcanzable por deep link. Los estados no cuentan                                                                                                                                                                                                                                            |
 
-## Licencia
+## Antes de arrancar
 
-A definir antes de liberar como open source (MIT o AGPL — ver `docs/00-producto.md` § 5).
+1. **El nombre es PERZE** y el logotipo está resuelto: el nombre con la Z en violeta, sin símbolo al lado. La Z tiene dos cortes ópticos —display para el ícono y favicon, texto para dentro de la palabra— y los assets están generados en `marca/`.
+2. **Decidí la licencia** (MIT si querés máxima adopción, AGPL si te importa que nadie lo cierre y lo venda).
+3. Fase 1 solo resuelve estructura y flujo. Si en wireframe estás discutiendo colores, perdiste el foco.
+
+## Los cuatro criterios que gobiernan todo
+
+1. **< 5 segundos y 3 decisiones** para cargar un gasto. Todo lo demás se subordina. ("3 taps" es el proxy del camino feliz, no la meta: los dígitos del monto no se pueden evitar.)
+2. **Minimalismo**: más pantallas, menos por pantalla. Presupuesto por pantalla: 1 cifra héroe · 1 color de marca fuera de los gráficos · 1 acción primaria · 3 niveles tipográficos · 5 elementos interactivos sobre el pliegue · 0 bordes de caja evitables · 0 iconos decorativos.
+3. **~90% neutros.** Color solo cuando significa algo.
+4. **Progresividad**: el modelo de datos es completo desde el día 1; la UI se revela según **flags** (monedas en uso, miembros, módulos activos), no según un "perfil" que no existe en el producto.
+
+## Módulos opcionales — lista canónica
+
+Son **seis**, y esta lista es la que vive en `households.enabled_modules`:
+
+`budgets` · `goals` · `recurring` · `debts` · `investments` · `family`
+
+Análisis **no** es un módulo: es un tab fijo cuyo contenido varía según qué módulos estén encendidos y cuántos datos haya.
+
+## Sobre la paleta
+
+Neutros cálidos + violeta índigo (marca) + aqua (positivo) + naranja (atención) + 4 colores de estado reservados. La paleta de datos de 5 slots está **validada programáticamente** contra las superficies reales de la app, en claro y oscuro: banda de luminosidad, croma, separación para daltonismo, piso de visión normal y contraste. Todos los checks pasan.
+
+Deliberadamente **no** se usa verde/rojo para ingreso/gasto: es la convención más común y la peor para daltonismo (ΔE 6.5, en banda de advertencia). El par aqua/naranja pasa con ΔE 8.7–9.6.
+
+## Fuentes de datos externas
+
+| Uso                                          | Fuente                                        | Key       |
+| -------------------------------------------- | --------------------------------------------- | --------- |
+| Cotizaciones LatAm (oficial, blue, MEP, CCL) | [DolarApi](https://dolarapi.com/docs/)        | No        |
+| FX internacional e histórico                 | [Frankfurter](https://frankfurter.dev/)       | No        |
+| Inflación, UVA, plazo fijo AR                | [ArgentinaDatos](https://argentinadatos.com/) | No        |
+| Acciones AR, CEDEARs, bonos, ONs             | [Data912](https://data912.apidocs.ar/)        | No        |
+| Crypto                                       | CoinGecko                                     | Free tier |
+| Acciones internacionales                     | Finnhub / Twelve Data                         | Free tier |
+
+Ninguna está en el camino crítico: todo se cachea en la base y siempre se puede cargar el valor a mano.

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<script src="./ds-base.js"></script>
+<style>html,body{margin:0;background:var(--surface-1)}a{color:var(--primary-ink);text-decoration:none}a:hover{color:var(--text-primary)}</style>
+</helmet>
+<section class="{{ themeClass }}" style="background:var(--surface-1);color:var(--text-primary);font-family:var(--font-sans);padding:56px 64px 96px">
+<div id="1a" style="max-width:1660px;margin:0 auto">
+
+<div style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:var(--surface-2);font:500 12px/16px var(--font-sans);color:var(--text-secondary)">1a · PROMPT D11 · bloque J</div>
+<h1 style="font:600 44px/48px var(--font-sans);letter-spacing:-.025em;margin:20px 0 0">Grupo familiar</h1>
+<p style="font:400 18px/28px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:14px 0 0;text-wrap:pretty">Diez vistas, modo oscuro, 390×844. El objetivo duro es J4: entender de un vistazo, sin leer, qué ve la otra persona sobre vos. Está resuelto poniendo la cara de la otra persona en cada fila que ella puede ver, y probado con tres configuraciones distintas de la misma pantalla. El segundo riesgo es J8: la comparativa entre miembros va con opt-in de los dos, y el estado asimétrico —uno dijo sí, el otro no— también está diseñado, porque es el que va a pasar.</p>
+
+<div style="display:flex;gap:20px;margin-top:36px;flex-wrap:wrap">
+<div style="flex:1 1 520px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cómo se lee J4 sin leer</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">La pantalla se llama “Qué ve Ana”,</span> no “Permisos y visibilidad”. El sujeto es la persona, no el sistema.</div>
+<div><span style="color:var(--text-primary);font-weight:500">El estado de cada fila es su cara.</span> Si Ana lo ve, está el avatar de Ana; si no, un ojo tachado en gris con la palabra “Solo vos”. Presencia de color contra ausencia de color: se resuelve antes de leer.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Nunca sólo color:</span> el avatar lleva inicial y la fila privada lleva ícono más label, así que también funciona en escala de grises.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Y hay prueba, no promesa:</span> el primario abre la app tal como la ve Ana.</div>
+</div>
+</div>
+<div style="flex:1 1 320px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Decisiones aplicadas, no rediscutidas</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div>Cada cuenta y cada movimiento es privado o compartido; el default lo controla el usuario con switches por cuenta y por categoría.</div>
+<div>El alcance personal / compartido / todo lo resuelve el ScopeSwitcher del bloque B. Acá no hay un segundo control que haga lo mismo.</div>
+<div>Tres roles —admin, miembro, solo lectura— explicados en una línea en el momento de invitar.</div>
+<div>Hasta seis personas. El módulo viene encendido si en el onboarding dijo “con mi pareja” o “con mi familia”.</div>
+<div>El conflicto de sincronización entre dos miembros se diseña acá y queda listo para el sistema de errores.</div>
+<div>J6 es input físico: tres frames de arrastre con presets y resultado en vivo.</div>
+<div>J7 muestra el neto simplificado y registra el pago que lo cancela.</div>
+<div>Selección por superficie; el único violeta de cada pantalla es la acción primaria.</div>
+<div>Los colores de miembro son identidad de dato, pero nadie queda identificado sólo por color: siempre inicial o nombre.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">J1 y J3 · Activación e invitación</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Si en el onboarding dijo “con mi pareja” o “con mi familia”, el módulo ya viene encendido y la activación es directamente la invitación. Los tres roles se explican en una línea en el momento de elegirlos, no en una pantalla de ayuda que nadie abre.</p>
+</div>
+
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J1 · Activación · primer miembro</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Grupo familiar" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="display:flex;align-items:center;gap:14px;min-height:64px">
+<div style="flex:1;min-width:0">
+<div style="font:400 16px/22px var(--font-sans);color:var(--text-primary)">Grupo familiar</div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Ya venía prendido: dijiste que la usás con tu pareja</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+</div>
+<div style="padding:10px 20px 0">
+<div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Compartir no significa mostrar todo: cada cuenta y cada gasto entra como privado o compartido, y vos decidís el default.</div>
+</div>
+<div style="padding:22px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">En el grupo</div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Martín · vos</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Admin</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:6px 0 12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--surface-3);color:var(--text-muted);font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">+</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Hasta 5 personas más</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Pareja, hijos, quien quieras</div></div>
+</div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:16px">Qué cambia en la app</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Personal · Compartido · Todo" meta="El selector de arriba filtra todas las cifras" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="eye" label="Qué ve la otra persona" meta="Cuenta por cuenta y categoría por categoría" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="users" label="Dividir y liquidar" meta="Quién puso qué y quién le debe a quién" chevron="{{ false }}" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Invitar a mi pareja</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Después</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J3 · Invitar miembro <span style="color:var(--text-muted);font-weight:400">— rol explicado en una línea</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Invitar" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:8px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Email" default-value="ana@gmail.com" hint-size="100%,64px"></x-import>
+</div>
+<div style="padding:18px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Qué va a poder hacer</div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ j3roles }}" value="Miembro" hint-size="100%,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:12px;text-wrap:pretty">Carga y edita gastos compartidos, y ve lo que vos compartas. No puede invitar a nadie ni borrar cuentas.</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;gap:12px;font:400 14px/20px var(--font-sans);color:var(--text-muted)"><span style="width:88px;color:var(--text-secondary)">Admin</span><span style="flex:1">Hace todo, incluso invitar y borrar cuentas.</span></div>
+<div style="display:flex;gap:12px;font:400 14px/20px var(--font-sans);color:var(--text-muted)"><span style="width:88px;color:var(--text-secondary)">Solo lectura</span><span style="flex:1">Mira lo compartido y no puede tocar nada.</span></div>
+</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Con qué arranca viendo</div>
+<div style="display:flex;align-items:center;gap:14px;min-height:56px">
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Solo lo común</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">2 cuentas conjuntas y 12 categorías de casa</div></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Switch" checked="{{ true }}" hint-size="52px,32px"></x-import>
+</div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px;text-wrap:pretty">Tu sueldo, tu Itaú y tus 6 categorías personales quedan afuera. Lo podés cambiar cuando quieras en “Qué ve Ana”.</div>
+<div style="margin-top:18px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="tag" label="Invitar con código o QR" meta="Si está al lado tuyo, es más rápido" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Mandar la invitación</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El switch ya viene encendido y lo dice</span> (“dijiste que la usás con tu pareja”). Nadie tiene que descubrir por qué apareció una sección nueva.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · La primera frase es la promesa de privacidad,</span> antes de cualquier invitación: compartir no es mostrar todo. Es lo que decide si alguien invita o cierra la pantalla.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El límite de seis se muestra como capacidad,</span> no como restricción: “hasta 5 personas más”, en la lista, donde importa.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · No hay un segundo control de alcance.</span> La fila explica que el filtro Personal / Compartido / Todo es el ScopeSwitcher del header que ya existe desde el bloque B.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El rol se elige con un segmentado y se explica al elegirlo:</span> el texto de abajo es del rol seleccionado, y los otros dos quedan en dos líneas de 14 px. Cero pantalla de ayuda.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · La invitación arranca con un default conservador</span> —sólo lo común— y dice exactamente qué queda afuera, con los números del usuario: tu sueldo, tu Itaú, 6 categorías.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Código o QR es una fila, no un tab.</span> El email es el camino principal; el QR es para cuando están juntos.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">J1: 4 interactivos (switch, lista de miembros, 3 filas como grupo, primario) · 0 cifras héroe · 3 niveles tipográficos · 2 violetas: switch encendido —excepción declarada del sistema— y primario · 1 color de miembro, con inicial. J3: 5 interactivos (email, segmentado, switch, fila de QR, primario), al límite · 3 niveles · 2 violetas por el switch. <span style="color:var(--text-primary)">Cumplen.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J1 · vacío — grupo de una persona</div><dc-import name="StateFrame" title="Grupo familiar" kind="empty" icon="users" message="Por ahora estás sola vos. Invitá a alguien y elegí qué comparte cada cuenta." action="Invitar" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J3 · cargando</div><dc-import name="StateFrame" title="Invitar" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J3 · error — email ya en otro grupo</div><dc-import name="StateFrame" title="Invitar" kind="error" what="Ana ya está en otro grupo familiar." next="Una persona puede estar en un grupo a la vez. Pedile que salga del otro y volvé a invitarla." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J3 · offline</div><dc-import name="StateFrame" title="Invitar" kind="offline" pending="1" offline-msg="Sin conexión — la invitación sale al sincronizar." hero-label="Invitación a" hero-value="ana@gmail.com" note="La invitación queda en cola y se manda sola cuando vuelva la conexión. El rol y los defaults ya quedaron guardados." r1="Rol" r1meta="Carga y edita lo compartido" r1val="Miembro" r2="Arranca viendo" r2meta="2 cuentas y 12 categorías" r2val="Solo lo común" r3="Queda afuera" r3meta="Sueldo, Itaú, 6 categorías" r3val="privado" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:64px">
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J2 · Household overview <span style="color:var(--text-muted);font-weight:400">— con el ScopeSwitcher del bloque B</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" scope="Compartido" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Patrimonio del grupo</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1812400" size="hero" show-sign="{{ false }}" hint-size="260px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Lo que cada uno comparte. Tus cuentas privadas no entran acá.</div>
+</div>
+<div style="padding:20px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Gasto compartido de julio · $ 48.600</div>
+<div style="margin-top:12px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SplitBar" parts="{{ j2parts }}" height="{{ splitH }}" hint-size="100%,20px"></x-import></div>
+</div>
+<div style="padding:18px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Quiénes son</div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Martín · vos</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Admin · puso $ 30.100 este mes</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">62%</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:6px 0 12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Ana</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Miembro · puso $ 18.500 este mes</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-secondary)">38%</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:6px 0 12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-2);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">S</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Sofía</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo lectura · no carga gastos</div></div>
+</div>
+<div style="margin-top:8px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.InsightCard" status="neutral" icon="users" text="Ana te debe $ 4.200 de 7 gastos compartidos de julio." action-label="Liquidar" on-dismiss="{{ noop }}" hint-size="100%,132px"></x-import>
+</div>
+<div style="margin-top:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="eye" label="Qué ve Ana" meta="3 de 5 cuentas · 12 de 18 categorías" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="list" label="Actividad del grupo" meta="Ana editó un gasto hace 2 horas" hint-size="100%,56px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TabBar" active="more" hint-size="100%,64px"></x-import>
+</div>
+</div>
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El scope vive en el header, como en todo el resto de la app.</span> Esta pantalla se mira en “Compartido”; el mismo control en “Personal” muestra tus cifras y en “Todo” la suma. No hay un selector propio del household: sería el mismo control dos veces.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El héroe aclara qué no incluye.</span> “Tus cuentas privadas no entran acá” está debajo de la cifra, porque un patrimonio conjunto que parezca incluir todo destruye la confianza en el módulo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · La contribución del mes es una sola barra,</span> con el color de cada miembro y su inicial en la leyenda. Dos porcentajes al costado de cada fila cierran la lectura.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Los colores de miembro son identidad de dato</span> —azul y magenta de la paleta— y nunca violeta: el violeta queda libre para la acción primaria. Nadie se identifica sólo por color: siempre hay inicial y nombre.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El saldo entre personas es un insight neutro, no una alerta.</span> Que Ana te deba $ 4.200 no es un problema: es un dato con una acción, liquidar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · “Qué ve Ana” es una fila con el número puesto</span> (3 de 5 cuentas, 12 de 18 categorías): el resumen vive acá y el detalle en J4.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · Sofía es solo lectura y se ve en su meta,</span> sin porcentaje ni barra: no aporta gasto, así que no ocupa lugar en la comparación.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">4 interactivos sobre el pliegue (scope, barra, lista de miembros, card de saldo) · 1 cifra héroe · 3 niveles tipográficos + mono · 3 colores de miembro, todos con inicial · violeta: el scope switcher —identidad de datos, excepción del sistema— y el FAB · 0 bordes. <span style="color:var(--text-primary)">Cumple.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J2 · vacío — invitación pendiente</div><dc-import name="StateFrame" title="Grupo familiar" kind="empty" icon="clock" message="Ana todavía no aceptó la invitación. Mientras tanto podés preparar qué va a ver." action="Qué ve Ana" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J2 · cargando</div><dc-import name="StateFrame" title="Grupo familiar" kind="loading" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J2 · error</div><dc-import name="StateFrame" title="Grupo familiar" kind="error" what="No pudimos traer los datos de Ana." next="Lo tuyo está completo y guardado. Los aportes de Ana pueden estar atrasados." hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J2 · offline</div><dc-import name="StateFrame" title="Grupo familiar" kind="offline" pending="3" offline-msg="Sin conexión — lo de Ana puede estar viejo." hero-label="Patrimonio del grupo" hero-value="$ 1.812.400" note="Tus cifras son de ahora; las de Ana son del último sync. Lo que cargues queda en el teléfono y se comparte después." r1="Vos" r1meta="Puso este mes · 62%" r1val="$ 30.100" r2="Ana" r2meta="Último sync hace 4 horas" r2val="$ 18.500" r3="Ana te debe" r3meta="7 gastos compartidos" r3val="$ 4.200" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">J4 · Qué ve Ana — el objetivo duro del bloque</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">La misma pantalla con tres configuraciones de visibilidad. El estado no se lee: se ve. Donde está la cara de Ana, Ana lo ve; donde hay un ojo tachado gris, no. Achicá estas tres a la mitad y seguís sabiendo cuál es cuál, que es exactamente la prueba que tiene que pasar.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+
+<div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">a · Casi todo compartido</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Qué ve Ana" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex;align-items:center;gap:12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 15px/21px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Ana ve <span style="color:var(--text-primary)">5 de tus 5 cuentas</span> y 17 de tus 18 categorías.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuentas</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Cuenta conjunta Brou</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Gastos de casa</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Mercado Pago</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Del día a día</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Itaú Caja de Ahorro</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Tu sueldo entra acá</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Efectivo</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Lo que llevás encima</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Balanz</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Inversiones</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:14px">Categorías</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Supermercado</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Servicios</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Salud</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Regalos</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Los de ella también</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver las 18 categorías" variant="action" hint-size="100%,52px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Ver la app como Ana</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">b · Solo lo común · el default</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Qué ve Ana" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex;align-items:center;gap:12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 15px/21px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Ana ve <span style="color:var(--text-primary)">3 de tus 5 cuentas</span> y 12 de tus 18 categorías.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuentas</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Cuenta conjunta Brou</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Gastos de casa</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Mercado Pago</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Del día a día</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Efectivo</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Lo que llevás encima</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Itaú Caja de Ahorro</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Tu sueldo entra acá</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Balanz</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Inversiones</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:14px">Categorías</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Supermercado</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Servicios</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Comidas afuera</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Ocio personal</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver las 18 categorías" variant="action" hint-size="100%,52px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Ver la app como Ana</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">c · Casi nada compartido</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Qué ve Ana" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:2px 20px 0;display:flex;align-items:center;gap:12px">
+<span style="width:36px;height:36px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 14px/36px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 15px/21px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Ana ve <span style="color:var(--text-primary)">1 de tus 5 cuentas</span> y 3 de tus 18 categorías.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuentas</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Cuenta conjunta Brou</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Gastos de casa</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Mercado Pago</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Del día a día</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Efectivo</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Lo que llevás encima</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Itaú Caja de Ahorro</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Tu sueldo entra acá</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Balanz</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Inversiones</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:14px">Categorías</div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Supermercado</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Servicios</div></div><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Comidas afuera</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:9px 0"><div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Ocio personal</div></div><span style="display:flex;align-items:center;gap:6px;flex-shrink:0"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="eye-off" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Solo vos</span></span></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver las 18 categorías" variant="action" hint-size="100%,52px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Ver la app como Ana</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El título es una persona, no un concepto.</span> “Qué ve Ana”, con su avatar y su inicial arriba. Una pantalla llamada “Permisos y visibilidad” obliga a construir el modelo mental; ésta lo entrega hecho.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · El estado es la presencia de la cara.</span> Color + forma redonda son rasgos preatentivos: el ojo cuenta caras sin leer. Las tres configuraciones producen tres densidades de magenta distintas, y ésa es la lectura de un vistazo.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Codificación redundante siempre.</span> El avatar lleva inicial y la fila privada lleva ícono de ojo tachado más la palabra “Solo vos”. En escala de grises o con daltonismo, la pantalla sigue funcionando.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · La línea de arriba es verificación, no explicación:</span> “5 de tus 5”, “3 de tus 5”, “1 de tus 5”. Sirve para confirmar lo que el ojo ya contó, y para el que llega con lector de pantalla es el resumen.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · Cuentas primero, categorías después,</span> porque una cuenta compartida arrastra sus movimientos y es la decisión más grande. Las 18 categorías no entran: se muestran las 4 que más se discuten y el resto a un tap.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Tocar la fila alterna el estado,</span> con haptic de 8 ms y Deshacer por 5 segundos. No hay switches: un switch prendido es violeta y quince switches serían quince violetas peleando con la acción primaria.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · El primario es la prueba.</span> “Ver la app como Ana” abre la app en modo espejo, con un banner de salida. Es la única forma de estar seguro, y de paso convierte la pantalla en algo que se puede auditar en vez de creer.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · Lo que Ana comparte con vos vive en su teléfono,</span> no acá: esta pantalla es sobre vos. Confundir las dos direcciones es el error más fácil de cometer en un modelo de visibilidad.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">3 interactivos sobre el pliegue (lista de cuentas como grupo, lista de categorías como grupo, primario) · 0 cifras héroe · 3 niveles tipográficos (body 16, label 13, caption 11) · un solo color no neutro: el magenta del avatar de Ana, que es identidad de dato y va con inicial · 1 violeta: el primario · 0 bordes, 0 separadores. <span style="color:var(--text-primary)">Cumple en las tres configuraciones.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J4 · vacío — todavía no aceptó</div><dc-import name="StateFrame" title="Qué ve Ana" kind="empty" icon="eye-off" message="Ana todavía no entró al grupo, así que por ahora no ve nada. Podés dejar preparado qué va a ver." action="Elegir cuentas" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J4 · cargando</div><dc-import name="StateFrame" title="Qué ve Ana" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J4 · error al guardar</div><dc-import name="StateFrame" title="Qué ve Ana" kind="error" what="No pudimos cambiar la visibilidad de Itaú Caja de Ahorro." next="Por seguridad quedó como estaba: privada. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J4 · offline</div><dc-import name="StateFrame" title="Qué ve Ana" kind="offline" pending="1" offline-msg="Sin conexión — se aplica al sincronizar." hero-label="Ana ve" hero-value="3 de 5 cuentas" note="El cambio queda guardado en el teléfono y se aplica en cuanto haya conexión. Hasta entonces Ana sigue viendo lo de antes." r1="Cuenta conjunta Brou" r1meta="Ana la ve" r1val="compartida" r2="Itaú Caja de Ahorro" r2meta="Tu sueldo" r2val="solo vos" r3="Cambio pendiente" r3meta="Mercado Pago → privada" r3val="1" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">J5 y J6 · Gastos compartidos y dividir</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">J6 es el tercer momento de input físico de la app, después del keypad y del dial: tres frames de arrastre sobre la misma barra, con el resultado en pesos actualizándose mientras el dedo se mueve.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J5 · Gastos compartidos</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Compartidos" on-back="{{ noop }}" show-scope="{{ false }}" on-search="{{ noop }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Julio · 7 gastos con reparto</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="48600" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:6px">Pusiste $ 30.100 y Ana $ 18.500. Te debe $ 4.200.</div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="padding:0 0 4px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Disco Punta Carretas</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Hoy · 50 y 50</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">6.240</span>
+</div>
+</div>
+<div style="padding:14px 0 4px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">UTE</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Ayer · 62 y 38</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">2.150</span>
+</div>
+</div>
+<div style="padding:14px 0 4px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Alquiler</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">1 de julio · 50 y 50</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">32.000</span>
+</div>
+</div>
+<div style="padding:14px 0 4px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Tienda Inglesa</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Martes 14 · montos exactos</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">4.980</span>
+</div>
+</div>
+<div style="padding:14px 0 4px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Pedidos Ya</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Lunes 13 · 50 y 50</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:500">1.480</span>
+</div>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:14px">El avatar dice quién lo pagó. El reparto, en el meta de la fila.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Liquidar $ 4.200</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J6 · 1 · Preset mitad y mitad</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dividir" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Disco Punta Carretas · hoy</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="6240" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+</div>
+<div style="padding:20px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ j6seg }}" value="Mitad y mitad" size="sm" hint-size="100%,36px"></x-import>
+</div>
+<div style="padding:28px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SplitBar" parts="{{ splitHalf }}" height="{{ splitH }}" hint-size="100%,20px"></x-import>
+</div>
+<div style="padding:22px 20px 0;flex:1">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans)">Vos</div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">3.120</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans)">Ana</div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">3.120</span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:12px">Arrastrá la división para cambiar el reparto.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar reparto</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J6 · 2 · Arrastrando</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dividir" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Disco Punta Carretas · hoy</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="6240" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+</div>
+<div style="padding:20px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ j6seg }}" value="Exactos" size="sm" hint-size="100%,36px"></x-import>
+</div>
+<div style="padding:28px 20px 0;position:relative">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SplitBar" parts="{{ splitDrag }}" height="{{ splitH }}" hint-size="100%,20px"></x-import>
+<div style="position:absolute;left:calc(20px + 68% - 14px);top:22px;width:28px;height:28px;border-radius:50%;background:var(--text-primary);box-shadow:var(--shadow-sheet)"></div>
+</div>
+<div style="padding:22px 20px 0;flex:1">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans)">Vos</div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;color:var(--text-primary)">4.243</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans)">Ana</div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;color:var(--text-primary)">1.997</span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:12px">68 y 32 · haptic de 8 ms cada 5 puntos, más marcado al pasar por 50.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar reparto</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J6 · 3 · Proporcional al ingreso</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dividir" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Disco Punta Carretas · hoy</div>
+<div style="margin-top:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="6240" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import></div>
+</div>
+<div style="padding:20px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ j6seg }}" value="Por ingreso" size="sm" hint-size="100%,36px"></x-import>
+</div>
+<div style="padding:28px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SplitBar" parts="{{ splitFinal }}" height="{{ splitH }}" hint-size="100%,20px"></x-import>
+</div>
+<div style="padding:22px 20px 0;flex:1">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Vos</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Ganás $ 92.400</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">3.869</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;min-width:0"><div style="font:400 16px/22px var(--font-sans)">Ana</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Gana $ 56.600</div></div>
+<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600">2.371</span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:12px">62 y 38, la proporción de lo que gana cada uno. Se calcula con los ingresos que cada uno comparte.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Guardar reparto</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · En J5 el avatar es quién pagó</span> y el reparto va en el meta. Los montos en mono a la derecha alinean como en cualquier lista de movimientos del bloque D: esta pantalla no inventa una fila nueva.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Tres frames, un solo control.</span> Preset → arrastre → otro preset: la barra es siempre la misma y los presets son sólo puntos de partida. Los cuatro modos —mitad, por ingreso, exactos, porcentajes— son el mismo objeto físico.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El resultado en pesos es la cifra más grande de la pantalla</span> después del total, en 22 px y en mono, y cambia mientras el dedo se mueve. Nadie divide pensando en porcentajes: divide pensando en cuánto le toca a cada uno.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · El thumb es de 28 px visibles y 44 de target,</span> en tinta primaria y con la única sombra que el sistema permite. Al pasar por 50/50 hay un haptic más marcado: el sistema ayuda a encontrar la mitad sin bloquear el resto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · “Por ingreso” muestra los dos ingresos,</span> porque un reparto proporcional sin ver de dónde sale la proporción es una caja negra. Y sólo funciona con los ingresos que cada uno comparte: si Ana no comparte el suyo, el preset no aparece.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Guardar no confirma:</span> guarda y ofrece Deshacer por 5 segundos, y le avisa a Ana en su feed de actividad.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">J5: 3 interactivos (buscar, lista, primario) · 1 cifra héroe · 3 niveles + mono · 2 colores de miembro con inicial · 1 violeta. J6: 3 interactivos (segmentado, barra, primario) · 1 cifra héroe de 40 y dos de 22 que comparten nivel · 3 niveles + mono · 2 colores de miembro · 1 violeta · 0 bordes. <span style="color:var(--text-primary)">Cumplen.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J5 · vacío</div><dc-import name="StateFrame" title="Compartidos" kind="empty" icon="users" message="Todavía no hay gastos repartidos. Cualquier gasto se puede dividir desde su detalle." action="Ver movimientos" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J6 · cargando</div><dc-import name="StateFrame" title="Dividir" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J6 · error — sin ingreso compartido</div><dc-import name="StateFrame" title="Dividir" kind="error" what="No podemos repartir por ingreso." next="Ana no comparte sus ingresos, así que no hay proporción que calcular. Podés usar mitad y mitad o montos exactos." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J6 · offline</div><dc-import name="StateFrame" title="Dividir" kind="offline" pending="1" offline-msg="Sin conexión — Ana lo ve al sincronizar." hero-label="Disco Punta Carretas" hero-value="$ 6.240" note="El reparto se guarda en el teléfono. Ana lo va a ver en su feed cuando haya conexión." r1="Vos" r1meta="62% · pagaste el total" r1val="$ 3.869" r2="Ana" r2meta="38% · te lo debe" r2val="$ 2.371" r3="Saldo del mes" r3meta="Incluye este gasto" r3val="$ 4.200" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">J7 y J8 · Liquidar y comparativa</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">J7 muestra el neto, no las siete deudas cruzadas. J8 sólo existe si los dos dijeron que sí: al lado está el estado asimétrico, que es el que va a pasar de verdad.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J7 · Liquidar <span style="color:var(--text-muted);font-weight:400">— neto simplificado</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Liquidar" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:14px 20px 0;display:flex;align-items:center;gap:12px">
+<span style="width:40px;height:40px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 15px/40px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Ana te debe</div>
+</div>
+<div style="padding:8px 20px 0">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="4200" size="hero-xl" show-sign="{{ false }}" hint-size="240px,60px"></x-import>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:10px;text-wrap:pretty">Es el neto de 7 gastos de julio: no hace falta que se devuelvan plata gasto por gasto.</div>
+</div>
+<div style="padding:24px 20px 0;flex:1;overflow:hidden">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">De dónde sale</div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:8px"><span style="flex:1">Pusiste</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">$ 30.100</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Te correspondía</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">$ 25.900</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Ana puso</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">$ 18.500</span></div>
+<div style="display:flex;gap:12px;font:500 15px/22px var(--font-sans);color:var(--text-primary);padding-top:8px"><span style="flex:1">Diferencia a favor tuyo</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums">$ 4.200</span></div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver los 7 gastos" variant="action" hint-size="100%,52px"></x-import>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:16px">Cómo lo cobrás</div>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="bank" label="Ana te transfiere" meta="Se registra como ingreso en tu Brou" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="wallet" label="Ya te lo dio en efectivo" meta="Sólo registra el pago, sin mover cuentas" hint-size="100%,56px"></x-import>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Registrar el pago</x-import>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J8 · Comparativa <span style="color:var(--text-muted);font-weight:400">— con los dos opt-in</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Vos y Ana" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Julio · sólo lo compartido</div>
+<div style="margin-top:8px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ j8seg }}" value="Categorías" size="sm" hint-size="100%,36px"></x-import></div>
+</div>
+<div style="padding:20px 20px 0;flex:1;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans)">Supermercado</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">$ 17.640</span></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<div style="height:10px;border-radius:999px;background:var(--data-4);width:58%"></div>
+<div style="height:10px;border-radius:999px;background:var(--data-5);width:42%"></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans)">Servicios</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">$ 7.410</span></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<div style="height:10px;border-radius:999px;background:var(--data-4);width:31%"></div>
+<div style="height:10px;border-radius:999px;background:var(--data-5);width:69%"></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans)">Comidas afuera</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">$ 9.440</span></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<div style="height:10px;border-radius:999px;background:var(--data-4);width:74%"></div>
+<div style="height:10px;border-radius:999px;background:var(--data-5);width:26%"></div>
+</div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;gap:10px"><span style="flex:1;font:400 16px/22px var(--font-sans)">Transporte</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--text-muted)">$ 5.870</span></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<div style="height:10px;border-radius:999px;background:var(--data-4);width:46%"></div>
+<div style="height:10px;border-radius:999px;background:var(--data-5);width:54%"></div>
+</div>
+</div>
+</div>
+<div style="margin-top:16px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SeriesLegend" series="{{ j8legend }}" layout="inline" hint-size="100%,20px"></x-import></div>
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:16px;text-wrap:pretty">Se comparan gastos de casa, no personas: acá no entra nada que alguno de los dos tenga como privado.</div>
+<div style="margin-top:14px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" icon="eye-off" label="Dejar de compartir la comparativa" meta="Se apaga para los dos, ahora mismo" hint-size="100%,56px"></x-import>
+</div>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J8b · Asimétrico <span style="color:var(--text-muted);font-weight:400">— vos sí, Ana todavía no</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Vos y Ana" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:36px 20px 0">
+<div style="display:flex;gap:12px">
+<span style="width:44px;height:44px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 16px/44px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<span style="width:44px;height:44px;border-radius:50%;background:var(--surface-3);color:var(--text-muted);font:600 16px/44px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+</div>
+<div style="font:600 22px/28px var(--font-sans);letter-spacing:-.01em;margin-top:22px">Falta que Ana diga que sí</div>
+<div style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);margin-top:10px;text-wrap:pretty">Vos ya la activaste. La comparativa se prende cuando los dos la activan, y hasta entonces no existe para ninguno de los dos: Ana tampoco ve nada tuyo acá.</div>
+</div>
+<div style="padding:28px 20px 0;flex:1">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans)">Vos</div>
+<span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="check" size="18" color="var(--text-secondary)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-secondary)">Activada</span></span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+<span style="width:32px;height:32px;border-radius:50%;background:var(--surface-3);color:var(--text-muted);font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<div style="flex:1;font:400 16px/22px var(--font-sans);color:var(--text-secondary)">Ana</div>
+<span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="clock" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import><span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">Sin decidir</span></span>
+</div>
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);margin-top:14px;text-wrap:pretty">No le vamos a insistir: si querés, pedíselo vos. Podés apagar la tuya cuando quieras y no queda registro de nada.</div>
+</div>
+<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:4px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="lg" hint-size="100%,64px">Pedirle a Ana</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="ghost" size="md" hint-size="100%,48px">Apagar la mía</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El neto es la única cifra grande de J7</span> —hero-xl de 64, el mismo tamaño que el resumen semanal— y arriba está la cara de quién debe. Las siete deudas cruzadas no se muestran: se muestran las cuatro líneas que explican el número, y los gastos a un tap.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Hay dos formas de cobrar y las dos registran,</span> pero sólo una mueve cuentas. “Ya te lo dio en efectivo” existe porque en la vida real la plata suele volver antes de que alguien abra la app.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · Liquidar no borra los gastos:</span> los marca como saldados y el saldo vuelve a cero. El historial queda entero.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · En J8 se comparan categorías de casa, no personas,</span> y la frase está en la pantalla. Las barras son de la categoría, no un ranking de quién gasta más: por eso van una debajo de la otra y no dos columnas enfrentadas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · No hay ganador ni perdedor.</span> Ningún porcentaje va en color de estado, no hay flechas de “peor” y el orden es por monto de la categoría, no por diferencia entre miembros. Vigilancia es exactamente eso: ordenar por quién se pasó.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Apagarla es una fila visible dentro de la pantalla,</span> no un ajuste escondido, y apaga para los dos: el opt-in es conjunto, así que el opt-out también.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · El estado asimétrico no revela nada de Ana:</span> su avatar está en gris, sin datos, y el copy aclara que ella tampoco ve nada tuyo. Es simétrico en la ausencia.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · Y no hay presión:</span> “no le vamos a insistir”. El botón para pedírselo es secundario, no primario, porque el default correcto es que no pase nada.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">J7: 4 interactivos (ver los 7, 2 formas de cobro, primario) · 1 cifra héroe · 3 niveles + mono · 1 color de miembro con inicial · 1 violeta. J8: 3 interactivos (segmentado, barras, fila de apagado) · 0 cifras héroe · 3 niveles + mono · 2 colores de miembro, ambos con nombre en la leyenda · <span style="color:var(--text-primary)">0 violeta</span>: es una pantalla de lectura. J8b: 2 interactivos, 0 violeta, un title de 22 como cifra única. Cumplen.</div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J7 · vacío — nadie debe nada</div><dc-import name="StateFrame" title="Liquidar" kind="empty" icon="check" message="Están a cero: los 7 gastos de julio ya quedaron saldados." action="Ver compartidos" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J7 · cargando</div><dc-import name="StateFrame" title="Liquidar" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J8 · error</div><dc-import name="StateFrame" title="Vos y Ana" kind="error" what="No pudimos armar la comparativa." next="Los gastos compartidos están completos y se pueden ver igual. Probá de nuevo." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J7 · offline</div><dc-import name="StateFrame" title="Liquidar" kind="offline" pending="2" offline-msg="Sin conexión — falta lo último de Ana." hero-label="Ana te debe" hero-value="$ 4.200" note="El neto usa lo que tenés sincronizado hasta las 09:41. Si Ana cargó algo después, el número puede cambiar: el pago se registra igual." r1="Pusiste" r1meta="7 gastos compartidos" r1val="$ 30.100" r2="Ana puso" r2meta="Último sync 09:41" r2val="$ 18.500" r3="Pago a registrar" r3meta="Queda pendiente de subir" r3val="$ 4.200" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:72px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">J9 y J10 · Actividad y estados</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">El conflicto de sincronización —dos personas editando el mismo movimiento, una sin conexión— se diseña acá y queda listo para que el sistema de errores lo reutilice tal cual.</p>
+</div>
+<div style="display:flex;gap:20px;align-items:flex-start;margin-top:32px;flex-wrap:wrap">
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J9 · Actividad del grupo</div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Actividad" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:4px 20px 0">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Hoy</div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Ana cambió el reparto de UTE</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">De 50 y 50 a 62 y 38 · hace 2 horas</div></div></div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Cargaste Disco Punta Carretas</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">$ 6.240 · mitad y mitad · hace 4 horas</div></div></div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Ana compartió su Mercado Pago</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Ahora ves sus movimientos de esa cuenta · 09:12</div></div></div>
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:14px">Ayer</div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">A</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Ana borró Farmacia San Roque</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">$ 890 · estaba duplicado · 18:40</div></div></div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-2);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">S</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Sofía entró al grupo</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">Solo lectura · 15:20</div></div></div>
+<div style="display:flex;gap:12px;padding:12px 0"><span style="width:32px;height:32px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 13px/32px var(--font-sans);text-align:center;flex-shrink:0">M</span><div style="flex:1"><div style="font:400 16px/22px var(--font-sans)">Liquidaste junio con Ana</div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-top:1px">$ 3.140 en efectivo · 11:05</div></div></div>
+</div>
+<div style="flex:1"></div>
+<div style="padding:0 20px 20px">
+<div style="font:400 14px/20px var(--font-sans);color:var(--text-muted);text-wrap:pretty">Sólo aparece lo compartido. Lo que cada uno hace en sus cuentas privadas no entra en este feed.</div>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:600 15px/20px var(--font-sans);margin-bottom:10px">J10 · Conflicto de sincronización <span style="color:var(--text-muted);font-weight:400">— dos personas, el mismo movimiento</span></div>
+<div style="width:390px;height:844px;position:relative;display:flex;flex-direction:column;background:var(--page);border-radius:24px;overflow:hidden">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Dos versiones" on-back="{{ noop }}" show-scope="{{ false }}" hint-size="100%,56px"></x-import>
+<div style="padding:6px 20px 0">
+<div style="font:400 16px/24px var(--font-sans);color:var(--text-primary);text-wrap:pretty">Los dos editaron <span style="font-weight:500">UTE del 12 de julio</span> mientras vos estabas sin conexión. Elegí cuál queda.</div>
+</div>
+<div style="padding:18px 20px 0;display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,150px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-4);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">M</span>
+<span style="flex:1;font:500 16px/22px var(--font-sans)">Tu versión</span>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">sin conexión, 14:02</span>
+</div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:10px"><span style="flex:1">Monto</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">$ 2.150</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Reparto</span><span style="color:var(--text-primary)">mitad y mitad</span></div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="md" hint-size="100%,48px">Quedarme con la mía</x-import></div>
+</x-import>
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Card" padding="16" hint-size="100%,150px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="width:28px;height:28px;border-radius:50%;background:var(--data-5);color:#FFFFFF;font:600 12px/28px var(--font-sans);text-align:center;flex-shrink:0">A</span>
+<span style="flex:1;font:500 16px/22px var(--font-sans)">La de Ana</span>
+<span style="font:500 13px/18px var(--font-sans);color:var(--text-muted)">14:38</span>
+</div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);margin-top:10px"><span style="flex:1">Monto</span><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)">$ 2.150</span></div>
+<div style="display:flex;gap:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)"><span style="flex:1">Reparto</span><span style="color:var(--text-primary)">62 y 38</span></div>
+<div style="margin-top:10px"><x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="md" hint-size="100%,48px">Quedarme con la de Ana</x-import></div>
+</x-import>
+</div>
+<div style="padding:16px 20px 0;flex:1">
+<div style="font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty">Sólo cambia el reparto: el monto y la fecha son iguales en las dos. Nada se borra hasta que elijas, y la que no quede queda en el historial de ediciones.</div>
+</div>
+<div style="padding:0 20px 20px">
+<x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" size="lg" hint-size="100%,64px">Quedarme con la más nueva</x-import>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showAnnotations }}" hint-placeholder-val="{{ true }}">
+<div style="width:340px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Anotaciones</div>
+<div style="font:400 15px/23px var(--font-sans);color:var(--text-secondary);display:flex;flex-direction:column;gap:12px">
+<div><span style="color:var(--text-primary);font-weight:500">1 · El feed dice quién, qué y cuándo, en una línea,</span> con el avatar como sujeto. Los cambios de visibilidad también aparecen (“Ana compartió su Mercado Pago”): enterarse de que ahora ves algo nuevo es parte del contrato.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · Lo privado no entra al feed</span> y se dice al pie, no en una pantalla de ayuda.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · El conflicto muestra sólo lo que difiere.</span> Monto y fecha son iguales en las dos versiones, así que la pantalla lo dice y no obliga a comparar seis campos: lo único distinto es el reparto.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · Tres salidas, ninguna destructiva:</span> la mía, la de ella, o la más nueva como primario. Nada se borra: la descartada queda en el historial de ediciones del movimiento.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · El conflicto no es un error del sistema</span> y no usa nivel critical: son dos personas trabajando bien, una sin señal. Cero rojo, cero “error de sincronización”.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · Esta pantalla es la plantilla para el sistema de errores (L3):</span> dos cards con autor y hora, sólo los campos en conflicto, tres salidas y el mismo copy de tres partes. Sirve igual para un conflicto de cuenta, de categoría o de presupuesto.</div>
+</div>
+<div style="background:var(--surface-2);border-radius:16px;padding:16px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Chequeo de ruido</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-secondary);margin-top:8px">J9: 1 interactivo (el feed como grupo) · 0 cifras héroe · 3 niveles · 3 colores de miembro con inicial · 0 violeta. J10: 3 interactivos (2 secundarios en las cards, primario) · 0 cifras héroe · 3 niveles + mono · 2 colores de miembro · 1 violeta · 0 bordes. <span style="color:var(--text-primary)">Cumplen.</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ showStates }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;margin-top:24px;flex-wrap:wrap">
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J10 · vacío — grupo de una persona</div><dc-import name="StateFrame" title="Actividad" kind="empty" icon="users" message="Todavía no hay actividad de nadie más. Cuando Ana entre, vas a ver acá lo que carga y lo que edita." action="Invitar" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J10 · cargando</div><dc-import name="StateFrame" title="Actividad" kind="loading" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J10 · miembro que se va con deuda</div><dc-import name="StateFrame" title="Grupo familiar" kind="error" what="Ana se fue del grupo y quedaban $ 4.200 sin liquidar." next="Los gastos compartidos quedan como están y el saldo queda registrado. Podés marcarlo como saldado cuando lo arreglen." tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+<div><div style="font:500 13px/18px var(--font-sans);color:var(--text-muted);margin-bottom:8px">J10 · offline con conflicto en cola</div><dc-import name="StateFrame" title="Actividad" kind="offline" pending="3" offline-msg="Sin conexión — 1 conflicto para resolver." hero-label="Para resolver" hero-value="1 conflicto" note="Ana y vos editaron el mismo movimiento. Se resuelve cuando quieras: nada se pierde mientras esté sin resolver." r1="UTE del 12 de julio" r1meta="Reparto distinto en cada versión" r1val="conflicto" r2="Tus cambios sin subir" r2meta="Se comparten al sincronizar" r2val="3" r3="Último sync con Ana" r3meta="Hoy 09:41" r3val="4 h" tabs="{{ false }}" hint-size="390px,844px"></dc-import></div>
+</div>
+</sc-if>
+<div style="margin-top:80px;padding-top:28px;border-top:1px solid var(--border)">
+<div style="font:600 32px/38px var(--font-sans);letter-spacing:-.02em">Panel de deuda de biblioteca</div>
+<p style="font:400 16px/24px var(--font-sans);color:var(--text-secondary);max-width:76ch;margin:10px 0 0;text-wrap:pretty">Lo que me faltó de D1 para el bloque J, sumado a lo que venía de F+G, H e I. Nada de esto tocó el bundle.</p>
+</div>
+<div style="display:flex;gap:20px;margin-top:28px;flex-wrap:wrap">
+<div style="flex:1 1 480px;background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Falta en la biblioteca · nuevo del bloque J</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:14px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">1 · Avatar.</span> D1 lo lista y el bundle no lo tiene. Los 30 avatares de este bloque son <code>span</code> con color de miembro, inicial y <code>line-height</code> igual al alto: tres tamaños distintos (28, 32, 36, 44) definidos a ojo. Necesita variantes de tamaño, estado “pendiente” en gris y foto opcional.</div>
+<div><span style="color:var(--text-primary);font-weight:500">2 · VisibilityRow.</span> La fila de J4 —nombre, contexto y a la derecha el avatar de quien lo ve o el ojo tachado con “Solo vos”— es el componente que define el bloque y está copiado 27 veces entre las tres configuraciones. Con dos miembros más habría que mostrar un cluster de avatares, y eso hoy no existe.</div>
+<div><span style="color:var(--text-primary);font-weight:500">3 · AvatarCluster.</span> Con seis personas, la columna derecha de J4 y las filas de J5 necesitan apilar caras con superposición y un “+2”. Diseñé para dos miembros y un tercero de solo lectura; con seis, la fila de J4 se rompe.</div>
+<div><span style="color:var(--text-primary);font-weight:500">4 · SplitBar con thumb visible.</span> El componente arrastra pero no dibuja el tirador: el círculo de 28 px del frame 2 de J6 está posicionado a mano con <code>calc()</code>. Tampoco expone el valor mientras se arrastra ni el haptic.</div>
+<div><span style="color:var(--text-primary);font-weight:500">5 · ConflictCards.</span> El patrón de J10 —dos versiones con autor y hora, sólo los campos que difieren, tres salidas— es reutilizable en todo el sistema de errores y hoy son dos <code>Card</code> armadas a mano.</div>
+<div><span style="color:var(--text-primary);font-weight:500">6 · ActivityRow.</span> El feed de J9 es avatar + una línea + meta con hora. Es igual en household, en el historial de ediciones de un movimiento y en el log de importación.</div>
+<div><span style="color:var(--text-primary);font-weight:500">7 · ComparisonBars.</span> Las barras de dos miembros por categoría de J8 no son un stacked bar del sistema: van con 6 px de aire y sin separador, justamente para que no se lean como una competencia. Merece su propio componente con esa regla adentro.</div>
+<div><span style="color:var(--text-primary);font-weight:500">8 · RoleSegmented con descripción.</span> El segmentado de J3 más la línea que explica el rol elegido es un patrón, no una composición: aparece igual en permisos de cuenta y en tipos de recordatorio.</div>
+<div><span style="color:var(--text-primary);font-weight:500">9 · MirrorBanner.</span> “Ver la app como Ana” necesita una barra persistente de salida del modo espejo. No la dibujé —es una vista del bloque B con un banner— y es la pieza que hace verificable a J4.</div>
+</div>
+<div style="font:400 14px/21px var(--font-sans);color:var(--text-muted);margin-top:16px">Sigue pendiente: PositionRow, QuantityInput, PriceStatus, Sparkline discreta, Donut con dimensión, SplitBar con etiquetas y bandas, InfoCard de una línea, ListRow con dos valores, DragRow, AccountCarousel bimoneda, BenchmarkBars, ChartCard, tooltip táctil, LineChart, StackedBar, Waterfall, Sankey, CalendarHeatmap y la rampa como tokens, RankingBar, StoryFrame, StatTile compacto, NeedsFxBanner, BulletBar, RadialDial, Chip por superficie, BudgetRing con color, MonthCalendar, DataList, TabBar con badge, ListRow variante switch.</div>
+</div>
+<div style="flex:1 1 320px;display:flex;flex-direction:column;gap:20px">
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Cuánto tarda en entenderse J4</div>
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;font:400 15px/22px var(--font-sans);color:var(--text-secondary)">
+<div><span style="color:var(--text-primary);font-weight:500">Bajo un segundo para el estado general, dos o tres para una fila puntual.</span> No es una medición de usuarios: no los tengo. Es lo que sostiene el diseño y en qué me baso.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Uno.</span> El estado de cada fila está codificado en color y forma —una cara redonda magenta— que son rasgos preatentivos: se procesan en paralelo en toda la pantalla, sin fijación. Por eso las tres configuraciones se distinguen entre sí de un vistazo, incluso miniaturizadas.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Dos.</span> Responder “¿ve Ana mi sueldo?” cuesta una sola fijación: encontrar la fila por su nombre y ver si hay cara. No hay que cruzar una matriz ni recordar qué significa una columna.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Tres.</span> La línea de arriba (“3 de tus 5 cuentas”) convierte la lectura en verificación: el usuario confirma lo que ya contó en vez de tener que contar.</div>
+<div><span style="color:var(--text-primary);font-weight:500">Cómo lo probaría de verdad:</span> mostrar la pantalla 3 segundos y pedir que digan cuántas cuentas ve Ana y si el sueldo está adentro. Menos del 80% de acierto y el diseño no cierra. Y un test de squint sobre las tres configuraciones: si dos se confunden, la densidad de color no está haciendo su trabajo.</div>
+</div>
+</div>
+<div style="background:var(--surface-2);border-radius:20px;padding:24px">
+<div style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">La vista peor resuelta</div>
+<div style="margin-top:12px;font:400 15px/22px var(--font-sans);color:var(--text-secondary);text-wrap:pretty"><span style="color:var(--text-primary);font-weight:500">J4, y es justo la más importante.</span> Funciona perfecto para dos personas y se rompe con seis: la columna derecha tendría que mostrar un cluster de caras y el estado dejaría de ser “hay cara o no hay cara” para pasar a ser “cuáles de estas cinco caras”, que ya no se lee sin contar. El grupo admite seis y yo diseñé para dos. La salida probablemente sea una pantalla por persona —el título ya es “Qué ve Ana”, así que el patrón lo aguanta— con un selector de miembro arriba, pero eso hay que diseñarlo y no lo hice. Segundo pendiente de la misma pantalla: el modo espejo que promete el primario no está dibujado, y es lo único que convierte la promesa en prueba.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;showStates&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showAnnotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      noop: () => {},
+      themeClass: (this.props.theme ?? 'dark') === 'light' ? 'light' : '',
+      showStates: this.props.showStates ?? true,
+      showAnnotations: this.props.showAnnotations ?? true,
+      j3roles: ['Admin', 'Miembro', 'Solo lectura'],
+      j6seg: ['Mitad y mitad', 'Por ingreso', 'Exactos'],
+      j8seg: ['Categorías', 'Aportes'],
+      splitHalf: [{ label: 'Vos', value: 50, color: 'var(--data-4)' }, { label: 'Ana', value: 50, color: 'var(--data-5)' }],
+      splitDrag: [{ label: 'Vos', value: 68, color: 'var(--data-4)' }, { label: 'Ana', value: 32, color: 'var(--data-5)' }],
+      splitFinal: [{ label: 'Vos', value: 62, color: 'var(--data-4)' }, { label: 'Ana', value: 38, color: 'var(--data-5)' }],
+      splitH: 20,
+      j8legend: [{ label: 'Vos · Martín', color: 'var(--data-4)' }, { label: 'Ana', color: 'var(--data-5)' }],
+      j2parts: [{ label: 'Vos · M', value: 62, color: 'var(--data-4)' }, { label: 'Ana · A', value: 38, color: 'var(--data-5)' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

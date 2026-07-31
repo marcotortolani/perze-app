@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/palette.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/charts.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/motion.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/tokens/base.css">
+  <link rel="stylesheet" href="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/styles.css">
+  <script src="_ds/perze-design-system-3bc1d90e-8d33-4d69-a9c9-45340dedbb73/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: #08080A; }
+    a { color: #8B7CF6; text-decoration: none; }
+    a:hover { color: #A99BFF; }
+  </style>
+</helmet>
+
+<section style="display: flex; flex-direction: column; gap: 56px; padding: 56px; background: #08080A; font-family: var(--font-sans)">
+
+  <div id="1a" style="display: flex; flex-direction: column; gap: 14px; max-width: 900px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="display: inline-block; padding: 3px 10px; border-radius: 999px; background: #1B1B1E; color: #A1A1A6; font: 600 11px/16px var(--font-sans); letter-spacing: .06em">1a</span>
+      <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76">Bloque E · D7 · alta fidelidad · 390×844</span>
+    </div>
+    <h1 style="margin: 0; font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: #FAFAF9">Cuentas, monedas y tipos de cambio</h1>
+    <p style="margin: 0; font: 400 16px/24px var(--font-sans); color: #A1A1A6; max-width: 720px; text-wrap: pretty">Dieciséis pantallas, siete estados y dos variantes en modo claro. Household de Montevideo con cuentas en UYU, ARS y USD, moneda base UYU, grupo familiar de dos. Todos los saldos van en tinta primaria y sin signo: el aqua marca la polaridad de un movimiento, nunca la de un saldo.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+      <span style="padding: 6px 12px; border-radius: 999px; background: #131315; color: #A1A1A6; font: 500 12px/16px var(--font-sans)">Regla del saldo aplicada</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #131315; color: #A1A1A6; font: 500 12px/16px var(--font-sans)">Scope por superficie</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #131315; color: #A1A1A6; font: 500 12px/16px var(--font-sans)">Nueve tipos de cuenta</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #131315; color: #A1A1A6; font: 500 12px/16px var(--font-sans)">needs_fx en neutro</span>
+      <span style="padding: 6px 12px; border-radius: 999px; background: #131315; color: #A1A1A6; font: 500 12px/16px var(--font-sans)">Cadena de resolución sin rate 1</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E1 · Lista de cuentas</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">dos variantes por flag de configuración</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E1 · Simple</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">monedas = 1 · perfil Simple</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Total en cuentas</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="55330" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">4 cuentas · actualizado hoy</div>
+            </div>
+            <div style="position: relative; margin-top: 28px">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Cuentas</div>
+            </div>
+            <div style="margin-top: 4px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItau }}" hint-size="100%,56px">
+              </x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Brou Cuenta Corriente" meta="Cuenta corriente" icon="bank" variant="value" value="{{ balBrou }}" hint-size="100%,56px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Efectivo" meta="Billetera" icon="wallet" variant="value" value="{{ balEfectivo }}" hint-size="100%,56px"></x-import>
+            </div>
+            <div style="position: relative">
+              <span style="position: absolute; top: 16px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Visa Itaú" meta="Tarjeta de crédito · a pagar el 12 de agosto" icon="cart" variant="value" value="{{ balVisa }}" hint-size="100%,56px"></x-import>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px">
+            <span style="position: absolute; top: -6px; left: 5px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" icon="plus" hint-size="100%,56px">Agregar cuenta</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Tinta primaria, sin signo. Es un saldo, no un movimiento: no lleva ni aqua ni −. Suma las cuatro cuentas de la única moneda del household, así que no hay conversión que mostrar ni línea de equivalente.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Con <code style="font-family: var(--font-mono)">monedas = 1</code> desaparecen banderas, códigos ISO, agrupación por moneda y subtotales. No es una versión recortada de la otra: es la pantalla entera de este perfil, y está terminada.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>La tarjeta resta del total. Se lee por el label —"a pagar el 12 de agosto"— y por su tipo, nunca por el color: el saldo va en la misma tinta que los otros tres.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Único violeta y única acción primaria, en los últimos 200px. Al ser una pantalla empujada desde "Más" no hay tab bar ni FAB compitiendo por el presupuesto.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Agregar cuenta) · 1 primaria · 3 niveles (caption, hero, body) · 2 interactivos sobre el pliegue (la lista cuenta como uno) · 0 bordes · 0 iconos decorativos.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E1 · Multi-moneda</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">monedas = 3 · UYU base, USD y ARS</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 4px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopes }}" value="Todo" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="position: relative; margin-top: 18px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Total convertido a UYU</div>
+              <div style="margin-top: 4px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="361480" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import>
+              </div>
+              <div style="margin-top: 4px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">7 cuentas · 3 monedas · al cambio de hoy</div>
+            </div>
+            <div style="position: relative; margin-top: 12px">
+              <span style="position: absolute; top: 10px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 0; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="clock" hint-size="180px,24px">3 movimientos sin conversión</x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+              </div>
+            </div>
+
+            <div style="position: relative; margin-top: 10px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇺🇾 UYU</span>
+                <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">$ 55.330</span>
+              </div>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItau }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Brou Cuenta Corriente" meta="Cuenta corriente" icon="bank" variant="value" value="{{ balBrou }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Efectivo" meta="Billetera" icon="wallet" variant="value" value="{{ balEfectivo }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Visa Itaú" meta="Tarjeta · a pagar el 12 de agosto" icon="cart" variant="value" value="{{ balVisa }}" hint-size="100%,56px"></x-import>
+
+            <div style="margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇺🇸 USD</span>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">US$ 7.520</span>
+            </div>
+            <div style="text-align: right; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">= $ 299.672</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro USD" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItauUsd }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Balanz" meta="Broker" icon="invest" variant="value" value="{{ balBalanz }}" hint-size="100%,56px"></x-import>
+
+            <div style="margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇦🇷 ARS</span>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">$ 214.500</span>
+            </div>
+            <div style="text-align: right; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">= $ 6.478</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Mercado Pago AR" meta="Billetera virtual" icon="wallet" variant="value" value="{{ balMpAr }}" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 60%, transparent)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" icon="plus" hint-size="100%,56px">Agregar cuenta</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>ScopeSwitcher <strong style="color: #D5D5DA">por superficie</strong>: el segmento activo es superficie 3 sobre superficie 1, no relleno de marca. Aplicado acá aunque el bundle todavía traiga <code style="font-family: var(--font-mono)">emphasis="brand"</code>; se compone con <code style="font-family: var(--font-mono)">SegmentedControl</code>, no con <code style="font-family: var(--font-mono)">ScopeSwitcher</code>.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>El único total convertido de la pantalla. Tinta primaria, sin signo. La conversión aparece una vez por grupo y nunca al lado de un saldo individual: siete equivalentes en línea serían siete cifras compitiendo con el héroe.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span><code style="font-family: var(--font-mono)">needs_fx</code> en badge <strong style="color: #D5D5DA">neutro</strong>, no naranja: es un dato que falta y se resuelve solo. Va acá y no en el héroe porque el total sigue siendo correcto — los pendientes están excluidos, no contados como cero. Toca y abre E8.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Header de grupo con su subtotal en la moneda del grupo, en mono tabular para que las tres columnas aliñen. El equivalente en base va debajo, en muted, sólo en los grupos que no son la moneda base.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">5</span><span>Las banderas son la única aparición de emoji admitida por el sistema: identidad de país, no decoración.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Agregar cuenta) · 1 primaria · 3 niveles (caption, hero, body) · 3 interactivos sobre el pliegue (scope, aviso de FX, lista) · 0 bordes · 0 iconos decorativos. Los iconos de tipo de cuenta son parte de una fila tocable, no decorativos.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E2 · Detalle · E3 · Crear cuenta</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">E3 partido en dos: una decisión por pantalla</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E2 · Detalle de cuenta</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">Itaú Caja de Ahorro · UYU</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Itaú Caja de Ahorro" on-back="{{ back }}" sync-state="synced" right="{{ editBtn }}" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Saldo</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="63740" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Caja de ahorro · Uruguay · UYU</div>
+              <div style="margin-top: 2px; font: 400 12px/17px var(--font-sans); color: var(--text-muted)">Conciliado el 21 de julio</div>
+            </div>
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ balance30 }}" width="350" height="56" color="var(--text-secondary)" hint-size="350px,56px"></x-import>
+              <div style="display: flex; justify-content: space-between; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">
+                <span>24 de junio · $ 58.100</span><span>hoy · $ 63.740</span>
+              </div>
+            </div>
+            <div style="margin-top: 20px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ accountTabs }}" value="Movimientos" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="margin-top: 18px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Julio</div>
+            <div style="position: relative; margin-top: 2px">
+              <span style="position: absolute; top: 14px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Disco" meta="Supermercado" value="-1840" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Delivery" value="-690" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="home" merchant="UTE" meta="Servicios" value="-2310" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="arrow-up" merchant="Sueldo" meta="Ingreso · Tata SA" value="58000" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="invest" merchant="Transferencia a Balanz" meta="US$ 200 al cambio de 39,72" value="-7944" currency="UYU" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 70%, transparent)">
+            <span style="position: absolute; top: -6px; left: 5px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" icon="check" hint-size="100%,56px">Conciliar saldo</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Saldo en tinta primaria y sin signo, igual que en E1. El detalle de una cuenta no cambia la regla.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Serie única, así que va en tinta neutra y no en un color de datos. Labels directos sólo en los extremos —primero y último—, nunca uno por punto.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Acá sí hay aqua: el sueldo es un <strong style="color: #D5D5DA">movimiento</strong> y su polaridad se codifica con color, signo y flecha. Los cinco gastos van en tinta neutra. Es la distinción que la pantalla entera protege.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>La transferencia a Balanz muestra el monto en la moneda de <em>esta</em> cuenta y el original en el meta. El saldo de la cuenta nunca se convierte.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Conciliar saldo) · 1 primaria · 3 niveles · 3 interactivos sobre el pliegue (editar, segmentado, lista) · 0 bordes · 1 color no neutro (el aqua del ingreso, que porta significado).
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E3.1 · Tipo de cuenta</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">nueve tipos, lista canónica</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nueva cuenta" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 12px 20px 0">
+            <div style="font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: var(--text-primary); text-wrap: pretty">¿Qué tipo de cuenta es?</div>
+            <div style="position: relative; margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="wallet" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Efectivo</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="bank" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Caja de ahorro</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="bank" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Cuenta corriente</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="cart" size="24" color="var(--text-primary)" hint-size="24px,24px"></x-import>
+                <span style="font: 500 12px/16px var(--font-sans); color: var(--text-primary)">Tarjeta de crédito</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="tag" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Billetera virtual</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="invest" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Broker</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="arrow-down" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Préstamo</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="arrow-up" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Por cobrar</span>
+              </div>
+              <div style="height: 104px; border-radius: var(--radius-card); background: var(--surface-1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; text-align: center; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="more" size="24" color="var(--text-secondary)" hint-size="24px,24px"></x-import>
+                <span style="font: 400 12px/16px var(--font-sans); color: var(--text-primary)">Otro</span>
+              </div>
+            </div>
+            <div style="position: relative; margin-top: 20px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px; font: 400 14px/20px var(--font-sans); color: var(--text-secondary); text-wrap: pretty">Elegiste <strong style="color: var(--text-primary); font-weight: 500">Tarjeta de crédito</strong>. En el paso siguiente vas a poder cargar el límite, el día de cierre y el de vencimiento.</div>
+            </div>
+          </div>
+          <div style="padding: 0 20px 24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Continuar</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Los nueve tipos canónicos, sin scroll y sin <code style="font-family: var(--font-mono)">&lt;select&gt;</code>. Selección por superficie (superficie 3, la de "Tarjeta de crédito"), no por relleno de marca: el violeta queda para Continuar.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>El tipo decide qué campos existen después. Decirlo acá evita que el paso 2 parezca cambiar de forma sin motivo.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Deuda de biblioteca: el set de íconos no tiene nueve glifos distinguibles para tipos de cuenta. "Caja de ahorro" y "Cuenta corriente" comparten <code style="font-family: var(--font-mono)">bank</code>, y "Billetera virtual" usa <code style="font-family: var(--font-mono)">tag</code>. Está anotado abajo, no resuelto inventando íconos.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          0 héroes (es una pantalla de elección, no de cifra) · 1 violeta (Continuar) · 1 primaria · 3 niveles (title, body, label) · 2 interactivos (la grilla cuenta como uno) · 0 bordes.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E3.2 · Datos de la cuenta</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">campos de tarjeta condicionales al tipo</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Nueva tarjeta" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 12px 20px 0">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Input" label="Nombre" value="Visa Itaú" hint-size="100%,72px"></x-import>
+            <div style="margin-top: 16px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Dónde vive</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Institución" variant="value" value="Itaú" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="País" variant="value" value="🇺🇾 Uruguay" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Moneda" variant="value" value="UYU" hint-size="100%,56px"></x-import>
+            <div style="position: relative; margin-top: 16px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Sólo para tarjetas</div>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Límite" meta="Con el keypad, nunca con teclado numérico" variant="value" value="$ 120.000" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Día de cierre" variant="value" value="4" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Día de vencimiento" variant="value" value="12" hint-size="100%,56px"></x-import>
+            <div style="position: relative; margin-top: 16px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Visibilidad</div>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Incluir en el patrimonio" right="{{ switchOn }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="La ve el grupo familiar" meta="Martín ve el saldo y los movimientos" right="{{ switchOn2 }}" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 70%, transparent)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Guardar cuenta</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Estos tres campos <strong style="color: #D5D5DA">no existen</strong> para los otros ocho tipos. El límite se carga con el keypad, no con <code style="font-family: var(--font-mono)">input type="number"</code>.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Los dos switches encendidos son violeta: es el estado de un control binario, uso permitido. Convive con el primario porque no compiten por el mismo significado, pero es el techo — un tercer switch acá pediría partir la pantalla.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Editar cuenta es esta misma pantalla con los valores cargados y una fila destructiva "Archivar cuenta" al final. Archivar no es borrar.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          0 héroes · <strong style="color: #9A9AA2">3 violetas</strong> (2 switches + primario) — pasa el techo de 1, misma excepción declarada que "Apariencia" en el UI kit · 1 primaria · 3 niveles · 4 interactivos (input, dos grupos de filas, botón) · 0 bordes salvo el del input, que sí lo necesita.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E4 · Tarjeta de crédito</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">partida en dos para que no sea un resumen bancario</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E4.1 · Ciclo actual</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">Visa Itaú · UYU</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Visa Itaú" on-back="{{ back }}" sync-state="synced" right="{{ editBtn2 }}" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">A pagar el 12 de agosto</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="31480" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Cierra el 4 de agosto · faltan 9 días</div>
+            </div>
+            <div style="position: relative; margin-top: 22px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden">
+                <div style="width: 26%; height: 8px; border-radius: 999px; background: var(--text-secondary)"></div>
+              </div>
+              <div style="margin-top: 8px; font: 400 12px/17px var(--font-mono); color: var(--text-muted)">Disponible $ 88.520 de $ 120.000</div>
+            </div>
+            <div style="position: relative; margin-top: 20px">
+              <span style="position: absolute; top: 16px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Consumos del ciclo" meta="18 movimientos desde el 5 de julio" variant="value" value="$ 22.140" hint-size="100%,56px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Cuotas de períodos anteriores" meta="3 planes activos" variant="navigation" hint-size="100%,56px"></x-import>
+            </div>
+            <div style="margin-top: 18px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Últimos consumos</div>
+            <div style="margin-top: 2px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="car" merchant="Pasajes a Buenos Aires" meta="Viajes · en 6 cuotas" value="-13600" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Tienda Inglesa" meta="Supermercado" value="-3240" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="home" merchant="Antel" meta="Servicios" value="-1190" currency="UYU" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+          <div style="padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 70%, transparent)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Pagar la tarjeta</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>La cifra héroe es lo que se va a debitar y cuándo, no "el saldo de la tarjeta". Sin signo y en tinta primaria: que sea plata que debés se lee en el caption, que es donde vive el significado.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Uso del límite en tinta neutra, no en violeta ni en un color de estado. Recién si pasara el 90% cambiaría a <code style="font-family: var(--font-mono)">warning</code>, con ícono y label. Un 26% no es una noticia.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Dos filas de composición y nada más: el resumen se explica con dos números, no con una tabla. Las cuotas y la proyección son otra pantalla — es lo que impide que esto se vuelva un extracto bancario.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Los consumos son movimientos: van con signo y en tinta neutra, igual que en cualquier lista. La tarjeta no cambia el vocabulario.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Pagar la tarjeta) · 1 primaria · 3 niveles · 3 interactivos sobre el pliegue (editar, filas de composición, lista) · 0 bordes · 0 colores no neutros.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E4.2 · Cuotas y proyección</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">lo que ya está comprometido</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuotas y proyección" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Comprometido en cuotas</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="63200" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">3 planes · $ 9.340 por mes hasta abril de 2027</div>
+            </div>
+            <div style="margin-top: 24px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Planes activos</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Notebook Lenovo" meta="Cuota 4 de 12 · $ 4.900 por mes" variant="value" value="$ 44.100" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Pasajes a Buenos Aires" meta="Cuota 2 de 6 · $ 3.100 por mes" variant="value" value="$ 12.400" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Tienda Inglesa" meta="Cuota 5 de 9 · $ 1.340 por mes" variant="value" value="$ 6.700" hint-size="100%,56px"></x-import>
+            <div style="position: relative; margin-top: 26px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Próximos resúmenes</div>
+              <div style="margin-top: 12px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.BarChart" data="{{ cycleBars }}" height="140" color="var(--text-secondary)" label-extremes="{{ true }}" hint-size="100%,140px"></x-import>
+              </div>
+            </div>
+            <div style="margin-top: 16px; font: 400 12px/17px var(--font-sans); color: var(--text-muted); text-wrap: pretty">Suma sólo las cuotas ya comprometidas. No estima consumos nuevos: una proyección inventada es peor que ninguna.</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Otro héroe, otra pantalla: partir E4 es lo que permite que cada una tenga una sola cifra protagonista. Comprometido total arriba, cuota mensual en el contexto.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Serie única en tinta neutra, grilla hairline horizontal, label directo sólo en la barra máxima. Tres barras responden una pregunta —"¿cuánto me viene encima?"— y por eso es un gráfico y no una tabla de doce filas.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Sin acción primaria: es una pantalla de lectura. Cero violetas, y está bien — el techo es uno, no la obligación de tener uno.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 0 violetas · 0 primarias · 3 niveles · 2 interactivos (lista de planes, gráfico) · 0 bordes · 0 colores no neutros.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E5 · Conciliación</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">una pregunta, una diferencia, un ajuste</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E5.1 · La pregunta</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">keypad, como todo monto de la app</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Conciliar" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 12px 20px 0; display: flex; flex-direction: column">
+            <div style="position: relative">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; text-wrap: pretty">¿Cuánto dice Itaú que tenés?</div>
+            </div>
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: 6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="65000" currency="UYU" size="hero-xl" show-sign="{{ false }}" hint-size="300px,60px"></x-import>
+              <div style="margin-top: 10px; font: 400 13px/18px var(--font-mono); color: var(--text-muted)">PERZE dice $ 63.740</div>
+            </div>
+            <div style="margin-top: 28px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Keypad" on-key="{{ noop }}" hint-size="100%,340px"></x-import>
+            </div>
+          </div>
+          <div style="padding: 0 20px 24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Comparar</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Una sola pregunta, en palabras, con el nombre del banco adentro. No hay "saldo real", "saldo teórico" ni la palabra conciliación en el cuerpo.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Lo que PERZE cree va abajo y en muted: si estuviera arriba y grande, el usuario lo copiaría en vez de mirar el banco, que es exactamente lo que hay que evitar.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Keypad propio a pantalla completa. Ningún monto de la app entra por teclado del sistema, tampoco este.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe (hero-xl) · 1 violeta (Comparar) · 1 primaria · 3 niveles (title, hero-xl, label) · 2 interactivos (keypad, botón) · 0 bordes.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E5.2 · La diferencia</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">sin diálogo de confirmación</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Conciliar" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Diferencia</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="1260" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Itaú dice $ 65.000 · PERZE dice $ 63.740</div>
+            </div>
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: 10px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 20px; font: 400 16px/24px var(--font-sans); color: var(--text-secondary); text-wrap: pretty">Casi siempre es un gasto en efectivo que no cargaste, o una comisión del banco. El ajuste deja el saldo igual al del banco y queda anotado como movimiento.</div>
+            </div>
+            <div style="margin-top: 20px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Revisar los movimientos de julio" variant="navigation" hint-size="100%,56px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Cambiar el monto del banco" variant="navigation" hint-size="100%,56px"></x-import>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px">
+            <span style="position: absolute; top: -6px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Crear el ajuste de $ 1.260</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>La diferencia es una magnitud, no una polaridad: tinta primaria y sin signo. Que falte o que sobre lo dice la frase de abajo, que nombra los dos saldos en orden.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Explicación antes de la acción, no después. El usuario tiene que entender qué es un ajuste antes de crear uno; es la única parte del bloque que se permite un párrafo.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>El monto va en el label del botón. No hay diálogo de confirmación: se ejecuta y se ofrece Deshacer por 5 segundos.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Crear el ajuste) · 1 primaria · 3 niveles · 2 interactivos (dos filas, botón) · 0 bordes.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E5.3 · Conciliada</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">reversible, no confirmable</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Itaú Caja de Ahorro" on-back="{{ back }}" sync-state="syncing" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Saldo</div>
+              <div style="margin-top: 6px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="65000" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="200px,44px"></x-import>
+              </div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Conciliado hoy · coincide con Itaú</div>
+            </div>
+            <div style="margin-top: 24px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Hoy</div>
+            <div style="position: relative; margin-top: 2px">
+              <span style="position: absolute; top: 14px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="check" merchant="Ajuste de conciliación" meta="Itaú Caja de Ahorro · sin categoría" value="1260" currency="UYU" polarity="neutral" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="cart" merchant="Disco" meta="Supermercado" value="-1840" currency="UYU" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.TransactionRow" icon="food" merchant="Pedidos Ya" meta="Delivery" value="-690" currency="UYU" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px">
+            <span style="position: absolute; top: -6px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="Ajuste de $ 1.260 creado" visible="{{ true }}" hint-size="100%,48px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>El saldo se actualizó y sigue en tinta primaria y sin signo. La conciliación no es una celebración: no hay partículas ni verde.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>El ajuste aparece como movimiento con su <code style="font-family: var(--font-mono)">+</code>, pero en <strong style="color: #D5D5DA">tinta neutra</strong>: <code style="font-family: var(--font-mono)">kind = adjustment</code> no es un ingreso, y pintarlo de aqua diría que entró plata.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Deshacer por 5 segundos en la zona del pulgar, donde estaba el primario. El SyncDot pasó a "sincronizando".</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 0 violetas · 0 primarias (el toast no lo es) · 3 niveles · 2 interactivos (lista, Deshacer) · 0 bordes.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E6 · Monedas y tipos de cambio</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">cuatro pantallas de consulta, ninguna de configuración</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E6.1 · Monedas</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">qué hay y a cuánto está</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Monedas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Tu patrimonio en dólares</div>
+              <div style="margin-top: 4px; font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: var(--text-primary)">83%</div>
+              <div style="margin-top: 4px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">US$ 7.520 de $ 361.480, al cambio de hoy</div>
+            </div>
+            <div style="position: relative; margin-top: 14px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="display: flex; gap: 2px; height: 8px">
+                <div style="flex: 0 0 82.9%; background: var(--data-2); border-radius: 999px 0 0 999px"></div>
+                <div style="flex: 0 0 15.3%; background: var(--data-1)"></div>
+                <div style="flex: 1; background: var(--data-3); border-radius: 0 999px 999px 0"></div>
+              </div>
+              <div style="margin-top: 10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SeriesLegend" series="{{ exposure }}" layout="inline" hint-size="100%,24px"></x-import>
+              </div>
+            </div>
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Moneda base</div>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Peso uruguayo" meta="Todo se convierte a UYU para los totales" variant="value" value="🇺🇾 UYU" hint-size="100%,56px"></x-import>
+
+            <div style="position: relative; margin-top: 22px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Pares en uso</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; cursor: pointer">
+              <div style="flex: 1; min-width: 0">
+                <div style="font: 400 16px/22px var(--font-sans); color: var(--text-primary)">🇺🇸 USD → UYU</div>
+                <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">dolarapi · oficial · hace 2 h</div>
+              </div>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; color: var(--text-primary)">39,85</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; cursor: pointer">
+              <div style="flex: 1; min-width: 0">
+                <div style="font: 400 16px/22px var(--font-sans); color: var(--text-primary)">🇦🇷 ARS → UYU</div>
+                <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">dolarapi · blue · hace 18 h</div>
+              </div>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; color: var(--text-primary)">0,0302</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+            </div>
+            <div style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0; cursor: pointer">
+<span style="position: absolute; top: 22px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">5</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start">
+                <div style="font: 400 16px/22px var(--font-sans); color: var(--text-primary)">🇧🇷 BRL → UYU</div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="200px,24px">Último valor conocido, hace 9 días</x-import>
+              </div>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; color: var(--text-primary)">7,42</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+            </div>
+
+            <div style="position: relative; margin-top: 18px">
+              <span style="position: absolute; top: 16px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">6</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Agregar una moneda" icon="plus" variant="action" hint-size="100%,56px"></x-import>
+            </div>
+            <div style="margin-top: 20px; font: 400 12px/17px var(--font-sans); color: var(--text-muted); text-wrap: pretty">Las cotizaciones se actualizan solas una vez por día. No hace falta que toques nada acá.</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Alguien entra a Monedas preguntándose <strong style="color: #D5D5DA">cómo le afecta el dólar</strong>, no cuánto está el dólar — eso lo googlea. La exposición es el contexto que hace que la lista de cotizaciones signifique algo; sin ella la pantalla es un índice. El dato es el mismo que en H6, leído para otra pregunta: allá es objeto de estudio, acá es contexto.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Barra apilada de tres segmentos con separador de 2px y leyenda inline. Es un gráfico, así que puede usar los slots de datos — el color sigue a la entidad: UYU slot 1, USD slot 2, ARS slot 3, y no cambian aunque cambie el ranking.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>La moneda base va después del contexto, no antes: es la respuesta a "¿en qué pienso?", que es una pregunta de segundo orden.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Los tres pares son del mismo rango de importancia, así que ninguno se agranda: el único héroe de la pantalla es la exposición. La cifra va en mono a 16px, alineada en columna.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">5</span><span>Cotización vieja sí es <code style="font-family: var(--font-mono)">warning</code> con ícono y label: acá el dato <em>no</em> se resuelve solo. Es distinto de <code style="font-family: var(--font-mono)">needs_fx</code>, que va en neutro. La cifra se sigue mostrando: un valor viejo es mejor que un guion.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">6</span><span>Único violeta: una fila de acción en tinta de marca, no un botón relleno. Agregar una moneda es raro; no merece ocupar la zona del pulgar.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe (la exposición) · 1 violeta fuera de los gráficos (fila Agregar una moneda) · 0 primarias rellenas · 3 niveles (hero, body, caption) · 3 interactivos (fila base, lista de pares, fila de acción) · 0 bordes · 3 colores de datos dentro de la barra apilada, que no cuentan · 1 color de estado (warning, con ícono y label).
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E6.2 · El par</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">ARS → UYU · la cadena de resolución visible</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="ARS → UYU" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">En uso ahora</div>
+              <div style="margin-top: 4px; font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: var(--text-primary)">0,0302</div>
+              <div style="margin-top: 4px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">1 ARS = 0,0302 UYU · 1 UYU = 33,11 ARS</div>
+              <div style="margin-top: 2px; font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · blue · actualizado hace 18 h</div>
+            </div>
+
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Qué cotización usar</div>
+              <div style="margin-top: 10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ quoteKinds }}" value="Blue" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+              </div>
+              <div style="margin-top: 10px; font: 400 12px/17px var(--font-mono); color: var(--text-muted)">Oficial 0,0198 · MEP 0,0289 · CCL 0,0284</div>
+            </div>
+
+            <div style="position: relative; margin-top: 26px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">De dónde sale</div>
+            </div>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">1</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Override manual</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">No hay ninguno fijado</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-primary)">2</span>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start">
+                  <div style="font: 500 16px/22px var(--font-sans); color: var(--text-primary)">Cotización del día</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-secondary)">dolarapi · blue · hoy 09:40</div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="good" icon="check" hint-size="90px,24px">En uso</x-import>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">3</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Último valor conocido</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">18 de julio · 0,0299 · con badge de antigüedad</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">4</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Sin conversión</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">El movimiento se guarda igual y queda pendiente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 12px">
+            <span style="position: absolute; top: 10px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Fijar un tipo de cambio manual" icon="edit" variant="action" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver el histórico" variant="navigation" hint-size="100%,56px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>El rate es la cifra héroe de esta pantalla, en tinta primaria. Debajo, la lectura en los dos sentidos: nadie tiene que dividir mentalmente.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Cuatro cotizaciones argentinas en un segmentado por superficie, no en un <code style="font-family: var(--font-mono)">&lt;select&gt;</code>. Las otras tres se muestran en una línea muted: es una comparación de un vistazo, no una tabla.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>La cadena de resolución completa, en orden, con el paso activo marcado. Los pasos inactivos van en muted: se leen como explicación, no como opciones a elegir. Es lo que convierte una regla de servidor en algo que se entiende mirando. <strong style="color: #D5D5DA">No hay paso 5</strong>: nunca cae a rate 1 y nunca bloquea el guardado.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>El único violeta de la pantalla y la única escritura posible desde acá. Todo lo demás es lectura.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe (el rate) · 1 violeta (fila de override) · 0 primarias rellenas · <strong style="color: #9A9AA2">4 niveles</strong> — hero, body, label y caption coexisten, una violación de las 3 declarada: el cuarto lo aporta la cadena de resolución, y comprimirla sería esconder justamente lo que hay que explicar · 3 interactivos sobre el pliegue · 1 color de estado (good, con ícono y label).
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E6.3 · Override manual</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">USD → UYU · con vigencia, no para siempre</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Tipo de cambio manual" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 12px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: 6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.FxEditor" dc-props="{{ fxProps }}" hint-size="100%,220px"></x-import>
+            </div>
+            <div style="position: relative; margin-top: 26px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Desde cuándo vale</div>
+              <div style="margin-top: 10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ vigencia }}" value="Desde hoy" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+              </div>
+            </div>
+            <div style="position: relative; margin-top: 26px">
+              <span style="position: absolute; top: 10px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 20px; font: 400 14px/20px var(--font-sans); color: var(--text-secondary); text-wrap: pretty">Se aplica a los movimientos nuevos de este par. Los 96 que ya tenés guardados no cambian: un tipo de cambio resuelto es el que estaba vigente cuando ocurrió el movimiento y no se recalcula.</div>
+            </div>
+          </div>
+          <div style="padding: 0 20px 24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Fijar tipo de cambio</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span><code style="font-family: var(--font-mono)">FxEditor</code> tal cual viene: rate grande, fuente y antigüedad debajo, slider fino de ±5% y tap para keypad. Nada nuevo dibujado para esta pantalla.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Un override sin vigencia se convierte en un dato viejo que nadie recuerda haber puesto. Dos opciones, no un formulario de fechas.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>El alcance dicho con un número concreto —96 movimientos— antes de confirmar. Es la única acción del bloque que no es reversible con Deshacer, porque afecta cálculos futuros y no una fila.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Este override es de <strong style="color: #D5D5DA">USD → UYU</strong> y no de ARS → UYU a propósito: <code style="font-family: var(--font-mono)">FxEditor</code> formatea el rate con dos decimales fijos, así que 0,0302 y 0,0310 se dibujarían iguales y el slider no diría nada. El par argentino no puede usar este componente hasta que acepte precisión por moneda — está en el panel de deuda.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe (el rate del FxEditor) · <strong style="color: #9A9AA2">2 violetas</strong> (el track del <code style="font-family: var(--font-mono)">FxEditor</code> + el primario) — el relleno del slider es estado de un control, misma familia que los <code style="font-family: var(--font-mono)">Switch</code> de E3.2; declarada, no comprimida · 1 primaria · 3 niveles · 3 interactivos (slider, segmentado, botón) · 0 bordes.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E6.4 · Histórico</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">gráfico y tabla, como todo analytics</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="ARS → UYU · histórico" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Últimos 30 días · blue</div>
+            <div style="position: relative; margin-top: 14px">
+              <span style="position: absolute; top: 30px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Sparkline" values="{{ arsHistory }}" width="350" height="120" color="var(--text-secondary)" hint-size="350px,120px"></x-import>
+            </div>
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">
+              <span>mín. 0,0281 · 2 de julio</span><span>máx. 0,0311 · 19 de julio</span>
+            </div>
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ chartTabs }}" value="Tabla" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="margin-top: 18px; font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Cotizaciones de hoy</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Blue" meta="dolarapi · en uso" variant="value" value="0,0302" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Oficial" meta="dolarapi" variant="value" value="0,0198" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="MEP" meta="dolarapi" variant="value" value="0,0289" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="CCL" meta="dolarapi" variant="value" value="0,0284" hint-size="100%,56px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>Serie única, tinta neutra, sin ejes ni grilla de caja. Labels directos sólo en mínimo y máximo, con su fecha: los dos puntos que alguien realmente busca.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Toggle gráfico/tabla, obligatorio en todo gráfico. Acá está en "Tabla", que además es la respuesta a "¿cuánto está el MEP?" sin tocar nada más.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Las cuatro cotizaciones sin chips de color: no son series de un gráfico, son valores del mismo par. Un chip de color acá implicaría cuatro líneas que no existen.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          0 héroes · 0 violetas · 0 primarias · 3 niveles · 2 interactivos (gráfico, segmentado) · 0 bordes · 0 colores no neutros.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E8 · Movimientos sin tipo de cambio</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">resolución en lote, agrupada por par y por fecha</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E8.1 · El lote</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">7 movimientos, 3 grupos</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Sin tipo de cambio" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Esperan conversión</div>
+              <div style="margin-top: 4px; font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: var(--text-primary)">7 movimientos</div>
+              <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary); text-wrap: pretty">Sus cuentas están bien: el saldo no necesita conversión. Lo que falta es sumarlos al patrimonio.</div>
+            </div>
+
+            <div style="position: relative; margin-top: 22px; display: flex; flex-direction: column; gap: 12px">
+              <span style="position: absolute; top: 14px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">ARS → UYU · martes 21</span>
+                  <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary)">3 mov · $ 48.300</span>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                  <div style="min-width: 0">
+                    <div style="font: 500 22px/28px var(--font-mono); color: var(--text-primary)">0,0302</div>
+                    <div style="font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · blue · del 21 de julio</div>
+                  </div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ false }}" hint-size="110px,44px">Aplicar</x-import>
+                </div>
+              </div>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">ARS → UYU · miércoles 22</span>
+                  <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary)">2 mov · $ 22.100</span>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                  <div style="min-width: 0">
+                    <div style="font: 500 22px/28px var(--font-mono); color: var(--text-primary)">0,0305</div>
+                    <div style="font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · blue · del 22 de julio</div>
+                  </div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ false }}" hint-size="110px,44px">Aplicar</x-import>
+                </div>
+              </div>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">USD → UYU · jueves 23</span>
+                  <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary)">2 mov · US$ 180</span>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                  <div style="min-width: 0">
+                    <div style="font: 500 22px/28px var(--font-mono); color: var(--text-primary)">39,72</div>
+                    <div style="font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · oficial · del 23 de julio</div>
+                  </div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ false }}" hint-size="110px,44px">Aplicar</x-import>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 70%, transparent)">
+            <span style="position: absolute; top: -6px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Aplicar a los 7</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>El héroe es un conteo, no plata: sumar los montos originales de tres monedas distintas daría un número sin significado. Debajo, la consecuencia real en una oración — el saldo está bien, el patrimonio no.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Agrupado por <strong style="color: #D5D5DA">par y por fecha</strong>, no por cuenta ni por categoría: el rate correcto es el del día en que ocurrió el movimiento, no el de hoy. Un grupo = un rate = una decisión. La cotización propuesta lleva su fecha para que se vea que no es la de hoy.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Aplicar por grupo en secundario, todo junto en primario. Tocar el rate abre el <code style="font-family: var(--font-mono)">FxEditor</code> de E6.3 con el valor de ese grupo.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Ningún badge naranja en toda la pantalla: siete movimientos sin convertir no son una emergencia. El ascenso a <code style="font-family: var(--font-mono)">warning</code> ocurre por grupo, a los siete días.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Aplicar a los 7) · 1 primaria · 3 niveles · 3 interactivos sobre el pliegue (los tres grupos cuentan como uno, rate, botón) · 0 bordes · 0 colores no neutros.
+        </div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E8.2 · Grupo aplicado</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">con ventana de Deshacer</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Sin tipo de cambio" on-back="{{ back }}" sync-state="syncing" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Esperan conversión</div>
+            <div style="position: relative; margin-top: 4px">
+              <span style="position: absolute; top: 8px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: var(--text-primary)">4 movimientos</div>
+            </div>
+            <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Se sumaron $ 1.458 al patrimonio.</div>
+
+            <div style="position: relative; margin-top: 22px; display: flex; flex-direction: column; gap: 12px">
+              <span style="position: absolute; top: 14px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                <div style="min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">ARS → UYU · martes 21</span>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="good" icon="check" hint-size="180px,24px">3 convertidos a 0,0302</x-import>
+                </div>
+              </div>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">ARS → UYU · miércoles 22</span>
+                  <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary)">2 mov · $ 22.100</span>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                  <div style="min-width: 0">
+                    <div style="font: 500 22px/28px var(--font-mono); color: var(--text-primary)">0,0305</div>
+                    <div style="font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · blue · del 22 de julio</div>
+                  </div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ false }}" hint-size="110px,44px">Aplicar</x-import>
+                </div>
+              </div>
+              <div style="border-radius: var(--radius-card); background: var(--surface-1); padding: 16px 18px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">USD → UYU · jueves 23</span>
+                  <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary)">2 mov · US$ 180</span>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                  <div style="min-width: 0">
+                    <div style="font: 500 22px/28px var(--font-mono); color: var(--text-primary)">39,72</div>
+                    <div style="font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · oficial · del 23 de julio</div>
+                  </div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" size="sm" full-width="{{ false }}" hint-size="110px,44px">Aplicar</x-import>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 12px">
+            <span style="position: absolute; top: -6px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.UndoToast" message="3 movimientos convertidos" visible="{{ true }}" hint-size="100%,48px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" hint-size="100%,56px">Aplicar a los 4</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>El conteo baja con count-up de 400 ms y la línea de abajo dice el efecto concreto en el patrimonio. Es la única confirmación: sin diálogo, sin pantalla de éxito.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>El grupo resuelto no desaparece: colapsa a una línea con badge <code style="font-family: var(--font-mono)">good</code> y el rate aplicado. Si se fuera de la pantalla, deshacer sería un acto de fe.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>Toast y primario conviven 5 segundos. El primario se recalcula solo: "Aplicar a los 4".</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Aplicar a los 4) · 1 primaria · 3 niveles · 3 interactivos · 0 bordes · 1 color de estado (good, con ícono y label).
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">E7 · Estados</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">los cinco, sobre las superficies del bloque</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 40px">
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Vacío · E1</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">household recién creado</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="wallet" message="Todavía no agregaste ninguna cuenta." action-label="Agregar la primera" on-action="{{ noop }}" hint-size="100%,200px"></x-import>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Un ícono de línea, una oración en voseo, una acción. Sin total en cero: mostrar "$ 0" como cifra héroe sería dar por respondida una pregunta que todavía no tiene datos.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Cargando · E1</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">skeleton con la forma real</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="syncing" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="120" height="11" radius="6" hint-size="120px,11px"></x-import>
+            <div style="margin-top: 10px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="220" height="40" radius="10" hint-size="220px,40px"></x-import>
+            </div>
+            <div style="margin-top: 10px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="180" height="13" radius="6" hint-size="180px,13px"></x-import>
+            </div>
+            <div style="margin-top: 30px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Skeleton" width="90" height="11" radius="6" hint-size="90px,11px"></x-import>
+            </div>
+            <div style="margin-top: 8px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,64px"></x-import>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SkeletonRow" hint-size="100%,64px"></x-import>
+            </div>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Cero spinners. El skeleton reserva el caption, la cifra héroe, la línea de contexto y cuatro filas: cuando llegan los datos nada salta de lugar.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Offline · E1 multi-moneda</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">la app sigue funcionando</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="offline" pending="3" hint-size="100%,56px"></x-import>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" pending="3" hint-size="100%,44px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Total convertido a UYU</div>
+            <div style="margin-top: 4px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="361480" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import>
+            </div>
+            <div style="margin-top: 6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="clock" hint-size="240px,24px">Cotización del 25 de julio, de ayer</x-import>
+            </div>
+            <div style="margin-top: 20px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇺🇾 UYU</span>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">$ 55.330</span>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItau }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Brou Cuenta Corriente" meta="Cuenta corriente" icon="bank" variant="value" value="{{ balBrou }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Efectivo" meta="Billetera · 1 gasto sin sincronizar" icon="wallet" variant="value" value="{{ balEfectivo }}" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="padding: 0 20px 24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" icon="plus" hint-size="100%,56px">Agregar cuenta</x-import>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Los saldos son locales y siguen siendo exactos: no se degradan ni se blurean. Lo único que envejece es la conversión, y se dice en neutro con su fecha. Agregar cuenta sigue habilitado — se encola.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Error · E2</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">qué pasó, qué implica, qué hacer</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Itaú Caja de Ahorro" on-back="{{ back }}" sync-state="offline" hint-size="100%,56px"></x-import>
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.OfflineBanner" status="critical" message="No pudimos sincronizar con Itaú." hint-size="100%,44px"></x-import>
+          <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="No pudimos sincronizar con Itaú." next="Tus movimientos locales están guardados y el saldo que ves es el último confirmado, del 21 de julio." retry-label="Reintentar" on-retry="{{ noop }}" hint-size="100%,220px"></x-import>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Tres partes en orden y el nombre del banco adentro. Nunca "Error inesperado", nunca un código en el titular. El <code style="font-family: var(--font-mono)">critical</code> vive en el banner, no en el SyncDot.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Error · E6</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">falla la cotización, no la app</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Monedas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Pares en uso</div>
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start">
+                <div style="font: 400 16px/22px var(--font-sans); color: var(--text-primary)">🇺🇸 USD → UYU</div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="230px,24px">Sin actualizar desde el 24 de julio</x-import>
+              </div>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; color: var(--text-primary)">39,72</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 0">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start">
+                <div style="font: 400 16px/22px var(--font-sans); color: var(--text-primary)">🇦🇷 ARS → UYU</div>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="warning" icon="alert" hint-size="230px,24px">Sin actualizar desde el 24 de julio</x-import>
+              </div>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; color: var(--text-primary)">0,0299</span>
+            </div>
+            <div style="margin-top: 24px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ErrorState" what="No pudimos traer las cotizaciones de hoy." next="Seguimos usando las del 24 de julio, así que los totales pueden estar corridos." retry-label="Reintentar ahora" on-retry="{{ noop }}" hint-size="100%,200px"></x-import>
+            </div>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">El error no reemplaza al contenido: las cotizaciones viejas se siguen mostrando con su badge. Vaciar la pantalla castigaría al usuario por una falla del proveedor.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Vacío feliz · E8</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">no queda nada por resolver</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Sin tipo de cambio" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 20px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="check" message="Todos tus movimientos tienen su tipo de cambio." action-label="Ver monedas" on-action="{{ noop }}" hint-size="100%,200px"></x-import>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Mismo sistema de vacío que el resto: un ícono, una oración, una acción. Sin celebración — el producto no felicita por estar al día.</div>
+      </div>
+
+      <div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">Vacío · E4</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">ciclo recién abierto</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Visa Itaú" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">A pagar el 12 de septiembre</div>
+            <div style="margin-top: 6px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="9340" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="180px,44px"></x-import>
+            </div>
+            <div style="margin-top: 6px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">Sólo cuotas · el ciclo cierra el 4 de septiembre</div>
+            <div style="margin-top: 40px">
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.EmptyState" icon="cart" message="Todavía no hay consumos en este ciclo." hint-size="100%,180px"></x-import>
+            </div>
+          </div>
+          <div style="padding: 0 20px 24px">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="secondary" hint-size="100%,56px">Ver cuotas y proyección</x-import>
+          </div>
+        </div>
+        <div style="font: 400 12px/17px var(--font-sans); color: #9A9AA2">Acá el cero sí se muestra, porque no es cero: las cuotas de períodos anteriores ya comprometen $ 9.340. Un empty state que dijera "no hay nada" mentiría.</div>
+      </div>
+
+    </div>
+    <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82; max-width: 820px">
+      <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido · estados</div>
+      Ningún estado supera el presupuesto. Los vacíos y los errores tienen 0 héroes y 1 acción; el offline y el vacío de E4 conservan su héroe y su primaria. Los únicos colores no neutros son <code style="font-family: var(--font-mono)">warning</code> y <code style="font-family: var(--font-mono)">critical</code>, siempre con ícono y label.
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">Modo claro</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">las dos pantallas más importantes del bloque</span>
+    </div>
+    <div class="light" style="display: flex; flex-wrap: wrap; gap: 40px">
+
+<div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E1 · Multi-moneda · claro</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">mismos tokens, modo claro</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="Cuentas" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 4px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ scopes }}" value="Todo" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+            </div>
+            <div style="position: relative; margin-top: 18px">
+              <span style="position: absolute; top: -4px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Total convertido a UYU</div>
+              <div style="margin-top: 4px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Amount" value="361480" currency="UYU" size="hero" show-sign="{{ false }}" hint-size="220px,44px"></x-import>
+              </div>
+              <div style="margin-top: 4px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">7 cuentas · 3 monedas · al cambio de hoy</div>
+            </div>
+            <div style="position: relative; margin-top: 12px">
+              <span style="position: absolute; top: 10px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 0; cursor: pointer">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="neutral" icon="clock" hint-size="180px,24px">3 movimientos sin conversión</x-import>
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Icon" name="chevron" size="18" color="var(--text-muted)" hint-size="18px,18px"></x-import>
+              </div>
+            </div>
+
+            <div style="position: relative; margin-top: 10px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇺🇾 UYU</span>
+                <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">$ 55.330</span>
+              </div>
+            </div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItau }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Brou Cuenta Corriente" meta="Cuenta corriente" icon="bank" variant="value" value="{{ balBrou }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Efectivo" meta="Billetera" icon="wallet" variant="value" value="{{ balEfectivo }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Visa Itaú" meta="Tarjeta · a pagar el 12 de agosto" icon="cart" variant="value" value="{{ balVisa }}" hint-size="100%,56px"></x-import>
+
+            <div style="margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇺🇸 USD</span>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">US$ 7.520</span>
+            </div>
+            <div style="text-align: right; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">= $ 299.672</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Itaú Caja de Ahorro USD" meta="Caja de ahorro" icon="bank" variant="value" value="{{ balItauUsd }}" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Balanz" meta="Broker" icon="invest" variant="value" value="{{ balBalanz }}" hint-size="100%,56px"></x-import>
+
+            <div style="margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <span style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">🇦🇷 ARS</span>
+              <span style="font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 500; color: var(--text-primary)">$ 214.500</span>
+            </div>
+            <div style="text-align: right; font: 400 11px/16px var(--font-mono); color: var(--text-muted)">= $ 6.478</div>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Mercado Pago AR" meta="Billetera virtual" icon="wallet" variant="value" value="{{ balMpAr }}" hint-size="100%,56px"></x-import>
+          </div>
+          <div style="padding: 0 20px 24px; background: linear-gradient(to top, var(--page) 60%, transparent)">
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.Button" variant="primary" icon="plus" hint-size="100%,56px">Agregar cuenta</x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>ScopeSwitcher <strong style="color: #D5D5DA">por superficie</strong>: el segmento activo es superficie 3 sobre superficie 1, no relleno de marca. Aplicado acá aunque el bundle todavía traiga <code style="font-family: var(--font-mono)">emphasis="brand"</code>; se compone con <code style="font-family: var(--font-mono)">SegmentedControl</code>, no con <code style="font-family: var(--font-mono)">ScopeSwitcher</code>.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>El único total convertido de la pantalla. Tinta primaria, sin signo. La conversión aparece una vez por grupo y nunca al lado de un saldo individual: siete equivalentes en línea serían siete cifras compitiendo con el héroe.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span><code style="font-family: var(--font-mono)">needs_fx</code> en badge <strong style="color: #D5D5DA">neutro</strong>, no naranja: es un dato que falta y se resuelve solo. Va acá y no en el héroe porque el total sigue siendo correcto — los pendientes están excluidos, no contados como cero. Toca y abre E8.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>Header de grupo con su subtotal en la moneda del grupo, en mono tabular para que las tres columnas aliñen. El equivalente en base va debajo, en muted, sólo en los grupos que no son la moneda base.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">5</span><span>Las banderas son la única aparición de emoji admitida por el sistema: identidad de país, no decoración.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe · 1 violeta (Agregar cuenta) · 1 primaria · 3 niveles (caption, hero, body) · 3 interactivos sobre el pliegue (scope, aviso de FX, lista) · 0 bordes · 0 iconos decorativos. Los iconos de tipo de cuenta son parte de una fila tocable, no decorativos.
+        </div>
+      </div>
+
+<div style="width: 390px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <div style="font: 600 14px/20px var(--font-sans); color: #F2F2F4">E6.2 · El par · claro</div>
+          <div style="font: 400 12px/17px var(--font-sans); color: #8A8A92">mismos tokens, modo claro</div>
+        </div>
+        <div style="position: relative; width: 390px; height: 844px; background: var(--page); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary)">
+          <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.AppHeader" title="ARS → UYU" on-back="{{ back }}" sync-state="synced" hint-size="100%,56px"></x-import>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0">
+            <div style="position: relative">
+              <span style="position: absolute; top: -6px; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">1</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">En uso ahora</div>
+              <div style="margin-top: 4px; font: 600 40px/44px var(--font-sans); letter-spacing: -.015em; color: var(--text-primary)">0,0302</div>
+              <div style="margin-top: 4px; font: 500 13px/18px var(--font-sans); color: var(--text-secondary)">1 ARS = 0,0302 UYU · 1 UYU = 33,11 ARS</div>
+              <div style="margin-top: 2px; font: 400 12px/17px var(--font-sans); color: var(--text-muted)">dolarapi · blue · actualizado hace 18 h</div>
+            </div>
+
+            <div style="position: relative; margin-top: 24px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">2</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">Qué cotización usar</div>
+              <div style="margin-top: 10px">
+                <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.SegmentedControl" options="{{ quoteKinds }}" value="Blue" emphasis="surface" size="md" hint-size="100%,44px"></x-import>
+              </div>
+              <div style="margin-top: 10px; font: 400 12px/17px var(--font-mono); color: var(--text-muted)">Oficial 0,0198 · MEP 0,0289 · CCL 0,0284</div>
+            </div>
+
+            <div style="position: relative; margin-top: 26px">
+              <span style="position: absolute; top: 0; left: -19px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">3</span>
+              <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted)">De dónde sale</div>
+            </div>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">1</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Override manual</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">No hay ninguno fijado</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-primary)">2</span>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start">
+                  <div style="font: 500 16px/22px var(--font-sans); color: var(--text-primary)">Cotización del día</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-secondary)">dolarapi · blue · hoy 09:40</div>
+                  <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.StatusBadge" status="good" icon="check" hint-size="90px,24px">En uso</x-import>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">3</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Último valor conocido</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">18 de julio · 0,0299 · con badge de antigüedad</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 14px; align-items: flex-start">
+                <span style="flex: 0 0 20px; font: 500 13px/20px var(--font-mono); color: var(--text-muted)">4</span>
+                <div style="flex: 1; min-width: 0">
+                  <div style="font: 400 16px/22px var(--font-sans); color: var(--text-muted)">Sin conversión</div>
+                  <div style="font: 400 13px/18px var(--font-sans); color: var(--text-muted)">El movimiento se guarda igual y queda pendiente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position: relative; padding: 0 20px 12px">
+            <span style="position: absolute; top: 10px; left: 1px; width: 18px; height: 18px; border-radius: 999px; background: var(--primary-fill); color: #fff; font: 600 10px/18px var(--font-sans); text-align: center; z-index: 9">4</span>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Fijar un tipo de cambio manual" icon="edit" variant="action" hint-size="100%,56px"></x-import>
+            <x-import component-from-global-scope="APPFinanzasDesignSystem_3bc1d9.ListRow" label="Ver el histórico" variant="navigation" hint-size="100%,56px"></x-import>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font: 400 12px/17px var(--font-sans); color: #9A9AA2">
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">1</span><span>El rate es la cifra héroe de esta pantalla, en tinta primaria. Debajo, la lectura en los dos sentidos: nadie tiene que dividir mentalmente.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">2</span><span>Cuatro cotizaciones argentinas en un segmentado por superficie, no en un <code style="font-family: var(--font-mono)">&lt;select&gt;</code>. Las otras tres se muestran en una línea muted: es una comparación de un vistazo, no una tabla.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">3</span><span>La cadena de resolución completa, en orden, con el paso activo marcado. Los pasos inactivos van en muted: se leen como explicación, no como opciones a elegir. Es lo que convierte una regla de servidor en algo que se entiende mirando. <strong style="color: #D5D5DA">No hay paso 5</strong>: nunca cae a rate 1 y nunca bloquea el guardado.</span></div>
+          <div style="display: flex; gap: 8px"><span style="flex: 0 0 18px; height: 18px; border-radius: 999px; background: #26262A; color: #C9C9D0; font: 600 10px/18px var(--font-sans); text-align: center">4</span><span>El único violeta de la pantalla y la única escritura posible desde acá. Todo lo demás es lectura.</span></div>
+        </div>
+        <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82">
+          <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Chequeo de ruido</div>
+          1 héroe (el rate) · 1 violeta (fila de override) · 0 primarias rellenas · <strong style="color: #9A9AA2">4 niveles</strong> — hero, body, label y caption coexisten, una violación de las 3 declarada: el cuarto lo aporta la cadena de resolución, y comprimirla sería esconder justamente lo que hay que explicar · 3 interactivos sobre el pliegue · 1 color de estado (good, con ícono y label).
+        </div>
+      </div>
+
+    </div>
+    <div style="border-top: 1px solid #1E1E22; padding-top: 10px; font: 400 12px/17px var(--font-sans); color: #7A7A82; max-width: 820px">
+      <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-bottom: 4px">Nota</div>
+      El claro no es una inversión del oscuro: cambia el hex de la tinta violeta (#5D45E8 en vez de #8B7CF6) mientras el relleno del primario sigue siendo #6D55F0 en los dos modos. Los saldos siguen en tinta primaria y sin signo, y el aqua del ingreso pasa a #12916A.
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px; max-width: 1240px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h2 style="margin: 0; font: 600 22px/28px var(--font-sans); letter-spacing: -.01em; color: #FAFAF9">Deuda del sistema</h2>
+      <span style="font: 400 14px/20px var(--font-sans); color: #6E6E76">cinco funcionales, ocho cosméticas · el bundle no se tocó</span>
+    </div>
+
+    <div style="border-radius: 20px; background: #131315; padding: 24px; display: flex; flex-direction: column; gap: 10px; max-width: 820px">
+      <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Criterio</span>
+      <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">Un dato puede leerse en dos pantallas; no puede calcularse dos veces.</div>
+      <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">La exposición por moneda vive en Análisis (H6) como objeto de estudio —cómo evolucionó, cómo se compara— y en Monedas (E6.1) como contexto que hace que la lista de cotizaciones signifique algo. No es duplicación: son dos preguntas distintas sobre el mismo dato. Lo que no puede pasar es que cada pantalla lo calcule por su cuenta. Fuente de verdad única en <code style="font-family: var(--font-mono)">lib/analytics/</code>, lectura múltiple. Aplica igual a patrimonio neto, a saldo de cuenta y a consumido de presupuesto, y va a decidir varias veces en los bloques H e I.</div>
+    </div>
+
+    <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-top: 8px">Funcionales · primero en la pasada de consolidación</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(390px, 1fr)); gap: 16px">
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Funcional</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">Rate</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Un tipo de cambio no es un monto: no lleva símbolo, no lleva dos decimales fijos y su precisión la decide <strong style="color: #D5D5DA">el par</strong> — ARS→UYU cuatro decimales, USD→UYU dos, BTC→USD ocho. Componente propio con precisión derivada del par; <code style="font-family: var(--font-mono)">FxEditor</code> lo usa adentro y deja de formatear con <code style="font-family: var(--font-mono)">formatAmount(rate, to, 2)</code>. Sin esto la app no puede mostrar el par argentino, que es uno de los casos de uso centrales: E6.3 tuvo que cambiar de par para poder existir.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Funcional</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">StatusBadge · ascenso por antigüedad</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">El badge recibe la fecha del dato y decide el nivel él: <code style="font-family: var(--font-mono)">neutral</code> hasta los siete días, <code style="font-family: var(--font-mono)">warning</code> después. Hoy lo decide cada pantalla, y una regla repartida en las pantallas es una regla que alguna pantalla va a implementar mal. Es el único ascenso por antigüedad del sistema y tiene que vivir en un solo lugar.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Funcional</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">ListRow.meta como ReactNode</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Hoy es <code style="font-family: var(--font-mono)">string</code>, así que ninguna fila puede llevar un <code style="font-family: var(--font-mono)">StatusBadge</code>. Es lo que obligó a dibujar a mano las filas de FX en E6.1 y en el estado de error, justo donde el badge de antigüedad es el dato importante.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Funcional</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">Íconos de tipo de cuenta</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Dos de los nueve tipos comparten glifo (<code style="font-family: var(--font-mono)">bank</code> para caja de ahorro y cuenta corriente) y billetera virtual usa <code style="font-family: var(--font-mono)">tag</code>. Dos tipos indistinguibles en la pantalla donde se elige el tipo no es un problema estético. Faltan: <code style="font-family: var(--font-mono)">piggy-bank</code>, <code style="font-family: var(--font-mono)">credit-card</code>, <code style="font-family: var(--font-mono)">smartphone</code>, <code style="font-family: var(--font-mono)">banknote</code>, <code style="font-family: var(--font-mono)">handshake</code>, <code style="font-family: var(--font-mono)">receipt</code>.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #2E2E33; color: #EDEDEF; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Funcional</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">LineChart</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">El histórico de E6.4 es un <code style="font-family: var(--font-mono)">Sparkline</code> estirado a 350×120. Le faltan eje temporal, labels directos de mínimo y máximo y tooltip táctil — tres cosas que la sección 7 declara obligatorias y que hoy están escritas a mano como texto debajo del gráfico.</div>
+      </div>
+    </div>
+
+    <div style="font: 500 11px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: #6E6E76; margin-top: 8px">Cosméticas · consolidación y limpieza</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(390px, 1fr)); gap: 16px">
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">AccountRow</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">La fila de cuenta se arma con <code style="font-family: var(--font-mono)">ListRow variant="value"</code> más un <code style="font-family: var(--font-mono)">Amount</code>. Funciona y se ve bien; se repite en cinco superficies del bloque. Es consolidación, no arreglo.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">RateRow</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Par + fuente + antigüedad + cifra en mono + badge. Hoy es composición a mano en tres lugares. Depende de <code style="font-family: var(--font-mono)">ListRow.meta</code> como ReactNode: sale sola cuando esa se resuelve.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">ProgressBar lineal</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Hay <code style="font-family: var(--font-mono)">BudgetRing</code> y <code style="font-family: var(--font-mono)">SplitBar</code>, pero no una barra de una magnitud contra un techo. El uso del límite en E4.1 y la barra de exposición en E6.1 son divs a mano.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">ResolutionChain</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">La lista de pasos numerados con uno activo (E6.2) va a reaparecer en importar, en reglas de auto-categorización y en el orden de fuentes de precios del bloque I. Vale la pena antes de la tercera copia.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">GroupCard con acción</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Las tarjetas de E8 —caption, resumen, cifra editable, acción secundaria— aparecen tres veces en dos estados.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">Borrar ScopeSwitcher</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">Con la selección por superficie aplicada quedó como alias trivial de <code style="font-family: var(--font-mono)">SegmentedControl</code>. Un alias que no agrega nada es deuda disfrazada de conveniencia: se borra y las pantallas migran a <code style="font-family: var(--font-mono)">SegmentedControl</code> directo, como ya hace E1.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">Slider del FxEditor por superficie</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">El track y el thumb van en relleno de marca, así que gastan el violeta de la pantalla sin ser la acción primaria (declarado en el chequeo de E6.3). Debería resolverse por superficie, como el resto de la selección del sistema. Es la tercera pieza del bundle que quedó del lado viejo de esa decisión.</div>
+      </div>
+      <div style="border-radius: 20px; background: #131315; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; padding: 3px 9px; border-radius: 999px; background: #1B1B1E; color: #8A8A92; font: 600 10px/14px var(--font-sans); letter-spacing: .08em; text-transform: uppercase">Cosmética</span>
+        <div style="font: 600 16px/22px var(--font-sans); color: #F2F2F4">CurrencyChip · variante bare</div>
+        <div style="font: 400 13px/19px var(--font-sans); color: #9A9AA2; text-wrap: pretty">En este bloque las banderas viven en headers de grupo y en filas de valor, donde un chip de 36px sería más ruidoso que el glifo suelto. O el chip gana una variante sin píldora, o se acepta que hay dos formas de mostrar una moneda.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</x-dc>
+<script data-dc-script type="text/plain">
+class Component extends DCLogic {
+  renderVals() {
+    const DS = window.APPFinanzasDesignSystem_3bc1d9 || {};
+    const h = React.createElement;
+    const bal = (value, currency) => DS.Amount ? h(DS.Amount, { value, currency, size: 'body', showSign: false, tabular: true }) : null;
+    return {
+      back: () => {},
+      noop: () => {},
+      fxProps: { from: 'USD', to: 'UYU', rate: 40.15, suggested: 39.85, source: 'dolarapi · oficial', ageHours: 2, onChange: () => {}, onOpenKeypad: () => {} },
+      quoteKinds: ['Oficial', 'Blue', 'MEP', 'CCL'],
+      vigencia: ['Desde hoy', 'Desde una fecha'],
+      chartTabs: ['Gráfico', 'Tabla'],
+      exposure: [
+        { label: 'USD 83%', color: 'var(--data-2)' },
+        { label: 'UYU 15%', color: 'var(--data-1)' },
+        { label: 'ARS 2%', color: 'var(--data-3)' }
+      ],
+      arsHistory: [0.0294, 0.0281, 0.0286, 0.0289, 0.0292, 0.0288, 0.0295, 0.0301, 0.0298, 0.0304, 0.0309, 0.0311, 0.0307, 0.0299, 0.0303, 0.0302],
+      cycleBars: [
+        { label: 'ago', value: 43780, display: '$ 43.780' },
+        { label: 'sep', value: 21640 },
+        { label: 'oct', value: 18200 }
+      ],
+      balItau: bal(63740, 'UYU'),
+      balBrou: bal(18920, 'UYU'),
+      balEfectivo: bal(4150, 'UYU'),
+      balVisa: bal(31480, 'UYU'),
+      balItauUsd: bal(2340, 'USD'),
+      balBalanz: bal(5180, 'USD'),
+      balMpAr: bal(214500, 'ARS'),
+      scopes: ['Personal', 'Compartido', 'Todo'],
+      accountTabs: ['Movimientos', 'Detalles'],
+      balance30: [58100, 57400, 59200, 58800, 61300, 60100, 59800, 62400, 61900, 63100, 62200, 64000, 63740],
+      editBtn: DS.Icon ? h('button', {
+        type: 'button', 'aria-label': 'Editar cuenta',
+        style: { width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 0, cursor: 'pointer' }
+      }, h(DS.Icon, { name: 'edit', size: 20, color: 'var(--text-secondary)' })) : null,
+      editBtn2: DS.Icon ? h('button', {
+        type: 'button', 'aria-label': 'Editar tarjeta',
+        style: { width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 0, cursor: 'pointer' }
+      }, h(DS.Icon, { name: 'edit', size: 20, color: 'var(--text-secondary)' })) : null,
+      switchOn: DS.Switch ? h(DS.Switch, { checked: true }) : null,
+      switchOn2: DS.Switch ? h(DS.Switch, { checked: true }) : null
+    };
+  }
+}
+</script>
+</body>
+</html>
