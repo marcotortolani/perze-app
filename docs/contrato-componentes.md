@@ -380,11 +380,11 @@ y no requieren ningún cambio — esta sección es la ficha que faltaba, no una 
 
 ### ZMark
 - **Existe para:** ser el único dibujo del sistema: grilla 3×3 con la Z, en tinta atenuada en los estados vacíos y animada en secuencia como loader.
-- **Props:** `size?: number` (default 20) · `gap?: number` · `animated?: boolean`.
-- **Estados:** estática · animada (7 celdas, 120 ms de stagger, 1,4 s de ciclo) · reducida (con `Movimiento: mínima` la animación se apaga y queda estática, ver `useMotionIntensity`).
-- **Tokens:** `--zmark-ink` (`color-mix(... N%, transparent)` sobre `--text-primary`) — **28% en oscuro, 20% en claro** (CON-19, auditoría D44: el 20% original se pierde en oscuro); el keyframe `zpulse` va en la hoja base del sistema, no en cada pantalla.
-- **A11y:** `role="img"` con `aria-label="PERZE"`. Como loader, el contenedor lleva `aria-busy="true"`.
-- **Bloques:** L1, L2, A1, y el splash. Ya en código: reemplaza el ícono de línea de `EmptyState`.
+- **Props:** `size?: number` (default 20) · `gap?: number` · `animated?: boolean` · `variant?: "pulse" | "sweep"` (default `"pulse"`) · `aria-label?: string` (default `"PERZE"`; las pantallas pasan `t("app.name")`).
+- **Estados:** estática · animada `pulse` (7 celdas, 120 ms de stagger, 1,4 s de ciclo, opacidad) · animada `sweep` (un solo bloque encendido en `--primary-ink` recorre la Z: 400 ms por celda, ciclo de 2,8 s, keyframe `zsweep`) · reducida (con `Movimiento: reducida` no hay stagger ni violeta: el conjunto pulsa entero con `zpulse`; con `mínima` la animación se apaga y queda estática, ver `useMotionIntensity`).
+- **Tokens:** `--zmark-ink` (`color-mix(... N%, transparent)` sobre `--text-primary`) — **28% en oscuro, 20% en claro** (CON-19, auditoría D44: el 20% original se pierde en oscuro); en `sweep`, el bloque activo usa `--primary-ink`. Los keyframes `zpulse` y `zsweep` van en la hoja base del sistema, no en cada pantalla.
+- **A11y:** `role="img"` con `aria-label` (default `"PERZE"`). Como loader, el contenedor lleva `aria-busy="true"`.
+- **Bloques:** L1, L2, A1, y el splash. Ya en código: reemplaza el ícono de línea de `EmptyState`; `sweep` es el hero de A2 y el loader de A3 y A11.
 
 ### Avatar
 - **Existe para:** identificar a un miembro. Es el único lugar donde el relleno de color es identidad de dato.

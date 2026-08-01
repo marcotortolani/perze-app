@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Icon, OtpInput } from "@/design-system";
+import { Icon, OtpInput, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
@@ -68,6 +68,11 @@ export default function OnboardingVerifyPage() {
         <p className="t-label" style={{ color: "var(--critical)", textAlign: "center" }}>
           {t("onboarding.verify.invalidCode")}
         </p>
+      ) : null}
+      {verifying ? (
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <ZMark size={10} gap={3} animated variant="sweep" aria-label={t("app.name")} />
+        </div>
       ) : null}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", marginTop: "auto" }}>

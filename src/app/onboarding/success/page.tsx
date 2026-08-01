@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Icon, Skeleton } from "@/design-system";
+import { Button, Icon, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
@@ -60,7 +60,7 @@ export default function OnboardingSuccessPage() {
   if (!ready) {
     return (
       <ScreenShell style={{ alignItems: "center", justifyContent: "center" }}>
-        <Skeleton width={160} height={16} />
+        <ZMark size={16} gap={5} animated variant="sweep" aria-label={t("app.name")} />
       </ScreenShell>
     );
   }

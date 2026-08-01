@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.4.1] — 2026-08-01
+
+El hueco central de la pantalla de acceso (A2) deja de estar vacío: la grilla 3×3 de la marca
+lo ocupa con una animación de barrido — un bloque violeta que recorre la Z — y la misma
+variante pasa a ser el loader del flujo de onboarding.
+
+### Agregado
+
+- Variante `sweep` en `ZMark`: un solo bloque encendido en `--primary-ink` recorre la Z
+  (400 ms por celda, ciclo de 2,8 s, keyframe `zsweep` en la hoja base). El default sigue
+  siendo `pulse`, así que los usos existentes no cambian
+- Colocación: centro de A2 (`/onboarding`, tamaño 32), loader de A11 mientras se crea el
+  household (reemplaza el `Skeleton`) y loader de A3 mientras se verifica el código OTP
+  (antes no había indicador visible)
+
+### Cambiado
+
+- `ZMark` con `Movimiento: reducida` ya no anima celda por celda: el conjunto pulsa entero
+  con `zpulse`, sin stagger ni violeta (`02-design-system.md` § 5.4); con `mínima` sigue
+  quedando estática
+- `aria-label` de `ZMark` es ahora una prop (default `"PERZE"`) y las pantallas pasan
+  `t("app.name")` — cierra la deuda D29 del plan de auditoría técnica
+- Ficha de `ZMark` en `contrato-componentes.md` actualizada con `variant`, tiempos y
+  comportamiento por intensidad
+
 ## [0.4.0] — 2026-08-01
 
 Conecta la app al backend real por primera vez — Supabase deja de ser un plan en

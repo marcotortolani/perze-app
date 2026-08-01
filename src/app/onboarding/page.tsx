@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Icon, Input, Logo } from "@/design-system";
+import { Button, Icon, Input, Logo, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { seedDemoHousehold } from "@/lib/seed/demo-household";
@@ -88,7 +88,11 @@ export default function OnboardingAuthPage() {
         </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: "auto" }}>
+      <div style={{ flex: 1, display: "grid", placeItems: "center" }}>
+        <ZMark size={32} gap={10} animated variant="sweep" aria-label={t("app.name")} />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {OAUTH_PROVIDERS.includes("google") ? (
           <Button variant="secondary" icon="google" onClick={() => handleOAuth("google")}>
             {t("onboarding.auth.continueWithGoogle")}

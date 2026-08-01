@@ -608,3 +608,19 @@
     opacity: 1;
   }
 }
+
+/* ZMark barrido en Z: con delay de 400ms por celda y ciclo de 2.8s (7 × 400ms),
+   hay exactamente un bloque encendido en violeta por vez recorriendo la Z. */
+@keyframes zsweep {
+  0% {
+    background: var(--zmark-ink);
+  }
+  3%,
+  11.5% {
+    background: var(--primary-ink);
+  }
+  14.3%,
+  100% {
+    background: var(--zmark-ink);
+  }
+}
