@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
+import { isDemoModeActive } from "@/lib/demo/demo-mode";
 
 const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join"];
 
@@ -17,6 +18,8 @@ const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/j
  * (sin round-trip completo por `proxy.ts`) seguía mostrando el shell. Ahora
  * también corta cuando `useCurrentUserId()` confirma `null` (sin sesión) —
  * `undefined` sigue siendo "todavía cargando", nunca dispara el redirect.
+ *
+ * Excepción: modo demo (§0) — sin sesión a propósito, nunca debe rebotar.
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -24,7 +27,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { data: household, isLoading } = useCurrentHousehold();
   const userId = useCurrentUserId();
   const exempt = EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
-  const blocked = !isLoading && (household === null || userId === null);
+  const blocked = !isLoading && (household === null || userId === null) && !isDemoModeActive();
 
   useEffect(() => {
     if (!exempt && blocked) router.replace("/onboarding");

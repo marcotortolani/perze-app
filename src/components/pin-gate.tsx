@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LockScreen } from "@/design-system/systems";
 import { usePinStore } from "@/stores/pin-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
+import { verifyBiometric } from "@/lib/security/webauthn";
 
 const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
 
@@ -56,7 +57,10 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const lastSavedTxId = useCaptureRecencyStore((s) => s.lastSavedTxId);
   const lastSavedTxAt = useCaptureRecencyStore((s) => s.lastSavedTxAt);
   const enabled = usePinStore((s) => s.enabled);
+  const biometricEnabled = usePinStore((s) => s.biometricEnabled);
+  const biometricCredentialId = usePinStore((s) => s.biometricCredentialId);
   const [sessionUnlocked, setSessionUnlocked] = useState(readSessionUnlocked);
+  const triedBiometricRef = useRef(false);
   // `Date.now()` no puede llamarse en el cuerpo del render (regla de
   // pureza) — se lee acá, en un tick de 1s, y el render solo compara
   // contra este estado. Corre siempre (no solo cuando está bloqueado):
@@ -78,6 +82,28 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const unlocked = exempt || !enabled || sessionUnlocked || isRecentEditOfOwnCapture;
   const lockoutSeconds = lockedUntil ? Math.max(0, Math.ceil((lockedUntil - nowMs) / 1000)) : 0;
 
+  // §2 — al mostrarse el gate, si hay biometría configurada se intenta
+  // UNA vez sola y en silencio: éxito desbloquea directo, sin tocar el
+  // keypad; una cancelación o falla del sensor cae al PIN sin reintentar
+  // sola (evita el prompt del SO reapareciendo en loop).
+  const canUseBiometric = biometricEnabled && !!biometricCredentialId && lockoutSeconds === 0;
+
+  const unlockWithBiometric = async () => {
+    if (!biometricCredentialId) return;
+    const ok = await verifyBiometric(biometricCredentialId);
+    if (ok) {
+      window.sessionStorage.setItem(UNLOCKED_SESSION_KEY, "1");
+      setSessionUnlocked(true);
+    }
+  };
+
+  useEffect(() => {
+    if (unlocked || !canUseBiometric || triedBiometricRef.current) return;
+    triedBiometricRef.current = true;
+    void unlockWithBiometric();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked, canUseBiometric]);
+
   if (unlocked) return <>{children}</>;
 
   return (
@@ -91,7 +117,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
         }
         return ok;
       }}
-      onBiometric={undefined}
+      onBiometric={canUseBiometric ? unlockWithBiometric : undefined}
       pinLength={6}
     />
   );

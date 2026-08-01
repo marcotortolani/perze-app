@@ -1736,33 +1736,61 @@ export type Database = {
       }
       profiles: {
         Row: {
+          access_requested_at: string
+          access_reviewed_at: string | null
+          access_reviewed_by: string | null
+          access_status: string
           avatar_url: string | null
+          country: string | null
           default_household_id: string | null
           display_name: string | null
           id: string
+          is_app_admin: boolean
+          last_seen_at: string | null
           locale: string
           settings: Json
           timezone: string | null
         }
         Insert: {
+          access_requested_at?: string
+          access_reviewed_at?: string | null
+          access_reviewed_by?: string | null
+          access_status?: string
           avatar_url?: string | null
+          country?: string | null
           default_household_id?: string | null
           display_name?: string | null
           id: string
+          is_app_admin?: boolean
+          last_seen_at?: string | null
           locale?: string
           settings?: Json
           timezone?: string | null
         }
         Update: {
+          access_requested_at?: string
+          access_reviewed_at?: string | null
+          access_reviewed_by?: string | null
+          access_status?: string
           avatar_url?: string | null
+          country?: string | null
           default_household_id?: string | null
           display_name?: string | null
           id?: string
+          is_app_admin?: boolean
+          last_seen_at?: string | null
           locale?: string
           settings?: Json
           timezone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_access_reviewed_by_fkey"
+            columns: ["access_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_default_household_fkey"
             columns: ["default_household_id"]
@@ -2638,6 +2666,23 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { invite_code: string }; Returns: string }
+      admin_list_access_requests: {
+        Args: never
+        Returns: {
+          access_requested_at: string
+          access_status: string
+          country: string
+          display_name: string
+          email: string
+          last_seen_at: string
+          profile_id: string
+        }[]
+      }
+      admin_metrics: { Args: never; Returns: Json }
+      admin_set_access_status: {
+        Args: { new_status: string; target_id: string }
+        Returns: undefined
+      }
       assert_can_mirror: {
         Args: { p_household_id: string; p_target_member: string }
         Returns: undefined
@@ -2670,6 +2715,7 @@ export type Database = {
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }
+      is_app_admin: { Args: never; Returns: boolean }
       is_household_admin: { Args: { h: string }; Returns: boolean }
       materialize_recurring_transactions: { Args: never; Returns: undefined }
       mirror_accounts: {

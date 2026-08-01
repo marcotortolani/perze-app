@@ -6,6 +6,86 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.0] — 2026-08-01
+
+Acceso controlado: contraseña como alternativa al OTP, desbloqueo por biometría además del PIN,
+y un rol de operador de instancia con aprobación manual de altas nuevas y métricas simples — para
+que una instancia personal, publicada como open source, no quede abierta a cualquiera con un
+email válido. Incluye también el fix de un bug reportado en vivo: "Probar con datos de ejemplo"
+dejó de entrar a la app después del blindaje de sesión de la versión anterior.
+
+### Corregido — el modo demo no entraba a la app
+
+- **Causa raíz**: `a21e02c` (v0.5.0) sumó tres gates de sesión de Supabase (`proxy.ts`,
+  `OnboardingGate`, `useCurrentUserId()`) que no existían cuando se escribió el atajo de demo —
+  `seedDemoHousehold()` nunca crea sesión real a propósito, así que los tres lo rebotaban a
+  `/onboarding` apenas terminaba de sembrar. El "load" rapidísimo reportado era exactamente eso
+- Nuevo modo demo local explícito (`lib/demo/demo-mode.ts`, cookie `perze-demo`) en vez de
+  `signInAnonymously()` — crear una sesión real habría disparado `handle_new_user()` y, con el
+  gate de aprobación nuevo de esta misma versión, el usuario demo hubiera nacido `pending` y
+  quedado bloqueado igual
+- **B15 cerrada** — el seed encolaba ~55 mutaciones al outbox con `created_by = DEMO_USER_ID`,
+  un uuid que ninguna policy de RLS reconoce: se quedaban colgadas para siempre. Nuevo
+  `outbox.withoutOutbox()` las suprime en el origen
+- `handleDemo` ahora atrapa errores (antes un fallo del seed se veía igual que el bug: spinner y
+  nada); "Salir del demo" nuevo en Más, que borra la base local y vuelve a `/onboarding`
+
+### Agregado — operador de instancia: aprobación de acceso y métricas
+
+- Migración `20260801180000_access_control.sql`: `profiles.is_app_admin`/`access_status`
+  (`pending`/`approved`/`rejected`), trigger `protect_access_columns` (nadie se auto-aprueba ni
+  se auto-asciende con un `UPDATE` directo — verificado con pgTAP, `22_access_control.sql`,
+  9/9), y tres RPC `SECURITY DEFINER` (`admin_list_access_requests`, `admin_metrics`,
+  `admin_set_access_status`) que rechazan a cualquiera que no sea `is_app_admin()`. Ninguna
+  nombra `transactions`/`accounts`/`budgets` ni ninguna tabla financiera — el límite es
+  estructural, no una convención. Bootstrap automático de la cuenta existente a operador +
+  aprobada
+- `proxy.ts` redirige a `/pending` (pantalla nueva) cualquier sesión sin aprobar antes de tocar
+  el resto de la app; `/onboarding/verify` y `/onboarding/success` hacen el mismo chequeo del
+  lado cliente, ya que `/onboarding/*` queda exento de sesión en el proxy
+- Nueva pantalla "Panel del operador" (Más, solo visible con `is_app_admin`): cola de
+  solicitudes pendientes con aprobar/rechazar, y métricas simples sin gráficos — totales,
+  distribución por país, actividad por recencia (`last_seen_at`, actualizado desde el proxy como
+  mucho una vez por día)
+- Nota de privacidad (qué ve y qué nunca ve quien opera la instancia) en `/pending`, en el About
+  y en la plantilla de mail — enmarcada como de primera parte, nunca como analytics de terceros
+  (`docs/00-producto.md` § "cero analytics de terceros por defecto")
+
+### Agregado — contraseña como alternativa al OTP
+
+- Toggle en la pantalla de login ("Prefiero usar mi contraseña" / "Prefiero el código por
+  email") — el código sigue siendo el default, la contraseña es opcional y se define desde
+  Ajustes → Seguridad (`updateUser({ password })`)
+- Errores de Supabase mapeados a copy que propone la corrección en vez de nombrarla
+  (`features/auth/password-auth.ts`)
+- `Input` (design system) gana `type`/`autoComplete` opcionales para poder enmascarar
+  contraseñas — antes no existía forma de pedirle un campo `password` sin salir del componente
+
+### Agregado — desbloqueo biométrico
+
+- WebAuthn puramente local (`lib/security/webauthn.ts`) — re-entrada al mismo dispositivo ya
+  logueado, mismo modelo de confianza que el PIN, nunca un passkey remoto de Supabase
+- Toggle en Ajustes → Seguridad, visible solo si el dispositivo tiene sensor Y el PIN ya está
+  configurado (el PIN sigue siendo el fallback obligatorio); `LockScreen`/`PinGate` traen la
+  conexión a `onBiometric` desde hace tiempo sin usar — queda wireada, con intento automático y
+  silencioso al mostrarse el gate
+
+### Sin tocar en esta pasada (declarado, no silencioso)
+
+- Recuperación de contraseña por email: `resetPasswordForEmail` depende de la misma plantilla
+  bloqueada por el plan free de Supabase que `magic_link`, y `auth/callback/route.ts` hoy solo
+  procesa el callback de OAuth. Conectar el flujo entero es trabajo aparte, no una casilla de
+  esta pasada
+
+### Técnico
+
+- `supabase db push --linked` aplicado y verificado en vivo contra el proyecto real; pgTAP
+  nuevo (9/9), `database.types.ts` regenerado
+- `pnpm vitest run` (374/374, +8 nuevos), `tsc --noEmit`, `eslint` (limpio salvo los problemas
+  preexistentes en `docs/design/*`/`docs/library/*`, ajenos a esta pasada), `next build`
+
+---
+
 ## [0.5.0] — 2026-08-01
 
 Resolución completa de `docs/plan-resolucion-auditoria-tecnica.md` (126 hallazgos de cinco

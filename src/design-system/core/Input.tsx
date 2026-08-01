@@ -14,6 +14,9 @@ export interface InputProps {
   id?: string | undefined;
   maxLength?: number | undefined;
   autoFocus?: boolean | undefined;
+  /** `"password"` para contraseñas (§1, acceso controlado) — nunca para montos, eso sigue siendo el Keypad. Default `"text"`. */
+  type?: "text" | "email" | "password" | undefined;
+  autoComplete?: string | undefined;
 }
 
 /**

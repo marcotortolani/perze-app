@@ -459,8 +459,14 @@
       "emailPlaceholder": "you@email.com",
       "sendLink": "Send sign-in link",
       "sendingLink": "Sending…",
+      "passwordPlaceholder": "Your password",
+      "signInWithPassword": "Sign in",
+      "signingIn": "Signing in…",
+      "preferPassword": "I'd rather use my password",
+      "preferCode": "I'd rather use the email code",
       "loadingDemo": "Loading sample data…",
-      "tryDemo": "Try with sample data"
+      "tryDemo": "Try with sample data",
+      "demoError": "Couldn't load the sample data — try again."
     },
     "verify": {
       "back": "Back",
@@ -514,6 +520,16 @@
       "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
       "retry": "Try again"
     },
+    "pending": {
+      "pendingTitle": "Your access is waiting for approval",
+      "pendingSubtitle": "Whoever runs this install hasn't approved your entry yet. We'll let you in as soon as they do.",
+      "rejectedTitle": "Your access wasn't approved",
+      "rejectedSubtitle": "Whoever runs this install decided not to grant you access.",
+      "verifiedAs": "Verified as {email}",
+      "refresh": "I've been approved — refresh",
+      "stillPending": "Not yet — you're still waiting for approval.",
+      "signOut": "Sign out"
+    },
     "complete": {
       "balanceTitle": "How much do you have in {account}?",
       "yourAccount": "your account",
@@ -558,9 +574,33 @@
     "tagsAndPayees": "Tags and payees",
     "rules": "Auto-categorization rules",
     "signOut": "Sign out",
+    "exitDemo": "Exit demo",
     "signOutConfirmTitle": "Unsynced changes",
     "signOutUnsyncedWarning": "{count, plural, one {You have # change that hasn't uploaded to the server yet.} other {You have # changes that haven't uploaded to the server yet.}} Signing out now will lose them.",
     "signOutConfirmAction": "Sign out anyway"
+  },
+  "adminPage": {
+    "title": "Operator panel",
+    "pendingSectionTitle": "Pending requests",
+    "pendingEmpty": "No requests waiting for approval.",
+    "requestedOn": "Requested on {date}",
+    "unknownCountry": "No country chosen yet",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvedToast": "Access approved.",
+    "rejectedToast": "Access rejected.",
+    "metricsSectionTitle": "Metrics",
+    "totalUsers": "Total users",
+    "pendingCount": "Pending",
+    "approvedCount": "Approved",
+    "rejectedCount": "Rejected",
+    "byCountryTitle": "By country",
+    "noCountryData": "No approved users with a chosen country yet.",
+    "activitySectionTitle": "Activity",
+    "activeToday": "Active today",
+    "active7d": "Active in 7 days",
+    "active30d": "Active in 30 days",
+    "inactive": "No recent activity"
   },
   "conflictsPage": {
     "title": "Sync conflicts",
@@ -704,8 +744,17 @@
     "dataStorage": "What data we keep",
     "dataStorageMeta": "And what never leaves your phone",
     "dataStorageBody": "Your transactions, accounts, and budgets live first on your phone (IndexedDB) and sync with your own Supabase project when you're online. Nothing is ever shared with third parties or used to train anything. If you self-host PERZE, that server is you.",
+    "operatorVisibility": "Who can see what",
+    "operatorVisibilityMeta": "What whoever runs this install can see",
     "madeWith": "Made with",
     "madeWithBody": "Geist Sans and Geist Mono, Phosphor icons, and exchange rates from BROU. MIT licensed — the code is yours to read, change, and run anywhere."
+  },
+  "privacyNotice": {
+    "title": "Who can see what",
+    "who": "This install of PERZE is run by one person, who manually approves every new access request.",
+    "sees": "Sees: your email, your country, and when you last used the app.",
+    "neverSees": "Never sees: your transactions, balances, accounts, or budgets. That restriction lives in the database, not a promise.",
+    "noThirdParty": "No third-party analytics: none of this ever leaves this install."
   },
   "home": {
     "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
@@ -914,7 +963,20 @@
     "createPrompt": "Choose a 6-digit PIN",
     "confirmPrompt": "Enter it again to confirm",
     "mismatch": "Doesn't match — try again",
-    "pinSet": "PIN turned on"
+    "pinSet": "PIN turned on",
+    "biometricLock": "Biometric unlock",
+    "biometricLockDescription": "Use Face ID, fingerprint, or another device sensor instead of the PIN",
+    "biometricEnabled": "Biometric unlock turned on",
+    "biometricEnrollError": "Couldn't turn on the sensor — try again",
+    "password": "Password",
+    "passwordDescription": "An alternative to the email code for signing in",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
+    "passwordMismatch": "The two passwords don't match.",
+    "savePassword": "Save password",
+    "savingPassword": "Saving…",
+    "passwordSaved": "Password updated"
   },
   "trendsPage": {
     "title": "Trends",

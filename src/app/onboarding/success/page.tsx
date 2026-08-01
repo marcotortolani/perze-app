@@ -10,6 +10,7 @@ import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { completeOnboarding } from "@/lib/onboarding/complete-onboarding";
 import { householdsRepo } from "@/lib/repos/households-repo";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { createClient } from "@/lib/supabase/client";
 import type { AccountKind } from "@/lib/db/schema";
 
@@ -51,6 +52,18 @@ export default function OnboardingSuccessPage() {
         // podría sincronizar nunca (created_by no coincidiría con ningún
         // auth.uid()).
         router.replace("/onboarding");
+        return;
+      }
+
+      // Acceso controlado (§3.2) — `/onboarding/*` está exento de sesión en
+      // `proxy.ts` (así puede pedir el email a alguien sin cuenta todavía),
+      // así que esta pantalla es la única barrera server-aware antes de
+      // `completeOnboarding()`, el punto real de escritura. Un usuario que
+      // navega acá a mano con sesión pero sin aprobación no debe poder
+      // crear un household.
+      const access = await profilesRepo.getOwnAccess(user.id);
+      if (access && access.accessStatus !== "approved") {
+        router.replace("/pending");
         return;
       }
 

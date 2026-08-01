@@ -6,11 +6,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { Card, ListRow, Sheet, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
+import { useOwnAccess } from "@/hooks/use-own-access";
 import { APP_VERSION } from "@/lib/version";
 import { setLocale } from "@/i18n/actions";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@/i18n/formatting";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
+import { exitDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
 
 const LANGUAGE_MESSAGE_KEY = {
   es: "morePage.languageNames.es",
@@ -36,6 +38,7 @@ export default function MorePage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { conflicts } = useConflicts(household?.id);
+  const ownAccess = useOwnAccess();
   const modules = household?.enabledModules ?? [];
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -67,6 +70,16 @@ export default function MorePage() {
   const doSignOut = async () => {
     setSignOutSheet("signing-out");
     await signOut();
+    router.replace("/onboarding");
+  };
+
+  const demoActive = isDemoModeActive();
+
+  // §0 — el demo no tiene sesión ni cambios sin sincronizar (el outbox
+  // queda vacío a propósito): salir es una acción directa, sin la hoja de
+  // confirmación de `signOut()`. No hay nada real que perder.
+  const handleExitDemo = async () => {
+    await exitDemoMode();
     router.replace("/onboarding");
   };
 
@@ -124,12 +137,24 @@ export default function MorePage() {
         </Card>
       </section>
 
+      {ownAccess?.isAppAdmin ? (
+        <section>
+          <Card padding="4px 16px">
+            <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} />
+          </Card>
+        </section>
+      ) : null}
+
       <Card padding="4px 16px">
         <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
       </Card>
 
       <Card padding="4px 16px">
-        <ListRow icon="sign-out" label={t("morePage.signOut")} onClick={handleSignOutRequest} />
+        {demoActive ? (
+          <ListRow icon="sign-out" label={t("morePage.exitDemo")} onClick={handleExitDemo} />
+        ) : (
+          <ListRow icon="sign-out" label={t("morePage.signOut")} onClick={handleSignOutRequest} />
+        )}
       </Card>
 
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>

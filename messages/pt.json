@@ -459,8 +459,14 @@
       "emailPlaceholder": "voce@email.com",
       "sendLink": "Enviar link de acesso",
       "sendingLink": "Enviando…",
+      "passwordPlaceholder": "Sua senha",
+      "signInWithPassword": "Entrar",
+      "signingIn": "Entrando…",
+      "preferPassword": "Prefiro usar minha senha",
+      "preferCode": "Prefiro o código por email",
       "loadingDemo": "Carregando dados de exemplo…",
-      "tryDemo": "Testar com dados de exemplo"
+      "tryDemo": "Testar com dados de exemplo",
+      "demoError": "Não foi possível carregar os dados de exemplo — tente de novo."
     },
     "verify": {
       "back": "Voltar",
@@ -514,6 +520,16 @@
       "errorSubtitle": "Pode ser sua conexão. Tente de novo — nada do que você escolheu foi perdido.",
       "retry": "Tentar de novo"
     },
+    "pending": {
+      "pendingTitle": "Seu acesso está esperando aprovação",
+      "pendingSubtitle": "Quem administra esta instalação ainda não aprovou sua entrada. Avisamos assim que puder passar.",
+      "rejectedTitle": "Seu acesso não foi aprovado",
+      "rejectedSubtitle": "Quem administra esta instalação decidiu não te dar acesso.",
+      "verifiedAs": "Verificado como {email}",
+      "refresh": "Já me aprovaram — atualizar",
+      "stillPending": "Ainda não — você continua esperando aprovação.",
+      "signOut": "Sair da conta"
+    },
     "complete": {
       "balanceTitle": "Quanto você tem em {account}?",
       "yourAccount": "sua conta",
@@ -558,9 +574,33 @@
     "tagsAndPayees": "Tags e comerciantes",
     "rules": "Regras de auto-categorização",
     "signOut": "Sair da conta",
+    "exitDemo": "Sair do demo",
     "signOutConfirmTitle": "Alterações não sincronizadas",
     "signOutUnsyncedWarning": "{count, plural, one {Você tem # alteração que ainda não foi enviada ao servidor.} other {Você tem # alterações que ainda não foram enviadas ao servidor.}} Se sair agora, elas se perdem.",
     "signOutConfirmAction": "Sair mesmo assim"
+  },
+  "adminPage": {
+    "title": "Painel do operador",
+    "pendingSectionTitle": "Solicitações pendentes",
+    "pendingEmpty": "Não há solicitações esperando aprovação.",
+    "requestedOn": "Solicitado em {date}",
+    "unknownCountry": "País ainda não escolhido",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "approvedToast": "Acesso aprovado.",
+    "rejectedToast": "Acesso rejeitado.",
+    "metricsSectionTitle": "Métricas",
+    "totalUsers": "Usuários totais",
+    "pendingCount": "Pendentes",
+    "approvedCount": "Aprovados",
+    "rejectedCount": "Rejeitados",
+    "byCountryTitle": "Por país",
+    "noCountryData": "Ainda não há usuários aprovados com país escolhido.",
+    "activitySectionTitle": "Atividade",
+    "activeToday": "Ativos hoje",
+    "active7d": "Ativos em 7 dias",
+    "active30d": "Ativos em 30 dias",
+    "inactive": "Sem atividade recente"
   },
   "conflictsPage": {
     "title": "Conflitos de sincronização",
@@ -704,8 +744,17 @@
     "dataStorage": "Quais dados guardamos",
     "dataStorageMeta": "E quais nunca saem do seu telefone",
     "dataStorageBody": "Seus movimentos, contas e orçamentos vivem primeiro no seu telefone (IndexedDB) e sincronizam com o seu próprio projeto Supabase quando há conexão. Nunca são compartilhados com terceiros nem usados para treinar nada. Se você hospedar o PERZE, esse servidor é você.",
+    "operatorVisibility": "Quem pode ver o quê",
+    "operatorVisibilityMeta": "O que quem administra esta instalação pode ver",
     "madeWith": "Feito com",
     "madeWithBody": "Geist Sans e Geist Mono, ícones Phosphor, e cotações do BROU. Licença MIT — o código é seu para ler, modificar e rodar onde quiser."
+  },
+  "privacyNotice": {
+    "title": "Quem pode ver o quê",
+    "who": "Esta instalação do PERZE é administrada por uma pessoa, que aprova manualmente cada novo acesso.",
+    "sees": "Vê: seu email, seu país e quando você usou o app pela última vez.",
+    "neverSees": "Nunca vê: seus movimentos, saldos, contas nem orçamentos. Essa restrição está no banco de dados, não é uma promessa.",
+    "noThirdParty": "Não há analytics de terceiros: nada disso sai desta instalação."
   },
   "home": {
     "empty": "Você ainda não lançou nenhuma movimentação. Registre seu primeiro gasto para ver seu resumo aqui.",
@@ -914,7 +963,20 @@
     "createPrompt": "Escolha um PIN de 6 dígitos",
     "confirmPrompt": "Repita para confirmar",
     "mismatch": "Não confere — tente de novo",
-    "pinSet": "PIN ativado"
+    "pinSet": "PIN ativado",
+    "biometricLock": "Desbloqueio biométrico",
+    "biometricLockDescription": "Usar Face ID, digital ou outro sensor do dispositivo em vez do PIN",
+    "biometricEnabled": "Desbloqueio biométrico ativado",
+    "biometricEnrollError": "Não foi possível ativar o sensor — tente de novo",
+    "password": "Senha",
+    "passwordDescription": "Uma alternativa ao código por email para entrar",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirme a senha",
+    "passwordRequirements": "Pelo menos 8 caracteres, com maiúscula, minúscula e um número.",
+    "passwordMismatch": "As duas senhas não coincidem.",
+    "savePassword": "Salvar senha",
+    "savingPassword": "Salvando…",
+    "passwordSaved": "Senha atualizada"
   },
   "trendsPage": {
     "title": "Tendências",

@@ -18,6 +18,17 @@ interface PinState {
   verify: (pin: string) => Promise<boolean>;
   /** Segundos restantes de bloqueo, 0 si no está bloqueado. */
   lockoutSecondsRemaining: () => number;
+
+  /**
+   * §2 — biometría local (WebAuthn), alternativa al PIN para el mismo
+   * gate de re-entrada. El PIN sigue siendo obligatorio como fallback: no
+   * existe un estado donde solo haya biometría y ningún PIN configurado
+   * (`securityPage` no ofrece el toggle hasta que el PIN ya está armado).
+   */
+  biometricEnabled: boolean;
+  biometricCredentialId: string | null;
+  enableBiometric: (credentialId: string) => void;
+  disableBiometric: () => void;
 }
 
 export const usePinStore = create<PinState>()(
@@ -28,6 +39,8 @@ export const usePinStore = create<PinState>()(
       pinSalt: null,
       failedAttempts: 0,
       lockedUntil: null,
+      biometricEnabled: false,
+      biometricCredentialId: null,
 
       setPin: async (pin) => {
         const salt = generateSalt();
@@ -35,7 +48,17 @@ export const usePinStore = create<PinState>()(
         set({ enabled: true, pinHash, pinSalt: salt, failedAttempts: 0, lockedUntil: null });
       },
 
-      disable: () => set({ enabled: false, pinHash: null, pinSalt: null, failedAttempts: 0, lockedUntil: null }),
+      disable: () =>
+        set({
+          enabled: false,
+          pinHash: null,
+          pinSalt: null,
+          failedAttempts: 0,
+          lockedUntil: null,
+          // Sin PIN no hay fallback — la biometría no puede quedar activa sola.
+          biometricEnabled: false,
+          biometricCredentialId: null,
+        }),
 
       verify: async (pin) => {
         const { pinHash, pinSalt, lockedUntil } = get();
@@ -72,6 +95,9 @@ export const usePinStore = create<PinState>()(
         if (!lockedUntil) return 0;
         return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
       },
+
+      enableBiometric: (credentialId) => set({ biometricEnabled: true, biometricCredentialId: credentialId }),
+      disableBiometric: () => set({ biometricEnabled: false, biometricCredentialId: null }),
     }),
     {
       name: "perze-pin",
@@ -85,6 +111,8 @@ export const usePinStore = create<PinState>()(
         pinSalt: state.pinSalt,
         failedAttempts: state.failedAttempts,
         lockedUntil: state.lockedUntil,
+        biometricEnabled: state.biometricEnabled,
+        biometricCredentialId: state.biometricCredentialId,
       }),
     }
   )

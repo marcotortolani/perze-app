@@ -6,6 +6,13 @@ export interface Profile {
   avatarUrl: string | null;
 }
 
+export type AccessStatus = "pending" | "approved" | "rejected";
+
+export interface OwnAccess {
+  accessStatus: AccessStatus;
+  isAppAdmin: boolean;
+}
+
 /**
  * K2 — perfil propio. `profiles_select` en RLS solo deja ver la fila
  * propia (`id = auth.uid()`) — a diferencia de accounts/transactions esto
@@ -33,5 +40,17 @@ export const profilesRepo = {
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ display_name: displayName }).eq("id", userId);
     if (error) throw error;
+  },
+
+  /**
+   * Acceso controlado (§3) — `access_status`/`is_app_admin` de la propia
+   * fila. `profiles_select` (self-only) alcanza para esto: nunca hace
+   * falta una policy nueva para que alguien vea su propio estado.
+   */
+  async getOwnAccess(userId: string): Promise<OwnAccess | null> {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("profiles").select("access_status, is_app_admin").eq("id", userId).maybeSingle();
+    if (error) throw error;
+    return data ? { accessStatus: data.access_status as AccessStatus, isAppAdmin: data.is_app_admin } : null;
   },
 };

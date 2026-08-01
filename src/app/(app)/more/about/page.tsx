@@ -11,6 +11,7 @@ export default function AboutPage() {
   const t = useTranslations();
   const router = useRouter();
   const [dataSheetOpen, setDataSheetOpen] = useState(false);
+  const [privacySheetOpen, setPrivacySheetOpen] = useState(false);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -27,6 +28,7 @@ export default function AboutPage() {
           <ListRow label={t("aboutPage.sourceCode")} meta={t("aboutPage.sourceCodeMeta")} chevron={false} />
           <ListRow label={t("aboutPage.license")} meta="MIT" right={<StatusBadge status="good">{t("aboutPage.licenseBadge")}</StatusBadge>} chevron={false} />
           <ListRow label={t("aboutPage.dataStorage")} meta={t("aboutPage.dataStorageMeta")} onClick={() => setDataSheetOpen(true)} />
+          <ListRow label={t("aboutPage.operatorVisibility")} meta={t("aboutPage.operatorVisibilityMeta")} onClick={() => setPrivacySheetOpen(true)} />
         </div>
 
         <div style={{ padding: "18px 4px 0" }}>
@@ -37,6 +39,15 @@ export default function AboutPage() {
 
       <Sheet open={dataSheetOpen} title={t("aboutPage.dataStorage")} onClose={() => setDataSheetOpen(false)} height={360}>
         <p className="t-body" style={{ color: "var(--text-secondary)", margin: 0 }}>{t("aboutPage.dataStorageBody")}</p>
+      </Sheet>
+
+      <Sheet open={privacySheetOpen} title={t("aboutPage.operatorVisibility")} onClose={() => setPrivacySheetOpen(false)} height={360}>
+        <div className="t-body" style={{ color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ margin: 0 }}>{t("privacyNotice.who")}</p>
+          <p style={{ margin: 0 }}>{t("privacyNotice.sees")}</p>
+          <p style={{ margin: 0 }}>{t("privacyNotice.neverSees")}</p>
+          <p style={{ margin: 0 }}>{t("privacyNotice.noThirdParty")}</p>
+        </div>
       </Sheet>
     </div>
   );

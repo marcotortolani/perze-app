@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getDb, resetDbForTests } from "../db/client";
 import { accountsRepo } from "../repos/accounts-repo";
 import { transactionsRepo } from "../repos/transactions-repo";
+import { outbox } from "../offline/outbox";
 import { seedDemoHousehold } from "./demo-household";
 
 describe("seedDemoHousehold", () => {
@@ -38,5 +39,11 @@ describe("seedDemoHousehold", () => {
     const { householdId } = await seedDemoHousehold();
     const pending = await transactionsRepo.listNeedingFx(householdId);
     expect(pending.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("no encola nada en el outbox (B15 — el demo es 100% local y no sincroniza jamás)", async () => {
+    await seedDemoHousehold();
+    expect(await outbox.count()).toBe(0);
+    expect(await outbox.listAll()).toHaveLength(0);
   });
 });

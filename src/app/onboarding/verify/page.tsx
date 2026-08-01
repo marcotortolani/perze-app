@@ -8,6 +8,7 @@ import { IconButton, OtpInput, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
 
 /** B10 — el mismo cooldown que la Edge Function ya exige del lado servidor (rate limit de `signInWithOtp`); acá es solo para no dejar tocar "Reenviar" en loop y quemar los reintentos sin que el usuario se entere por qué. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -48,6 +49,17 @@ export default function OnboardingVerifyPage() {
       const { error } = await supabase.auth.verifyOtp({ email, token: value, type: "email" });
       if (error) {
         setInvalid(true);
+        return;
+      }
+
+      // Acceso controlado (§3.2) — verificarse no alcanza; hace falta la
+      // aprobación del operador antes de tocar el resto del onboarding.
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const access = user ? await profilesRepo.getOwnAccess(user.id) : null;
+      if (access && access.accessStatus !== "approved") {
+        router.push("/pending");
         return;
       }
       router.push("/onboarding/country");

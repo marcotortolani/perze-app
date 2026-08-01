@@ -8,8 +8,11 @@ import { Button, Icon, Input, Logo, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { seedDemoHousehold } from "@/lib/seed/demo-household";
+import { enterDemoMode } from "@/lib/demo/demo-mode";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { createClient } from "@/lib/supabase/client";
+import { signInWithPassword } from "@/features/auth/password-auth";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { env } from "@/env";
 
 /**
@@ -35,6 +38,14 @@ export default function OnboardingAuthPage() {
   const [email, setEmail] = useState("");
   const [seeding, setSeeding] = useState(false);
   const [sending, setSending] = useState(false);
+  // §1 — contraseña como ALTERNATIVA al código, nunca el default: arranca
+  // siempre en modo código (`usePassword = false`), y quien ya se definió
+  // una contraseña en Ajustes → Seguridad puede tocar "Prefiero usar mi
+  // contraseña" para saltarse la espera del email.
+  const [usePassword, setUsePassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -67,12 +78,40 @@ export default function OnboardingAuthPage() {
     }
   };
 
+  const handlePasswordSignIn = async () => {
+    if (!emailValid || !password || signingIn) return;
+    setSigningIn(true);
+    setPasswordError(null);
+    try {
+      const { error } = await signInWithPassword(email, password);
+      if (error) {
+        setPasswordError(error);
+        return;
+      }
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const access = user ? await profilesRepo.getOwnAccess(user.id) : null;
+      if (access && access.accessStatus !== "approved") {
+        router.push("/pending");
+        return;
+      }
+      router.push("/onboarding/country");
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
   const handleDemo = async () => {
     setSeeding(true);
     try {
       await seedDemoHousehold();
+      enterDemoMode();
       invalidateHousehold();
       router.push("/");
+    } catch {
+      toast.error(t("onboarding.auth.demoError"));
     } finally {
       setSeeding(false);
     }
@@ -113,10 +152,49 @@ export default function OnboardingAuthPage() {
           </div>
         ) : null}
 
-        <Input placeholder={t("onboarding.auth.emailPlaceholder")} value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Button disabled={!emailValid || sending} icon="mail" onClick={handleMagicLink}>
-          {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
-        </Button>
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder={t("onboarding.auth.emailPlaceholder")}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        {usePassword ? (
+          <Input
+            type="password"
+            autoComplete="current-password"
+            placeholder={t("onboarding.auth.passwordPlaceholder")}
+            value={password}
+            invalid={!!passwordError}
+            hint={passwordError ?? undefined}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordError(null);
+            }}
+          />
+        ) : null}
+
+        {usePassword ? (
+          <Button disabled={!emailValid || !password || signingIn} onClick={handlePasswordSignIn}>
+            {signingIn ? t("onboarding.auth.signingIn") : t("onboarding.auth.signInWithPassword")}
+          </Button>
+        ) : (
+          <Button disabled={!emailValid || sending} icon="mail" onClick={handleMagicLink}>
+            {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
+          </Button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setUsePassword((v) => !v);
+            setPasswordError(null);
+          }}
+          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
+        >
+          {usePassword ? t("onboarding.auth.preferCode") : t("onboarding.auth.preferPassword")}
+        </button>
       </div>
 
       <button

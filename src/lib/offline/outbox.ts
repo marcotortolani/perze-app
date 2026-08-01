@@ -6,6 +6,27 @@ import type { OutboxEntryRow, OutboxOp } from "../db/schema";
  * sin Supabase) no hay a dónde drenarla: existe para que conectar el backend
  * sea enchufar un worker que la recorra, no rediseñar el flujo de escritura.
  */
+let suppressed = false;
+
+/**
+ * Ejecuta `fn` sin que `outbox.enqueue()` escriba nada — el household de
+ * demo (`seedDemoHousehold()`) es 100% local y no debe intentar sincronizar
+ * jamás: sus filas llevan `created_by = DEMO_USER_ID`, que ninguna policy
+ * de RLS reconoce, así que esas ~55 entradas se quedaban colgadas en la cola
+ * para siempre (B15). El flag es de módulo, no por-repo: los repos no
+ * cambian su firma, y el seed corre secuencial (sin escrituras concurrentes
+ * de otro flujo real durante la ventana).
+ */
+export async function withoutOutbox<T>(fn: () => Promise<T>): Promise<T> {
+  const previous = suppressed;
+  suppressed = true;
+  try {
+    return await fn();
+  } finally {
+    suppressed = previous;
+  }
+}
+
 export const outbox = {
   async enqueue(entry: {
     table: string;
@@ -14,6 +35,7 @@ export const outbox = {
     payload: unknown;
     clientRev: number;
   }): Promise<number> {
+    if (suppressed) return -1;
     const row: OutboxEntryRow = {
       ...entry,
       createdAt: new Date().toISOString(),
