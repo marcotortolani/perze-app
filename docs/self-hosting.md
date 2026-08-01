@@ -34,11 +34,35 @@ deploy de este repo Next.js.
    ```
 
    Generá tu propio par de claves VAPID (por ejemplo con `web-push generate-vapid-keys` o
-   cualquier generador de claves EC P-256) — no reutilices las de otro deploy. La función
-   queda desplegada pero **sin disparador automático**: alguien tiene que invocarla (un cron,
-   un webhook, o a mano) cuando corresponda mandar cada tipo de notificación. Encender un
-   envío recurrente es una decisión de producto (qué evento dispara cada aviso, con qué
-   frecuencia) que este repo no toma por vos.
+   cualquier generador de claves EC P-256) — no reutilices las de otro deploy.
+
+5. Desplegá la Edge Function de cotizaciones diarias (E20 — sin esto, `fx_rates` queda vacía
+   para siempre):
+
+   ```bash
+   supabase functions deploy daily-fx-sync
+   ```
+
+6. Los cron jobs de `20260801160000_cron_engines.sql` (materializar recurrentes, cerrar
+   resúmenes de tarjeta vencidos, purgar `audit_log`, podar `push_subscriptions`) quedan
+   activos apenas se aplica la migración — no necesitan ningún paso más. Los dos que además
+   llaman a una Edge Function (`daily-fx-sync` y el disparador de notificaciones hacia
+   `send-push`) sí necesitan que registres dos secrets en **Vault** (Settings → Vault en el
+   dashboard, o `select vault.create_secret(...)` por SQL) — sin ellos, esos dos cron jobs
+   corren igual pero salen en silencio sin hacer nada, no fallan:
+
+   | Nombre del secret            | Valor                                                    |
+   | ----------------------------- | --------------------------------------------------------- |
+   | `perze_project_url`           | `https://TU_PROJECT_REF.supabase.co`                      |
+   | `perze_service_role_key`      | La `service_role` key — **Settings → API** en el dashboard |
+
+   > **Por qué Vault y no una variable de entorno:** estas funciones SQL corren dentro de
+   > Postgres (llamadas por `pg_cron`), no en la app ni en una Edge Function — no tienen
+   > acceso a `.env`. Vault es el lugar donde Supabase guarda secretos que un `SECURITY
+   > DEFINER` puede leer sin que RLS ni un cliente autenticado los vea nunca.
+
+   La notificación de tipo `insights` (detección de anomalías) no se dispara sola: no hay un
+   motor de detección del lado servidor todavía — queda como feature pendiente, no como bug.
 
 ## 2. Variables de entorno
 
