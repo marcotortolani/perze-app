@@ -2,8 +2,12 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, Donut, SeriesLegend, Skeleton } from "@/design-system";
+import { AppHeader, SeriesLegend, Skeleton } from "@/design-system";
+
+// C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
+const Donut = dynamic(() => import("@/design-system/charts/Donut").then((m) => m.Donut), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";

@@ -2,8 +2,12 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, NeedsFxBanner, Sankey, Skeleton } from "@/design-system";
+import { AppHeader, EmptyState, NeedsFxBanner, Skeleton } from "@/design-system";
+
+// C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
+const Sankey = dynamic(() => import("@/design-system/charts/Sankey").then((m) => m.Sankey), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCategories } from "@/hooks/use-categories";
 import { useAccounts } from "@/hooks/use-accounts";

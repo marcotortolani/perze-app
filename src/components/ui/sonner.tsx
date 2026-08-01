@@ -1,7 +1,12 @@
 "use client"
 
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CheckCircleIcon, InfoIcon, WarningCircleIcon, XCircleIcon, CircleNotchIcon } from "@phosphor-icons/react"
+// C14/auditoría: el barrel `@phosphor-icons/react` referencia >9.000 íconos;
+// este `<Toaster>` vive en el árbol raíz (`providers.tsx`), así que ese
+// barrel entero terminaba en el bundle inicial aunque el usuario nunca
+// abriera una pantalla con más íconos. El resto del design system ya usa
+// el subpath `dist/ssr` (ver `design-system/core/Icon.tsx`) — acá faltaba.
+import { CheckCircleIcon, InfoIcon, WarningCircleIcon, XCircleIcon, CircleNotchIcon } from "@phosphor-icons/react/dist/ssr"
 import { useResolvedTheme } from "@/lib/theme/use-resolved-theme"
 
 const Toaster = ({ ...props }: ToasterProps) => {

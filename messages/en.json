@@ -6,6 +6,10 @@
     "shortcutAddExpenseShort": "Expense",
     "shortcutAddExpenseDescription": "Go straight to the capture keypad"
   },
+  "pwa": {
+    "updateAvailable": "A new version of PERZE is available.",
+    "updateNow": "Update"
+  },
   "nav": {
     "home": "Home",
     "homeShort": "Home",

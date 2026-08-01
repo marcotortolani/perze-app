@@ -2,8 +2,12 @@
 
 import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, BarChart, EmptyState, ListRow, Skeleton } from "@/design-system";
+import { AppHeader, EmptyState, ListRow, Skeleton } from "@/design-system";
+
+// C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
+const BarChart = dynamic(() => import("@/design-system/charts/BarChart").then((m) => m.BarChart), { ssr: false });
 import { useAccount } from "@/hooks/use-accounts";
 import { useDebtsByAccount } from "@/hooks/use-debts";
 import { debtsRepo } from "@/lib/repos/debts-repo";
