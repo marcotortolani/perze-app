@@ -78,7 +78,7 @@ async function fetchDolarApiRates(): Promise<FxRateInsert[]> {
   return rows;
 }
 
-Deno.serve(async (_req) => {
+Deno.serve(async () => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   const { data: currencies, error: currenciesError } = await supabase
