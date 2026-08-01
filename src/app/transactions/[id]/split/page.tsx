@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Amount, Button, Icon, Switch } from "@/design-system";
+import { Amount, Button, IconButton, Switch } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -93,9 +93,7 @@ export default function SplitTransactionPage({ params }: { params: Promise<{ id:
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button type="button" onClick={() => router.back()} aria-label={t("splitPage.back")} style={{ background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-          <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-        </button>
+        <IconButton icon="chevron-left" ariaLabel={t("splitPage.back")} onClick={() => router.back()} style={{ margin: -11 }} />
         <h1 className="t-title" style={{ margin: 0 }}>{t("splitPage.title")}</h1>
       </div>
 

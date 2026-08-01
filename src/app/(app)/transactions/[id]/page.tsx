@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, EmptyState, Icon, ListRow, Skeleton, StatusBadge } from "@/design-system";
+import { Amount, EmptyState, IconButton, ListRow, Skeleton, StatusBadge } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -117,9 +117,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
-      <button type="button" onClick={() => router.push("/transactions")} aria-label={t("transactions.detail.back")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-        <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-      </button>
+      <IconButton icon="chevron-left" ariaLabel={t("transactions.detail.back")} onClick={() => router.push("/transactions")} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
         <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" polarity={polarity} tabular mutedDecimals />

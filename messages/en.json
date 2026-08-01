@@ -104,6 +104,18 @@
         "conflict": "Edited by another member at the same time — unresolved",
         "rejected": "Couldn't sync"
       }
+    },
+    "otpInput": {
+      "groupLabel": "Verification code",
+      "digitLabel": "Digit {index} of {total}"
+    },
+    "keypad": {
+      "operatorPlus": "Add",
+      "operatorMinus": "Subtract",
+      "operatorMultiply": "Multiply",
+      "operatorDivide": "Divide",
+      "backspace": "Backspace",
+      "decimalSeparator": "Decimal separator"
     }
   },
   "reference": {

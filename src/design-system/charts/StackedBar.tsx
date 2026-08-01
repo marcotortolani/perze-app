@@ -17,6 +17,8 @@ export interface StackedBarProps {
   height?: number | undefined;
   /** Índice del grupo en curso (período actual) — se dibuja en gris, nunca en color de serie. */
   inProgressIndex?: number | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -24,16 +26,17 @@ const SLOTS = ["var(--data-1)", "var(--data-2)", "var(--data-3)", "var(--data-4)
 const SEPARATOR = 2;
 
 /** LIB-18: barras apiladas — separador de 2px del color de superficie, radio 4 anclado a baseline, período en curso en gris. */
-export function StackedBar({ groups, series, height = 160, inProgressIndex, style }: StackedBarProps) {
+export function StackedBar({ groups, series, height = 160, inProgressIndex, ariaLabel, style }: StackedBarProps) {
   const w = 320;
   const base = height - 20;
   const totals = groups.map((g) => g.values.reduce((s, v) => s + v, 0));
   const max = Math.max(...totals, 1);
   const slot = w / Math.max(groups.length, 1);
   const barW = Math.min(30, slot - 9);
+  const summary = ariaLabel ?? groups.map((g, gi) => `${g.label}: ${totals[gi]}`).join(", ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
+    <svg role="img" aria-label={summary} viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
       <line x1="0" y1={base} x2={w} y2={base} stroke="var(--border)" strokeWidth="1" />
       {groups.map((g, gi) => {
         const total = totals[gi] ?? 0;

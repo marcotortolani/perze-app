@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import type { ClipboardEvent, CSSProperties, KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 
 export interface OtpInputProps {
   length?: number | undefined;
@@ -13,8 +14,16 @@ export interface OtpInputProps {
   style?: CSSProperties | undefined;
 }
 
-/** Seis casillas de un dígito con autofill — código de verificación de A3. */
+/**
+ * Seis casillas de un dígito con autofill — código de verificación de A3.
+ *
+ * D9/auditoría: cada casilla era un `<input>` sin `aria-label` — un lector
+ * de pantalla las anunciaba como seis campos de texto sin contexto ("editar
+ * texto", sin más). Ahora cada una anuncia "dígito N de M" y el conjunto
+ * lleva `role="group"` con un label que identifica el campo completo.
+ */
 export function OtpInput({ length = 6, value, onChange, invalid = false, disabled = false, style }: OtpInputProps) {
+  const t = useTranslations();
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? "");
 
@@ -37,7 +46,7 @@ export function OtpInput({ length = 6, value, onChange, invalid = false, disable
   };
 
   return (
-    <div style={{ display: "flex", gap: 8, ...style }}>
+    <div role="group" aria-label={t("ds.otpInput.groupLabel")} style={{ display: "flex", gap: 8, ...style }}>
       {digits.map((d, i) => (
         <input
           key={i}
@@ -45,6 +54,8 @@ export function OtpInput({ length = 6, value, onChange, invalid = false, disable
             refs.current[i] = el;
           }}
           value={d}
+          aria-label={t("ds.otpInput.digitLabel", { index: i + 1, total: length })}
+          aria-invalid={invalid || undefined}
           inputMode="numeric"
           autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={1}

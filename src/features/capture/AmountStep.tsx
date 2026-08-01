@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AmountScrubber, Chip, Icon, Keypad, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
@@ -11,6 +11,7 @@ import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 export interface AmountStepProps {
   draft: CaptureDraft;
@@ -34,15 +35,24 @@ export interface AmountStepProps {
   onPhoto: () => void;
 }
 
-/** Convierte un monto en unidades mínimas a la expresión de texto que entiende el keypad (coma decimal, sin separador de miles). */
-export function amountToExpression(rawAmount: bigint, currency: string): string {
+/**
+ * Convierte un monto en unidades mínimas a la expresión de texto que
+ * entiende el keypad. D13/auditoría: el separador decimal estaba
+ * hardcodeado a "," — en un locale `en-US` (separador ".") producía una
+ * expresión que el propio keypad de esa sesión no iba a saber re-parsear
+ * como decimal. `locale` es opcional para no romper los call sites que
+ * todavía no lo pasan (Bloque G, fuera de este fix) — sin él cae al
+ * comportamiento anterior.
+ */
+export function amountToExpression(rawAmount: bigint, currency: string, locale: Locale = "es"): string {
   const decimals = decimalsFor(currency);
   const negative = rawAmount < 0n;
   const divisor = 10n ** BigInt(decimals);
   const abs = negative ? -rawAmount : rawAmount;
   const intPart = abs / divisor;
   const fracPart = decimals > 0 ? (abs % divisor).toString().padStart(decimals, "0") : "";
-  return `${negative ? "-" : ""}${intPart}${decimals > 0 ? `,${fracPart}` : ""}`;
+  const separator = decimalSeparatorForLocale(locale);
+  return `${negative ? "-" : ""}${intPart}${decimals > 0 ? `${separator}${fracPart}` : ""}`;
 }
 
 /** C1 — el paso que abre el FAB. El primer frame es interactivo: se puede escribir en el keypad al toque. */
@@ -65,6 +75,8 @@ export function AmountStep({
   onPhoto,
 }: AmountStepProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const numberLocale = numberLocaleForUiLocale(locale);
   const categoryLabel = useCategoryLabel();
   const KIND_OPTIONS = [
     { id: "expense", label: t("capture.kind.expense") },
@@ -74,11 +86,11 @@ export function AmountStep({
   const currency = draft.currency || account?.currencyCode || "UYU";
   const hero = useMemo(() => {
     try {
-      return evaluateKeypadExpression(draft.amountExpression || "0", currency);
+      return evaluateKeypadExpression(draft.amountExpression || "0", currency, numberLocale);
     } catch {
       return money(0n, currency);
     }
-  }, [draft.amountExpression, currency]);
+  }, [draft.amountExpression, currency, numberLocale]);
 
   const isTransfer = draft.kind === "transfer";
   const hasAccounts = accounts.length > 0;
@@ -93,7 +105,7 @@ export function AmountStep({
             para la lista, no para el keypad). Arrastrable (C1, AmountScrubber):
             un tap corto le pasa la posta al keypad (ya visible abajo, así que
             es un no-op acá), el drag ajusta el monto con aceleración. */}
-        <AmountScrubber value={hero} onChange={(next) => onAmountChange(amountToExpression(next, currency))} onOpenKeypad={() => {}} />
+        <AmountScrubber value={hero} onChange={(next) => onAmountChange(amountToExpression(next, currency, locale))} onOpenKeypad={() => {}} />
       </div>
 
       {isTransfer ? (

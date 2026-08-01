@@ -5,9 +5,11 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { IntlBoundary } from "@/components/intl-boundary";
 import { Providers } from "@/components/providers";
-import { getThemeInitScript } from "@/lib/theme/init-script";
+import { getLangInitScript, getThemeInitScript } from "@/lib/theme/init-script";
 import { APP_VERSION } from "@/lib/version";
 import { env } from "@/env";
+import { LOCALE_COOKIE } from "@/i18n/request";
+import { routing } from "@/i18n/routing";
 import "./globals.css";
 
 /**
@@ -90,16 +92,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // lang="es" es el fallback estático (idioma fuente); `IntlBoundary` lo
-    // corrige en cliente para EN/PT — ver `src/components/sync-html-lang.tsx`.
+    // D1 — `lang="es"` (idioma fuente) es el fallback estático: este
+    // componente no puede `await getLocale()` sin volver dinámica toda la
+    // ruta (ver el comentario de `getLangInitScript`). El script de abajo
+    // corrige el atributo ANTES del primer paint, no en un `useEffect`
+    // post-hidratación como antes.
     <html
-      lang="en"
+      lang={routing.defaultLocale}
       className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {/* Anti-flash: setea `.light` antes del primer paint si corresponde. */}
         <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
+        {/* D1: corrige `<html lang>` antes del primer paint — ver `getLangInitScript`. */}
+        <script dangerouslySetInnerHTML={{ __html: getLangInitScript(LOCALE_COOKIE, routing.locales, routing.defaultLocale) }} />
         <Suspense fallback={null}>
           <IntlBoundary>
             <Providers>{children}</Providers>

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Icon, InstitutionTile, Input, ProgressSteps } from "@/design-system";
+import { Button, IconButton, InstitutionTile, Input, ProgressSteps } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import type { AccountKind } from "@/lib/db/schema";
@@ -85,9 +85,7 @@ export default function OnboardingAccountPage() {
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button type="button" onClick={() => router.push("/onboarding/usage")} aria-label={t("onboarding.account.back")} style={{ background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-          <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-        </button>
+        <IconButton icon="chevron-left" ariaLabel={t("onboarding.account.back")} onClick={() => router.push("/onboarding/usage")} style={{ margin: -11 }} />
         <ProgressSteps
           current={3}
           total={3}

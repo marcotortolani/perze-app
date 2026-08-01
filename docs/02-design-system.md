@@ -58,10 +58,12 @@ Gris **ligeramente cálido** — más agradable y menos clínico que el gris pur
 | Borde / divisor | `#2E2E33` | `#E4E4E1` |
 | Texto primario | `#FAFAF9` | `#131315` |
 | Texto secundario | `#A1A1A6` (7.2:1) | `#5A5A60` (6.9:1) |
-| Texto muted — ejes, captions | `#6E6E76` (3.7:1) | `#8A8A90` (3.4:1) |
+| Texto muted — ejes, captions | `#8E8E96` (5.7:1 vs. sup. 1) | `#6B6B71` (5.3:1 vs. sup. 1) |
 | Gridline hairline | `#232326` | `#EFEFED` |
 | Superficie de selección | `#2C2C31` (1,24:1 vs. sup. 2) | `#DEDEDA` (1,24:1 vs. sup. 2) |
 | Anillo de selección | `#37373A` (1,45:1 vs. sup. 2) | `#C9C9C4` (1,52:1 vs. sup. 2) |
+
+**D5 (auditoría técnica, cerrado):** texto muted era `#6E6E76`/`#8A8A90` — 3,7:1/3,4:1, por debajo de AA (4,5:1) en el peor caso (contra Superficie 3, la más parecida al propio ink3). Los valores de arriba ya son los corregidos.
 
 **No hay más de 3 superficies apiladas nunca.** Si necesitás una cuarta, el layout está mal.
 
@@ -85,8 +87,8 @@ componente calcula el porcentaje a mano.
 |---|---|---|---|---|
 | **Primario** | Violeta índigo | texto/ícono `#8B7CF6` · relleno `#6D55F0` | texto/ícono `#5D45E8` · relleno `#6D55F0` | Marca, botón primario, tab activo, selección, foco, serie 1 de datos |
 | | | *(solo dos hexes de violeta por modo: uno de tinta, uno de relleno. No hay un tercero.)* | | |
-| **Secundario** | Aqua profundo | `#199E70` | `#12916A` | Ingresos, progreso completado, confirmación, serie 2 |
-| **Acento** | Naranja quemado | `#E06A35` | `#D95926` | Gastos, atención, serie 3 |
+| **Secundario** | Aqua profundo | `#199E70` | `#0D7A58` | Ingresos, progreso completado, confirmación, serie 2 |
+| **Acento** | Naranja quemado | `#E06A35` | `#B8451A` | Gastos, atención, serie 3 |
 
 Contrastes verificados: relleno primario `#6D55F0` + texto blanco = **4.99:1** (AA texto normal) y **3.72:1** contra la superficie oscura. Texto violeta `#8B7CF6` sobre dark = **5.58:1**; `#5D45E8` sobre light = **6.03:1**.
 
@@ -113,25 +115,31 @@ Consecuencia aceptada: con el preset por defecto el color de marca y el slot 1 d
 
 | Rol | Dark | Light |
 |---|---|---|
-| Ingreso / positivo | aqua `#199E70` | `#12916A` |
-| Gasto / negativo | **neutro** por defecto; naranja `#E06A35` solo cuando hay que destacar | neutro; `#D95926` |
+| Ingreso / positivo | aqua `#199E70` | `#0D7A58` |
+| Gasto / negativo | **neutro** por defecto; naranja `#E06A35` solo cuando hay que destacar | neutro; `#B8451A` |
 
-Verificado: el par aqua↔naranja pasa todos los checks all-pairs en ambos modos (CVD ΔE **8.7** dark / **9.6** light, visión normal 25.5 / 26.2, contraste ≥3:1).
+Verificado (dark, sin cambios): el par aqua↔naranja pasa todos los checks all-pairs (CVD ΔE **8.7**, visión normal 25.5, contraste ≥3:1).
+
+**D6 (auditoría técnica, cerrado):** en claro, `#12916A`/`#D95926` daban 3,42:1/3,34:1 contra `--page` — es el único caso donde el color de esta tabla porta significado (polaridad), así que tenía que llegar a AA de texto (4,5:1), no solo al 3:1 de un ícono/swatch. Los valores de arriba (`#0D7A58`/`#B8451A`) ya son los corregidos — ambos ≥5,1:1 contra `--page` claro. Los números de ΔE/CVD del par en claro quedan para re-validar contra el nuevo par (no invalidan el fix: oscurecer un color solo puede separarlo más de su complementario, nunca menos).
 
 Y siempre con **codificación secundaria**: signo `+`/`−`, flecha ↑↓ y posición. El color nunca porta el significado solo.
 
 **Decisión minimalista importante:** en la lista de movimientos, los gastos van en **texto neutro primario**, no en naranja. Si el 90% de las filas son gastos, colorearlas todas es ruido puro. Solo los ingresos se destacan en aqua, porque son la excepción. El naranja se reserva para gráficos y para llamar la atención sobre un gasto puntual.
 
-### 2.5 Estado (fijo, nunca tematizado)
+### 2.5 Estado (fijo en ambos modos, salvo `critical` — ver D7 abajo)
 
 | Rol | Hex | Uso |
 |---|---|---|
 | good | `#0CA30C` | meta cumplida, dentro de presupuesto, sync ok |
-| warning | `#FAB219` | 80% del presupuesto, cotización desactualizada |
+| warning | `#FAB219` | 80% del presupuesto, cotización desactualizada — **solo ícono/tinte de fondo, nunca texto** (ver D4) |
 | serious | `#EC835A` | recurrente que aumentó, anomalía detectada |
-| critical | `#D03B3B` | presupuesto excedido, saldo proyectado negativo, error de sync |
+| critical | `#D03B3B` (claro) / `#E8615F` (oscuro) | presupuesto excedido, saldo proyectado negativo, error de sync |
 
 Siempre con **ícono + label**. Nunca color solo. Nunca reutilizados como color de serie. El rojo **no** significa "gasto"; significa "problema".
+
+**D4 (auditoría técnica, cerrado):** `--warning` (`#FAB219`) da 1,76:1 contra `--page` en modo claro — muy por debajo de AA (4,5:1) para texto. El componente (`Banner`, `NeedsFxBanner`) lo usa solo en el ícono y el tinte de fondo (`color-mix` al 12%); el texto del mensaje y del botón de acción van en `--text-primary`, que sí pasa AA en los dos modos.
+
+**D7 (auditoría técnica, cerrado):** `#D03B3B` pasa AA en claro pero daba 3,58:1 contra Superficie 2 en oscuro (el modo por defecto de la app) — es el color de los mensajes de error de formulario a 12px. A diferencia de good/warning/serious, `critical` deja de ser "fijo en ambos modos": en oscuro usa `#E8615F` (5,2:1 contra Superficie 2), en claro sigue siendo `#D03B3B` sin cambios.
 
 **Criterio para elegir el nivel** — es la pregunta "¿qué tiene que hacer el usuario?", no "¿qué tan grave suena?":
 
@@ -164,11 +172,11 @@ Cinco slots, **orden fijo, nunca ciclado**. Cinco, no ocho: es una app minimalis
 | Slot | Hue | Dark | Light |
 |---|---|---|---|
 | 1 | violeta | `#8B7CF6` | `#5D45E8` |
-| 2 | aqua (secundario) | `#199E70` | `#12916A` |
-| 3 | naranja (acento) | `#E06A35` | `#D95926` |
+| 2 | aqua (secundario) | `#199E70` | `#0D7A58` |
+| 3 | naranja (acento) | `#E06A35` | `#B8451A` |
 | 4 | azul | `#3987E5` | `#2A78D6` |
 | 5 | magenta | `#D55181` | `#C9457A` |
-| — | "Otros" | `#6E6E76` | `#8A8A90` |
+| — | "Otros" | `#8E8E96` (D5) | `#6B6B71` (D5) |
 
 **Validación completa** (superficies `#131315` dark / `#FFFFFF` light): `PASS` en los cinco checks, en ambos modos. Peor par adyacente CVD ΔE **8.7** dark / **9.6** light; visión normal **25.5** / **26.2**; los cinco superan 3:1 contra su superficie. Los tres primeros slots también pasan **all-pairs**, así que son los únicos habilitados para scatter, treemap y small multiples.
 

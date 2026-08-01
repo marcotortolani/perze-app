@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, Button, Input, Keypad, ListRow, Sheet } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -15,10 +15,13 @@ import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { computeThreeMonthCushion } from "@/lib/analytics/goal-projection";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money, toMajorUnitsUnsafe } from "@/lib/money/money";
+import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /** F7 — crear meta: nombre, monto objetivo, cuenta que la respalda. La sugerencia "colchón de 3 meses" (F7, estado vacío del diseño) prellena el monto con 3x el gasto diario promedio de los últimos 90 días. */
 export default function NewGoalPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
@@ -39,13 +42,13 @@ export default function NewGoalPage() {
   const cushion = computeThreeMonthCushion(transactions, new Date());
   const cushionMoney = money(cushion, household.baseCurrency);
 
-  const useCushion = () => setExpr(String(toMajorUnitsUnsafe(cushionMoney)).replace(".", ","));
+  const useCushion = () => setExpr(String(toMajorUnitsUnsafe(cushionMoney)).replace(".", decimalSeparator));
 
   const handleSave = async () => {
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const target = evaluateKeypadExpression(expr, household.baseCurrency);
+      const target = evaluateKeypadExpression(expr, household.baseCurrency, numberLocaleForUiLocale(locale));
       await goalsRepo.create({
         householdId: household.id,
         name: name.trim(),

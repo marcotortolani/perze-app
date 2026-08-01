@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, Button, CategoryBubble, Keypad } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -13,10 +13,12 @@ import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useInvalidateBudgets } from "@/hooks/use-budgets";
 import { budgetsRepo } from "@/lib/repos/budgets-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /** F2 — crear presupuesto: elegir categoría (o el household entero) y el límite. */
 export default function NewBudgetPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
@@ -38,7 +40,7 @@ export default function NewBudgetPage() {
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const limit = evaluateKeypadExpression(expr, household.baseCurrency);
+      const limit = evaluateKeypadExpression(expr, household.baseCurrency, numberLocaleForUiLocale(locale));
       const category = categories.find((c) => c.id === categoryId);
       await budgetsRepo.create({
         householdId: household.id,

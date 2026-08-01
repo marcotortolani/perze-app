@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Icon, OptionCard, ProgressSteps } from "@/design-system";
+import { Button, IconButton, OptionCard, ProgressSteps } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -45,9 +45,7 @@ export default function OnboardingCountryPage() {
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button type="button" onClick={() => router.push("/onboarding")} aria-label={t("onboarding.country.back")} style={{ background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-          <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-        </button>
+        <IconButton icon="chevron-left" ariaLabel={t("onboarding.country.back")} onClick={() => router.push("/onboarding")} style={{ margin: -11 }} />
         <ProgressSteps current={1} total={3} onSkip={() => router.push("/onboarding/usage")} skipLabel={t("ds.progressSteps.skip")} />
       </div>
 

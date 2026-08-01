@@ -11,13 +11,15 @@ export interface WaterfallProps {
   /** Invariante: la suma de `deltas` tiene que ser `total` — se verifica en desarrollo, nunca en producción. */
   total: number;
   height?: number | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
 const TOLERANCE = 0.01;
 
 /** LIB-07: gráfico de cascada — cada barra parte de donde terminó la anterior. */
-export function Waterfall({ deltas, total, height = 160, style }: WaterfallProps) {
+export function Waterfall({ deltas, total, height = 160, ariaLabel, style }: WaterfallProps) {
   if (process.env.NODE_ENV !== "production") {
     const sum = deltas.reduce((s, d) => s + d.value, 0);
     if (Math.abs(sum - total) > TOLERANCE) {
@@ -35,9 +37,10 @@ export function Waterfall({ deltas, total, height = 160, style }: WaterfallProps
   const slot = w / deltas.length;
   const barW = Math.min(40, slot - 8);
   const scaleY = (v: number) => base - ((v - min) / span) * base;
+  const summary = ariaLabel ?? deltas.map((d) => `${d.label}: ${d.value}`).join(", ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
+    <svg role="img" aria-label={summary} viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
       <line x1="0" y1={scaleY(0)} x2={w} y2={scaleY(0)} stroke="var(--border)" strokeWidth="1" />
       {deltas.map((d, i) => {
         const start = i === 0 ? 0 : values[i - 1]!;

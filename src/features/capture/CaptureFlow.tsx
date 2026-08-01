@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import { Icon } from "@/design-system";
+import { useLocale, useTranslations } from "next-intl";
+import { IconButton } from "@/design-system";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { MorphButton } from "@/components/motion";
 import { ScreenShell } from "@/components/screen-shell";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -43,6 +44,7 @@ export interface CaptureFlowProps {
  */
 export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
@@ -120,6 +122,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       userId,
       account: latestAccount,
       counterAccount: latestCounterAccount,
+      numberLocale: numberLocaleForUiLocale(locale),
     });
     invalidateTransactions();
     // B14 — habilita los 60s de edición sin PIN sobre este movimiento puntual.
@@ -180,14 +183,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       onClick={(e) => e.stopPropagation()}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <button
-          type="button"
+        <IconButton
+          icon={step === "category" ? "chevron-left" : "close"}
+          ariaLabel={step === "category" ? t("capture.back") : t("capture.close")}
           onClick={handleCancel}
-          aria-label={step === "category" ? t("capture.back") : t("capture.close")}
-          style={{ background: "none", border: 0, cursor: "pointer", padding: 8, margin: -8 }}
-        >
-          <Icon name={step === "category" ? "chevron-left" : "close"} size={22} color="var(--text-secondary)" />
-        </button>
+          style={{ margin: -11 }}
+        />
         {draft.burstMode ? (
           <span className="t-label" style={{ color: "var(--text-secondary)" }}>
             {t("capture.burstCount", { count: draft.burstCount })}

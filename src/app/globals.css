@@ -30,7 +30,8 @@
   --n-grid-dark: #232326;
   --n-ink1-dark: #fafaf9;
   --n-ink2-dark: #a1a1a6;
-  --n-ink3-dark: #6e6e76;
+  /* D5/auditoría: #6e6e76 medía 3.7:1 contra superficie — no llega a AA (4.5:1) en texto chico. */
+  --n-ink3-dark: #8e8e96;
   /* warm neutrals — light */
   --n-page-light: #fafaf9;
   --n-s1-light: #ffffff;
@@ -40,7 +41,8 @@
   --n-grid-light: #efefed;
   --n-ink1-light: #131315;
   --n-ink2-light: #5a5a60;
-  --n-ink3-light: #8a8a90;
+  /* D5/auditoría: #8a8a90 medía 3.4:1 — no llega a AA. */
+  --n-ink3-light: #6b6b71;
 
   /* brand — indigo violet: exactamente dos hexes por modo, uno de tinta uno de relleno */
   --violet-ink-dark: #8b7cf6;
@@ -49,11 +51,14 @@
 
   /* polaridad del dinero */
   --aqua-dark: #199e70;
-  --aqua-light: #12916a;
+  /* D6/auditoría: #12916a medía 3.42:1 en claro — es el único caso donde
+     el color porta significado (polaridad de ingreso), tiene que llegar a AA. */
+  --aqua-light: #0d7a58;
   --orange-dark: #e06a35;
-  --orange-light: #d95926;
+  /* D6/auditoría: #d95926 medía 3.34:1 en claro. */
+  --orange-light: #b8451a;
 
-  /* estado — fijo en ambos modos, nunca tematizado */
+  /* estado — fijo en ambos modos, nunca tematizado (excepto `critical`: ver D7 más abajo, donde se define `--critical` per-modo) */
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-serious: #ec835a;
@@ -130,7 +135,15 @@
   --good: var(--status-good);
   --warning: var(--status-warning);
   --serious: var(--status-serious);
-  --critical: var(--status-critical);
+  /*
+   * D7/auditoría: `--status-critical` (#d03b3b) pasa AA en claro pero da
+   * 3.58:1 sobre `--surface-2` en oscuro (el modo por defecto de la app) —
+   * es el color de los mensajes de error de formulario a 12px. A
+   * diferencia de good/warning/serious (que sí quedan "fijos en ambos
+   * modos"), `critical` necesita un valor propio en oscuro; `.light` más
+   * abajo NO lo redeclara — sigue heredando `--status-critical` sin tocar.
+   */
+  --critical: #e8615f;
 
   --shadow-sheet: 0 8px 32px rgba(0, 0, 0, 0.32);
   --scrim: rgba(0, 0, 0, 0.6);

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, Button, Input, Keypad, ListRow, SegmentedControl, Sheet } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -13,10 +13,12 @@ import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useInvalidateRecurringRules } from "@/hooks/use-recurring-rules";
 import { recurringRulesRepo } from "@/lib/repos/recurring-rules-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /** G2 — nueva regla recurrente: nombre, cuenta, día del mes, monto esperado. */
 export default function NewRecurringRulePage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
@@ -45,7 +47,7 @@ export default function NewRecurringRulePage() {
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const amount = evaluateKeypadExpression(expr, household.baseCurrency);
+      const amount = evaluateKeypadExpression(expr, household.baseCurrency, numberLocaleForUiLocale(locale));
       await recurringRulesRepo.create({
         householdId: household.id,
         name: name.trim(),

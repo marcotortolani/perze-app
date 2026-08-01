@@ -3,8 +3,8 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import { Amount, Button, EmptyState, Icon, Keypad, Skeleton } from "@/design-system";
+import { useLocale, useTranslations } from "next-intl";
+import { Amount, Button, EmptyState, IconButton, Keypad, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
@@ -13,11 +13,13 @@ import { money, subtract } from "@/lib/money/money";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { useCurrentUserId } from "@/hooks/use-current-user";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /** E5 — conciliación: "¿cuánto dice tu banco que tenés?" → diferencia → ajuste. Bloque E, Fase 8. */
 export default function ReconcileAccountPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
@@ -30,7 +32,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   if (isLoading || !household || !userId) return <Skeleton height={300} />;
   if (!account) return <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
 
-  const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode);
+  const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode, numberLocaleForUiLocale(locale));
   const currentBalance = money(account.currentBalance, account.currencyCode);
   const diff = subtract(bankBalance, currentBalance);
   const hasDiff = expr.trim() !== "" && diff.amount !== 0n;
@@ -87,9 +89,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 16, paddingBottom: 24, minHeight: "100%" }}>
-      <button type="button" onClick={() => router.back()} aria-label={t("accountsPage.reconcile.back")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-        <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-      </button>
+      <IconButton icon="chevron-left" ariaLabel={t("accountsPage.reconcile.back")} onClick={() => router.back()} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
         <span className="t-label" style={{ color: "var(--text-secondary)" }}>{t("accountsPage.reconcile.prompt", { account: account.name })}</span>

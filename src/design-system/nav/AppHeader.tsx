@@ -63,7 +63,10 @@ export function AppHeader({
       {showScope && !onBack && scopeOptions ? (
         <SegmentedControl options={scopeOptions} value={scope} onChange={onScopeChange} size="sm" emphasis="brand" />
       ) : null}
-      {title ? <div style={{ fontFamily: "var(--font-sans)", fontSize: 17, fontWeight: 600, letterSpacing: "-.01em", color: "var(--text-primary)" }}>{title}</div> : null}
+      {/* D11/auditoría: había CERO `<h1>` en `src/app/(app)` — el título de pantalla
+          era un `<div>`, así que un lector de pantalla no tenía forma de saltar
+          directo al encabezado de la página ni de anunciar la jerarquía. */}
+      {title ? <h1 style={{ margin: 0, fontFamily: "var(--font-sans)", fontSize: 17, fontWeight: 600, letterSpacing: "-.01em", color: "var(--text-primary)" }}>{title}</h1> : null}
       <div style={{ flex: 1 }} />
       {right}
       {onSearch ? (

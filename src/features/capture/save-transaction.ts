@@ -1,6 +1,7 @@
 import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money } from "@/lib/money/money";
+import type { NumberLocale } from "@/lib/money/parse";
 import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
@@ -15,6 +16,13 @@ export interface SaveDraftParams {
   userId: string;
   account: AccountRow;
   counterAccount?: AccountRow | undefined;
+  /**
+   * D13/auditoría: el separador decimal que tipeó el usuario depende del
+   * locale de la UI en el momento de capturar (`Keypad` ya lo deriva) — acá
+   * hay que parsearlo con el mismo locale, o un "." en un locale en-US se
+   * lee como separador de miles en vez de decimal (corrompe el monto 10x).
+   */
+  numberLocale?: NumberLocale | undefined;
 }
 
 /**
@@ -24,7 +32,7 @@ export interface SaveDraftParams {
  * no hay tipo de cambio, el movimiento se guarda igual, sin conversión
  * (`needs_fx`), nunca se bloquea.
  */
-export async function saveDraftAsTransaction({ draft, household, userId, account, counterAccount }: SaveDraftParams): Promise<TransactionRow> {
+export async function saveDraftAsTransaction({ draft, household, userId, account, counterAccount, numberLocale = "es-UY" }: SaveDraftParams): Promise<TransactionRow> {
   const date = draft.occurredAt.slice(0, 10);
 
   // Primera conversión (CLAUDE.md § dinero, "SON DOS CONVERSIONES, NO UNA"):
@@ -32,7 +40,7 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
   // — `amount`/`currencyCode` SIEMPRE terminan en la moneda de la cuenta,
   // nunca en la capturada. Esa conversión ocurre acá, en la captura.
   const capturedCurrency = draft.currency || account.currencyCode;
-  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency);
+  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency, numberLocale);
 
   let amount = capturedAmount;
   let original: Pick<NewTransactionInput, "originalAmount" | "originalCurrency" | "originalRate"> = {

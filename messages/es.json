@@ -104,6 +104,18 @@
         "conflict": "Editado por otro miembro a la vez — sin resolver",
         "rejected": "No se pudo sincronizar"
       }
+    },
+    "otpInput": {
+      "groupLabel": "Código de verificación",
+      "digitLabel": "Dígito {index} de {total}"
+    },
+    "keypad": {
+      "operatorPlus": "Sumar",
+      "operatorMinus": "Restar",
+      "operatorMultiply": "Multiplicar",
+      "operatorDivide": "Dividir",
+      "backspace": "Borrar",
+      "decimalSeparator": "Separador decimal"
     }
   },
   "reference": {
