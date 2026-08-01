@@ -35,6 +35,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.101.4(react@19.2.4)
+      '@tanstack/react-virtual':
+        specifier: ^3.14.8
+        version: 3.14.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@use-gesture/react':
         specifier: ^10.3.1
         version: 10.3.1(react@19.2.4)
@@ -83,6 +86,9 @@ importers:
       shadcn:
         specifier: ^4.8.3
         version: 4.8.3(@types/node@20.19.41)(typescript@5.9.3)
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -111,9 +117,6 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.101.4
         version: 5.101.4(@tanstack/react-query@5.101.4(react@19.2.4))(react@19.2.4)
-      '@tanstack/react-virtual':
-        specifier: ^3.14.8
-        version: 3.14.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@testing-library/jest-dom':
         specifier: ^7.0.0
         version: 7.0.0(@testing-library/dom@10.4.1)
@@ -147,9 +150,6 @@ importers:
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
-      sharp:
-        specifier: ^0.34.5
-        version: 0.34.5
       tailwindcss:
         specifier: ^4
         version: 4.3.0

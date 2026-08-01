@@ -1,0 +1,35 @@
+# Auditoría E3: sin este archivo, Docker no lee .gitignore y cualquier
+# `docker build` hornea .env.local (secretos), .git (historial) y
+# node_modules/.next (bulto innecesario) en la capa del stage `builder`,
+# recuperables con `docker history`/`docker save` aunque el stage `runner`
+# no los copie explícitamente.
+
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+
+node_modules
+.next
+.turbo
+
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.DS_Store
+*.log
+
+coverage
+playwright-report
+test-results
+
+.vercel
+.vscode
+.idea
+
+Dockerfile
+docker-compose.yml
