@@ -1,5 +1,5 @@
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from "serwist";
+import { NetworkOnly, Serwist } from "serwist";
 import { defaultCache } from "@serwist/turbopack/worker";
 
 declare global {
@@ -18,12 +18,27 @@ declare const self: ServiceWorkerGlobalScope;
  * local-first (Dexie/outbox), así que esto solo cubre una navegación nueva
  * a una ruta que todavía no está en caché sin red, nunca el guardado de datos.
  */
+/**
+ * B5/C25 — `defaultCache` (en producción) trae un `NetworkFirst` de 24h
+ * para todo `/api/*` (cache `"apis"`). Eso incluye `/api/fx`: una respuesta
+ * con el override manual de un household, o directamente un 401, quedaba
+ * en CacheStorage sin purga posible (no había logout, ver B4) — la
+ * cotización de ayer se servía como si fuera de hoy sin tocar la red. Esta
+ * regla va ANTES de `...defaultCache` a propósito: el primer matcher que
+ * coincide gana, así que esto le gana a la regla `NetworkFirst` de más
+ * abajo para cualquier `/api/*`, sin tocar el resto de `defaultCache`.
+ */
+const API_NETWORK_ONLY: RuntimeCaching = {
+  matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && pathname.startsWith("/api/"),
+  handler: new NetworkOnly(),
+};
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [API_NETWORK_ONLY, ...defaultCache],
   fallbacks: {
     entries: [
       {

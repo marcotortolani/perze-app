@@ -21,6 +21,13 @@ export const env = createEnv({
     // sigue mostrando las preferencias, pero `subscribeToPush` falla explícito
     // (nunca en silencio) en vez de dejar suscribirse a un push que no puede llegar.
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+    // B18 — era la única variable pública que se leía directo de
+    // `process.env` en vez de pasar por acá (`onboarding/page.tsx`),
+    // invisible para quien hace self-host y solo mira este contrato.
+    // CSV de "google"/"apple" — cuáles OAuth providers están registrados
+    // en Supabase Auth (CLAUDE.md § "Orden de A2"); vacío = sin OAuth, los
+    // botones no se dibujan (nunca deshabilitados).
+    NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: z.string().optional(),
   },
   shared: {
     NODE_ENV: z.enum(["development", "production", "test"]),
@@ -31,5 +38,6 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS,
   },
 });

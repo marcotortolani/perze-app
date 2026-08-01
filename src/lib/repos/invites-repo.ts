@@ -12,11 +12,18 @@ export interface HouseholdInvite {
   acceptedBy: string | null;
 }
 
+/**
+ * E4 — `Math.random()` es un PRNG no criptográfico (xorshift128+, estado
+ * recuperable): el código de invitación es la única credencial que
+ * consume `accept_invite` y otorga lectura completa de las finanzas del
+ * household, así que necesita `crypto.getRandomValues`. 11 caracteres
+ * sobre un alfabeto de 32 símbolos (antes 8) — más entropía sin perder
+ * lo cómodo de tipear a mano si no se puede compartir el link (J3).
+ */
 function randomCode(): string {
-  // 8 caracteres alfanuméricos en mayúscula — cómodo de tipear a mano si
-  // no se puede compartir el link (J3, invitación por código).
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I, ambiguos al tipear
-  return Array.from({ length: 8 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  const bytes = crypto.getRandomValues(new Uint8Array(11));
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
 }
 
 /**

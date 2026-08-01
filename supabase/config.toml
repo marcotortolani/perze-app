@@ -179,10 +179,13 @@ enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
-minimum_password_length = 6
+# E15 — 6 sin composición daba ~10^6 combinaciones sobre el flujo principal
+# de login, con `sign_in_sign_ups = 30` cada 5 minutos (~360/hora/IP): un
+# ataque de fuerza bruta lo agota en horas, no en años.
+minimum_password_length = 8
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
-password_requirements = ""
+password_requirements = "lower_upper_letters_digits"
 
 # Configure passkey sign-ins.
 # [auth.passkey]
@@ -211,6 +214,14 @@ token_verifications = 30
 web3 = 30
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# E16 — sin captcha y con `enable_signup = true` abierto (arriba), crear
+# cuentas a escala es trivial: cada una es un JWT válido que habilita
+# E1 (invocar send-push) y E4 (generar invitaciones). NO se activa acá
+# directamente: este archivo gobierna `supabase start` (local) y activar
+# un provider real rompería el dev local sin las keys correspondientes.
+# Antes de producción: configurar Turnstile/hCaptcha en el dashboard del
+# proyecto remoto (Authentication → Settings → Bot and Abuse Protection),
+# no en este archivo.
 # [auth.captcha]
 # enabled = true
 # provider = "hcaptcha"
@@ -223,6 +234,9 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
+# E16 — el login real de la app es OTP (el propio código de verificación
+# YA confirma el email), así que esto queda en `false` a propósito acá:
+# no es la brecha, ver la nota de `[auth.captcha]` arriba para la real.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
@@ -231,7 +245,11 @@ max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# E15 — el flujo real de login de la app es OTP puro (signInWithOtp, sin
+# contraseña en ningún lado del onboarding), así que esta es la ventana que
+# de verdad importa: 1h de vigencia sobre un código de 6 dígitos es mucho
+# tiempo para un atacante con `token_verifications = 30` cada 5 minutos.
+otp_expiry = 600
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -370,6 +388,16 @@ enabled = false
 authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
+
+# E1 — sin esta sección, el gate default de la plataforma acepta como JWT
+# válido la anon key (pública, va en el bundle del cliente): cualquiera
+# podía invocar `send-push` sin ninguna credencial real. `verify_jwt = true`
+# exige un JWT válido en `Authorization` antes de que la función corra —
+# la función en sí además distingue un JWT de `service_role` (cron/trigger
+# de sistema, confianza total) de uno de usuario real (debe ser miembro
+# del household, ver `send-push/index.ts`).
+[functions.send-push]
+verify_jwt = true
 
 [edge_runtime]
 enabled = true
