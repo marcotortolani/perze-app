@@ -32,7 +32,7 @@ export default function NewGoalPage() {
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const account = accounts.find((a) => a.id === accountId);
   const canSave = name.trim() !== "" && expr.trim() !== "";

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { hashPin } from "@/lib/security/pin-hash";
+import { constantTimeEqual, generateSalt, hashPin, hashPinLegacy } from "@/lib/security/pin-hash";
 
 /** 3 intentos errados = 30s de espera — nunca borrado de datos (CLAUDE.md § PIN). */
 const LOCKOUT_AFTER_ATTEMPTS = 3;
@@ -9,6 +9,8 @@ const LOCKOUT_MS = 30_000;
 interface PinState {
   enabled: boolean;
   pinHash: string | null;
+  /** `null` = hash legacy sin sal (pre-B12), todavía no migrado. */
+  pinSalt: string | null;
   failedAttempts: number;
   lockedUntil: number | null;
   setPin: (pin: string) => Promise<void>;
@@ -23,21 +25,38 @@ export const usePinStore = create<PinState>()(
     (set, get) => ({
       enabled: false,
       pinHash: null,
+      pinSalt: null,
       failedAttempts: 0,
       lockedUntil: null,
 
       setPin: async (pin) => {
-        const pinHash = await hashPin(pin);
-        set({ enabled: true, pinHash, failedAttempts: 0, lockedUntil: null });
+        const salt = generateSalt();
+        const pinHash = await hashPin(pin, salt);
+        set({ enabled: true, pinHash, pinSalt: salt, failedAttempts: 0, lockedUntil: null });
       },
 
-      disable: () => set({ enabled: false, pinHash: null, failedAttempts: 0, lockedUntil: null }),
+      disable: () => set({ enabled: false, pinHash: null, pinSalt: null, failedAttempts: 0, lockedUntil: null }),
 
       verify: async (pin) => {
-        const { pinHash, lockedUntil } = get();
+        const { pinHash, pinSalt, lockedUntil } = get();
         if (lockedUntil && Date.now() < lockedUntil) return false;
-        const candidate = await hashPin(pin);
-        const ok = candidate === pinHash;
+
+        let ok: boolean;
+        if (pinSalt) {
+          ok = constantTimeEqual(await hashPin(pin, pinSalt), pinHash ?? "");
+        } else {
+          // B12 — migración transparente: el hash legacy (pre-sal) todavía
+          // vive acá. Si el PIN tipeado matchea contra el esquema viejo, se
+          // re-hashea con PBKDF2 + sal nueva y se reemplaza — nunca se
+          // vuelve a escribir un hash sin sal a partir de acá.
+          ok = constantTimeEqual(await hashPinLegacy(pin), pinHash ?? "");
+          if (ok) {
+            const salt = generateSalt();
+            const migratedHash = await hashPin(pin, salt);
+            set({ pinHash: migratedHash, pinSalt: salt });
+          }
+        }
+
         if (ok) {
           set({ failedAttempts: 0, lockedUntil: null });
           return true;
@@ -54,6 +73,19 @@ export const usePinStore = create<PinState>()(
         return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
       },
     }),
-    { name: "perze-pin", partialize: (state) => ({ enabled: state.enabled, pinHash: state.pinHash }) }
+    {
+      name: "perze-pin",
+      // B8 — antes `partialize` solo guardaba `enabled`/`pinHash`:
+      // `failedAttempts`/`lockedUntil` vivían solo en memoria y un F5 (o
+      // cerrar y volver a abrir la pestaña) anulaba el lockout de 30s a
+      // mitad de la espera. Ahora sobreviven al reload.
+      partialize: (state) => ({
+        enabled: state.enabled,
+        pinHash: state.pinHash,
+        pinSalt: state.pinSalt,
+        failedAttempts: state.failedAttempts,
+        lockedUntil: state.lockedUntil,
+      }),
+    }
   )
 );

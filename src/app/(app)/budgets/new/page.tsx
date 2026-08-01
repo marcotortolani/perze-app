@@ -30,7 +30,7 @@ export default function NewBudgetPage() {
 
   const expenseCategories = categories.filter((c) => c.kind === "expense" && c.parentId === null);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const canSave = expr.trim() !== "";
 

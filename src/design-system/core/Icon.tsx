@@ -51,6 +51,7 @@ import {
   PlusIcon,
   ReceiptIcon,
   ShoppingCartIcon,
+  SignOutIcon,
   TagIcon,
   TargetIcon,
   TrashIcon,
@@ -141,6 +142,8 @@ const ICONS = {
   "shopping-cart": ShoppingCartIcon,
   utensils: ForkKnifeIcon,
   "trending-up": TrendUpIcon,
+  // B4 — logout (más/ajustes), agregado con el fix de sesión.
+  "sign-out": SignOutIcon,
 } satisfies Record<string, PhosphorIcon>;
 
 export type IconName = keyof typeof ICONS;

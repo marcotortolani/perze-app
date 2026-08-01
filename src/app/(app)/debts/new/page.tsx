@@ -56,7 +56,7 @@ export default function NewDebtPage() {
   const defaultExpr = sourceTransaction ? String(toMajorUnitsUnsafe(money(sourceTransaction.amount, sourceTransaction.currencyCode))).replace(".", ",") : "";
   const defaultAccountId = sourceTransaction?.accountId ?? null;
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const name = nameOverride ?? defaultName;
   const expr = exprOverride ?? defaultExpr;

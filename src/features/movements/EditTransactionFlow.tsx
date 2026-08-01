@@ -60,6 +60,8 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
 
   const handleCreateCategory = async (name: string) => {
+    // B3 — nunca escribir con un uid que no sea real.
+    if (!userId) throw new Error("sin sesión");
     const created = await categoriesRepo.create(
       buildNewCategoryInput({ householdId: household.id, name, kind: categoryKind, createdBy: userId, existing: sameKindCategories })
     );

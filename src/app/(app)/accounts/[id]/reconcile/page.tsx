@@ -27,7 +27,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const [expr, setExpr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  if (isLoading || !household) return <Skeleton height={300} />;
+  if (isLoading || !household || !userId) return <Skeleton height={300} />;
   if (!account) return <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
 
   const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode);

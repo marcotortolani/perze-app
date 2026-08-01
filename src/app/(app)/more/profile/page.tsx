@@ -14,11 +14,11 @@ export default function ProfilePage() {
   const t = useTranslations();
   const router = useRouter();
   const userId = useCurrentUserId();
-  const profileQuery = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId), enabled: !!userId });
+  const profileQuery = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
   const [name, setName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  if (profileQuery.isLoading) return <Skeleton height={200} style={{ marginTop: 16 }} />;
+  if (profileQuery.isLoading || !userId) return <Skeleton height={200} style={{ marginTop: 16 }} />;
 
   const displayName = name ?? profileQuery.data?.displayName ?? "";
 

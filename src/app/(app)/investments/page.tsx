@@ -37,7 +37,7 @@ export default function InvestmentsPage() {
   const pricesQuery = useLatestPrices(instrumentIds);
 
   if (household && !household.enabledModules.includes("investments")) return null;
-  if (!household || !portfolios || !assetClasses || !instruments) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  if (!household || !portfolios || !assetClasses || !instruments || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   if (!portfolio) {
     return (

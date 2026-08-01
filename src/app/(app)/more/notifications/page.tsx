@@ -20,8 +20,8 @@ export default function NotificationsPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
-  const { data: prefs } = useNotificationPreferences(household?.id, userId);
-  const invalidate = useInvalidateNotificationPreferences(household?.id, userId);
+  const { data: prefs } = useNotificationPreferences(household?.id, userId ?? undefined);
+  const invalidate = useInvalidateNotificationPreferences(household?.id, userId ?? undefined);
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
 
@@ -29,7 +29,7 @@ export default function NotificationsPage() {
     getCurrentPushSubscription().then((sub) => setPushEnabled(sub !== null));
   }, []);
 
-  if (!household || !prefs || pushEnabled === null) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  if (!household || !prefs || pushEnabled === null || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const handleTogglePush = async (on: boolean) => {
     setPushBusy(true);

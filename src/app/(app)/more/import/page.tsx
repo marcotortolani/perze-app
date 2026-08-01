@@ -48,7 +48,7 @@ export default function ImportCsvPage() {
   const account = accounts.find((a) => a.id === accountId);
   const importedRows: ImportedRow[] = useMemo(() => applyColumnMapping(dataRows, mapping), [dataRows, mapping]);
 
-  if (!household) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  if (!household || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const handleFile = async (file: File) => {
     const text = await file.text();

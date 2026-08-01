@@ -30,7 +30,7 @@ export default function CategoryTemplatePage() {
 
   const usedCategoryIds = useMemo(() => new Set((transactions ?? []).map((tx) => tx.categoryId).filter((id): id is string => id !== null)), [transactions]);
 
-  if (!household || !categories || !transactions) {
+  if (!household || !categories || !transactions || !userId) {
     return (
       <div style={{ paddingTop: 16 }}>
         <Skeleton width={160} height={20} style={{ marginBottom: 20 }} />

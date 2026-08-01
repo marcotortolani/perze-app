@@ -14,6 +14,7 @@ import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import type { AccountRow } from "@/lib/db/schema";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
+import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { AccountPickerSheet } from "./AccountPickerSheet";
 import { AmountStep } from "./AmountStep";
@@ -61,6 +62,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const backspaceAmount = useCaptureDraftStore((s) => s.backspaceAmount);
   const clearAmount = useCaptureDraftStore((s) => s.clearAmount);
   const resetForBurst = useCaptureDraftStore((s) => s.resetForBurst);
+  const recordSave = useCaptureRecencyStore((s) => s.recordSave);
   const reset = useCaptureDraftStore((s) => s.reset);
 
   const [step, setStep] = useState<Step>("amount");
@@ -78,7 +80,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
 
   const handleCreateCategory = async (name: string) => {
-    if (!household) throw new Error("no household");
+    if (!household || !userId) throw new Error("no household o sin sesión");
     const created = await categoriesRepo.create(
       buildNewCategoryInput({ householdId: household.id, name, kind: categoryKind, createdBy: userId, existing: sameKindCategories })
     );
@@ -93,14 +95,18 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   };
 
   const canSave = () => {
-    if (!household || !account) return false;
+    if (!household || !account || !userId) return false;
     if (draft.amountExpression.trim() === "") return false;
     if (draft.kind === "transfer") return !!counterAccount;
     return !!draft.categoryId;
   };
 
   const doSave = async () => {
-    if (!household || !account) return;
+    // B3 — nunca escribir con un uid que no sea real: `undefined` (todavía
+    // cargando) y `null` (sin sesión) bloquean el guardado igual. Distinto
+    // del PIN pre-auth (CLAUDE.md): esto es la sesión de Supabase, no el
+    // bloqueo local — sin ella, la escritura jamás va a pasar RLS.
+    if (!household || !account || !userId) return;
     // Se lee `getState()` en vez del `draft` reactivo de este closure: si
     // esta función corre justo después de un `setField` (p. ej. el chip de
     // categoría frecuente), el closure todavía tendría el valor viejo.
@@ -116,6 +122,8 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       counterAccount: latestCounterAccount,
     });
     invalidateTransactions();
+    // B14 — habilita los 60s de edición sin PIN sobre este movimiento puntual.
+    recordSave(tx.id);
 
     // El toast vive en el `<Toaster>` global (providers.tsx), no en este
     // componente: tiene que sobrevivir a que `CaptureFlow` se desmonte al
@@ -156,7 +164,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     onClose?.();
   };
 
-  if (!household) {
+  if (!household || !userId) {
     return (
       <ScreenShell style={{ alignItems: "center", justifyContent: "center" }}>
         <p className="t-body" style={{ color: "var(--text-secondary)" }}>

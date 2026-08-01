@@ -34,7 +34,7 @@ export default function NewRecurringRulePage() {
   const [sheet, setSheet] = useState<"none" | "account" | "category">("none");
   const [saving, setSaving] = useState(false);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const account = accounts.find((a) => a.id === accountId);
   const category = categories.find((c) => c.id === categoryId);

@@ -36,7 +36,7 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const [sheet, setSheet] = useState<"none" | "instrument" | "account">("none");
   const [saving, setSaving] = useState(false);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const instrument = instruments.find((i) => i.id === instrumentId);
   const account = accounts.find((a) => a.id === accountId);

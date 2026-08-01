@@ -19,7 +19,7 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
   const { data: account, isLoading } = useAccount(id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
-  if (isLoading || !household) return null;
+  if (isLoading || !household || !userId) return null;
   if (!account) return <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
 
   return (

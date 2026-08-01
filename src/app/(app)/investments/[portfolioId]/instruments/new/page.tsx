@@ -33,7 +33,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
   const [couponFrequency, setCouponFrequency] = useState("2");
   const [saving, setSaving] = useState(false);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const selectedAssetClass = assetClasses.find((a) => a.id === assetClassId);
   const isFixedIncome = selectedAssetClass ? FIXED_INCOME_CLASS_NAMES.has(selectedAssetClass.name) : false;
