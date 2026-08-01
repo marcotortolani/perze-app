@@ -2405,6 +2405,7 @@ export type Database = {
           installment_total: number | null
           kind: string
           location: Json | null
+          needs_capture_fx: boolean | null
           note: string | null
           occurred_at: string
           original_amount: number | null
@@ -2446,6 +2447,7 @@ export type Database = {
           installment_total?: number | null
           kind: string
           location?: Json | null
+          needs_capture_fx?: boolean | null
           note?: string | null
           occurred_at: string
           original_amount?: number | null
@@ -2487,6 +2489,7 @@ export type Database = {
           installment_total?: number | null
           kind?: string
           location?: Json | null
+          needs_capture_fx?: boolean | null
           note?: string | null
           occurred_at?: string
           original_amount?: number | null
