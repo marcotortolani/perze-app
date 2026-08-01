@@ -20,6 +20,8 @@ export interface SankeyProps {
   orientation?: "vertical" | undefined;
   width?: number | undefined;
   height?: number | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -32,7 +34,7 @@ const NODE_WIDTH = 12;
  * descendente); labels sobre la banda, nunca adentro (bandas finas no
  * tienen lugar para texto legible).
  */
-export function Sankey({ nodes, links, width = 320, height = 320, style }: SankeyProps) {
+export function Sankey({ nodes, links, width = 320, height = 320, ariaLabel, style }: SankeyProps) {
   const columns = [...new Set(nodes.map((n) => n.column))].sort((a, b) => a - b);
   const columnWidth = columns.length > 1 ? width / (columns.length - 1) : width;
 
@@ -56,8 +58,10 @@ export function Sankey({ nodes, links, width = 320, height = 320, style }: Sanke
     }
   }
 
+  const summary = ariaLabel ?? links.map((l) => `${l.source} → ${l.target}: ${l.value}`).join(", ");
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
+    <svg role="img" aria-label={summary} viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
       {links.map((l, i) => {
         const s = positioned.get(l.source);
         const t = positioned.get(l.target);

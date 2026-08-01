@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { EmptyState, FxEditor, GroupCard, Icon, Sheet, Skeleton } from "@/design-system";
+import { EmptyState, FxEditor, GroupCard, IconButton, Sheet, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
 import { fxRepo } from "@/lib/repos/fx-repo";
@@ -79,9 +79,7 @@ export default function ResolveFxPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 16, paddingBottom: 24 }}>
-      <button type="button" onClick={() => router.push("/accounts")} aria-label={t("accountsPage.resolveFx.back")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-        <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-      </button>
+      <IconButton icon="chevron-left" ariaLabel={t("accountsPage.resolveFx.back")} onClick={() => router.push("/accounts")} style={{ alignSelf: "flex-start", margin: -11 }} />
       <p className="t-body" style={{ color: "var(--text-secondary)" }}>
         {t("accountsPage.resolveFx.explanation")}
       </p>

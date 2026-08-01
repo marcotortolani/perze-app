@@ -1,5 +1,6 @@
 import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import type { NumberLocale } from "@/lib/money/parse";
 import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
@@ -11,6 +12,8 @@ export interface UpdateDraftParams {
   household: HouseholdRow;
   account: AccountRow;
   counterAccount?: AccountRow | undefined;
+  /** D13/auditoría — ver el mismo comentario en `save-transaction.ts`. */
+  numberLocale?: NumberLocale | undefined;
 }
 
 /**
@@ -20,13 +23,13 @@ export interface UpdateDraftParams {
  * así que un cambio de cuenta, monto o moneda queda contable sin casos
  * especiales acá.
  */
-export async function updateTransactionFromDraft({ transactionId, draft, household, account, counterAccount }: UpdateDraftParams): Promise<TransactionRow> {
+export async function updateTransactionFromDraft({ transactionId, draft, household, account, counterAccount, numberLocale = "es-UY" }: UpdateDraftParams): Promise<TransactionRow> {
   const date = draft.occurredAt.slice(0, 10);
 
   // Misma primera conversión que saveDraftAsTransaction: amount/currencyCode
   // siempre terminan en la moneda de la cuenta, nunca en la capturada.
   const capturedCurrency = draft.currency || account.currencyCode;
-  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency);
+  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency, numberLocale);
 
   let amount = capturedAmount;
   let original: Pick<TransactionRow, "originalAmount" | "originalCurrency" | "originalRate"> = {

@@ -98,6 +98,18 @@
     "needsFxBanner": {
       "message": "{count, plural, one {# movimento sem cotação} other {# movimentos sem cotação}}",
       "resolve": "Resolver"
+    },
+    "otpInput": {
+      "groupLabel": "Código de verificação",
+      "digitLabel": "Dígito {index} de {total}"
+    },
+    "keypad": {
+      "operatorPlus": "Somar",
+      "operatorMinus": "Subtrair",
+      "operatorMultiply": "Multiplicar",
+      "operatorDivide": "Dividir",
+      "backspace": "Apagar",
+      "decimalSeparator": "Separador decimal"
     }
   },
   "reference": {

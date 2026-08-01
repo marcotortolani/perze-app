@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import { Button, Chip, Icon, Input, Keypad, OptionCard, SegmentedControl, Switch } from "@/design-system";
+import { useLocale, useTranslations } from "next-intl";
+import { Button, Chip, Icon, IconButton, Input, Keypad, OptionCard, SegmentedControl, Switch } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
@@ -12,6 +12,7 @@ import { COUNTRIES, CURRENCIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/coun
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { todayIso } from "@/lib/repos/ids";
 import type { AccountKind, AccountRow, Visibility } from "@/lib/db/schema";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 const KIND_ICON: Record<AccountKind, IconName> = {
   cash: "banknote",
@@ -36,6 +37,7 @@ export interface AccountFormFlowProps {
 /** E3 — crear/editar cuenta. Bloque E, Fase 8. */
 export function AccountFormFlow({ householdId, userId, existing, onClose, onSaved }: AccountFormFlowProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const KIND_OPTIONS: Array<{ id: AccountKind; label: string; description: string; icon: IconName }> = [
     { id: "cash", label: t(ACCOUNT_KIND_MESSAGE_KEY.cash), description: t("accounts.form.kindDescription.cash"), icon: KIND_ICON.cash },
     { id: "checking", label: t(ACCOUNT_KIND_MESSAGE_KEY.checking), description: t("accounts.form.kindDescription.checking"), icon: KIND_ICON.checking },
@@ -70,7 +72,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const openingBalance = existing ? existing.openingBalance : evaluateKeypadExpression(openingExpr || "0", currencyCode).amount;
+      const openingBalance = existing ? existing.openingBalance : evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
       const patch = {
         name: name.trim(),
         kind,
@@ -113,14 +115,12 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <button
-          type="button"
+        <IconButton
+          icon={step === "details" && !existing ? "chevron-left" : "close"}
+          ariaLabel={step === "details" && !existing ? t("accounts.form.back") : t("accounts.form.close")}
           onClick={() => (step === "details" && !existing ? setStep("kind") : onClose())}
-          aria-label={step === "details" && !existing ? t("accounts.form.back") : t("accounts.form.close")}
-          style={{ background: "none", border: 0, cursor: "pointer", padding: 8, margin: -8 }}
-        >
-          <Icon name={step === "details" && !existing ? "chevron-left" : "close"} size={22} color="var(--text-secondary)" />
-        </button>
+          style={{ margin: -11 }}
+        />
         <span className="t-label" style={{ color: "var(--text-secondary)" }}>
           {existing ? t("accounts.form.editTitle") : t("accounts.form.newTitle")}
         </span>

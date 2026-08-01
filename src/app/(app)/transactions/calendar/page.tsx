@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Icon, Skeleton, TransactionRow } from "@/design-system";
+import { Icon, IconButton, Skeleton, TransactionRow } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -71,9 +71,7 @@ export default function MovementsCalendarPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <button type="button" onClick={() => router.push("/transactions")} aria-label={t("transactions.calendar.back")} style={{ background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-          <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-        </button>
+        <IconButton icon="chevron-left" ariaLabel={t("transactions.calendar.back")} onClick={() => router.push("/transactions")} style={{ margin: -11 }} />
         <span className="t-body" style={{ fontWeight: 600, textTransform: "capitalize" }}>
           {new Date(year, month, 1).toLocaleDateString(locale, { month: "long", year: "numeric" })}
         </span>

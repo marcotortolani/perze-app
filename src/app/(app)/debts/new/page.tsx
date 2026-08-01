@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, Button, Input, Keypad, ListRow, SegmentedControl, Sheet } from "@/design-system";
+import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -29,6 +30,7 @@ const KINDS: DebtKind[] = ["installment_plan", "loan", "personal", "credit_line"
  */
 export default function NewDebtPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromTransactionId = searchParams.get("fromTransaction") ?? undefined;
@@ -53,7 +55,7 @@ export default function NewDebtPage() {
   // evita el round-trip de setState en un useEffect (ver CLAUDE.md,
   // patrón ya usado en split/page.tsx y goals/[id]/page.tsx).
   const defaultName = sourceTransaction ? (sourceCategory?.name ?? t("debtsPage.fromTransactionDefaultName")) : "";
-  const defaultExpr = sourceTransaction ? String(toMajorUnitsUnsafe(money(sourceTransaction.amount, sourceTransaction.currencyCode))).replace(".", ",") : "";
+  const defaultExpr = sourceTransaction ? String(toMajorUnitsUnsafe(money(sourceTransaction.amount, sourceTransaction.currencyCode))).replace(".", decimalSeparatorForLocale(locale)) : "";
   const defaultAccountId = sourceTransaction?.accountId ?? null;
 
   if (!household) return null;
@@ -69,7 +71,7 @@ export default function NewDebtPage() {
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const principal = evaluateKeypadExpression(expr, household.baseCurrency);
+      const principal = evaluateKeypadExpression(expr, household.baseCurrency, numberLocaleForUiLocale(locale));
       const startDate = new Date();
       const debt = await debtsRepo.create({
         householdId: household.id,

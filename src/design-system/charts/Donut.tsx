@@ -13,6 +13,8 @@ export interface DonutProps {
   dimension?: ReactNode | undefined;
   onDrill?: ((label: string) => void) | undefined;
   size?: number | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -20,8 +22,9 @@ const SLOTS = ["var(--data-1)", "var(--data-2)", "var(--data-3)", "var(--data-4)
 const GAP_DEG = 2;
 
 /** LIB-06: donut de composición — 5 slots + "Otros", separadores de 2px, total en el centro. */
-export function Donut({ slices, dimension, onDrill, size = 180, style }: DonutProps) {
+export function Donut({ slices, dimension, onDrill, size = 180, ariaLabel, style }: DonutProps) {
   const total = slices.reduce((s, x) => s + x.value, 0) || 1;
+  const summary = ariaLabel ?? slices.map((s) => `${s.label}: ${Math.round((s.value / total) * 100)}%`).join(", ");
   const radius = size / 2;
   const thickness = radius * 0.28;
   const innerRadius = radius - thickness;
@@ -47,7 +50,7 @@ export function Donut({ slices, dimension, onDrill, size = 180, style }: DonutPr
 
   return (
     <div style={{ position: "relative", width: size, height: size, ...style }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg role="img" aria-label={summary} width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {arcs.map((a) => (
           <path
             key={a.label}

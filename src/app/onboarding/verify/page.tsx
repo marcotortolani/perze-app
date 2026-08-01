@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Icon, OtpInput, ZMark } from "@/design-system";
+import { IconButton, OtpInput, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
@@ -50,9 +50,7 @@ export default function OnboardingVerifyPage() {
 
   return (
     <ScreenShell style={{ padding: "48px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 32 }}>
-      <button type="button" onClick={() => router.push("/onboarding")} aria-label={t("onboarding.verify.back")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-        <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-      </button>
+      <IconButton icon="chevron-left" ariaLabel={t("onboarding.verify.back")} onClick={() => router.push("/onboarding")} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
         <h1 className="t-title" style={{ margin: 0 }}>{t("onboarding.verify.title")}</h1>

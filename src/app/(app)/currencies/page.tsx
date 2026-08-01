@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { EmptyState, FxEditor, Icon, Input, RateRow, Sheet, Skeleton, StatusBadge } from "@/design-system";
+import { EmptyState, FxEditor, Icon, IconButton, Input, RateRow, Sheet, Skeleton, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
@@ -62,9 +62,7 @@ export default function CurrenciesPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <button type="button" onClick={() => router.push("/accounts")} aria-label={t("currenciesPage.back")} style={{ background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-          <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-        </button>
+        <IconButton icon="chevron-left" ariaLabel={t("currenciesPage.back")} onClick={() => router.push("/accounts")} style={{ margin: -11 }} />
         <button
           type="button"
           onClick={() => queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] })}

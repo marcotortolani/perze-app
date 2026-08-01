@@ -29,20 +29,23 @@ export function NeedsFxBanner({ count, onResolve, style }: NeedsFxBannerProps) {
         gap: 8,
         padding: "10px var(--screen-padding)",
         background: "color-mix(in srgb, var(--warning) 12%, transparent)",
-        color: "var(--warning)",
+        // D4/auditoría: `--warning` da 1,76:1 contra `--page` en claro — muy
+        // por debajo de AA. Va solo en el ícono (abajo); el texto usa
+        // `--text-primary`, que sí pasa AA en los dos modos.
+        color: "var(--text-primary)",
         fontFamily: "var(--font-sans)",
         fontSize: 13,
         fontWeight: 500,
         ...style,
       }}
     >
-      <Icon name="alert" size={15} strokeWidth={2} />
+      <Icon name="alert" size={15} strokeWidth={2} color="var(--warning)" />
       <span>{t("ds.needsFxBanner.message", { count })}</span>
       {onResolve ? (
         <button
           type="button"
           onClick={onResolve}
-          style={{ marginLeft: "auto", minHeight: 32, background: "none", border: 0, cursor: "pointer", color: "var(--warning)", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, padding: "0 4px" }}
+          style={{ marginLeft: "auto", minHeight: 32, background: "none", border: 0, cursor: "pointer", color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, padding: "0 4px" }}
         >
           {t("ds.needsFxBanner.resolve")}
         </button>

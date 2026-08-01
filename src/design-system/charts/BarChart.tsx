@@ -17,11 +17,13 @@ export interface BarChartProps {
   gridLines?: number | undefined;
   /** Labels directos selectivos únicamente — nunca un número sobre cada barra. */
   labelExtremes?: boolean | undefined;
+  /** D12/auditoría: resumen para lectores de pantalla. Sin esto el SVG es mudo o se lee fragmento por fragmento. Por defecto se arma de `data` (label + value); pasá esto para un resumen mejor con contexto que el componente no tiene (unidad, período). */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Gráfico de barras: extremos redondeados de 4px anclados a la baseline, grilla recesiva, sin fondo de gráfico. */
-export function BarChart({ data = [], height = 130, color = "var(--data-1)", gridLines = 3, labelExtremes = true, style }: BarChartProps) {
+export function BarChart({ data = [], height = 130, color = "var(--data-1)", gridLines = 3, labelExtremes = true, ariaLabel, style }: BarChartProps) {
   const w = 320;
   const h = height;
   const base = h - 30;
@@ -30,9 +32,10 @@ export function BarChart({ data = [], height = 130, color = "var(--data-1)", gri
   const barW = Math.min(30, slot - 9);
   const maxIdx = data.findIndex((d) => d.value === max);
   const maxDatum = data[maxIdx];
+  const summary = ariaLabel ?? data.map((d) => `${d.label}: ${d.display ?? d.value}`).join(", ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
+    <svg role="img" aria-label={summary} viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
       {Array.from({ length: gridLines }, (_, i) => {
         const y = base - ((i + 1) / (gridLines + 1)) * base;
         return <line key={i} x1="0" y1={y} x2={w} y2={y} stroke="var(--gridline)" strokeWidth="1" />;

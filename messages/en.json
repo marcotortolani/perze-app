@@ -98,6 +98,18 @@
     "needsFxBanner": {
       "message": "{count, plural, one {# item without a rate} other {# items without a rate}}",
       "resolve": "Resolve"
+    },
+    "otpInput": {
+      "groupLabel": "Verification code",
+      "digitLabel": "Digit {index} of {total}"
+    },
+    "keypad": {
+      "operatorPlus": "Add",
+      "operatorMinus": "Subtract",
+      "operatorMultiply": "Multiply",
+      "operatorDivide": "Divide",
+      "backspace": "Backspace",
+      "decimalSeparator": "Decimal separator"
     }
   },
   "reference": {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button, Icon, Keypad } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingHydrated, useOnboardingStore } from "@/stores/onboarding-store";
@@ -11,6 +11,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void> };
 
@@ -25,6 +26,7 @@ function isIos(): boolean {
  */
 export default function OnboardingCompletePage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const hydrated = useOnboardingHydrated();
@@ -53,7 +55,7 @@ export default function OnboardingCompletePage() {
 
   const handleSaveBalance = async () => {
     if (account && expr.trim() !== "") {
-      const amount = evaluateKeypadExpression(expr, account.currencyCode);
+      const amount = evaluateKeypadExpression(expr, account.currencyCode, numberLocaleForUiLocale(locale));
       await accountsRepo.update(account.id, { openingBalance: amount.amount, currentBalance: amount.amount });
       invalidateAccounts();
     }

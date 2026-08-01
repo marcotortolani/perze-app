@@ -1,4 +1,5 @@
 export { Icon, type IconName, type IconProps } from "./Icon";
+export { IconButton, type IconButtonProps } from "./IconButton";
 export { Logo, type LogoProps } from "./Logo";
 export { Card, type CardProps } from "./Card";
 export { Button, type ButtonProps } from "./Button";

@@ -1,26 +1,36 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { normalizeSize } from "./size";
 
 export interface OverlayProps {
   open: boolean;
   onClose: () => void;
-  labelledBy?: string;
+  labelledBy?: string | undefined;
   children: ReactNode;
+  /**
+   * D3 — `Sheet` reusa esta primitiva para el portal/trap de foco/Escape/
+   * scroll lock, en vez de reimplementarlos: `"dialog"` (default) es la
+   * caja centrada en escritorio / anclada abajo en móvil que ya usaba el
+   * buscador; `"sheet"` es SIEMPRE bottom sheet (radio solo arriba,
+   * `--shadow-sheet`, ancho completo) sea cual sea el viewport — un sheet
+   * no se vuelve un diálogo centrado en desktop.
+   */
+  variant?: "dialog" | "sheet" | undefined;
+  /** Solo con `variant="sheet"` — alto del panel, ver `normalizeSize()`. */
+  height?: number | string | undefined;
+  style?: CSSProperties | undefined;
 }
 
 /**
- * Primitiva de diálogo flotante — no existía ninguna en el design system
- * (`Sheet` es solo móvil, sin portal ni trampa de foco). La usa el
- * buscador (`search-overlay.tsx`); no migra `Sheet`/`Modal` a esto todavía.
- *
- * Portal a `document.body`, foco atrapado y restaurado al cerrar, Escape
- * cierra, scroll del body bloqueado mientras está abierto. Geometría:
- * anclado abajo en móvil/tablet (`<1024px`), centrado en escritorio.
+ * Primitiva de diálogo flotante — portal a `document.body`, foco atrapado
+ * y restaurado al cerrar, Escape cierra, scroll del body bloqueado
+ * mientras está abierto. Sin esto cada consumidor (el buscador, y ahora
+ * `Sheet`) tenía que reimplementar las cuatro cosas por separado.
  */
-export function Overlay({ open, onClose, labelledBy, children }: OverlayProps) {
+export function Overlay({ open, onClose, labelledBy, children, variant = "dialog", height, style }: OverlayProps) {
   const isDesktop = useIsDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
@@ -65,6 +75,8 @@ export function Overlay({ open, onClose, labelledBy, children }: OverlayProps) {
 
   if (!open || typeof document === "undefined") return null;
 
+  const isSheet = variant === "sheet";
+
   return createPortal(
     <div
       role="presentation"
@@ -76,8 +88,8 @@ export function Overlay({ open, onClose, labelledBy, children }: OverlayProps) {
         background: "var(--scrim)",
         display: "flex",
         justifyContent: "center",
-        alignItems: isDesktop ? "flex-start" : "flex-end",
-        paddingTop: isDesktop ? "12vh" : 0,
+        alignItems: isSheet ? "flex-end" : isDesktop ? "flex-start" : "flex-end",
+        paddingTop: !isSheet && isDesktop ? "12vh" : 0,
       }}
     >
       <div
@@ -87,9 +99,21 @@ export function Overlay({ open, onClose, labelledBy, children }: OverlayProps) {
         aria-labelledby={labelledBy}
         onClick={(e) => e.stopPropagation()}
         style={
-          isDesktop
-            ? { width: 640, maxWidth: "92vw", maxHeight: "70dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet)", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
-            : { width: "100%", maxHeight: "85dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
+          isSheet
+            ? {
+                position: "relative",
+                width: "100%",
+                background: "var(--surface-2)",
+                borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0",
+                boxShadow: "var(--shadow-sheet)",
+                padding: "10px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))",
+                height: normalizeSize(height ?? "auto"),
+                overflow: "auto",
+                ...style,
+              }
+            : isDesktop
+              ? { width: 640, maxWidth: "92vw", maxHeight: "70dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet)", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
+              : { width: "100%", maxHeight: "85dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
         }
       >
         {children}

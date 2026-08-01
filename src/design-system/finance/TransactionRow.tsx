@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ElementType } from "react";
 import { Icon, type IconName } from "../core/Icon";
 import { Amount } from "../money/Amount";
 import type { Money } from "@/lib/money/money";
@@ -50,8 +50,14 @@ export function TransactionRow({
   style,
 }: TransactionRowProps) {
   const [pressed, setPressed] = useState(false);
+  // D2 — mismo patrón que `ListRow.tsx`: sin `onClick` es una fila pasiva
+  // (`div`); con `onClick` tiene que ser un `<button>` real — antes era
+  // siempre `div`, así que un movimiento clickeable no aparecía en el
+  // orden de tabulación ni respondía a Enter/Espacio.
+  const Tag: ElementType = onClick ? "button" : "div";
   return (
-    <div
+    <Tag
+      type={onClick ? "button" : undefined}
       onClick={onClick}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}
@@ -60,7 +66,13 @@ export function TransactionRow({
         display: "flex",
         alignItems: "center",
         gap: 14,
+        width: "100%",
         padding: "11px 0",
+        background: "none",
+        border: 0,
+        textAlign: "left",
+        font: "inherit",
+        color: "inherit",
         cursor: onClick ? "pointer" : "default",
         transform: pressed && onClick ? "scale(var(--press-scale))" : "scale(1)",
         transition: "transform var(--duration-fast) var(--ease-spring-snappy)",
@@ -114,6 +126,6 @@ export function TransactionRow({
           </span>
         ) : null}
       </span>
-    </div>
+    </Tag>
   );
 }

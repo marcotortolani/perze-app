@@ -23,6 +23,8 @@ export interface LineChartProps {
   color?: string | undefined;
   /** Formatea el valor para los labels directos (mín/máx) y el tooltip. */
   formatValue?: ((value: number) => string) | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -32,8 +34,9 @@ export interface LineChartProps {
  * El `Sparkline` no alcanza para esto: le faltan eje, labels y tooltip,
  * que la sección 7 del design system declara obligatorios.
  */
-export function LineChart({ data, width = 320, height = 140, color = "var(--data-1)", formatValue = String, style }: LineChartProps) {
+export function LineChart({ data, width = 320, height = 140, color = "var(--data-1)", formatValue = String, ariaLabel, style }: LineChartProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const summary = ariaLabel ?? data.map((d) => `${d.label}: ${formatValue(d.value)}`).join(", ");
   const padding = { top: 20, bottom: 24, left: 4, right: 4 };
   const plotW = width - padding.left - padding.right;
   const plotH = height - padding.top - padding.bottom;
@@ -64,6 +67,8 @@ export function LineChart({ data, width = 320, height = 140, color = "var(--data
   return (
     <div style={{ position: "relative", ...style }}>
       <svg
+        role="img"
+        aria-label={summary}
         viewBox={`0 0 ${width} ${height}`}
         style={{ width: "100%", height: "auto", display: "block" }}
         onPointerMove={onMove}

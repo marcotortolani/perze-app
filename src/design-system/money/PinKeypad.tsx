@@ -47,7 +47,7 @@ export function PinKeypad({ length, maxLength = 6, onKey, style }: PinKeypadProp
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
         {KEYS.map((k, i) =>
-          k === "" ? <span key={i} /> : <KeypadKey key={k} label={k} fontSize={26} iconSize={22} onPress={onKey} />
+          k === "" ? <span key={i} /> : <KeypadKey key={k} label={k} fontSize={26} iconSize={22} onPress={onKey} ariaLabel={k === "backspace" ? t("ds.keypad.backspace") : undefined} />
         )}
       </div>
     </div>

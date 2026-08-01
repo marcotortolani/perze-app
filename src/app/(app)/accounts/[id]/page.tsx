@@ -4,7 +4,7 @@ import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, EmptyState, Icon, LineChart, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, EmptyState, IconButton, LineChart, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
@@ -102,9 +102,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
-      <button type="button" onClick={() => router.push("/accounts")} aria-label={t("accountsPage.detail.back")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 4, margin: -4, cursor: "pointer" }}>
-        <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
-      </button>
+      <IconButton icon="chevron-left" ariaLabel={t("accountsPage.detail.back")} onClick={() => router.push("/accounts")} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>

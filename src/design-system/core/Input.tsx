@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { ChangeEvent, CSSProperties, ElementType } from "react";
 
 export interface InputProps {
@@ -15,11 +16,24 @@ export interface InputProps {
   autoFocus?: boolean | undefined;
 }
 
-/** Campo de texto sobre superficie 3, radio 14, 48px de alto. NUNCA para montos — eso es el Keypad. */
-export function Input({ label, hint, invalid = false, multiline = false, style, ...rest }: InputProps) {
+/**
+ * Campo de texto sobre superficie 3, radio 14, 48px de alto. NUNCA para
+ * montos — eso es el Keypad.
+ *
+ * D8/auditoría: el `hint` (sobre todo cuando `invalid`) no tenía ninguna
+ * asociación programática con el control — un lector de pantalla no lo
+ * anunciaba ni al enfocar el campo ni al aparecer el error. `aria-describedby`
+ * lo liga siempre que hay hint; `aria-invalid` marca el estado; `role="alert"`
+ * en el hint solo cuando `invalid` (un hint normal no es una alerta — se
+ * leería como interrupción cada vez que aparece sin que haya pasado nada).
+ */
+export function Input({ label, hint, invalid = false, multiline = false, style, id, ...rest }: InputProps) {
   const Tag: ElementType = multiline ? "textarea" : "input";
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const hintId = hint ? `${inputId}-hint` : undefined;
   return (
-    <label style={{ display: "block" }}>
+    <label style={{ display: "block" }} htmlFor={inputId}>
       {label ? (
         <span
           style={{
@@ -36,6 +50,9 @@ export function Input({ label, hint, invalid = false, multiline = false, style, 
       ) : null}
       <Tag
         {...rest}
+        id={inputId}
+        aria-invalid={invalid || undefined}
+        aria-describedby={hintId}
         style={{
           width: "100%",
           minHeight: multiline ? 88 : 48,
@@ -54,6 +71,8 @@ export function Input({ label, hint, invalid = false, multiline = false, style, 
       />
       {hint ? (
         <span
+          id={hintId}
+          role={invalid ? "alert" : undefined}
           style={{
             display: "block",
             fontSize: 12,

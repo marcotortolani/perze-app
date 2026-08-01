@@ -43,16 +43,17 @@ describe("tokens de color — docs/02-design-system.md § 2", () => {
 
   it("secundario aqua y acento naranja", () => {
     expectToken("#199e70");
-    expectToken("#12916a");
+    expectToken("#0d7a58"); // D6 — aqua-light oscurecido, antes #12916a (3.42:1, no llegaba a AA)
     expectToken("#e06a35");
-    expectToken("#d95926");
+    expectToken("#b8451a"); // D6 — orange-light oscurecido, antes #d95926 (3.34:1)
   });
 
-  it("estado — fijo, nunca tematizado", () => {
+  it("estado — good/warning/serious fijos en ambos modos; critical per-modo desde D7", () => {
     expectToken("#0ca30c"); // good
     expectToken("#fab219"); // warning
     expectToken("#ec835a"); // serious
-    expectToken("#d03b3b"); // critical
+    expectToken("#d03b3b"); // critical — base, sigue siendo el valor en claro
+    expectToken("#e8615f"); // D7 — critical en oscuro, antes heredaba #d03b3b (3.58:1, no llegaba a AA)
   });
 
   it("slots de datos 4 (azul) y 5 (magenta)", () => {
@@ -105,5 +106,42 @@ describe("motion — docs/02-design-system.md § 5.1", () => {
 
   it("reduced motion", () => {
     expectToken("prefers-reduced-motion: reduce");
+  });
+});
+
+// D4-D7 (docs/plan-resolucion-auditoria-tecnica.md) — contraste real, no
+// "el valor sigue siendo el documentado": fórmula WCAG 2.x de luminancia
+// relativa (misma que usó la auditoría), no una aproximación a ojo.
+function relativeLuminance(hex: string): number {
+  const n = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16) / 255);
+  const linear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear(r!) + 0.7152 * linear(g!) + 0.0722 * linear(b!);
+}
+
+function contrastRatio(hexA: string, hexB: string): number {
+  const [l1, l2] = [relativeLuminance(hexA), relativeLuminance(hexB)].sort((a, b) => b - a);
+  return (l1! + 0.05) / (l2! + 0.05);
+}
+
+const AA_NORMAL_TEXT = 4.5;
+
+describe("contraste AA — D4-D7 (docs/plan-resolucion-auditoria-tecnica.md § tokens)", () => {
+  it("D5 — --text-muted (n-ink3) llega a AA contra --surface-3, el peor caso (la superficie más parecida al propio ink3)", () => {
+    expect(contrastRatio("#8e8e96", "#26262a")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT); // dark
+    expect(contrastRatio("#6b6b71", "#eeeeec")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT); // light
+  });
+
+  it("D6 — --aqua-light y --orange-light (polaridad) llegan a AA en modo claro", () => {
+    expect(contrastRatio("#0d7a58", "#fafaf9")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    expect(contrastRatio("#b8451a", "#fafaf9")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("D7 — --critical llega a AA en modo oscuro (contra --surface-2, donde vive el error de formulario)", () => {
+    expect(contrastRatio("#e8615f", "#1b1b1e")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("D4 — --warning falla AA como texto en modo claro (por eso va solo en ícono/tinte de fondo, nunca en el label)", () => {
+    expect(contrastRatio("#fab219", "#fafaf9")).toBeLessThan(AA_NORMAL_TEXT);
   });
 });

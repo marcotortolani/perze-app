@@ -11,6 +11,15 @@ export interface KeypadKeyProps {
   iconSize?: number | undefined;
   onPress: (key: string) => void;
   onLongPress?: (() => void) | undefined;
+  /**
+   * D14/auditoría: sin esto, un dígito se anuncia bien solo porque es su
+   * propio texto visible, pero `backspace` (ícono sin texto) quedaba
+   * completamente mudo para un lector de pantalla, y los operadores
+   * (`+ − × ÷`) se anunciaban con el símbolo crudo en vez de su nombre.
+   * El caller (`Keypad`/`PinKeypad`) ya tiene `useTranslations()` — pasa el
+   * label traducido acá en vez de que `KeypadKey` importe next-intl.
+   */
+  ariaLabel?: string | undefined;
 }
 
 /**
@@ -21,7 +30,7 @@ export interface KeypadKeyProps {
  * `aria-live` opuestos, modelos de error distintos) — no unificar más allá
  * de esta tecla.
  */
-export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress }: KeypadKeyProps) {
+export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress, ariaLabel }: KeypadKeyProps) {
   const [pressed, setPressed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -38,6 +47,7 @@ export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, 
   return (
     <button
       type="button"
+      aria-label={ariaLabel}
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}

@@ -11,20 +11,23 @@ export interface DivergingBarProps {
   height?: number | undefined;
   /** `zero` = línea base al medio (variación %); `center` reservado para casos con otro punto de referencia. */
   baseline?: "zero" | "center" | undefined;
+  /** D12/auditoría — ver el mismo comentario en `BarChart.tsx`. */
+  ariaLabel?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** LIB-18: barras divergentes — aqua/naranja desde una baseline central, para variación % o efecto FX. */
-export function DivergingBar({ data, height = 140, style }: DivergingBarProps) {
+export function DivergingBar({ data, height = 140, ariaLabel, style }: DivergingBarProps) {
   const w = 320;
   const midY = height / 2;
   const max = Math.max(...data.map((d) => Math.abs(d.value)), 1);
   const slot = w / Math.max(data.length, 1);
   const barW = Math.min(30, slot - 9);
   const halfHeight = midY - 10;
+  const summary = ariaLabel ?? data.map((d) => `${d.label}: ${d.value}`).join(", ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
+    <svg role="img" aria-label={summary} viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height: "auto", display: "block", ...style }}>
       <line x1="0" y1={midY} x2={w} y2={midY} stroke="var(--border)" strokeWidth="2" />
       {data.map((d, i) => {
         const h = (Math.abs(d.value) / max) * halfHeight;
