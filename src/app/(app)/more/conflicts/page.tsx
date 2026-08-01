@@ -9,7 +9,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
-import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { conflictsRepo } from "@/lib/repos/conflicts-repo";
 import type { ConflictRecordRow } from "@/lib/db/schema";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -31,7 +31,7 @@ export default function ConflictsPage() {
   const { conflicts, refresh } = useConflicts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const categoryLabel = useCategoryLabel();
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const [resolving, setResolving] = useState<string | null>(null);
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));

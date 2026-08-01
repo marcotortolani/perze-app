@@ -94,7 +94,13 @@ export function resolveFxRate(params: {
     };
   }
 
-  const mostRecent = [...candidates].sort((a, b) => (a.asOf < b.asOf ? 1 : -1))[0];
+  // A7 — "heredado" tiene que ser una cotización ANTERIOR a la fecha del
+  // movimiento, nunca posterior: un import retroactivo (CSV, gasto
+  // olvidado) heredaba antes la cotización de HOY, no la de su propia
+  // fecha — en ARS, decenas de puntos de error. Sin candidatos ≤ date, no
+  // hay heredado legítimo: cae a pending, no inventa nada más reciente.
+  const priorCandidates = candidates.filter((r) => r.asOf <= date);
+  const mostRecent = [...priorCandidates].sort((a, b) => (a.asOf < b.asOf ? 1 : -1))[0];
   if (mostRecent) {
     return {
       source: "inherited",

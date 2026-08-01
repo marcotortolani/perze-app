@@ -3,7 +3,7 @@ import type { GoalRow } from "../db/schema";
 import { outbox } from "../offline/outbox";
 import { newId, nowIso } from "./ids";
 
-export type NewGoalInput = Omit<GoalRow, "id" | "archivedAt" | "createdAt" | "updatedAt">;
+export type NewGoalInput = Omit<GoalRow, "id" | "archivedAt" | "createdAt" | "updatedAt" | "clientRev">;
 
 export const goalsRepo = {
   async list(householdId: string): Promise<GoalRow[]> {
@@ -17,16 +17,22 @@ export const goalsRepo = {
 
   async create(input: NewGoalInput): Promise<GoalRow> {
     const now = nowIso();
-    const row: GoalRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now };
+    const row: GoalRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now, clientRev: 1 };
     await getDb().goals.add(row);
-    await outbox.enqueue({ table: "goals", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    await outbox.enqueue({ table: "goals", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     return row;
   },
 
   async update(id: string, patch: Partial<GoalRow>): Promise<void> {
-    await getDb().goals.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().goals.get(id);
-    if (row) await outbox.enqueue({ table: "goals", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.goals, db.outbox, async () => {
+      const existing = await db.goals.get(id);
+      if (!existing) return;
+      const nextRev = existing.clientRev + 1;
+      const updated: GoalRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
+      await db.goals.put(updated);
+      await outbox.enqueue({ table: "goals", op: "update", entityId: id, payload: updated, clientRev: nextRev });
+    });
   },
 
   async archive(id: string): Promise<void> {

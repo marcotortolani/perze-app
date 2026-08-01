@@ -98,6 +98,12 @@
     "needsFxBanner": {
       "message": "{count, plural, one {# movimiento sin cotización} other {# movimientos sin cotización}}",
       "resolve": "Resolver"
+    },
+    "transactionRow": {
+      "syncIssue": {
+        "conflict": "Editado por otro miembro a la vez — sin resolver",
+        "rejected": "No se pudo sincronizar"
+      }
     }
   },
   "reference": {
@@ -446,6 +452,7 @@
       "yourEmail": "tu email",
       "invalidCode": "Ese código venció o no es válido. Pedí uno nuevo.",
       "resend": "Reenviar código",
+      "resendCooldown": "Reenviar en {seconds}s",
       "resent": "Te reenviamos el código",
       "changeEmail": "Cambiar email"
     },
@@ -485,7 +492,10 @@
     "success": {
       "title": "¡Listo!",
       "subtitle": "Tu cuenta está creada. Cargá tu primer gasto para empezar a ver tu resumen.",
-      "cta": "Cargar mi primer gasto"
+      "cta": "Cargar mi primer gasto",
+      "errorTitle": "No pudimos terminar de crear tu cuenta",
+      "errorSubtitle": "Puede ser tu conexión. Probá de nuevo — no se perdió nada de lo que ya elegiste.",
+      "retry": "Probar de nuevo"
     },
     "complete": {
       "balanceTitle": "¿Cuánto tenés en {account}?",
@@ -540,7 +550,31 @@
     "noCategory": "Sin categoría",
     "keepMine": "Quedarme con la mía",
     "keepTheirs": "Quedarme con la otra",
-    "resolved": "Conflicto resuelto."
+    "resolved": "Conflicto resuelto.",
+    "badgeCount": "{count, plural, one {# conflicto} other {# conflictos}}",
+    "homeBanner": "{count, plural, one {Hay # movimiento con un conflicto de sincronización.} other {Hay # movimientos con un conflicto de sincronización.}}",
+    "homeBannerAction": "Revisar"
+  },
+  "syncDiagnosticsPage": {
+    "title": "Estado de sincronización",
+    "empty": "No hay mutaciones pendientes de sincronizar.",
+    "entryLabel": "{op} en {table}",
+    "ops": {
+      "insert": "Creación",
+      "update": "Edición",
+      "delete": "Borrado"
+    },
+    "statuses": {
+      "pending": "Pendiente",
+      "syncing": "Sincronizando",
+      "failed": "Falló, reintentando",
+      "conflict": "En conflicto",
+      "dead": "Sin poder sincronizar"
+    },
+    "createdAt": "Creado el {when}",
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "retry": "Reintentar ahora",
+    "retried": "En cola para el próximo intento."
   },
   "notificationsPage": {
     "title": "Notificaciones",

@@ -8,25 +8,39 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { completeOnboarding } from "@/lib/onboarding/complete-onboarding";
+import { householdsRepo } from "@/lib/repos/households-repo";
+import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { createClient } from "@/lib/supabase/client";
 import type { AccountKind } from "@/lib/db/schema";
 
 const PRESET_KIND: Record<string, AccountKind> = { Efectivo: "cash" };
 
-/** A11 — éxito + CTA gigante al keypad. Acá se crea el household real: cuenta + plantilla Básica en silencio. */
+/**
+ * A11 — éxito + CTA gigante al keypad. Acá se crea el household real:
+ * cuenta + plantilla Básica en silencio.
+ *
+ * B7 — la única guarda antes era `started.current`, que no sobrevive a un
+ * remount real (volver a esta pantalla, no solo el doble-invoke de
+ * StrictMode): un usuario que entra de nuevo a `/onboarding/success` con
+ * el household ya creado terminaba con un segundo household "Mi hogar"
+ * huérfano. Ahora primero se consulta `getCurrentHouseholdId()` — si ya
+ * hay uno activo, se asume que este flujo ya corrió y se salta la
+ * creación entera. También se suma estado de error con reintento: antes
+ * un fallo de red a mitad de camino dejaba la pantalla colgada en el
+ * loader para siempre.
+ */
 export default function OnboardingSuccessPage() {
   const t = useTranslations();
   const router = useRouter();
   const draft = useOnboardingStore((s) => s.draft);
   const setField = useOnboardingStore((s) => s.setField);
   const invalidateHousehold = useInvalidateHousehold();
-  const [ready, setReady] = useState(false);
-  const started = useRef(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [attempt, setAttempt] = useState(0);
+  const running = useRef(false);
 
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    (async () => {
+  async function run() {
+    try {
       const supabase = createClient();
       const {
         data: { user },
@@ -37,6 +51,15 @@ export default function OnboardingSuccessPage() {
         // podría sincronizar nunca (created_by no coincidiría con ningún
         // auth.uid()).
         router.replace("/onboarding");
+        return;
+      }
+
+      const existingHouseholdId = await householdsRepo.getCurrentHouseholdId();
+      if (existingHouseholdId) {
+        const [existingAccount] = await accountsRepo.list(existingHouseholdId);
+        setField("pendingBalanceAccountId", existingAccount?.id ?? null);
+        invalidateHousehold();
+        setStatus("ready");
         return;
       }
 
@@ -52,12 +75,45 @@ export default function OnboardingSuccessPage() {
       });
       setField("pendingBalanceAccountId", accountId);
       invalidateHousehold();
-      setReady(true);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      setStatus("ready");
+    } catch {
+      setStatus("error");
+    } finally {
+      running.current = false;
+    }
+  }
 
-  if (!ready) {
+  useEffect(() => {
+    if (running.current) return;
+    running.current = true;
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
+
+  if (status === "error") {
+    return (
+      <ScreenShell style={{ alignItems: "center", justifyContent: "center", padding: "var(--screen-padding)", gap: 20, textAlign: "center" }}>
+        <Icon name="alert" size={48} color="var(--critical)" />
+        <h1 className="t-title" style={{ margin: 0 }}>{t("onboarding.success.errorTitle")}</h1>
+        <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
+          {t("onboarding.success.errorSubtitle")}
+        </p>
+        <div style={{ width: "100%", marginTop: 16 }}>
+          <Button
+            size="lg"
+            onClick={() => {
+              setStatus("loading");
+              setAttempt((n) => n + 1);
+            }}
+          >
+            {t("onboarding.success.retry")}
+          </Button>
+        </div>
+      </ScreenShell>
+    );
+  }
+
+  if (status === "loading") {
     return (
       <ScreenShell style={{ alignItems: "center", justifyContent: "center" }}>
         <ZMark size={16} gap={5} animated variant="sweep" aria-label={t("app.name")} />

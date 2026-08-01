@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { EmptyState, FxEditor, GroupCard, Icon, Sheet, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { convert, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
@@ -20,7 +20,7 @@ export default function ResolveFxPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: transactions = [], isLoading } = useTransactions(household?.id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const [editingCurrency, setEditingCurrency] = useState<string | null>(null);
   const [rate, setRate] = useState<ScaledRate>(rateFromInteger(1));
   const [applying, setApplying] = useState(false);
@@ -56,7 +56,7 @@ export default function ResolveFxPage() {
     setApplying(true);
     try {
       const txs = groups.find(([c]) => c === editingCurrency)?.[1] ?? [];
-      await fxRepo.setManualOverride(editingCurrency, baseCurrency, rate);
+      await fxRepo.setManualOverride(household.id, editingCurrency, baseCurrency, rate);
       await Promise.all(
         txs.map((t) =>
           transactionsRepo.update(t.id, {

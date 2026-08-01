@@ -46,14 +46,26 @@ export const fxRepo = {
     await getDb().householdFxPreferences.put({ householdId, currencyPair, preferredProvider, preferredQuoteKind });
   },
 
-  /** Override manual "con vigencia": se guarda como una cotización más, con `provider: 'manual'`, y gana siempre hasta que se reemplace. */
-  async getManualOverride(base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
+  /**
+   * Override manual "con vigencia": se guarda como una cotización más, con
+   * `provider: 'manual'`, y gana siempre hasta que se reemplace.
+   *
+   * A8 — scoped por `householdId`: antes cualquier household con el mismo
+   * par de monedas leía el override del otro (mismo `provider`/`quoteKind`
+   * por default, sin dimensión de household en la fila). Sigue sin haber
+   * vigencia real (`valid_from`/`valid_to` como sí tiene `fx_overrides` en
+   * el servidor) — el modelo local sigue siendo "el último que se
+   * escribió gana", ver nota de alcance en `lib/db/client.ts` versión 6.
+   */
+  async getManualOverride(householdId: string, base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
     const rows = await ratesForPair(base, quote);
-    const manual = rows.filter((r) => r.provider === MANUAL_PROVIDER).sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1))[0];
+    const manual = rows
+      .filter((r) => r.provider === MANUAL_PROVIDER && r.householdId === householdId)
+      .sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1))[0];
     return manual ? { rate: manual.rate, quoteKind: manual.quoteKind } : null;
   },
 
-  async setManualOverride(base: string, quote: string, rate: ScaledRate, quoteKind = "custom"): Promise<void> {
+  async setManualOverride(householdId: string, base: string, quote: string, rate: ScaledRate, quoteKind = "custom"): Promise<void> {
     const row: FxRateRow = {
       base,
       quote,
@@ -64,20 +76,22 @@ export const fxRepo = {
       bid: null,
       ask: null,
       fetchedAt: nowIso(),
+      householdId,
     };
     await getDb().fxRates.put(row);
   },
 
-  async clearManualOverride(base: string, quote: string): Promise<void> {
+  async clearManualOverride(householdId: string, base: string, quote: string): Promise<void> {
     const rows = await ratesForPair(base, quote);
     const manualKeys = rows
-      .filter((r) => r.provider === MANUAL_PROVIDER)
+      .filter((r) => r.provider === MANUAL_PROVIDER && r.householdId === householdId)
       .map((r): [string, string, string, string, string] => [r.base, r.quote, r.asOf, r.provider, r.quoteKind]);
     await getDb().fxRates.bulkDelete(manualKeys);
   },
 
+  /** Cotizaciones de proveedor: globales, sin household (Patrón C) — `householdId: ""`. */
   async cacheQuotes(records: FxRateRecord[]): Promise<void> {
-    const rows: FxRateRow[] = records.map((r) => ({ ...r, bid: null, ask: null }));
+    const rows: FxRateRow[] = records.map((r) => ({ ...r, bid: null, ask: null, householdId: "" }));
     await getDb().fxRates.bulkPut(rows);
   },
 
@@ -99,7 +113,7 @@ export const fxRepo = {
 
     const pair = `${base}/${quote}`;
     const [manualOverride, preference, cachedRows] = await Promise.all([
-      fxRepo.getManualOverride(base, quote),
+      fxRepo.getManualOverride(householdId, base, quote),
       fxRepo.getPreference(householdId, pair),
       ratesForPair(base, quote),
     ]);
@@ -115,7 +129,14 @@ export const fxRepo = {
     });
 
     const isOnline = typeof navigator === "undefined" || navigator.onLine;
-    if (resolution.source === "pending" && isOnline) {
+    // A8 — antes solo se consultaba la red cuando el local daba `pending`.
+    // Con cache viejo, un movimiento de HOY quedaba `inherited` (con
+    // `isStale: true`) sin volver a intentar la red, aunque hubiera
+    // conexión — se sigue prefiriendo el cache si ya tiene la cotización
+    // de hoy (`resolution.source === "api"`), pero un `inherited` para la
+    // fecha de hoy vale la pena refrescar.
+    const shouldRefetch = resolution.source === "pending" || (resolution.source === "inherited" && date === todayIso());
+    if (shouldRefetch && isOnline) {
       try {
         const url = new URL("/api/fx", typeof window !== "undefined" ? window.location.origin : "http://localhost");
         url.searchParams.set("base", base);

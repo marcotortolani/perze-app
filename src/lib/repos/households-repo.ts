@@ -5,7 +5,7 @@ import { newId, nowIso } from "./ids";
 
 const CURRENT_HOUSEHOLD_META_KEY = "currentHouseholdId";
 
-export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt">;
+export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt" | "clientRev">;
 
 export const householdsRepo = {
   async get(id: string): Promise<HouseholdRow | undefined> {
@@ -14,26 +14,35 @@ export const householdsRepo = {
 
   async create(input: NewHouseholdInput): Promise<HouseholdRow> {
     const now = nowIso();
-    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now };
+    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now, clientRev: 1 };
     await getDb().households.add(row);
-    await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     return row;
   },
 
   async update(id: string, patch: Partial<HouseholdRow>): Promise<void> {
-    await getDb().households.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().households.get(id);
-    if (row) await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.households, db.outbox, async () => {
+      const existing = await db.households.get(id);
+      if (!existing) return;
+      const nextRev = existing.clientRev + 1;
+      const updated: HouseholdRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
+      await db.households.put(updated);
+      await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: updated, clientRev: nextRev });
+    });
   },
 
   async addMember(member: HouseholdMemberRow): Promise<void> {
-    await getDb().householdMembers.add(member);
-    await outbox.enqueue({
-      table: "household_members",
-      op: "insert",
-      entityId: `${member.householdId}:${member.profileId}`,
-      payload: member,
-      clientRev: 1,
+    const db = getDb();
+    await db.transaction("rw", db.householdMembers, db.outbox, async () => {
+      await db.householdMembers.add(member);
+      await outbox.enqueue({
+        table: "household_members",
+        op: "insert",
+        entityId: `${member.householdId}:${member.profileId}`,
+        payload: member,
+        clientRev: 1,
+      });
     });
   },
 

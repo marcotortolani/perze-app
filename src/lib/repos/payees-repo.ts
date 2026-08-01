@@ -3,7 +3,7 @@ import type { PayeeRow } from "../db/schema";
 import { outbox } from "../offline/outbox";
 import { newId } from "./ids";
 
-export type NewPayeeInput = Omit<PayeeRow, "id">;
+export type NewPayeeInput = Omit<PayeeRow, "id" | "clientRev">;
 
 export const payeesRepo = {
   async list(householdId: string): Promise<PayeeRow[]> {
@@ -20,22 +20,32 @@ export const payeesRepo = {
   },
 
   async create(input: NewPayeeInput): Promise<PayeeRow> {
-    const row: PayeeRow = { ...input, id: newId() };
+    const row: PayeeRow = { ...input, id: newId(), clientRev: 1 };
     await getDb().payees.add(row);
-    await outbox.enqueue({ table: "payees", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    await outbox.enqueue({ table: "payees", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     return row;
   },
 
   async update(id: string, patch: Partial<PayeeRow>): Promise<void> {
-    await getDb().payees.update(id, patch);
-    const row = await getDb().payees.get(id);
-    if (row) await outbox.enqueue({ table: "payees", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.payees, db.outbox, async () => {
+      const existing = await db.payees.get(id);
+      if (!existing) return;
+      const nextRev = existing.clientRev + 1;
+      const updated: PayeeRow = { ...existing, ...patch, clientRev: nextRev };
+      await db.payees.put(updated);
+      await outbox.enqueue({ table: "payees", op: "update", entityId: id, payload: updated, clientRev: nextRev });
+    });
   },
 
   async remove(id: string): Promise<void> {
-    await getDb().payees.delete(id);
-    // payees no tiene deleted_at (igual que tags): el worker traduce este
-    // "delete" a un DELETE real contra Supabase.
-    await outbox.enqueue({ table: "payees", op: "delete", entityId: id, payload: {}, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.payees, db.outbox, async () => {
+      const existing = await db.payees.get(id);
+      await db.payees.delete(id);
+      // payees no tiene deleted_at (igual que tags): el worker traduce este
+      // "delete" a un DELETE real contra Supabase.
+      await outbox.enqueue({ table: "payees", op: "delete", entityId: id, payload: {}, clientRev: (existing?.clientRev ?? 0) + 1 });
+    });
   },
 };

@@ -142,6 +142,81 @@ export class PerzeDatabase extends Dexie {
             row.syncError = null;
           });
       });
+
+    /**
+     * A8 — el override manual de FX no llevaba `householdId`: dos
+     * households con el mismo par de monedas podían leerse el override
+     * cruzado. Se agrega como campo indexado (no como parte de la clave
+     * primaria — cambiar una PK compuesta ya poblada es una migración de
+     * Dexie mucho más arriesgada que agregar un índice, y esto es
+     * suficiente para que `getManualOverride`/`clearManualOverride`
+     * filtren por household de verdad). Filas viejas backfillean a `""`
+     * (quedan como si fueran globales — sin dato para saber a qué
+     * household pertenecían).
+     *
+     * Nota de alcance: la clave primaria sigue siendo
+     * `[base+quote+asOf+provider+quoteKind]`, así que dos households
+     * escribiendo un override para el mismo par el mismo día TODAVÍA
+     * pueden pisarse el uno al otro en el `put()` (colisión de escritura,
+     * no de lectura) — cerrar eso del todo pide mover `householdId` a la
+     * clave primaria, una migración más profunda que queda pendiente.
+     */
+    this.version(6)
+      .stores({
+        fxRates: "[base+quote+asOf+provider+quoteKind], [base+quote], [householdId+base+quote]",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("fxRates")
+          .toCollection()
+          .modify((row: FxRateRow) => {
+            row.householdId = "";
+          });
+      });
+
+    /**
+     * C10 — `clientRev` estaba hardcodeado a `1` en el outbox de accounts/
+     * categories/tags/payees/budgets/goals/recurringRules/households/
+     * categorizationRules (todo salvo transactions): el versionado
+     * optimista era ficticio, así que `detectRevisionConflict` nunca
+     * podía detectar nada real. Se agrega la columna en las 9 tablas —
+     * las filas existentes backfillean a 1 (mismo valor con el que ya
+     * "nacían" antes, así que no hay salto raro en el próximo sync).
+     */
+    this.version(7)
+      .stores({})
+      .upgrade(async (tx) => {
+        const tables = ["accounts", "categories", "tags", "payees", "budgets", "goals", "recurringRules", "households", "categorizationRules"];
+        for (const name of tables) {
+          await tx
+            .table(name)
+            .toCollection()
+            .modify((row: { clientRev?: number }) => {
+              row.clientRev = 1;
+            });
+        }
+      });
+
+    /**
+     * C8/C9/C32 — el outbox se drenaba en orden de `status` (índice usado
+     * por `where("status")`), no de llegada: una entrada vieja en
+     * `"pending"` podía esperar detrás de una recién marcada `"failed"` si
+     * el índice las intercalaba distinto. Ahora `listPending` itera la
+     * tabla por PK (`++id`, monótono → FIFO real) y filtra en JS. Se suma
+     * `nextAttemptAt` para el backoff exponencial con jitter; filas viejas
+     * backfillean a `null` (elegibles de inmediato, mismo comportamiento
+     * que tenían).
+     */
+    this.version(8)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx
+          .table("outbox")
+          .toCollection()
+          .modify((row: OutboxEntryRow) => {
+            row.nextAttemptAt = null;
+          });
+      });
   }
 }
 

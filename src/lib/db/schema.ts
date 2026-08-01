@@ -25,6 +25,7 @@ export interface HouseholdRow {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  clientRev: number;
 }
 
 export type HouseholdRole = "owner" | "admin" | "member" | "viewer";
@@ -119,6 +120,7 @@ export interface AccountRow {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  clientRev: number;
 }
 
 export type CategoryKind = "expense" | "income";
@@ -151,6 +153,7 @@ export interface CategoryRow {
   updatedAt: string;
   /** Distinto de `archivedAt`: archivar es del usuario, borrar es soft-delete (`CLAUDE.md` § 2). */
   deletedAt: string | null;
+  clientRev: number;
 }
 
 export interface TagRow {
@@ -158,6 +161,7 @@ export interface TagRow {
   householdId: string;
   name: string;
   color: string | null;
+  clientRev: number;
 }
 
 export interface PayeeRow {
@@ -168,6 +172,7 @@ export interface PayeeRow {
   defaultAccountId: string | null;
   logoUrl: string | null;
   aliases: string[];
+  clientRev: number;
 }
 
 export type TransactionKind = "expense" | "income" | "transfer" | "adjustment";
@@ -321,6 +326,8 @@ export interface FxRateRow {
   bid: bigint | null;
   ask: bigint | null;
   fetchedAt: string;
+  /** A8 — "" para cotizaciones de proveedor (globales, Patrón C, sin household); el household real para overrides manuales. */
+  householdId: string;
 }
 
 export interface HouseholdFxPreferenceRow {
@@ -331,11 +338,16 @@ export interface HouseholdFxPreferenceRow {
 }
 
 export type OutboxOp = "insert" | "update" | "delete";
-/** `"conflict"` es terminal — no se reintenta solo, espera resolución explícita (ver `conflicts-repo.ts`). */
-export type OutboxStatus = "pending" | "syncing" | "failed" | "conflict";
+/**
+ * `"conflict"` es terminal — no se reintenta solo, espera resolución
+ * explícita (ver `conflicts-repo.ts`). `"dead"` también es terminal — pasó
+ * el techo de reintentos automáticos (C9/C32) y espera reintento manual
+ * desde la pantalla de diagnóstico en Más.
+ */
+export type OutboxStatus = "pending" | "syncing" | "failed" | "conflict" | "dead";
 
 export interface OutboxEntryRow {
-  id?: number; // autoIncrement
+  id?: number; // autoIncrement — orden FIFO real (C8): nunca reordenar por status.
   table: string;
   op: OutboxOp;
   entityId: string;
@@ -345,6 +357,8 @@ export interface OutboxEntryRow {
   status: OutboxStatus;
   attempts: number;
   lastError: string | null;
+  /** Backoff exponencial con jitter (C9) — `null` hasta el primer fallo. `drainOutbox` no toma una entrada con `nextAttemptAt` en el futuro. */
+  nextAttemptAt: string | null;
 }
 
 export interface MetaRow {
@@ -379,6 +393,8 @@ export interface BudgetRow {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  /** C10 — antes hardcodeado a 1 en todos los repos salvo transactions: la detección de conflictos era ficticia. */
+  clientRev: number;
 }
 
 export interface GoalRow {
@@ -395,6 +411,7 @@ export interface GoalRow {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  clientRev: number;
 }
 
 export interface RecurringRuleRow {
@@ -411,6 +428,7 @@ export interface RecurringRuleRow {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  clientRev: number;
 }
 
 export type RuleMatchField = "note" | "payeeName";
@@ -442,4 +460,5 @@ export interface CategorizationRuleRow {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  clientRev: number;
 }

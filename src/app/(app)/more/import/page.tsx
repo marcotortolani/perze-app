@@ -8,7 +8,7 @@ import { AppHeader, Button, ColumnMappingRow, CsvPreviewTable, EmptyState, ListR
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
-import { useTransactions, useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { parseCsv } from "@/lib/import/csv-parser";
 import { applyColumnMapping, guessColumnMapping, type ColumnMapping, type ImportField, type ImportedRow } from "@/lib/import/column-mapping";
 import { detectDuplicates, type DedupedRow } from "@/lib/import/duplicate-detection";
@@ -29,7 +29,7 @@ export default function ImportCsvPage() {
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [] } = useAccounts(household?.id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
 
   const [step, setStep] = useState<Step>("file");
   const [fileName, setFileName] = useState<string | null>(null);

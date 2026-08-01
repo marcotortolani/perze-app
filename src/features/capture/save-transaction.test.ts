@@ -20,6 +20,7 @@ const HOUSEHOLD_UYU: HouseholdRow = {
   createdBy: "user-1",
   createdAt: "2026-07-01T00:00:00.000Z",
   updatedAt: "2026-07-01T00:00:00.000Z",
+  clientRev: 1,
 };
 
 function baseDraft(overrides: Partial<CaptureDraft> = {}): CaptureDraft {
@@ -105,7 +106,7 @@ describe("saveDraftAsTransaction", () => {
       createdBy: "user-1",
     });
 
-    await fxRepo.setManualOverride("USD", "UYU", rateFromInteger(40));
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "USD", "UYU", rateFromInteger(40));
 
     const tx = await saveDraftAsTransaction({ draft: baseDraft({ amountExpression: "10" }), household: HOUSEHOLD_UYU, userId: "user-1", account });
 

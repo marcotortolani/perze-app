@@ -1,10 +1,11 @@
 /**
  * Traducción camelCase (Dexie) → snake_case (Postgres/Supabase) por tabla.
- * BASE-05 — el outbox solo puede drenar las tablas donde el usuario ya
- * escribe hoy vía repo (`accounts`, `categories`, `tags`, `payees`,
- * `transactions`); `households`/`household_members`/`profiles` quedan
- * afuera a propósito: su creación es un flujo de servidor (A7, Server
- * Action) que todavía no existe (C7), no un CRUD local.
+ * BASE-05 — el outbox drena las tablas donde el usuario ya escribe hoy vía
+ * repo. `households` y `household_members` SÍ están mapeadas (B6: el owner
+ * tiene que llegar al servidor para que el resto del onboarding tenga
+ * membership real) — nota corregida, un comentario viejo acá decía lo
+ * contrario. `profiles` sigue afuera: se crea vía el trigger
+ * `handle_new_user` en Supabase, nunca desde un repo local.
  *
  * Todo `bigint` se serializa como `string` explícitamente — `JSON.stringify`
  * no sabe serializar `bigint` nativo (tira `TypeError`), y aunque supiera,
@@ -45,6 +46,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
   households: {
     supabaseTable: "households",
     deletedAtColumn: "deleted_at",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       name: p.name,
@@ -57,6 +59,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_by: p.createdBy,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
+      client_rev: p.clientRev,
     }),
   },
 
@@ -77,6 +80,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
   accounts: {
     supabaseTable: "accounts",
     deletedAtColumn: "deleted_at",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -106,12 +110,14 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       deleted_at: p.deletedAt,
+      client_rev: p.clientRev,
     }),
   },
 
   categories: {
     supabaseTable: "categories",
     deletedAtColumn: "deleted_at",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -130,6 +136,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       deleted_at: p.deletedAt,
+      client_rev: p.clientRev,
       // i18nKey es un concepto solo del cliente (traducción de la
       // plantilla de seed) — no existe columna en Postgres, no se manda.
     }),
@@ -138,17 +145,20 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
   tags: {
     supabaseTable: "tags",
     deletedAtColumn: "", // tags no tiene deleted_at — ver nota en drainOutbox()
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
       name: p.name,
       color: p.color,
+      client_rev: p.clientRev,
     }),
   },
 
   payees: {
     supabaseTable: "payees",
     deletedAtColumn: "",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -157,6 +167,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       default_account_id: p.defaultAccountId,
       logo_url: p.logoUrl,
       aliases: p.aliases,
+      client_rev: p.clientRev,
     }),
   },
 
@@ -197,7 +208,17 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       installment_group_id: p.installmentGroupId,
       installment_number: p.installmentNumber,
       installment_total: p.installmentTotal,
-      sync_state: "ok",
+      // A10 — antes hardcodeado a "ok": la columna que existe para que la
+      // UI muestre "esto no se guardó" (D2/C12) siempre valía "ok" sin
+      // importar qué pasó de verdad. `sync_state` es un campo LOCAL del
+      // cliente (nunca lo escribe el servidor) que describe cómo terminó
+      // el ÚLTIMO intento de sync — se manda tal cual está en la fila:
+      // 'ok' en el camino feliz, y si esta fila se está resubiendo
+      // después de un conflicto resuelto (`conflicts-repo.ts`), ya viene
+      // en 'ok' desde ahí. Nunca 'rejected'/'conflict' en un upsert
+      // exitoso — esos estados los pone `sync-worker.ts` localmente
+      // cuando el intento FALLA, no acá.
+      sync_state: p.syncState ?? "ok",
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       deleted_at: p.deletedAt,
@@ -209,6 +230,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
   budgets: {
     supabaseTable: "budgets",
     deletedAtColumn: "", // sin deleted_at — apagar es archived_at (nunca se borra)
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -220,12 +242,14 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_by: p.createdBy,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
+      client_rev: p.clientRev,
     }),
   },
 
   goals: {
     supabaseTable: "goals",
     deletedAtColumn: "",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -240,12 +264,14 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_by: p.createdBy,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
+      client_rev: p.clientRev,
     }),
   },
 
   recurring_rules: {
     supabaseTable: "recurring_rules",
     deletedAtColumn: "",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -260,12 +286,14 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_by: p.createdBy,
       created_at: p.createdAt,
       updated_at: p.updatedAt,
+      client_rev: p.clientRev,
     }),
   },
 
   rules: {
     supabaseTable: "rules",
     deletedAtColumn: "deleted_at",
+    conflictSensitive: true,
     toRow: (p) => ({
       id: p.id,
       household_id: p.householdId,
@@ -279,6 +307,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       deleted_at: p.deletedAt,
+      client_rev: p.clientRev,
     }),
   },
 };

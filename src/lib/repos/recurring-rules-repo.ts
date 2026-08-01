@@ -3,7 +3,7 @@ import type { RecurringRuleRow } from "../db/schema";
 import { outbox } from "../offline/outbox";
 import { newId, nowIso } from "./ids";
 
-export type NewRecurringRuleInput = Omit<RecurringRuleRow, "id" | "archivedAt" | "createdAt" | "updatedAt">;
+export type NewRecurringRuleInput = Omit<RecurringRuleRow, "id" | "archivedAt" | "createdAt" | "updatedAt" | "clientRev">;
 
 export const recurringRulesRepo = {
   async list(householdId: string): Promise<RecurringRuleRow[]> {
@@ -17,16 +17,22 @@ export const recurringRulesRepo = {
 
   async create(input: NewRecurringRuleInput): Promise<RecurringRuleRow> {
     const now = nowIso();
-    const row: RecurringRuleRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now };
+    const row: RecurringRuleRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now, clientRev: 1 };
     await getDb().recurringRules.add(row);
-    await outbox.enqueue({ table: "recurring_rules", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    await outbox.enqueue({ table: "recurring_rules", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     return row;
   },
 
   async update(id: string, patch: Partial<RecurringRuleRow>): Promise<void> {
-    await getDb().recurringRules.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().recurringRules.get(id);
-    if (row) await outbox.enqueue({ table: "recurring_rules", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.recurringRules, db.outbox, async () => {
+      const existing = await db.recurringRules.get(id);
+      if (!existing) return;
+      const nextRev = existing.clientRev + 1;
+      const updated: RecurringRuleRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
+      await db.recurringRules.put(updated);
+      await outbox.enqueue({ table: "recurring_rules", op: "update", entityId: id, payload: updated, clientRev: nextRev });
+    });
   },
 
   async archive(id: string): Promise<void> {

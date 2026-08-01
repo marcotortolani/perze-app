@@ -68,6 +68,7 @@ export type Database = {
       accounts: {
         Row: {
           archived_at: string | null
+          client_rev: number
           color: string | null
           country_code: string | null
           created_at: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           country_code?: string | null
           created_at?: string
@@ -124,6 +126,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           country_code?: string | null
           created_at?: string
@@ -346,108 +349,54 @@ export type Database = {
           },
         ]
       }
-      budget_lines: {
+      budgets: {
         Row: {
-          amount: number
-          budget_id: string
+          amount_limit: number
+          archived_at: string | null
           category_id: string | null
+          client_rev: number
+          created_at: string
+          created_by: string
+          currency_code: string
+          household_id: string
           id: string
-          rollover_balance: number
-          tag_id: string | null
+          name: string
+          updated_at: string
         }
         Insert: {
-          amount: number
-          budget_id: string
+          amount_limit: number
+          archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
+          created_at?: string
+          created_by: string
+          currency_code: string
+          household_id: string
           id: string
-          rollover_balance?: number
-          tag_id?: string | null
+          name: string
+          updated_at?: string
         }
         Update: {
-          amount?: number
-          budget_id?: string
+          amount_limit?: number
+          archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
+          created_at?: string
+          created_by?: string
+          currency_code?: string
+          household_id?: string
           id?: string
-          rollover_balance?: number
-          tag_id?: string | null
+          name?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "budget_lines_budget_id_fkey"
-            columns: ["budget_id"]
-            isOneToOne: false
-            referencedRelation: "budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_lines_category_id_fkey"
+            foreignKeyName: "budgets_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "budget_lines_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      budgets: {
-        Row: {
-          created_at: string
-          created_by: string
-          currency_code: string
-          deleted_at: string | null
-          end_date: string | null
-          household_id: string
-          id: string
-          is_active: boolean
-          name: string
-          owner_id: string | null
-          period: string
-          rollover: boolean
-          scope: string
-          start_date: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          currency_code: string
-          deleted_at?: string | null
-          end_date?: string | null
-          household_id: string
-          id: string
-          is_active?: boolean
-          name: string
-          owner_id?: string | null
-          period: string
-          rollover?: boolean
-          scope?: string
-          start_date: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          currency_code?: string
-          deleted_at?: string | null
-          end_date?: string | null
-          household_id?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          owner_id?: string | null
-          period?: string
-          rollover?: boolean
-          scope?: string
-          start_date?: string
-          updated_at?: string
-        }
-        Relationships: [
           {
             foreignKeyName: "budgets_created_by_fkey"
             columns: ["created_by"]
@@ -467,13 +416,6 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budgets_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -544,6 +486,7 @@ export type Database = {
       categories: {
         Row: {
           archived_at: string | null
+          client_rev: number
           color: string | null
           created_at: string
           created_by: string
@@ -563,6 +506,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by: string
@@ -582,6 +526,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by?: string
@@ -954,60 +899,61 @@ export type Database = {
       }
       goals: {
         Row: {
+          account_id: string | null
           archived_at: string | null
+          client_rev: number
           color: string | null
-          contribution_strategy: Json | null
           created_at: string
           created_by: string
           currency_code: string
-          current_amount: number
-          deleted_at: string | null
           household_id: string
           icon: string | null
           id: string
-          linked_account_ids: string[] | null
           name: string
           target_amount: number
           target_date: string | null
           updated_at: string
         }
         Insert: {
+          account_id?: string | null
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
-          contribution_strategy?: Json | null
           created_at?: string
           created_by: string
           currency_code: string
-          current_amount?: number
-          deleted_at?: string | null
           household_id: string
           icon?: string | null
           id: string
-          linked_account_ids?: string[] | null
           name: string
           target_amount: number
           target_date?: string | null
           updated_at?: string
         }
         Update: {
+          account_id?: string | null
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
-          contribution_strategy?: Json | null
           created_at?: string
           created_by?: string
           currency_code?: string
-          current_amount?: number
-          deleted_at?: string | null
           household_id?: string
           icon?: string | null
           id?: string
-          linked_account_ids?: string[] | null
           name?: string
           target_amount?: number
           target_date?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "goals_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goals_created_by_fkey"
             columns: ["created_by"]
@@ -1072,7 +1018,7 @@ export type Database = {
           code: string
           created_at: string
           email: string | null
-          expires_at: string | null
+          expires_at: string
           household_id: string
           id: string
           revoked_at: string | null
@@ -1083,7 +1029,7 @@ export type Database = {
           code: string
           created_at?: string
           email?: string | null
-          expires_at?: string | null
+          expires_at?: string
           household_id: string
           id: string
           revoked_at?: string | null
@@ -1094,7 +1040,7 @@ export type Database = {
           code?: string
           created_at?: string
           email?: string | null
-          expires_at?: string | null
+          expires_at?: string
           household_id?: string
           id?: string
           revoked_at?: string | null
@@ -1172,6 +1118,7 @@ export type Database = {
         Row: {
           base_country: string | null
           base_currency: string
+          client_rev: number
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -1186,6 +1133,7 @@ export type Database = {
         Insert: {
           base_country?: string | null
           base_currency: string
+          client_rev?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -1200,6 +1148,7 @@ export type Database = {
         Update: {
           base_country?: string | null
           base_currency?: string
+          client_rev?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -1550,6 +1499,7 @@ export type Database = {
       payees: {
         Row: {
           aliases: string[] | null
+          client_rev: number
           default_account_id: string | null
           default_category_id: string | null
           household_id: string
@@ -1559,6 +1509,7 @@ export type Database = {
         }
         Insert: {
           aliases?: string[] | null
+          client_rev?: number
           default_account_id?: string | null
           default_category_id?: string | null
           household_id: string
@@ -1568,6 +1519,7 @@ export type Database = {
         }
         Update: {
           aliases?: string[] | null
+          client_rev?: number
           default_account_id?: string | null
           default_category_id?: string | null
           household_id?: string
@@ -1857,66 +1809,81 @@ export type Database = {
       }
       recurring_rules: {
         Row: {
-          amount_history: Json
-          auto_post: boolean
+          account_id: string
+          archived_at: string | null
+          category_id: string | null
+          client_rev: number
           created_at: string
           created_by: string
-          deleted_at: string | null
-          detected: boolean
-          end_date: string | null
+          currency_code: string
+          day_of_month: number
+          expected_amount: number
           household_id: string
           id: string
-          is_active: boolean
-          last_run_at: string | null
+          kind: string
           name: string
-          next_run_at: string | null
-          rrule: string
-          template: Json
           updated_at: string
         }
         Insert: {
-          amount_history?: Json
-          auto_post?: boolean
+          account_id: string
+          archived_at?: string | null
+          category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by: string
-          deleted_at?: string | null
-          detected?: boolean
-          end_date?: string | null
+          currency_code: string
+          day_of_month: number
+          expected_amount: number
           household_id: string
           id: string
-          is_active?: boolean
-          last_run_at?: string | null
+          kind: string
           name: string
-          next_run_at?: string | null
-          rrule: string
-          template: Json
           updated_at?: string
         }
         Update: {
-          amount_history?: Json
-          auto_post?: boolean
+          account_id?: string
+          archived_at?: string | null
+          category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by?: string
-          deleted_at?: string | null
-          detected?: boolean
-          end_date?: string | null
+          currency_code?: string
+          day_of_month?: number
+          expected_amount?: number
           household_id?: string
           id?: string
-          is_active?: boolean
-          last_run_at?: string | null
+          kind?: string
           name?: string
-          next_run_at?: string | null
-          rrule?: string
-          template?: Json
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recurring_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recurring_rules_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_rules_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "recurring_rules_household_id_fkey"
@@ -1930,6 +1897,7 @@ export type Database = {
       rules: {
         Row: {
           actions: Json
+          client_rev: number
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -1944,6 +1912,7 @@ export type Database = {
         }
         Insert: {
           actions: Json
+          client_rev?: number
           created_at?: string
           created_by: string
           deleted_at?: string | null
@@ -1958,6 +1927,7 @@ export type Database = {
         }
         Update: {
           actions?: Json
+          client_rev?: number
           created_at?: string
           created_by?: string
           deleted_at?: string | null
@@ -2092,18 +2062,21 @@ export type Database = {
       }
       tags: {
         Row: {
+          client_rev: number
           color: string | null
           household_id: string
           id: string
           name: string
         }
         Insert: {
+          client_rev?: number
           color?: string | null
           household_id: string
           id: string
           name: string
         }
         Update: {
+          client_rev?: number
           color?: string | null
           household_id?: string
           id?: string
@@ -2265,6 +2238,7 @@ export type Database = {
       transaction_shares: {
         Row: {
           deleted_at: string | null
+          fx_source: string
           id: string
           member_id: string
           settled_at: string | null
@@ -2277,6 +2251,7 @@ export type Database = {
         }
         Insert: {
           deleted_at?: string | null
+          fx_source?: string
           id: string
           member_id: string
           settled_at?: string | null
@@ -2289,6 +2264,7 @@ export type Database = {
         }
         Update: {
           deleted_at?: string | null
+          fx_source?: string
           id?: string
           member_id?: string
           settled_at?: string | null
@@ -2329,6 +2305,7 @@ export type Database = {
           amount_base: number | null
           category_id: string | null
           deleted_at: string | null
+          fx_source: string
           id: string
           note: string | null
           transaction_id: string
@@ -2338,6 +2315,7 @@ export type Database = {
           amount_base?: number | null
           category_id?: string | null
           deleted_at?: string | null
+          fx_source?: string
           id: string
           note?: string | null
           transaction_id: string
@@ -2347,6 +2325,7 @@ export type Database = {
           amount_base?: number | null
           category_id?: string | null
           deleted_at?: string | null
+          fx_source?: string
           id?: string
           note?: string | null
           transaction_id?: string

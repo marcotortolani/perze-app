@@ -12,7 +12,7 @@ import { CategoryStep } from "@/features/capture/CategoryStep";
 import { DetailsSheet } from "@/features/capture/DetailsSheet";
 import { useFrequentCategories } from "@/features/capture/use-frequent-categories";
 import { buildNewCategoryInput } from "@/features/capture/create-category";
-import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useInvalidateCategories } from "@/hooks/use-categories";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
@@ -42,7 +42,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const backspaceAmount = useCaptureDraftStore((s) => s.backspaceAmount);
   const clearAmount = useCaptureDraftStore((s) => s.clearAmount);
   const reset = useCaptureDraftStore((s) => s.reset);
-  const invalidateTransactions = useInvalidateTransactions(household.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household.id);
   const invalidateCategories = useInvalidateCategories(household.id);
   const userId = useCurrentUserId();
   const { data: transactions } = useTransactions(household.id);

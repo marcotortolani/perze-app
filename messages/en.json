@@ -98,6 +98,12 @@
     "needsFxBanner": {
       "message": "{count, plural, one {# item without a rate} other {# items without a rate}}",
       "resolve": "Resolve"
+    },
+    "transactionRow": {
+      "syncIssue": {
+        "conflict": "Edited by another member at the same time — unresolved",
+        "rejected": "Couldn't sync"
+      }
     }
   },
   "reference": {
@@ -446,6 +452,7 @@
       "yourEmail": "your email",
       "invalidCode": "That code expired or isn't valid. Request a new one.",
       "resend": "Resend code",
+      "resendCooldown": "Resend in {seconds}s",
       "resent": "We resent the code",
       "changeEmail": "Change email"
     },
@@ -485,7 +492,10 @@
     "success": {
       "title": "All set!",
       "subtitle": "Your account is ready. Add your first expense to start seeing your summary.",
-      "cta": "Add my first expense"
+      "cta": "Add my first expense",
+      "errorTitle": "We couldn't finish setting up your account",
+      "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
+      "retry": "Try again"
     },
     "complete": {
       "balanceTitle": "How much do you have in {account}?",
@@ -540,7 +550,31 @@
     "noCategory": "No category",
     "keepMine": "Keep mine",
     "keepTheirs": "Keep theirs",
-    "resolved": "Conflict resolved."
+    "resolved": "Conflict resolved.",
+    "badgeCount": "{count, plural, one {# conflict} other {# conflicts}}",
+    "homeBanner": "{count, plural, one {There is # transaction with a sync conflict.} other {There are # transactions with a sync conflict.}}",
+    "homeBannerAction": "Review"
+  },
+  "syncDiagnosticsPage": {
+    "title": "Sync status",
+    "empty": "There are no pending mutations to sync.",
+    "entryLabel": "{op} on {table}",
+    "ops": {
+      "insert": "Create",
+      "update": "Update",
+      "delete": "Delete"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "syncing": "Syncing",
+      "failed": "Failed, retrying",
+      "conflict": "In conflict",
+      "dead": "Unable to sync"
+    },
+    "createdAt": "Created on {when}",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "retry": "Retry now",
+    "retried": "Queued for the next attempt."
   },
   "notificationsPage": {
     "title": "Notifications",

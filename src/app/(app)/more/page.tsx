@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Card, ListRow, Sheet } from "@/design-system";
+import { Card, ListRow, Sheet, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useConflicts } from "@/hooks/use-conflicts";
 import { APP_VERSION } from "@/lib/version";
 import { setLocale } from "@/i18n/actions";
 import { routing } from "@/i18n/routing";
@@ -33,6 +34,7 @@ export default function MorePage() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const { conflicts } = useConflicts(household?.id);
   const modules = household?.enabledModules ?? [];
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -88,7 +90,14 @@ export default function MorePage() {
           <ListRow icon="user" label={t("morePage.profile")} onClick={() => router.push("/more/profile")} />
           <ListRow icon="lock" label={t("morePage.security")} onClick={() => router.push("/more/security")} />
           <ListRow icon="alert" label={t("notificationsPage.title")} onClick={() => router.push("/more/notifications")} />
-          <ListRow icon="refresh" label={t("conflictsPage.title")} onClick={() => router.push("/more/conflicts")} />
+          <ListRow
+            icon="refresh"
+            label={t("conflictsPage.title")}
+            chevron
+            value={conflicts.length > 0 ? <StatusBadge status="critical">{t("conflictsPage.badgeCount", { count: conflicts.length })}</StatusBadge> : undefined}
+            onClick={() => router.push("/more/conflicts")}
+          />
+          <ListRow icon="refresh" label={t("syncDiagnosticsPage.title")} onClick={() => router.push("/more/sync")} />
           <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
           <ListRow icon="install" label={t("morePage.importExport")} onClick={() => router.push("/more/export")} />
           <ListRow icon="install" label={t("importCsvPage.title")} onClick={() => router.push("/more/import")} />

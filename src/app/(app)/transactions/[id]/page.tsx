@@ -10,7 +10,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
-import { useInvalidateTransactions, useTransaction } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { formatRate } from "@/lib/fx/rate";
@@ -37,7 +37,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const { data: categories = [] } = useCategories(household?.id);
   const { data: payees = [] } = usePayees(household?.id);
   const { data: transaction, isLoading } = useTransaction(id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
 
   if (isLoading || !household) {
     return (
