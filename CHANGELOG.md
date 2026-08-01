@@ -6,6 +6,234 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.0] — 2026-08-01
+
+Resolución completa de `docs/plan-resolucion-auditoria-tecnica.md` (126 hallazgos de cinco
+auditorías paralelas) en las diez fases que el propio documento proponía, F0 a F9, cada una en
+su rama y su commit, mergeadas a `main` en orden. Corrección de datos, identidad y sesión,
+superficie de API, schema/RLS reproducible y sync confiable quedan completos; accesibilidad,
+bundle y deuda menor quedan parciales y declarados abajo. Suma además dos fixes de post-mortem
+sobre el flujo de login real: el mail de verificación llegaba con link a `localhost` en vez de
+código, y pegar el código de a uno por casilla no era descubrible.
+
+### Corregido — F0, higiene inmediata
+
+- `.dockerignore` (faltaba del todo): `.env*` horneaba en cualquier `docker build`
+- `@tanstack/react-virtual`/`sharp` movidos de `devDependencies` a `dependencies`
+  (`package.json`) — un build de producción con `--prod` los perdía
+
+### Corregido — F1, corrupción de datos en FX/captura/outbox
+
+- `sync-config.ts`: `fx_rate`/`original_rate`/`counter_fx_rate` viajaban al outbox con
+  `bigintToString` en vez de `formatRate()` — un rate escalado ×10¹² podía llegar a Supabase sin
+  desescalar
+- **A3** — sin cotización de captura, el número tipeado se reinterpretaba como si ya estuviera
+  en la moneda de la cuenta. Corregido para preservarlo en `original_*` con `original_rate:
+  NULL`; migración `20260801090000` relaja el `CHECK original_triple` y agrega
+  `needs_capture_fx` (columna generada) — decisión tomada con el usuario ante el conflicto con
+  el constraint existente
+- **A4** — nuevo `resolve-pending-fx.ts`: única escritura legítima de `amount_base` después de
+  la inserción, cuando un movimiento `pending` se resuelve; antes vivía duplicado inline en
+  `accounts/resolve-fx/page.tsx`
+- **C3** — `sync-worker.ts` no reseteaba una entrada `syncing` interrumpida (pestaña cerrada a
+  mitad de drenaje) — quedaba huérfana para siempre. `outbox.recoverInterrupted()` la recupera
+  al reiniciar
+- **C4** — 11 repos (`accounts`/`categories`/`tags`/`payees`/`budgets`/`goals`/
+  `recurring-rules`/`households`/`categorization-rules`/`conflicts`/`transactions`) encolaban al
+  outbox FUERA de la transacción de Dexie de la escritura — un crash entre medio perdía la
+  entrada de sync sin dejar rastro. Todos reescritos para encolar en la misma transacción
+- **D10** — `todayIso()` (nuevo, `lib/dates/today.ts`, vía `Intl.DateTimeFormat`) reemplaza 5
+  ocurrencias crudas de `new Date().toISOString().slice(0,10)` más un duplicado en
+  `api/fx/route.ts` — todas en UTC puro, rompían la fecha "de hoy" pasadas las 21h en UY/AR
+
+### Corregido — F2, identidad y sesión
+
+- `proxy.ts` no usaba el resultado real de `getUser()` — cualquier ruta fuera de una allowlist
+  corta quedaba accesible sin sesión
+- `useCurrentUserId()` pasa a tri-estado (`string | null | undefined`) — ~20 sitios de escritura
+  ya no asumen un uid que puede no existir todavía
+- No existía `signOut()` real: nuevo `lib/auth/sign-out.ts` (Supabase + `db.delete()` + limpieza
+  de stores persistidos + purga de `CacheStorage` + `unsubscribeFromPush()`), Dexie
+  namespaced por usuario (`perze-${userId}`, `db-owner-sync.tsx`)
+- **B9/B14** — `PinGate` vivía solo en `(app)/layout.tsx`: `/search`,
+  `/transactions/[id]/edit`, `/accounts/new`, `/accounts/[id]/edit` filtraban datos sin pedir
+  PIN. Movido a `providers.tsx` con allowlist pre-auth explícita; excepción real de edición sin
+  desbloquear durante 60 s (`capture-recency-store.ts`)
+- **C22** — `AccountPickerSheet` mostraba saldos con la app bloqueada (long-press evadía el PIN
+  desde el shortcut de captura); ahora los oculta pre-desbloqueo
+- **B8** — `failedAttempts`/`lockedUntil` del PIN vivían solo en memoria — recargar la página
+  anulaba el lockout de 3 intentos. Persistidos en `pin-store.ts`
+- **B12** — hash del PIN pasa de SHA-256 sin sal a PBKDF2-SHA256 con sal por dispositivo,
+  migración transparente del hash viejo
+
+### Corregido — F3, superficie de servidor
+
+- `/api/fx`: sin auth (401 ahora obligatorio), sin Zod, interpolación cruda en un `.or()`, sin
+  `Cache-Control: no-store` — cualquiera podía leer/envenenar cotizaciones ajenas
+- `supabase/functions/send-push`: sin resolver el usuario desde `Authorization`, sin chequeo de
+  membresía del household (403 ahora), body sin validar, errores no opacos, sin limpieza de
+  suscripciones muertas (410/404)
+- **E4** — códigos de invitación con `Math.random()` (recuperable) → `crypto.getRandomValues`;
+  nueva migración valida email contra `auth.users`, `expires_at DEFAULT now() + 7 días`,
+  `CHECK (role <> 'owner')`
+- `otp_expiry`/`minimum_password_length`/composición de contraseña endurecidos en
+  `supabase/config.toml`; `safe-next-path.ts` (nuevo) valida `next` contra open redirect en
+  `auth/callback`
+
+### Corregido — F4, schema reproducible y RLS real
+
+- **A5/A13** — ~25 policies con `WITH CHECK` tautológico (`household_id = (SELECT
+  tabla.household_id)`, siempre `TRUE` porque RLS no tiene `OLD`) en 12 archivos: un miembro de
+  dos households podía mover cualquier fila propia entre ellos. Reemplazado por un trigger
+  `BEFORE UPDATE` genérico de inmutabilidad real + trigger de protección de rol (solo un owner
+  cambia roles a/desde `owner`, nunca degrada al último)
+- **A11/A12** — cero `GRANT`/`REVOKE` en 30 migraciones: nueva migración con `GRANT` explícito
+  (sin `DELETE`, coherente con soft-delete) y `REVOKE EXECUTE … FROM PUBLIC, anon` en toda
+  función `SECURITY DEFINER`
+- **A6** — `transaction_splits`/`transaction_shares` sin `fx_source`: cuando el padre resolvía
+  su `pending`, los hijos quedaban `NULL` para siempre. Columnas + `CHECK` pareado + trigger
+  `AFTER UPDATE ON transactions` que propaga la resolución hacia abajo
+- **A2** — diagnóstico contra el remoto: `budgets`/`goals`/`recurring_rules` ya tenían el shape
+  v2 (`040000`), no el viejo de `010900`/`011000`. Reconciliado con una migración nueva en vez
+  de reescribir migraciones ya pusheadas
+- pgTAP: 8 archivos actualizados (el trigger de inmutabilidad cambia el mensaje de error, no la
+  protección real), nuevo `20_fx_propagation.sql`; `scripts/db-reset.sh` nuevo
+
+### Corregido — F5, sync confiable y visible
+
+- **A7** — `inherited` podía tomar una cotización posterior a la fecha del movimiento
+  (`resolve.ts` no filtraba `asOf <= date`) — un import retroactivo heredaba el rate de hoy
+- **A8** — el override manual ignoraba `householdId`/vigencia; ahora filtrado por household y
+  fecha (límite conocido y documentado: dos households escribiendo el mismo par el mismo día
+  todavía pueden pisarse en el `put()`, corregirlo del todo pide mover `householdId` a la clave
+  primaria)
+- **C10/C11/A10/C12** — `clientRev` estaba hardcodeado a `1` en 9 tablas fuera de
+  `transactions`: el versionado optimista era ficticio. Ahora real e incremental, con
+  `conflictSensitive` extendido a esas tablas; conflictos se detectan, se guardan y se muestran
+  (badge en Más, banner critical en home, ícono en `TransactionRow`) en vez de resolverse en
+  silencio "el último que sincroniza gana"
+- **C8/C9/C32** — el outbox se drenaba en orden de `status`, no de llegada; sin backoff ni
+  techo de reintentos (un error permanente reintentaba cada 30 s para siempre). FIFO real por
+  PK, backoff exponencial con jitter, dead-letter a partir de 8 intentos, pantalla de
+  diagnóstico en Más con reintento manual
+- **C7** — `SyncDot` inferìa "offline" de `pending > 0`: tener cola y no tener red son cosas
+  distintas. `useOnlineStatus()` nuevo, con listeners reales
+- **B6/B7** — `completeOnboarding()` sin transacción (un fallo a mitad de camino dejaba un
+  household activo sin cuenta) y `/onboarding/success` con un guard de `useRef` que no
+  sobrevive a un remount real (duplicaba el household). Transacción única + idempotencia real
+  vía `getCurrentHouseholdId()` + estado de error con reintento
+- **B10** — reenvío de OTP sin cooldown; ahora 60 s con contador visible
+- **C24** — borrado/restauración masiva de movimientos en `Promise.all` — dos seleccionados de
+  la misma cuenta podían pisarse el delta de saldo. Pasa a secuencial
+- **C5/C6 (alcance acotado)** — `createOptimisticMutation()` sin un solo caller en toda la app.
+  Se adoptó `invalidateAfterTransactionWrite()` en los 8 sitios reales que escriben
+  transacciones; la adopción completa en cada mutación de la app queda pendiente, es un cambio
+  de arquitectura
+
+### Corregido — F6, motores que faltaban
+
+- **E20** — `fx_rates` vacía para siempre (nada la escribía). Nueva Edge Function
+  `daily-fx-sync` (desplegada, probada contra el proyecto real — 26 cotizaciones cargadas) +
+  cron diario
+- **E9a** — ninguna `recurring_rule` se materializaba sola.
+  `materialize_recurring_transactions()` la crea en su `day_of_month`, idempotente por período,
+  con la misma cadena de resolución de FX que el resto de la app
+- **E9b/E9d** — `send-push` documentaba textualmente que nadie la llamaba.
+  `dispatch_due_notifications()` dispara `budget_alerts`/`recurring_reminders`/`weekly_summary`
+  con de-dup vía `audit_log`; `insights` (detección de anomalías) queda declarado como feature
+  nueva, no hay motor de detección del lado servidor que reusar
+- **E9c/E9e/E9f** — `card_statements` nunca pasaba a `overdue`, `audit_log`/
+  `push_subscriptions` crecían sin límite. Tres funciones + cron: transición por vencimiento,
+  purga por retención (nunca borra `delete`/`role_change`), tope de 5 + caducidad a 270 días
+
+### Corregido — F7, accesibilidad e i18n
+
+- **D3** — `Sheet` no tenía portal, trampa de foco, Escape ni scroll lock (28 archivos la usan);
+  ahora reusa `Overlay` internamente (`variant="sheet"`)
+- **D2** — `TransactionRow` era siempre `<div>`: un movimiento clickeable no entraba en el orden
+  de tabulación. Mismo patrón que `ListRow` (`Tag = onClick ? "button" : "div"`)
+- **D1** — `<html lang>` se corregía solo en un `useEffect` post-hidratación — un lector de
+  pantalla podía alcanzar a anunciar con la voz equivocada antes de que corriera. Script
+  síncrono pre-paint (mismo patrón que el anti-flash de tema)
+- **D4-D7** — cuatro tokens de contraste bajo AA: `--text-muted` (2,95–3,92:1), `--aqua-light`/
+  `--orange-light` en claro (única polaridad que fallaba), `--critical` en oscuro (3,58:1).
+  Corregidos con tests reales de fórmula WCAG, no solo de presencia de string. `--warning` sale
+  del texto de `Banner`/`NeedsFxBanner` (1,76:1 en claro) — queda solo en ícono/tinte de fondo
+- **D8/D9** — `Input` sin `aria-describedby`/`aria-invalid`/`role="alert"`; `OtpInput` con seis
+  casillas mudas sin contexto. Corregidos con asociación real y "dígito N de M" por casilla
+- **D11** — cero `<h1>` en toda `(app)` — `AppHeader` renderizaba el título en un `<div>`
+- **D13/D14** — la tecla decimal del `Keypad` estaba hardcodeada a "," — en un locale `en-US`
+  corrompía el monto 10x si el "." se leía como separador de miles. Corregido en los 9 call
+  sites reales (captura, edición, cuentas, metas, deudas, presupuestos, recurrentes,
+  onboarding, conciliación), con `aria-label` traducido en `KeypadKey`
+- **D15** — nuevo `<IconButton>` (44×44 real); 13 de 17 botones solo-ícono migrados
+- **D12 (parcial)** — `role="img"` + resumen calculado en los 8 charts SVG; el toggle "ver como
+  tabla" página por página no se cableó
+
+### Corregido — F8, fluidez y bundle (parcial)
+
+- **C14** — `Toaster` global importaba el barrel completo de `@phosphor-icons/react`
+  (+9.000 íconos) en vez del subpath `dist/ssr`
+- **C16/C15** — los 6 módulos opcionales repetían `useEffect(router.replace) + if-en-render`
+  después de que sus hooks de datos ya habían disparado sus queries. Nuevo `<ModuleGate>`
+  declarativo + cada página dividida en `page.tsx` delgado y un `XxxPageContent` cargado con
+  `next/dynamic`: si el módulo está apagado, ni el código ni las queries corren
+- **C15** — `BarChart`/`LineChart`/`Donut`/`Sankey` diferidos con `next/dynamic` en las 5
+  páginas de Análisis/cuentas que los usan — antes cero usos de `next/dynamic` en toda la app
+- **C18** — `skipWaiting: true` activaba el service worker nuevo a mitad de sesión (causa
+  clásica de "chunk load error" post-deploy). Ahora queda esperando hasta que
+  `ServiceWorkerRegister` ofrece un toast de actualización
+
+### Corregido — F9, deuda menor (parcial)
+
+- **A18** — 77 columnas de foreign key sin índice cubriente en `public` (barrido completo
+  contra `information_schema`, no solo las puntuales que nombraba la auditoría)
+
+### Corregido — Login por email: código real, no un link a localhost
+
+- El mail de `signInWithOtp` mandaba la plantilla "magic_link" default de Supabase — un botón
+  de link, nunca el código de 6 dígitos que `/onboarding/verify` pide tipear a mano — y ese link
+  apuntaba a `site_url`, que en `supabase/config.toml` seguía en `http://127.0.0.1:3000` (el
+  default de desarrollo local, nunca actualizado). `site_url` pasa al dominio real; plantilla
+  propia (`supabase/templates/magic_link.html`) muestra `{{ .Token }}` grande, sin ningún link
+  — el flujo real de la app nunca consume ese link (`auth/callback` solo atiende OAuth)
+- **Bug de fondo encontrado en el mismo diagnóstico**: el proyecto generaba códigos de **8**
+  caracteres con vigencia de **1 hora**, mientras la pantalla de verificación solo tiene 6
+  casillas — la verificación probablemente venía fallando por eso, no solo por el link.
+  Corregido a 6 dígitos / 10 minutos
+- **Bloqueado**: la plantilla de mail no se pudo pushear al proyecto real — Supabase rechaza la
+  edición de plantillas en el plan free con su proveedor de mail default. Necesita SMTP propio
+  (sección `[auth.email.smtp]` ya preparada en `config.toml`) o upgrade de plan
+- `OtpInput`: nuevo botón "Pegar código" (`navigator.clipboard.readText()`) — pegar en una
+  casilla de un solo dígito ya funcionaba pero no era descubrible
+
+### Sin tocar en esta pasada (declarado, no silencioso)
+
+- F8: manifest estático, `share_target` POST, `queryKeys` centralizados, `<VirtualList>`
+  extraído, Dexie `versionchange`/`blocked`, demo aislado y purgable, Zod en el onboarding,
+  `headers()`/CSP (los scripts inline de tema/lang necesitan nonce), cascada de soft-delete +
+  regla ESLint de `deleted_at`, rates de usuario por string crudo
+- F9: A17 (no es un bug real), A19 (re-sincronizar `01-arquitectura-datos.md` con el schema
+  real), A20, B19-B21, D28/D29, E17/E18. E19 (notificación persistente de captura) se reporta
+  como feature nueva, no como fix
+- D16-D30, B17, B22 (prioridad media/baja) y la revisión de copy en portugués (D23) — marcada
+  para hablante nativo, no para este fix
+
+### Técnico
+
+- 10 ramas (`fix/f0-higiene-inmediata` … `fix/f9-deuda-menor`), 10 commits, mergeadas a `main`
+  en orden con conflictos reales resueltos a mano en F5 (`clientRev` real + encolado
+  transaccional, complementarios, no excluyentes), F7 (`numberLocale` + `existing` combinados
+  en `update-transaction.ts`) y F8 (páginas de módulo ya divididas)
+- `database.types.ts` regenerado contra el remoto ya reconciliado en vez de resolverlo a mano
+- Verificación end-to-end contra el proyecto real (`perze-app`) en cada fase:
+  `supabase db push --linked`, pgTAP re-corrido (12 suites, sin fallas después del merge —
+  las que venían fallando por F4/A2 dejan de fallar apenas esas fases quedan mergeadas),
+  `tsc --noEmit`, `pnpm vitest run` (363/363), `eslint` (68 problemas — sin cambios, todos en
+  archivos vendored/generados ajenos a esta pasada), `next build`
+
+---
+
 ## [0.4.1] — 2026-08-01
 
 El hueco central de la pantalla de acceso (A2) deja de estar vacío: la grilla 3×3 de la marca
