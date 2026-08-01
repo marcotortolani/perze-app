@@ -1,39 +1,41 @@
 -- 01-arquitectura-datos.md § 2.7. recurring_rules y debts son raíz (Patrón A);
 -- debt_schedule es hija (Patrón B).
+--
+-- A2 (auditoría técnica) — `recurring_rules` reescrita a v2 (mismo motivo
+-- que `20260801010900_budgets_goals.sql`: colisionaba con la v2 de
+-- `20260801040000_budgets_goals_recurring.sql`). `debts`/`debt_schedule`
+-- no tienen v2 en ningún lado — quedan sin tocar.
 CREATE TABLE public.recurring_rules (
   id uuid PRIMARY KEY,
   household_id uuid NOT NULL REFERENCES public.households (id),
   name text NOT NULL,
-  template jsonb NOT NULL, -- transacción modelo
-  rrule text NOT NULL, -- 'FREQ=MONTHLY;BYMONTHDAY=5'
-  next_run_at timestamptz,
-  last_run_at timestamptz,
-  end_date date,
-  auto_post boolean NOT NULL DEFAULT false, -- crear sola o solo recordar
-  detected boolean NOT NULL DEFAULT false, -- detectada automáticamente
-  amount_history jsonb NOT NULL DEFAULT '[]'::jsonb, -- para avisar de aumentos
-  is_active boolean NOT NULL DEFAULT true,
+  kind text NOT NULL CHECK (kind IN ('expense', 'income')),
+  category_id uuid REFERENCES public.categories (id),
+  account_id uuid NOT NULL REFERENCES public.accounts (id),
+  expected_amount bigint NOT NULL CHECK (expected_amount > 0),
+  currency_code text NOT NULL REFERENCES public.currencies (code),
+  -- 1-31; los meses más cortos caen al último día (resuelto en el cliente).
+  day_of_month int NOT NULL CHECK (day_of_month BETWEEN 1 AND 31),
+  archived_at timestamptz,
 
   created_by uuid NOT NULL REFERENCES public.profiles (id),
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  deleted_at timestamptz
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE INDEX recurring_rules_household_idx ON public.recurring_rules (household_id) WHERE archived_at IS NULL;
 
 ALTER TABLE public.recurring_rules ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY recurring_rules_select ON public.recurring_rules FOR SELECT
-USING (deleted_at IS NULL AND household_id IN (SELECT public.current_households()));
+USING (household_id IN (SELECT public.current_households()));
 
 CREATE POLICY recurring_rules_insert ON public.recurring_rules FOR INSERT
 WITH CHECK (public.can_write(household_id) AND created_by = (SELECT auth.uid()));
 
 CREATE POLICY recurring_rules_update ON public.recurring_rules FOR UPDATE
 USING (household_id IN (SELECT public.current_households()) AND public.can_write(household_id))
-WITH CHECK (
-  household_id = (SELECT recurring_rules.household_id) -- inmutable, ver nota en accounts_update
-  AND created_by = (SELECT recurring_rules.created_by)
-);
+WITH CHECK (household_id = (SELECT recurring_rules.household_id) AND created_by = (SELECT recurring_rules.created_by));
 
 CREATE TABLE public.debts (
   id uuid PRIMARY KEY,

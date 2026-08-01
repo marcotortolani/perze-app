@@ -8,9 +8,11 @@
 -- las políticas de hijas es inconsistente — un debt_schedule de una deuda
 -- recién soft-deleteada se volvía invisible por RLS (verificado con test),
 -- mientras que la deuda misma (con el fix anterior) seguía siendo visible.
--- Se saca acá para las 5 policies que quedaron con el chequeo del padre:
--- transaction_splits_select, transaction_shares_select, budget_lines_select,
--- debt_schedule_all, trades_select.
+-- Se saca acá para las policies que quedaron con el chequeo del padre:
+-- transaction_splits_select, transaction_shares_select, debt_schedule_all,
+-- trades_select. (`budget_lines_select` vivía acá también, pero
+-- `budget_lines` no existe más — ver A2 en
+-- `20260801010900_budgets_goals.sql`, reescrita a v2 sin esa tabla hija.)
 
 ALTER POLICY transaction_splits_select ON public.transaction_splits
 USING (
@@ -27,16 +29,6 @@ USING (
     SELECT 1 FROM public.transactions t
     WHERE t.id = transaction_shares.transaction_id
       AND t.household_id IN (SELECT public.current_households())
-  )
-);
-
-ALTER POLICY budget_lines_select ON public.budget_lines
-USING (
-  EXISTS (
-    SELECT 1 FROM public.budgets b
-    WHERE b.id = budget_lines.budget_id
-      AND b.household_id IN (SELECT public.current_households())
-      AND (b.scope = 'household' OR b.owner_id = (SELECT auth.uid()))
   )
 );
 

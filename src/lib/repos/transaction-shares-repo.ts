@@ -2,12 +2,16 @@ import { createClient } from "../supabase/client";
 
 export type SplitMode = "equal" | "income_pro_rata" | "exact" | "percent";
 
+/** A6 — mismos valores que `transactions.fx_source`; el share hereda el estado del padre. */
+export type ChildFxSource = "identity" | "api" | "manual" | "inherited" | "pending";
+
 export interface TransactionShare {
   id: string;
   transactionId: string;
   memberId: string;
   shareAmount: bigint;
   shareAmountBase: bigint | null;
+  fxSource: ChildFxSource;
   sharePct: number | null;
   splitMode: SplitMode | null;
   settledAt: string | null;
@@ -36,7 +40,7 @@ export const transactionSharesRepo = {
     // bigint como JSON number (mismo patrón que `/api/fx`).
     const { data, error } = await supabase
       .from("transaction_shares")
-      .select("id, transaction_id, member_id, share_amount::text, share_amount_base::text, share_pct, split_mode, settled_at, settlement_id")
+      .select("id, transaction_id, member_id, share_amount::text, share_amount_base::text, fx_source, share_pct, split_mode, settled_at, settlement_id")
       .eq("transaction_id", transactionId)
       .is("deleted_at", null)
       .returns<ShareRow[]>();
@@ -50,7 +54,7 @@ export const transactionSharesRepo = {
     const { data, error } = await supabase
       .from("transaction_shares")
       .select(
-        "id, transaction_id, member_id, share_amount::text, share_amount_base::text, share_pct, split_mode, settled_at, settlement_id, transactions!inner(household_id, currency_code, created_by, deleted_at)"
+        "id, transaction_id, member_id, share_amount::text, share_amount_base::text, fx_source, share_pct, split_mode, settled_at, settlement_id, transactions!inner(household_id, currency_code, created_by, deleted_at)"
       )
       .is("deleted_at", null)
       .is("settled_at", null)
@@ -111,6 +115,7 @@ interface ShareRow {
   member_id: string;
   share_amount: string;
   share_amount_base: string | null;
+  fx_source: string;
   share_pct: number | string | null;
   split_mode: string | null;
   settled_at: string | null;
@@ -124,6 +129,7 @@ function fromRow(row: ShareRow): TransactionShare {
     memberId: row.member_id,
     shareAmount: BigInt(row.share_amount),
     shareAmountBase: row.share_amount_base === null ? null : BigInt(row.share_amount_base),
+    fxSource: row.fx_source as ChildFxSource,
     sharePct: row.share_pct === null ? null : Number(row.share_pct),
     splitMode: row.split_mode as SplitMode | null,
     settledAt: row.settled_at,

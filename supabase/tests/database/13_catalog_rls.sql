@@ -49,13 +49,15 @@ SELECT tests.log(is(
 
 -- bug encontrado y corregido en 20260801020300: institutions_write no
 -- fijaba household_id como inmutable — un miembro de dos households podía
--- mover su clon de uno a otro. Se prueba explícitamente acá.
+-- mover su clon de uno a otro. La protección real es el trigger
+-- `institutions_immutable` (A5, `20260801130000_immutability_triggers.sql`)
+-- — el WITH CHECK de la policy seguía siendo tautológico.
 SELECT tests.log(throws_ok(
   format(
     $$UPDATE public.institutions SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_clone_id')
   ),
-  'new row violates row-level security policy for table "institutions"',
+  'La columna household_id es inmutable en institutions',
   'A no puede mover su clon de institución al household de B (household_id inmutable)'
 ));
 

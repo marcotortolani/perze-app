@@ -8,13 +8,23 @@ SELECT tests.clear_authentication();
 SELECT tests.setup_household('a', 'rd-household-a');
 SELECT tests.setup_household('b', 'rd-household-b');
 
+-- v2 (A2, auditoría técnica): recurring_rules ya no tiene template/rrule —
+-- necesita account_id (NOT NULL) y expected_amount/currency_code/day_of_month.
+SELECT tests.stash('b_account_id', gen_random_uuid());
+INSERT INTO public.accounts (id, household_id, owner_id, name, kind, currency_code, created_by)
+VALUES (tests.get('b_account_id'), tests.get('b_household_id'), tests.get('b_profile_id'), 'Cuenta de B', 'checking', 'ARS', tests.get('b_profile_id'));
+
+SELECT tests.stash('a_account_id', gen_random_uuid());
+INSERT INTO public.accounts (id, household_id, owner_id, name, kind, currency_code, created_by)
+VALUES (tests.get('a_account_id'), tests.get('a_household_id'), tests.get('a_profile_id'), 'Cuenta de A', 'checking', 'ARS', tests.get('a_profile_id'));
+
 SELECT tests.stash('b_rule_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, template, rrule, created_by)
-VALUES (tests.get('b_rule_id'), tests.get('b_household_id'), 'Netflix de B', '{}'::jsonb, 'FREQ=MONTHLY', tests.get('b_profile_id'));
+INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, day_of_month, created_by)
+VALUES (tests.get('b_rule_id'), tests.get('b_household_id'), 'Netflix de B', 'expense', tests.get('b_account_id'), 500000, 'ARS', 5, tests.get('b_profile_id'));
 
 SELECT tests.stash('a_rule_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, template, rrule, created_by)
-VALUES (tests.get('a_rule_id'), tests.get('a_household_id'), 'Netflix de A', '{}'::jsonb, 'FREQ=MONTHLY', tests.get('a_profile_id'));
+INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, day_of_month, created_by)
+VALUES (tests.get('a_rule_id'), tests.get('a_household_id'), 'Netflix de A', 'expense', tests.get('a_account_id'), 500000, 'ARS', 5, tests.get('a_profile_id'));
 
 SELECT tests.stash('a_debt_id', gen_random_uuid());
 INSERT INTO public.debts (id, household_id, kind, name, principal, currency_code, start_date, direction, created_by)
@@ -37,15 +47,17 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.recurring_rules SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_rule_id')
   ),
-  'new row violates row-level security policy for table "recurring_rules"',
+  -- A5: protección real vía trigger recurring_rules_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en recurring_rules',
   'A no puede mover su regla recurrente al household de B'
 ));
 
-UPDATE public.recurring_rules SET deleted_at = now() WHERE id = tests.get('a_rule_id');
+-- v2: recurring_rules usa archived_at, no deleted_at.
+UPDATE public.recurring_rules SET archived_at = now() WHERE id = tests.get('a_rule_id');
 SELECT tests.log(isnt(
-  (SELECT deleted_at FROM public.recurring_rules WHERE id = tests.get('a_rule_id')),
+  (SELECT archived_at FROM public.recurring_rules WHERE id = tests.get('a_rule_id')),
   NULL,
-  'A puede soft-deletear su propia regla recurrente'
+  'A puede archivar su propia regla recurrente'
 ));
 
 SELECT tests.log(throws_ok(
@@ -53,7 +65,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.debts SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_debt_id')
   ),
-  'new row violates row-level security policy for table "debts"',
+  -- A5: protección real vía trigger debts_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en debts',
   'A no puede mover su deuda al household de B'
 ));
 

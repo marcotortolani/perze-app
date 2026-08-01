@@ -260,12 +260,16 @@ export interface TransactionTagRow {
   tagId: string;
 }
 
+/** A6 — mismos valores que `transactions.fxSource`; el hijo hereda el estado del padre (trigger `inherit_fx_state_splits`/propagación server-side). */
+export type ChildFxSource = "identity" | "api" | "manual" | "inherited" | "pending";
+
 export interface TransactionSplitRow {
   id: string;
   transactionId: string;
   categoryId: string;
   amount: bigint;
   amountBase: bigint | null;
+  fxSource: ChildFxSource;
   note: string | null;
   /** CON-24: soft-delete, igual que el resto — nunca se expone un DELETE real. */
   deletedAt: string | null;
@@ -279,6 +283,7 @@ export interface TransactionShareRow {
   memberId: string;
   shareAmount: bigint;
   shareAmountBase: bigint | null;
+  fxSource: ChildFxSource;
   /** J5 muestra "62 y 38" — numeric(6,3) como string decimal. */
   sharePct: string | null;
   splitMode: ShareSplitMode | null;

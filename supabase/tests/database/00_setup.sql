@@ -78,8 +78,17 @@ BEGIN
     'authenticated', 'authenticated', now(), now()
   );
 
+  -- El trigger `on_auth_user_created` (`20260801030000_auth_new_user_trigger.sql`,
+  -- Bloque C, agregado DESPUÉS de escribirse este helper para GATE-1) ya
+  -- inserta la fila de `profiles` apenas se crea el `auth.users` de arriba
+  -- — sin el ON CONFLICT, este INSERT explícito choca con esa fila y
+  -- ROMPE los 10 archivos de test de GATE-1 (encontrado corriendo F4 de
+  -- la auditoría técnica: cualquier test que llame a `create_user`/
+  -- `create_household`/`setup_household` fallaba con "duplicate key value
+  -- violates ... profiles_pkey").
   INSERT INTO public.profiles (id, display_name)
-  VALUES (v_user_id, p_email);
+  VALUES (v_user_id, p_email)
+  ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name;
 
   RETURN v_user_id;
 END;
