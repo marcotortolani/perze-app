@@ -12,6 +12,8 @@
  * que `CLAUDE.md` prohíbe para plata.
  */
 
+import { formatRate } from "../fx/rate";
+
 export type SyncOp = "insert" | "update" | "delete";
 
 export interface SyncTableConfig {
@@ -39,6 +41,18 @@ function bigintToString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "bigint") return value.toString();
   throw new Error(`Se esperaba bigint o null, llegó ${typeof value}`);
+}
+
+/**
+ * Serializa un `ScaledRate` (bigint × 10^12, ver `lib/fx/rate.ts`) al decimal
+ * plano que espera la columna `numeric(24,12)`. NUNCA usar `bigintToString`
+ * para un rate — eso manda el entero escalado tal cual y Postgres lo lee
+ * 10^12 veces más grande (A1 de la auditoría técnica).
+ */
+function rateToString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "bigint") return formatRate(value);
+  throw new Error(`Se esperaba ScaledRate (bigint) o null, llegó ${typeof value}`);
 }
 
 export const SYNC_TABLES: Record<string, SyncTableConfig> = {
@@ -176,8 +190,8 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       currency_code: p.currencyCode,
       original_amount: p.originalAmount === null ? null : bigintToString(p.originalAmount),
       original_currency: p.originalCurrency,
-      original_rate: p.originalRate === null ? null : bigintToString(p.originalRate),
-      fx_rate: p.fxRate === null ? null : bigintToString(p.fxRate),
+      original_rate: p.originalRate === null ? null : rateToString(p.originalRate),
+      fx_rate: p.fxRate === null ? null : rateToString(p.fxRate),
       fx_source: p.fxSource,
       fx_provider: p.fxProvider,
       fx_quote_kind: p.fxQuoteKind,
@@ -185,7 +199,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       amount_base: p.amountBase === null ? null : bigintToString(p.amountBase),
       counter_amount: p.counterAmount === null ? null : bigintToString(p.counterAmount),
       counter_currency_code: p.counterCurrencyCode,
-      counter_fx_rate: p.counterFxRate === null ? null : bigintToString(p.counterFxRate),
+      counter_fx_rate: p.counterFxRate === null ? null : rateToString(p.counterFxRate),
       category_id: p.categoryId,
       payee_id: p.payeeId,
       note: p.note,

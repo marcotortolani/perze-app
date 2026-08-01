@@ -28,6 +28,21 @@ export const outbox = {
     return getDb().outbox.where("status").anyOf("pending", "failed").toArray();
   },
 
+  /**
+   * C3 — una entrada queda en `"syncing"` para siempre si la pestaña se
+   * cierra o el dispositivo se duerme entre `markSyncing()` y
+   * `markSynced()`/`markFailed()` (lo normal en móvil): `listPending()`
+   * nunca la vuelve a levantar, no se reintenta, no se cuenta, y el SyncDot
+   * miente "todo bien". Se llama al arrancar `drainOutbox`, antes de
+   * `listPending()` — no hay forma de distinguir una entrada huérfana de
+   * una que de verdad está sincronizando en otra pestaña ahora mismo, así
+   * que el costo de un falso positivo (reintentar una que ya iba a
+   * terminar) es mucho menor que el de perderla para siempre.
+   */
+  async recoverInterrupted(): Promise<number> {
+    return getDb().outbox.where("status").equals("syncing").modify({ status: "pending" });
+  },
+
   async count(): Promise<number> {
     return getDb().outbox.where("status").anyOf("pending", "failed").count();
   },

@@ -35,4 +35,18 @@ describe("outbox", () => {
     expect(entry?.lastError).toBe("network error otra vez");
     expect(await outbox.count()).toBe(1);
   });
+
+  it("C3 — una entrada 'syncing' interrumpida no queda huérfana: listPending la ignora hasta recoverInterrupted", async () => {
+    const id = await outbox.enqueue({ table: "transactions", op: "insert", entityId: "tx-1", payload: {}, clientRev: 1 });
+    await outbox.markSyncing(id);
+
+    // Simula el cierre de la pestaña entre markSyncing y markSynced/markFailed.
+    expect(await outbox.listPending()).toHaveLength(0);
+    expect(await outbox.count()).toBe(0);
+
+    await outbox.recoverInterrupted();
+
+    expect(await outbox.listPending()).toHaveLength(1);
+    expect(await outbox.count()).toBe(1);
+  });
 });

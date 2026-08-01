@@ -8,6 +8,15 @@ import {
 } from "./balance-effects";
 import { newId, nowIso } from "./ids";
 
+/**
+ * C4 — encola dentro de la MISMA transacción Dexie que escribe la fila
+ * (el caller la llama desde dentro de un `db.transaction(...)` que ya
+ * declaró `db.outbox` entre sus tablas). Antes, el enqueue corría después
+ * de que la transacción ya había hecho commit: un crash o cierre de
+ * pestaña entre el commit y el enqueue dejaba la fila local sin entrada de
+ * outbox — existe en el dispositivo pero nunca va a existir en el
+ * servidor, sin reconciliación posible.
+ */
 async function enqueueTransaction(op: "insert" | "update" | "delete", row: TransactionRow): Promise<void> {
   await outbox.enqueue({ table: "transactions", op, entityId: row.id, payload: row, clientRev: row.clientRev });
 }
@@ -66,15 +75,15 @@ export const transactionsRepo = {
     const now = nowIso();
     const row: TransactionRow = { ...input, id: newId(), clientRev: input.clientRev ?? 1, createdAt: now, updatedAt: now, deletedAt: null, syncState: "ok", syncError: null };
 
-    await db.transaction("rw", db.transactions, db.accounts, async () => {
+    await db.transaction("rw", db.transactions, db.accounts, db.outbox, async () => {
       await db.transactions.add(row);
       const effects = computeTransactionEffects(row);
       for (const [accountId, delta] of mergeEffectsByAccount(effects)) {
         await bumpBalance(accountId, delta);
       }
+      await enqueueTransaction("insert", row);
     });
 
-    await enqueueTransaction("insert", row);
     return row;
   },
 
@@ -82,7 +91,7 @@ export const transactionsRepo = {
     const db = getDb();
     let updated!: TransactionRow;
 
-    await db.transaction("rw", db.transactions, db.accounts, async () => {
+    await db.transaction("rw", db.transactions, db.accounts, db.outbox, async () => {
       const existing = await db.transactions.get(id);
       if (!existing) throw new Error(`Movimiento ${id} no encontrado`);
 
@@ -96,9 +105,9 @@ export const transactionsRepo = {
       for (const [accountId, delta] of net) {
         if (delta !== 0n) await bumpBalance(accountId, delta);
       }
+      await enqueueTransaction("update", updated);
     });
 
-    await enqueueTransaction("update", updated);
     return updated;
   },
 
@@ -106,7 +115,7 @@ export const transactionsRepo = {
   async softDelete(id: string): Promise<void> {
     const db = getDb();
     let updated: TransactionRow | undefined;
-    await db.transaction("rw", db.transactions, db.accounts, async () => {
+    await db.transaction("rw", db.transactions, db.accounts, db.outbox, async () => {
       const existing = await db.transactions.get(id);
       if (!existing || existing.deletedAt !== null) return;
 
@@ -117,15 +126,15 @@ export const transactionsRepo = {
       for (const [accountId, delta] of mergeEffectsByAccount(reversed)) {
         await bumpBalance(accountId, delta);
       }
+      await enqueueTransaction("update", updated);
     });
-    if (updated) await enqueueTransaction("update", updated);
   },
 
   /** Deshacer el borrado — reaplica el efecto original. */
   async restore(id: string): Promise<void> {
     const db = getDb();
     let restored: TransactionRow | undefined;
-    await db.transaction("rw", db.transactions, db.accounts, async () => {
+    await db.transaction("rw", db.transactions, db.accounts, db.outbox, async () => {
       const existing = await db.transactions.get(id);
       if (!existing || existing.deletedAt === null) return;
 
@@ -136,8 +145,8 @@ export const transactionsRepo = {
       for (const [accountId, delta] of mergeEffectsByAccount(effects)) {
         await bumpBalance(accountId, delta);
       }
+      await enqueueTransaction("update", restored);
     });
-    if (restored) await enqueueTransaction("update", restored);
   },
 };
 

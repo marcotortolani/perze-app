@@ -1,5 +1,6 @@
 import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { money } from "@/lib/money/money";
 import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
@@ -11,6 +12,12 @@ export interface UpdateDraftParams {
   household: HouseholdRow;
   account: AccountRow;
   counterAccount?: AccountRow | undefined;
+  /**
+   * El movimiento tal como está guardado hoy — necesario para A4: congelar
+   * `fx` en la edición salvo que el monto/cuenta/moneda haya cambiado de
+   * verdad y el rate previo siguiera `pending` (`NULL`).
+   */
+  existing: TransactionRow;
 }
 
 /**
@@ -20,7 +27,7 @@ export interface UpdateDraftParams {
  * así que un cambio de cuenta, monto o moneda queda contable sin casos
  * especiales acá.
  */
-export async function updateTransactionFromDraft({ transactionId, draft, household, account, counterAccount }: UpdateDraftParams): Promise<TransactionRow> {
+export async function updateTransactionFromDraft({ transactionId, draft, household, account, counterAccount, existing }: UpdateDraftParams): Promise<TransactionRow> {
   const date = draft.occurredAt.slice(0, 10);
 
   // Misma primera conversión que saveDraftAsTransaction: amount/currencyCode
@@ -49,33 +56,50 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
         originalCurrency: capturedCurrency,
         originalRate: captureResolution.rate,
       };
+    } else {
+      // A3 — sin cotización para la conversión de captura: nunca se
+      // reinterpreta el número tipeado como si ya estuviera en la moneda
+      // de la cuenta. `amount` queda en 0 (placeholder no-corruptor, igual
+      // de "no inventado" que dejar `fx_rate` en NULL en la cadena
+      // needs_fx) y lo tipeado se preserva en `original_*` con
+      // `originalRate: null` — `needs_capture_fx` (columna generada) lo
+      // marca para resolución posterior.
+      amount = money(0n, account.currencyCode);
+      original = {
+        originalAmount: capturedAmount.amount,
+        originalCurrency: capturedCurrency,
+        originalRate: null,
+      };
     }
   }
 
   const currency = account.currencyCode;
 
-  let fx: Pick<TransactionRow, "fxRate" | "fxSource" | "fxProvider" | "fxQuoteKind" | "fxResolvedAt" | "amountBase"> = {
-    fxRate: null,
-    fxSource: "identity",
-    fxProvider: null,
-    fxQuoteKind: null,
-    fxResolvedAt: null,
-    amountBase: null,
-  };
+  // A4 — congelar el rate: una edición que no toca amount/cuenta/moneda no
+  // vuelve a correr la cadena de resolución. Si el rate ya estaba resuelto
+  // (fxRate !== null), el cambio se ignora siempre — nunca se pisa un rate
+  // congelado. Solo se recalcula cuando el rate previo era `pending` y algo
+  // de lo que lo determina cambió de verdad.
+  const fxInputsChanged = amount.amount !== existing.amount || account.id !== existing.accountId || currency !== existing.currencyCode;
+  const shouldRecomputeFx = existing.fxRate === null && fxInputsChanged;
 
-  if (currency === household.baseCurrency) {
-    // `fxRate: null` es needs_fx — identidad de moneda no es "sin resolver".
-    fx = { fxRate: rateFromInteger(1), fxSource: "identity", fxProvider: null, fxQuoteKind: null, fxResolvedAt: new Date().toISOString(), amountBase: amount.amount };
-  } else {
-    const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: household.baseCurrency, date });
-    fx = {
-      fxRate: resolution.rate,
-      fxSource: resolution.source,
-      fxProvider: resolution.provider,
-      fxQuoteKind: resolution.quoteKind,
-      fxResolvedAt: resolution.rate !== null ? new Date().toISOString() : null,
-      amountBase: resolution.rate !== null ? convert(amount, household.baseCurrency, resolution.rate).amount : null,
-    };
+  let fx: Partial<Pick<TransactionRow, "fxRate" | "fxSource" | "fxProvider" | "fxQuoteKind" | "fxResolvedAt" | "amountBase">> = {};
+
+  if (shouldRecomputeFx) {
+    if (currency === household.baseCurrency) {
+      // `fxRate: null` es needs_fx — identidad de moneda no es "sin resolver".
+      fx = { fxRate: rateFromInteger(1), fxSource: "identity", fxProvider: null, fxQuoteKind: null, fxResolvedAt: new Date().toISOString(), amountBase: amount.amount };
+    } else {
+      const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: household.baseCurrency, date });
+      fx = {
+        fxRate: resolution.rate,
+        fxSource: resolution.source,
+        fxProvider: resolution.provider,
+        fxQuoteKind: resolution.quoteKind,
+        fxResolvedAt: resolution.rate !== null ? new Date().toISOString() : null,
+        amountBase: resolution.rate !== null ? convert(amount, household.baseCurrency, resolution.rate).amount : null,
+      };
+    }
   }
 
   const patch: Partial<TransactionRow> = {

@@ -31,6 +31,7 @@ class SyncConflictError extends Error {
  * intento, nunca se pierde).
  */
 export async function drainOutbox(supabase: SupabaseClient): Promise<DrainResult> {
+  await outbox.recoverInterrupted();
   const pending = await outbox.listPending();
   let synced = 0;
   let failedCount = 0;

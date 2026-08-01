@@ -9,6 +9,5 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function todayIso(): string {
-  return nowIso().slice(0, 10);
-}
+/** D10 — reexportado desde `lib/dates/today.ts`: ver ahí por qué ya no es `nowIso().slice(0, 10)`. */
+export { todayIso } from "../dates/today";

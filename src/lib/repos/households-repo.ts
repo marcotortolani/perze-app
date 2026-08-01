@@ -13,27 +13,37 @@ export const householdsRepo = {
   },
 
   async create(input: NewHouseholdInput): Promise<HouseholdRow> {
+    const db = getDb();
     const now = nowIso();
     const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now };
-    await getDb().households.add(row);
-    await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.households, db.outbox, async () => {
+      await db.households.add(row);
+      await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<HouseholdRow>): Promise<void> {
-    await getDb().households.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().households.get(id);
-    if (row) await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.households, db.outbox, async () => {
+      await db.households.update(id, { ...patch, updatedAt: nowIso() });
+      const row = await db.households.get(id);
+      if (row) await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: row, clientRev: 1 });
+    });
   },
 
   async addMember(member: HouseholdMemberRow): Promise<void> {
-    await getDb().householdMembers.add(member);
-    await outbox.enqueue({
-      table: "household_members",
-      op: "insert",
-      entityId: `${member.householdId}:${member.profileId}`,
-      payload: member,
-      clientRev: 1,
+    const db = getDb();
+    await db.transaction("rw", db.householdMembers, db.outbox, async () => {
+      await db.householdMembers.add(member);
+      await outbox.enqueue({
+        table: "household_members",
+        op: "insert",
+        entityId: `${member.householdId}:${member.profileId}`,
+        payload: member,
+        clientRev: 1,
+      });
     });
   },
 

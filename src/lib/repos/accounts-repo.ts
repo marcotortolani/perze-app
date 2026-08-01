@@ -24,6 +24,7 @@ export const accountsRepo = {
   },
 
   async create(input: NewAccountInput): Promise<AccountRow> {
+    const db = getDb();
     const now = nowIso();
     const row: AccountRow = {
       ...input,
@@ -34,24 +35,26 @@ export const accountsRepo = {
       updatedAt: now,
       deletedAt: null,
     };
-    await getDb().accounts.add(row);
-    await outbox.enqueue({ table: "accounts", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — el enqueue vive en la MISMA transacción que la escritura: un
+    // crash entre el commit y el enqueue dejaba la cuenta local sin
+    // entrada de outbox, sin reconciliación posible.
+    await db.transaction("rw", db.accounts, db.outbox, async () => {
+      await db.accounts.add(row);
+      await outbox.enqueue({ table: "accounts", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<AccountRow>): Promise<void> {
-    await getDb().accounts.update(id, { ...patch, updatedAt: nowIso() });
-    await enqueueAccountUpdate(id);
+    await enqueueAccountWrite(id, { ...patch, updatedAt: nowIso() });
   },
 
   async archive(id: string): Promise<void> {
-    await getDb().accounts.update(id, { archivedAt: nowIso(), updatedAt: nowIso() });
-    await enqueueAccountUpdate(id);
+    await enqueueAccountWrite(id, { archivedAt: nowIso(), updatedAt: nowIso() });
   },
 
   async softDelete(id: string): Promise<void> {
-    await getDb().accounts.update(id, { deletedAt: nowIso(), updatedAt: nowIso() });
-    await enqueueAccountUpdate(id);
+    await enqueueAccountWrite(id, { deletedAt: nowIso(), updatedAt: nowIso() });
   },
 
   /**
@@ -71,8 +74,13 @@ export const accountsRepo = {
   },
 };
 
-async function enqueueAccountUpdate(id: string): Promise<void> {
-  const row = await getDb().accounts.get(id);
-  if (!row) return;
-  await outbox.enqueue({ table: "accounts", op: "update", entityId: id, payload: row, clientRev: 1 });
+/** Aplica `patch` y encola dentro de la misma transacción Dexie (C4). */
+async function enqueueAccountWrite(id: string, patch: Partial<AccountRow>): Promise<void> {
+  const db = getDb();
+  await db.transaction("rw", db.accounts, db.outbox, async () => {
+    await db.accounts.update(id, patch);
+    const row = await db.accounts.get(id);
+    if (!row) return;
+    await outbox.enqueue({ table: "accounts", op: "update", entityId: id, payload: row, clientRev: 1 });
+  });
 }
