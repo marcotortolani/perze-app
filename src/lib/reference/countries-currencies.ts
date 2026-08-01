@@ -8,17 +8,16 @@
 export interface CountryRef {
   code: string;
   name: string;
-  flag: string;
   defaultCurrency: string;
 }
 
 export const COUNTRIES: CountryRef[] = [
-  { code: "UY", name: "Uruguay", flag: "🇺🇾", defaultCurrency: "UYU" },
-  { code: "AR", name: "Argentina", flag: "🇦🇷", defaultCurrency: "ARS" },
-  { code: "BR", name: "Brasil", flag: "🇧🇷", defaultCurrency: "BRL" },
-  { code: "US", name: "Estados Unidos", flag: "🇺🇸", defaultCurrency: "USD" },
-  { code: "MX", name: "México", flag: "🇲🇽", defaultCurrency: "MXN" },
-  { code: "CL", name: "Chile", flag: "🇨🇱", defaultCurrency: "CLP" },
+  { code: "UY", name: "Uruguay", defaultCurrency: "UYU" },
+  { code: "AR", name: "Argentina", defaultCurrency: "ARS" },
+  { code: "BR", name: "Brasil", defaultCurrency: "BRL" },
+  { code: "US", name: "Estados Unidos", defaultCurrency: "USD" },
+  { code: "MX", name: "México", defaultCurrency: "MXN" },
+  { code: "CL", name: "Chile", defaultCurrency: "CLP" },
 ];
 
 export interface CurrencyRef {
@@ -35,10 +34,6 @@ export const CURRENCIES: CurrencyRef[] = [
   { code: "CLP", name: "Peso chileno" },
   { code: "EUR", name: "Euro" },
 ];
-
-export function countryFlag(code: string | null | undefined): string {
-  return COUNTRIES.find((c) => c.code === code)?.flag ?? "🏳️";
-}
 
 /**
  * `CountryRef.code`/`CurrencyRef.code` → clave de `reference.country.*` /

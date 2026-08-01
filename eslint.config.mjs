@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import noExcessPrimaryFill from "./eslint-rules/no-excess-primary-fill.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -42,6 +43,19 @@ const eslintConfig = defineConfig([
           allowedStrings: ["·", "→", "↑", "↓", "−", "%", "—", "…", "+", "×", "÷", "•", "✓", "PERZE"],
         },
       ],
+    },
+  },
+  {
+    // CON-27: presupuesto de ruido — un solo `--primary-fill` visible por
+    // pantalla. Solo aplica a archivos de pantalla, nunca a
+    // `src/design-system/**`, donde el token es la implementación legítima
+    // del componente (Switch, SegmentedControl/Chip de identidad, Button
+    // primary, UndoToast) y no una segunda marca en la misma pantalla.
+    files: ["src/app/**/page.tsx"],
+    ignores: ["src/app/dev/**"],
+    plugins: { "perze-tokens": { rules: { "no-excess-primary-fill": noExcessPrimaryFill } } },
+    rules: {
+      "perze-tokens/no-excess-primary-fill": "warn",
     },
   },
 ]);

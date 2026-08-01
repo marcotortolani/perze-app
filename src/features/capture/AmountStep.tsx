@@ -2,45 +2,64 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Amount, Chip, Icon, Keypad, SegmentedControl } from "@/design-system";
+import { AmountScrubber, Chip, Icon, Keypad, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { formatAmount } from "@/lib/money/format";
+import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
 import { useCategoryLabel } from "@/hooks/use-category-label";
-import { useFrequentCategories } from "./use-frequent-categories";
 
 export interface AmountStepProps {
   draft: CaptureDraft;
   accounts: AccountRow[];
-  categories: CategoryRow[];
+  /** Top de más usadas (`useFrequentCategories`, calculado una vez en `CaptureFlow`) — mismo conjunto que ve `CategoryStep`. */
+  frequent: CategoryRow[];
   account: AccountRow | undefined;
   counterAccount: AccountRow | undefined;
   onKindChange: (kind: CaptureKind) => void;
   onAmountKey: (key: string) => void;
+  /** Reemplaza `amountExpression` entero con un monto absoluto — lo produce el drag del `AmountScrubber`, no una tecla más. */
+  onAmountChange: (expression: string) => void;
   onOpenAccountPicker: () => void;
   onOpenCounterAccountPicker: () => void;
   onInvertTransfer: () => void;
   onQuickCategory: (category: CategoryRow) => void;
+  /** Chip "Otras" — no guarda directo como los demás, lleva al paso completo de categorías (top 5 + "Otro"). */
+  onOpenCategoryPicker: () => void;
   onOpenDetails: () => void;
   onVoice: () => void;
   onPhoto: () => void;
+}
+
+/** Convierte un monto en unidades mínimas a la expresión de texto que entiende el keypad (coma decimal, sin separador de miles). */
+export function amountToExpression(rawAmount: bigint, currency: string): string {
+  const decimals = decimalsFor(currency);
+  const negative = rawAmount < 0n;
+  const divisor = 10n ** BigInt(decimals);
+  const abs = negative ? -rawAmount : rawAmount;
+  const intPart = abs / divisor;
+  const fracPart = decimals > 0 ? (abs % divisor).toString().padStart(decimals, "0") : "";
+  return `${negative ? "-" : ""}${intPart}${decimals > 0 ? `,${fracPart}` : ""}`;
 }
 
 /** C1 — el paso que abre el FAB. El primer frame es interactivo: se puede escribir en el keypad al toque. */
 export function AmountStep({
   draft,
   accounts,
-  categories,
+  frequent,
   account,
   counterAccount,
   onKindChange,
   onAmountKey,
+  onAmountChange,
   onOpenAccountPicker,
   onOpenCounterAccountPicker,
   onInvertTransfer,
   onQuickCategory,
+  onOpenCategoryPicker,
   onOpenDetails,
   onVoice,
   onPhoto,
@@ -61,7 +80,6 @@ export function AmountStep({
     }
   }, [draft.amountExpression, currency]);
 
-  const frequent = useFrequentCategories(categories, draft.kind === "income" ? "income" : "expense", 4);
   const isTransfer = draft.kind === "transfer";
   const hasAccounts = accounts.length > 0;
 
@@ -69,11 +87,13 @@ export function AmountStep({
     <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
       <SegmentedControl options={KIND_OPTIONS} value={draft.kind} onChange={(id) => onKindChange(id as CaptureKind)} />
 
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", display: "flex", justifyContent: "center" }}>
         {/* La cifra en captura es una entrada, no todavía un movimiento con
             polaridad: neutra y sin signo mientras se tipea (el +/− aqua es
-            para la lista, no para el keypad). */}
-        <Amount value={hero} size="hero-xl" showSign={false} polarity="neutral" mutedDecimals tabular />
+            para la lista, no para el keypad). Arrastrable (C1, AmountScrubber):
+            un tap corto le pasa la posta al keypad (ya visible abajo, así que
+            es un no-op acá), el drag ajusta el monto con aceleración. */}
+        <AmountScrubber value={hero} onChange={(next) => onAmountChange(amountToExpression(next, currency))} onOpenKeypad={() => {}} />
       </div>
 
       {isTransfer ? (
@@ -112,13 +132,16 @@ export function AmountStep({
         </button>
       )}
 
-      {!isTransfer && frequent.length > 0 ? (
-        <div style={{ display: "flex", gap: 8, overflowX: "auto" }}>
+      {!isTransfer ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
           {frequent.map((c) => (
             <Chip key={c.id} icon={c.icon as IconName} onClick={() => onQuickCategory(c)}>
               {categoryLabel(c)}
             </Chip>
           ))}
+          <Chip icon="more" onClick={onOpenCategoryPicker}>
+            {t("capture.category.other")}
+          </Chip>
         </div>
       ) : null}
 
@@ -149,7 +172,7 @@ export function AmountStep({
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        <Keypad onKey={onAmountKey} onClear={() => onAmountKey("clear")} />
+        <Keypad onKey={onAmountKey} onClear={() => onAmountKey("clear")} announceValue={formatAmount(hero, { showSign: false })} />
       </div>
     </div>
   );

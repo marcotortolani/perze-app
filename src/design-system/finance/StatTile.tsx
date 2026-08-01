@@ -10,13 +10,21 @@ export interface StatTileProps {
   deltaPolarity?: "positive" | "negative" | "neutral" | undefined;
   /** Contexto de comparación, p. ej. "vs. junio". */
   deltaNote?: ReactNode | undefined;
+  /**
+   * `compact` (title 22) es lo que devuelve H1/I2 cuando necesitan tres
+   * niveles tipográficos en pantalla en vez de dos — mitigación del
+   * presupuesto de ruido pedida antes de escribir H1 (auditoría visual).
+   */
+  size?: "md" | "compact" | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Tile de KPI: label en caption, cifra héroe, delta con signo. Sin borde, sin ícono. */
-export function StatTile({ label, value, delta, deltaPolarity = "neutral", deltaNote, style }: StatTileProps) {
+export function StatTile({ label, value, delta, deltaPolarity = "neutral", deltaNote, size = "md", style }: StatTileProps) {
   const color =
     deltaPolarity === "positive" ? "var(--money-positive)" : deltaPolarity === "negative" ? "var(--money-negative-emphasis)" : "var(--text-secondary)";
+  const valueSize = size === "compact" ? 22 : 30;
+  const valueLine = size === "compact" ? "28px" : "36px";
   return (
     <div style={style}>
       <div
@@ -32,7 +40,7 @@ export function StatTile({ label, value, delta, deltaPolarity = "neutral", delta
       >
         {label}
       </div>
-      <div style={{ fontFamily: "var(--font-sans)", fontSize: 30, lineHeight: "36px", fontWeight: 600, letterSpacing: "-.015em", marginTop: 6, color: "var(--text-primary)" }}>
+      <div style={{ fontFamily: "var(--font-sans)", fontSize: valueSize, lineHeight: valueLine, fontWeight: 600, letterSpacing: "-.015em", marginTop: 6, color: "var(--text-primary)" }}>
         {value}
       </div>
       {delta || deltaNote ? (

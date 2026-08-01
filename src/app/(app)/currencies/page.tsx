@@ -46,7 +46,7 @@ export default function CurrenciesPage() {
   if (!household) return <Skeleton height={300} />;
 
   if (currencies.length === 0) {
-    return <EmptyState icon="wallet" message={t("currenciesPage.empty")} actionLabel={t("currenciesPage.emptyAction")} onAction={() => router.push("/accounts")} />;
+    return <EmptyState message={t("currenciesPage.empty")} actionLabel={t("currenciesPage.emptyAction")} onAction={() => router.push("/accounts")} />;
   }
 
   const editingResolution: FxResolution | undefined = editingPair ? ratesQuery.data?.get(editingPair) : undefined;

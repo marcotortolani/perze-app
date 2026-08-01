@@ -16,12 +16,39 @@ export interface TransactionRowProps {
   secondary?: string | undefined;
   polarity?: "positive" | "negative" | "negative-emphasis" | "neutral" | undefined;
   privacy?: boolean | undefined;
+  /**
+   * CON-14 (docs/plan-de-trabajo.md § 4): los 4 estados que le faltaban.
+   * `pending` es `status='pending'` (un cargo todavía sin acreditar) —
+   * DISTINTO del badge de `needs_fx` y del de "sin sincronizar", que son
+   * otras dos cosas y no se confunden acá.
+   */
+  pending?: boolean | undefined;
+  /** Repartido entre miembros del household (J5/J7). */
+  shared?: boolean | undefined;
+  /** Tiene foto de ticket u otro adjunto. */
+  hasAttachment?: boolean | undefined;
+  /** Cuota N de M — `null`/`undefined` si no es una compra en cuotas. */
+  installment?: { number: number; total: number } | undefined;
   onClick?: (() => void) | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Un movimiento en la lista: ícono, comercio, cuenta/categoría, monto. Swipe izquierda borra, derecha edita. */
-export function TransactionRow({ icon = "cart", merchant, meta, value, secondary, polarity, privacy = false, onClick, style }: TransactionRowProps) {
+export function TransactionRow({
+  icon = "cart",
+  merchant,
+  meta,
+  value,
+  secondary,
+  polarity,
+  privacy = false,
+  pending = false,
+  shared = false,
+  hasAttachment = false,
+  installment,
+  onClick,
+  style,
+}: TransactionRowProps) {
   const [pressed, setPressed] = useState(false);
   return (
     <div
@@ -40,18 +67,44 @@ export function TransactionRow({ icon = "cart", merchant, meta, value, secondary
         ...style,
       }}
     >
-      <span style={{ width: 40, height: 40, borderRadius: 12, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <span
+        style={{
+          position: "relative",
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          background: "var(--surface-2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          // pending: un cargo todavía sin acreditar — distinto del badge de
+          // needs_fx y del de "sin sincronizar" (CON-14).
+          boxShadow: pending ? "inset 0 0 0 1.5px var(--text-muted)" : "none",
+        }}
+      >
         <Icon name={icon} size={19} color="var(--text-secondary)" />
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontSize: 16, lineHeight: "22px", fontWeight: 400, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {merchant}
-        </span>
-        {meta ? (
-          <span style={{ display: "block", fontSize: 13, lineHeight: "18px", color: "var(--text-muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {meta}
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontSize: 16, lineHeight: "22px", fontWeight: 400, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {merchant}
           </span>
-        ) : null}
+          {hasAttachment ? <Icon name="receipt" size={13} color="var(--text-muted)" /> : null}
+          {shared ? <Icon name="users" size={13} color="var(--text-muted)" /> : null}
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {meta ? (
+            <span style={{ display: "block", fontSize: 13, lineHeight: "18px", color: "var(--text-muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {meta}
+            </span>
+          ) : null}
+          {installment ? (
+            <span style={{ fontSize: 12, lineHeight: "18px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
+              {`${installment.number}/${installment.total}`}
+            </span>
+          ) : null}
+        </span>
       </span>
       <span style={{ textAlign: "right", flexShrink: 0 }}>
         <Amount value={value} size="body" polarity={polarity} tabular privacy={privacy} style={{ display: "block" }} />

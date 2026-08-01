@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server";
-import { formatRate } from "@/lib/fx/rate";
-import { type FxRateRecord, resolveFxRate } from "@/lib/fx/resolve";
+import { formatRate, parseRate, type ScaledRate } from "@/lib/fx/rate";
+import { type FxManualOverride, type FxRateRecord, resolveFxRate } from "@/lib/fx/resolve";
 import { createDolarApiProvider } from "@/lib/fx/providers/dolarapi";
 import { createFrankfurterProvider } from "@/lib/fx/providers/frankfurter";
 import type { FxProvider } from "@/lib/fx/providers/types";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Única puerta de entrada a cotizaciones externas — el cliente nunca llama
- * a una API de FX directo (`CLAUDE.md`). Cache en memoria de proceso como
- * estable provisorio: cuando exista la tabla `fx_rates` de Supabase
- * (Fase 9 en adelante), esto pasa a leer/escribir ahí en vez de un `Map`.
+ * a una API de FX directo (`CLAUDE.md`). Lee `fx_overrides` (paso 1 de la
+ * cadena) y el cache persistente `fx_rates` (paso 2/3) desde Supabase, con
+ * las policies de RLS del usuario autenticado.
+ *
+ * **No escribe** en `fx_rates`: esa tabla es Patrón C puro
+ * (`docs/01-arquitectura-datos.md` § 3), escritura solo por `service_role`.
+ * Precargar cotizaciones frescas es el trabajo del cron diario
+ * (`BASE-02`, pendiente) — este route handler, mientras tanto, vuelve a
+ * pedirle a los providers en cada request sin cache sin persistir, igual
+ * que antes de conectar Supabase. Cuando exista el cron, esto debería
+ * encontrar casi siempre un `fx_rates` fresco y dejar de llamar afuera.
  */
 const providers: FxProvider[] = [createDolarApiProvider(), createFrankfurterProvider()];
-
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const cache = new Map<string, { record: FxRateRecord; expiresAt: number }>();
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -49,6 +55,7 @@ export async function GET(request: Request) {
   const base = searchParams.get("base");
   const quote = searchParams.get("quote");
   const date = searchParams.get("date") ?? todayIso();
+  const householdId = searchParams.get("householdId");
   const preferredProvider = searchParams.get("provider") ?? undefined;
   const preferredQuoteKind = searchParams.get("quoteKind") ?? undefined;
 
@@ -59,23 +66,66 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "MISSING_PARAMS" }, { status: 400 });
   }
 
-  const cacheKey = `${base}:${quote}:${preferredProvider ?? "*"}:${preferredQuoteKind ?? "*"}`;
-  const cached = cache.get(cacheKey);
-  let ratesForPair: FxRateRecord[];
+  const supabase = await createClient();
 
-  if (cached && cached.expiresAt > Date.now()) {
-    ratesForPair = [cached.record];
-  } else {
-    ratesForPair = base === quote ? [] : await fetchAllQuotes(base, quote);
-    const freshest = ratesForPair.find((r) => r.asOf === todayIso());
-    if (freshest) cache.set(cacheKey, { record: freshest, expiresAt: Date.now() + CACHE_TTL_MS });
+  // Paso 1 de la cadena: override manual vigente del household, a la
+  // fecha del movimiento (no "el último"). `rate::text` evita que
+  // PostgREST serialice el numeric(24,12) como JSON number y le vuele
+  // precisión — se parsea siempre desde texto, nunca desde `number`.
+  let manualOverride: FxManualOverride | null = null;
+  if (householdId && base !== quote) {
+    const { data } = await supabase
+      .from("fx_overrides")
+      .select("rate::text, valid_from, valid_to")
+      .eq("household_id", householdId)
+      .eq("base_currency", base)
+      .eq("quote_currency", quote)
+      .lte("valid_from", date)
+      .or(`valid_to.is.null,valid_to.gte.${date}`)
+      .order("valid_from", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ rate: string; valid_from: string; valid_to: string | null }>();
+
+    if (data) {
+      manualOverride = { rate: parseRate(data.rate), quoteKind: "custom" };
+    }
+  }
+
+  // Paso 2/3: candidatos ya persistidos en fx_rates (cache real, no en
+  // memoria de proceso — sobrevive un redeploy/cold start).
+  let ratesForPair: FxRateRecord[] = [];
+  if (base !== quote) {
+    const { data } = await supabase
+      .from("fx_rates")
+      .select("base, quote, as_of, provider, quote_kind, rate::text, fetched_at")
+      .eq("base", base)
+      .eq("quote", quote)
+      .order("as_of", { ascending: false })
+      .limit(30)
+      .returns<Array<{ base: string; quote: string; as_of: string; provider: string; quote_kind: string; rate: string; fetched_at: string }>>();
+
+    ratesForPair = (data ?? []).map((r) => ({
+      base: r.base,
+      quote: r.quote,
+      asOf: r.as_of,
+      provider: r.provider,
+      quoteKind: r.quote_kind,
+      rate: parseRate(r.rate) as ScaledRate,
+      fetchedAt: r.fetched_at,
+    }));
+  }
+
+  const hasFreshToday = ratesForPair.some((r) => r.asOf === todayIso());
+  if (!hasFreshToday && base !== quote) {
+    const fresh = await fetchAllQuotes(base, quote);
+    ratesForPair = [...fresh, ...ratesForPair];
   }
 
   const resolution = resolveFxRate({
     base,
     quote,
     date,
-    manualOverride: null,
+    manualOverride,
     ratesForPair,
     preferredProvider,
     preferredQuoteKind,

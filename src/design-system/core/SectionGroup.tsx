@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
-export interface ResultGroupProps {
+export interface SectionGroupProps {
   label: string;
   count?: number | undefined;
   onSeeAll?: (() => void) | undefined;
@@ -11,7 +11,7 @@ export interface ResultGroupProps {
 }
 
 /** Header de grupo con label, contador y "ver todos" — resultados de búsqueda (B8), secciones de lista (D1). */
-export function ResultGroup({ label, count, onSeeAll, seeAllLabel, children, style }: ResultGroupProps) {
+export function SectionGroup({ label, count, onSeeAll, seeAllLabel, children, style }: SectionGroupProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4, ...style }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 0 4px" }}>

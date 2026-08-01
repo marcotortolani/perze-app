@@ -35,3 +35,30 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+/**
+ * K12 — push. El payload lo arma la Edge Function `send-push` (nunca el
+ * cliente): `{title, body, url}`. Sin payload (algunos proveedores mandan
+ * push vacíos como wake-up) se muestra un texto genérico en vez de fallar.
+ */
+self.addEventListener("push", (event) => {
+  let payload: { title?: string; body?: string; url?: string } = {};
+  try {
+    payload = event.data?.json() ?? {};
+  } catch {
+    payload = {};
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title ?? "PERZE", {
+      body: payload.body ?? "",
+      icon: "/icon.svg",
+      data: { url: payload.url ?? "/" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data as { url?: string } | undefined)?.url ?? "/";
+  event.waitUntil(self.clients.openWindow(url));
+});

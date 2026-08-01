@@ -11,6 +11,12 @@ export interface LockScreenProps {
   onSubmit: (pin: string) => boolean | Promise<boolean>;
   onBiometric?: (() => void) | undefined;
   pinLength?: number;
+  /**
+   * Segundos restantes de bloqueo tras 3 intentos errados (0 = sin
+   * bloqueo). Mientras es > 0 el keypad no dibuja teclas: nunca se borran
+   * datos, solo se espera.
+   */
+  lockoutSeconds?: number;
   style?: CSSProperties;
 }
 
@@ -22,12 +28,14 @@ export interface LockScreenProps {
  * por acá. El gate solo aparece al querer VER saldos, movimientos o
  * análisis — escribir no revela nada, leer sí.
  */
-export function LockScreen({ onSubmit, onBiometric, pinLength = 6, style }: LockScreenProps) {
+export function LockScreen({ onSubmit, onBiometric, pinLength = 6, lockoutSeconds = 0, style }: LockScreenProps) {
   const t = useTranslations();
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const locked = lockoutSeconds > 0;
 
   const handleKey = async (key: string) => {
+    if (locked) return;
     if (key === "backspace") {
       setPin((p) => p.slice(0, -1));
       setError(false);
@@ -64,10 +72,14 @@ export function LockScreen({ onSubmit, onBiometric, pinLength = 6, style }: Lock
       <Icon name="lock" size={28} strokeWidth={1.5} color="var(--text-secondary)" />
       <div style={{ textAlign: "center" }}>
         <p style={{ margin: 0, fontSize: 16, fontWeight: 500, color: "var(--text-primary)" }}>{t("ds.lockScreen.enterPin")}</p>
-        {error ? <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--critical)" }}>{t("ds.lockScreen.wrongPin")}</p> : null}
+        {locked ? (
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--critical)", maxWidth: "32ch" }}>{t("ds.lockScreen.lockedOut", { seconds: lockoutSeconds })}</p>
+        ) : error ? (
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--critical)" }}>{t("ds.lockScreen.wrongPin")}</p>
+        ) : null}
       </div>
-      <PinKeypad length={pin.length} maxLength={pinLength} onKey={handleKey} style={{ width: "100%", maxWidth: 320 }} />
-      {onBiometric ? (
+      {!locked ? <PinKeypad length={pin.length} maxLength={pinLength} onKey={handleKey} style={{ width: "100%", maxWidth: 320 }} /> : null}
+      {onBiometric && !locked ? (
         <button
           type="button"
           onClick={onBiometric}

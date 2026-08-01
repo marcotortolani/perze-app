@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Amount } from "../money/Amount";
 import type { Money } from "@/lib/money/money";
 
@@ -12,6 +12,13 @@ export interface AccountSummary {
   name: string;
   balance: Money;
   country?: string | undefined;
+  /**
+   * CON-15: cuentas de broker en dos monedas (ej. saldo en pesos + saldo en
+   * dólares de la misma cuenta) — el caller arma el segundo `<Amount>` ya
+   * formateado, este componente no sabe de brokers ni decide cuándo
+   * corresponde mostrarlo.
+   */
+  secondaryBalance?: ReactNode | undefined;
 }
 
 export interface AccountCarouselProps {
@@ -61,10 +68,11 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
               width: 208,
               textAlign: "left",
               cursor: "pointer",
-              background: on ? "var(--surface-2)" : "var(--surface-1)",
+              background: on ? "var(--selection-surface)" : "var(--surface-1)",
               borderRadius: "var(--radius-card)",
               padding: 16,
               border: 0,
+              boxShadow: on ? "inset 0 0 0 1px var(--selection-ring)" : "none",
               transition: "background var(--duration-fast) var(--ease-spring-snappy)",
             }}
           >
@@ -85,6 +93,11 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
             </div>
             <div style={{ marginTop: 10 }}>
               <Amount value={a.balance} size="body" showSign={false} polarity="neutral" privacy={privacy} />
+              {a.secondaryBalance ? (
+                <div style={{ marginTop: 2, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 13, color: "var(--text-muted)" }}>
+                  {a.secondaryBalance}
+                </div>
+              ) : null}
             </div>
             <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>
               {a.name}

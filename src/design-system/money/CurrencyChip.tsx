@@ -4,8 +4,6 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon } from "../core/Icon";
 
-const FLAGS: Record<string, string> = { UYU: "🇺🇾", USD: "🇺🇸", ARS: "🇦🇷", EUR: "🇪🇺", BRL: "🇧🇷" };
-
 export interface CurrencyChipProps {
   currency?: string | undefined;
   selected?: boolean | undefined;
@@ -15,7 +13,12 @@ export interface CurrencyChipProps {
   style?: CSSProperties | undefined;
 }
 
-/** Chip de bandera + código ISO; tap abre el selector. El único lugar del sistema donde aparece emoji. */
+/**
+ * Chip de código ISO; tap abre el selector. **Cero banderas** — decisión
+ * cerrada de `CLAUDE.md` (§ "Las dos decisiones de imagen"): la bandera es
+ * del país, no de la moneda, y se rompe apenas conviven USD/EUR. Va el
+ * código solo, igual en E6/H6/I2/K3.
+ */
 export function CurrencyChip({ currency = "UYU", selected = false, onClick, showChevron = true, style }: CurrencyChipProps) {
   const [pressed, setPressed] = useState(false);
   return (
@@ -45,9 +48,6 @@ export function CurrencyChip({ currency = "UYU", selected = false, onClick, show
         ...style,
       }}
     >
-      <span aria-hidden="true" style={{ fontFamily: "var(--font-sans)", fontSize: 15 }}>
-        {FLAGS[currency] ?? "🏳"}
-      </span>
       {currency}
       {showChevron ? <Icon name="chevron-down" size={14} strokeWidth={1.75} /> : null}
     </button>

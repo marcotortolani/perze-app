@@ -35,7 +35,7 @@ export const ACCOUNT_KIND_LABEL: Record<AccountKind, string> = {
 /** Un glifo por tipo de cuenta — antes "checking" y "savings" compartían `bank`. */
 export const ACCOUNT_KIND_ICON: Record<AccountKind, IconName> = {
   cash: "banknote",
-  checking: "bank",
+  checking: "bank-checking",
   savings: "piggy-bank",
   credit_card: "credit-card",
   wallet: "wallet",

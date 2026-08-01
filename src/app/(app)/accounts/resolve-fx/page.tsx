@@ -42,7 +42,7 @@ export default function ResolveFxPage() {
   if (isLoading || !household) return <Skeleton height={300} />;
 
   if (pending.length === 0) {
-    return <EmptyState icon="check" message={t("accountsPage.resolveFx.empty")} actionLabel={t("accountsPage.resolveFx.emptyAction")} onAction={() => router.push("/accounts")} />;
+    return <EmptyState message={t("accountsPage.resolveFx.empty")} actionLabel={t("accountsPage.resolveFx.emptyAction")} onAction={() => router.push("/accounts")} />;
   }
 
   const openEditor = async (currency: string) => {

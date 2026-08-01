@@ -8,6 +8,7 @@ import {
   Amount,
   AmountScrubber,
   AppHeader,
+  Banner,
   BarChart,
   BudgetRing,
   Button,
@@ -26,7 +27,6 @@ import {
   Keypad,
   LineChart,
   ListRow,
-  OfflineBanner,
   OptionCard,
   OtpInput,
   PinKeypad,
@@ -35,7 +35,7 @@ import {
   ProgressSteps,
   RateRow,
   ResolutionChain,
-  ResultGroup,
+  SectionGroup,
   SegmentedControl,
   SeriesLegend,
   Sheet,
@@ -149,9 +149,9 @@ export default function ComponentsPage() {
         <Row>
           <OtpInput value={otp} onChange={setOtp} />
         </Row>
-        <ResultGroup label="Cuentas" count={2} onSeeAll={() => {}} seeAllLabel="Ver todos">
+        <SectionGroup label="Cuentas" count={2} onSeeAll={() => {}} seeAllLabel="Ver todos">
           <ListRow label="Itaú Caja de Ahorro" meta="UYU" icon="wallet" />
-        </ResultGroup>
+        </SectionGroup>
         {noticeOpen ? (
           <DismissibleNotice
             message="Podés poner Inversiones en la barra desde Ajustes."
@@ -255,8 +255,8 @@ export default function ComponentsPage() {
           <OptionCard title="Con mi pareja" description="Comparten cuentas y gastos." onClick={() => {}} />
         </Row>
         <Row>
-          <InstitutionTile name="Itaú" fallbackIcon="bank" selected onClick={() => {}} />
-          <InstitutionTile name="Mercado Pago" fallbackIcon="wallet" onClick={() => {}} />
+          <InstitutionTile name="Itaú" color="#EC7000" selected onClick={() => {}} />
+          <InstitutionTile name="Mercado Pago" color="#009EE3" onClick={() => {}} />
         </Row>
         <AccountRow name="Itaú Caja de Ahorro" meta="UYU" balance={DEMO_MONEY} icon="wallet" />
         <RateRow pair="USD → UYU" source="DolarApi · oficial" ageLabel="hace 2 h" rate={fxRate} />
@@ -306,9 +306,19 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="Feedback">
-        <EmptyState icon="wallet" message="Todavía no cargaste gastos." actionLabel="Cargar el primero" onAction={() => {}} />
-        <ErrorState what="No pudimos sincronizar con Itaú." next="Tus gastos locales están guardados." onRetry={() => {}} retryLabel="Reintentar" />
-        <OfflineBanner pending={3} />
+        <EmptyState message="Todavía no cargaste gastos." actionLabel="Cargar el primero" onAction={() => {}} />
+        <ErrorState
+          what="No pudimos sincronizar con Itaú."
+          next="Tus gastos locales están guardados."
+          onAlternative={() => {}}
+          alternativeLabel="Ver offline"
+          onRetry={() => {}}
+          retryLabel="Reintentar"
+        />
+        <Banner status="offline" pending={3} />
+        <Banner status="warning" />
+        <Banner status="error" />
+        <UndoToast message="Sincronizando…" variant="progress" visible />
         <SkeletonRow />
         <Skeleton width={120} height={20} />
         <Row>

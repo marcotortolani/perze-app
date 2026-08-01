@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { normalizeSize } from "../core/size";
 
 export interface SkeletonProps {
   width?: number | string | undefined;
@@ -10,7 +11,17 @@ export interface SkeletonProps {
 /** Placeholder de carga que respeta la forma real. Cero spinners de pantalla completa. */
 export function Skeleton({ width = "100%", height = 16, radius = 8, style }: SkeletonProps) {
   return (
-    <span style={{ display: "block", width, height, borderRadius: radius, background: "var(--surface-2)", animation: "ds-skel 1.4s ease-in-out infinite", ...style }}>
+    <span
+      style={{
+        display: "block",
+        width: normalizeSize(width),
+        height: normalizeSize(height),
+        borderRadius: normalizeSize(radius),
+        background: "var(--surface-2)",
+        animation: "ds-skel 1.4s ease-in-out infinite",
+        ...style,
+      }}
+    >
       <style>{"@keyframes ds-skel{0%,100%{opacity:1}50%{opacity:.55}}"}</style>
     </span>
   );

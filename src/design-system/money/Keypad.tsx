@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { Icon } from "../core/Icon";
+import { KeypadKey, VISUALLY_HIDDEN_STYLE } from "./KeypadKey";
 
 const KEYS = [
   ["1", "2", "3", "+"],
@@ -12,72 +11,32 @@ const KEYS = [
 ];
 const OPS = ["+", "−", "×", "÷"];
 
-interface KeyProps {
-  label: string;
-  onPress: (key: string) => void;
-  onLongPress?: (() => void) | undefined;
-}
-
-function Key({ label, onPress, onLongPress }: KeyProps) {
-  const [pressed, setPressed] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const isOp = OPS.includes(label);
-
-  const down = () => {
-    setPressed(true);
-    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(8);
-    if (onLongPress) timer.current = setTimeout(onLongPress, 500);
-  };
-  const up = () => {
-    setPressed(false);
-    clearTimeout(timer.current);
-  };
-
-  return (
-    <button
-      type="button"
-      onPointerDown={down}
-      onPointerUp={up}
-      onPointerLeave={up}
-      onClick={() => onPress(label)}
-      style={{
-        height: "var(--keypad-key-height)",
-        borderRadius: "var(--radius-keypad-key)",
-        border: 0,
-        background: pressed ? "var(--primary-fill)" : isOp ? "var(--surface-2)" : "var(--surface-3)",
-        color: pressed ? "var(--primary-on-fill)" : isOp ? "var(--text-secondary)" : "var(--text-primary)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        fontFamily: "var(--font-sans)",
-        fontSize: isOp ? 22 : 32,
-        fontWeight: 500,
-        fontVariantNumeric: "tabular-nums",
-        transform: pressed ? "scale(var(--press-scale))" : "scale(1)",
-        transition: "transform var(--duration-fast) var(--ease-spring-snappy), background var(--duration-micro) linear",
-      }}
-    >
-      {label === "backspace" ? <Icon name="backspace" size={24} strokeWidth={1.8} /> : label}
-    </button>
-  );
-}
-
 export interface KeypadProps {
   /** Recibe '0'-'9', ',', '+', '−', '×', '÷' o 'backspace'. */
   onKey: (key: string) => void;
   /** Long-press en backspace limpia toda la entrada. */
   onClear?: (() => void) | undefined;
+  /**
+   * CON-12: el monto formateado a anunciar por `aria-live` en cada tecla —
+   * `Keypad` no calcula plata, solo expone la región; el caller (que ya
+   * tiene `formatAmount()`) le pasa el texto final.
+   */
+  announceValue?: string | undefined;
   gap?: number | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Teclado numérico de pantalla completa — el componente más usado de la app. Teclas 64px, dígitos 32px, haptic de 8ms por tecla. */
-export function Keypad({ onKey, onClear, gap = 8, style }: KeypadProps) {
+export function Keypad({ onKey, onClear, announceValue, gap = 8, style }: KeypadProps) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap, ...style }}>
+      {announceValue !== undefined ? (
+        <div role="status" aria-live="polite" style={VISUALLY_HIDDEN_STYLE}>
+          {announceValue}
+        </div>
+      ) : null}
       {KEYS.flat().map((k) => (
-        <Key key={k} label={k} onPress={onKey} onLongPress={k === "backspace" ? onClear : undefined} />
+        <KeypadKey key={k} label={k} muted={OPS.includes(k)} onPress={onKey} onLongPress={k === "backspace" ? onClear : undefined} />
       ))}
     </div>
   );

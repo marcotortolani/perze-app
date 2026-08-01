@@ -104,6 +104,23 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **A11y:** no va en columna alineada; si el contexto la alinea, el contenedor fija `min-width` para que 8 decimales no muevan la columna vecina.
 - **Bloques:** I3, I4, I5.
 
+### FxEditor
+- **Existe para:** el rate sugerido como cifra héroe, editable con un slider fino de ±5% alrededor de la sugerencia. Único punto de la app donde un tipo de cambio se ajusta a mano.
+- **Props:** `from?: CurrencyCode` (default "USD") · `to?: CurrencyCode` (default "UYU") · `rate: ScaledRate` · `suggested?: ScaledRate` (centro del slider; si falta, es `rate`) · `source?: string` (default `ds.fxEditor.source`) · `ageHours?: number` · `stale?: boolean` · `onChange?: (rate: ScaledRate) => void` · `onOpenKeypad?: () => void`.
+- **Estados:** normal · con badge de antigüedad (`stale`) · slider en el límite ±5% (clamp, no rebota).
+- **Tokens:** `--text-hero-size/line/track --text-muted --text-primary --surface-3` (accent-color del `<input type="range">`, nunca relleno de marca — la corrección que motivó el componente, ver comentario en el código).
+- **A11y:** la cifra es un `button` real (abre el keypad); el slider es un `<input type="range">` nativo, foco y flechas de teclado gratis. El badge de antigüedad usa `StatusBadge` y por lo tanto ya trae su propio `role="status"`.
+- **Reconciliación con `Rate`/`PriceStatus` (§ 4, § 6):** `FxEditor` **es** la implementación editable de ese mismo territorio — no un cuarto componente separado. `Rate` (spec) es la variante de solo lectura para listas (E6, E7, H6, I2); cuando `PriceStatus` (spec, LIB-01) exista, el par `source`/`ageHours`/`stale` de `FxEditor` debería consumirlo en vez de reimplementar el badge, igual que se anota para `Rate` en § 6.
+- **Bloques:** C4, E6, E7.
+
+### AmountScrubber
+- **Existe para:** una cifra héroe arrastrable — el drag horizontal ajusta el monto con aceleración por velocidad, y un tap corto (sin drag, <180ms) le pasa la posta al keypad.
+- **Props:** `value: Money` · `step?: bigint` (incremento mínimo en unidades mínimas, default 1000n) · `onChange?: (next: bigint) => void` · `onOpenKeypad?: () => void`.
+- **Estados:** normal · activo (arrastrando, `scale(1.02)`).
+- **Tokens:** `--duration-fast --ease-spring-snappy` (más los que `Amount` ya trae con `size="hero-xl"`).
+- **A11y:** el gesto de arrastre no tiene equivalente de teclado propio — el tap corto abre el `Keypad`, que sí es completamente navegable, así que ese es el camino accesible declarado, no una alternativa de segunda clase.
+- **Bloques:** C1, C5.
+
 ### StatusBadge
 - **Existe para:** el nivel de un estado, con ícono y label, y el único escalamiento por edad del sistema.
 - **Props:** `status: 'neutral'|'good'|'warning'|'serious'|'critical'` (default `good`) · `ageDays?: number` · `icon?: IconName` · `children: ReactNode` (el label, obligatorio).
@@ -136,6 +153,31 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **A11y:** idem `SelectableRow`. La descripción va dentro del elemento con rol, así que la lee el lector de pantalla sin `aria-describedby`.
 - **Bloques:** A5, A8, A9 (tres usos sólo en A), I1, K4.
 
+### CategoryBubble
+- **Existe para:** el target de categoría de 64px en la captura y los filtros — ícono neutro y label debajo.
+- **Props:** `icon?: IconName` (default "cart") · `label: string` · `selected?: boolean` · `onClick?: () => void`.
+- **Estados:** sin seleccionar (`--surface-2`) · seleccionada (`--selection-surface` + anillo + `scale(1.04)`) · presionada.
+- **Tokens:** `--selection-surface --selection-ring --surface-2 --text-primary --text-secondary --press-scale --duration-fast --ease-spring-snappy`.
+- **A11y:** es un `button` real; el ícono es puramente decorativo porque el `label` ya describe la categoría en texto — no lleva `aria-label` propio ni duplica el texto.
+- **Bloques:** C1, C2.
+
+### DateStrip
+- **Existe para:** fechar un movimiento con una tira horizontal de días con snap, sin abrir un date picker del sistema.
+- **Props:** `days: (string | { date: string; label?: string })[]` (ISO; `label` reemplaza la letra del día para "Hoy"/"Ayer") · `value?: string` · `onChange?: (date: string) => void` · `onLongPress?: (date: string) => void` (abre el calendario completo).
+- **Estados:** normal · seleccionado (`--selection-surface` + anillo, cifra en tinta primaria peso 600) · nombrado ("Hoy"/"Ayer", tinta primaria aunque no esté seleccionado).
+- **Tokens:** `--selection-surface --selection-ring --surface-2 --radius-input --text-primary --text-secondary --text-muted --font-mono`.
+- **A11y:** cada día es un `button` con snap-scroll nativo (foco y flechas del sistema operativo funcionan solos). El long-press no tiene equivalente de teclado propio todavía — pendiente para cuando se programe el calendario completo (`onLongPress`) contra un flujo real.
+- **Bloques:** C1, C5.
+
+### SectionGroup
+- **Existe para:** el header de grupo — label, contador y "ver todos" — con los hijos debajo. Es el patrón genérico "caption + hijos", renombrado desde `ResultGroup` (LIB-16).
+- **Props:** `label: string` · `count?: number` · `onSeeAll?: () => void` · `seeAllLabel?: string` (requerido con `onSeeAll`) · `children: ReactNode`.
+- **Estados:** con contador · con "ver todos" · ambos · ninguno.
+- **Tokens:** `--text-muted --primary-ink --font-sans`.
+- **A11y:** el botón "ver todos" es un `button` real de 44px de alto efectivo (padding del layout, no del componente).
+- **Bloques:** B8 (búsqueda), D1 (secciones de lista de movimientos).
+- **Nota LIB-16 — por qué no se unificó con los otros cuatro:** el ítem original de deuda (§ 4.22) asumía que `AccountRow`, `RateRow`, `GroupCard`, `ResultGroup` y `ResolutionChain` eran "el mismo patrón". Una vez escritos, no lo son: `AccountRow` es `ListRow` + `Amount` compuestos; `RateRow` es una fila de par+fuente+antigüedad+cifra; `ResolutionChain` es una lista de pasos con uno activo; `GroupCard` es caption+resumen+cifra editable+acción (la composición específica de E8, no un contenedor de hijos). Solo `ResultGroup` era genuinamente "header de caption + hijos" — es la única que se renombra a `SectionGroup`. Forzar los otros cuatro dentro del mismo componente habría sido la abstracción prematura que el proyecto pide evitar; quedan como están, cada uno documentado por separado.
+
 ### KeypadKey
 - **Existe para:** ser la tecla de los dos keypads.
 - **Props:** `label: ReactNode` · `ariaLabel?: string` · `onPress: () => void` · `onLongPress?: () => void` · `size?: number` (tamaño de fuente, default 32).
@@ -153,12 +195,25 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **Bloques:** A7, C1, C4, C5, C6, F3, F7, I5, I6.
 
 ### PinKeypad
-- **Existe para:** ingresar un secreto de largo fijo.
-- **Props:** `length?: number` (default 4) · `filled: number` · `error?: boolean` · `lockedSeconds?: number` · `onKey: (d: string) => void` · `onBackspace: () => void`.
-- **Estados:** vacío · parcial · completo · error (puntos en critical) · bloqueado (30 s tras 3 intentos, con copy que aclara que **no se borra nada**).
-- **Tokens:** `--surface-3 --text-primary --critical` más los de `KeypadKey`.
-- **A11y:** los puntos son `role="status"` con `aria-label="{filled} de {length} dígitos"` y **nunca** exponen el valor. Sin operadores, sin coma. El bloqueo se anuncia como texto, no sólo como estado visual.
-- **Bloques:** K11, L6.
+- **Existe para:** ingresar un secreto de largo fijo — solo los dígitos y el progreso, nunca el valor.
+- **Props:** `length: number` (dígitos ya tipeados) · `maxLength?: number` (default 6) · `onKey: (key: string) => void` · `style?`.
+- **Estados:** vacío · parcial · completo. El error y el bloqueo (30s tras 3 intentos) **no viven acá** — son estado de `LockScreen`, que envuelve este teclado; `PinKeypad` solo sabe cuántos dígitos van y a dónde van las teclas.
+- **Tokens:** `--primary-fill --surface-3` más los de `KeypadKey`.
+- **A11y:** los puntos de progreso son `aria-live="polite"` vía `role="status"` visualmente oculto anunciando "{current} de {total} dígitos" (i18n `pinKeypad.progress`) — nunca exponen el dígito. Sin operadores, sin coma.
+- **Bloques:** L6, K11 (seguridad).
+
+### LockScreen
+- **Existe para:** el gate de PIN al abrir la app — opcional, apagado por defecto.
+- **Props:** `onSubmit: (pin: string) => boolean | Promise<boolean>` · `onBiometric?: () => void` · `pinLength?: number` (default 6) · `lockoutSeconds?: number` (default 0 — mientras es > 0, el keypad no se dibuja: nunca se borran datos, solo se espera).
+- **Estados:** normal · error (PIN incorrecto, mensaje + puntos vuelven a cero) · bloqueado (30s tras 3 intentos, copy explícito de que los datos están intactos, `ds.lockScreen.lockedOut`).
+- **Tokens:** `--text-secondary --text-primary --critical --primary-ink`.
+- **A11y:** ícono de candado decorativo; el mensaje de error/bloqueo es texto real, no solo color.
+- **Bloques:** L6. **Nunca se interpone entre el usuario y C1/C2** (regla de producto, no del componente): el shortcut de la PWA, el share target y el widget van directo al keypad de captura.
+
+### PinGate (`src/components/pin-gate.tsx`)
+- **Existe para:** aplicar `LockScreen` en el único punto correcto — el shell de `(app)/layout.tsx`, que cubre home/cuentas/movimientos/análisis/más. **Nunca envuelve `/add` ni `/transactions/[id]/edit`**, que viven fuera de ese árbol de rutas a propósito (convención de rutas de `CLAUDE.md`): la captura y la edición de los 60s posteriores al guardado quedan pre-auth sin ningún caso especial adicional.
+- **Estado:** `usePinStore` (Zustand + `persist`, solo `enabled`/`pinHash` persistidos) para el PIN en sí; el desbloqueo de la pestaña actual vive en `sessionStorage` (`perze:pinUnlocked`), independiente de cuándo termina de hidratarse el store persistido — piden dos fuentes distintas a propósito para no acoplar un bug de timing de hidratación con el gate de seguridad.
+- **Bloques:** L6.
 
 ### OtpInput
 - **Existe para:** el código de seis dígitos del magic link, con autofill del sistema.
@@ -185,15 +240,151 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ---
 
+## 2.5 · Sin ficha, ya en código (CON-22)
+
+Los 16 restantes de la reconciliación (§ intro): tienen código, se usan en pantallas reales
+y no requieren ningún cambio — esta sección es la ficha que faltaba, no una revisión.
+
+### Button
+- **Existe para:** el botón de acción de todo el sistema, 56-64px de alto.
+- **Props:** `variant?: 'primary'|'secondary'|'ghost'|'danger'` (default `primary`) · `size?: 'md'|'lg'|'sm'` (56/64/44px) · `icon?: IconName` · `children?: ReactNode` · `disabled?: boolean` · `fullWidth?: boolean` (default `true`) · `onClick?: () => void` · el resto de `ButtonHTMLAttributes` (`type`, `aria-*`, etc.).
+- **Estados:** los 4 `variant` · presionado (`scale(var(--press-scale))`) · deshabilitado (opacidad .4, sin eventos).
+- **Tokens:** `--primary-fill --primary-on-fill --text-primary --critical --border --radius-button --primary-button-height --primary-button-height-lg --press-scale --duration-fast --ease-spring-snappy`.
+- **A11y:** `button` real; `disabled` real (no solo visual) bloquea el click y el foco de teclado.
+- **Bloques:** todos.
+
+### AppHeader
+- **Existe para:** el header de 56px de toda pantalla: volver/scope, título, buscar, `SyncDot`.
+- **Props:** `title?: string` · `scope?: string` · `onScopeChange?: (scope: string) => void` · `scopeOptions?: string[]` · `onSearch?: () => void` · `onBack?: () => void` · `backLabel?: string` (requerido con `onBack`) · `searchLabel?: string` (requerido con `onSearch`) · `syncState?: 'synced'|'syncing'|'offline'` · `pending?: number` · `showScope?: boolean` (default `true`) · `right?: ReactNode`.
+- **Estados:** dashboard (scope switcher visible) · pantalla empujada (`onBack` presente, oculta el scope switcher) · con buscador · con `right` custom.
+- **Tokens:** `--header-height --screen-padding --text-primary --text-secondary --page`.
+- **A11y:** el botón de volver y el de buscar son de 44×44 con `aria-label` obligatorio (`backLabel`/`searchLabel`, resueltos por el caller vía `useTranslations` — el componente no trae copy propia). El scope switcher es un `SegmentedControl emphasis="brand"`, no un componente separado (`ScopeSwitcher` está eliminado, ver § 2).
+- **Bloques:** todos.
+
+### Amount
+- **Existe para:** ser el ÚNICO lugar donde se formatea plata en JSX — signo, símbolo, decimales por moneda, color por polaridad, modo privacidad.
+- **Props:** `value: Money` · `size?: 'hero-xl'|'hero'|'title'|'body'|'label'` (default `body`) · `polarity?: 'positive'|'negative'|'negative-emphasis'|'neutral'` (default derivado del signo, `neutral` si `showSign=false`) · `showSign?: boolean` (default `true`) · `showArrow?: boolean` · `tabular?: boolean` (mono + `tabular-nums`, solo en columnas) · `mutedDecimals?: boolean` · `privacy?: boolean`.
+- **Estados:** positivo/negativo/negativo-énfasis/neutro · con flecha · con decimales atenuados (keypad) · privacidad activa (`blur(8px)`, `userSelect: none`).
+- **Tokens:** `--money-positive --money-negative --money-negative-emphasis --text-hero-xl/hero/title/body/label-* --font-mono --font-sans --text-muted`.
+- **A11y:** el signo y la flecha son glifos de texto, no color solo — la polaridad nunca se comunica solo por tinta (regla del sistema de marca). Los decimales van en un `span` separado solo para el atenuado, no rompen la lectura del lector de pantalla.
+- **Bloques:** todos los que muestran dinero. Fuera de JSX, el equivalente es `formatAmount`/`formatAmountCompact` de `lib/money` — nunca `toFixed`.
+
+### Icon
+- **Existe para:** el set de íconos de línea del sistema (Phosphor, no Lucide — mandato del usuario).
+- **Props:** `name: IconName` · `size?: number` (default 20; 24 en nav, 26 en category bubbles) · `strokeWidth?: number` (default 1.5 "regular"; ≥2 pasa a peso "bold") · `color?: string` (default `currentColor`).
+- **Estados:** regular · bold (según `strokeWidth`).
+- **Tokens:** ninguno propio — `color` hereda del contexto (`currentColor`) salvo que el caller fije un token.
+- **A11y:** `aria-hidden="true"` siempre — la regla dura del sistema es que todo ícono tiene que ser tocable (dentro de un control con su propio label) o portar significado ya declarado en texto al lado; nunca es la única fuente de significado.
+- **Bloques:** todos. **Nota de inventario:** el sistema de marca pide un ícono `bank-checking` propio para distinguir cuenta corriente de caja de ahorro; hoy ambas comparten glifo (`hand-coins` es el workaround documentado en el código, ver CON-28/29 sobre íconos nuevos).
+
+### Chip
+- **Existe para:** la píldora de 36px de filtros, atajos de gasto frecuente y opciones de scope.
+- **Props:** `children?: ReactNode` · `selected?: boolean` · `icon?: IconName` · `onClick?: () => void` · el resto de `ButtonHTMLAttributes`.
+- **Estados:** normal · seleccionado (relleno de marca — único lugar donde una lista de chips lo gasta) · presionado · no interactivo (sin `onClick`, `cursor: default`).
+- **Tokens:** `--primary-fill --primary-on-fill --surface-2 --text-secondary --border --radius-chip --press-scale --duration-fast --ease-spring-snappy`.
+- **A11y:** `button` real; sin `onClick` sigue siendo un `button` mudo — un chip puramente decorativo (ej. mostrar la categoría en un resumen) debería resolverse con otro elemento, no con `Chip` sin handler.
+- **Bloques:** C1 (categorías frecuentes), filtros de D, K3.
+
+### Card
+- **Existe para:** el contenedor de contenido genérico — radio 20, sin sombra, jerarquía por superficie + espaciado.
+- **Props:** `surface?: 1|2|3` (default `1`) · `bordered?: boolean` · `padding?: number|string` (default `20`) · `radius?: number|string` · `children?: ReactNode` · el resto de `HTMLAttributes<HTMLDivElement>`.
+- **Estados:** las 3 superficies · con/sin borde.
+- **Tokens:** `--surface-1/2/3 --radius-card --border`.
+- **A11y:** ninguna propia — es un contenedor semánticamente neutro (`div`); el contenido interno aporta sus propios roles.
+- **Nota:** `padding`/`radius` aceptan `number|string` pero, a diferencia de `Skeleton`/`Sheet` (que ya pasan por `normalizeSize()`, CON-C6), este componente no normaliza — un string tipo `"20"` sin unidad se pasaría crudo a `style`. No es parte de este relevamiento arreglarlo (CON-22 es solo ficha), pero queda anotado para no repetir el bug de `SplitBar height="20"`/`Skeleton height="40"` que motivó `normalizeSize`.
+- **Bloques:** todos.
+
+### SegmentedControl
+- **Existe para:** 2-4 opciones mutuamente excluyentes, seleccionadas por superficie (nunca relleno de marca, salvo `emphasis="brand"` para identidad de dato — el scope del household).
+- **Props:** `options: (string | { id, label, icon? })[]` · `value?: string` · `onChange?: (id: string) => void` · `size?: 'md'|'sm'` (44/36px) · `emphasis?: 'surface'|'brand'` (default `surface`).
+- **Estados:** activo por superficie · activo por marca (`emphasis="brand"`) · inactivo.
+- **Tokens:** `--surface-2 --selection-surface --selection-ring --primary-fill --primary-on-fill --text-primary --text-muted --radius-chip --duration-fast --ease-spring-snappy`.
+- **A11y:** `role="radiogroup"` en el contenedor, `role="radio"` + `aria-checked` por opción — deliberadamente no `tablist`/`tab`, porque es una elección, no un panel de contenido.
+- **Bloques:** todos los que necesitan una elección de 2-4 (kind de captura, scope, tipo de cuenta…).
+
+### SkeletonRow
+- **Existe para:** el placeholder de carga pre-armado que calza con `TransactionRow` — respeta la forma real, cero spinners de pantalla completa.
+- **Props:** `style?: CSSProperties`. (Es una composición fija de 3 `Skeleton`; no expone sub-props — para otras formas se compone `Skeleton` directamente.)
+- **Estados:** único — su forma no varía.
+- **Tokens:** hereda los de `Skeleton` (`--surface-2`, animación `ds-skel`).
+- **A11y:** ninguna propia — no es contenido, es placeholder; el contenedor de la lista es responsabilidad del caller anunciar como cargando si corresponde.
+- **Bloques:** D1, B, cualquier lista de movimientos mientras carga.
+
+### Switch
+- **Existe para:** el toggle de 46×28 de un ajuste binario de aplicación inmediata.
+- **Props:** `checked?: boolean` · `onChange?: (checked: boolean) => void` · `disabled?: boolean` · `label?: string` (se omite si ya vive dentro de un `ListRow` que etiqueta) · `id?: string` (para `aria-labelledby`).
+- **Estados:** on (relleno de marca) · off (`--surface-3`) · deshabilitado · con foco (anillo `--primary-ink`).
+- **Tokens:** `--primary-fill --primary-on-fill --surface-3 --text-muted --primary-ink --duration-fast --ease-spring-snappy`.
+- **A11y:** `role="switch"` + `aria-checked` + `aria-labelledby`; vibración táctil de 12ms al togglear (`navigator.vibrate`, best-effort, no bloquea si no existe).
+- **Bloques:** K (ajustes), cualquier toggle binario.
+
+### Input
+- **Existe para:** el campo de texto genérico — superficie 3, radio 14, 48px de alto. **Nunca para montos** (eso es `Keypad`).
+- **Props:** `label?: string` · `hint?: string` · `invalid?: boolean` · `multiline?: boolean` · `placeholder?: string` · `value?: string` · `onChange?: (e) => void` · `name?/id?/maxLength?/autoFocus?`.
+- **Estados:** normal · con hint · inválido (borde + hint en `--critical`) · multilínea (textarea, 88px mín).
+- **Tokens:** `--surface-3 --text-primary --text-secondary --text-muted --critical --border --radius-input`.
+- **A11y:** `label` real envolvente (asocia el control sin `htmlFor` manual); el hint inválido debería anunciar la corrección, no solo "campo inválido" (regla general de errores del sistema — este componente no la aplica solo, depende del texto que le pase el caller).
+- **Bloques:** formularios de cuentas, notas, comercio en captura.
+
+### CurrencyChip
+- **Existe para:** el chip de código ISO que abre el selector de moneda. **Cero banderas** — decisión cerrada (`CLAUDE.md` § "Las dos decisiones de imagen"): la bandera es del país, no de la moneda.
+- **Props:** `currency?: string` (default `"UYU"`) · `selected?: boolean` · `onClick?: () => void` · `showChevron?: boolean` (default `true`).
+- **Estados:** normal · seleccionado (relleno de marca) · presionado.
+- **Tokens:** `--primary-fill --primary-on-fill --surface-2 --text-primary --border --radius-chip --font-mono --press-scale --duration-fast --ease-spring-snappy`.
+- **A11y:** `button` real; el código de 3 letras es el label visible y suficiente (no requiere `aria-label` adicional, a diferencia de un ícono solo).
+- **Bloques:** E6, H6, I2, K3.
+
+### Sparkline
+- **Existe para:** la línea de tendencia de 2px sin ejes, embebida en insight cards y filas de lista.
+- **Props:** `values: number[]` · `width?: number` (default 96) · `height?: number` (default 28) · `color?: string` (default `--data-1`).
+- **Estados:** único — no tiene interacción ni estado vacío propio (un `values` vacío dibuja un path vacío; el caller decide si mostrar el componente).
+- **Tokens:** `--data-1 --line-width`.
+- **A11y:** SVG puramente decorativo dentro de un contexto que ya tiene su propio texto (insight, fila) — no lleva `role`/`aria-label` porque no porta información que no esté ya en texto al lado.
+- **Bloques:** B (home), H (analytics).
+
+### InsightCard
+- **Existe para:** un insight de una línea con ícono de estado, sparkline opcional y exactamente una acción — descartable.
+- **Props:** `status?: 'good'|'warning'|'serious'|'critical'|'neutral'` (default `neutral`) · `icon?: IconName` (default por `status`) · `text: ReactNode` (una línea) · `actionLabel?/onAction?` · `sparkline?: ReactNode` · `onDismiss?: () => void` · `dismissLabel?: string` (requerido con `onDismiss`).
+- **Estados:** los 5 `status` · con sparkline · con acción · descartable.
+- **Tokens:** `--surface-1 --radius-card --good --warning --serious --critical --text-secondary --text-primary --primary-ink --text-muted`.
+- **A11y:** el botón de descartar es 44×44 con `aria-label` obligatorio (`dismissLabel`, resuelto por el caller). El color de `status` nunca es la única señal — siempre acompaña un ícono distinto por nivel.
+- **Bloques:** B (home). **Pendiente declarado (CON-20, no de esta ficha):** agregar estado de error propio cuando el insight dependa de una query que puede fallar.
+
+### SyncDot
+- **Existe para:** el indicador de sync de 6px en el header. **Los errores de sync NO se muestran acá** — llevan `Banner status="error"` (CON-18).
+- **Props:** `state?: 'synced'|'syncing'|'offline'` (default `synced`) · `pending?: number` (cambios locales encolados, solo se muestra con `state="offline"`).
+- **Estados:** synced (tinta muted, el caso normal no merece color) · syncing (pulso de opacidad) · offline con contador.
+- **Tokens:** `--text-muted --warning --font-mono`.
+- **A11y:** ninguna propia hoy — es un punto de 6px sin `role`; el estado real y accionable (offline con pendientes) ya se comunica en detalle vía `Banner`, que sí es `role="status"`.
+- **Bloques:** `AppHeader` (todos).
+
+### SeriesLegend
+- **Existe para:** la leyenda / vista de tabla de un gráfico — máximo 5 series + "Otros", colores de los slots de datos fijos por índice.
+- **Props:** `series: { label: string; value?: string; color?: string }[]` · `layout?: 'table'|'inline'` (default `table`) · `dividers?: boolean` (default `false`).
+- **Estados:** layout tabla (con valores alineados a la derecha en mono) · layout inline (chips en una fila) · con/sin separadores.
+- **Tokens:** `--data-1..5 --data-other --text-primary --text-secondary --border`.
+- **A11y:** en layout `table` es una `<table>` real — el lector de pantalla la navega como tabla; en `inline` es texto plano con un chip de color decorativo al lado (el texto ya nombra la serie, el color no es la única fuente).
+- **Bloques:** todo gráfico con ≥2 series (regla del sistema: leyenda obligatoria a partir de 2).
+
+### BarChart
+- **Existe para:** el gráfico de barras del sistema — extremos redondeados de 4px anclados a la baseline, grilla recesiva, sin fondo de gráfico.
+- **Props:** `data: { label: string; value: number; color?: string; display?: string }[]` · `height?: number` (default 130) · `color?: string` (default `--data-1`) · `gridLines?: number` (default 3) · `labelExtremes?: boolean` (default `true`, dibuja el valor solo sobre la barra máxima — nunca un número sobre cada barra).
+- **Estados:** único — sin interacción propia; el toggle "ver como tabla" (regla del sistema para todo gráfico) vive en el `ChartCard` que lo envuelve, no acá.
+- **Tokens:** `--data-1 --gridline --border --text-muted --text-secondary --bar-radius --font-mono --font-sans`.
+- **A11y:** SVG puro sin `role`; el valor accesible en texto vive en el `display` de la barra máxima y en el `SeriesLegend`/tabla que lo acompaña — este componente por sí solo no es la fuente accesible de los datos.
+- **Bloques:** F (presupuestos), H (analytics).
+
+---
+
 ## 3 · Cosméticas incorporadas
 
 ### ZMark
-- **Existe para:** ser el único dibujo del sistema: grilla 3×3 con la Z, al 20% de tinta en los estados vacíos y animada en secuencia como loader.
+- **Existe para:** ser el único dibujo del sistema: grilla 3×3 con la Z, en tinta atenuada en los estados vacíos y animada en secuencia como loader.
 - **Props:** `size?: number` (default 20) · `gap?: number` · `animated?: boolean`.
-- **Estados:** estática · animada (7 celdas, 120 ms de stagger, 1,4 s de ciclo) · reducida (con `Movimiento: mínima` la animación se apaga y queda estática).
-- **Tokens:** `--text-primary` vía `color-mix(... 20%, transparent)`; el keyframe `zpulse` va en la hoja base del sistema, no en cada pantalla.
+- **Estados:** estática · animada (7 celdas, 120 ms de stagger, 1,4 s de ciclo) · reducida (con `Movimiento: mínima` la animación se apaga y queda estática, ver `useMotionIntensity`).
+- **Tokens:** `--zmark-ink` (`color-mix(... N%, transparent)` sobre `--text-primary`) — **28% en oscuro, 20% en claro** (CON-19, auditoría D44: el 20% original se pierde en oscuro); el keyframe `zpulse` va en la hoja base del sistema, no en cada pantalla.
 - **A11y:** `role="img"` con `aria-label="PERZE"`. Como loader, el contenedor lleva `aria-busy="true"`.
-- **Bloques:** L1, L2, A1, y el splash.
+- **Bloques:** L1, L2, A1, y el splash. Ya en código: reemplaza el ícono de línea de `EmptyState`.
 
 ### Avatar
 - **Existe para:** identificar a un miembro. Es el único lugar donde el relleno de color es identidad de dato.
@@ -284,12 +475,12 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **Bloques:** L5 (uno por sección, diez en total).
 
 ### InstitutionTile
-- **Existe para:** elegir banco o billetera con logo.
-- **Props:** `name: string` · `logo?: ReactNode` · `selected: boolean` · `onChange: (name) => void`.
-- **Estados:** con logo · sin logo (iniciales, nunca un ícono genérico) · seleccionado (superficie 3) · foco.
-- **Tokens:** `--surface-1 --surface-2 --surface-3 --radius-card --text-primary --text-secondary`.
-- **A11y:** `role="radio"` + `aria-checked`; el contenedor es `radiogroup` con label "Institución".
-- **Bloques:** A6, E3.
+- **Existe para:** elegir banco o billetera — CON-29: baldosa de monograma, nunca el logo real de un tercero.
+- **Props:** `name: string` · `color: string` (obligatorio — `institutions.color`, el monograma se pinta sobre este) · `logoUrl?: string | null` (slot opcional para un override **local** del usuario, nunca un preset del catálogo) · `selected?: boolean` · `onClick?: () => void`.
+- **Estados:** monograma (dos iniciales sobre `color`, caso normal — nunca un ícono genérico) · con `logoUrl` (override local, renderiza `<img>`) · seleccionado (`--selection-ring` + `--selection-surface`) · presionado.
+- **Tokens:** `--selection-surface --selection-ring --surface-2 --text-primary --press-scale --duration-fast --ease-spring-snappy`.
+- **A11y:** `button` real; el logo de terceros (`logoUrl`) lleva `alt=""` porque es decorativo — el nombre visible ya identifica la institución en texto.
+- **Bloques:** A6, E1, E3.
 
 ### ActivityRow
 - **Existe para:** quién hizo qué y cuándo.
@@ -309,40 +500,177 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ---
 
-## 4 · Especificadas, no implementadas **[spec]**
+## 4 · Especificadas, ya en código (GATE-3 cerrado)
 
-Mismo contrato, sin código todavía. Orden de implementación sugerido: las cuatro
-primeras desbloquean pantallas enteras.
+Las 29 piezas de esta lista **tienen código** — GATE-3 (`docs/plan-de-trabajo.md` LIB-01..18
++ CON-09..30) está cerrado. Se conserva el número original de cada ítem para poder
+rastrearlo contra el historial del proyecto; las fichas completas (props, estados, tokens,
+a11y) de los 18 componentes genuinamente nuevos están en **§ 4.1** más abajo. Los ítems que
+resultaron ser ajustes sobre componentes ya fichados (21, 23–27) están documentados en la
+ficha de ese componente en § 2/§ 2.5, no acá dos veces.
 
-1. **SkeletonBlock** — `variant: 'hero'|'list'|'cards'|'chart'` · `rows?: number`. Las cuatro plantillas de layout de L2, hoy rearmadas a mano en cada pantalla. Tokens: `--surface-2`. A11y: contenedor `aria-busy="true"`, sin texto. Bloques: todos los estados de carga. **Además**: `Skeleton` tiene que normalizar `width`/`height` numéricos y string — hoy un `"40"` se descarta y el bloque colapsa a cero.
-2. **PriceStatus** — `state: 'fresh'|'stale'|'manual'|'market-closed'` · `ageHours?` · `onUpdate?`. El par badge + "actualizar a mano" de I2, I3, I4 e I12. Un precio sin proveedor es `neutral`, no un error.
-3. **PositionRow** — `symbol` · `assetClass` · `quantity?` · `price?` · `value` · `changePct` · `alt?: ReactNode` (para el plazo fijo, que no tiene cantidad) · `status?: ReactNode`. Dos líneas, dos columnas de precisión fija, tercera línea condicional. Bloques: I3.
-4. **NeedsFxBanner** — `count: number` · `amount: number` · `onResolve`. Regla de producto, no composición: aparece en seis pantallas de H y cuatro de F+G.
-5. **MonthCalendar** — `month` · `marks: Array<{date, level}>` · `onSelect`. Celdas de 44 px. Bloques: G1, D5.
-6. **CalendarHeatmap** — `days: Array<{date, value}>` · `rows: 'month'|'year'` · `onSelect`. Celdas de 8 px con target de 44 por zona, rampa `--ramp-1..7`. Bloques: H8.
-7. **StackedBar / DivergingBar** — `groups` · `series` · `baseline?: 'zero'|'center'` · `inProgressIndex?`. Separador de 2 px del color de superficie, radio 4 anclado a baseline, período en curso en gris. Bloques: H3, H6, H7.
-8. **Donut** — `slices` · `dimension?` · `onDrill`. Cinco slots más "Otros" en gris, separadores de 2 px, total en el centro en title. Bloques: H2, I2.
-9. **Waterfall** — `deltas: Array<{label, value, color}>` · `total`. Invariante del componente: la suma de `deltas` es `total`, y si no, tira en desarrollo. Bloques: H5.
-10. **Sankey** — `nodes` · `links` · `orientation: 'vertical'`. Orden de nodos calculado para minimizar cruces, labels sobre banda. Bloques: H4. **Es el que más falta hace**: hoy las coordenadas están a mano.
-11. **RankingBar** — `items: Array<{label, value, meta}>`. Una sola serie, un solo color. Bloques: H9.
-12. **BenchmarkBars** — `subject: {label, value}` · `benchmarks: Array<{label, value}>`. El sujeto en slot 1, las referencias en gris. Bloques: I10.
-13. **SplitBar v2** — `parts` (con `color` por parte) · `onChange` · `height: number` · `showThumb?` · `showValues?` · `tolerance?`. Hoy no dibuja tirador y exige `height` numérico. Bloques: J2, J6, I9.
-14. **StoryFrame** — `index` · `total` · `figure` · `line` · `cover?`. Bloques: H12.
-15. **StatTile compact** — `size?: 'md'|'compact'` (title 22 en vez de 30). Es lo que devuelve H1 e I2 a tres niveles tipográficos. Bloques: H1, I2.
-16. **InfoCard** — `label` · `value` · `explanation`. El "tooltip" que el sistema no tiene, resuelto como card de una línea. Bloques: I10.
-17. **DragRow** — `onReorder`, asa de 44 px. Bloques: I8, K5, E1.
-18. **ComparisonBars** — dos miembros por categoría, 6 px de aire y sin separador, ordenado por monto y nunca por diferencia. Bloques: J8.
-19. **MirrorBanner** — barra persistente de salida del modo "ver la app como Ana". Bloques: J4.
-20. **TabBar** — sumar `badge?: number` por slot y `slots[3]` configurable por el usuario. Bloques: B6, F4, K3.
-21. **TransactionRow** — los cuatro casos que faltan: `pending`, `shared`, `attachment`, `installment`. Bloques: D1.
-22. **AccountRow / RateRow / GroupCard / ResultGroup / ResolutionChain** — filas y agrupadores de E, K y la búsqueda global. `GroupCard` y `ResultGroup` son el mismo patrón (header de caption + hijos) y deberían unificarse en **SectionGroup** antes de escribirlos dos veces.
-23. **AccountCarousel** — `secondaryBalance?: ReactNode` para el broker en dos monedas.
-24. **ErrorState** — segunda acción: `alternativeLabel` + `onAlternative`, con el camino alternativo primero.
-25. **UndoToast** — variante `progress`: sin acción, con contador y barra de 2 px. Hoy siempre dibuja "Deshacer", incluso sobre algo que no se puede deshacer.
-26. **Banner** — renombrar `OfflineBanner` a `Banner` con `status` y `action?`: ya se usa para advertencia y error, y el nombre miente.
-27. **EmptyState** — reemplazar el ícono de línea por `ZMark`. Hoy la biblioteca y el sistema de marca dicen dos cosas distintas sobre el mismo estado.
-28. **Íconos nuevos** — `mail`, `lock`, `fingerprint`, `install`, `globe` (bandera/mundo) y **`bank-checking`**, porque caja de ahorro y cuenta corriente comparten `bank` y se ven idénticas.
-29. **Tokens nuevos** — `--ramp-1..7` en `charts.css` exponiendo la rampa secuencial violeta: hoy los heatmaps referencian `--violet-300..700` de `palette.css`, que el propio archivo dice no referenciar directo.
+1. **SkeletonBlock** — hecho, ficha en § 4.1. `Skeleton` ya normaliza `width`/`height`/`radius` (`normalizeSize`, CON-10).
+2. **PriceStatus** — hecho, ficha en § 4.1.
+3. **PositionRow** — hecho, ficha en § 4.1.
+4. **NeedsFxBanner** — hecho, ficha en § 4.1. **Corregido contra la especificación original:** sin `amount` — solo `count` (CLAUDE.md § needs_fx, ver la ficha).
+5. **MonthCalendar** — hecho, ficha en § 4.1.
+6. **CalendarHeatmap** — hecho, ficha en § 4.1.
+7. **StackedBar / DivergingBar** — hecho, ficha en § 4.1.
+8. **Donut** — hecho, ficha en § 4.1.
+9. **Waterfall** — hecho, ficha en § 4.1. Invariante `sum(deltas) === total` verificada con un `throw` en desarrollo (`NODE_ENV !== 'production'`), silenciosa en producción.
+10. **Sankey** — hecho, ficha en § 4.1.
+11. **RankingBar** — hecho, ficha en § 4.1.
+12. **BenchmarkBars** — hecho, ficha en § 4.1.
+13. **SplitBar v2** — hecho (CON-11, § 2 `SplitBar`).
+14. **StoryFrame** — hecho, ficha en § 4.1.
+15. **StatTile compact** — hecho. `size?: 'md'|'compact'` en `StatTile` (§ 2), title 22 en vez de 30.
+16. **InfoCard** — hecho, ficha en § 4.1.
+17. **DragRow** — hecho, ficha en § 4.1.
+18. **ComparisonBars** — hecho, ficha en § 4.1.
+19. **MirrorBanner** — hecho, ficha en § 4.1.
+20. **TabBar** — hecho (CON-13, § 2 `TabBar`).
+21. **TransactionRow** — hecho (CON-14, § 2 `TransactionRow`).
+22. **AccountRow / RateRow / GroupCard / ResultGroup / ResolutionChain** — hecho (LIB-16). Solo `ResultGroup` era genuinamente "header de caption + hijos" — se renombró a `SectionGroup` (§ 2). Los otros cuatro, ya escritos, resultaron ser composiciones distintas entre sí y quedan separados — ver la nota completa en la ficha de `SectionGroup`.
+23. **AccountCarousel** — hecho (CON-15, § 2 `AccountCarousel`).
+24. **ErrorState** — hecho (CON-16, § 2 `ErrorState`).
+25. **UndoToast** — hecho (CON-17, § 2 `UndoToast`).
+26. **Banner** — hecho (CON-18, § 2 `Banner`).
+27. **EmptyState** — hecho (CON-19, § 2 `EmptyState`).
+28. **Íconos nuevos** — hecho (LIB-17). `mail`, `lock`, `fingerprint`, `install`, `globe` ya estaban en `Icon.tsx`; se agregó `bank-checking` (glifo `Cardholder`, distinto de `bank`) y se reasignó `checking` en `ACCOUNT_KIND_ICON`.
+29. **Tokens nuevos** — hecho (LIB-17). `--ramp-1..7` en `globals.css`, 7 pasos por modo respetando el piso de contraste 2:1 de § 2.7 del sistema de diseño (100→550 en oscuro, 250→700 en claro) — nunca `--violet-300..700` directo.
+
+---
+
+## 4.1 · Fichas de los 18 componentes de LIB-01..18
+
+### PriceStatus (LIB-01)
+- **Existe para:** el par badge + "actualizar a mano" de I2/I3/I4/I12.
+- **Props:** `state: 'fresh'|'stale'|'manual'|'market-closed'` · `ageHours?: number` · `onUpdate?: () => void`.
+- **Estados:** `fresh` (`StatusBadge status="good"`) · `stale` (`warning` + antigüedad) · `manual`/`market-closed` (`neutral` — **no es un error**, es un dato sin proveedor o fuera de horario de mercado).
+- **Tokens:** los de `StatusBadge` (`--good --warning --text-secondary --surface-2`).
+- **A11y:** el botón de actualizar es 28px visual dentro de un target táctil equivalente, con `aria-label="Actualizar precio"` (i18n `ds.priceStatus.update`).
+- **Bloques:** I2, I3, I4, I12.
+
+### PositionRow (LIB-02)
+- **Existe para:** la fila de una posición de inversión — dos líneas, dos columnas de precisión fija, tercera línea condicional.
+- **Props:** `symbol: string` · `assetClass: string` · `quantity?: ReactNode` · `price?: ReactNode` · `value: ReactNode` · `changePct: ReactNode` · `alt?: ReactNode` (reemplaza cantidad/precio para el plazo fijo) · `status?: ReactNode` (típicamente un `PriceStatus`) · `onClick?: () => void`.
+- **Estados:** con cantidad/precio · con `alt` (plazo fijo) · con `status` · clickeable.
+- **Tokens:** `--text-primary --text-secondary --text-muted --font-mono`.
+- **A11y:** `button` real cuando tiene `onClick`; `div` estático si no.
+- **Bloques:** I3.
+
+### NeedsFxBanner (LIB-03)
+- **Existe para:** declarar cuántos movimientos quedaron afuera de un agregado por `needs_fx` — la regla de producto más cara de romper del proyecto (CLAUDE.md § needs_fx).
+- **Props:** `count: number` (si `count <= 0`, no renderiza nada) · `onResolve?: () => void`.
+- **Corrección deliberada contra el `[spec]` original:** **nunca `amount`** — un movimiento sin `fx_rate` no tiene `amount_base`, sumar montos de monedas distintas da un número sin significado.
+- **Estados:** con acción de resolver · sin acción (solo informativo).
+- **Tokens:** `--warning --font-sans`.
+- **A11y:** `role="status"`.
+- **Bloques:** H1a, H5, H7, F2, G1, G4, I2, I3, I11, J2, J7, K1, E8.
+
+### MonthCalendar (LIB-04)
+- **Existe para:** la grilla de mes de presupuestos (G1) y el calendario de movimientos (D5) — celdas de 44px.
+- **Props:** `month: string` (ISO "YYYY-MM") · `marks?: { date: string; level: number }[]` (level 0-7, mapea a `--ramp-N`) · `value?: string` · `onSelect?: (date: string) => void`.
+- **Estados:** celda sin marca · con nivel (1-7) · seleccionada (anillo `--selection-ring`).
+- **Tokens:** `--ramp-1..7 --selection-ring --text-muted --text-primary --font-mono`.
+- **A11y:** cada día es un `button` de 44px real; los encabezados de día de semana usan `formatWeekdayNarrow` del locale activo.
+- **Bloques:** G1, D5.
+
+### CalendarHeatmap (LIB-05)
+- **Existe para:** el heatmap de calendario de H8 — celdas de 8px con target de 44px por zona.
+- **Props:** `days: { date: string; value: number }[]` (el componente normaliza a 7 niveles — no recibe el nivel ya resuelto) · `rows?: 'month'|'year'` · `onSelect?: (date: string) => void`.
+- **Estados:** celda vacía (sin actividad) · 7 niveles de `--ramp-1..7`.
+- **Tokens:** `--ramp-1..7 --surface-2`.
+- **A11y:** cada celda es un `button` con `aria-label` de la fecha ISO; el hit-area real es 44px aunque el cuadrado visual sea 8px (padding, no tamaño de celda).
+- **Bloques:** H8.
+
+### Donut (LIB-06)
+- **Existe para:** el gráfico de composición de H2/I2 — 5 slots + "Otros", separadores de 2px, total en el centro.
+- **Props:** `slices: { label: string; value: number; color?: string }[]` · `dimension?: ReactNode` (texto en el centro, típicamente el total) · `onDrill?: (label: string) => void` · `size?: number` (default 180).
+- **Estados:** con drill-down (`onClick` por slice) · sin él.
+- **Tokens:** `--data-1..5 --data-other --text-title-size --text-primary`.
+- **A11y:** el SVG no lleva `role` propio — el total en el centro y el `SeriesLegend`/tabla que lo acompaña son la fuente accesible.
+- **Bloques:** H2, I2.
+
+### Waterfall (LIB-07)
+- **Existe para:** el gráfico de cascada de H5 — cada barra parte de donde terminó la anterior.
+- **Props:** `deltas: { label: string; value: number; color?: string }[]` · `total: number` · `height?: number`.
+- **Invariante:** `sum(deltas.value) === total` (tolerancia 0.01) — si no se cumple, **tira una excepción en desarrollo** (`NODE_ENV !== 'production'`) y no rompe producción silenciosamente distinto de cómo se pidió; en producción no valida.
+- **Estados:** delta positivo (`--money-positive`) · negativo (`--money-negative-emphasis`) · color override por delta.
+- **Tokens:** `--money-positive --money-negative-emphasis --border --bar-radius`.
+- **Bloques:** H5.
+
+### Sankey (LIB-08)
+- **Existe para:** el diagrama de flujo de H4 — el que más faltaba, hoy con coordenadas a mano.
+- **Props:** `nodes: { id, label, column, color? }[]` · `links: { source, target, value }[]` · `orientation?: 'vertical'` · `width?/height?: number`.
+- **Orden de nodos:** dentro de cada columna, ordenados por valor total descendente (heurística simple de minimización de cruces, no un solver de optimización completo).
+- **Tokens:** `--data-1 --text-secondary --font-sans`.
+- **A11y:** labels en texto SVG junto a cada nodo, nunca solo color.
+- **Bloques:** H4.
+
+### RankingBar (LIB-09)
+- **Existe para:** el ranking horizontal de H9 — una sola serie, un solo color.
+- **Props:** `items: { label, value, meta? }[]` · `display?: (value: number) => ReactNode`.
+- **Tokens:** `--data-1 --surface-2 --text-primary --text-secondary --text-muted`.
+- **Bloques:** H9.
+
+### BenchmarkBars (LIB-10)
+- **Existe para:** comparar una posición contra benchmarks (I10) — el sujeto en slot 1, las referencias en gris.
+- **Props:** `subject: { label, value }` · `benchmarks: { label, value }[]` · `display?: (value: number) => ReactNode`.
+- **Tokens:** `--data-1 --text-muted --surface-2`.
+- **Bloques:** I10.
+
+### StoryFrame (LIB-11)
+- **Existe para:** un frame del "Wrapped" de H12 — progreso de N puntos, figura, una línea de lectura.
+- **Props:** `index: number` · `total: number` · `figure: ReactNode` · `line: ReactNode` · `cover?: ReactNode`.
+- **Tokens:** `--text-primary --surface-2`.
+- **A11y:** `role="progressbar"` con `aria-valuenow/min/max` en el indicador superior.
+- **Bloques:** H12.
+
+### InfoCard (LIB-12)
+- **Existe para:** el "tooltip" que el sistema no tiene — resuelto como card de una línea, sin scrim ni puntero.
+- **Props:** `label: string` · `value: ReactNode` · `explanation: string`.
+- **Tokens:** `--surface-1 --radius-card --text-muted --text-primary --text-secondary`.
+- **Bloques:** I10.
+
+### DragRow (LIB-13)
+- **Existe para:** una fila reordenable con asa de 44px.
+- **Props:** `id: string` · `children: ReactNode` · `index: number` · `onReorder?: (fromIndex, toIndex) => void` · `rowHeight?: number` (default 56) · `dragLabel: string` (requerido — `aria-label` del asa, resuelto por el caller vía `useTranslations`).
+- **Mecánica:** el drag vertical mueve de a una posición por cada `rowHeight` de recorrido; el gesto reporta `(fromIndex, toIndex)`, no reordena la lista solo — el caller es dueño del array.
+- **Tokens:** `--surface-1 --duration-fast --ease-spring-snappy`.
+- **A11y:** el asa es un `button` de 44×44 con `aria-label` obligatorio.
+- **Bloques:** I8, K5, E1.
+
+### ComparisonBars (LIB-14)
+- **Existe para:** comparar dos miembros por categoría (J8) — 6px de aire, sin separador.
+- **Props:** `categories: { label: string; members: { label, value, color }[] }[]` · `display?: (value: number) => ReactNode`.
+- **Regla:** el caller ordena las categorías por monto — **nunca por diferencia entre miembros**, eso exagera desacuerdos pequeños en montos chicos.
+- **Tokens:** `--surface-2 --text-muted --text-secondary`.
+- **Bloques:** J8.
+
+### MirrorBanner (LIB-15)
+- **Existe para:** la barra persistente de salida del modo espejo ("ver la app como Ana", J4).
+- **Props:** `message: string` · `exitLabel: string` · `onExit: () => void`.
+- **Nota de arquitectura:** el modo espejo en sí no vive en RLS — es una consulta de servidor con `can_see()` del `member_id` del otro (CLAUDE.md § schema, decisión 1); este componente es solo la salida visible, nunca amplía acceso.
+- **Tokens:** `--surface-3 --text-primary --primary-ink`.
+- **A11y:** `role="status"`.
+- **Bloques:** J4.
+
+### StackedBar / DivergingBar (LIB-18)
+- **Existen para:** H3/H6/H7 — composición apilada y variación divergente, dos componentes con la misma familia de reglas visuales.
+- **`StackedBar` props:** `groups: { label, values: number[] }[]` · `series: { label, color? }[]` (mismo orden que `values`) · `height?: number` · `inProgressIndex?: number` (el grupo en curso se pinta en `--text-muted`, nunca en color de serie).
+- **`DivergingBar` props:** `data: { label, value }[]` · `baseline?: 'zero'|'center'` · `height?: number`.
+- **Estados:** `StackedBar` — segmento normal · período en curso (gris) · separador de 2px entre segmentos. `DivergingBar` — positivo (`--diverge-aqua-2`) · negativo (`--diverge-orange-2`), nunca eje dual.
+- **Tokens:** `--data-1..5 --data-other --diverge-aqua-2 --diverge-orange-2 --border --bar-radius`.
+- **Bloques:** H3, H6, H7.
+
+### SkeletonBlock
+- **Existe para:** las cuatro plantillas de carga de L2 — antes rearmadas a mano en cada pantalla.
+- **Props:** `variant: 'hero'|'list'|'cards'|'chart'` · `rows?: number` (default 3; ignorado en `hero`/`chart`, que tienen forma fija).
+- **Estados:** los 4 `variant`.
+- **Tokens:** `--surface-2` (vía `Skeleton`).
+- **A11y:** contenedor con `aria-busy="true"`, sin texto.
+- **Bloques:** todos los estados de carga.
 
 ---
 

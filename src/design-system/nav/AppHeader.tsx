@@ -16,6 +16,8 @@ export interface AppHeaderProps {
   backLabel?: string | undefined;
   /** Requerido cuando `onSearch` está presente — lo resuelve el caller vía `useTranslations`. */
   searchLabel?: string | undefined;
+  /** El buscador flotante que abre `onSearch` está montado y visible. */
+  searchExpanded?: boolean | undefined;
   syncState?: "synced" | "syncing" | "offline" | undefined;
   pending?: number | undefined;
   showScope?: boolean | undefined;
@@ -39,6 +41,7 @@ export function AppHeader({
   onBack,
   backLabel,
   searchLabel,
+  searchExpanded = false,
   syncState = "synced",
   pending = 0,
   showScope = true,
@@ -68,6 +71,8 @@ export function AppHeader({
           type="button"
           onClick={onSearch}
           aria-label={searchLabel}
+          aria-haspopup="dialog"
+          aria-expanded={searchExpanded}
           style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: 0, cursor: "pointer", marginRight: -10 }}
         >
           <Icon name="search" size={20} color="var(--text-secondary)" />

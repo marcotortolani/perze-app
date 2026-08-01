@@ -53,7 +53,10 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [currencyCode, setCurrencyCode] = useState(existing?.currencyCode ?? COUNTRIES.find((c) => c.code === "UY")!.defaultCurrency);
   const [openingExpr, setOpeningExpr] = useState("");
   const [includeInNetWorth, setIncludeInNetWorth] = useState(existing?.includeInNetWorth ?? true);
-  const [visibility, setVisibility] = useState<Visibility>(existing?.visibility ?? "household");
+  // "custom" se define en J4 (permisos), no en este formulario — si la
+  // cuenta ya es custom, el toggle simple de acá no la puede representar;
+  // arranca en "household" y J4 sigue siendo la única forma de volver a "custom".
+  const [visibility, setVisibility] = useState<Visibility>(existing?.visibility === "private" ? "private" : "household");
   const [statementDay, setStatementDay] = useState(existing?.statementDay?.toString() ?? "");
   const [dueDay, setDueDay] = useState(existing?.dueDay?.toString() ?? "");
   const [interestRate, setInterestRate] = useState(existing?.interestRate ?? "");
@@ -147,7 +150,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
                   selected={countryCode === c.code}
                   onClick={() => { setCountryCode(c.code); setCurrencyCode(c.defaultCurrency); }}
                 >
-                  {c.flag} {t(COUNTRY_MESSAGE_KEY[c.code as keyof typeof COUNTRY_MESSAGE_KEY])}
+                  {t(COUNTRY_MESSAGE_KEY[c.code as keyof typeof COUNTRY_MESSAGE_KEY])}
                 </Chip>
               ))}
             </div>

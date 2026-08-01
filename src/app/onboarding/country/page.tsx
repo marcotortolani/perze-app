@@ -62,7 +62,7 @@ export default function OnboardingCountryPage() {
         {COUNTRIES.map((c) => (
           <OptionCard
             key={c.code}
-            title={`${c.flag} ${t(COUNTRY_MESSAGE_KEY[c.code as keyof typeof COUNTRY_MESSAGE_KEY])}`}
+            title={t(COUNTRY_MESSAGE_KEY[c.code as keyof typeof COUNTRY_MESSAGE_KEY])}
             description={t("onboarding.country.yourCurrency", { currency: c.defaultCurrency })}
             selected={countryCode === c.code}
             onClick={() => setCountryCode(c.code)}

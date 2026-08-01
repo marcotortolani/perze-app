@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { normalizeSize } from "./size";
 
 export interface SheetProps {
   open?: boolean | undefined;
@@ -26,7 +27,7 @@ export function Sheet({ open = true, title, children, onClose, height = "auto", 
           borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0",
           boxShadow: "var(--shadow-sheet)",
           padding: "10px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))",
-          height,
+          height: normalizeSize(height),
           ...style,
         }}
       >

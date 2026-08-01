@@ -81,6 +81,7 @@ export function VoiceCaptureSheet({ open, onClose, onApply }: VoiceCaptureSheetP
             type="button"
             onClick={startListening}
             disabled={listening}
+            aria-label={t("capture.voice_sheet.startListening")}
             style={{
               alignSelf: "center",
               width: 72,

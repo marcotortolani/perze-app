@@ -8,18 +8,21 @@ import { MorphButton } from "@/components/motion";
 import { ScreenShell } from "@/components/screen-shell";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
-import { useCategories } from "@/hooks/use-categories";
-import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
+import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
+import { categoriesRepo } from "@/lib/repos/categories-repo";
 import type { AccountRow } from "@/lib/db/schema";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
-import { DEMO_USER_ID } from "@/lib/demo-user";
+import { useCurrentUserId } from "@/hooks/use-current-user";
 import { AccountPickerSheet } from "./AccountPickerSheet";
 import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
 import { DetailsSheet } from "./DetailsSheet";
 import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
 import { saveDraftAsTransaction } from "./save-transaction";
+import { buildNewCategoryInput } from "./create-category";
+import { useFrequentCategories } from "./use-frequent-categories";
 
 type Step = "amount" | "category";
 type SheetKind = "none" | "account" | "counterAccount" | "details" | "voice";
@@ -40,9 +43,16 @@ export interface CaptureFlowProps {
 export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const t = useTranslations();
   const { data: household } = useCurrentHousehold();
+  const userId = useCurrentUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
+  const { data: transactions } = useTransactions(household?.id);
   const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateCategories = useInvalidateCategories(household?.id);
+  // Capturado una vez al montar, no en cada render: `useFrequentCategories`
+  // compara por `now.getTime()`, así que un `Date` estable evita
+  // recalcular el ranking en cada tecla del keypad.
+  const [now] = useState(() => new Date());
 
   const draft = useCaptureDraftStore((s) => s.draft);
   const setField = useCaptureDraftStore((s) => s.setField);
@@ -62,6 +72,19 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // cuenta por default sin necesidad de persistirla antes de guardar.
   const account = accounts.find((a) => a.id === draft.accountId) ?? accounts[0];
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
+
+  const categoryKind = draft.kind === "income" ? "income" : "expense";
+  const sameKindCategories = categories.filter((c) => c.kind === categoryKind);
+  const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
+
+  const handleCreateCategory = async (name: string) => {
+    if (!household) throw new Error("no household");
+    const created = await categoriesRepo.create(
+      buildNewCategoryInput({ householdId: household.id, name, kind: categoryKind, createdBy: userId, existing: sameKindCategories })
+    );
+    invalidateCategories();
+    return created;
+  };
 
   const handleAmountKey = (key: string) => {
     if (key === "clear") clearAmount();
@@ -88,7 +111,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     const tx = await saveDraftAsTransaction({
       draft: latestDraft,
       household,
-      userId: DEMO_USER_ID,
+      userId,
       account: latestAccount,
       counterAccount: latestCounterAccount,
     });
@@ -97,7 +120,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     // El toast vive en el `<Toaster>` global (providers.tsx), no en este
     // componente: tiene que sobrevivir a que `CaptureFlow` se desmonte al
     // volver a la lista (C7 — "la card vuela, aparece el toast con Deshacer").
-    toast(tx.fxSource === "pending" ? t("capture.savedPendingFx") : t("capture.saved"), {
+    // C11a: el copy distingue needs_fx (rate por resolver) de estar
+    // offline al guardar (el mismo movimiento, otra razón) — son dos
+    // problemas distintos y el usuario necesita saber cuál es.
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    const savedMessage = tx.fxSource === "pending" ? t("capture.savedPendingFx") : offline ? t("capture.savedOffline") : t("capture.saved");
+    toast(savedMessage, {
       duration: 5000,
       action: {
         label: t("capture.undo"),
@@ -163,11 +191,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         <AmountStep
           draft={draft}
           accounts={accounts}
-          categories={categories}
+          frequent={frequentCategories}
           account={account}
           counterAccount={counterAccount}
           onKindChange={setKind}
           onAmountKey={handleAmountKey}
+          onAmountChange={(expression) => setField("amountExpression", expression)}
           onOpenAccountPicker={() => setSheet("account")}
           onOpenCounterAccountPicker={() => setSheet("counterAccount")}
           onInvertTransfer={() => {
@@ -180,12 +209,19 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
             await doSave();
             handleAfterSaveComplete();
           }}
+          onOpenCategoryPicker={() => setStep("category")}
           onOpenDetails={() => setSheet("details")}
           onVoice={() => setSheet("voice")}
           onPhoto={() => toast(t("capture.photoComingSoon"))}
         />
       ) : (
-        <CategoryStep categories={categories.filter((c) => c.kind === (draft.kind === "income" ? "income" : "expense"))} selectedId={draft.categoryId} onSelect={(c) => setField("categoryId", c.id)} />
+        <CategoryStep
+          categories={sameKindCategories}
+          frequent={frequentCategories}
+          selectedId={draft.categoryId}
+          onSelect={(c) => setField("categoryId", c.id)}
+          onCreate={handleCreateCategory}
+        />
       )}
 
       <div style={{ marginTop: "auto" }}>

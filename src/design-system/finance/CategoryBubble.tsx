@@ -45,8 +45,8 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: selected ? "var(--surface-3)" : "var(--surface-2)",
-          border: `2px solid ${selected ? "var(--border)" : "transparent"}`,
+          background: selected ? "var(--selection-surface)" : "var(--surface-2)",
+          border: `2px solid ${selected ? "var(--selection-ring)" : "transparent"}`,
           transform: selected ? "scale(1.04)" : "scale(1)",
           transition:
             "border-color var(--duration-fast) var(--ease-spring-snappy), background var(--duration-fast) linear, transform var(--duration-fast) var(--ease-spring-snappy)",

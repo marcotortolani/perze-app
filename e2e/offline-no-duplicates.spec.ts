@@ -14,7 +14,11 @@ async function saveOne(page: Page, marker: string): Promise<void> {
   await page.mouse.click(195, 50);
 
   await page.getByRole("button", { name: "Supermercado" }).click();
-  const toast = page.getByText(/^Movimiento guardado$|^Guardado sin tipo de cambio/);
+  // Con la red cortada, `CaptureFlow.doSave()` elige `capture.savedOffline`
+  // ("Guardado en el teléfono...") — un tercer mensaje distinto de
+  // `capture.saved` (con red) y `capture.savedPendingFx` (sin cotización),
+  // que este regex no contemplaba y por eso el test nunca veía el toast.
+  const toast = page.getByText(/^Movimiento guardado$|^Guardado sin tipo de cambio|^Guardado en el teléfono/);
   await expect(toast).toBeVisible();
   // El toast (top-center, 5s) tapa el scrim del sheet de la próxima
   // iteración si sigue en pantalla — se espera a que desaparezca antes de

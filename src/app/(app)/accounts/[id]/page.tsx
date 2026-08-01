@@ -16,7 +16,7 @@ import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { money, toMajorUnitsUnsafe } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
-import { countryFlag } from "@/lib/reference/countries-currencies";
+import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import type { Locale } from "@/i18n/formatting";
 
 const EVOLUTION_DAYS = 90;
@@ -79,7 +79,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   }, [account, transactions, locale]);
 
   if (isLoading || !household) return <Skeleton height={300} />;
-  if (!account) return <EmptyState icon="alert" message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />;
+  if (!account) return <EmptyState message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />;
 
   const isCreditCard = account.kind === "credit_card";
   const cycleTransactions = isCreditCard
@@ -109,7 +109,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       <div style={{ textAlign: "center" }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>
           {account.name} · {t(ACCOUNT_KIND_MESSAGE_KEY[account.kind])}
-          {account.countryCode ? ` ${countryFlag(account.countryCode)}` : ""}
+          {account.countryCode && account.countryCode in COUNTRY_MESSAGE_KEY
+            ? ` · ${t(COUNTRY_MESSAGE_KEY[account.countryCode as keyof typeof COUNTRY_MESSAGE_KEY])}`
+            : ""}
         </span>
         <div style={{ marginTop: 4 }}>
           <Amount value={money(account.currentBalance, account.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular />
@@ -121,7 +123,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       ) : null}
 
       {isCreditCard ? (
-        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => router.push(`/accounts/${account.id}/card`)}
+          style={{ all: "unset", cursor: "pointer", display: "block", width: "100%", background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16 }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span className="t-label" style={{ color: "var(--text-secondary)" }}>{t("accountsPage.detail.cycleSummary")}</span>
           {account.creditLimit ? (
             <>
@@ -144,7 +151,8 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             {t("accountsPage.detail.cycleProjection", { amount: formatAmountCompact(money(cycleTotal, account.currencyCode), { showSign: false }) })}
           </span>
-        </div>
+          </div>
+        </button>
       ) : null}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

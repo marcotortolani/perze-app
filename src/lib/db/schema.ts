@@ -109,7 +109,8 @@ export interface AccountRow {
   termMonths: number | null;
 
   includeInNetWorth: boolean;
-  visibility: Visibility;
+  /** `accounts.visibility` en Postgres SÍ admite `custom` (a diferencia de `transactions`) — ver `visibility_grants`. */
+  visibility: Visibility | "custom";
   color: string | null;
   icon: string | null;
   sortOrder: number;
@@ -142,6 +143,14 @@ export interface CategoryRow {
   isSystem: boolean;
   sortOrder: number;
   archivedAt: string | null;
+  /** J4 muestra visibilidad por categoría, no solo por cuenta. */
+  visibility: Visibility | "custom";
+  ownerId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Distinto de `archivedAt`: archivar es del usuario, borrar es soft-delete (`CLAUDE.md` § 2). */
+  deletedAt: string | null;
 }
 
 export interface TagRow {
@@ -184,10 +193,25 @@ export interface TransactionRow {
   accountId: string;
   counterAccountId: string | null;
 
-  /** Siempre positivo salvo `adjustment`; el signo lo da `kind`. */
+  /**
+   * SON DOS CONVERSIONES, NO UNA (`CLAUDE.md` § dinero). `amount`/
+   * `currencyCode` están SIEMPRE en la moneda de la cuenta: mueven
+   * `currentBalance` y no necesitan FX nunca.
+   */
   amount: bigint;
   currencyCode: string;
 
+  /**
+   * Lo que el usuario gastó de verdad, cuando difiere de la moneda de la
+   * cuenta (pagás USD con tarjeta en pesos: `amount`/`currencyCode` son los
+   * pesos que salieron, esto es el dato original). Los tres son NULL o
+   * ninguno — mismo invariante que la migración (`original_triple` CHECK).
+   */
+  originalAmount: bigint | null;
+  originalCurrency: string | null;
+  originalRate: bigint | null; // ScaledRate: originalCurrency → currencyCode
+
+  /** Segunda conversión: moneda de la cuenta → moneda base. Acá vive needs_fx. */
   fxRate: bigint | null; // ScaledRate — NULL = needs_fx
   fxSource: FxSourceValue;
   fxProvider: string | null;
@@ -218,6 +242,17 @@ export interface TransactionRow {
   deletedAt: string | null;
   clientRev: number;
   source: TransactionSource;
+
+  /**
+   * `docs/01-arquitectura-datos.md` § 7, decisión 4: lo que nunca llegó al
+   * servidor vive solo en el outbox y no tiene fila — así que `syncState`
+   * describe cómo terminó el ÚLTIMO intento de sync de una fila que sí
+   * existe local. `'conflict'` = otro miembro editó esta misma fila entre
+   * que se guardó localmente y que se intentó subir (`client_rev`
+   * desalineado) — ver `sync-worker.ts` y `conflicts-repo.ts`.
+   */
+  syncState: "ok" | "rejected" | "conflict";
+  syncError: string | null;
 }
 
 export interface TransactionTagRow {
@@ -232,7 +267,11 @@ export interface TransactionSplitRow {
   amount: bigint;
   amountBase: bigint | null;
   note: string | null;
+  /** CON-24: soft-delete, igual que el resto — nunca se expone un DELETE real. */
+  deletedAt: string | null;
 }
+
+export type ShareSplitMode = "equal" | "income_pro_rata" | "exact" | "percent";
 
 export interface TransactionShareRow {
   id: string;
@@ -240,9 +279,16 @@ export interface TransactionShareRow {
   memberId: string;
   shareAmount: bigint;
   shareAmountBase: bigint | null;
+  /** J5 muestra "62 y 38" — numeric(6,3) como string decimal. */
+  sharePct: string | null;
+  splitMode: ShareSplitMode | null;
   settledAt: string | null;
   settlementId: string | null;
+  deletedAt: string | null;
 }
+
+export type SettlementMethod = "cash" | "transfer" | "forgiven" | "other";
+export type SettlementStatus = "pending" | "done" | "forgiven";
 
 export interface SettlementRow {
   id: string;
@@ -251,8 +297,18 @@ export interface SettlementRow {
   toMember: string;
   amount: bigint;
   currencyCode: string;
-  settledAt: string;
+  /** Misma forma que transactions: needs_fx aplica acá también. */
+  fxRate: bigint | null; // ScaledRate
+  fxSource: FxSourceValue;
+  amountBase: bigint | null;
+  method: SettlementMethod | null;
+  status: SettlementStatus;
+  settledAt: string | null;
   transactionId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }
 
 export interface FxRateRow {
@@ -275,7 +331,8 @@ export interface HouseholdFxPreferenceRow {
 }
 
 export type OutboxOp = "insert" | "update" | "delete";
-export type OutboxStatus = "pending" | "syncing" | "failed";
+/** `"conflict"` es terminal — no se reintenta solo, espera resolución explícita (ver `conflicts-repo.ts`). */
+export type OutboxStatus = "pending" | "syncing" | "failed" | "conflict";
 
 export interface OutboxEntryRow {
   id?: number; // autoIncrement
@@ -293,4 +350,96 @@ export interface OutboxEntryRow {
 export interface MetaRow {
   key: string;
   value: unknown;
+}
+
+/** Un conflicto real detectado al drenar el outbox — ver `sync-worker.ts`/`conflicts-repo.ts`. */
+export interface ConflictRecordRow {
+  id: string;
+  table: string;
+  entityId: string;
+  /** El payload que el outbox intentó subir y el servidor rechazó por `client_rev` desalineado. */
+  localPayload: Record<string, unknown>;
+  /** La fila tal como está en el servidor en este momento. */
+  serverPayload: Record<string, unknown>;
+  detectedAt: string;
+}
+
+/**
+ * Bloque F+G. Sin `budget_periods`/`goal_contributions`/`goal_accounts` a
+ * propósito — ver la nota de la migración `20260801040000`.
+ */
+export interface BudgetRow {
+  id: string;
+  householdId: string;
+  categoryId: string | null;
+  name: string;
+  amountLimit: bigint;
+  currencyCode: string;
+  archivedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoalRow {
+  id: string;
+  householdId: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  targetAmount: bigint;
+  currencyCode: string;
+  targetDate: string | null;
+  accountId: string | null;
+  archivedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecurringRuleRow {
+  id: string;
+  householdId: string;
+  name: string;
+  kind: "expense" | "income";
+  categoryId: string | null;
+  accountId: string;
+  expectedAmount: bigint;
+  currencyCode: string;
+  dayOfMonth: number;
+  archivedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RuleMatchField = "note" | "payeeName";
+export type RuleMatchOp = "contains" | "equals";
+
+export interface RuleMatch {
+  field: RuleMatchField;
+  op: RuleMatchOp;
+  value: string;
+}
+
+export interface RuleActions {
+  categoryId: string | null;
+  tagIds: string[];
+  payeeId: string | null;
+}
+
+/** K7 — auto-categorización. `match`/`actions` viven en columnas jsonb en Supabase, ver `20260801011100_system.sql`. */
+export interface CategorizationRuleRow {
+  id: string;
+  householdId: string;
+  name: string;
+  priority: number;
+  match: RuleMatch;
+  actions: RuleActions;
+  isActive: boolean;
+  hitCount: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }

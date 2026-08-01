@@ -37,10 +37,10 @@ Antes de escribir código contra un documento, verificá que no haya otra copia:
 ## Stack
 
 - Next.js 16 (App Router) · TypeScript strict · Tailwind CSS v4
-- shadcn/ui customizado · Motion (`motion`) · Lucide
+- shadcn/ui customizado · Motion (`motion`) · Phosphor Icons
 - Supabase (Postgres, Auth, Storage, Realtime, Edge Functions)
 - TanStack Query v5 · Zustand · Dexie (outbox offline) · Zod v4
-- Serwist (PWA) · Biome (lint + format) · Vitest + Playwright
+- Serwist (PWA) · ESLint (lint) · Vitest + Playwright
 
 **No hay Docker en esta máquina, y no lo va a haber.** Supabase se usa contra un **proyecto remoto de desarrollo**, enlazado con `supabase link`. Funcionan sin Docker: `db push --linked`, `gen types typescript --linked`, `migration new`. **No funcionan y no hay que proponerlos:** `supabase start`, `supabase status`, `supabase db reset`, `supabase db pull` y `supabase db diff` sin `--linked`.
 
@@ -176,9 +176,28 @@ Y una invariante que ningún componente puede verificar solo: **el presupuesto d
 - `revalidateTag(tag, profile)` requiere perfil de `cacheLife`; `updateTag()` en Server Actions para read-your-writes
 - Turbopack es el bundler por defecto
 - Todo slot de ruta paralela necesita su `default.js` explícito
-- No existe `next lint` — usamos Biome
+- No existe `next lint` — usamos ESLint directo (`pnpm lint`)
 - **Tailwind v4:** `darkMode: 'class'` ya no existe en config JS. El modo oscuro se declara en CSS con `@custom-variant dark (&:where(.dark, .dark *));`
 - **`@theme` emite un solo bloque `:root` y no soporta variantes claro/oscuro.** El patrón correcto es valores crudos en `:root` más overrides en `.dark`, expuestos con `@theme inline`
+
+---
+
+## Convención de rutas: qué vive dentro de `(app)/` y qué no
+
+**El grupo `(app)/` es solo para las pantallas con tab bar persistente** (home, cuentas,
+movimientos, análisis, más). Un flujo de pantalla completa —sin tab bar, sin el chrome del
+shell— vive **fuera** de `(app)/`, como hermano del grupo. Ejemplos ya en el repo:
+`src/app/accounts/new`, `src/app/accounts/[id]/edit`, `src/app/transactions/[id]/edit` y
+`src/app/add`. No es un descuido: mezclar un flujo full-screen adentro de `(app)/` le hereda
+el layout con tab bar, que ninguna de esas pantallas quiere.
+
+**El caso `add` tiene además el patrón de ruta interceptora.** `src/app/add/page.tsx` es la
+ruta real, full-screen, para navegación dura (shortcut de la PWA, share target, deep link).
+`src/app/(app)/@modal/(.)add` la intercepta cuando la navegación es blanda (tap en el botón
+primario estando ya adentro de la app): mismo destino, pero se dibuja como modal sobre el
+tab bar en vez de reemplazar la pantalla. Replicar este mismo patrón —ruta hermana +
+interceptora en `@modal`— para cualquier otro flujo que deba abrirse tanto por deep link
+como por modal desde adentro.
 
 ---
 
@@ -193,7 +212,7 @@ Antes de decir que una pantalla está lista, las ocho tienen que ser ciertas:
 5. Cero strings hardcodeadas; listas de más de 50 items virtualizadas
 6. Si muestra un agregado, excluye los `needs_fx` y muestra el conteo excluido
 7. Test unitario de la lógica y e2e del camino feliz
-8. `pnpm check` y `pnpm build` pasan limpios
+8. `pnpm lint` y `pnpm build` pasan limpios
 
 ---
 
@@ -207,7 +226,7 @@ Antes de decir que una pantalla está lista, las ocho tienen que ser ciertas:
 
 ## Comandos
 
-`pnpm dev` · `pnpm build` · `pnpm test` · `pnpm e2e` · `pnpm check` (Biome) · `pnpm db:types` · `pnpm db:push`
+`pnpm dev` · `pnpm build` · `pnpm test` · `pnpm e2e` · `pnpm lint` (ESLint) · `pnpm db:types` · `pnpm db:push`
 
 ---
 

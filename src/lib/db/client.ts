@@ -1,10 +1,14 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
 import type {
   AccountRow,
+  BudgetRow,
+  CategorizationRuleRow,
   CategoryRow,
+  ConflictRecordRow,
   CountryRow,
   CurrencyRow,
   FxRateRow,
+  GoalRow,
   HouseholdFxPreferenceRow,
   HouseholdMemberRow,
   HouseholdRow,
@@ -13,6 +17,7 @@ import type {
   OutboxEntryRow,
   PayeeRow,
   ProfileRow,
+  RecurringRuleRow,
   SettlementRow,
   TagRow,
   TransactionRow,
@@ -54,6 +59,11 @@ export class PerzeDatabase extends Dexie {
   householdFxPreferences!: Table<HouseholdFxPreferenceRow>;
   outbox!: EntityTable<OutboxEntryRow, "id">;
   meta!: EntityTable<MetaRow, "key">;
+  budgets!: EntityTable<BudgetRow, "id">;
+  goals!: EntityTable<GoalRow, "id">;
+  recurringRules!: EntityTable<RecurringRuleRow, "id">;
+  categorizationRules!: EntityTable<CategorizationRuleRow, "id">;
+  conflicts!: EntityTable<ConflictRecordRow, "id">;
 
   constructor(name = "perze") {
     super(name);
@@ -96,6 +106,40 @@ export class PerzeDatabase extends Dexie {
           .toCollection()
           .modify((category: CategoryRow) => {
             category.i18nKey = CATEGORY_I18N_KEY_BY_NAME.get(category.name) ?? null;
+          });
+      });
+
+    /** Bloque F+G — presupuestos, metas, recurrentes (ver `20260801040000` en Supabase). */
+    this.version(3).stores({
+      budgets: "id, householdId, categoryId, archivedAt",
+      goals: "id, householdId, accountId, archivedAt",
+      recurringRules: "id, householdId, accountId, categoryId, archivedAt",
+    });
+
+    /** K7 — reglas de auto-categorización (`rules` en Supabase, ver `20260801011100_system.sql`). */
+    this.version(4).stores({
+      categorizationRules: "id, householdId, [householdId+isActive], deletedAt",
+    });
+
+    /**
+     * CQ — detección real de conflictos de sync (antes: `client_rev` se
+     * mandaba a Supabase pero nada lo comparaba, así que dos ediciones
+     * offline del mismo movimiento se resolvían con "el último que
+     * sincroniza gana", en silencio — ver `sync-worker.ts`.
+     */
+    this.version(5)
+      .stores({
+        transactions:
+          "id, householdId, accountId, categoryId, payeeId, [householdId+occurredAt], deletedAt, occurredAt, syncState",
+        conflicts: "id, table, entityId, detectedAt",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table("transactions")
+          .toCollection()
+          .modify((row: TransactionRow) => {
+            row.syncState = "ok";
+            row.syncError = null;
           });
       });
   }

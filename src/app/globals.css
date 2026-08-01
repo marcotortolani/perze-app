@@ -87,6 +87,21 @@
   --diverge-orange-1: #efa07b;
   --diverge-orange-2: #d95926;
   --diverge-orange-3: #a63d14;
+
+  /*
+   * CON-08 / auditoría D02: la selección por superficie era indistinguible
+   * (`--surface-3` contra `--surface-2` da 1,065:1 en claro, 1,14:1 en
+   * oscuro — imperceptible). Token propio, nunca compartido con
+   * `--surface-3` (que sigue siendo inputs/keypad). Contraste real contra
+   * `--surface-2`, verificado con la fórmula WCAG de contraste relativo
+   * (no a ojo): claro 1,24:1 / anillo 1,52:1 — dark con la misma
+   * magnitud, 1,24:1 / 1,45:1, para que el mismo mecanismo se sienta
+   * igual de firme en los dos modos.
+   */
+  --selection-surface-dark: #2c2c31;
+  --selection-ring-dark: #37373a;
+  --selection-surface-light: #dededa;
+  --selection-ring-light: #c9c9c4;
 }
 
 /* ---- tokens/colors.css — alias semánticos por modo ---- */
@@ -119,6 +134,29 @@
 
   --shadow-sheet: 0 8px 32px rgba(0, 0, 0, 0.32);
   --scrim: rgba(0, 0, 0, 0.6);
+
+  --selection-surface: var(--selection-surface-dark);
+  --selection-ring: var(--selection-ring-dark);
+
+  /* CON-19 / auditoría D44: la Z al 20% se pierde en oscuro; sube a 28% ahí. */
+  --zmark-ink: color-mix(in srgb, var(--text-primary) 28%, transparent);
+
+  /*
+   * LIB-17: rampa ordinal discreta de 7 pasos para heatmaps/treemaps
+   * (`CalendarHeatmap`, `MonthCalendar`). Los heatmaps referenciaban
+   * `--violet-300..700` directo, que `palette.css` documenta como "no
+   * referenciar directo" — estos 7 alias son el punto de entrada correcto.
+   * En oscuro, el paso más cercano a la superficie no puede ir más oscuro
+   * que 550 (regla de 2:1 de § 2.7 del sistema de diseño): se usan los 7
+   * pasos entre 100 y 550.
+   */
+  --ramp-1: var(--violet-100);
+  --ramp-2: var(--violet-150);
+  --ramp-3: var(--violet-250);
+  --ramp-4: var(--violet-300);
+  --ramp-5: var(--violet-400);
+  --ramp-6: var(--violet-450);
+  --ramp-7: var(--violet-550);
 }
 .light,
 [data-theme="light"] {
@@ -132,6 +170,20 @@
   --text-primary: var(--n-ink1-light);
   --text-secondary: var(--n-ink2-light);
   --text-muted: var(--n-ink3-light);
+
+  --selection-surface: var(--selection-surface-light);
+  --selection-ring: var(--selection-ring-light);
+
+  --zmark-ink: color-mix(in srgb, var(--text-primary) 20%, transparent);
+
+  /* En claro el piso seguro es 250 (no arrancar más claro, § 2.7): 7 pasos entre 250 y 700. */
+  --ramp-1: var(--violet-250);
+  --ramp-2: var(--violet-300);
+  --ramp-3: var(--violet-400);
+  --ramp-4: var(--violet-450);
+  --ramp-5: var(--violet-550);
+  --ramp-6: var(--violet-600);
+  --ramp-7: var(--violet-700);
 
   --primary-ink: var(--violet-ink-light);
   --primary-fill: var(--violet-fill);
@@ -251,15 +303,17 @@
   --keypad-key-height: 64px;
 
   /*
-   * Responsive — el diseño de origen es mobile-first (390px); a partir de
-   * `--bp-tablet` el contenido queda centrado en una sola columna de ancho
-   * fijo (nunca multi-columna) y la navegación pasa de TabBar inferior a
-   * `Sidebar` fijo. Ver `docs/02-design-system.md` § 8 y
-   * `src/design-system/nav/Sidebar.tsx`.
+   * Responsive — el diseño de origen es mobile-first (390px). Un solo corte
+   * de navegación, 1024px (`lg:` de Tailwind, `DESKTOP_BREAKPOINT` en
+   * `use-is-desktop.ts`): hasta ahí, TabBar inferior; desde ahí, `Sidebar`
+   * fijo. `--content-max-width` es el ancho de lectura para pantallas de
+   * una sola columna; `--content-max-width-wide` lo usan las rutas con
+   * layout de lista + detalle (`/transactions`, `/accounts`), que necesitan
+   * más aire — ver `contentWidthFor()` en `src/lib/nav/content-width.ts`.
+   * Ver `docs/02-design-system.md` § 8 y `src/design-system/nav/Sidebar.tsx`.
    */
-  --bp-tablet: 768px;
-  --bp-desktop: 1024px;
   --content-max-width: 560px;
+  --content-max-width-wide: 1200px;
   --sidebar-width: 248px;
 
   /* --radius-* declarados arriba, en `@theme` (ver comentario de esa sección) */
@@ -342,6 +396,8 @@
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
+  --color-selection-surface: var(--selection-surface);
+  --color-selection-ring: var(--selection-ring);
   --color-border: var(--border);
   --color-gridline: var(--gridline);
   --color-text-primary: var(--text-primary);
@@ -507,5 +563,48 @@
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/*
+ * Shell de `(app)/layout.tsx` fijo al viewport, mismo comportamiento en
+ * todos los anchos: `<main>` (`.app-shell-main`) es el único contenedor de
+ * scroll de la app. `.app-shell-column` necesita `min-height: 0` porque un
+ * hijo flex en columna vale `min-height: auto` por default — sin esto,
+ * `overflow-y: auto` en `<main>` nunca se activa y el documento vuelve a
+ * ser el que scrollea (el mismo bug de doble scroller que tenía el
+ * virtualizador de `/transactions`). Sin esto, además, el `<Sidebar>` no
+ * tiene una altura definida contra la cual scrollear solo.
+ */
+@utility app-shell {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+}
+@utility app-shell-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+@utility app-shell-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-inline: var(--screen-padding);
+}
+
+/* ZMark animada (loader): stagger de 120ms, ciclo de 1.4s. `prefers-reduced-motion`
+   se respeta arriba (el componente no anima si `animated` es false). */
+@keyframes zpulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
   }
 }

@@ -49,7 +49,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   }
 
   if (!transaction) {
-    return <EmptyState icon="alert" message={t("transactions.detail.notFound")} actionLabel={t("transactions.detail.backToList")} onAction={() => router.push("/transactions")} />;
+    return <EmptyState message={t("transactions.detail.notFound")} actionLabel={t("transactions.detail.backToList")} onAction={() => router.push("/transactions")} />;
   }
 
   const account = accounts.find((a) => a.id === transaction.accountId);
@@ -85,6 +85,9 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       counterAccountId: transaction.counterAccountId,
       amount: transaction.amount,
       currencyCode: transaction.currencyCode,
+      originalAmount: transaction.originalAmount,
+      originalCurrency: transaction.originalCurrency,
+      originalRate: transaction.originalRate,
       fxRate: transaction.fxRate,
       fxSource: transaction.fxSource,
       fxProvider: transaction.fxProvider,
@@ -175,7 +178,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
         <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
         <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => toast(t("transactions.detail.recurringComingSoon"))} />
-        <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => toast(t("transactions.detail.splitComingSoon"))} />
+        <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
         <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
       </div>
     </div>

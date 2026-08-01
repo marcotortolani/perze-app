@@ -1,0 +1,56 @@
+/**
+ * Bloque I — agrega trades en posiciones por instrumento: cantidad
+ * tenida y costo base. Solo `buy`/`sell` mueven cantidad; el resto
+ * (dividendos, intereses, comisiones...) son flujo de caja del
+ * portfolio, no cambian cuánto del instrumento se tiene.
+ */
+
+export interface PositionTradeInput {
+  instrumentId: string;
+  kind: string;
+  quantity: number;
+  /** Costo total de la operación en unidades mínimas de la moneda del trade. */
+  netAmount: bigint;
+}
+
+export interface Position {
+  instrumentId: string;
+  quantity: number;
+  /** Costo base proporcional a lo que todavía se tiene (se reduce en una venta). */
+  costBasis: bigint;
+}
+
+export function computePositions(trades: readonly PositionTradeInput[]): Map<string, Position> {
+  const positions = new Map<string, Position>();
+
+  for (const trade of trades) {
+    const current = positions.get(trade.instrumentId) ?? { instrumentId: trade.instrumentId, quantity: 0, costBasis: 0n };
+
+    if (trade.kind === "buy") {
+      positions.set(trade.instrumentId, {
+        instrumentId: trade.instrumentId,
+        quantity: current.quantity + trade.quantity,
+        costBasis: current.costBasis + trade.netAmount,
+      });
+    } else if (trade.kind === "sell") {
+      const remainingQty = current.quantity - trade.quantity;
+      // Costo base proporcional al remanente — vender la mitad de la
+      // posición se lleva la mitad del costo acumulado, nunca todo ni nada.
+      const remainingCostBasis = current.quantity > 0 ? (current.costBasis * BigInt(Math.round(Math.max(remainingQty, 0) * 1_000_000))) / BigInt(Math.round(current.quantity * 1_000_000)) : 0n;
+      positions.set(trade.instrumentId, {
+        instrumentId: trade.instrumentId,
+        quantity: remainingQty,
+        costBasis: remainingQty > 0 ? remainingCostBasis : 0n,
+      });
+    } else {
+      positions.set(trade.instrumentId, current);
+    }
+  }
+
+  // Instrumentos vendidos del todo no son una posición — se cierran, no se muestran en 0 para siempre.
+  for (const [id, position] of positions) {
+    if (position.quantity <= 0) positions.delete(id);
+  }
+
+  return positions;
+}

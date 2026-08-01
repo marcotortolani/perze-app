@@ -121,6 +121,7 @@ export const fxRepo = {
         url.searchParams.set("base", base);
         url.searchParams.set("quote", quote);
         url.searchParams.set("date", date);
+        url.searchParams.set("householdId", householdId);
         if (preference.preferredProvider) url.searchParams.set("provider", preference.preferredProvider);
         if (preference.preferredQuoteKind) url.searchParams.set("quoteKind", preference.preferredQuoteKind);
 

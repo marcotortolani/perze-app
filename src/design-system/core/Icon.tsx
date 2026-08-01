@@ -10,6 +10,7 @@ import {
   BriefcaseIcon,
   CalendarIcon,
   CameraIcon,
+  CardholderIcon,
   CarIcon,
   CaretDownIcon,
   CaretLeftIcon,
@@ -54,6 +55,7 @@ import {
   TargetIcon,
   TrashIcon,
   TrendUpIcon,
+  UserIcon,
   UsersIcon,
   WalletIcon,
   WarningIcon,
@@ -96,6 +98,7 @@ const ICONS = {
   "eye-off": EyeSlashIcon,
   refresh: ArrowsClockwiseIcon,
   users: UsersIcon,
+  user: UserIcon,
   trend: TrendUpIcon,
   target: TargetIcon,
   filter: FunnelIcon,
@@ -130,6 +133,9 @@ const ICONS = {
   // ícono propio de "cuenta corriente", distinto de `piggy-bank` (caja de
   // ahorro) — ver perze-brand/assets/README.md, pendiente histórico.
   "hand-coins": HandCoinsIcon,
+  // LIB-17: caja de ahorro y cuenta corriente compartían `bank` y se veían
+  // idénticas (contrato § 4, item 28) — glifo propio y distinto de `bank`.
+  "bank-checking": CardholderIcon,
   // alias de los nombres que usa `lib/seed/demo-household.ts` para categorías —
   // mismo glifo que su alias corto, sin duplicar el import.
   "shopping-cart": ShoppingCartIcon,

@@ -23,7 +23,9 @@ export function useInvalidateAccounts(householdId: string | undefined) {
 export function useAccount(id: string | undefined) {
   return useQuery({
     queryKey: ["account", id ?? ""],
-    queryFn: () => accountsRepo.get(id!),
+    // `?? ""`: `enabled: false` deja el queryFn sin correr, pero React
+    // Query igual exige que la función tipe un resultado no-`undefined`.
+    queryFn: () => accountsRepo.get(id ?? ""),
     enabled: !!id,
   });
 }

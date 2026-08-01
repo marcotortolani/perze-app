@@ -11,5 +11,7 @@ export { ListRow, type ListRowProps } from "./ListRow";
 export { Sheet, type SheetProps } from "./Sheet";
 export { ProgressSteps, type ProgressStepsProps } from "./ProgressSteps";
 export { OtpInput, type OtpInputProps } from "./OtpInput";
-export { ResultGroup, type ResultGroupProps } from "./ResultGroup";
+export { SectionGroup, type SectionGroupProps } from "./SectionGroup";
 export { DismissibleNotice, type DismissibleNoticeProps } from "./DismissibleNotice";
+export { ZMark, type ZMarkProps } from "./ZMark";
+export { Overlay, type OverlayProps } from "./Overlay";

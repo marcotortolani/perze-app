@@ -11,39 +11,41 @@ import type { AccountKind } from "@/lib/db/schema";
 interface Preset {
   name: string;
   kind: AccountKind;
+  /** CON-29: el monograma se pinta sobre este color — nunca el logo real de la institución. */
+  color: string;
 }
 
 const PRESETS_BY_COUNTRY: Record<string, Preset[]> = {
   UY: [
-    { name: "Itaú", kind: "savings" },
-    { name: "Brou", kind: "checking" },
-    { name: "Santander", kind: "checking" },
-    { name: "Mercado Pago", kind: "wallet" },
-    { name: "Prex", kind: "wallet" },
+    { name: "Itaú", kind: "savings", color: "#EC7000" },
+    { name: "Brou", kind: "checking", color: "#00A19A" },
+    { name: "Santander", kind: "checking", color: "#EC0000" },
+    { name: "Mercado Pago", kind: "wallet", color: "#009EE3" },
+    { name: "Prex", kind: "wallet", color: "#7B2FF7" },
   ],
   AR: [
-    { name: "Banco Nación", kind: "checking" },
-    { name: "Mercado Pago", kind: "wallet" },
-    { name: "Ualá", kind: "wallet" },
-    { name: "Banco Galicia", kind: "checking" },
+    { name: "Banco Nación", kind: "checking", color: "#0072BC" },
+    { name: "Mercado Pago", kind: "wallet", color: "#009EE3" },
+    { name: "Ualá", kind: "wallet", color: "#191A3F" },
+    { name: "Banco Galicia", kind: "checking", color: "#FF5000" },
   ],
   BR: [
-    { name: "Nubank", kind: "checking" },
-    { name: "Itaú", kind: "checking" },
-    { name: "PicPay", kind: "wallet" },
+    { name: "Nubank", kind: "checking", color: "#820AD1" },
+    { name: "Itaú", kind: "checking", color: "#EC7000" },
+    { name: "PicPay", kind: "wallet", color: "#21C25E" },
   ],
   US: [
-    { name: "Chase", kind: "checking" },
-    { name: "Bank of America", kind: "checking" },
-    { name: "PayPal", kind: "wallet" },
+    { name: "Chase", kind: "checking", color: "#117ACA" },
+    { name: "Bank of America", kind: "checking", color: "#E31837" },
+    { name: "PayPal", kind: "wallet", color: "#003087" },
   ],
   MX: [
-    { name: "BBVA", kind: "checking" },
-    { name: "Mercado Pago", kind: "wallet" },
+    { name: "BBVA", kind: "checking", color: "#004481" },
+    { name: "Mercado Pago", kind: "wallet", color: "#009EE3" },
   ],
   CL: [
-    { name: "Banco de Chile", kind: "checking" },
-    { name: "Mercado Pago", kind: "wallet" },
+    { name: "Banco de Chile", kind: "checking", color: "#003DA5" },
+    { name: "Mercado Pago", kind: "wallet", color: "#009EE3" },
   ],
 };
 
@@ -52,7 +54,10 @@ const PRESETS_BY_COUNTRY: Record<string, Preset[]> = {
 // literal contra "Efectivo" para inferir el `AccountKind` — cambiar el
 // texto acá rompería esa inferencia. Traducir esto bien requiere separar
 // identidad (`kind`) de label en el store, fuera del alcance de i18n.
-const ALWAYS: Preset[] = [{ name: "Efectivo", kind: "cash" }, { name: "Otro", kind: "other" }];
+const ALWAYS: Preset[] = [
+  { name: "Efectivo", kind: "cash", color: "#6E6E76" },
+  { name: "Otro", kind: "other", color: "#6E6E76" },
+];
 
 /** A6 — primera cuenta: presets visuales por país, máximo 6 visibles + buscar. */
 export default function OnboardingAccountPage() {
@@ -105,7 +110,7 @@ export default function OnboardingAccountPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
         {presets.map((p) => (
-          <InstitutionTile key={p.name} name={p.name} fallbackIcon={p.kind === "cash" ? "banknote" : p.kind === "wallet" ? "wallet" : "bank"} selected={selected?.name === p.name} onClick={() => setSelected(p)} />
+          <InstitutionTile key={p.name} name={p.name} color={p.color} selected={selected?.name === p.name} onClick={() => setSelected(p)} />
         ))}
       </div>
 

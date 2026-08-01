@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "@/components/ui/sonner";
 import { OnboardingGate } from "@/components/onboarding-gate";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { useSyncLoop } from "@/lib/offline/use-sync-loop";
 
 /**
  * Todo el estado de dominio (cuentas, movimientos, household…) vive en Dexie
@@ -32,12 +33,18 @@ function makeQueryClient() {
   });
 }
 
+function SyncLoop() {
+  useSyncLoop();
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ServiceWorkerRegister />
+      <SyncLoop />
       <OnboardingGate>{children}</OnboardingGate>
       <Toaster richColors position="top-center" />
       {process.env.NODE_ENV === "development" && (

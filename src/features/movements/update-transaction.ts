@@ -21,9 +21,38 @@ export interface UpdateDraftParams {
  * especiales acá.
  */
 export async function updateTransactionFromDraft({ transactionId, draft, household, account, counterAccount }: UpdateDraftParams): Promise<TransactionRow> {
-  const currency = draft.currency || account.currencyCode;
-  const amount = evaluateKeypadExpression(draft.amountExpression || "0", currency);
   const date = draft.occurredAt.slice(0, 10);
+
+  // Misma primera conversión que saveDraftAsTransaction: amount/currencyCode
+  // siempre terminan en la moneda de la cuenta, nunca en la capturada.
+  const capturedCurrency = draft.currency || account.currencyCode;
+  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency);
+
+  let amount = capturedAmount;
+  let original: Pick<TransactionRow, "originalAmount" | "originalCurrency" | "originalRate"> = {
+    originalAmount: null,
+    originalCurrency: null,
+    originalRate: null,
+  };
+
+  if (capturedCurrency !== account.currencyCode) {
+    const captureResolution = await fxRepo.resolve({
+      householdId: household.id,
+      base: capturedCurrency,
+      quote: account.currencyCode,
+      date,
+    });
+    if (captureResolution.rate !== null) {
+      amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
+      original = {
+        originalAmount: capturedAmount.amount,
+        originalCurrency: capturedCurrency,
+        originalRate: captureResolution.rate,
+      };
+    }
+  }
+
+  const currency = account.currencyCode;
 
   let fx: Pick<TransactionRow, "fxRate" | "fxSource" | "fxProvider" | "fxQuoteKind" | "fxResolvedAt" | "amountBase"> = {
     fxRate: null,
@@ -55,6 +84,7 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
     counterAccountId: draft.kind === "transfer" ? (counterAccount?.id ?? null) : null,
     amount: amount.amount,
     currencyCode: currency,
+    ...original,
     occurredAt: draft.occurredAt,
     categoryId: draft.kind === "transfer" ? null : draft.categoryId,
     note: draft.note || null,

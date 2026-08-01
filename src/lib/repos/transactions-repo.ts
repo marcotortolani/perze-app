@@ -1,5 +1,6 @@
 import { getDb } from "../db/client";
 import type { TransactionRow } from "../db/schema";
+import { outbox } from "../offline/outbox";
 import {
   computeTransactionEffects,
   mergeEffectsByAccount,
@@ -7,9 +8,13 @@ import {
 } from "./balance-effects";
 import { newId, nowIso } from "./ids";
 
+async function enqueueTransaction(op: "insert" | "update" | "delete", row: TransactionRow): Promise<void> {
+  await outbox.enqueue({ table: "transactions", op, entityId: row.id, payload: row, clientRev: row.clientRev });
+}
+
 export type NewTransactionInput = Omit<
   TransactionRow,
-  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev"
+  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev" | "syncState" | "syncError"
 > & { clientRev?: number };
 
 export interface TransactionFilters {
@@ -45,8 +50,9 @@ export const transactionsRepo = {
       .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1));
   },
 
-  async get(id: string): Promise<TransactionRow | undefined> {
-    return getDb().transactions.get(id);
+  /** `null`, no `undefined` — TanStack Query no acepta que un `queryFn` resuelva `undefined` (ver `useTransaction`). */
+  async get(id: string): Promise<TransactionRow | null> {
+    return (await getDb().transactions.get(id)) ?? null;
   },
 
   /** Movimientos con `fxRate === null` — el estado `needs_fx` (doc 01 § 2.5). */
@@ -58,7 +64,7 @@ export const transactionsRepo = {
   async create(input: NewTransactionInput): Promise<TransactionRow> {
     const db = getDb();
     const now = nowIso();
-    const row: TransactionRow = { ...input, id: newId(), clientRev: input.clientRev ?? 1, createdAt: now, updatedAt: now, deletedAt: null };
+    const row: TransactionRow = { ...input, id: newId(), clientRev: input.clientRev ?? 1, createdAt: now, updatedAt: now, deletedAt: null, syncState: "ok", syncError: null };
 
     await db.transaction("rw", db.transactions, db.accounts, async () => {
       await db.transactions.add(row);
@@ -68,6 +74,7 @@ export const transactionsRepo = {
       }
     });
 
+    await enqueueTransaction("insert", row);
     return row;
   },
 
@@ -91,37 +98,46 @@ export const transactionsRepo = {
       }
     });
 
+    await enqueueTransaction("update", updated);
     return updated;
   },
 
   /** Borrado reversible (swipe + "Deshacer" 5s) — nunca un diálogo de confirmación. */
   async softDelete(id: string): Promise<void> {
     const db = getDb();
+    let updated: TransactionRow | undefined;
     await db.transaction("rw", db.transactions, db.accounts, async () => {
       const existing = await db.transactions.get(id);
       if (!existing || existing.deletedAt !== null) return;
 
-      await db.transactions.update(id, { deletedAt: nowIso(), updatedAt: nowIso() });
+      const patch = { deletedAt: nowIso(), updatedAt: nowIso(), clientRev: existing.clientRev + 1 };
+      await db.transactions.update(id, patch);
+      updated = { ...existing, ...patch };
       const reversed = reverseEffects(computeTransactionEffects(existing));
       for (const [accountId, delta] of mergeEffectsByAccount(reversed)) {
         await bumpBalance(accountId, delta);
       }
     });
+    if (updated) await enqueueTransaction("update", updated);
   },
 
   /** Deshacer el borrado — reaplica el efecto original. */
   async restore(id: string): Promise<void> {
     const db = getDb();
+    let restored: TransactionRow | undefined;
     await db.transaction("rw", db.transactions, db.accounts, async () => {
       const existing = await db.transactions.get(id);
       if (!existing || existing.deletedAt === null) return;
 
-      await db.transactions.update(id, { deletedAt: null, updatedAt: nowIso() });
+      const patch = { deletedAt: null, updatedAt: nowIso(), clientRev: existing.clientRev + 1 };
+      await db.transactions.update(id, patch);
+      restored = { ...existing, ...patch };
       const effects = computeTransactionEffects(existing);
       for (const [accountId, delta] of mergeEffectsByAccount(effects)) {
         await bumpBalance(accountId, delta);
       }
     });
+    if (restored) await enqueueTransaction("update", restored);
   },
 };
 

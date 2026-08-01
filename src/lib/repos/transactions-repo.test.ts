@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetDbForTests } from "../db/client";
 import type { AccountRow, TransactionRow } from "../db/schema";
+import { outbox } from "../offline/outbox";
 import { accountsRepo } from "./accounts-repo";
 import { transactionsRepo } from "./transactions-repo";
 
@@ -43,6 +44,9 @@ function baseTx(overrides: Partial<TransactionRow>): Parameters<typeof transacti
     counterAccountId: null,
     amount: 0n,
     currencyCode: "UYU",
+    originalAmount: null,
+    originalCurrency: null,
+    originalRate: null,
     fxRate: null,
     fxSource: "identity",
     fxProvider: null,
@@ -160,5 +164,35 @@ describe("transactionsRepo — mantiene el saldo de cuenta sin trigger de Postgr
     const pending = await transactionsRepo.listNeedingFx(HOUSEHOLD);
     expect(pending).toHaveLength(1);
     expect(pending[0]?.fxSource).toBe("pending");
+  });
+
+  describe("BASE-05 — cada escritura encola en el outbox", () => {
+    it("create encola un insert", async () => {
+      const account = await accountsRepo.create(baseAccount());
+      const before = await outbox.count();
+      const tx = await transactionsRepo.create(baseTx({ accountId: account.id, amount: 1000n }));
+
+      const pending = await outbox.listPending();
+      const own = pending.filter((e) => e.entityId === tx.id);
+      expect(own).toHaveLength(1);
+      expect(own[0]?.table).toBe("transactions");
+      expect(own[0]?.op).toBe("insert");
+      expect(await outbox.count()).toBeGreaterThan(before);
+    });
+
+    it("update, softDelete y restore encolan un update cada uno, con clientRev creciente", async () => {
+      const account = await accountsRepo.create(baseAccount());
+      const tx = await transactionsRepo.create(baseTx({ accountId: account.id, amount: 1000n }));
+      await outbox.markSynced((await outbox.listPending()).find((e) => e.entityId === tx.id)!.id!);
+
+      await transactionsRepo.update(tx.id, { note: "actualizado" });
+      await transactionsRepo.softDelete(tx.id);
+      await transactionsRepo.restore(tx.id);
+
+      const entries = (await outbox.listPending()).filter((e) => e.entityId === tx.id);
+      expect(entries).toHaveLength(3);
+      expect(entries.every((e) => e.op === "update")).toBe(true);
+      expect(entries.map((e) => e.clientRev)).toEqual([2, 3, 4]);
+    });
   });
 });

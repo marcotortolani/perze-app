@@ -86,3 +86,23 @@ export function formatAmountCompact(m: Money, opts: FormatAmountOptions = {}): s
 
   return formatAmount(m, opts);
 }
+
+export interface FormatNumberOptions {
+  locale?: NumberLocale;
+}
+
+/**
+ * Único formateador de CANTIDADES de instrumento (`number`, nunca
+ * `bigint`) — dominio distinto de `formatAmount`. `decimals` es
+ * obligatorio y sin default a propósito (contrato § 0): la precisión se
+ * deriva con `decimalsForQuantity()` en el caller, nunca se asume acá.
+ * Ningún componente de dinero llama a `toFixed()` — esto reemplaza esa
+ * tentación para el caso de cantidades.
+ */
+export function formatNumber(value: number, decimals: number, opts: FormatNumberOptions = {}): string {
+  const { locale = "es-UY" } = opts;
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}

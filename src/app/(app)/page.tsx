@@ -5,25 +5,30 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   AccountCarousel,
+  Banner,
   EmptyState,
+  ErrorState,
   Icon,
   InsightCard,
-  OfflineBanner,
-  ResultGroup,
+  SectionGroup,
   Skeleton,
   SkeletonRow,
   Sparkline,
   StatTile,
   TransactionRow,
 } from "@/design-system";
+import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
 import { CountUp } from "@/components/motion";
+import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
+import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { usePendingMutations } from "@/lib/offline";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { usePrivacyStore } from "@/stores/privacy-store";
 import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
 import type { Money } from "@/lib/money/money";
@@ -50,13 +55,19 @@ export default function HomePage() {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
-  const { data: accounts, isLoading: accountsLoading } = useAccounts(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const { data: accounts, isLoading: accountsLoading } = accountsQuery;
   const { data: categories = [] } = useCategories(household?.id);
-  const { data: transactions, isLoading: txLoading } = useTransactions(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: transactions, isLoading: txLoading } = transactionsQuery;
   const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const budgetAlerts = useBudgetAlerts();
+  const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const privacy = usePrivacyStore((s) => s.privacyMode);
   const togglePrivacy = usePrivacyStore((s) => s.toggle);
   const pending = usePendingMutations();
+  const seenPrivacyTooltip = useContextualTooltipStore((s) => s.hasSeen("home-privacy-toggle"));
+  const markPrivacyTooltipSeen = useContextualTooltipStore((s) => s.markSeen);
   const [insightDismissed, setInsightDismissed] = useState(false);
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -64,13 +75,14 @@ export default function HomePage() {
 
   if (!household || accountsLoading || txLoading) return <HomeSkeleton />;
 
+  if (errorState) return <ErrorState {...errorState} />;
+
   const allAccounts = accounts ?? [];
   const allTransactions = transactions ?? [];
 
   if (allAccounts.length === 0 || allTransactions.length === 0) {
     return (
       <EmptyState
-        icon="wallet"
         message={t("home.empty")}
         actionLabel={t("home.emptyAction")}
         onAction={() => router.push("/add")}
@@ -151,16 +163,24 @@ export default function HomePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
-      {pending && pending > 0 ? <OfflineBanner pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
+      {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
 
       <section style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="t-caption" style={{ color: "var(--text-muted)", letterSpacing: ".08em", textTransform: "uppercase" }}>
             {t("home.netWorth")}
           </span>
-          <button type="button" onClick={togglePrivacy} aria-label={privacy ? t("home.showAmounts") : t("home.hideAmounts")} style={{ background: "none", border: 0, padding: 4, cursor: "pointer" }}>
-            <Icon name={privacy ? "eye-off" : "eye"} size={15} color="var(--text-muted)" />
-          </button>
+          {seenPrivacyTooltip ? (
+            <button type="button" onClick={togglePrivacy} aria-label={privacy ? t("home.showAmounts") : t("home.hideAmounts")} style={{ background: "none", border: 0, padding: 4, cursor: "pointer" }}>
+              <Icon name={privacy ? "eye-off" : "eye"} size={15} color="var(--text-muted)" />
+            </button>
+          ) : (
+            <ContextualTooltip message={t("home.privacyTooltip")} onDismiss={() => markPrivacyTooltipSeen("home-privacy-toggle")}>
+              <button type="button" onClick={togglePrivacy} aria-label={privacy ? t("home.showAmounts") : t("home.hideAmounts")} style={{ background: "none", border: 0, padding: 4, cursor: "pointer" }}>
+                <Icon name={privacy ? "eye-off" : "eye"} size={15} color="var(--text-muted)" />
+              </button>
+            </ContextualTooltip>
+          )}
         </div>
         {netWorth.data ? (
           <CountUp value={netWorth.data.netWorth.amount} currency={baseCurrency} size="hero-xl" showSign={false} polarity="neutral" tabular privacy={privacy} />
@@ -189,7 +209,20 @@ export default function HomePage() {
       </section>
 
       {!insightDismissed ? (
-        needsFxCount > 0 ? (
+        budgetAlerts.length > 0 ? (
+          <InsightCard
+            status={budgetAlerts[0]!.level === "exceeded" ? "critical" : "warning"}
+            icon="alert"
+            text={t(budgetAlerts[0]!.level === "exceeded" ? "home.budgetExceededInsight" : "home.budgetWarningInsight", {
+              category: budgetAlerts[0]!.budget.categoryId ? categoryLabel(categoryById.get(budgetAlerts[0]!.budget.categoryId!) ?? { name: budgetAlerts[0]!.budget.name, i18nKey: null }) : budgetAlerts[0]!.budget.name,
+              percent: Math.round(budgetAlerts[0]!.progress * 100),
+            })}
+            actionLabel={t("home.seeBudgets")}
+            onAction={() => router.push("/budgets")}
+            onDismiss={() => setInsightDismissed(true)}
+            dismissLabel={t("ds.insightCard.dismiss")}
+          />
+        ) : needsFxCount > 0 ? (
           <InsightCard
             status="warning"
             icon="alert"
@@ -211,7 +244,7 @@ export default function HomePage() {
         ) : null
       ) : null}
 
-      <ResultGroup label={t("home.recentTransactions")} onSeeAll={() => router.push("/transactions")} seeAllLabel={t("common.seeAll")}>
+      <SectionGroup label={t("home.recentTransactions")} onSeeAll={() => router.push("/transactions")} seeAllLabel={t("common.seeAll")}>
         <div>
           {recentTransactions.map((tx: TransactionRecord) => {
             const account = accountById.get(tx.accountId);
@@ -234,7 +267,7 @@ export default function HomePage() {
             );
           })}
         </div>
-      </ResultGroup>
+      </SectionGroup>
     </div>
   );
 }

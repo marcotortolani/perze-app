@@ -67,6 +67,9 @@ describe("PerzeDatabase — schema abre y hace CRUD básico", () => {
         counterAccountId: null,
         amount: 1000n,
         currencyCode: "UYU",
+        originalAmount: null,
+        originalCurrency: null,
+        originalRate: null,
         fxRate: null,
         fxSource: "identity",
         fxProvider: null,
@@ -92,6 +95,8 @@ describe("PerzeDatabase — schema abre y hace CRUD básico", () => {
         deletedAt: null,
         clientRev: 1,
         source: "manual",
+        syncState: "ok",
+        syncError: null,
       },
     ]);
 

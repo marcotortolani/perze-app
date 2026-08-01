@@ -12,7 +12,7 @@ import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money, subtract } from "@/lib/money/money";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { todayIso } from "@/lib/repos/ids";
-import { DEMO_USER_ID } from "@/lib/demo-user";
+import { useCurrentUserId } from "@/hooks/use-current-user";
 
 /** E5 — conciliación: "¿cuánto dice tu banco que tenés?" → diferencia → ajuste. Bloque E, Fase 8. */
 export default function ReconcileAccountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +20,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const userId = useCurrentUserId();
   const { data: account, isLoading } = useAccount(id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
   const invalidateTransactions = useInvalidateTransactions(household?.id);
@@ -27,7 +28,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const [saving, setSaving] = useState(false);
 
   if (isLoading || !household) return <Skeleton height={300} />;
-  if (!account) return <EmptyState icon="alert" message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
+  if (!account) return <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
 
   const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode);
   const currentBalance = money(account.currentBalance, account.currencyCode);
@@ -40,13 +41,16 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
     try {
       await transactionsRepo.create({
         householdId: household.id,
-        createdBy: DEMO_USER_ID,
+        createdBy: userId,
         kind: "adjustment",
         occurredAt: new Date().toISOString(),
         accountId: account.id,
         counterAccountId: null,
         amount: diff.amount,
         currencyCode: account.currencyCode,
+        originalAmount: null,
+        originalCurrency: null,
+        originalRate: null,
         fxRate: account.currencyCode === household.baseCurrency ? null : null,
         fxSource: account.currencyCode === household.baseCurrency ? "identity" : "pending",
         fxProvider: null,
@@ -62,7 +66,10 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
         attachments: [],
         location: null,
         status: "cleared",
-        visibility: account.visibility,
+        // Las transacciones no admiten "custom" (solo la cuenta puede
+        // serlo) — cae a "private" en vez de "household" para no filtrar
+        // el movimiento a miembros que no tienen grant sobre la cuenta.
+        visibility: account.visibility === "custom" ? "private" : account.visibility,
         recurringId: null,
         installmentGroupId: null,
         installmentNumber: null,

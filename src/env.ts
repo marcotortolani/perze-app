@@ -2,11 +2,12 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import * as z from "zod";
 
 /**
- * Variables de entorno tipadas y validadas en build. Hoy no hay ninguna
- * requerida: el backend es local-first (Dexie) y las APIs de FX
- * (`docs/01-arquitectura-datos.md` § "Confirmado por vos") no piden key.
- * Sumar acá las de Supabase cuando se conecte (Fase 9 en adelante) y las de
- * proveedores de cotización que la pidan.
+ * Variables de entorno tipadas y validadas en build. El backend sigue
+ * siendo local-first (Dexie + outbox): Supabase se lee/escribe detrás de
+ * TanStack Query, nunca bloquea el arranque. La publishable key es segura
+ * en el bundle — RLS es la barrera real, nunca el secreto de esta key
+ * (`CLAUDE.md` § RLS). La `service_role` key NUNCA entra acá: solo Edge
+ * Functions/cron.
  */
 export const env = createEnv({
   server: {},
@@ -14,6 +15,12 @@ export const env = createEnv({
     // Para `metadataBase` (og:image, apple-touch-icon absolutos) — sin
     // dominio propio todavía, cae a localhost en dev/preview.
     NEXT_PUBLIC_SITE_URL: z.url().optional(),
+    NEXT_PUBLIC_SUPABASE_URL: z.url(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+    // K12 — clave pública VAPID para push. Opcional: sin ella, `more/notifications`
+    // sigue mostrando las preferencias, pero `subscribeToPush` falla explícito
+    // (nunca en silencio) en vez de dejar suscribirse a un push que no puede llegar.
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   },
   shared: {
     NODE_ENV: z.enum(["development", "production", "test"]),
@@ -21,5 +28,8 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   },
 });

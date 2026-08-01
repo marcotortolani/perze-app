@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { AccountFormFlow } from "@/features/accounts/AccountFormFlow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useInvalidateAccounts } from "@/hooks/use-accounts";
-import { DEMO_USER_ID } from "@/lib/demo-user";
 
 /** E3 — crear cuenta. Ruta de página completa, mismo patrón que `/add`. */
 export default function NewAccountPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const userId = useCurrentUserId();
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
   if (!household) return null;
@@ -17,7 +18,7 @@ export default function NewAccountPage() {
   return (
     <AccountFormFlow
       householdId={household.id}
-      userId={DEMO_USER_ID}
+      userId={userId}
       onClose={() => router.push("/accounts")}
       onSaved={(account) => {
         invalidateAccounts();

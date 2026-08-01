@@ -42,5 +42,10 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     categories: ["finance", "productivity"],
     lang: locale,
     dir: "ltr",
+    share_target: {
+      action: "/add",
+      method: "GET",
+      params: { title: "title", text: "note", url: "url" },
+    },
   };
 }

@@ -23,7 +23,9 @@ export function useInvalidateTransactions(householdId: string | undefined) {
 export function useTransaction(id: string | undefined) {
   return useQuery({
     queryKey: ["transaction", id ?? ""],
-    queryFn: () => transactionsRepo.get(id!),
+    // `?? null`: `enabled: false` deja el queryFn sin correr, pero React
+    // Query igual exige que la función tipe un resultado no-`undefined`.
+    queryFn: () => transactionsRepo.get(id ?? ""),
     enabled: !!id,
   });
 }

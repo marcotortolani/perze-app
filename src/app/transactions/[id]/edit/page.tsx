@@ -21,7 +21,7 @@ export default function EditTransactionPage({ params }: { params: Promise<{ id: 
   const { data: transaction, isLoading } = useTransaction(id);
 
   if (isLoading || !household) return null;
-  if (!transaction) return <EmptyState icon="alert" message={t("transactions.edit.notFound")} actionLabel={t("transactions.edit.back")} onAction={() => router.push("/transactions")} />;
+  if (!transaction) return <EmptyState message={t("transactions.edit.notFound")} actionLabel={t("transactions.edit.back")} onAction={() => router.push("/transactions")} />;
 
   return (
     <EditTransactionFlow

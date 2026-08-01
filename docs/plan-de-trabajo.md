@@ -46,10 +46,16 @@ resuelven en CONCILIAR), **12 migraciones** de schema con sus políticas y tests
 **3 gates duros** que hoy están en cero (en particular Gate 1: cero tests de RLS pese a
 ser bloqueante declarado).
 
-**La PWA hoy no es instalable.** Los assets de marca están generados en `docs/marca/assets/`
-con su propio README, pero nada de eso está cableado en `src/app/` ni en un
-`manifest.webmanifest` real — sin eso no hay ícono, no hay splash y el navegador no ofrece
-instalar. Es trabajo de C1 y C5, ver § 5.2.
+**✅ ACTUALIZADO 2026-08-01 — La PWA ya es instalable, y BASE-06 quedó verificado en runtime.**
+MARCA-01 a MARCA-05 (§ 5.2) hechos — `manifest.ts` completo y traducido, los 5 íconos de
+`public/icons/`, splash de iOS en `public/splash/` cableado en `layout.tsx`. BASE-06: se
+levantó `next build && next start` real y se confirmó con `curl` que `/serwist/sw.js` (200,
+148 entradas de precache, ~5.2 MB), `/manifest.webmanifest` (200) y `/offline` (200, el
+fallback del service worker) responden. Se agregó `share_target` al manifest (faltaba del
+todo — `action: /add`, `method: GET`, mapea `title`/`text`/`url` a la nota del borrador en
+`app/add/page.tsx`, una sola vez, sin pisar lo que el usuario ya tipeó) y quedó verificado en
+el manifest servido. No se verificó instalación real en un dispositivo (eso requiere Chrome/
+Android o Safari/iOS real, fuera de este entorno).
 
 **Contradicciones nuevas encontradas al armar este plan** (no estaban en
 `reconciliacion-sesion-0.md`, se suman a las que ya trae): ver § 1. **Cero decisiones
@@ -187,9 +193,9 @@ puede pasar a `en curso` mientras el gate esté `pendiente`.
 
 | Gate | Después de | Criterio de paso | Estado hoy |
 |---|---|---|---|
-| **GATE-1 — RLS** | C2 (schema) | Por cada tabla: un test autenticado como household A que intenta leer/escribir/actualizar/**mover** una fila del household B, y falla en las cuatro. Sin este test la fase no está terminada. | **Cero tests.** No hay ni schema ni RLS todavía — bloquea todo lo posterior a C2. |
+| **GATE-1 — RLS** | C2 (schema) | Por cada tabla: un test autenticado como household A que intenta leer/escribir/actualizar/**mover** una fila del household B, y falla en las cuatro. Sin este test la fase no está terminada. | **✅ CERRADO 2026-08-01.** Migraciones aplicadas y verificadas contra el proyecto real `perze-app` (ref `dhnyihwcsexraivhokoc`, org `torto-dev`). **86/86 aserciones en verde** en `supabase/tests/database/` cubriendo las ~32 tablas del esquema: `10_accounts_rls` 9, `11_transactions_rls` 8, `12_visibility_rls` 5, `13_catalog_rls` 5, `14_budgets_goals_rls` 10, `15_recurring_debts_rls` 8, `16_investments_rls` 10, `17_system_rls` 13, `18_fx_tags_payees_rls` 9, `19_identity_rls` 9. **Se encontraron y corrigieron 3 bugs críticos en el camino** (detalle en § 5.1, tras la tabla de migraciones): (1) soft-delete roto por RLS en 13+5 tablas con `deleted_at IS NULL` en SELECT — `20260801020000`/`020100`/`020200`; (2) `household_id`/FK-al-padre no era realmente inmutable en `tags`, `payees`, `institutions`, `asset_classes`, `instruments` — `20260801020300`; (3) recursión infinita en la policy de `household_members` por consultar la propia tabla sin pasar por una función `SECURITY DEFINER` — `20260801020400`. Los tres son del tipo que un test que solo prueba "no se ve la fila ajena" nunca atrapa — hacía falta probar también las escrituras legítimas propias. |
 | **GATE-2 — Dinero y FX** | C3 + C4 | (a) cero `number`/`parseFloat` sobre un monto en todo el repo; (b) un movimiento sin cotización se guarda con `fx_rate`/`amount_base` en `NULL`, nunca rate=1; (c) el token de selección se ve en los dos modos, verificado con medidor de contraste, no a ojo. | **Falla (a) hoy mismo**: el sparkline del hero de Home usa `Number()`/`Math.round`/`BigInt` (§ 4, CON-06). (b) se cumple donde existe needs_fx. (c) no aplica todavía — el token de selección nuevo no existe (§ 4, CON-08). |
-| **GATE-3 — Biblioteca** | C6 | Las 29 piezas `[spec]` existen o están explícitamente diferidas con motivo. `EmptyState` usa `ZMark`. `SplitBar` no toca la paleta de datos. `ScopeSwitcher` no existe ni como alias. | **0/29** piezas `[spec]` tienen código. `EmptyState` sigue con ícono de línea. `SplitBar` sí usa la paleta de datos (viola charts.css). `ScopeSwitcher` — cumple, no existe ni como alias (verificado en código). |
+| **GATE-3 — Biblioteca** | C6 | Las 29 piezas `[spec]` existen o están explícitamente diferidas con motivo. `EmptyState` usa `ZMark`. `SplitBar` no toca la paleta de datos. `ScopeSwitcher` no existe ni como alias. | **CERRADO.** 29/29 piezas `[spec]` tienen código (docs/contrato-componentes.md § 4). `EmptyState` consume `ZMark`. `SplitBar` usa `PARTS_RAMP`, no `--data-1..5`. `ScopeSwitcher` no existe ni como alias. CON-09..30 y LIB-01..18 completos. |
 
 ---
 
@@ -250,78 +256,190 @@ Todo lo que ya existe y está mal, desalineado o incompleto. No crea pantallas n
 | **CON-02** | Actualizar `docs/auditoria-visual.md` (y su duplicado `docs/design/AUDITORIA-VISUAL.md`) §"missing/orphans" para reflejar el cierre que `CLAUDE.md` ya declara (§ 1.3) | Pre-C1 | Ninguno — higiene | chico | **hecho** | La sección D05/D06 dice "cerrado" con referencia a G6a/I7b/J4b, no "vuelve a diseño" |
 | **CON-03** | Correr las verificaciones de `docs/design/INDEX.md` para J2 (segunda vez) y J4 contra `adenda-02-modo-espejo.html` (§ 1.8) | Pre-C1 | Desbloqueaba CONS-J04 y CONS-J02 (saber contra qué archivo programar) | chico | **hecho** | INDEX.md actualizado sin celdas ⚠: J2 sigue en adenda-01, J4 sigue en `bloque-j-familiar.html` |
 | **CON-04** | Borrar los 7 comentarios `<!--SLOT-*-->` vestigiales en `bloque-k-ajustes.html` (líneas ~850-856) | Pre-C18 (bloque K) | Ninguno | chico | pendiente | Comentarios removidos, diff de una línea por comentario |
-| **CON-05** | **[dinero]** Agregar `originalAmount`/`originalCurrencyCode`/`originalRate` a `transactions` en el schema (migración) y a `TransactionRow` en `src/lib/db/schema.ts`; agregar `fxRate`/`fxSource`/`amountBase` a `settlements` | C2 + C3 | Bloquea C3 (lib/fx no puede completarse sin el tipo) y toda la captura en moneda distinta a la de cuenta (C8) | mediano | pendiente | Las dos conversiones son estructuralmente distintas en el tipo; ningún campo mezcla las dos; `SettlementRow` tiene el mismo shape de needs_fx que `transactions`/`trades` |
+| **CON-05** | **[dinero]** Agregar `originalAmount`/`originalCurrencyCode`/`originalRate` a `transactions` en el schema (migración) y a `TransactionRow` en `src/lib/db/schema.ts`; agregar `fxRate`/`fxSource`/`amountBase` a `settlements` | C2 + C3 | Bloquea C3 (lib/fx no puede completarse sin el tipo) y toda la captura en moneda distinta a la de cuenta (C8) | mediano | **hecho** | Migración ya tenía los campos (§ 5.1). `TransactionRow`/`SettlementRow`/`TransactionShareRow`/`TransactionSplitRow` actualizados en `src/lib/db/schema.ts`. Se encontró y corrigió un bug real en el camino: `save-transaction.ts`/`update-transaction.ts` usaban la moneda **capturada** como `currencyCode` de la transacción en vez de la de la cuenta — violaba la regla de las dos conversiones. Corregido: la primera conversión (capturada→cuenta) ahora resuelve por `fxRepo` y llena `original_*`; `amount`/`currencyCode` quedan siempre en moneda de cuenta. `npx tsc --noEmit` limpio, 119/119 tests, lint limpio en los archivos tocados |
 | **CON-06** | **[dinero, urgente]** Reescribir el sparkline/delta del hero de Home (`src/app/(app)/page.tsx:106-119,164`) para no pasar por `Number()`/`Math.round()`/`BigInt()` — usar `lib/money` end-to-end | C3/GATE-2 | Bloquea GATE-2 | mediano | **en curso** | Grep de `Number(` sobre variables de plata en el archivo da cero resultados — **hecho, verificado**; `typecheck`/`eslint` limpios. Falta: test unitario con montos que exceden `Number.MAX_SAFE_INTEGER` — la lógica sigue inline en el componente, no extraída a una función pura testeable |
-| **CON-07** | **[dinero, menor]** `src/components/motion/CountUp.tsx:29-34` interpola con `Number()`/`BigInt(Math.round())` durante la animación | C4 (motion) | Ninguno — no bloquea GATE-2 (es interpolación visual, el valor de reposo es correcto) | chico | pendiente | La interpolación usa una escala fija de bigint o limita explícitamente el rango seguro con comentario justificando por qué es aceptable |
-| **CON-08** | **[token]** Crear el token de superficie de selección + anillo (audit D02): claro `#DEDEDA` (1,24:1) con anillo `#C9C9C4` (1,43:1); no tocar `--surface-3` (compartido con inputs/keypad) | C4/GATE-2 | Bloquea GATE-2; desbloquea todo componente seleccionable (`SegmentedControl`, `Chip`, `CategoryBubble`, `DateStrip`, `AccountCarousel`, `SelectableRow`, `OptionCard`, `InstitutionTile`) | mediano | pendiente | Contraste medido ≥1,24:1 claro y equivalente oscuro; los 9 componentes listados migrados al nuevo token, no a `--surface-3` |
-| **CON-09** | **[componente]** `StatusBadge`: mover el escalamiento por edad (`neutral` + `ageDays>=7` → `warning`) adentro del componente; hoy lo decide el caller (`RateRow.tsx:41-42`) | C6/GATE-3 | Parte de GATE-3 | chico | pendiente | `RateRow` y cualquier otro caller solo pasan `ageDays`, nunca `status`; test unitario de la transición a los 7 días |
-| **CON-10** | **[componente]** Normalizar props de tamaño string-o-number en `Skeleton.tsx` (`width`/`height`/`radius`) y `Sheet.tsx` (`height`) | C6/GATE-3 | Parte de GATE-3 | chico | pendiente | `<Skeleton height="20" />` renderiza 20px, no colapsa a 0; test de regresión para ambos casos |
-| **CON-11** | **[componente]** `SplitBar` v1: sacar la paleta de datos (`--data-1..5`) de un control arrastrable (audit D04/D17); no dibuja thumb; `height` es number-only (ya seguro) pero falta agregar `showThumb`/`showValues`/`tolerance` de la v2 del spec | C6/GATE-3 | Parte de GATE-3; bloquea I9/J2/J6 | mediano | pendiente | Colores vienen de un token de "partes" no ligado a `--data-*`; thumb visible y arrastrable con hit-area 44px |
-| **CON-12** | **[componente]** Extraer `KeypadKey` compartido entre `Keypad` y `PinKeypad` (hoy cada uno duplica su propio `<button>`); agregar `aria-live` a ambos (ninguno lo tiene hoy) | C6/GATE-3 | Parte de GATE-3 | chico | pendiente | Un solo componente `KeypadKey` consumido por los dos; `Keypad` anuncia el monto por `aria-live`, `PinKeypad` anuncia "N de M dígitos" sin revelar el valor |
-| **CON-13** | **[componente]** Extender `TabBar` con `badge?: number` por slot y `slots[3]` configurable por el usuario | C6/GATE-3 | Bloquea B6/F4/K3 | mediano | pendiente | El 4to slot se lee de preferencia del usuario, default Análisis; badge visible con `aria-label` propio |
-| **CON-14** | **[componente]** `TransactionRow`: agregar los 4 casos faltantes (`pending`, `shared`, `attachment`, `installment`) | C6/GATE-3 | Bloquea D1 | mediano | pendiente | Los 4 estados tienen diseño visual propio y test de snapshot |
-| **CON-15** | **[componente]** `AccountCarousel`: agregar `secondaryBalance?: ReactNode` para cuentas de broker en dos monedas | C6/GATE-3 | Bloquea E1 | chico | pendiente | Cuenta de broker muestra ambas monedas sin overflow en 390px |
-| **CON-16** | **[componente]** `ErrorState`: agregar segunda acción (`alternativeLabel` + `onAlternative`), camino alternativo primero | C6/GATE-3 | Bloquea el patrón de error de **todos** los hooks (ver CON-19) | mediano | pendiente | Componente acepta 2 acciones; primera es la alternativa (ej. "ver offline"), segunda es "reintentar" |
-| **CON-17** | **[componente]** `UndoToast`: agregar variante `progress` (sin acción, contador + barra 2px) — hoy siempre dibuja "Deshacer" aunque no haya nada que deshacer | C6/GATE-3 | Ninguno | chico | pendiente | Variante `progress` no renderiza botón de acción |
-| **CON-18** | **[componente]** Renombrar `OfflineBanner` → `Banner` con `status` + `action?` (el nombre asume un solo uso; ya sirve para warning/error) | C6/GATE-3 | Ninguno | chico | pendiente | Un solo `Banner` con `status: 'offline' \| 'warning' \| 'error'` reemplaza los usos existentes, sin regresión visual |
-| **CON-19** | **[patrón, alto impacto]** `EmptyState`: reemplazar el ícono de línea por `ZMark` al 20% (claro) / 28% (oscuro, audit D44) — afecta 68 estados vacíos ya diseñados sobre el componente viejo | C6/GATE-3 | Parte de GATE-3; es el fix #1 de la auditoría | mediano | pendiente | `EmptyState` consume `ZMark`, no `Icon`; contraste de opacidad verificado en ambos modos |
-| **CON-20** | **[patrón]** Escribir el hook/patrón de estado de error que hoy no existe en ningún hook (`isError` nunca se usa en `src/`) — patrón reusable sobre `ErrorState` (CON-16) para las 5 vistas de la Definición de Terminado | C5/C6 | Bloquea el criterio #2 de "terminado" para **toda** pantalla nueva de aquí en más | grande | pendiente | Un wrapper (`useQueryWithErrorState` o similar) usado por Home y al menos 2 pantallas más como referencia; documentado para copiar en cada bloque nuevo |
-| **CON-21** | **[componente, spec sin código]** Escribir la ficha de contrato + verificar los 4 componentes no mencionados en ningún lado que ya tienen código: `FxEditor`, `AmountScrubber`, `CategoryBubble`, `DateStrip` | C6/GATE-3 | Parte de GATE-3 | mediano | pendiente | Cada uno tiene entrada en `contrato-componentes.md` (props, estados, a11y, tokens); `FxEditor` reconciliado explícitamente contra `Rate`/`PriceStatus` (mismo territorio, hoy sin relación declarada) |
-| **CON-22** | **[componente, documentación]** Escribir fichas de contrato para los 16 componentes restantes "sin ficha" que ya tienen código y no requieren cambios: `Button`, `AppHeader`, `Amount`, `Icon`, `Chip`, `Card`, `SegmentedControl`, `SkeletonRow`, `Switch`, `Input`, `CurrencyChip`, `Sparkline`, `InsightCard`, `SyncDot`, `SeriesLegend`, `BarChart` | C6/GATE-3 | Parte de GATE-3 | mediano | pendiente | 16 entradas nuevas en el contrato, sin cambios de código requeridos |
-| **CON-23** | **[schema]** Documentar como excepción escrita `interest_rate`/`coupon_rate numeric(8,4)` (V5) e `instruments.ratio numeric(12,6)` (V6), que rompen la convención de escala pero probablemente son intencionales | C2 | Ninguno — evita que alguien "corrija" un valor correcto en una migración futura | chico | pendiente | Comentario en la migración explicando por qué esas dos columnas no siguen `numeric(24,12)`/`numeric(38,12)` |
-| **CON-24** | **[schema]** Verificar y resolver V8: contradicción entre "DELETE nunca se expone" y la política `splits_all ... FOR ALL` sobre `transaction_splits`, que además no tiene `deleted_at` | C2 | Bloquea GATE-1 si no se resuelve antes de escribir la política de `transaction_splits` | chico | pendiente | `transaction_splits` tiene `deleted_at` y su política no incluye `DELETE`, o hay una razón escrita de por qué esta tabla es la excepción |
-| **CON-25** | **[ruta, documentación]** Escribir la convención implícita "los flujos de pantalla completa viven fuera de `(app)/`" (`accounts/new`, `accounts/[id]/edit`, `transactions/[id]/edit`, `add`) — no es un bug, pero nadie la documentó y alguien va a violarla | C1 | Ninguno | chico | pendiente | Convención escrita en `CLAUDE.md` o `docs/00-producto.md`, con los 4 casos existentes como ejemplo |
-| **CON-26** | **[lib]** Escribir `formatNumber(value: number, decimals: number)` en `lib/money` — hoy no existe en absoluto; `decimalsFor()` debe aceptar `instrument` además de `currency` | C3 | Bloquea todo el bloque I (inversiones) — no hay formateador de cantidades | mediano | pendiente | `formatNumber` sin default en `decimals`; test con BTC(8)/FCI(4)/UYU(0) en la misma lista, ninguno se redondea mal |
-| **CON-29** | **[componente, marca]** `InstitutionTile`: reemplazar los logos de institución por una baldosa de monograma — dos letras sobre `institutions.color` (columna ya existente, no un archivo); `institutions.logo_url` queda como slot opcional para una carpeta local ignorada por git (§ 1.10) | C6/GATE-3 | Bloquea A6, E1, E3 | mediano | pendiente | `InstitutionTile` no importa ni referencia ningún binario de logo de terceros; dos instituciones distintas se ven visualmente distintas; funciona offline |
-| **CON-30** | **[componente, marca]** Cero banderas en toda la app, dos casos distintos: chip con código de moneda (`CurrencyChip`) donde el token identifica una moneda (E6, H6, I2, K3); bandera eliminada y solo el nombre donde identifica un país (A4, E3) (§ 1.11) | C6/GATE-3 | Afecta A4, E3, E6, H6, I2, K3 | mediano | pendiente | Grep de emoji de bandera (`grep -P '[\x{1F1E6}-\x{1F1FF}]'`) sobre `src/` da cero resultados; `CurrencyChip` documentado en el contrato (se resuelve junto con CON-22) |
+| **CON-07** | **[dinero, menor]** `src/components/motion/CountUp.tsx:29-34` interpola con `Number()`/`BigInt(Math.round())` durante la animación | C4 (motion) | Ninguno — no bloquea GATE-2 (es interpolación visual, el valor de reposo es correcto) | chico | **hecho** | `animate()` de Motion ahora anima el progreso 0→1 (un ratio, no un monto), y `interpolateAmount()` (nueva, exportada, con test) escala ese progreso a bigint con `roundHalfEven` — el monto en sí nunca pasa por `Number()`. Test en `CountUp.test.ts` prueba explícitamente un monto de 10^19 unidades (muy por encima de `MAX_SAFE_INTEGER`), extremos exactos y punto medio sin ruido de flotante |
+| **CON-08** | **[token]** Crear el token de superficie de selección + anillo (audit D02): claro `#DEDEDA` (1,24:1) con anillo `#C9C9C4` (1,43:1); no tocar `--surface-3` (compartido con inputs/keypad) | C4/GATE-2 | Bloquea GATE-2; desbloquea todo componente seleccionable (`SegmentedControl`, `Chip`, `CategoryBubble`, `DateStrip`, `AccountCarousel`, `SelectableRow`, `OptionCard`, `InstitutionTile`) | mediano | **hecho, parcial** | `--selection-surface`/`--selection-ring` agregados a `globals.css` y documentados en `02-design-system.md` § 2.2, con contraste verificado por fórmula WCAG (no a ojo): claro 1,24:1/1,52:1, oscuro 1,24:1/1,45:1 (mismo orden de magnitud en los dos modos). Migrados y verificados visualmente en el navegador: `SegmentedControl` (variante no-marca), `CategoryBubble`, `DateStrip`, `AccountCarousel`, `OptionCard`, `InstitutionTile` — 6 de 8. `Chip` se dejó con `--primary-fill` a propósito: sus usos reales (filtros de fecha/tipo/cuenta/categoría) son "filtro activo", que el propio presupuesto de ruido permite en violeta — no es el bug de D02. **`SelectableRow` no existe en el repo todavía** (ni con ese ni otro nombre) — es trabajo de C6/LIB, no de esta pasada; no se inventó |
+| **CON-09** | **[componente]** `StatusBadge`: mover el escalamiento por edad (`neutral` + `ageDays>=7` → `warning`) adentro del componente; hoy lo decide el caller (`RateRow.tsx:41-42`) | C6/GATE-3 | Parte de GATE-3 | chico | hecho | `RateRow` y cualquier otro caller solo pasan `ageDays`, nunca `status`; test unitario de la transición a los 7 días |
+| **CON-10** | **[componente]** Normalizar props de tamaño string-o-number en `Skeleton.tsx` (`width`/`height`/`radius`) y `Sheet.tsx` (`height`) | C6/GATE-3 | Parte de GATE-3 | chico | hecho | `<Skeleton height="20" />` renderiza 20px, no colapsa a 0; test de regresión para ambos casos |
+| **CON-11** | **[componente]** `SplitBar` v1: sacar la paleta de datos (`--data-1..5`) de un control arrastrable (audit D04/D17); no dibuja thumb; `height` es number-only (ya seguro) pero falta agregar `showThumb`/`showValues`/`tolerance` de la v2 del spec | C6/GATE-3 | Parte de GATE-3; bloquea I9/J2/J6 | mediano | hecho | Colores vienen de un token de "partes" no ligado a `--data-*`; thumb visible y arrastrable con hit-area 44px |
+| **CON-12** | **[componente]** Extraer `KeypadKey` compartido entre `Keypad` y `PinKeypad` (hoy cada uno duplica su propio `<button>`); agregar `aria-live` a ambos (ninguno lo tiene hoy) | C6/GATE-3 | Parte de GATE-3 | chico | hecho | Un solo componente `KeypadKey` consumido por los dos; `Keypad` anuncia el monto por `aria-live`, `PinKeypad` anuncia "N de M dígitos" sin revelar el valor |
+| **CON-13** | **[componente]** Extender `TabBar` con `badge?: number` por slot y `slots[3]` configurable por el usuario | C6/GATE-3 | Bloquea B6/F4/K3 | mediano | hecho | El 4to slot se lee de preferencia del usuario, default Análisis; badge visible con `aria-label` propio |
+| **CON-14** | **[componente]** `TransactionRow`: agregar los 4 casos faltantes (`pending`, `shared`, `attachment`, `installment`) | C6/GATE-3 | Bloquea D1 | mediano | hecho | Los 4 estados tienen diseño visual propio y test de snapshot |
+| **CON-15** | **[componente]** `AccountCarousel`: agregar `secondaryBalance?: ReactNode` para cuentas de broker en dos monedas | C6/GATE-3 | Bloquea E1 | chico | hecho | Cuenta de broker muestra ambas monedas sin overflow en 390px |
+| **CON-16** | **[componente]** `ErrorState`: agregar segunda acción (`alternativeLabel` + `onAlternative`), camino alternativo primero | C6/GATE-3 | Bloquea el patrón de error de **todos** los hooks (ver CON-19) | mediano | hecho | Componente acepta 2 acciones; primera es la alternativa (ej. "ver offline"), segunda es "reintentar" |
+| **CON-17** | **[componente]** `UndoToast`: agregar variante `progress` (sin acción, contador + barra 2px) — hoy siempre dibuja "Deshacer" aunque no haya nada que deshacer | C6/GATE-3 | Ninguno | chico | hecho | Variante `progress` no renderiza botón de acción |
+| **CON-18** | **[componente]** Renombrar `OfflineBanner` → `Banner` con `status` + `action?` (el nombre asume un solo uso; ya sirve para warning/error) | C6/GATE-3 | Ninguno | chico | hecho | Un solo `Banner` con `status: 'offline' \| 'warning' \| 'error'` reemplaza los usos existentes, sin regresión visual |
+| **CON-19** | **[patrón, alto impacto]** `EmptyState`: reemplazar el ícono de línea por `ZMark` al 20% (claro) / 28% (oscuro, audit D44) — afecta 68 estados vacíos ya diseñados sobre el componente viejo | C6/GATE-3 | Parte de GATE-3; es el fix #1 de la auditoría | mediano | hecho | `EmptyState` consume `ZMark`, no `Icon`; contraste de opacidad verificado en ambos modos |
+| **CON-20** | **[patrón]** Escribir el hook/patrón de estado de error que hoy no existe en ningún hook (`isError` nunca se usa en `src/`) — patrón reusable sobre `ErrorState` (CON-16) para las 5 vistas de la Definición de Terminado | C5/C6 | Bloquea el criterio #2 de "terminado" para **toda** pantalla nueva de aquí en más | grande | hecho | Un wrapper (`useQueryWithErrorState` o similar) usado por Home y al menos 2 pantallas más como referencia; documentado para copiar en cada bloque nuevo |
+| **CON-21** | **[componente, spec sin código]** Escribir la ficha de contrato + verificar los 4 componentes no mencionados en ningún lado que ya tienen código: `FxEditor`, `AmountScrubber`, `CategoryBubble`, `DateStrip` | C6/GATE-3 | Parte de GATE-3 | mediano | hecho | Cada uno tiene entrada en `contrato-componentes.md` (props, estados, a11y, tokens); `FxEditor` reconciliado explícitamente contra `Rate`/`PriceStatus` (mismo territorio, hoy sin relación declarada) |
+| **CON-22** | **[componente, documentación]** Escribir fichas de contrato para los 16 componentes restantes "sin ficha" que ya tienen código y no requieren cambios: `Button`, `AppHeader`, `Amount`, `Icon`, `Chip`, `Card`, `SegmentedControl`, `SkeletonRow`, `Switch`, `Input`, `CurrencyChip`, `Sparkline`, `InsightCard`, `SyncDot`, `SeriesLegend`, `BarChart` | C6/GATE-3 | Parte de GATE-3 | mediano | hecho | 16 entradas nuevas en el contrato, sin cambios de código requeridos |
+| **CON-23** | **[schema]** Documentar como excepción escrita `interest_rate`/`coupon_rate numeric(8,4)` (V5) e `instruments.ratio numeric(12,6)` (V6), que rompen la convención de escala pero probablemente son intencionales | C2 | Ninguno — evita que alguien "corrija" un valor correcto en una migración futura | chico | **hecho** | Comentario en `supabase/migrations/20260801010400_catalog.sql` explicando por qué esas columnas no siguen `numeric(24,12)`/`numeric(38,12)` — son tasas/ratios, no montos ni tipos de cambio |
+| **CON-24** | **[schema]** Verificar y resolver V8: contradicción entre "DELETE nunca se expone" y la política `splits_all ... FOR ALL` sobre `transaction_splits`, que además no tiene `deleted_at` | C2 | Bloquea GATE-1 si no se resuelve antes de escribir la política de `transaction_splits` | chico | **hecho** | `transaction_splits` y `transaction_shares` tienen `deleted_at` en `supabase/migrations/20260801010700_transactions.sql`; sus políticas están separadas en SELECT/INSERT/UPDATE, sin `DELETE`. Se dejó `transaction_tags` con `FOR ALL` (incluye DELETE real) porque no tiene significado financiero propio — un tag sacado no pierde ningún hecho contable |
+| **CON-25** | **[ruta, documentación]** Escribir la convención implícita "los flujos de pantalla completa viven fuera de `(app)/`" (`accounts/new`, `accounts/[id]/edit`, `transactions/[id]/edit`, `add`) — no es un bug, pero nadie la documentó y alguien va a violarla | C1 | Ninguno | chico | **hecho** | Convención escrita en `CLAUDE.md` § "Convención de rutas", con los 4 casos existentes y el patrón ruta-hermana + interceptora en `@modal` para `add` |
+| **CON-26** | **[lib]** Escribir `formatNumber(value: number, decimals: number)` en `lib/money` — hoy no existe en absoluto; `decimalsFor()` debe aceptar `instrument` además de `currency` | C3 | Bloquea todo el bloque I (inversiones) — no hay formateador de cantidades | mediano | **hecho** | `formatNumber` en `src/lib/money/format.ts`, sin default en `decimals`. `decimalsForQuantity()` nuevo en `decimals.ts` (crypto por símbolo, FCI/Crypto por asset class, default 0 para acciones/CEDEARs/bonos). Falta el test explícito BTC(8)/FCI(4)/UYU(0) en la misma lista — se escribe cuando se construya `PositionRow` (LIB-02) que es quien realmente los mezcla |
+| **CON-29** | **[componente, marca]** `InstitutionTile`: reemplazar los logos de institución por una baldosa de monograma — dos letras sobre `institutions.color` (columna ya existente, no un archivo); `institutions.logo_url` queda como slot opcional para una carpeta local ignorada por git (§ 1.10) | C6/GATE-3 | Bloquea A6, E1, E3 | mediano | hecho | `InstitutionTile` no importa ni referencia ningún binario de logo de terceros; dos instituciones distintas se ven visualmente distintas; funciona offline |
+| **CON-30** | **[componente, marca]** Cero banderas en toda la app, dos casos distintos: chip con código de moneda (`CurrencyChip`) donde el token identifica una moneda (E6, H6, I2, K3); bandera eliminada y solo el nombre donde identifica un país (A4, E3) (§ 1.11) | C6/GATE-3 | Afecta A4, E3, E6, H6, I2, K3 | mediano | **hecho** | Encontrado haciendo la verificación visual de CON-08 (no en el trabajo de bloques todavía): `CurrencyChip.tsx` literalmente tenía el comentario "el único lugar del sistema donde aparece emoji" — la decisión de `CLAUDE.md` la revierte y el componente no se había actualizado. Corregido: `CurrencyChip` sin bandera; `onboarding/country/page.tsx` (A4) y `AccountFormFlow.tsx` (E3, formulario) sin bandera, solo nombre; `accounts/page.tsx` y `accounts/[id]/page.tsx` (E1/E3, lista y detalle) tenían un tercer sitio no listado en el plan original — mostraban la bandera SOLA sin nombre, corregido a nombre vía `COUNTRY_MESSAGE_KEY`. `countryFlag()`/`CountryRef.flag` (muertos) eliminados de `lib/reference/countries-currencies.ts`. `grep -P '[\x{1F1E6}-\x{1F1FF}]'` sobre `src/` da cero resultados, verificado |
 
 ---
 
 ## 5. Parte 2 — CONSTRUIR: migraciones, biblioteca, capas base
 
-### 5.1 Migraciones (C2) — 12 migraciones, en el orden que fija `05-prompts-desarrollo.md`
+### 5.1 Migraciones (C2) — 12 migraciones, reordenadas por dependencia real
 
-Cada una lleva su propia RLS y sus tests (GATE-1 no pasa sin ellos).
+**✅ Escritas 2026-07-31, sin aplicar todavía (sin proyecto Supabase linkeado — decisión
+explícita del usuario: escribir a mano primero, enlazar y pushear después).** El orden de
+`05-prompts-desarrollo.md` (que este documento seguía antes) es **irresoluble tal cual
+está escrito**: `current_households()`/`can_see()` se usan en las policies de SELECT de
+`accounts`/`categories` pero dependen de tablas que ese orden crea después
+(`household_members`, `visibility_grants`); y `accounts.institution_id` referencia
+`institutions`, que ese orden crea en la migración siguiente. Postgres valida los cuerpos
+de función `LANGUAGE sql` contra los objetos existentes al momento de `CREATE FUNCTION` —
+no se puede diferir. El orden real, por dependencia:
 
-| ID | Migración | Tablas / contenido | Tamaño | Estado |
+| Archivo | Migración | Tablas / contenido | Tamaño | Estado |
 |---|---|---|---|---|
-| **MIG-00** | Helpers | `current_households()`, `can_write(h)`, `can_see(...)` — todas `SECURITY DEFINER SET search_path=''` | mediano | pendiente |
-| **MIG-01** | `extensions` | `pgcrypto`/`uuid-ossp` según corresponda para UUID v7 en cliente | chico | pendiente |
-| **MIG-02** | `reference` | `currencies`, `countries`, `fx_rates` (Pattern C puro) | mediano | pendiente |
-| **MIG-03** | `identity` | `profiles`, `households`, `household_members`, `household_invites`, `household_fx_preferences` | grande | pendiente |
-| **MIG-04** | `accounts` | `accounts` (root) | mediano | pendiente |
-| **MIG-05** | `classification` | `categories`, `tags`, `payees`, `institutions`/`instruments`/`asset_classes` (Pattern C con clonado) | grande | pendiente |
-| **MIG-06** | `transactions` | `transactions`, `transaction_tags`, `transaction_splits`, `transaction_shares` — incluye `original_*` (CON-05) y `fx_pair` CHECK + `inherit_fx_state()` trigger | grande | pendiente |
-| **MIG-07** | `fx` | `fx_overrides` (`valid_from`/`valid_to`), `visibility_grants` | mediano | pendiente |
-| **MIG-08** | `budgets_goals` | `budgets`, `budget_lines`, `budget_periods`, `goals`, `goal_contributions`, `goal_accounts` | grande | pendiente |
-| **MIG-09** | `recurring_debts` | `recurring_rules`, `debts`, `debt_schedule` (con `origin_transaction_id`, `installment_count`) | grande | pendiente |
-| **MIG-10** | `investments` | `portfolios`, `trades` (con `fx_pair` CHECK — CON-05 aplica acá también), `price_snapshots`, `target_allocations`, `portfolio_snapshots`, `instrument_cashflows`, `benchmarks`/`benchmark_series`, vistas `positions`/`fx_latest` | grande | pendiente |
-| **MIG-11** | `system` | `settlements` (con fx — CON-05), `rules`, `insights`, `audit_log`, `import_batches`, `notification_preferences` + push subs, `price_index`, `card_statements`, `household_currencies` | grande | pendiente |
+| `20260801010000_extensions.sql` | `extensions` | `pgcrypto` (los IDs de raíz igual se generan en el cliente) | chico | **hecho** |
+| `20260801010100_reference.sql` | `reference` | `currencies`, `countries`, `fx_rates` (Patrón C puro) — antes que `identity` porque `households.base_currency` la referencia | mediano | **hecho** |
+| `20260801010200_identity.sql` | `identity` | `profiles`, `households`, `household_members`, `household_invites`, `household_fx_preferences` + `current_households()`/`can_write()` | grande | **hecho** |
+| `20260801010300_visibility.sql` | `visibility` | `visibility_grants` + `can_see()` — **movida acá** (el plan la ubicaba en "fx", después de accounts/categories; tiene que existir antes porque esas dos tablas llaman a `can_see()` en su SELECT). La policy de escritura completa se cierra en `classification.sql`, una vez que `categories` existe | mediano | **hecho** |
+| `20260801010400_catalog.sql` | `catalog` | `institutions`, `asset_classes`, `instruments` (Patrón C con clonado) — antes que `accounts` porque `accounts.institution_id` la referencia | grande | **hecho** |
+| `20260801010500_accounts.sql` | `accounts` | `accounts`, `account_balance_snapshots` | mediano | **hecho** |
+| `20260801010600_classification.sql` | `classification` | `categories`, `tags`, `payees` — después de `accounts` porque `payees.default_account_id` la referencia. Cierra acá la policy de `visibility_grants` | grande | **hecho** |
+| `20260801010700_transactions.sql` | `transactions` | `transactions`, `transaction_tags`, `transaction_splits`, `transaction_shares` — `original_*` (CON-05), `fx_pair` CHECK, dos triggers `inherit_fx_state_*` (uno por tabla hija, nombres de columna distintos), trigger de recompute de `accounts.current_balance` | grande | **hecho** |
+| `20260801010800_fx_overrides.sql` | `fx_overrides` | `fx_overrides` (`valid_from`/`valid_to`) | mediano | **hecho** |
+| `20260801010900_budgets_goals.sql` | `budgets_goals` | `budgets`, `budget_lines`, `goals` — **`budget_periods`, `goal_contributions`, `goal_accounts` NO están**, ver nota de gap abajo | grande | **hecho, parcial** |
+| `20260801011000_recurring_debts.sql` | `recurring_debts` | `recurring_rules`, `debts` (con `origin_transaction_id`, `installment_count`), `debt_schedule` | grande | **hecho** |
+| `20260801011010_investments.sql` | `investments` | `portfolios`, `trades` (con `fx_pair` CHECK), `price_snapshots` (Patrón C puro, es dato de mercado no de household), `target_allocations`, `portfolio_snapshots` — **`instrument_cashflows`, `benchmarks`/`benchmark_series`, vistas `positions`/`fx_latest` NO están**, ver nota de gap abajo | grande | **hecho, parcial** |
+| `20260801011100_system.sql` | `system` | `settlements` (con fx), `rules`, `insights`, `audit_log`, `import_batches` — **`notification_preferences`+push subs, `price_index`, `card_statements`, `household_currencies` NO están**, ver nota de gap abajo | grande | **hecho, parcial** |
+| `20260801020000_fix_soft_delete_rls.sql` | corrección | Saca `deleted_at IS NULL` de 13 policies de SELECT (bug #1 de GATE-1, ver nota abajo) | mediano | **hecho** |
+| `20260801020100_fix_soft_delete_rls_children.sql` | corrección | Mismo bug, 5 policies de hijas que chequeaban el `deleted_at` del padre | chico | **hecho** |
+| `20260801020200_fix_soft_delete_rls_children_2.sql` | corrección | Mismo bug, 4 policies más encontradas escribiendo los tests | chico | **hecho** |
+| `20260801020300_fix_tags_payees_immutability.sql` | corrección | `household_id` inmutable en `tags`/`payees`/`institutions`/`asset_classes`/`instruments` (bug #2) | chico | **hecho** |
+| `20260801020400_fix_household_members_recursion.sql` | corrección | Recursión infinita en `household_members_update` (bug #3), nuevo helper `is_household_admin()` | chico | **hecho** |
 
-**→ GATE-1** al cierre de MIG-11.
+**Endurecimiento de seguridad aplicado a las 12 migraciones, no solo copiado del documento
+fuente.** El patrón de `WITH CHECK` que trae `01-arquitectura-datos.md` § 3 en su propio
+ejemplo (`household_id IN (SELECT current_households()) AND created_by = ...`) **no
+impide que un usuario miembro de dos households mueva una fila de uno a otro** — solo
+bloquea moverla a un household del que no es miembro. Se corrigió en las 15 policies de
+UPDATE/ALL de esta sesión a `household_id = (SELECT tabla.household_id)` (o el FK al padre
+equivalente en las entidades hijas), que es inmutabilidad real. Vale la pena revisar este
+mismo patrón si en el futuro se escribe una política de UPDATE copiando literalmente el
+ejemplo del documento en vez de este archivo.
+
+**CON-23 y CON-24 (§ 4) quedaron resueltos como parte de esta migración, no como ítems
+aparte:** el comentario de excepción de `interest_rate`/`coupon_rate`/`ratio` está en
+`catalog.sql`, y `transaction_splits`/`transaction_shares` tienen `deleted_at` con policies
+separadas SELECT/INSERT/UPDATE sin `DELETE` (en vez del `FOR ALL` original que exponía
+DELETE, violando "DELETE nunca se expone").
+
+**Tres gaps de documentación reales, no inventados en la migración:** `docs/plan-de-trabajo.md`
+(este archivo) menciona en su propia tabla de MIG-08/10/11 siete tablas sin schema escrito
+en ningún lado de `01-arquitectura-datos.md` § 2.7-2.9: `budget_periods`,
+`goal_contributions`, `goal_accounts` (bloquea CONS-F05/F06), `instrument_cashflows`,
+`benchmarks`/`benchmark_series` (bloquea CONS-I11/I10), `notification_preferences` + push
+subscriptions (bloquea K12), `price_index` (bloquea H7), `card_statements` (bloquea E4) y
+`household_currencies` (bloquea CONS-E06 — "monedas en uso" para el flag de progresividad).
+Ninguna se inventó: son tablas con implicancia de producto/schema real (ledger vs.
+agregado, 1:N vs. N:N, forma del payload) que necesitan una decisión antes de escribir la
+migración, no una suposición. **⚠ DECISIÓN pendiente**, no bloquea el resto de C2/GATE-1
+pero sí bloquea programar F5/F6/I10/I11/K12/H7/E4/E6 tal como están descritas.
+
+**✅ 2026-08-01 — Proyecto Supabase enlazado, migraciones aplicadas, tests corridos y en
+verde contra el proyecto real.** El usuario creó `perze-app` (ref `dhnyihwcsexraivhokoc`,
+org `torto-dev`, región `us-east-2`). El CLI estaba logueado con otra cuenta
+(`TradeHub`/`cpetrsvbujadxmsyckae`) — se resolvió con `supabase login --token` usando un
+Personal Access Token dejado en `.env.local`, después con `supabase link --project-ref` y
+`supabase db push --linked`. Las 12 migraciones (más una 13ª de corrección, ver abajo)
+corrieron limpio.
+
+**No existe `supabase test db` en esta máquina** (necesita el stack local con Docker). Los
+tests de `supabase/tests/database/*.sql` se corren con
+`supabase db query --linked -f <archivo>`, que ejecuta contra la Management API — **no**
+una sesión psql real, con dos consecuencias que ya están resueltas en el código:
+
+1. **No soporta `\gset`** (meta-comando de psql) — el fixture pasa valores entre pasos con
+   variables de sesión de Postgres (`set_config`/`current_setting` bajo `tests.*`, ver
+   `tests.stash()`/`tests.get()` en `00_setup.sql`), que sí son server-side y funcionan con
+   cualquier forma de ejecutar el archivo.
+2. **Solo devuelve las filas del último statement del archivo** — no hay forma de ver el
+   resultado de cada aserción intermedia. Se resolvió con `tests.tap_log` (tabla) +
+   `tests.log()`: cada aserción se envuelve en `tests.log(is(...))`/`tests.log(throws_ok(...))`,
+   y el archivo termina con `SELECT line FROM tests.tap_log ORDER BY id;` **antes** del
+   `ROLLBACK` final, que muestra todo el reporte TAP junto.
+
+**✅ GATE-1 cerrado 2026-08-01 — 86/86 aserciones en verde**, las ~32 tablas del esquema
+cubiertas en 10 archivos: `10_accounts_rls` 9, `11_transactions_rls` 8, `12_visibility_rls`
+5, `13_catalog_rls` 5, `14_budgets_goals_rls` 10, `15_recurring_debts_rls` 8,
+`16_investments_rls` 10, `17_system_rls` 13, `18_fx_tags_payees_rls` 9, `19_identity_rls` 9
+(household_members, household_invites, household_fx_preferences, profiles — usadas como
+fixture en todos los demás archivos pero sin test adversarial propio hasta este último).
+
+**Tres bugs críticos encontrados en el camino, los tres del tipo que un test que solo
+prueba "A no ve la fila de B" nunca atrapa** — hacía falta probar también que las
+escrituras legítimas y propias de A siguieran funcionando:
+
+1. **Soft-delete roto por RLS en 18 tablas.** `UPDATE ... SET deleted_at = now()` —el único
+   mecanismo de borrado de todo el esquema— fallaba porque Postgres exige que la fila
+   **resultante** de un UPDATE también satisfaga la política de SELECT de la tabla, no solo
+   el `WITH CHECK` de UPDATE. Verificado empíricamente: con `WITH CHECK (true)` el UPDATE
+   seguía fallando, y sacando `deleted_at IS NULL` de la política de SELECT, funcionó. Sin
+   este fix, **nadie podría haber borrado nunca nada** en producción. Se preguntó al usuario
+   cómo resolverlo (sacar el filtro de RLS a la capa de queries de la app, vs. funciones RPC
+   `SECURITY DEFINER` por tabla) — eligió la primera. Tres migraciones: `20260801020000`
+   (13 tablas raíz: `accounts`, `budgets`, `categories`, `debts`, `goals`, `portfolios`,
+   `recurring_rules`, `rules`, `settlements`, `trades`, `transaction_shares`,
+   `transaction_splits`, `transactions`), `20260801020100` y `20260801020200` (5 policies de
+   tablas hijas que además chequeaban `deleted_at IS NULL` del _padre_ dentro de un
+   `EXISTS` — mismo problema de fondo, encontrado tabla por tabla al escribir los tests de
+   `debt_schedule`, `target_allocations`, `portfolio_snapshots`,
+   `account_balance_snapshots`, `transaction_tags`). **Consecuencia para cualquier código
+   que lea estas tablas: RLS ya no filtra borrados — toda query que no quiera ver
+   soft-deletes tiene que agregar `.eq('deleted_at', null)` explícitamente.** Hay que
+   recordarlo al escribir cada hook de TanStack Query (BASE-01 en adelante).
+2. **`household_id` no era realmente inmutable en `tags`, `payees`, y en el patrón de
+   clonado (`institutions`, `asset_classes`, `instruments`)** — quedaron fuera de la pasada
+   de endurecimiento original por un descuido, con el patrón viejo
+   (`household_id IN current_households()`) que permite mover una fila propia a otro
+   household del que el mismo usuario también es miembro. Corregido en
+   `20260801020300_fix_tags_payees_immutability.sql`.
+3. **Recursión infinita en `household_members_update`**: su `USING` consultaba
+   `household_members` directamente (no a través de una función `SECURITY DEFINER`) desde
+   dentro de una policy de la misma tabla — exactamente lo que `current_households()`/
+   `can_write()` existen para evitar, pero esta policy puntual no los usaba. Postgres lo
+   detecta y aborta con `infinite recursion detected in policy for relation
+   "household_members"`. Corregido con un helper nuevo, `public.is_household_admin(h)`, en
+   `20260801020400_fix_household_members_recursion.sql`.
+
+**Regla general para cualquier policy nueva de acá en adelante**: nunca consultar
+directamente la tabla a la que la policy pertenece desde dentro de su propia policy — pasar
+siempre por una función `SECURITY DEFINER SET search_path=''`, y testear explícitamente que
+las escrituras legítimas del dueño (incluido el soft-delete) siguen funcionando, no solo que
+las ajenas fallan.
 
 ### 5.2 Capas base
 
-| ID | Qué | Fase | Tamaño | Estado |
-|---|---|---|---|---|
-| **BASE-01** | `lib/money` — extender con el modelo de dos conversiones (usa CON-05) y `formatNumber` (CON-26) | C3 | grande | pendiente |
-| **BASE-02** | `lib/fx` — cadena de resolución de 4 pasos, inmutabilidad de rate salvo la única excepción de `inherited`→histórico real al reconectar, providers, `/api/fx`, cron diario | C3 | grande | pendiente |
-| **BASE-03** | `globals.css` con `@theme`/`.dark` (Tailwind v4), incluye el token de selección (CON-08) | C4 | mediano | pendiente |
-| **BASE-04** | Motion primitives (`Pressable`, `CountUp` fix incluido — CON-07, `StaggerList`, `SharedElement`, `MorphButton`, `useHaptics`, `useMotionIntensity`) | C4 | grande | pendiente |
-| **BASE-05** | Offline: Dexie schema, outbox worker + Background Sync, resolución de conflictos LWW→`audit_log`, `createOptimisticMutation()`, Realtime debounced | C5 | grande | pendiente |
-| **BASE-06** | Serwist: precache, estrategias de cache, fallback offline, manifest/shortcuts/share target | C5 | mediano | pendiente |
+| ID | Qué | Fase | Tamaño | Estado | Notas |
+|---|---|---|---|---|---|
+| **BASE-01** | `lib/money` — extender con el modelo de dos conversiones (usa CON-05) y `formatNumber` (CON-26) | C3 | grande | **hecho** | |
+| **BASE-02** | `lib/fx` — cadena de resolución de 4 pasos, inmutabilidad de rate salvo la única excepción de `inherited`→histórico real al reconectar, providers, `/api/fx`, cron diario | C3 | grande | **hecho, parcial** | La cadena de 4 pasos, providers (dolarapi/frankfurter) y `/api/fx` ya existían con buen nivel; lo que faltaba era la conexión real: `/api/fx` ahora lee `fx_overrides`/`fx_rates` de Supabase (antes: override hardcodeado en `null`, cache solo en memoria de proceso — se perdía en cada cold start). Verificado end-to-end contra `perze-app` con el dev server: trajo una cotización real de dolarapi.com y la resolvió bien. **Cuidado de precisión real**: `numeric(24,12)` vuelve de PostgREST como JSON number si no se pide `::text` explícito en el `select`, lo que le vuela precisión a un rate igual que le pasaría a un monto — el route ahora pide `rate::text` en ambas tablas y parsea con `parseRate()`, nunca confía en el `number` del tipo generado. `fxRepo.resolve()` (Dexie) ahora pasa `householdId` a `/api/fx` para que el lookup de `fx_overrides` no quede sin uso. **Falta real**: el cron diario (no existe ningún endpoint ni config de cron todavía) y la excepción de `inherited`→histórico al reconectar (ambos, trabajo de C5/offline, no de esta pasada) |
+| **BASE-03** | `globals.css` con `@theme`/`.dark` (Tailwind v4), incluye el token de selección (CON-08) | C4 | mediano | pendiente | |
+| **BASE-04** | Motion primitives (`Pressable`, `CountUp` fix incluido — CON-07, `StaggerList`, `SharedElement`, `MorphButton`, `useHaptics`, `useMotionIntensity`) | C4 | grande | **hecho, parcial** | 5 de 6 ya existían (`Pressable`, `CountUp` con el fix de CON-07, `StaggerList`, `MorphButton`, `useHaptics`, `useMotionIntensity` — son 6 nombres pero uno de la lista, `useMotionIntensity`, ya cuenta separado). `SharedElement` no es un componente propio en `02-design-system.md` § 5.2: es el patrón `layoutId` de Motion (o `<ViewTransition>` de React 19.2) aplicado directo a `Amount`/`Icon` cuando se construya la transición lista→detalle real (D1→D3) — no se inventa un wrapper especulativo sin una pantalla que lo use |
+| **BASE-05** | Offline: Dexie schema, outbox worker + Background Sync, resolución de conflictos LWW→`audit_log`, `createOptimisticMutation()`, Realtime debounced | C5 | grande | **hecho, parcial** | **Encontrado**: `createOptimisticMutation()` y el outbox (`lib/offline/outbox.ts`) ya existían como infraestructura, pero **nada los llamaba** — los 6 repos (`accounts`, `categories`, `tags`, `payees`, `transactions`) escribían directo a Dexie sin encolar nada; drenar la cola no habría tenido nada que drenar. **Hecho**: los 6 repos ahora encolan en cada mutación (`lib/offline/sync-config.ts` mapea camelCase→snake_case por tabla, con `bigint` siempre como `string` — nunca `number`, ni siquiera para un rate); `lib/offline/sync-worker.ts` (`drainOutbox`) traduce cada entrada a un `upsert`/`update`/`delete` real contra Supabase, con "falla una fila, siguen las demás"; `lib/offline/use-sync-loop.ts` dispara el drenaje al montar, al volver la conexión, y cada 30s. Todo testeado con un doble de Supabase (10 tests nuevos) — typecheck, suite completa (131/131) y build limpios. `CategoryRow` local no tenía `visibility`/`ownerId`/`createdBy`/timestamps que el schema del servidor exige — alineado, con los dos call sites de seed/onboarding actualizados. **✅ Desbloqueado 2026-08-01**: C7 (auth real) ya existe — se agregaron `households`/`household_members` a `SYNC_TABLES` y se verificó de punta a punta contra `perze-app` que un household creado localmente sincroniza de verdad (ver CONS-A11). **Sin hacer, a propósito**: Realtime (pull de cambios de otros miembros) y el registro de Background Sync en el service worker — necesitan dos sesiones autenticadas simulando dos miembros para verificarse de verdad, quedan para la próxima pasada de C5 |
+| **BASE-06** | Serwist: precache, estrategias de cache, fallback offline, manifest/shortcuts/share target | C5 | mediano | **hecho** | Verificado en runtime (`next build && next start` + `curl`): 148 entradas de precache, `/offline` y el manifest sirven 200. `share_target` faltaba del todo — agregado y cableado a `app/add/page.tsx` |
 
-**Cableado de marca — sin esto la PWA no es instalable.** Los assets ya están generados en
-`docs/marca/assets/` con su propio README; falta llevarlos a `src/app/`/`public/` y
-escribir el manifest real.
+**Cableado de marca — hecho.** Verificado el 2026-07-31: los 5 ítems de abajo ya están
+implementados (ver notas por fila). Queda una única brecha real: confirmar que Serwist
+(BASE-06, sigue pendiente) precachea el manifest.
 
-| ID | Qué | Fase | Tamaño | Estado |
-|---|---|---|---|---|
-| **MARCA-01** | Copiar `icon.svg`, `favicon.ico`, `apple-icon.png` (180×180) y `opengraph-image.png` a `src/app/` (metadata basada en archivo de Next.js 16); `og-square.png` (1200×1200, para que WhatsApp no recorte el 1200×630) como imagen adicional | C1 | chico | pendiente |
-| **MARCA-02** | Generar `public/icons/` con `icon-192`/`icon-512` (`purpose: "any"`), `icon-maskable-192`/`icon-maskable-512` (`purpose: "maskable"`, **archivos distintos** de los `any` — declarar el mismo PNG en los dos hace que Android recorte la Z), e `icon-mono-512` (`purpose: "monochrome"`, para íconos temáticos de Android 13+) | C1 | chico | pendiente |
-| **MARCA-03** | Generar los dos íconos de shortcut de 96×96 (`shortcut-gasto.png`, `shortcut-movimientos.png`) — dependen de qué acciones queden en el set final de shortcuts, por eso van con el manifest y no antes | C5 | chico | pendiente |
-| **MARCA-04** | Escribir `manifest.webmanifest` completo (name, short_name, start_url, display, background_color, theme_color, los 5 íconos de MARCA-02 sin mezclar `any`/`maskable`, shortcuts con MARCA-03) y cablearlo junto a Serwist (BASE-06) | C5 | mediano | pendiente |
-| **MARCA-05** | Splash de iOS (~15 pares claro/oscuro, uno por resolución): generarlos en el build, **no versionarlos** — agregar el paso al pipeline de build, no a `public/` | C5 (o config de build, junto a C1) | mediano | pendiente |
+| ID | Qué | Fase | Tamaño | Estado | Notas |
+|---|---|---|---|---|---|
+| **MARCA-01** | Copiar `icon.svg`, `favicon.ico`, `apple-icon.png` (180×180) y `opengraph-image.png` a `src/app/` (metadata basada en archivo de Next.js 16); `og-square.png` (1200×1200, para que WhatsApp no recorte el 1200×630) como imagen adicional | C1 | chico | **hecho** | Verificado en código: los 4 archivos están en `src/app/`. `og-square` no está copiado a `src/app/` (solo existe en `docs/marca/assets/`) — Next 16 no tiene convención de archivo para una imagen OG cuadrada adicional, así que si hace falta va como asset explícito en `opengraph-image` array, no como file convention; no bloquea nada, se retoma si algún consumidor (WhatsApp) lo pide |
+| **MARCA-02** | Generar `public/icons/` con `icon-192`/`icon-512` (`purpose: "any"`), `icon-maskable-192`/`icon-maskable-512` (`purpose: "maskable"`, **archivos distintos** de los `any` — declarar el mismo PNG en los dos hace que Android recorte la Z), e `icon-mono-512` (`purpose: "monochrome"`, para íconos temáticos de Android 13+) | C1 | chico | **hecho** | Verificado: los 5 archivos existen en `public/icons/` y `manifest.ts` los declara con su `purpose` correcto, sin mezclar `any`/`maskable` |
+| **MARCA-03** | Generar los dos íconos de shortcut de 96×96 (`shortcut-gasto.png`, `shortcut-movimientos.png`) — dependen de qué acciones queden en el set final de shortcuts, por eso van con el manifest y no antes | C5 | chico | **hecho** | Verificado: `shortcut-gasto-96.png`/`-192.png` existen y están en `manifest.ts`. Solo un shortcut (agregar gasto) — "movimientos" no se generó; si el set final de shortcuts crece, retomar acá |
+| **MARCA-04** | Escribir `manifest.webmanifest` completo (name, short_name, start_url, display, background_color, theme_color, los 5 íconos de MARCA-02 sin mezclar `any`/`maskable`, shortcuts con MARCA-03) y cablearlo junto a Serwist (BASE-06) | C5 | mediano | **hecho** | Verificado en runtime: `src/app/manifest.ts` completo, async, traducido con next-intl, servido en 200 con `share_target` incluido |
+| **MARCA-05** | Splash de iOS (~15 pares claro/oscuro, uno por resolución): generarlos en el build, **no versionarlos** — agregar el paso al pipeline de build, no a `public/` | C5 (o config de build, junto a C1) | mediano | **hecho, con nota** | Verificado: 28 PNG (14 dispositivos × 2 esquemas) en `public/splash/`, generados por `scripts/generate-splash-screens.mjs`, referenciados en `layout.tsx` con media queries correctas. Contradice el criterio "no versionarlos": están commiteados en `public/`, no generados en build. Funciona igual; si se quiere honrar el criterio original habría que moverlos a un paso de build y gitignorarlos — no bloquea nada, es una discrepancia menor entre lo planeado y lo hecho |
 
 ### 5.3 Biblioteca de componentes (C6) — 18 piezas `[spec]` genuinamente nuevas
 
@@ -330,26 +448,26 @@ CON-09..CON-19. Los 4 sin ficha con código ya existente están en CON-21.)
 
 | ID | Componente | Bloquea | Tamaño | Estado |
 |---|---|---|---|---|
-| **LIB-01** | `PriceStatus` | I2/I3/I4/I12 | chico | pendiente |
-| **LIB-02** | `PositionRow` | I3 | mediano | pendiente |
-| **LIB-03** | `NeedsFxBanner` (count-only, sin `amount` — ver contrato a corregir) | H1a/H5/H7/F2/G1/G4/I2/I3/I11/J2/J7/K1/E8 | mediano | pendiente |
-| **LIB-04** | `MonthCalendar` | G1, D5 | mediano | pendiente |
-| **LIB-05** | `CalendarHeatmap` (con `--ramp-1..7`, ver LIB-17) | H8 | mediano | pendiente |
-| **LIB-06** | `Donut` | H2, I2 | mediano | pendiente |
-| **LIB-07** | `Waterfall` (con invariante de dev-time: deltas suman el total) | H5 | mediano | pendiente |
-| **LIB-08** | `Sankey` | H4 — "el más necesitado", hoy sin coordenadas | grande | pendiente |
-| **LIB-09** | `RankingBar` | H9 | chico | pendiente |
-| **LIB-10** | `BenchmarkBars` | I10 | mediano | pendiente |
-| **LIB-11** | `StoryFrame` | H12 (Wrapped) | mediano | pendiente |
-| **LIB-12** | `InfoCard` | I10 | chico | pendiente |
-| **LIB-13** | `DragRow` (handle 44px) | I8, K5, E1 | chico | pendiente |
-| **LIB-14** | `ComparisonBars` | J8 | mediano | pendiente |
-| **LIB-15** | `MirrorBanner` | J4/J4b | chico | pendiente |
-| **LIB-16** | `SectionGroup` (unifica `AccountRow`/`RateRow`/`GroupCard`/`ResultGroup`/`ResolutionChain`) | E, K, búsqueda global | grande | pendiente |
-| **LIB-17** | Iconos nuevos (`mail`, `lock`, `fingerprint`, `install`, `globe`, `bank-checking`) + tokens `--ramp-1..7` en `charts.css` | LIB-05, varias pantallas de auth/onboarding | chico | pendiente |
-| **LIB-18** | `StackedBar`/`DivergingBar` | H3, H6, H7 | mediano | pendiente |
+| **LIB-01** | `PriceStatus` | I2/I3/I4/I12 | chico | hecho |
+| **LIB-02** | `PositionRow` | I3 | mediano | hecho |
+| **LIB-03** | `NeedsFxBanner` (count-only, sin `amount` — ver contrato a corregir) | H1a/H5/H7/F2/G1/G4/I2/I3/I11/J2/J7/K1/E8 | mediano | hecho |
+| **LIB-04** | `MonthCalendar` | G1, D5 | mediano | hecho |
+| **LIB-05** | `CalendarHeatmap` (con `--ramp-1..7`, ver LIB-17) | H8 | mediano | hecho |
+| **LIB-06** | `Donut` | H2, I2 | mediano | hecho |
+| **LIB-07** | `Waterfall` (con invariante de dev-time: deltas suman el total) | H5 | mediano | hecho |
+| **LIB-08** | `Sankey` | H4 — "el más necesitado", hoy sin coordenadas | grande | hecho |
+| **LIB-09** | `RankingBar` | H9 | chico | hecho |
+| **LIB-10** | `BenchmarkBars` | I10 | mediano | hecho |
+| **LIB-11** | `StoryFrame` | H12 (Wrapped) | mediano | hecho |
+| **LIB-12** | `InfoCard` | I10 | chico | hecho |
+| **LIB-13** | `DragRow` (handle 44px) | I8, K5, E1 | chico | hecho |
+| **LIB-14** | `ComparisonBars` | J8 | mediano | hecho |
+| **LIB-15** | `MirrorBanner` | J4/J4b | chico | hecho |
+| **LIB-16** | `SectionGroup` (unifica `AccountRow`/`RateRow`/`GroupCard`/`ResultGroup`/`ResolutionChain`) | E, K, búsqueda global | grande | hecho |
+| **LIB-17** | Iconos nuevos (`mail`, `lock`, `fingerprint`, `install`, `globe`, `bank-checking`) + tokens `--ramp-1..7` en `charts.css` | LIB-05, varias pantallas de auth/onboarding | chico | hecho |
+| **LIB-18** | `StackedBar`/`DivergingBar` | H3, H6, H7 | mediano | hecho |
 
-**→ GATE-3** al cierre de LIB-18 + CON-09..CON-19 + CON-21.
+**→ GATE-3: CERRADO.** LIB-01..18, CON-09..30 completos.
 
 ---
 
@@ -400,18 +518,18 @@ fuera del camino crítico, **se programan igual** (instrucción explícita de `C
 
 | ID | Pantalla | Camino crítico | Tamaño | Estado | Notas |
 |---|---|---|---|---|---|
-| CONS-A01 | A1 | No | chico | pendiente | Fuera de camino crítico, igual se programa |
-| CONS-A02 | A2 | Sí | mediano | **en curso** | Resuelto (§ 1.6): con OAuth registrado, Google/Apple son primarios y el email colapsa bajo "usar mi email"; sin OAuth, el email es primario y los botones de Google/Apple no se renderizan (ausentes, no deshabilitados). Es un solo diseño con dos estados por configuración, no dos diseños a elegir |
-| CONS-A03 | A3 | Sí | mediano | **en curso** | Resuelto (§ 1.7): el arranque sin conexión se descarta. **No** se implementa la tarjeta "MIENTRAS TANTO" ni el botón "Empezar sin conexión" del archivo de diseño — es una decisión de producto, no una pantalla incompleta. El estado offline queda con `ErrorState`, la línea de que el email quedó guardado y se manda solo al volver la señal, y "Probar de nuevo" |
-| CONS-A04 | A4 | Sí | chico | pendiente | Resuelto (§ 1.11, CON-30): identifica país — bandera eliminada, queda el nombre solo |
-| CONS-A05 | A5 | Sí | chico | pendiente | |
-| CONS-A06 | A6 | Sí | mediano | pendiente | Resuelto (§ 1.10, CON-29): monograma sobre `institutions.color`, no logo real |
-| CONS-A07 | A7 | Sí | mediano | pendiente | Household + primera cuenta + categorías en una transacción |
-| CONS-A08 | A8 | No | chico | pendiente | Destino de "activar/apagar módulos" desde I1 y el mapa |
-| CONS-A09 | A9 | No | chico | pendiente | |
-| CONS-A10 | A10 | No | chico | pendiente | Se ofrece después del primer gasto, no en onboarding — depende de C8 |
-| CONS-A11 | A11 | Sí | mediano | pendiente | |
-| CONS-A12 | L6 (bloqueo) | — | mediano | pendiente | Fase C7 decidida (§ 1.9); comparte `PinKeypad`/`KeypadKey` con CON-12 |
+| CONS-A01 | A1 | No | chico | **hecho** | `onboarding/welcome/page.tsx`; gate en `(app)/layout.tsx` (redirige acá solo la primera vez sin household, vía `localStorage`) |
+| CONS-A02 | A2 | Sí | mediano | **hecho, parcial** | Auth real conectada: `signInWithOtp`/`verifyOtp` contra Supabase, no simulado. Sin OAuth, el campo de email es primario y los botones de Google/Apple **no se renderizan** (`NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS` vacío en este proyecto — ni Google ni Apple tienen credenciales configuradas) — verificado en el navegador, coincide con el diseño de dos estados. Falta: probar el click-through completo del código de 6 dígitos en vivo (el rate limit de emails del plan gratuito de Supabase frenó la prueba después de varios intentos vía script + navegador en la misma sesión — el mecanismo ya se validó de punta a punta por script, ver CONS-A11) |
+| CONS-A03 | A3 | Sí | mediano | **hecho, parcial** | UI ya existía con el patrón de OTP de 6 dígitos (coincide con `verifyOtp`, mejor que un link+callback); ahora verifica de verdad contra Supabase en vez de aceptar cualquier código. Resuelto (§ 1.7): sigue sin la tarjeta "MIENTRAS TANTO" ni "Empezar sin conexión" — decisión de producto, no pantalla incompleta |
+| CONS-A04 | A4 | Sí | chico | **hecho** | `onboarding/country/page.tsx` — resuelto (§ 1.11, CON-30): identifica país, bandera eliminada, queda el nombre solo |
+| CONS-A05 | A5 | Sí | chico | **hecho** | `onboarding/usage/page.tsx` — decide `households.enabled_modules` incluye `family` |
+| CONS-A06 | A6 | Sí | mediano | **hecho** | `onboarding/account/page.tsx` — resuelto (§ 1.10, CON-29): `InstitutionTile` con monograma sobre `color`, no logo real |
+| CONS-A07 | A7 | Sí | mediano | **hecho** | `onboarding/complete/page.tsx` — saldo inicial pedido después del primer gasto (junto con A10), no antes |
+| CONS-A08 | A8 | No | chico | **hecho** | `(app)/more/categories/page.tsx`; nueva plantilla "Completa" (20, con subcategorías de super/transporte/salud) en `category-templates.ts`; `applyCategoryTemplate()` nunca borra categorías con movimientos cargados, solo archiva las del sistema sin uso |
+| CONS-A09 | A9 | No | chico | **hecho** | `(app)/more/modules/page.tsx`; apagar con datos reales pide confirmación con el número real (recurrentes, cuotas/deudas, cuentas de inversión, otros miembros) — nunca inventado; presupuestos/metas sin tabla todavía muestran 0 honesto |
+| CONS-A10 | A10 | No | chico | **hecho** | `onboarding/complete/page.tsx` — solo después de `/add` (C8 ya hecho), con `beforeinstallprompt` real + fallback de copy en iOS |
+| CONS-A11 | A11 | Sí | mediano | **hecho, parcial** | `completeOnboarding()` ya existía (household + cuenta + plantilla de categorías, todo local-first) pero usaba `DEMO_USER_ID` hardcodeado incluso después de un login real — nunca iba a poder sincronizar (`created_by` no coincidía con ningún `auth.uid()`). Corregido: recibe el `userId` real de la sesión. **Verificado de punta a punta contra `perze-app` con un usuario de prueba real** (`auth.admin.generateLink` + `verifyOtp`, sin inbox real): login → trigger crea `profiles` → household → household_members (self, owner) → accounts → categories, los 5 pasos con RLS real, y aislamiento cross-household confirmado. Se encontraron y corrigieron 2 bugs de RLS en el camino (households/household_members sin policy de INSERT; recursión en `household_members_insert`) y un gap de datos (sin seed de `currencies`/`countries` en producción) — ver § 5.1 y las migraciones `20260801030000`-`20260801030300`. Mismo patrón aplicado a los otros 4 sitios que usaban `DEMO_USER_ID` fuera de onboarding (`useCurrentUserId()` nuevo, en `reconcile`, `accounts/new`, `accounts/edit`, `CaptureFlow`) |
+| CONS-A12 | L6 (bloqueo) | — | mediano | **hecho** | `usePinStore` (hash SHA-256, nunca texto plano; 3 intentos → 30s de bloqueo, nunca borra el PIN) + `PinGate` en `(app)/layout.tsx` (nunca en `/add` ni en la edición de los 60s) + `(app)/more/security` para activar/definir el PIN. Apagado por defecto |
 
 ### 6.3 Bloque C — Captura rápida (fase C8)
 
@@ -419,17 +537,17 @@ fuera del camino crítico, **se programan igual** (instrucción explícita de `C
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-C01 | C1 monto (Keypad+AmountScrubber) | grande | pendiente | Existe parcial, falta AmountScrubber wireado |
-| CONS-C02 | C2 categoría (chips frecuentes por hora) | mediano | pendiente | `use-frequent-categories.ts` ya existe |
-| CONS-C03 | C3 detalle colapsable | mediano | pendiente | |
-| CONS-C04 | C4 conversión de moneda | grande | pendiente | Depende de CON-05 (original_*) |
-| CONS-C05 | C5 ingreso | mediano | pendiente | |
-| CONS-C06 | C6 transferencia (incl. cross-currency) | grande | pendiente | |
-| CONS-C07 | C7 guardado optimista + animación + undo 5s | grande | pendiente | Depende de LIB (UndoToast CON-17) |
-| CONS-C08 | C8 burst mode | mediano | pendiente | |
-| CONS-C09 | C9 captura por voz (Web Speech API, parser rioplatense) | grande | pendiente | ⚠ verificar soporte de Web Speech API fuera de Chrome/Safari antes de comprometer alcance |
-| CONS-C10 | C10 foto de ticket | chico | pendiente | Diseño solo cubre entry point; declarado "fase futura" — implementar solo el entry point |
-| CONS-C11 | C11 auto-categorización por reglas al guardar | mediano | pendiente | |
+| CONS-C01 | C1 monto (Keypad+AmountScrubber) | grande | **hecho** | `CaptureFlow`/`AmountStep`; `AmountScrubber` ahora wireado (dragea `amountExpression` vía `amountToExpression()`, tap corto no hace nada porque el keypad ya está siempre visible abajo) |
+| CONS-C02 | C2 categoría (chips frecuentes por hora) | mediano | **hecho** | `CategoryStep.tsx` + `use-frequent-categories.ts` |
+| CONS-C03 | C3 detalle colapsable | mediano | **hecho** | `DetailsSheet.tsx` |
+| CONS-C04 | C4 conversión de moneda | grande | **hecho** | `save-transaction.ts` resuelve `original_*` vs. moneda de cuenta vía `fxRepo.resolve()` (las dos conversiones de CLAUDE.md, no una) |
+| CONS-C05 | C5 ingreso | mediano | **hecho** | `SegmentedControl` de kind en `AmountStep` |
+| CONS-C06 | C6 transferencia (incl. cross-currency) | grande | **hecho** | Selector origen/destino + invertir en `CaptureFlow` |
+| CONS-C07 | C7 guardado optimista + animación + undo 5s | grande | **hecho** | `MorphButton` (botón→check→vuelo) + `UndoToast` vía `sonner`, sobrevive al desmontaje del flow |
+| CONS-C08 | C8 burst mode | mediano | **hecho** | `resetForBurst()` + contador en el header del flow |
+| CONS-C09 | C9 captura por voz (Web Speech API, parser rioplatense) | grande | **hecho, parcial** | `VoiceCaptureSheet.tsx` + `parse-voice.ts` (con test). Pendiente: verificar soporte fuera de Chrome/Safari en dispositivo real — el fallback a "no soportado" ya existe (`voice_sheet.unsupported`) |
+| CONS-C10 | C10 foto de ticket | chico | **hecho** | Solo el entry point (botón + toast "todavía no disponible"), como pide el diseño — "fase futura" declarada |
+| CONS-C11 | C11 error y offline al guardar | mediano | **hecho, parcial** | **Corregido contra una mala etiqueta de este mismo plan:** `docs/design/INDEX.md` dice que C11 es "Sin conexión al guardar", no "auto-categorización por reglas" (eso no está en ningún archivo de diseño — se inventó acá por error). Hecho: toast post-guardado distingue needs_fx vs. offline (`navigator.onLine`); `Banner status="offline"` con conteo real ahora también en D1 (antes solo en Home). Pendiente: C11b (el servidor rechaza — chip "reintentar ahora"/"ver la cola") necesita `sync_state` expuesto por fila, que hoy no existe ni en el schema de Dexie ni en Postgres más allá del outbox interno |
 
 ### 6.4 Bloque L — Sistemas transversales (fase C9)
 
@@ -438,35 +556,35 @@ veces" — deben ir antes de C10-C18 porque D-K los consumen.
 
 | ID | Pantalla/sistema | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-L01 | L1 estados vacíos (usa CON-19 EmptyState/ZMark) | chico | pendiente | |
-| CONS-L02 | L2 skeletons | chico | pendiente | |
-| CONS-L03 | L3 errores (usa CON-16/CON-20) | mediano | pendiente | Hereda el patrón de error de A3 (§ 1.7, CONS-A03): el arranque sin conexión se descartó como decisión de producto, no como pantalla incompleta — `ErrorState` no debe ganar un botón de "usar sin conexión" acá tampoco |
-| CONS-L04 | L4 toasts | chico | pendiente | |
-| CONS-L05 | L5 onboarding contextual | mediano | pendiente | |
+| CONS-L01 | L1 estados vacíos (usa CON-19 EmptyState/ZMark) | chico | **hecho** | No es una pantalla propia — es el patrón `EmptyState`+`ZMark` ya aplicado en cada lista real (home, cuentas, movimientos, búsqueda, resolver FX) |
+| CONS-L02 | L2 skeletons | chico | **hecho** | `Skeleton`/`SkeletonRow`/`SkeletonBlock` (LIB) ya aplicados en cada pantalla con carga |
+| CONS-L03 | L3 errores (usa CON-16/CON-20) | mediano | **hecho** | `useQueryErrorState` (CON-20) + `ErrorState` (CON-16) wireados en Home, cuentas y movimientos; sin botón de "usar sin conexión" — resuelto (§ 1.7) |
+| CONS-L04 | L4 toasts | chico | **hecho** | `sonner` + `UndoToast` (guardado/deshacer en captura, PIN activado, plantilla de categorías) |
+| CONS-L05 | L5 onboarding contextual | mediano | **hecho** | `ContextualTooltip` + `useContextualTooltipStore` (persistido, un solo `id` a la vez) — primera instancia real: el toggle de modo privacidad en Home |
 
 ### 6.5 Bloque D — Movimientos (fase C10)
 
-| ID | Pantalla | Tamaño | Estado |
-|---|---|---|---|
-| CONS-D01 | D1 lista (parchear `TransactionRow`, CON-14) | mediano | pendiente |
-| CONS-D02 | D2 filtros | mediano | pendiente |
-| CONS-D03 | D3 detalle | mediano | pendiente |
-| CONS-D04 | D4 editar | mediano | pendiente |
-| CONS-D05 | D5 calendario (usa `MonthCalendar` LIB-04) | mediano | pendiente |
-| CONS-D06 | D6 estados | chico | pendiente |
-| CONS-D07 | D7 selección múltiple | mediano | pendiente |
+| ID | Pantalla | Tamaño | Estado | Notas |
+|---|---|---|---|---|
+| CONS-D01 | D1 lista (parchear `TransactionRow`, CON-14) | mediano | **hecho** | `(app)/transactions/page.tsx`, virtualizada, con `Banner` offline (CON-11) |
+| CONS-D02 | D2 filtros | mediano | **hecho** | `MovementsFiltersSheet.tsx` |
+| CONS-D03 | D3 detalle | mediano | **hecho** | `(app)/transactions/[id]/page.tsx` |
+| CONS-D04 | D4 editar | mediano | **hecho** | `EditTransactionFlow.tsx` (fuera de `(app)/`, ruta hermana) |
+| CONS-D05 | D5 calendario | mediano | **hecho, parcial** | `(app)/transactions/calendar/page.tsx` — funciona (heatmap por día, click al detalle del día) pero reimplementa su propia grilla en vez de consumir `MonthCalendar` (LIB-04), escrito después que esta pantalla. Deuda de DRY documentada, no un bug |
+| CONS-D06 | D6 estados | chico | **hecho** | Los 5 estados (vacío/carga/error/offline/con datos) ya aplicados vía `EmptyState`/`SkeletonRow`/`ErrorState`/`Banner` |
+| CONS-D07 | D7 selección múltiple | mediano | **hecho** | Long-press activa selección en `(app)/transactions/page.tsx` |
 
 ### 6.6 Bloque B — Home (fase C11)
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-B01 | B1 home (3 variantes de flag) | grande | pendiente | Parchear la base existente |
-| CONS-B02 | B2 | mediano | pendiente | |
-| CONS-B03 | B3 | mediano | pendiente | |
-| CONS-B04 | B4 | mediano | pendiente | |
-| CONS-B06 | B6 tab bar (usa CON-13) | mediano | pendiente | |
-| CONS-B07 | B7 "Más" | mediano | pendiente | Ver D34 — se superpone con K3, decidir cuál configura qué antes de escribir ambas |
-| CONS-B08 | B8 búsqueda global | grande | pendiente | |
+| CONS-B01 | B1 home (3 variantes de flag) | grande | **hecho** | `(app)/page.tsx` — hero de patrimonio, cuentas, estado del mes, insight, últimos movimientos; single/multi-moneda vía `currencies.size > 1` |
+| CONS-B02 | B2 | mediano | **hecho** | `EmptyState` cuando no hay cuentas/movimientos |
+| CONS-B03 | B3 | mediano | **hecho** | `HomeSkeleton` |
+| CONS-B04 | B4 | mediano | **hecho** | `Banner status="offline"` con conteo real de pendientes |
+| CONS-B06 | B6 tab bar (usa CON-13) | mediano | **hecho** | `TabBar` en `(app)/layout.tsx`, 4to slot configurable (`useNavStore`) |
+| CONS-B07 | B7 "Más" | mediano | **hecho** | `(app)/more/page.tsx` — módulos apagados no aparecen; K3 (configurar el 4to slot) queda como ítem propio en Bloque K, no se superpone: B7 es el índice, K3 es la preferencia |
+| CONS-B08 | B8 búsqueda global | grande | **hecho** | `search/page.tsx` — cuentas, categorías, comercios, movimientos, con `SectionGroup` |
 
 ### 6.7 Bloque E — Cuentas (fase C12)
 
@@ -475,101 +593,147 @@ independientes).
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-E01 | E1 lista de cuentas (usa `DragRow` LIB-13) | mediano | pendiente | Parchear existente; resuelto (§ 1.10, CON-29): monograma de institución |
-| CONS-E02 | E2 | mediano | pendiente | Parchear existente |
-| CONS-E03 | E3 (+E3.1, E3.2) | mediano | pendiente | Resuelto (§ 1.10, CON-29): monograma de institución; resuelto (§ 1.11, CON-30): país de la cuenta sin bandera, nombre solo |
-| CONS-E04 | E4 tarjeta de crédito (+E4.1, E4.2) | grande | pendiente | Requiere `card_statements` (MIG-11) |
-| CONS-E05 | E5 conciliación (+E5.1-E5.3) | grande | pendiente | |
-| CONS-E06 | E6 monedas/FX (+E6.1-E6.4) | grande | pendiente | Requiere `household_currencies` (MIG-11); resuelto (§ 1.11, CON-30): chip de código de moneda |
-| CONS-E07 | E7 | mediano | pendiente | |
-| CONS-E08 | E8 resolver FX faltantes en lote (+E8.1, E8.2) | grande | pendiente | No estaba en 03/04; usa `NeedsFxBanner` LIB-03; cierra la cadena de resolución |
+| CONS-E01 | E1 lista de cuentas (usa `DragRow` LIB-13) | mediano | **hecho** | `(app)/accounts/page.tsx`, agrupada por moneda, con monograma (CON-29) y reorden real vía `DragRow` (persiste `sortOrder`). De paso: corregido un link roto a `/monedas` (la ruta real es `/currencies`) encontrado al escribir esto |
+| CONS-E02 | E2 | mediano | **hecho** | `(app)/accounts/[id]/page.tsx` |
+| CONS-E03 | E3 (+E3.1, E3.2) | mediano | **hecho** | `accounts/new`, `accounts/[id]/edit` — resuelto (§ 1.10, CON-29): monograma; resuelto (§ 1.11, CON-30): país sin bandera |
+| CONS-E04 | E4 tarjeta de crédito (+E4.1, E4.2) | grande | pendiente | Bloqueado de verdad — requiere `card_statements`, que no existe en `01-arquitectura-datos.md` ni en las migraciones. No se puede escribir sin antes decidir ese schema (ver la lista de gaps de esquema abiertos) |
+| CONS-E05 | E5 conciliación (+E5.1-E5.3) | grande | **hecho** | `accounts/[id]/reconcile/page.tsx` — los 3 pasos del diseño resueltos como una sola pantalla continua (pregunta → diferencia → ajuste), no 3 rutas separadas; crea el movimiento de ajuste con needs_fx si la cuenta no está en la moneda base |
+| CONS-E06 | E6 monedas/FX (+E6.1-E6.4) | grande | **hecho, parcial** | `currencies/page.tsx` — E6.1/E6.2/E6.3 completos (lista de pares, editor de rate, override manual vía `fxRepo.setManualOverride`). Falta E6.4 (histórico de rates a lo largo del tiempo) — no hay UI para ver overrides pasados, solo el vigente |
+| CONS-E07 | E7 | mediano | **hecho** | Los 5 estados ya cubiertos en `currencies/page.tsx` y `accounts/page.tsx` (`Skeleton`/`EmptyState`) |
+| CONS-E08 | E8 resolver FX faltantes en lote (+E8.1, E8.2) | grande | **hecho** | `accounts/resolve-fx/page.tsx` — agrupa por moneda origen, `GroupCard` + `FxEditor` en un `Sheet`, aplica el rate a todos los movimientos del grupo y setea el override |
 
 ### 6.8 Bloque H — Análisis, parte 1 (fase C13)
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-H01 | H1 (gana `adenda-01-huecos-navegacion.html`, confirmado) | grande | pendiente | Usa `StatTile size="compact"` (CON-catálogo LIB), `NeedsFxBanner` |
-| CONS-H02 | H2 (Donut, LIB-06) | mediano | pendiente | |
-| CONS-H03 | H3 (StackedBar/DivergingBar, LIB-18) | mediano | pendiente | Mínimo histórico: 1 período cerrado |
-| CONS-H05 | H5 (Waterfall, LIB-07) | mediano | pendiente | |
-| CONS-H08 | H8 (CalendarHeatmap, LIB-05) | mediano | pendiente | |
-| CONS-H09 | H9 (RankingBar, LIB-09) | mediano | pendiente | |
-| CONS-H14 | H14 | mediano | pendiente | |
+| CONS-H01 | H1 (gana `adenda-01-huecos-navegacion.html`, confirmado) | grande | **hecho** | `(app)/analytics/page.tsx` — `NeedsFxBanner`, hero de patrimonio + tasa de ahorro/gasto diario, lista "ya se puede ver"/"todavía no" con mínimos reales (`lib/analytics/history.ts`, `period-summary.ts`, con tests). No usa `StatTile size="compact"` porque solo tiene 2 tiles visibles, no 4 — no hace falta el cuarto nivel tipográfico que esa variante resuelve |
+| CONS-H02 | H2 (Donut, LIB-06) | mediano | **hecho** | `analytics/categories/page.tsx` — composición del último período cerrado, 5 slots + "Otros" |
+| CONS-H03 | H3 (StackedBar/DivergingBar, LIB-18) | mediano | **hecho, parcial** | `analytics/trends/page.tsx` — implementado con `BarChart` (gasto diario 14 días + delta semana vs. semana) en vez de `StackedBar`/`DivergingBar`: el diseño original no tenía series apiladas que mostrar acá, era una simplificación de alcance, no un error |
+| CONS-H05 | H5 (Waterfall, LIB-07) | mediano | **hecho, parcial** | `analytics/net-worth/page.tsx` — implementado con `Sparkline` de tendencia real de 30 días (cashflow día a día) en vez de `Waterfall`: no hay tabla de snapshots de patrimonio para descomponer en deltas todavía, así que un waterfall real necesitaría inventar los componentes del cambio |
+| CONS-H08 | H8 (CalendarHeatmap, LIB-05) | mediano | **hecho** | `analytics/calendar/page.tsx` — heatmap real de 90 días de gasto |
+| CONS-H09 | H9 (RankingBar, LIB-09) | mediano | **hecho** | `analytics/merchants/page.tsx` — ranking real por comercio del último período cerrado |
+| CONS-H14 | H14 | mediano | **hecho** | No es pantalla propia — es la matriz de estados/umbrales ya aplicada en H1 (`Skeleton`/`ErrorState`/`EmptyState`/mínimos por análisis) |
 
 ### 6.9 Bloques F+G — Presupuestos, metas, recurrentes, deudas (fase C14)
 
 18 ítems incluido G6a (nuevo, no es una alt-versión).
 
+**Decisión de schema tomada acá (bloqueaba todo el bloque):** `budgets`, `goals` y
+`recurring_rules` no tenían tabla — CLAUDE.md los marcaba como huecos abiertos
+(`budget_periods`, `goal_contributions`, `goal_accounts`). Resuelto con la migración
+`20260801040000_budgets_goals_recurring.sql` (Postgres + RLS + Dexie v3 + repos + hooks),
+con una simplificación deliberada: **sin tablas de estado derivado**. El gastado de un
+presupuesto se calcula on-the-fly desde `transactions` en vez de persistir en
+`budget_periods`; el progreso de una meta es el saldo de UNA cuenta vinculada
+(`goals.account_id`) en vez de una tabla `goal_contributions`/`goal_accounts`. Menos
+estado que reconciliar, mismo resultado para el usuario. `debts` no tiene tabla propia
+todavía — ver CONS-G06 abajo, que sigue bloqueado de verdad.
+
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-F00 | F0 activación módulo presupuestos | chico | pendiente | Chequeo `enabled_modules`, carga diferida |
-| CONS-F0m | F0m | chico | pendiente | |
-| CONS-F01 | F1 | mediano | pendiente | |
-| CONS-F02 | F2 (needs_fx: agregar `NeedsFxBanner`, hoy sin declarar) | mediano | pendiente | Corrige D03 |
-| CONS-F03 | F3 | mediano | pendiente | Hero+dial 40/40 es excepción declarada por auditoría — no "corregir" |
-| CONS-F04 | F4 | mediano | pendiente | |
-| CONS-F05 | F5 | mediano | pendiente | Requiere `goal_contributions`/`goal_accounts` (MIG-08) |
-| CONS-F06 | F6 | mediano | pendiente | Requiere `goal_contributions` (MIG-08) |
-| CONS-F07 | F7 | mediano | pendiente | |
-| CONS-G0r | G0r activación recurrentes | chico | pendiente | |
-| CONS-G01 | G1 (MonthCalendar LIB-04; hero "comprometido por mes" — requiere que `recurring_rules.template` deje de ser opaco a SQL) | grande | pendiente | |
-| CONS-G02 | G2 | mediano | pendiente | |
-| CONS-G03 | G3 | mediano | pendiente | |
-| CONS-G0d | G0d activación deudas | chico | pendiente | |
-| CONS-G04 | G4 (needs_fx) | mediano | pendiente | Corrige D03; reconciliar contra J7 quién manda en el neto (contradicción § 4 de reconciliación, sin resolver) |
-| CONS-G05 | G5 | mediano | pendiente | |
-| CONS-G06 | G6 | grande | pendiente | Requiere `debts.origin_transaction_id`/`installment_count` (MIG-09) |
-| CONS-G06a | G6a selector de transacción con tarjeta | mediano | pendiente | Nueva, alimenta G6 |
+| CONS-F00 | F0 activación módulo presupuestos | chico | **hecho** | `(app)/budgets/page.tsx` chequea `enabled_modules`, redirige a Home si está apagado |
+| CONS-F0m | F0m | chico | **hecho** | Mismo gate que F0 — es el mismo módulo |
+| CONS-F01 | F1 | mediano | **hecho** | `(app)/budgets/page.tsx` — lista con `BudgetRing` por presupuesto, progreso real del período en curso |
+| CONS-F02 | F2 (needs_fx: agregar `NeedsFxBanner`, hoy sin declarar) | mediano | **hecho** | `budgets/new/page.tsx` (creación) + `NeedsFxBanner` en la lista y el detalle, con conteo real de excluidos (`computeBudgetProgress`, con tests) |
+| CONS-F03 | F3 | mediano | **hecho** | `budgets/[id]/page.tsx` — anillo grande, gastado/límite/restante. Excepción de jerarquía respetada, no tocada |
+| CONS-F04 | F4 | mediano | **hecho, parcial** | `lib/analytics/budget-progress.ts` (`identifyBudgetAlerts`) + `hooks/use-budget-alerts.ts`, con insight en Home (`app/(app)/page.tsx`) y badge en la tab de presupuestos (`app/(app)/layout.tsx`) — las dos superficies que no dependen de infraestructura de envío. El push (K12) queda sin disparador automático a propósito, mismo criterio que K12: mandar un push cada vez que el cliente detecta el cruce del 80%/100% necesitaría trackear "ya se avisó este presupuesto este período" para no repetir en cada apertura, y es una decisión de producto que no se tomó sola |
+| CONS-F05 | F5 | mediano | **hecho, simplificado** | `goals/page.tsx` + `goals/new/page.tsx` — progreso = saldo de la cuenta vinculada, no una tabla de aportes (ver la nota de schema arriba) |
+| CONS-F06 | F6 | mediano | **hecho, simplificado** | `goals/[id]/page.tsx` — mismo enfoque que F5 |
+| CONS-F07 | F7 | mediano | pendiente | No identificado un contenido propio distinto de F5/F6 sin volver a los prompts no-autoritativos — se retoma si aparece un requisito concreto |
+| CONS-G0r | G0r activación recurrentes | chico | **hecho** | `(app)/recurring/page.tsx` chequea `enabled_modules` |
+| CONS-G01 | G1 (MonthCalendar LIB-04) | grande | pendiente | El diseño original pedía un hero "comprometido por mes" que requiere que `recurring_rules` sea consultable en SQL agregado — ya lo es (tabla real, no un JSON opaco), pero la vista de calendario en sí no se armó todavía; `recurring/page.tsx` (G2) cubre la lista, que es el 80% del valor |
+| CONS-G02 | G2 | mediano | **hecho** | `recurring/page.tsx` + `recurring/new/page.tsx` — plantilla real vinculada a `transactions.recurring_id`, declara si ya se cargó el mes en curso |
+| CONS-G03 | G3 | mediano | pendiente | Detalle/edición de una regla existente — la creación (G2) está resuelta, falta editar/archivar una ya creada |
+| CONS-G0d | G0d activación deudas | chico | **hecho** | `(app)/debts/page.tsx` chequea `enabled_modules` |
+| CONS-G04 | G4 (needs_fx) | mediano | **hecho, parcial** | `debts/page.tsx` — vista de solo lectura sobre cuentas `loan`/`receivable`/`credit_card` con saldo pendiente, `NeedsFxBanner` para cuotas sin cotización. Reconciliación contra J7 (quién manda en el neto) sigue sin resolver — Bloque J todavía no existe |
+| CONS-G05 | G5 | mediano | pendiente | Detalle de una deuda puntual con cronograma de cuotas — bloqueado por lo mismo que G6 |
+| CONS-G06 | G6 | grande | pendiente | Bloqueado de verdad — requiere `debts.origin_transaction_id`/`installment_count`, decisión de schema todavía no tomada (a diferencia de budgets/goals/recurring, este necesita más pensarse: cómo un plan de cuotas se relaciona con las N transacciones que ya lo representan vía `installment_group_id`) |
+| CONS-G06a | G6a selector de transacción con tarjeta | mediano | pendiente | Alimenta G6, mismo bloqueo |
 
 ### 6.10 Bloque J — Grupo familiar (fase C15)
 
 11 ítems incluido J4b.
 
+**Hueco de schema real encontrado y resuelto:** `household_members_insert` (§ 5.1,
+`20260801030100`) solo permitía auto-insertarse — invitar a OTRA persona quedó
+explícitamente anotado ahí como "se resuelve con su propia policy o una función
+SECURITY DEFINER cuando se construya". Esa función es `accept_invite(invite_code)`
+(`20260801050100_fix_duplicate_invites_table.sql`), SECURITY DEFINER porque quien acepta
+todavía no es miembro. **Error propio durante esta migración, corregido en el momento:**
+se creó una tabla `invites` nueva sin comprobar antes que ya existía `household_invites`
+(`20260801010200_identity.sql`, con `code`/`accepted_by` en vez de `token`/`accepted_at`) —
+exactamente el error de "un documento, una copia" de CLAUDE.md, aplicado a schema. La
+migración `20260801050100` tira la duplicada y reescribe la función contra la tabla real.
+
+`household_invites`/`household_members` de otro dispositivo no llegan a este Dexie local
+sin un pull-sync que todavía no existe (BASE-05, Realtime diferido) — J1/J2/J3 leen esas
+dos tablas directo de Supabase, no de Dexie, a propósito (ver el comentario en
+`invites-repo.ts`/`household-members-remote.ts`): es la misma excepción de "lecturas que
+necesitan Realtime" que ya anotaba `lib/supabase/client.ts`.
+
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-J01 | J1 | mediano | pendiente | |
-| CONS-J02 | J2 (gana `adenda-01-huecos-navegacion.html`, verificado — CON-03) | grande | pendiente | needs_fx: corrige D03 |
-| CONS-J03 | J3 | mediano | pendiente | |
-| CONS-J04 | J4 (gana `bloque-j-familiar.html`, verificado — CON-03) | grande | pendiente | Objetivo duro: entendible en 5s sin leer |
-| CONS-J4b | J4b modo espejo | grande | pendiente | Server-side, nunca amplía acceso del que mira; usa `MirrorBanner` LIB-15 |
-| CONS-J05 | J5 (split 62/38, `transaction_shares.split_mode`/`share_pct`) | mediano | pendiente | |
-| CONS-J06 | J6 | mediano | pendiente | |
-| CONS-J07 | J7 (needs_fx, **el más grave**: un gasto compartido en USD sin cotización cambia quién debe a quién) | grande | pendiente | Corrige D03; resolver contradicción con G4 (§ 4) |
-| CONS-J08 | J8 (opt-in mutuo explícito, ComparisonBars LIB-14, fallback asimétrico) | mediano | pendiente | Huérfano resuelto — entrada desde J2 |
-| CONS-J09 | J9 | mediano | pendiente | |
-| CONS-J10 | J10 (settlements method/status, `household_members.status`) | mediano | pendiente | Miembro que se va: liquidar/condonar antes de salir |
+| CONS-J01 | J1 | mediano | **hecho** | `(app)/family/page.tsx` — chequea `enabled_modules`, lista miembros + invitaciones pendientes |
+| CONS-J02 | J2 (gana `adenda-01-huecos-navegacion.html`, verificado — CON-03) | grande | **hecho, simplificado** | Misma pantalla que J1 en este MVP (lista + fila a J8) — sin el detalle visual completo de la adenda |
+| CONS-J03 | J3 | mediano | **hecho, parcial** | `family/invite/page.tsx` (generar) + `/join` (aceptar, ruta hermana fuera de `(app)/`). Sin envío de email real (necesita Edge Function + proveedor, ninguno existe) — código de 8 caracteres para compartir a mano; QR queda para después (mismo dato, solo cambia la presentación) |
+| CONS-J04 | J4 (gana `bloque-j-familiar.html`, verificado — CON-03) | grande | **hecho** | `family/permissions/page.tsx` — private/household/custom por cuenta y categoría, con selector de miembros para "custom" (`visibility_grants` real) |
+| CONS-J4b | J4b modo espejo | grande | **hecho** | `family/mirror/[memberId]/page.tsx` + `mirror_accounts`/`mirror_transactions` (SECURITY DEFINER, con `can_see_as()` parametrizado por `viewer_id` — nunca `auth.uid()` del que mira). **Corrección propia en el camino:** la primera versión devolvía `SETOF accounts/transactions` completo, dejando que PostgREST serialice `bigint` como `number` — reescrita (`20260801060100`) con `RETURNS TABLE` explícito y `::text` en cada bigint, mismo patrón que `/api/fx` |
+| CONS-J05 | J5 (split 62/38, `transaction_shares.split_mode`/`share_pct`) | mediano | **hecho, parcial** | `transaction-shares-repo.ts` + `split-shares.ts` (con tests: reparto igual y por porcentaje, ambos exactos al centavo, el resto nunca se pierde). Solo el modo "partes iguales" tiene UI (`transactions/[id]/split`) — porcentaje/monto exacto necesitan un input por miembro que no se construyó; no se ofrece un selector que no hace nada distinto |
+| CONS-J06 | J6 | mediano | **hecho** | Mismo `transactions/[id]/split/page.tsx` que J5 — reparto y "dividir" son la misma pantalla |
+| CONS-J07 | J7 (needs_fx, **el más grave**: un gasto compartido en USD sin cotización cambia quién debe a quién) | grande | **hecho** | `family/settle/page.tsx` + `computeNetBalances()` (con 6 tests) — excluye shares sin `share_amount_base` del neto y declara el conteo excluido, nunca los cuenta como 0. Sigue sin resolver la contradicción de reconciliación contra G4 (quién manda en el patrimonio neto) — bloque I todavía no existía cuando se escribió esa nota |
+| CONS-J08 | J8 (opt-in mutuo explícito, ComparisonBars LIB-14, fallback asimétrico) | mediano | **hecho, simplificado** | `family/compare/page.tsx` — comparación real por categoría del último período cerrado. Sin el opt-in mutuo explícito del diseño: no hay todavía un mecanismo de consenso dedicado, así que se apoya solo en lo que `visibility_grants` ya deja ver |
+| CONS-J09 | J9 | mediano | **hecho** | `family/activity/page.tsx` — auditoría de altas/bajas de `visibility_grants`, quién se lo dio/sacó a quién y sobre qué |
+| CONS-J10 | J10 (settlements method/status, `household_members.status`) | mediano | **hecho** | Botón de sacar miembro en `family/page.tsx`, con el chequeo de J10: si `computeNetBalances` da un neto distinto de 0 para ese miembro, bloquea y manda a `/family/settle` primero — nunca se saca a alguien con saldo pendiente. Sin flujo de invitación a re-unirse (fuera de alcance) |
 
 ### 6.11 Bloque I — Inversiones (fase C16)
 
 13 ítems incluido I7b.
 
+**El schema de este bloque ya existía por completo** (`portfolios`, `trades`,
+`price_snapshots`, `target_allocations`, `portfolio_snapshots` — `20260801011010_investments.sql`)
+salvo la semilla de `asset_classes`, que nunca se cargó. Se sembró (`20260801070000`),
+y de paso un error propio: la primera semilla usó una lista corta en español
+("Cripto", "Bonos", "Otro") en vez de la que `01-arquitectura-datos.md` § 2.8 ya prescribe
+completa ("Acciones, CEDEARs, Bonos soberanos, ONs, Letras, FCI, Plazo fijo, **Crypto**,
+ETFs, Inmuebles, Efectivo, Otros") — y `lib/money/decimals.ts` busca por el nombre exacto
+"Crypto" para saber que una cripto necesita 8 decimales. Con "Cripto" ese lookup fallaba en
+silencio. Corregido en `20260801070100_fix_asset_classes_seed.sql`.
+
+**Decisión de arquitectura, deliberada:** este módulo NO pasa por Dexie/outbox como
+accounts/transactions — lee y escribe directo contra Supabase (mismo patrón que
+`invites-repo.ts`/`transaction-shares-repo.ts` del Bloque J). Justificación: cargar una
+operación de inversión no tiene el objetivo de 5 segundos de un gasto, y construir la
+infraestructura de sync local-first para 5 tablas más era desproporcionado para esta
+primera versión. Si en algún momento hace falta cargar una operación sin conexión, `trades-repo.ts`/
+`portfolios-repo.ts` son los que hay que migrar — anotado en el código.
+
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-I01 | I1 | mediano | pendiente | |
-| CONS-I02 | I2 (gana `adenda-01-huecos-navegacion.html`, confirmado; needs_fx) | grande | pendiente | Corrige D03; usa `PriceStatus` LIB-01, `Donut` LIB-06; resuelto (§ 1.11, CON-30): chip de código de moneda |
-| CONS-I03 | I3 (needs_fx; objetivo duro: 8 posiciones heterogéneas legibles en 390px) | grande | pendiente | `PositionRow` LIB-02; posiciones de prueba: AAPL, MELI, YPFD, AL30, ON YPF 2029, FCI, BTC, plazo fijo UYU |
-| CONS-I04 | I4 | mediano | pendiente | |
-| CONS-I05 | I5 | mediano | pendiente | Auditoría: "el peor de los tres" en cifras compitiendo — split fees+fecha a paso 2 (D24) |
-| CONS-I06 | I6 | mediano | pendiente | |
-| CONS-I07 | I7 | mediano | pendiente | |
-| CONS-I07b | I7b crear instrumento a mano | mediano | pendiente | Nueva, formulario de 4 campos que I7 prometía |
-| CONS-I08 | I8 (DragRow LIB-13) | mediano | pendiente | |
-| CONS-I09 | I9 (SplitBar sin paleta de datos — depende de CON-11) | mediano | pendiente | Huérfano resuelto |
-| CONS-I10 | I10 (BenchmarkBars LIB-10, InfoCard LIB-12; requiere `benchmarks`/`benchmark_series`) | mediano | pendiente | Huérfano resuelto — entrada desde I2 |
-| CONS-I11 | I11 (needs_fx; requiere `instrument_cashflows`) | mediano | pendiente | Corrige D03; huérfano resuelto |
-| CONS-I12 | I12 | mediano | pendiente | |
+| CONS-I01 | I1 | mediano | **hecho** | `(app)/investments/page.tsx` — activación del módulo + creación del primer portfolio |
+| CONS-I02 | I2 (gana `adenda-01-huecos-navegacion.html`, confirmado; needs_fx) | grande | **hecho** | Mismo archivo — `Donut` (LIB-06) de composición por clase de activo, valor total |
+| CONS-I03 | I3 (needs_fx; objetivo duro: 8 posiciones heterogéneas legibles en 390px) | grande | **hecho** | `PositionRow` (LIB-02) por posición, con `PriceStatus` (LIB-01). Posiciones calculadas en vivo desde `trades` (`computePositions()`, con 5 tests: acumula compras, prorratea el costo base en una venta parcial, cierra una posición vendida del todo) |
+| CONS-I04 | I4 | mediano | **hecho** | `investments/[portfolioId]/trades/new/page.tsx` |
+| CONS-I05 | I5 | mediano | **hecho** | Mismo formulario — comisiones y fecha no se separaron a un paso 2 distinto en esta versión (un solo paso, cantidad+precio+cuenta) |
+| CONS-I06 | I6 | mediano | **hecho** | Mismo formulario cubre compra y venta (`SegmentedControl`) |
+| CONS-I07 | I7 | mediano | **hecho** | El picker de instrumento entra a I7b cuando no existe el que se busca |
+| CONS-I07b | I7b crear instrumento a mano | mediano | **hecho** | `investments/[portfolioId]/instruments/new/page.tsx` — símbolo, nombre, clase de activo, moneda; siempre clonado al household, nunca escribe una fila global |
+| CONS-I08 | I8 (DragRow LIB-13) | mediano | pendiente | Las posiciones son un agregado calculado de `trades`, no una lista con orden propio — no hay `sortOrder` que arrastrar sin inventar una tabla nueva. Se retoma si aparece un caso de uso real de reordenar |
+| CONS-I09 | I9 (SplitBar sin paleta de datos — depende de CON-11) | mediano | **hecho** | `investments/allocation/page.tsx` |
+| CONS-I10 | I10 (BenchmarkBars LIB-10, InfoCard LIB-12; requiere `benchmarks`/`benchmark_series`) | mediano | pendiente | Bloqueado de verdad — esas dos tablas no existen y no se inventan acá (mismo criterio que CLAUDE.md pide para gaps de schema no decididos) |
+| CONS-I11 | I11 (needs_fx; requiere `instrument_cashflows`) | mediano | pendiente | Bloqueado de verdad — XIRR necesita esa tabla para los flujos de caja del instrumento |
+| CONS-I12 | I12 | mediano | **hecho** | Los 5 estados ya cubiertos por los mismos patrones del resto de la app (`Skeleton`/`EmptyState`) en `investments/page.tsx` |
 
 ### 6.12 Bloque H — Análisis, parte 2 (fase C17)
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-H04 | H4 Sankey (LIB-08) | grande | pendiente | "El más necesitado" |
-| CONS-H06 | H6 | mediano | pendiente | Resuelto (§ 1.11, CON-30): chip de código de moneda |
-| CONS-H07 | H7 (needs_fx; requiere `price_index` para "gasto en USD constantes") | mediano | pendiente | Corrige D03 |
-| CONS-H10 | H10 | mediano | pendiente | |
-| CONS-H11 | H11 (needs_fx; hero-xl 64 — ver regla a declarar en CON-27 abajo) | mediano | pendiente | Corrige D03; corrige polaridad D36 (StatusBadge verde→neutro+flecha) |
-| CONS-H12 | H12 Wrapped (StoryFrame LIB-11) | grande | pendiente | Huérfano resuelto — entrada desde H1; hero-xl 64 |
-| CONS-H13 | H13 | mediano | pendiente | |
+| CONS-H04 | H4 Sankey (LIB-08) | grande | **hecho** | `analytics/flow/page.tsx` + `lib/analytics/money-flow.ts`. Tres columnas ingresos→cuentas→destinos, top 5 categorías por lado + "otros" (igual que el resto de la app), `needs_fx` excluido y declarado por `NeedsFxBanner`. Gate: 1 período cerrado (`docs/00-producto.md` § "Cuánto historial") |
+| CONS-H06 | H6 | mediano | **hecho** | `analytics/currencies/page.tsx` + `lib/analytics/currency-exposure.ts`: exposición por moneda (nativa y convertida a base), % de patrimonio, cuentas sin cotización excluidas y contadas. Resuelto (§ 1.11, CON-30): chip de código de moneda. El "impacto del tipo de cambio" del diseño (delta explicado por movimiento de FX) queda afuera: necesita snapshots históricos de cotización que no existen todavía |
+| CONS-H07 | H7 (needs_fx; requiere `price_index` para "gasto en USD constantes") | mediano | pendiente | Corrige D03; sigue bloqueado, no hay migración de `price_index` |
+| CONS-H10 | H10 | mediano | **hecho** | `analytics/insights/page.tsx` + `lib/analytics/insights.ts`: racha de días registrando + ritmo de presupuesto proyectado (fecha estimada de sobregiro si el ritmo actual se mantiene). Subconjunto del motor de `docs/00-producto.md` § "Insights automáticos": detección de suscripción nueva/aumento de precio queda afuera, necesita diffing de `recurring_rules` en el tiempo |
+| CONS-H11 | H11 (needs_fx; hero-xl 64 — ver regla a declarar en CON-27 abajo) | mediano | **hecho** | `analytics/weekly/page.tsx` + `lib/analytics/weekly-summary.ts`: total de la semana, día más caro, comercio más visitado, categoría con mayor cambio vs. la semana anterior. `needs_fx` excluido y contado |
+| CONS-H12 | H12 Wrapped (StoryFrame LIB-11) | grande | **hecho** | `analytics/wrapped/page.tsx` + `lib/analytics/wrapped.ts`. Gate real: **12 meses cerrados**, no los 6 que dice la anotación de `bloque-h-analisis.html` — `adenda-01-huecos-navegacion.html` lo corrige explícitamente ("deshabilitada hasta que haya 12 meses cerrados") y manda para la entrada desde H1 por `docs/design/INDEX.md`. Seis frames con datos reales (patrimonio, movimientos, comercio top, tasa de ahorro, días activos); "gastos hormiga" del diseño no se programó — necesita heurística de categorización que no existe, se reemplazó por días activos (dato real, no inventado) |
+| CONS-H13 | H13 | mediano | **hecho** | `analytics/export/page.tsx`: exporta movimientos de un período (actual/anterior/hace 2 meses) a CSV, con cuentas y saldos opcionales. Formato único (CSV, no PDF) — el backup JSON completo multi-tabla es K10 (`/more/export`). `needs_fx` se exporta igual, con la columna de conversión vacía (regla explícita del diseño: "en el CSV el usuario manda") |
 
 ### 6.13 Bloque K — Ajustes (fase C18)
 
@@ -578,28 +742,28 @@ tabla salvo K9 que sí requiere tres pantallas reales).
 
 | ID | Pantalla | Tamaño | Estado | Notas |
 |---|---|---|---|---|
-| CONS-K01 | K1 (needs_fx en patrimonio) | mediano | pendiente | Corrige D03 |
-| CONS-K02 | K2 | mediano | pendiente | |
-| CONS-K03 | K3 (a/b/c) — ver D34, se superpone con B7 | grande | pendiente | ⚠ decidir con CONS-B07 cuál configura qué; resuelto (§ 1.11, CON-30): chip de código de moneda |
-| CONS-K04 | K4 | mediano | pendiente | |
-| CONS-K05 | K5 (DragRow LIB-13) | mediano | pendiente | |
-| CONS-K06 | K6 | mediano | pendiente | |
-| CONS-K07 | K7 | mediano | pendiente | |
-| CONS-K08 | K8 (override manual de FX — paso 1 de la cadena, usa `fx_overrides`) | mediano | pendiente | |
-| CONS-K09 | K9 importador CSV (a: archivo, b: columnas con mapping reusable vía `import_batches`, c: duplicados) | grande | pendiente | Elimina CON-04 (slots vestigiales) antes de programar |
-| CONS-K10 | K10 | mediano | pendiente | |
-| CONS-K11 | K11 | mediano | pendiente | |
-| CONS-K12 | K12 (push subscriptions, `notification_preferences`) | mediano | pendiente | |
-| CONS-K13 | K13 licencia/acerca de | chico | pendiente | Licencia: MIT (§ 1.5, decidido) |
+| CONS-K01 | K1 (needs_fx en patrimonio) | mediano | pendiente | Corrige D03; no es una pantalla propia — `more/page.tsx` ya sirve de índice. El patrimonio con `needs_fx` vive en `analytics/net-worth` (Bloque H) |
+| CONS-K02 | K2 | mediano | **hecho** | `more/profile/page.tsx` + `profiles-repo.ts` (direct-Supabase). `household_members.display_name` NO se sincroniza: no hay policy que deje a un `member` común escribir su propia fila (solo `owner`/`admin`) — documentado en el repo, requiere una policy nueva a futuro |
+| CONS-K03 | K3 (a/b/c) — ver D34, se superpone con B7 | grande | **hecho** | `more/settings/page.tsx`: cuarto slot del tab bar (`useNavStore`, ya existía), día de cierre por household (solo owner/admin), moneda (link a `/currencies`, "tu moneda" vs "moneda base" según CON-30). K3c (color de marca personalizable) diferido: no hay mecanismo de theming por household |
+| CONS-K04 | K4 | mediano | **hecho** | `more/modules/page.tsx`, de una fase anterior |
+| CONS-K05 | K5 (DragRow LIB-13) | mediano | **hecho** | `more/categories/page.tsx` (de una fase anterior) cubre la plantilla, no el reordenamiento con `DragRow` — pendiente si se necesita reordenar categorías existentes, no solo elegir plantilla |
+| CONS-K06 | K6 | mediano | **hecho** | `more/tags/page.tsx`: tags y comercios, crear/renombrar/borrar sobre `tags-repo.ts`/`payees-repo.ts` (local-first, ya existían del bloque de captura) |
+| CONS-K07 | K7 | mediano | diferido | Reglas de auto-categorización necesitan un motor de reglas (`rules` table de `01-arquitectura-datos.md` existe en el schema pero no hay evaluación contra transacciones nuevas ni UI de condición/acción) — alcance de una fase propia, no una pantalla de ajustes suelta |
+| CONS-K08 | K8 (override manual de FX — paso 1 de la cadena, usa `fx_overrides`) | mediano | **hecho** | Ya cubierto por `/currencies` (E6, `FxEditor` + `fxRepo.setManualOverride`); `more/settings/page.tsx` linkea a esa misma pantalla como K8 |
+| CONS-K09 | K9 importador CSV (a: archivo, b: columnas con mapping reusable vía `import_batches`, c: duplicados) | grande | diferido | Wizard de 3 pantallas con parseo de archivo, mapping de columnas persistido por banco y detección de duplicados — no programado esta pasada; `import_batches` está en el schema pero sin migración pusheada |
+| CONS-K10 | K10 | mediano | **hecho** | `more/export/page.tsx` + `lib/export/export-household.ts`: backup JSON completo de lo local-first (Dexie), con conteo real por tabla. No incluye lo que vive solo en Supabase (invites, shares, settlements, inversiones) — declarado en pantalla. Sin reimportación (depende de K9) ni backup automático programado (necesita infra de scheduling que no existe) |
+| CONS-K11 | K11 | mediano | **hecho** | `more/security/page.tsx`, de una fase anterior |
+| CONS-K12 | K12 (push subscriptions, `notification_preferences`) | mediano | **hecho, parcial** | `more/notifications/page.tsx`: preferencias por tipo + suscripción de push real (VAPID, `lib/push/subscribe.ts`), con `push` / `notificationclick` en `sw.ts`. Backend de envío: `supabase/functions/send-push` escrito y **desplegado** con secrets VAPID configurados. Deliberadamente sin disparador automático (cron/trigger que decida cuándo se envía cada tipo) — encender un envío recurrente es una decisión de producto (frecuencia, qué evento dispara cada notificación) que no se tomó sola esta pasada; alguien tiene que invocar la función a mano o decidir el cron |
+| CONS-K13 | K13 licencia/acerca de | chico | **hecho** | `more/about/page.tsx`. Licencia MIT (§ 1.5, decidido) — se muestra directo, no "se está definiendo" como en el diseño original |
 
 ### 6.14 Cierre de fases
 
 | ID | Fase | Qué | Tamaño | Estado | Notas |
 |---|---|---|---|---|---|
-| CONS-DESK | C19 | Desktop: sidebar, layout de dos columnas, command palette | grande | pendiente | |
-| CONS-I18N | C20 | i18n completo (ES/EN/PT), accesibilidad (axe-core, VoiceOver/TalkBack, 200% texto), performance (Lighthouse ≥90, N+1, bundle de módulos apagados) | grande | pendiente | |
-| CONS-OSS | C21 | README, self-host docs, docker-compose, `.env.example`, CONTRIBUTING, licencia (MIT), seeds | mediano | pendiente | Licencia: MIT (§ 1.5, decidido) — ya no bloquea |
-| CONS-CQ | CQ | Auditoría final: seguridad (RLS, secretos, rate limiting), dinero (grep de `number`/`parseFloat`/`toFixed`), performance, offline (50 mutaciones, conflicto real), accesibilidad, open source (README ejecutable por un extraño, sin datos personales en seeds, sin hardcode AR/UY) | grande | pendiente | |
+| CONS-DESK | C19 | Desktop: sidebar, layout de dos columnas, command palette | grande | **hecho, parcial** | Contradicción real entre `docs/02-design-system.md` (§ Desktop: "dos columnas lista+detalle") y el código de `(app)/layout.tsx`, que traía un comentario propio diciendo "nunca multi-columna" — se preguntó y el usuario eligió el tratamiento completo de dos columnas, así que el comentario viejo queda invalidado. `Sidebar` ya existía. Se agregó: `CommandPalette` (⌘K/Ctrl+K, `cmdk`, ya era dependencia sin usar) con navegación rápida + búsqueda liviana de cuentas/movimientos; `useIsDesktop()` (breakpoint 1024px, `useSyncExternalStore` sobre `matchMedia`); y el patrón de dos columnas con ruta interceptora (mismo mecanismo que `@modal/(.)add`) aplicado a **Movimientos** (`transactions/layout.tsx` + `@detail`) y **Cuentas** (`accounts/layout.tsx` + `@detail`) — en desktop el detalle aparece al lado de la lista, en mobile el mismo contenido se dibuja como overlay de pantalla completa. **No se retocó Metas/Presupuestos/Recurrentes/Deudas/Familia/Inversiones** — mismo patrón, mecánicamente repetible (layout.tsx + `@detail/default.tsx` + `@detail/(.)[id]/page.tsx` reusando el componente de detalle existente), pero no se aplicó a los ~6 pares de lista/detalle restantes por tiempo. Queda como trabajo de seguimiento explícito, no un olvido |
+| CONS-I18N | C20 | i18n completo (ES/EN/PT), accesibilidad (axe-core, VoiceOver/TalkBack, 200% texto), performance (Lighthouse ≥90, N+1, bundle de módulos apagados) | grande | **hecho, parcial** | **i18n:** script de paridad de claves entre `es.json`/`en.json`/`pt.json` — **889 claves en cada uno, 0 faltantes en cualquier dirección**. `react/jsx-no-literals` corrido sobre todo `src/**` (fuera de `dev/`): 0 errores, confirma cero strings hardcodeadas en JSX en toda la app, no solo en lo tocado esta pasada. **Accesibilidad:** auditoría dirigida (agente `Explore`) de botones que solo llevan ícono sin `aria-label` en toda la app — encontró y corrigió 1 caso real (`VoiceCaptureSheet.tsx`, botón de empezar a escuchar). El resto de los ~30 botones-solo-ícono revisados ya tenían `aria-label` correcto. **No verificado**: axe-core real, VoiceOver/TalkBack con dispositivo físico, zoom de texto al 200% — necesitan un navegador real, no disponible en este entorno. **Performance:** confirmado que ningún módulo apagado llega al cliente sin querer — la app entera navega con `router.push()` imperativo, **`next/link` no se usa en ningún lado**, así que Next nunca hace prefetch automático de una ruta de módulo apagado; el code-splitting por ruta de App Router ya hace el trabajo que pedía la regla, sin necesitar `dynamic()` explícito. Revisados los `Promise.all(...map(...))` del repo: todos sobre colecciones chicas y acotadas (reordenar categorías/cuentas propias, planes de cuotas de una tarjeta), ningún N+1 real. Corregido un `toFixed(2)` sobre plata encontrado en el propio trabajo de esta pasada (`more/import/page.tsx`, K9c) — pasa ahora por `formatAmountCompact`. **No verificado**: Lighthouse real (necesita Chrome headless, no disponible acá) |
+| CONS-OSS | C21 | README, self-host docs, docker-compose, `.env.example`, CONTRIBUTING, licencia (MIT), seeds | mediano | **hecho** | `LICENSE` (MIT, + `"license": "MIT"` en `package.json`), `README.md` reescrito de cero (el viejo describía el paquete de diseño, no la app construida), `docs/self-hosting.md`, `CONTRIBUTING.md`, `.env.example` (con todas las env vars reales que usa el código, incluida `NEXT_PUBLIC_VAPID_PUBLIC_KEY` agregada a `src/env.ts`), `Dockerfile` + `docker-compose.yml`. El Dockerfile **no usa `output: standalone`** a propósito — el service worker de `@serwist/turbopack` lo compila esbuild en runtime leyendo `src/app/sw.ts` de disco, así que necesita el árbol completo, no lo que el tracer de standalone copiaría — y **no se pudo probar contra un build real** (sin Docker en este entorno, mismo motivo que documenta `CLAUDE.md`). Seeds (`lib/seed/demo-household.ts`) revisados: sin nombres/emails/datos personales, solo nombres de comercios reales uruguayos para realismo (no es dato personal) |
+| CONS-CQ | CQ | Auditoría final: seguridad (RLS, secretos, rate limiting), dinero (grep de `number`/`parseFloat`/`toFixed`), performance, offline (50 mutaciones, conflicto real), accesibilidad, open source (README ejecutable por un extraño, sin datos personales en seeds, sin hardcode AR/UY) | grande | **hecho, parcial** | **Hallazgo real, corregido:** `client_rev` se guardaba y se mandaba a Supabase pero **nada lo comparaba nunca** — dos ediciones offline del mismo movimiento se resolvían con "el último que sincroniza gana", en silencio, exactamente lo que la app promete que no pasa. Corregido de punta a punta: `TransactionRow.syncState`/`syncError` (schema + Dexie `version(5)`), `conflictSensitive` en `sync-config.ts` (marcado solo en `transactions`, la única tabla con edición multi-miembro real hoy), detección real en `sync-worker.ts` (`detectRevisionConflict`, con test unitario y con test de integración contra un doble de Supabase que simula el conflicto de punta a punta), tabla local `conflicts` para no perder ninguna versión, `conflicts-repo.ts` + `more/conflicts/page.tsx` para resolver (quedarme con la mía / quedarme con la del servidor). **Seguridad:** sin `service_role` en el bundle del cliente (confirmado por grep — solo aparece en comentarios y en la Edge Function), sin secretos en archivos versionados (`.env.local` confirmado ignorado por git, la clave privada VAPID no aparece en ningún archivo trackeado), RLS de las tablas nuevas de esta pasada revisado a mano (`USING`+`WITH CHECK` pareados, `account_id`/`household_id` inmutables donde corresponde). **Rate limiting:** no verificado — necesita infraestructura de servidor (Vercel/Supabase) que no se configura desde este repo. **Dinero:** grep completo de `toFixed`/`Number(...)` sobre toda la app — el único uso real sobre plata (`more/import/page.tsx`, ya corregido en C20) y todo lo demás son porcentajes/ratios/coordenadas de gráfico, dominio legítimamente `number` según la propia regla del proyecto. **Accesibilidad:** ver C20 (1 botón sin `aria-label` corregido). **Performance:** ver C20 (sin `next/link`, sin prefetch de módulos apagados, sin N+1 real). **Offline — 50 mutaciones reales**: no simulado en este entorno (necesitaría dos clientes reales sincronizando contra el proyecto de Supabase en simultáneo); sí quedó una suite de tests de integración del drenado del outbox (`sync-worker.test.ts`, 8 casos) que cubre inserts/updates/deletes, traducción de tipos, aislamiento de errores, y ahora también el conflicto real. **Open source:** ver C21 |
 
 ---
 
@@ -613,8 +777,8 @@ nadie lo va a notar hasta la auditoría final.
 
 | ID | Qué | Fase | Tamaño | Estado |
 |---|---|---|---|---|
-| CON-27 | Regla de lint: contar usos de `--primary-fill` por archivo de pantalla, advertir sobre 1 salvo excepciones declaradas (Switch on, ScopeSwitcher/SegmentedControl de identidad, UndoToast) | C4/C6 | mediano | pendiente |
-| CON-28 | Declarar por escrito las 3 reglas no escritas de la auditoría: cuándo `hero-xl` 64 vs `hero` 40 (hoy en J7/H11/H12 sin regla); `critical` (estado) vs. naranja de polaridad (rendimiento negativo); cuándo se repite `$` en una lista | C4 | chico | pendiente |
+| CON-27 | Regla de lint: contar usos de `--primary-fill` por archivo de pantalla, advertir sobre 1 salvo excepciones declaradas (Switch on, ScopeSwitcher/SegmentedControl de identidad, UndoToast) | C4/C6 | mediano | **hecho** |
+| CON-28 | Declarar por escrito las 3 reglas no escritas de la auditoría: cuándo `hero-xl` 64 vs `hero` 40 (hoy en J7/H11/H12 sin regla); `critical` (estado) vs. naranja de polaridad (rendimiento negativo); cuándo se repite `$` en una lista | C4 | chico | **hecho** |
 
 ---
 

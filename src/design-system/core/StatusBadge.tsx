@@ -22,15 +22,40 @@ const STATUS_MAP: Record<
 export interface StatusBadgeProps {
   /** Rampa de estado fija — nunca tematizada, nunca reusada como color de serie de gráfico. */
   status?: "neutral" | "good" | "warning" | "serious" | "critical" | undefined;
+  /**
+   * CON-09 (docs/plan-de-trabajo.md § 4): el escalamiento por edad vive
+   * ACÁ, no en el caller — pasá `ageDays` (días desde que algo quedó
+   * `neutral`, ej. un `needs_fx` pendiente) y el componente decide solo si
+   * corresponde subir a `warning` a partir de una semana
+   * (`docs/02-design-system.md` § 6, mismo umbral que `lib/fx/resolve.ts`
+   * `needsFxSeverity()`). Solo aplica cuando `status="neutral"` — los
+   * demás niveles no escalan por tiempo, son estados explícitos.
+   */
+  ageDays?: number | undefined;
   /** Siempre requerido: el color solo nunca porta el significado. */
   children: ReactNode;
   icon?: IconName | undefined;
   style?: CSSProperties | undefined;
 }
 
+const AGE_ESCALATION_THRESHOLD_DAYS = 7;
+
+/**
+ * Extraída como función pura testeable: `neutral` + 7 días o más → `warning`,
+ * cualquier otro estado no escala por tiempo (son explícitos).
+ */
+export function resolveBadgeStatus(
+  status: NonNullable<StatusBadgeProps["status"]>,
+  ageDays: number | undefined
+): NonNullable<StatusBadgeProps["status"]> {
+  if (status === "neutral" && ageDays !== undefined && ageDays >= AGE_ESCALATION_THRESHOLD_DAYS) return "warning";
+  return status;
+}
+
 /** Píldora de estado: siempre ícono + label, nunca color solo. El rojo nunca significa "gasto". */
-export function StatusBadge({ status = "good", children, icon, style }: StatusBadgeProps) {
-  const s = STATUS_MAP[status];
+export function StatusBadge({ status = "good", ageDays, children, icon, style }: StatusBadgeProps) {
+  const effectiveStatus = resolveBadgeStatus(status, ageDays);
+  const s = STATUS_MAP[effectiveStatus];
   return (
     <span
       style={{

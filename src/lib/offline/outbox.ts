@@ -49,4 +49,9 @@ export const outbox = {
       lastError: error,
     });
   },
+
+  /** Terminal — a diferencia de `markFailed`, `listPending` no vuelve a levantar esta entrada: espera resolución explícita (`conflicts-repo.ts`). */
+  async markConflict(id: number): Promise<void> {
+    await getDb().outbox.update(id, { status: "conflict" });
+  },
 };

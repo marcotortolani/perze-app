@@ -7,22 +7,45 @@ import { useTranslations } from "next-intl";
 import { Icon, OtpInput } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { createClient } from "@/lib/supabase/client";
 
-/** A3 — verificación de magic link. Sin backend: cualquier código de 6 dígitos se acepta. */
+/** A3 — verificación del código de 6 dígitos que manda `signInWithOtp` (A2). */
 export default function OnboardingVerifyPage() {
   const t = useTranslations();
   const router = useRouter();
   const email = useOnboardingStore((s) => s.draft.email);
   const [code, setCode] = useState("");
   const [invalid, setInvalid] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
-  const handleChange = (value: string) => {
+  const handleChange = async (value: string) => {
     setCode(value);
     setInvalid(false);
-    if (value.length === 6) {
-      if (/^\d{6}$/.test(value)) router.push("/onboarding/country");
-      else setInvalid(true);
+    if (value.length !== 6) return;
+    if (!/^\d{6}$/.test(value)) {
+      setInvalid(true);
+      return;
     }
+
+    setVerifying(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.verifyOtp({ email, token: value, type: "email" });
+      if (error) {
+        setInvalid(true);
+        return;
+      }
+      router.push("/onboarding/country");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    if (error) toast.error(error.message);
+    else toast(t("onboarding.verify.resent"));
   };
 
   return (
@@ -39,7 +62,7 @@ export default function OnboardingVerifyPage() {
       </div>
 
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <OtpInput value={code} onChange={handleChange} invalid={invalid} />
+        <OtpInput value={code} onChange={handleChange} invalid={invalid} disabled={verifying} />
       </div>
       {invalid ? (
         <p className="t-label" style={{ color: "var(--critical)", textAlign: "center" }}>
@@ -48,7 +71,7 @@ export default function OnboardingVerifyPage() {
       ) : null}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", marginTop: "auto" }}>
-        <button type="button" onClick={() => toast(t("onboarding.verify.resent"))} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--primary-ink)", fontSize: 14 }}>
+        <button type="button" onClick={handleResend} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--primary-ink)", fontSize: 14 }}>
           {t("onboarding.verify.resend")}
         </button>
         <button type="button" onClick={() => router.push("/onboarding")} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }}>

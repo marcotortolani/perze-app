@@ -1,0 +1,110 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { EmptyState, Icon, ListRow, Skeleton } from "@/design-system";
+import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
+import { useInvites } from "@/hooks/use-invites";
+import { useCurrentUserId } from "@/hooks/use-current-user";
+import { markHouseholdMemberFormer } from "@/lib/repos/household-members-remote";
+import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
+import { computeNetBalances } from "@/lib/analytics/settle-up";
+
+const ROLE_MESSAGE_KEY = {
+  owner: "familyPage.roles.owner",
+  admin: "familyPage.roles.admin",
+  member: "familyPage.roles.member",
+  viewer: "familyPage.roles.viewer",
+} as const;
+
+/** J1/J2 — grupo familiar: quién está, quién falta aceptar, entrada a comparar/invitar. */
+export default function FamilyPage() {
+  const t = useTranslations();
+  const router = useRouter();
+  const userId = useCurrentUserId();
+  const { data: household } = useCurrentHousehold();
+  const { data: members } = useRemoteHouseholdMembers(household?.id);
+  const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
+  const { data: invites } = useInvites(household?.id);
+
+  useEffect(() => {
+    if (household && !household.enabledModules.includes("family")) router.replace("/");
+  }, [household, router]);
+
+  if (household && !household.enabledModules.includes("family")) return null;
+
+  if (!household || !members || !invites) return <Skeleton height={200} style={{ marginTop: 16 }} />;
+
+  const pendingInvites = invites.filter((i) => i.acceptedBy === null && i.revokedAt === null);
+  const myRole = members.find((m) => m.profileId === userId)?.role;
+  const canRemove = myRole === "owner" || myRole === "admin";
+
+  // J10: un miembro que se va liquida o condona antes — nunca se lo saca
+  // con saldo pendiente, así que se chequea el neto antes de tocar `status`.
+  const handleRemove = async (targetId: string) => {
+    if (!household) return;
+    const shares = await transactionSharesRepo.listUnsettledForHousehold(household.id);
+    const { byMember } = computeNetBalances(
+      shares.map((s) => ({ memberId: s.memberId, shareAmountBase: s.shareAmountBase, paidBy: s.createdBy })),
+      targetId
+    );
+    if ([...byMember.values()].some((v) => v !== 0n)) {
+      toast(t("familyPage.mustSettleFirst"));
+      router.push("/family/settle");
+      return;
+    }
+    await markHouseholdMemberFormer(household.id, targetId);
+    invalidateMembers();
+    toast(t("familyPage.removed"));
+  };
+
+  if (members.length <= 1 && pendingInvites.length === 0) {
+    return <EmptyState message={t("familyPage.empty")} actionLabel={t("familyPage.invite")} onAction={() => router.push("/family/invite")} />;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
+      <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
+      <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
+      <ListRow icon="handshake" label={t("settlePage.title")} onClick={() => router.push("/family/settle")} />
+      <ListRow icon="chart" label={t("comparePage.title")} onClick={() => router.push("/family/compare")} />
+      <ListRow icon="list" label={t("activityPage.title")} onClick={() => router.push("/family/activity")} />
+      <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 12 }}>{t("familyPage.members")}</div>
+      {members.map((m) => (
+        <ListRow
+          key={m.profileId}
+          icon="users"
+          label={m.displayName ?? t("familyPage.unnamed")}
+          meta={t(ROLE_MESSAGE_KEY[m.role])}
+          onClick={m.profileId !== userId ? () => router.push(`/family/mirror/${m.profileId}`) : undefined}
+          right={
+            canRemove && m.profileId !== userId ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove(m.profileId);
+                }}
+                aria-label={t("familyPage.remove", { name: m.displayName ?? t("familyPage.unnamed") })}
+                style={{ background: "none", border: 0, padding: 8, margin: -8, cursor: "pointer" }}
+              >
+                <Icon name="close" size={16} color="var(--text-muted)" />
+              </button>
+            ) : undefined
+          }
+        />
+      ))}
+      {pendingInvites.length > 0 ? (
+        <>
+          <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 12 }}>{t("familyPage.pendingInvites")}</div>
+          {pendingInvites.map((invite) => (
+            <ListRow key={invite.id} icon="mail" label={invite.email ?? t("familyPage.codeInvite", { code: invite.code })} meta={t("familyPage.pending")} />
+          ))}
+        </>
+      ) : null}
+    </div>
+  );
+}

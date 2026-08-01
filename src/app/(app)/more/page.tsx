@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, ListRow, Sheet } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -38,8 +37,6 @@ export default function MorePage() {
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const comingSoon = (label: string) => toast(t("morePage.comingSoon", { label }));
-
   const handleSelectLocale = (next: Locale) => {
     if (next === locale) {
       setLanguageSheetOpen(false);
@@ -58,10 +55,14 @@ export default function MorePage() {
         <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
         <Card padding="4px 16px">
           <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} />
-          {modules.includes("budgets") ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => comingSoon(t("morePage.budgets"))} /> : null}
-          {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => comingSoon(t("morePage.goals"))} /> : null}
-          {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => comingSoon(t("morePage.recurring"))} /> : null}
-          {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => comingSoon(t("morePage.debts"))} /> : null}
+          {modules.includes("budgets") ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
+          {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => router.push("/goals")} /> : null}
+          {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}
+          {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => router.push("/debts")} /> : null}
+          {modules.includes("investments") ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
+          <ListRow icon="tag" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
+          <ListRow icon="tag" label={t("morePage.tagsAndPayees")} onClick={() => router.push("/more/tags")} />
+          <ListRow icon="refresh" label={t("morePage.rules")} onClick={() => router.push("/more/rules")} />
         </Card>
       </section>
 
@@ -69,7 +70,7 @@ export default function MorePage() {
         <section>
           <div style={CAPTION_STYLE}>{t("morePage.people")}</div>
           <Card padding="4px 16px">
-            <ListRow icon="users" label={t("morePage.family")} onClick={() => comingSoon(t("morePage.family"))} />
+            <ListRow icon="users" label={t("morePage.family")} onClick={() => router.push("/family")} />
           </Card>
         </section>
       ) : null}
@@ -84,14 +85,19 @@ export default function MorePage() {
             variant="value"
             onClick={() => setLanguageSheetOpen(true)}
           />
-          <ListRow icon="edit" label={t("morePage.settings")} onClick={() => comingSoon(t("morePage.settings"))} />
-          <ListRow icon="install" label={t("morePage.importExport")} onClick={() => comingSoon(t("morePage.importExport"))} />
-          <ListRow icon="mail" label={t("morePage.about")} onClick={() => comingSoon(t("morePage.about"))} />
+          <ListRow icon="user" label={t("morePage.profile")} onClick={() => router.push("/more/profile")} />
+          <ListRow icon="lock" label={t("morePage.security")} onClick={() => router.push("/more/security")} />
+          <ListRow icon="alert" label={t("notificationsPage.title")} onClick={() => router.push("/more/notifications")} />
+          <ListRow icon="refresh" label={t("conflictsPage.title")} onClick={() => router.push("/more/conflicts")} />
+          <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
+          <ListRow icon="install" label={t("morePage.importExport")} onClick={() => router.push("/more/export")} />
+          <ListRow icon="install" label={t("importCsvPage.title")} onClick={() => router.push("/more/import")} />
+          <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
         </Card>
       </section>
 
       <Card padding="4px 16px">
-        <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => comingSoon(t("morePage.enableMoreFeatures"))} />
+        <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
       </Card>
 
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>

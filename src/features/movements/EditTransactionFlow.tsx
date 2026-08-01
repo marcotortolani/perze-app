@@ -10,7 +10,12 @@ import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
 import { AmountStep } from "@/features/capture/AmountStep";
 import { CategoryStep } from "@/features/capture/CategoryStep";
 import { DetailsSheet } from "@/features/capture/DetailsSheet";
-import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useFrequentCategories } from "@/features/capture/use-frequent-categories";
+import { buildNewCategoryInput } from "@/features/capture/create-category";
+import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateCategories } from "@/hooks/use-categories";
+import { useCurrentUserId } from "@/hooks/use-current-user";
+import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { formatAmount } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
@@ -38,13 +43,29 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const clearAmount = useCaptureDraftStore((s) => s.clearAmount);
   const reset = useCaptureDraftStore((s) => s.reset);
   const invalidateTransactions = useInvalidateTransactions(household.id);
+  const invalidateCategories = useInvalidateCategories(household.id);
+  const userId = useCurrentUserId();
+  const { data: transactions } = useTransactions(household.id);
 
   const [step, setStep] = useState<"amount" | "category">("amount");
   const [sheet, setSheet] = useState<"none" | "account" | "counterAccount" | "details">("none");
   // Capturado una sola vez al montar (lazy init, no en el cuerpo del render)
   // — evita llamar a `Date.now()` en cada render solo para comparar antigüedad.
   const [openedAtMs] = useState(() => Date.now());
+  const [now] = useState(() => new Date());
   const isStale = transaction.currencyCode !== household.baseCurrency && openedAtMs - new Date(transaction.occurredAt).getTime() > STALE_DAYS * 86_400_000;
+
+  const categoryKind = draft.kind === "income" ? "income" : "expense";
+  const sameKindCategories = categories.filter((c) => c.kind === categoryKind);
+  const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
+
+  const handleCreateCategory = async (name: string) => {
+    const created = await categoriesRepo.create(
+      buildNewCategoryInput({ householdId: household.id, name, kind: categoryKind, createdBy: userId, existing: sameKindCategories })
+    );
+    invalidateCategories();
+    return created;
+  };
 
   useEffect(() => {
     reset();
@@ -106,11 +127,12 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
         <AmountStep
           draft={draft}
           accounts={accounts}
-          categories={categories}
+          frequent={frequentCategories}
           account={account}
           counterAccount={counterAccount}
           onKindChange={setKind}
           onAmountKey={(key) => (key === "clear" ? clearAmount() : key === "backspace" ? backspaceAmount() : appendToAmount(key === "," ? "," : key))}
+          onAmountChange={(expression) => setField("amountExpression", expression)}
           onOpenAccountPicker={() => setSheet("account")}
           onOpenCounterAccountPicker={() => setSheet("counterAccount")}
           onInvertTransfer={() => {
@@ -119,12 +141,19 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
             setField("counterAccountId", from);
           }}
           onQuickCategory={(category) => setField("categoryId", category.id)}
+          onOpenCategoryPicker={() => setStep("category")}
           onOpenDetails={() => setSheet("details")}
           onVoice={() => toast(t("movements.editFlow.voiceUnavailable"))}
           onPhoto={() => toast(t("movements.editFlow.photoComingSoon"))}
         />
       ) : (
-        <CategoryStep categories={categories.filter((c) => c.kind === (draft.kind === "income" ? "income" : "expense"))} selectedId={draft.categoryId} onSelect={(c) => setField("categoryId", c.id)} />
+        <CategoryStep
+          categories={sameKindCategories}
+          frequent={frequentCategories}
+          selectedId={draft.categoryId}
+          onSelect={(c) => setField("categoryId", c.id)}
+          onCreate={handleCreateCategory}
+        />
       )}
 
       <div style={{ marginTop: "auto" }}>

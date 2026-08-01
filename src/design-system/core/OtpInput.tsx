@@ -8,11 +8,13 @@ export interface OtpInputProps {
   value: string;
   onChange: (value: string) => void;
   invalid?: boolean | undefined;
+  /** Mientras se verifica el código contra el servidor — no bloquea visualmente, solo evita doble submit. */
+  disabled?: boolean | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Seis casillas de un dígito con autofill — código de verificación de A3. */
-export function OtpInput({ length = 6, value, onChange, invalid = false, style }: OtpInputProps) {
+export function OtpInput({ length = 6, value, onChange, invalid = false, disabled = false, style }: OtpInputProps) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? "");
 
@@ -46,6 +48,7 @@ export function OtpInput({ length = 6, value, onChange, invalid = false, style }
           inputMode="numeric"
           autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={1}
+          disabled={disabled}
           onChange={(e) => setDigit(i, e.target.value.replace(/\D/g, "").slice(-1))}
           onKeyDown={(e) => onKeyDown(i, e)}
           onPaste={onPaste}

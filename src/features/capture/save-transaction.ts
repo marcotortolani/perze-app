@@ -4,6 +4,8 @@ import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { transactionsRepo, type NewTransactionInput } from "@/lib/repos/transactions-repo";
+import { categorizationRulesRepo } from "@/lib/repos/categorization-rules-repo";
+import { evaluateCategorizationRules } from "@/lib/analytics/categorization-rules";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 
 export interface SaveDraftParams {
@@ -22,22 +24,74 @@ export interface SaveDraftParams {
  * (`needs_fx`), nunca se bloquea.
  */
 export async function saveDraftAsTransaction({ draft, household, userId, account, counterAccount }: SaveDraftParams): Promise<TransactionRow> {
-  const currency = draft.currency || account.currencyCode;
-  const amount = evaluateKeypadExpression(draft.amountExpression || "0", currency);
   const date = draft.occurredAt.slice(0, 10);
+
+  // Primera conversión (CLAUDE.md § dinero, "SON DOS CONVERSIONES, NO UNA"):
+  // lo que el usuario tipeó puede estar en otra moneda que la de la cuenta
+  // — `amount`/`currencyCode` SIEMPRE terminan en la moneda de la cuenta,
+  // nunca en la capturada. Esa conversión ocurre acá, en la captura.
+  const capturedCurrency = draft.currency || account.currencyCode;
+  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency);
+
+  let amount = capturedAmount;
+  let original: Pick<NewTransactionInput, "originalAmount" | "originalCurrency" | "originalRate"> = {
+    originalAmount: null,
+    originalCurrency: null,
+    originalRate: null,
+  };
+
+  if (capturedCurrency !== account.currencyCode) {
+    const captureResolution = await fxRepo.resolve({
+      householdId: household.id,
+      base: capturedCurrency,
+      quote: account.currencyCode,
+      date,
+    });
+    if (captureResolution.rate !== null) {
+      amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
+      original = {
+        originalAmount: capturedAmount.amount,
+        originalCurrency: capturedCurrency,
+        originalRate: captureResolution.rate,
+      };
+    }
+    // Sin rate para la conversión de captura: no se bloquea el guardado.
+    // `original_*` queda en NULL y el monto capturado se usa tal cual como
+    // moneda de cuenta — no corrompe ningún agregado, porque original_rate
+    // no alimenta needs_fx ni ningún cálculo de patrimonio (es solo la
+    // anotación de "qué tipeó el usuario"). Distinto del caso de
+    // needs_fx real más abajo, que sí requiere el badge visible.
+  }
+
+  const currency = account.currencyCode;
+
+  // K7 — auto-categorización: solo entra si el usuario no eligió categoría
+  // él mismo. Una elección explícita nunca se pisa con una regla.
+  let matchedCategoryId = draft.categoryId;
+  let matchedRuleId: string | null = null;
+  if (!draft.categoryId && draft.kind !== "transfer") {
+    const rules = await categorizationRulesRepo.list(household.id);
+    const matched = evaluateCategorizationRules(rules, { note: draft.note || null, payeeName: draft.payeeName || null });
+    if (matched?.actions.categoryId) {
+      matchedCategoryId = matched.actions.categoryId;
+      matchedRuleId = matched.id;
+    }
+  }
+  if (matchedRuleId) void categorizationRulesRepo.recordHit(matchedRuleId);
 
   const base: Omit<NewTransactionInput, "kind" | "accountId" | "counterAccountId" | "amount" | "counterAmount" | "counterCurrencyCode" | "counterFxRate"> = {
     householdId: household.id,
     createdBy: userId,
     occurredAt: draft.occurredAt,
     currencyCode: currency,
+    ...original,
     fxRate: null,
     fxSource: "identity",
     fxProvider: null,
     fxQuoteKind: null,
     fxResolvedAt: null,
     amountBase: null,
-    categoryId: draft.categoryId,
+    categoryId: matchedCategoryId,
     payeeId: null,
     note: draft.note || null,
     attachments: [],

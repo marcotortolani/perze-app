@@ -1,0 +1,57 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { AppHeader, BarChart, Skeleton, StatTile } from "@/design-system";
+import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useTransactions } from "@/hooks/use-transactions";
+import { formatAmountCompact } from "@/lib/money/format";
+import { money } from "@/lib/money/money";
+import { formatDateShort, type Locale } from "@/i18n/formatting";
+
+const DAYS = 14;
+
+/** H3 — tendencias: gasto diario de las últimas 2 semanas, día por día. */
+export default function TrendsPage() {
+  const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const router = useRouter();
+  const { data: household } = useCurrentHousehold();
+  const { data: transactions } = useTransactions(household?.id);
+
+  if (!household || !transactions) return <Skeleton height={260} style={{ marginTop: 16 }} />;
+
+  const now = new Date();
+  const baseCurrency = household.baseCurrency;
+  const days = Array.from({ length: DAYS }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (DAYS - 1 - i));
+    const iso = d.toISOString().slice(0, 10);
+    const total = transactions
+      .filter((tx) => tx.kind === "expense" && tx.amountBase !== null && tx.occurredAt.slice(0, 10) === iso)
+      .reduce((s, tx) => s + tx.amountBase!, 0n);
+    return { date: d, total };
+  });
+
+  const thisWeek = days.slice(-7).reduce((s, d) => s + d.total, 0n);
+  const lastWeek = days.slice(0, 7).reduce((s, d) => s + d.total, 0n);
+  const deltaPct = lastWeek > 0n ? ((Number(thisWeek) - Number(lastWeek)) / Number(lastWeek)) * 100 : null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <AppHeader title={t("trendsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
+      <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
+        <StatTile
+          label={t("trendsPage.thisWeek")}
+          value={formatAmountCompact(money(thisWeek, baseCurrency), { showSign: false })}
+          delta={deltaPct !== null ? `${deltaPct >= 0 ? "↑" : "↓"} ${Math.abs(deltaPct).toFixed(1)}%` : undefined}
+          deltaPolarity={deltaPct === null ? "neutral" : deltaPct > 0 ? "negative" : "positive"}
+          deltaNote={t("trendsPage.vsLastWeek")}
+        />
+        <BarChart
+          data={days.map((d) => ({ label: formatDateShort(locale, d.date).slice(0, 2), value: Number(d.total) }))}
+          height={140}
+        />
+      </div>
+    </div>
+  );
+}

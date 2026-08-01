@@ -60,8 +60,24 @@ Gris **ligeramente cálido** — más agradable y menos clínico que el gris pur
 | Texto secundario | `#A1A1A6` (7.2:1) | `#5A5A60` (6.9:1) |
 | Texto muted — ejes, captions | `#6E6E76` (3.7:1) | `#8A8A90` (3.4:1) |
 | Gridline hairline | `#232326` | `#EFEFED` |
+| Superficie de selección | `#2C2C31` (1,24:1 vs. sup. 2) | `#DEDEDA` (1,24:1 vs. sup. 2) |
+| Anillo de selección | `#37373A` (1,45:1 vs. sup. 2) | `#C9C9C4` (1,52:1 vs. sup. 2) |
 
 **No hay más de 3 superficies apiladas nunca.** Si necesitás una cuarta, el layout está mal.
+
+**Selección por superficie (auditoría D02, corregido).** `--surface-3` contra `--surface-2`
+daba 1,065:1 en claro y 1,14:1 en oscuro — indistinguible. Token propio (`--selection-surface`
++ `--selection-ring`), nunca compartido con `--surface-3` (que sigue siendo inputs/keypad):
+`SegmentedControl` (opción no-marca), `Chip` de identidad neutra, `CategoryBubble`,
+`DateStrip`, `AccountCarousel`, `SelectableRow`, `OptionCard`, `InstitutionTile`. Contraste
+verificado con la fórmula de luminancia relativa WCAG, no a ojo — mismo orden de magnitud en
+los dos modos para que el mecanismo se sienta igual de firme.
+
+**Tinta de `ZMark` (CON-19, auditoría D44).** El 20% de tinta que documentaba el sistema de
+marca se pierde en oscuro. Token propio `--zmark-ink` (`color-mix(in srgb, var(--text-primary)
+N%, transparent)`): **28% en oscuro, 20% en claro** — la app arranca en oscuro por defecto, así
+que el valor de `:root` es el de 28% y `.light`/`[data-theme="light"]` lo baja a 20%. Ningún
+componente calcula el porcentaje a mano.
 
 ### 2.3 Primario, secundario y acento
 
@@ -128,6 +144,17 @@ Siempre con **ícono + label**. Nunca color solo. Nunca reutilizados como color 
 
 Falta un quinto nivel que no existe: **el neutro no lleva color**. Usa tinta secundaria sobre superficie 2, con ícono. Un dato pendiente en ámbar o naranja mentiría sobre su gravedad, y el ruido de un color que grita más de lo que pasa es el que hace que el usuario deje de mirar los colores.
 
+**`critical` (estado) contra el naranja de polaridad — CON-28.** Son dos escalas distintas
+que comparten familia de color por casualidad, no por relación semántica, y hay que
+declararlo para que nadie las funda en una. `critical` (`#D03B3B`, rojo) es **estado**:
+algo está mal *ahora* y requiere acción — presupuesto excedido, error de sync. El naranja de
+polaridad (`--money-negative-emphasis`, § 2.3) es **polaridad**: un gasto puntual que se
+quiere destacar dentro de la lectura neutra de "gasto = tinta neutra". Un gasto grande no es
+un problema por ser grande — sigue siendo naranja de polaridad, nunca `critical`. Un
+presupuesto excedido sí es un problema — es `critical`, con ícono y label, nunca solo un
+monto en naranja. La pregunta que separa los dos casos: "¿esto es información sobre un
+monto, o es una alerta sobre el estado del sistema?".
+
 **Ascenso por antigüedad — la única excepción, y es una sola.** Si un movimiento lleva más de **7 días** con `needs_fx`, el badge sube de `neutral` a `warning`. El razonamiento: a esa altura ya dejó de ser "un dato que llega solo" y pasa a requerir que el usuario cargue el rate a mano. Ningún otro estado del sistema escala por tiempo — un movimiento sin sincronizar de hace un mes sigue siendo neutro, porque la app no puede hacer nada distinto y avisarlo no ayudaría.
 
 ### 2.6 Paleta de datos (validada)
@@ -193,6 +220,24 @@ caption   11 / 16   +2%    uppercase, headers de sección
 ```
 
 Las cifras héroe usan figuras proporcionales; `tabular-nums` se reserva para columnas.
+
+**Cuándo `hero-xl` (64) en vez de `hero` (40) — CON-28.** La auditoría marcó J7 y H11
+usándolo sin que ninguna regla lo explicara. La regla: `hero-xl` es solo para la cifra que
+el usuario está **construyendo activamente en el momento** — el monto en el keypad de
+captura (C1/C4/C5) y el rate en edición de `FxEditor`. `hero` es para toda cifra
+**protagonista pero ya resuelta**: un saldo, un total, un patrimonio, el "cuánto me deben"
+de J7. J7 y H11 muestran un cálculo ya hecho, no algo que el usuario está tipeando ahora
+— van en `hero`, no en `hero-xl`; si aparecen en `hero-xl` hoy es una desviación a corregir
+cuando se programen esas pantallas, no una segunda regla válida.
+
+**Repetición del símbolo `$` en una lista — CON-28.** Dos convenciones convivían sin
+decisión escrita. La que queda: **el símbolo se repite en cada fila** cuando la lista puede
+mezclar monedas (cuentas de distintas monedas, movimientos en H con `needs_fx`, cualquier
+lista que agregue con `NeedsFxBanner`) — sin el símbolo por fila, un ARS y un USD son
+indistinguibles a simple vista. El símbolo **se omite y aparece una sola vez como header**
+(o no aparece, si el título de la sección ya lo deja claro) cuando toda la lista está
+garantizada en una sola moneda — la cuenta ya elegida, el detalle de una transacción. La
+pregunta operativa es "¿puede esta lista, alguna vez, mezclar monedas?", no el tipo de dato.
 
 ---
 
@@ -280,7 +325,7 @@ Nada de la funcionalidad depende de una animación.
 | `<Amount>` | Único lugar donde se formatea plata: signo, símbolo, decimales por moneda, color por polaridad, variante de tamaño, `tabular-nums` opcional, modo privacidad (blur). |
 | `<Keypad>` | Teclado numérico de pantalla completa. Teclas 64px, dígitos 32px, `+ − × ÷`, backspace con long-press para limpiar, haptic por tecla. |
 | `<AmountScrubber>` | La cifra es arrastrable horizontalmente: ± con aceleración por velocidad (`@use-gesture`). |
-| `<CurrencyChip>` | Bandera + código. Tap abre selector. |
+| `<CurrencyChip>` | Solo el código ISO — cero banderas (CON-30). Tap abre selector. |
 | `<FxEditor>` | Rate sugerido grande, fuente y fecha, slider fino ±5%, tap para keypad, badge si el dato está viejo. |
 | `<CategoryBubble>` | Círculo de 64px, ícono neutro, label debajo. Seleccionado = anillo violeta animado. |
 | `<AccountCarousel>` | Carrusel horizontal con snap: saldo, institución, moneda, país. |

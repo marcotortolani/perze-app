@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, EmptyState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow } from "@/design-system";
+import { Banner, Button, EmptyState, ErrorState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow } from "@/design-system";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import type { Locale } from "@/i18n/formatting";
 import type { IconName } from "@/design-system/core/Icon";
@@ -13,9 +13,11 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { add, money, subtract, zero } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
+import { usePendingMutations } from "@/lib/offline";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
@@ -49,15 +51,28 @@ export default function MovementsPage() {
   const locale = useLocale() as Locale;
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
-  const { data: transactions, isLoading: txLoading } = useTransactions(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: transactions, isLoading: txLoading } = transactionsQuery;
   const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const errorState = useQueryErrorState(transactionsQuery, { what: t("transactions.list.errorWhat") });
+  const pending = usePendingMutations();
 
   const [filters, setFilters] = useState<MovementsFilters>(defaultMovementsFilters());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selection, setSelection] = useState<Set<string> | null>(null);
+
+  // Resultados del buscador flotante (`?category=` / `?payee=`) aterrizan
+  // acá ya filtrados en vez de en una lista sin filtrar — ver `SearchOverlay`.
+  const categoryIdParam = searchParams.get("category");
+  const payeeIdParam = searchParams.get("payee");
+  useEffect(() => {
+    if (!categoryIdParam) return;
+    setFilters((f) => (f.categoryIds.includes(categoryIdParam) ? f : { ...f, categoryIds: [categoryIdParam] }));
+  }, [categoryIdParam]);
 
   const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -74,9 +89,10 @@ export default function MovementsPage() {
       if (filters.accountIds.length > 0 && !filters.accountIds.includes(t.accountId)) return false;
       if (filters.categoryIds.length > 0 && (!t.categoryId || !filters.categoryIds.includes(t.categoryId))) return false;
       if (filters.onlyPending && t.fxRate !== null) return false;
+      if (payeeIdParam && t.payeeId !== payeeIdParam) return false;
       return true;
     });
-  }, [transactions, from, to, filters]);
+  }, [transactions, from, to, filters, payeeIdParam]);
 
   const baseCurrency = household?.baseCurrency ?? "UYU";
   let periodIncome = zero(baseCurrency);
@@ -158,15 +174,20 @@ export default function MovementsPage() {
     );
   }
 
+  if (errorState) return <ErrorState {...errorState} />;
+
   if ((transactions ?? []).length === 0) {
-    return <EmptyState icon="list" message={t("transactions.list.empty")} actionLabel={t("transactions.list.emptyAction")} onAction={() => router.push("/add")} />;
+    return <EmptyState message={t("transactions.list.empty")} actionLabel={t("transactions.list.emptyAction")} onAction={() => router.push("/add")} />;
   }
 
   const activeFilterCount = countActiveFilters(filters);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", paddingTop: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, paddingTop: 12 }}>
+      {pending && pending > 0 ? (
+        <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding)) 12px", borderRadius: 0, flexShrink: 0 }} />
+      ) : null}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, flexShrink: 0 }}>
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
@@ -178,7 +199,15 @@ export default function MovementsPage() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/transactions/calendar")}
+          // `window.location` en vez de `router.push`/`Link`:
+          // `/transactions/calendar` es hermana de `[id]` bajo el mismo
+          // directorio que intercepta `@detail/(.)[id]` — cualquier
+          // navegación blanda hacia ahí desde dentro de `/transactions/*`
+          // la agarra el interceptor (trata "calendar" como si fuera un
+          // id), sin importar que exista una página estática con ese
+          // nombre. Forzar una recarga completa es lo que evita esa
+          // intercepción.
+          onClick={() => { window.location.href = "/transactions/calendar"; }}
           style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-chip)", padding: "8px 14px", cursor: "pointer" }}
         >
           <Icon name="calendar" size={16} color="var(--text-secondary)" />
@@ -192,7 +221,7 @@ export default function MovementsPage() {
         ) : null}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 12px", borderBottom: "1px solid var(--border)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 12px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.income")}</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--money-positive)" }}>{formatAmountCompact(periodIncome, { showSign: false })}</div>
@@ -208,9 +237,9 @@ export default function MovementsPage() {
       </div>
 
       {items.length === 0 ? (
-        <EmptyState icon="filter" message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
+        <EmptyState message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
       ) : (
-        <div ref={parentRef} style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+        <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative" }}>
           <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = items[virtualRow.index];
