@@ -1,5 +1,6 @@
 import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { money } from "@/lib/money/money";
 import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
@@ -54,13 +55,21 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
         originalCurrency: capturedCurrency,
         originalRate: captureResolution.rate,
       };
+    } else {
+      // A3 — sin cotización para la conversión de captura: nunca se
+      // reinterpreta el número tipeado como si ya estuviera en la moneda
+      // de la cuenta (100 USD tipeados no se guardan como 100 ARS).
+      // `amount` queda en 0 — placeholder no-corruptor, sin inventar un
+      // rate — y lo tipeado se preserva en `original_*` con
+      // `originalRate: null`; `needs_capture_fx` (columna generada en
+      // Postgres) marca el movimiento para resolución posterior.
+      amount = money(0n, account.currencyCode);
+      original = {
+        originalAmount: capturedAmount.amount,
+        originalCurrency: capturedCurrency,
+        originalRate: null,
+      };
     }
-    // Sin rate para la conversión de captura: no se bloquea el guardado.
-    // `original_*` queda en NULL y el monto capturado se usa tal cual como
-    // moneda de cuenta — no corrompe ningún agregado, porque original_rate
-    // no alimenta needs_fx ni ningún cálculo de patrimonio (es solo la
-    // anotación de "qué tipeó el usuario"). Distinto del caso de
-    // needs_fx real más abajo, que sí requiere el badge visible.
   }
 
   const currency = account.currencyCode;

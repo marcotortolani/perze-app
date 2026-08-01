@@ -19,36 +19,46 @@ export const categoriesRepo = {
   },
 
   async create(input: NewCategoryInput): Promise<CategoryRow> {
+    const db = getDb();
     const now = nowIso();
     const row: CategoryRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now, deletedAt: null };
-    await getDb().categories.add(row);
-    await outbox.enqueue({ table: "categories", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.categories, db.outbox, async () => {
+      await db.categories.add(row);
+      await outbox.enqueue({ table: "categories", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<CategoryRow>): Promise<void> {
-    await getDb().categories.update(id, { ...patch, updatedAt: nowIso() });
-    await enqueueCategoryUpdate(id);
+    await enqueueCategoryWrite(id, { ...patch, updatedAt: nowIso() });
   },
 
   async archive(id: string): Promise<void> {
-    await getDb().categories.update(id, { archivedAt: nowIso(), updatedAt: nowIso() });
-    await enqueueCategoryUpdate(id);
+    await enqueueCategoryWrite(id, { archivedAt: nowIso(), updatedAt: nowIso() });
   },
 
   async bulkCreate(inputs: NewCategoryInput[]): Promise<CategoryRow[]> {
+    const db = getDb();
     const now = nowIso();
     const rows = inputs.map((input) => ({ ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now, deletedAt: null }));
-    await getDb().categories.bulkAdd(rows);
-    for (const row of rows) {
-      await outbox.enqueue({ table: "categories", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
-    }
+    await db.transaction("rw", db.categories, db.outbox, async () => {
+      await db.categories.bulkAdd(rows);
+      for (const row of rows) {
+        await outbox.enqueue({ table: "categories", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+      }
+    });
     return rows;
   },
 };
 
-async function enqueueCategoryUpdate(id: string): Promise<void> {
-  const row = await getDb().categories.get(id);
-  if (!row) return;
-  await outbox.enqueue({ table: "categories", op: "update", entityId: id, payload: row, clientRev: 1 });
+/** Aplica `patch` y encola dentro de la misma transacción Dexie (C4). */
+async function enqueueCategoryWrite(id: string, patch: Partial<CategoryRow>): Promise<void> {
+  const db = getDb();
+  await db.transaction("rw", db.categories, db.outbox, async () => {
+    await db.categories.update(id, patch);
+    const row = await db.categories.get(id);
+    if (!row) return;
+    await outbox.enqueue({ table: "categories", op: "update", entityId: id, payload: row, clientRev: 1 });
+  });
 }

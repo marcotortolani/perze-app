@@ -20,22 +20,32 @@ export const payeesRepo = {
   },
 
   async create(input: NewPayeeInput): Promise<PayeeRow> {
+    const db = getDb();
     const row: PayeeRow = { ...input, id: newId() };
-    await getDb().payees.add(row);
-    await outbox.enqueue({ table: "payees", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.payees, db.outbox, async () => {
+      await db.payees.add(row);
+      await outbox.enqueue({ table: "payees", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<PayeeRow>): Promise<void> {
-    await getDb().payees.update(id, patch);
-    const row = await getDb().payees.get(id);
-    if (row) await outbox.enqueue({ table: "payees", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.payees, db.outbox, async () => {
+      await db.payees.update(id, patch);
+      const row = await db.payees.get(id);
+      if (row) await outbox.enqueue({ table: "payees", op: "update", entityId: id, payload: row, clientRev: 1 });
+    });
   },
 
   async remove(id: string): Promise<void> {
-    await getDb().payees.delete(id);
-    // payees no tiene deleted_at (igual que tags): el worker traduce este
-    // "delete" a un DELETE real contra Supabase.
-    await outbox.enqueue({ table: "payees", op: "delete", entityId: id, payload: {}, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.payees, db.outbox, async () => {
+      await db.payees.delete(id);
+      // payees no tiene deleted_at (igual que tags): el worker traduce este
+      // "delete" a un DELETE real contra Supabase.
+      await outbox.enqueue({ table: "payees", op: "delete", entityId: id, payload: {}, clientRev: 1 });
+    });
   },
 };

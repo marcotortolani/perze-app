@@ -70,9 +70,12 @@ export const conflictsRepo = {
     const nextRev = serverRev + 1;
     const local = conflict.localPayload as unknown as TransactionRow;
     const updated: TransactionRow = { ...local, clientRev: nextRev, syncState: "ok", syncError: null, updatedAt: nowIso() };
-    await db.transactions.put(updated);
-    await outbox.enqueue({ table: "transactions", op: "update", entityId: conflict.entityId, payload: updated, clientRev: nextRev });
-    await db.conflicts.delete(conflict.id);
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.transactions, db.outbox, db.conflicts, async () => {
+      await db.transactions.put(updated);
+      await outbox.enqueue({ table: "transactions", op: "update", entityId: conflict.entityId, payload: updated, clientRev: nextRev });
+      await db.conflicts.delete(conflict.id);
+    });
   },
 
   /** Se queda con la versión del servidor: pisa la fila local con lo que ya ganó del otro lado. */

@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/client";
+import { todayIso } from "../dates/today";
 
 export interface LatestPrice {
   instrumentId: string;
@@ -30,7 +31,7 @@ export const priceSnapshotsRepo = {
   /** I12 — precio cargado a mano cuando ningún proveedor lo trae. Queda como snapshot con `provider: 'manual'`, igual que cualquier otra fuente. */
   async setManual(instrumentId: string, close: number, currencyCode: string): Promise<void> {
     const supabase = createClient();
-    const asOf = new Date().toISOString().slice(0, 10);
+    const asOf = todayIso(); // D10 — día calendario local, no UTC
     const { error } = await supabase.from("price_snapshots").upsert({ instrument_id: instrumentId, as_of: asOf, provider: "manual", close, currency_code: currencyCode } as never);
     if (error) throw error;
   },

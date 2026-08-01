@@ -16,17 +16,24 @@ export const recurringRulesRepo = {
   },
 
   async create(input: NewRecurringRuleInput): Promise<RecurringRuleRow> {
+    const db = getDb();
     const now = nowIso();
     const row: RecurringRuleRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now };
-    await getDb().recurringRules.add(row);
-    await outbox.enqueue({ table: "recurring_rules", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.recurringRules, db.outbox, async () => {
+      await db.recurringRules.add(row);
+      await outbox.enqueue({ table: "recurring_rules", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<RecurringRuleRow>): Promise<void> {
-    await getDb().recurringRules.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().recurringRules.get(id);
-    if (row) await outbox.enqueue({ table: "recurring_rules", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.recurringRules, db.outbox, async () => {
+      await db.recurringRules.update(id, { ...patch, updatedAt: nowIso() });
+      const row = await db.recurringRules.get(id);
+      if (row) await outbox.enqueue({ table: "recurring_rules", op: "update", entityId: id, payload: row, clientRev: 1 });
+    });
   },
 
   async archive(id: string): Promise<void> {

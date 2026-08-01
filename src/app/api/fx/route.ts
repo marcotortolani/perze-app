@@ -22,6 +22,16 @@ import { createClient } from "@/lib/supabase/server";
  */
 const providers: FxProvider[] = [createDolarApiProvider(), createFrankfurterProvider()];
 
+/**
+ * D10 — a propósito NO usa `lib/dates/today.ts` (el helper tz-aware del
+ * cliente): esto corre en el servidor, sin conocer la zona horaria del
+ * usuario. Se usa solo para (a) el fallback de `date` cuando el caller no
+ * lo manda — hoy ningún caller real omite `date`, siempre lo calculan
+ * ellos con el helper del cliente — y (b) `hasFreshToday`, que pregunta
+ * "¿ya tenemos la cotización global de hoy en cache", un concepto de
+ * fecha de mercado, no de calendario del usuario. Usar la zona del
+ * dispositivo servidor acá sería tan arbitrario como UTC.
+ */
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }

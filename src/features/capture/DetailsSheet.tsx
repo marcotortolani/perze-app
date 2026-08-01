@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { AccountCarousel, DateStrip, Input, Sheet, Switch } from "@/design-system";
+import { todayIso as todayIsoLocal } from "@/lib/dates/today";
 import type { AccountRow } from "@/lib/db/schema";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 
@@ -13,19 +14,29 @@ export interface DetailsSheetProps {
   onSetField: <K extends keyof CaptureDraft>(key: K, value: CaptureDraft[K]) => void;
 }
 
+/**
+ * D10 — `centerIso` es una fecha calendario ("YYYY-MM-DD"), no un instante:
+ * la aritmética tiene que quedarse en UTC de punta a punta (`Date.UTC` +
+ * getters/setters `UTC*`). Mezclar un instante UTC (`new Date("2026-08-01")`
+ * = medianoche UTC) con `getDate()`/`setDate()` (hora local del runtime)
+ * corría un día entero para cualquier huso horario negativo — América
+ * entera — en el borde del mes.
+ */
 function isoDaysAround(centerIso: string, span = 3): string[] {
-  const center = new Date(centerIso);
+  const [y, m, d] = centerIso.split("-").map(Number);
+  const center = Date.UTC(y!, m! - 1, d!);
   return Array.from({ length: span * 2 + 1 }, (_, i) => {
-    const d = new Date(center);
-    d.setDate(d.getDate() - span + i);
-    return d.toISOString().slice(0, 10);
+    const day = new Date(center);
+    day.setUTCDate(day.getUTCDate() - span + i);
+    return day.toISOString().slice(0, 10);
   });
 }
 
 function dayLabel(iso: string, todayIso: string, labels: { today: string; yesterday: string }): string | undefined {
   if (iso === todayIso) return labels.today;
-  const yesterday = new Date(todayIso);
-  yesterday.setDate(yesterday.getDate() - 1);
+  const [y, m, d] = todayIso.split("-").map(Number);
+  const yesterday = new Date(Date.UTC(y!, m! - 1, d!));
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   if (iso === yesterday.toISOString().slice(0, 10)) return labels.yesterday;
   return undefined;
 }
@@ -33,7 +44,7 @@ function dayLabel(iso: string, todayIso: string, labels: { today: string; yester
 /** C3 — detalles colapsados: cuenta, fecha, comercio, nota. Todo con default, ninguna fila obligatoria. */
 export function DetailsSheet({ open, onClose, draft, accounts, onSetField }: DetailsSheetProps) {
   const t = useTranslations();
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayIsoLocal(); // D10 — día calendario local, no UTC
   const dateValue = draft.occurredAt.slice(0, 10);
   const dayLabels = { today: t("capture.details_sheet.today"), yesterday: t("capture.details_sheet.yesterday") };
   const days = isoDaysAround(todayIso).map((date) => ({ date, label: dayLabel(date, todayIso, dayLabels) }));

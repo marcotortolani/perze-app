@@ -95,7 +95,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
     const latestAccount = accounts.find((a) => a.id === latestDraft.accountId) ?? account;
     const latestCounterAccount = accounts.find((a) => a.id === latestDraft.counterAccountId);
 
-    await updateTransactionFromDraft({ transactionId: transaction.id, draft: latestDraft, household, account: latestAccount, counterAccount: latestCounterAccount });
+    await updateTransactionFromDraft({ transactionId: transaction.id, draft: latestDraft, household, account: latestAccount, counterAccount: latestCounterAccount, existing: transaction });
     invalidateTransactions();
     toast(t("movements.editFlow.updated"));
   };

@@ -16,17 +16,24 @@ export const goalsRepo = {
   },
 
   async create(input: NewGoalInput): Promise<GoalRow> {
+    const db = getDb();
     const now = nowIso();
     const row: GoalRow = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now };
-    await getDb().goals.add(row);
-    await outbox.enqueue({ table: "goals", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.goals, db.outbox, async () => {
+      await db.goals.add(row);
+      await outbox.enqueue({ table: "goals", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<GoalRow>): Promise<void> {
-    await getDb().goals.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().goals.get(id);
-    if (row) await outbox.enqueue({ table: "goals", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.goals, db.outbox, async () => {
+      await db.goals.update(id, { ...patch, updatedAt: nowIso() });
+      const row = await db.goals.get(id);
+      if (row) await outbox.enqueue({ table: "goals", op: "update", entityId: id, payload: row, clientRev: 1 });
+    });
   },
 
   async archive(id: string): Promise<void> {

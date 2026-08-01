@@ -12,17 +12,24 @@ export const categorizationRulesRepo = {
   },
 
   async create(input: NewCategorizationRuleInput): Promise<CategorizationRuleRow> {
+    const db = getDb();
     const now = nowIso();
     const row: CategorizationRuleRow = { ...input, id: newId(), hitCount: 0, deletedAt: null, createdAt: now, updatedAt: now };
-    await getDb().categorizationRules.add(row);
-    await outbox.enqueue({ table: "rules", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
+    await db.transaction("rw", db.categorizationRules, db.outbox, async () => {
+      await db.categorizationRules.add(row);
+      await outbox.enqueue({ table: "rules", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+    });
     return row;
   },
 
   async update(id: string, patch: Partial<CategorizationRuleRow>): Promise<void> {
-    await getDb().categorizationRules.update(id, { ...patch, updatedAt: nowIso() });
-    const row = await getDb().categorizationRules.get(id);
-    if (row) await outbox.enqueue({ table: "rules", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const db = getDb();
+    await db.transaction("rw", db.categorizationRules, db.outbox, async () => {
+      await db.categorizationRules.update(id, { ...patch, updatedAt: nowIso() });
+      const row = await db.categorizationRules.get(id);
+      if (row) await outbox.enqueue({ table: "rules", op: "update", entityId: id, payload: row, clientRev: 1 });
+    });
   },
 
   async archive(id: string): Promise<void> {

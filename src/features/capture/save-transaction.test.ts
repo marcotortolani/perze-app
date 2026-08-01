@@ -146,6 +146,48 @@ describe("saveDraftAsTransaction", () => {
     expect(tx.amountBase).toBeNull();
   });
 
+  it("A3 — captura en otra moneda sin cotización: nunca reinterpreta el número tipeado", async () => {
+    const account = await accountsRepo.create({
+      householdId: HOUSEHOLD_UYU.id,
+      ownerId: "user-1",
+      name: "Cuenta ARS",
+      kind: "wallet",
+      institutionId: null,
+      countryCode: "AR",
+      currencyCode: "ARS",
+      openingBalance: 0n,
+      openingDate: "2026-07-01",
+      creditLimit: null,
+      statementDay: null,
+      dueDay: null,
+      interestRate: null,
+      termMonths: null,
+      includeInNetWorth: true,
+      visibility: "household",
+      color: null,
+      icon: null,
+      archivedAt: null,
+      createdBy: "user-1",
+    });
+
+    // Se tipea "100" en USD (draft.currency), la cuenta es ARS, y no hay
+    // ningún rate USD/ARS cargado (ni manual ni cache): antes de A3, esto
+    // guardaba amount=10000 (100.00) reinterpretado como si ya fuera ARS.
+    const tx = await saveDraftAsTransaction({
+      draft: baseDraft({ amountExpression: "100", currency: "USD" }),
+      household: HOUSEHOLD_UYU,
+      userId: "user-1",
+      account,
+    });
+
+    expect(tx.amount).toBe(0n); // nunca 10000n (el bug de A3)
+    expect(tx.currencyCode).toBe("ARS");
+    expect(tx.originalAmount).toBe(10_000n); // 100.00 USD, preservado tal cual se tipeó
+    expect(tx.originalCurrency).toBe("USD");
+    expect(tx.originalRate).toBeNull();
+    expect((await accountsRepo.get(account.id))?.currentBalance).toBe(0n); // no corrompe el saldo
+  });
+
   it("transferencia entre cuentas de la misma moneda", async () => {
     const from = await accountsRepo.create({
       householdId: HOUSEHOLD_UYU.id,

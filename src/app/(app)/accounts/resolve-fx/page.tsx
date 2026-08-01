@@ -8,8 +8,9 @@ import { EmptyState, FxEditor, GroupCard, Icon, Sheet, Skeleton } from "@/design
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { transactionsRepo } from "@/lib/repos/transactions-repo";
-import { convert, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
+import { todayIso } from "@/lib/dates/today";
+import { rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
 import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import type { TransactionRow } from "@/lib/db/schema";
@@ -46,7 +47,7 @@ export default function ResolveFxPage() {
   }
 
   const openEditor = async (currency: string) => {
-    const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: new Date().toISOString().slice(0, 10) });
+    const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: todayIso() });
     setRate(resolution.rate ?? rateFromInteger(1));
     setEditingCurrency(currency);
   };
@@ -57,18 +58,7 @@ export default function ResolveFxPage() {
     try {
       const txs = groups.find(([c]) => c === editingCurrency)?.[1] ?? [];
       await fxRepo.setManualOverride(editingCurrency, baseCurrency, rate);
-      await Promise.all(
-        txs.map((t) =>
-          transactionsRepo.update(t.id, {
-            fxRate: rate,
-            fxSource: "manual",
-            fxProvider: null,
-            fxQuoteKind: "custom",
-            fxResolvedAt: new Date().toISOString(),
-            amountBase: convert(money(t.amount, t.currencyCode), baseCurrency, rate).amount,
-          })
-        )
-      );
+      await Promise.all(txs.map((t) => resolvePendingFx({ transactionId: t.id, baseCurrency, rate })));
       invalidateTransactions();
       toast(t("accountsPage.resolveFx.resolvedCount", { count: txs.length }));
       setEditingCurrency(null);

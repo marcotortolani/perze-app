@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { AppHeader, Button, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { buildHouseholdExport, countHouseholdExport, stringifyHouseholdExport, type HouseholdExportCounts } from "@/lib/export/export-household";
+import { todayIso } from "@/lib/dates/today";
 
 const ROW_KEYS: (keyof HouseholdExportCounts)[] = ["transactions", "accounts", "categories", "tags", "payees", "budgets", "goals", "recurringRules"];
 
@@ -34,7 +35,7 @@ export default function ExportPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `perze-backup-${household.name.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `perze-backup-${household.name.toLowerCase().replace(/\s+/g, "-")}-${todayIso()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
