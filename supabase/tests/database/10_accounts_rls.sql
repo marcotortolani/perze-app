@@ -55,17 +55,18 @@ SELECT tests.log(is(
 ));
 
 -- intento mover la cuenta de A al household de B (household_id es
--- inmutable, ver docs/plan-de-trabajo.md § 5.1 nota de endurecimiento). Un
--- WITH CHECK que falla en UPDATE lanza una excepción dura (a diferencia de
--- USING, que solo filtra filas en silencio) — verificado empíricamente
--- contra el proyecto real, se prueba con throws_ok, no esperando un no-op.
+-- inmutable, ver docs/plan-de-trabajo.md § 5.1 nota de endurecimiento). A5
+-- (auditoría técnica): el WITH CHECK en sí era tautológico (siempre TRUE,
+-- nunca compara contra la fila vieja) — la protección real hoy es el
+-- trigger `accounts_immutable` (`20260801130000_immutability_triggers.sql`),
+-- que sí lanza una excepción dura comparando OLD/NEW de verdad.
 SELECT tests.log(throws_ok(
   format(
     $$UPDATE public.accounts SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_account_id')
   ),
-  'new row violates row-level security policy for table "accounts"',
-  'el UPDATE que intenta mover la cuenta a household B es rechazado por WITH CHECK'
+  'La columna household_id es inmutable en accounts',
+  'el UPDATE que intenta mover la cuenta a household B es rechazado (trigger de inmutabilidad, A5)'
 ));
 
 SELECT tests.log(is(

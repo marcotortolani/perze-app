@@ -47,7 +47,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.fx_overrides SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_override_id')
   ),
-  'new row violates row-level security policy for table "fx_overrides"',
+  -- A5: protección real vía trigger fx_overrides_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en fx_overrides',
   'A no puede mover su override de FX al household de B'
 ));
 
@@ -71,7 +72,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.tags SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_tag_id')
   ),
-  'new row violates row-level security policy for table "tags"',
+  -- A5: protección real vía trigger tags_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en tags',
   'A no puede mover su tag al household de B'
 ));
 
@@ -86,7 +88,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.payees SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_payee_id')
   ),
-  'new row violates row-level security policy for table "payees"',
+  -- A5: protección real vía trigger payees_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en payees',
   'A no puede mover su payee al household de B'
 ));
 

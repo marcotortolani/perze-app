@@ -44,7 +44,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.portfolios SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_portfolio_id')
   ),
-  'new row violates row-level security policy for table "portfolios"',
+  -- A5: protección real vía trigger portfolios_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en portfolios',
   'A no puede mover su cartera al household de B'
 ));
 

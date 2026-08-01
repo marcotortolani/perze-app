@@ -31,11 +31,15 @@ USING (
   AND public.can_see('account', id, visibility, owner_id)
 );
 
+-- A2 (auditoría técnica) — `budgets` se reescribió a v2 en
+-- `20260801010900_budgets_goals.sql`: ya no tiene `scope`/`owner_id` (v2 no
+-- distingue presupuesto personal/household), así que esta política queda
+-- igual de simple que `goals_select`/`recurring_rules_select` de abajo —
+-- de hecho ya nace así en la migración v2, este ALTER es un no-op para
+-- una cadena aplicada desde cero, y solo importa para el remoto que tenía
+-- la v1 (ver `20260801110000_reconcile_budgets_goals_recurring_v2.sql`).
 ALTER POLICY budgets_select ON public.budgets
-USING (
-  household_id IN (SELECT public.current_households())
-  AND (scope = 'household' OR owner_id = (SELECT auth.uid()))
-);
+USING (household_id IN (SELECT public.current_households()));
 
 ALTER POLICY categories_select ON public.categories
 USING (

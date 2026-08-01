@@ -59,7 +59,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.household_members SET household_id = %L WHERE household_id = %L AND profile_id = %L$$,
     tests.get('b_household_id'), tests.get('a_household_id'), tests.get('a_profile_id')
   ),
-  'new row violates row-level security policy for table "household_members"',
+  -- A5: protección real vía trigger household_members_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en household_members',
   'A no puede mover su propia membresía al household de B'
 ));
 
@@ -74,7 +75,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.household_fx_preferences SET household_id = %L WHERE household_id = %L AND currency_pair = 'ARS/USD'$$,
     tests.get('b_household_id'), tests.get('a_household_id')
   ),
-  'new row violates row-level security policy for table "household_fx_preferences"',
+  -- A5: protección real vía trigger household_fx_preferences_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en household_fx_preferences',
   'A no puede mover su preferencia de FX al household de B'
 ));
 

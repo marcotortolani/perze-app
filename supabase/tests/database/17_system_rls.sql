@@ -44,7 +44,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.settlements SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_settlement_id')
   ),
-  'new row violates row-level security policy for table "settlements"',
+  -- A5: protección real vía trigger settlements_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en settlements',
   'A no puede mover su settlement al household de B'
 ));
 
@@ -76,7 +77,8 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.rules SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_rule_id')
   ),
-  'new row violates row-level security policy for table "rules"',
+  -- A5: protección real vía trigger rules_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en rules',
   'A no puede mover su regla al household de B'
 ));
 

@@ -1,25 +1,24 @@
--- GATE-1: budgets (+ budget_lines hija) y goals. Cross-household isolation
--- + soft-delete (deleted_at IS NULL ya no está en las policies de SELECT
--- desde 20260801020000_fix_soft_delete_rls.sql — se prueba que sigue así).
+-- GATE-1: budgets y goals (v2 — ver A2 de la auditoría técnica: ya no hay
+-- budget_lines hija, ni deleted_at en estas dos tablas, solo archived_at,
+-- así que el patrón de "soft-delete auto-referencia" de
+-- 20260801020000_fix_soft_delete_rls.sql no aplica acá — nunca aplicó,
+-- de hecho, porque la política de SELECT de v2 nunca filtró por columna
+-- propia). Cross-household isolation + inmutabilidad de household_id.
 BEGIN;
 SELECT tests.reset_log();
-SELECT tests.log(plan(10));
+SELECT tests.log(plan(8));
 
 SELECT tests.clear_authentication();
 SELECT tests.setup_household('a', 'bg-household-a');
 SELECT tests.setup_household('b', 'bg-household-b');
 
 SELECT tests.stash('b_budget_id', gen_random_uuid());
-INSERT INTO public.budgets (id, household_id, name, period, start_date, currency_code, created_by)
-VALUES (tests.get('b_budget_id'), tests.get('b_household_id'), 'Presupuesto de B', 'monthly', current_date, 'ARS', tests.get('b_profile_id'));
+INSERT INTO public.budgets (id, household_id, name, amount_limit, currency_code, created_by)
+VALUES (tests.get('b_budget_id'), tests.get('b_household_id'), 'Presupuesto de B', 100000, 'ARS', tests.get('b_profile_id'));
 
 SELECT tests.stash('a_budget_id', gen_random_uuid());
-INSERT INTO public.budgets (id, household_id, name, period, start_date, currency_code, created_by)
-VALUES (tests.get('a_budget_id'), tests.get('a_household_id'), 'Presupuesto de A', 'monthly', current_date, 'ARS', tests.get('a_profile_id'));
-
-SELECT tests.stash('a_budget_line_id', gen_random_uuid());
-INSERT INTO public.budget_lines (id, budget_id, amount)
-VALUES (tests.get('a_budget_line_id'), tests.get('a_budget_id'), 100000);
+INSERT INTO public.budgets (id, household_id, name, amount_limit, currency_code, created_by)
+VALUES (tests.get('a_budget_id'), tests.get('a_household_id'), 'Presupuesto de A', 200000, 'ARS', tests.get('a_profile_id'));
 
 SELECT tests.stash('b_goal_id', gen_random_uuid());
 INSERT INTO public.goals (id, household_id, name, target_amount, currency_code, created_by)
@@ -34,12 +33,6 @@ SELECT tests.log(is(
 ));
 
 SELECT tests.log(is(
-  (SELECT count(*)::int FROM public.budget_lines WHERE budget_id = tests.get('b_budget_id')),
-  0,
-  'A no puede leer budget_lines de un presupuesto de B (aunque conozca el id)'
-));
-
-SELECT tests.log(is(
   (SELECT count(*)::int FROM public.goals WHERE household_id = tests.get('b_household_id')),
   0,
   'A no puede leer metas de B'
@@ -50,35 +43,25 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.budgets SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_budget_id')
   ),
-  'new row violates row-level security policy for table "budgets"',
+  -- A5: protección real vía trigger budgets_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en budgets',
   'A no puede mover su presupuesto al household de B'
 ));
 
-SELECT tests.log(throws_ok(
-  format(
-    $$UPDATE public.budget_lines SET budget_id = %L WHERE id = %L$$,
-    tests.get('b_budget_id'), tests.get('a_budget_line_id')
-  ),
-  'new row violates row-level security policy for table "budget_lines"',
-  'A no puede reasignar su budget_line al presupuesto de B (budget_id inmutable)'
-));
-
--- soft-delete: A borra su propio presupuesto (UPDATE deleted_at) — tiene
--- que funcionar, es exactamente el bug que corrigió 20260801020000
-UPDATE public.budgets SET deleted_at = now() WHERE id = tests.get('a_budget_id');
+UPDATE public.budgets SET archived_at = now() WHERE id = tests.get('a_budget_id');
 SELECT tests.log(isnt(
-  (SELECT deleted_at FROM public.budgets WHERE id = tests.get('a_budget_id')),
+  (SELECT archived_at FROM public.budgets WHERE id = tests.get('a_budget_id')),
   NULL,
-  'A puede soft-deletear su propio presupuesto (deleted_at IS NULL ya no bloquea el UPDATE)'
+  'A puede archivar su propio presupuesto'
 ));
 
 SELECT tests.log(is(
   (SELECT count(*)::int FROM public.budgets WHERE id = tests.get('a_budget_id')),
   1,
-  'el presupuesto soft-deleteado sigue siendo visible por RLS (deleted_at ya no se filtra ahí — lo filtra la app)'
+  'el presupuesto archivado sigue siendo visible por RLS (archived_at no se filtra ahí — lo filtra la app)'
 ));
 
--- goals: mismo patrón de inmutabilidad + soft-delete, sobre un goal propio de A
+-- goals: mismo patrón de inmutabilidad + archivado, sobre un goal propio de A
 SELECT tests.stash('a_goal_id', gen_random_uuid());
 SELECT tests.clear_authentication();
 INSERT INTO public.goals (id, household_id, name, target_amount, currency_code, created_by)
@@ -90,15 +73,16 @@ SELECT tests.log(throws_ok(
     $$UPDATE public.goals SET household_id = %L WHERE id = %L$$,
     tests.get('b_household_id'), tests.get('a_goal_id')
   ),
-  'new row violates row-level security policy for table "goals"',
+  -- A5: protección real vía trigger goals_immutable, no el WITH CHECK (tautológico).
+  'La columna household_id es inmutable en goals',
   'A no puede mover su meta al household de B'
 ));
 
-UPDATE public.goals SET deleted_at = now() WHERE id = tests.get('a_goal_id');
+UPDATE public.goals SET archived_at = now() WHERE id = tests.get('a_goal_id');
 SELECT tests.log(isnt(
-  (SELECT deleted_at FROM public.goals WHERE id = tests.get('a_goal_id')),
+  (SELECT archived_at FROM public.goals WHERE id = tests.get('a_goal_id')),
   NULL,
-  'A puede soft-deletear su propia meta'
+  'A puede archivar su propia meta'
 ));
 
 SELECT tests.log(is(
