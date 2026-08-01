@@ -27,6 +27,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
+import { useConflicts } from "@/hooks/use-conflicts";
 import { usePendingMutations } from "@/lib/offline";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { usePrivacyStore } from "@/stores/privacy-store";
@@ -66,6 +67,7 @@ export default function HomePage() {
   const privacy = usePrivacyStore((s) => s.privacyMode);
   const togglePrivacy = usePrivacyStore((s) => s.toggle);
   const pending = usePendingMutations();
+  const { conflicts } = useConflicts(household?.id);
   const seenPrivacyTooltip = useContextualTooltipStore((s) => s.hasSeen("home-privacy-toggle"));
   const markPrivacyTooltipSeen = useContextualTooltipStore((s) => s.markSeen);
   const [insightDismissed, setInsightDismissed] = useState(false);
@@ -164,6 +166,14 @@ export default function HomePage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
       {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
+      {conflicts.length > 0 ? (
+        <Banner
+          status="error"
+          message={t("conflictsPage.homeBanner", { count: conflicts.length })}
+          action={{ label: t("conflictsPage.homeBannerAction"), onClick: () => router.push("/more/conflicts") }}
+          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+        />
+      ) : null}
 
       <section style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -262,6 +272,7 @@ export default function HomePage() {
                 secondary={secondary}
                 polarity={polarity}
                 privacy={privacy}
+                syncIssue={tx.syncState === "ok" ? undefined : tx.syncState}
                 onClick={() => router.push("/transactions")}
               />
             );

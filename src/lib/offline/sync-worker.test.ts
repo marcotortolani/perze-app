@@ -148,10 +148,14 @@ describe("drainOutbox — BASE-05", () => {
     expect(result).toEqual({ synced: 1, failed: 1, conflicts: 0 });
     expect(calls).toHaveLength(2); // ambas se intentaron, la falla de una no frenó la otra
 
-    const [stillPending] = await outbox.listPending();
-    expect(stillPending?.table).toBe("accounts");
-    expect(stillPending?.attempts).toBe(1);
-    expect(stillPending?.lastError).toContain("accounts");
+    // No con `listPending()`: C9 puso la entrada en backoff, así que no
+    // se levanta sola hasta pasar la ventana de espera. Sigue en la cola
+    // igual (nunca se pierde) — se verifica con `listAll()`.
+    const [stillQueued] = await outbox.listAll();
+    expect(stillQueued?.table).toBe("accounts");
+    expect(stillQueued?.status).toBe("failed");
+    expect(stillQueued?.attempts).toBe(1);
+    expect(stillQueued?.lastError).toContain("accounts");
   });
 
   it("households y household_members (C7 — creación de household real) se traducen bien", async () => {

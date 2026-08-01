@@ -68,6 +68,7 @@ export type Database = {
       accounts: {
         Row: {
           archived_at: string | null
+          client_rev: number
           color: string | null
           country_code: string | null
           created_at: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           country_code?: string | null
           created_at?: string
@@ -124,6 +126,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           country_code?: string | null
           created_at?: string
@@ -351,6 +354,7 @@ export type Database = {
           amount_limit: number
           archived_at: string | null
           category_id: string | null
+          client_rev: number
           created_at: string
           created_by: string
           currency_code: string
@@ -363,6 +367,7 @@ export type Database = {
           amount_limit: number
           archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by: string
           currency_code: string
@@ -375,6 +380,7 @@ export type Database = {
           amount_limit?: number
           archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by?: string
           currency_code?: string
@@ -480,6 +486,7 @@ export type Database = {
       categories: {
         Row: {
           archived_at: string | null
+          client_rev: number
           color: string | null
           created_at: string
           created_by: string
@@ -499,6 +506,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by: string
@@ -518,6 +526,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by?: string
@@ -892,6 +901,7 @@ export type Database = {
         Row: {
           account_id: string | null
           archived_at: string | null
+          client_rev: number
           color: string | null
           created_at: string
           created_by: string
@@ -907,6 +917,7 @@ export type Database = {
         Insert: {
           account_id?: string | null
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by: string
@@ -922,6 +933,7 @@ export type Database = {
         Update: {
           account_id?: string | null
           archived_at?: string | null
+          client_rev?: number
           color?: string | null
           created_at?: string
           created_by?: string
@@ -1106,6 +1118,7 @@ export type Database = {
         Row: {
           base_country: string | null
           base_currency: string
+          client_rev: number
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -1120,6 +1133,7 @@ export type Database = {
         Insert: {
           base_country?: string | null
           base_currency: string
+          client_rev?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -1134,6 +1148,7 @@ export type Database = {
         Update: {
           base_country?: string | null
           base_currency?: string
+          client_rev?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -1484,6 +1499,7 @@ export type Database = {
       payees: {
         Row: {
           aliases: string[] | null
+          client_rev: number
           default_account_id: string | null
           default_category_id: string | null
           household_id: string
@@ -1493,6 +1509,7 @@ export type Database = {
         }
         Insert: {
           aliases?: string[] | null
+          client_rev?: number
           default_account_id?: string | null
           default_category_id?: string | null
           household_id: string
@@ -1502,6 +1519,7 @@ export type Database = {
         }
         Update: {
           aliases?: string[] | null
+          client_rev?: number
           default_account_id?: string | null
           default_category_id?: string | null
           household_id?: string
@@ -1794,6 +1812,7 @@ export type Database = {
           account_id: string
           archived_at: string | null
           category_id: string | null
+          client_rev: number
           created_at: string
           created_by: string
           currency_code: string
@@ -1809,6 +1828,7 @@ export type Database = {
           account_id: string
           archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by: string
           currency_code: string
@@ -1824,6 +1844,7 @@ export type Database = {
           account_id?: string
           archived_at?: string | null
           category_id?: string | null
+          client_rev?: number
           created_at?: string
           created_by?: string
           currency_code?: string
@@ -1876,6 +1897,7 @@ export type Database = {
       rules: {
         Row: {
           actions: Json
+          client_rev: number
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -1890,6 +1912,7 @@ export type Database = {
         }
         Insert: {
           actions: Json
+          client_rev?: number
           created_at?: string
           created_by: string
           deleted_at?: string | null
@@ -1904,6 +1927,7 @@ export type Database = {
         }
         Update: {
           actions?: Json
+          client_rev?: number
           created_at?: string
           created_by?: string
           deleted_at?: string | null
@@ -2038,18 +2062,21 @@ export type Database = {
       }
       tags: {
         Row: {
+          client_rev: number
           color: string | null
           household_id: string
           id: string
           name: string
         }
         Insert: {
+          client_rev?: number
           color?: string | null
           household_id: string
           id: string
           name: string
         }
         Update: {
+          client_rev?: number
           color?: string | null
           household_id?: string
           id?: string
@@ -2632,9 +2659,16 @@ export type Database = {
         Returns: boolean
       }
       can_write: { Args: { h: string }; Returns: boolean }
+      clamped_date: {
+        Args: { p_day: number; p_month: number; p_year: number }
+        Returns: string
+      }
+      close_overdue_card_statements: { Args: never; Returns: undefined }
       current_households: { Args: never; Returns: string[] }
+      dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }
       is_household_admin: { Args: { h: string }; Returns: boolean }
+      materialize_recurring_transactions: { Args: never; Returns: undefined }
       mirror_accounts: {
         Args: { p_household_id: string; p_target_member: string }
         Returns: {
@@ -2657,10 +2691,13 @@ export type Database = {
           occurred_at: string
         }[]
       }
+      prune_push_subscriptions: { Args: never; Returns: undefined }
+      purge_audit_log: { Args: never; Returns: undefined }
       recompute_account_balance: {
         Args: { p_account_id: string }
         Returns: undefined
       }
+      trigger_daily_fx_sync: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

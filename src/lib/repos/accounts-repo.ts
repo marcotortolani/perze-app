@@ -5,7 +5,7 @@ import { newId, nowIso } from "./ids";
 
 export type NewAccountInput = Omit<
   AccountRow,
-  "id" | "currentBalance" | "createdAt" | "updatedAt" | "deletedAt" | "sortOrder"
+  "id" | "currentBalance" | "createdAt" | "updatedAt" | "deletedAt" | "sortOrder" | "clientRev"
 > & { sortOrder?: number };
 
 /**
@@ -34,27 +34,28 @@ export const accountsRepo = {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      clientRev: 1,
     };
     // C4 — el enqueue vive en la MISMA transacción que la escritura: un
     // crash entre el commit y el enqueue dejaba la cuenta local sin
     // entrada de outbox, sin reconciliación posible.
     await db.transaction("rw", db.accounts, db.outbox, async () => {
       await db.accounts.add(row);
-      await outbox.enqueue({ table: "accounts", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+      await outbox.enqueue({ table: "accounts", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     });
     return row;
   },
 
   async update(id: string, patch: Partial<AccountRow>): Promise<void> {
-    await enqueueAccountWrite(id, { ...patch, updatedAt: nowIso() });
+    await enqueueAccountUpdate(id, patch);
   },
 
   async archive(id: string): Promise<void> {
-    await enqueueAccountWrite(id, { archivedAt: nowIso(), updatedAt: nowIso() });
+    await enqueueAccountUpdate(id, { archivedAt: nowIso() });
   },
 
   async softDelete(id: string): Promise<void> {
-    await enqueueAccountWrite(id, { deletedAt: nowIso(), updatedAt: nowIso() });
+    await enqueueAccountUpdate(id, { deletedAt: nowIso() });
   },
 
   /**
@@ -63,6 +64,8 @@ export const accountsRepo = {
    * sincroniza (lo recalcula el trigger de Postgres a partir de las
    * transactions ya sincronizadas), así que esto es puro bookkeeping local
    * para que la UI muestre el saldo correcto sin esperar una vuelta de red.
+   * Tampoco toca `clientRev`: no es una edición del usuario, es el mismo
+   * efecto contable que ya viaja en el outbox de la transacción.
    */
   async applyBalanceDelta(id: string, delta: bigint): Promise<void> {
     const account = await getDb().accounts.get(id);
@@ -74,13 +77,25 @@ export const accountsRepo = {
   },
 };
 
-/** Aplica `patch` y encola dentro de la misma transacción Dexie (C4). */
-async function enqueueAccountWrite(id: string, patch: Partial<AccountRow>): Promise<void> {
+/**
+ * C4 — el enqueue vive en la MISMA transacción que la escritura: un crash
+ * entre el commit y el enqueue dejaba la fila local sin entrada de
+ * outbox, sin reconciliación posible.
+ *
+ * C10 — `clientRev` real: se lee la fila actual, se incrementa, y el MISMO
+ * valor incrementado es el que se persiste en Dexie y el que viaja en el
+ * outbox — antes el outbox mandaba siempre `clientRev: 1`, así que
+ * `detectRevisionConflict` (`conflict-detection.ts`) nunca podía detectar
+ * nada real para esta tabla.
+ */
+async function enqueueAccountUpdate(id: string, patch: Partial<AccountRow>): Promise<void> {
   const db = getDb();
   await db.transaction("rw", db.accounts, db.outbox, async () => {
-    await db.accounts.update(id, patch);
-    const row = await db.accounts.get(id);
-    if (!row) return;
-    await outbox.enqueue({ table: "accounts", op: "update", entityId: id, payload: row, clientRev: 1 });
+    const existing = await db.accounts.get(id);
+    if (!existing) return;
+    const nextRev = existing.clientRev + 1;
+    const updated: AccountRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
+    await db.accounts.put(updated);
+    await outbox.enqueue({ table: "accounts", op: "update", entityId: id, payload: updated, clientRev: nextRev });
   });
 }

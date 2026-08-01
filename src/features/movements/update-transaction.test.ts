@@ -21,6 +21,7 @@ const HOUSEHOLD_UYU: HouseholdRow = {
   createdBy: "user-1",
   createdAt: "2026-07-01T00:00:00.000Z",
   updatedAt: "2026-07-01T00:00:00.000Z",
+  clientRev: 1,
 };
 
 function baseDraft(overrides: Partial<CaptureDraft> = {}): CaptureDraft {
@@ -77,14 +78,14 @@ describe("updateTransactionFromDraft", () => {
 
   it("A4 — congela fx_rate ya resuelto: editar la nota no lo toca aunque la cotización cambie", async () => {
     const account = await makeArsAccount();
-    await fxRepo.setManualOverride("ARS", "UYU", rateFromInteger(10));
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(10));
     const tx = await saveDraftAsTransaction({ draft: baseDraft(), household: HOUSEHOLD_UYU, userId: "user-1", account });
     expect(tx.fxRate).not.toBeNull();
     const frozenRate = tx.fxRate;
     const frozenAmountBase = tx.amountBase;
 
     // La cotización "de hoy" cambia — un rate congelado no debería enterarse.
-    await fxRepo.setManualOverride("ARS", "UYU", rateFromInteger(999));
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(999));
 
     const updated = await updateTransactionFromDraft({
       transactionId: tx.id,
@@ -106,7 +107,7 @@ describe("updateTransactionFromDraft", () => {
     expect(tx.fxRate).toBeNull();
     expect(tx.fxSource).toBe("pending");
 
-    await fxRepo.setManualOverride("ARS", "UYU", rateFromInteger(10));
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(10));
 
     const updated = await updateTransactionFromDraft({
       transactionId: tx.id,
@@ -127,7 +128,7 @@ describe("updateTransactionFromDraft", () => {
     expect(tx.fxRate).toBeNull();
 
     // Aparece un rate recién ahora, pero la edición no toca monto/cuenta/moneda.
-    await fxRepo.setManualOverride("ARS", "UYU", rateFromInteger(10));
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(10));
 
     const updated = await updateTransactionFromDraft({
       transactionId: tx.id,

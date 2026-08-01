@@ -7,6 +7,7 @@ import { AppHeader, Sidebar, TabBar, type TabItem, type SidebarNavGroup } from "
 import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
 import { usePendingMutations } from "@/lib/offline";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { SAW_WELCOME_KEY } from "@/lib/onboarding/welcome-flag";
@@ -42,6 +43,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const scope = useScopeStore((s) => s.scope);
   const setScope = useScopeStore((s) => s.setScope);
   const pending = usePendingMutations();
+  const online = useOnlineStatus();
   const { data: household, isLoading: householdLoading } = useCurrentHousehold();
   const budgetAlerts = useBudgetAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -169,7 +171,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             onSearch={() => setSearchOpen(true)}
             searchExpanded={searchOpen}
             searchLabel={t("ds.appHeader.search")}
-            syncState={pending && pending > 0 ? "offline" : "synced"}
+            syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
             pending={pending ?? 0}
           />
         </div>

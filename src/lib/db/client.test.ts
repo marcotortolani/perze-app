@@ -47,6 +47,7 @@ describe("PerzeDatabase — schema abre y hace CRUD básico", () => {
       createdAt: "2026-07-01T00:00:00.000Z",
       updatedAt: "2026-07-01T00:00:00.000Z",
       deletedAt: null,
+      clientRev: 1,
     });
 
     const row = await db.accounts.get("acc-1");

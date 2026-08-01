@@ -12,7 +12,7 @@ import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
-import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { add, money, subtract, zero } from "@/lib/money/money";
@@ -57,7 +57,7 @@ export default function MovementsPage() {
   const { data: categories = [] } = useCategories(household?.id);
   const transactionsQuery = useTransactions(household?.id);
   const { data: transactions, isLoading: txLoading } = transactionsQuery;
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const errorState = useQueryErrorState(transactionsQuery, { what: t("transactions.list.errorWhat") });
   const pending = usePendingMutations();
 
@@ -150,15 +150,31 @@ export default function MovementsPage() {
     });
   };
 
+  // C24 — secuencial, no `Promise.all`: cada `softDelete`/`restore` dispara
+  // un `applyBalanceDelta` sobre la MISMA cuenta cuando dos movimientos
+  // seleccionados comparten `accountId` (el caso común). En paralelo, dos
+  // lecturas de `current_balance` pueden pisarse (read-modify-write sin
+  // lock) y perder un delta. Uno por uno es más lento pero nunca corrompe
+  // el saldo.
   const handleBulkDelete = async () => {
     if (!selection) return;
     const ids = [...selection];
-    await Promise.all(ids.map((id) => transactionsRepo.softDelete(id)));
+    for (const id of ids) {
+      await transactionsRepo.softDelete(id);
+    }
     invalidateTransactions();
     setSelection(null);
     toast(t("transactions.list.deletedBulk", { count: ids.length }), {
       duration: 5000,
-      action: { label: t("transactions.list.undo"), onClick: async () => { await Promise.all(ids.map((id) => transactionsRepo.restore(id))); invalidateTransactions(); } },
+      action: {
+        label: t("transactions.list.undo"),
+        onClick: async () => {
+          for (const id of ids) {
+            await transactionsRepo.restore(id);
+          }
+          invalidateTransactions();
+        },
+      },
     });
   };
 
@@ -299,6 +315,7 @@ export default function MovementsPage() {
                                 : undefined
                             }
                             polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" ? "neutral" : "negative"}
+                            syncIssue={item.tx.syncState === "ok" ? undefined : item.tx.syncState}
                             onClick={() => (selection ? toggleSelected(item.tx.id) : router.push(`/transactions/${item.tx.id}`))}
                           />
                         </div>

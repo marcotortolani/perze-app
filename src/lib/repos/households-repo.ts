@@ -5,7 +5,7 @@ import { newId, nowIso } from "./ids";
 
 const CURRENT_HOUSEHOLD_META_KEY = "currentHouseholdId";
 
-export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt">;
+export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt" | "clientRev">;
 
 export const householdsRepo = {
   async get(id: string): Promise<HouseholdRow | undefined> {
@@ -15,21 +15,25 @@ export const householdsRepo = {
   async create(input: NewHouseholdInput): Promise<HouseholdRow> {
     const db = getDb();
     const now = nowIso();
-    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now };
+    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now, clientRev: 1 };
     // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
     await db.transaction("rw", db.households, db.outbox, async () => {
       await db.households.add(row);
-      await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: 1 });
+      await outbox.enqueue({ table: "households", op: "insert", entityId: row.id, payload: row, clientRev: row.clientRev });
     });
     return row;
   },
 
   async update(id: string, patch: Partial<HouseholdRow>): Promise<void> {
     const db = getDb();
+    // C10 — clientRev real, ver la nota en accounts-repo.ts.
     await db.transaction("rw", db.households, db.outbox, async () => {
-      await db.households.update(id, { ...patch, updatedAt: nowIso() });
-      const row = await db.households.get(id);
-      if (row) await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: row, clientRev: 1 });
+      const existing = await db.households.get(id);
+      if (!existing) return;
+      const nextRev = existing.clientRev + 1;
+      const updated: HouseholdRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
+      await db.households.put(updated);
+      await outbox.enqueue({ table: "households", op: "update", entityId: id, payload: updated, clientRev: nextRev });
     });
   },
 

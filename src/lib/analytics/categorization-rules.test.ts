@@ -16,6 +16,7 @@ function rule(overrides: Partial<CategorizationRuleRow> = {}): CategorizationRul
     createdAt: "2026-01-01",
     updatedAt: "2026-01-01",
     deletedAt: null,
+    clientRev: 1,
     ...overrides,
   };
 }

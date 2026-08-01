@@ -67,6 +67,37 @@ describe("resolveFxRate — cadena de resolución estricta", () => {
     expect(r.rate).toBe(RATE_1200);
   });
 
+  it("A7 — nunca hereda una cotización POSTERIOR a la fecha del movimiento", () => {
+    // Import retroactivo: el movimiento es del 10, pero lo único cacheado
+    // es del 27 (hoy). Antes de A7 esto heredaba el rate de hoy — hay que
+    // caer a pending en vez de inventar una cotización futura.
+    const r = resolveFxRate({
+      base: "USD",
+      quote: "ARS",
+      date: "2026-07-10",
+      ratesForPair: [
+        { base: "USD", quote: "ARS", asOf: "2026-07-27", provider: "dolarapi", quoteKind: "oficial", rate: RATE_1200, fetchedAt: "" },
+      ],
+    });
+    expect(r.source).toBe("pending");
+    expect(r.rate).toBeNull();
+  });
+
+  it("A7 — con candidatos antes y después de la fecha, hereda el más reciente que no sea futuro", () => {
+    const r = resolveFxRate({
+      base: "USD",
+      quote: "ARS",
+      date: "2026-07-15",
+      ratesForPair: [
+        { base: "USD", quote: "ARS", asOf: "2026-07-10", provider: "dolarapi", quoteKind: "oficial", rate: RATE_1000, fetchedAt: "" },
+        { base: "USD", quote: "ARS", asOf: "2026-07-27", provider: "dolarapi", quoteKind: "oficial", rate: RATE_1200, fetchedAt: "" },
+      ],
+    });
+    expect(r.source).toBe("inherited");
+    expect(r.asOf).toBe("2026-07-10");
+    expect(r.rate).toBe(RATE_1000);
+  });
+
   it("sin nada disponible, pending — nunca cae a rate = 1", () => {
     const r = resolveFxRate({ base: "USD", quote: "ARS", date: "2026-07-27", ratesForPair: [] });
     expect(r.source).toBe("pending");

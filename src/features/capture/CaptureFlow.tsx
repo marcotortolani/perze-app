@@ -9,7 +9,7 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
-import { useInvalidateTransactions, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import type { AccountRow } from "@/lib/db/schema";
@@ -48,7 +48,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const invalidateCategories = useInvalidateCategories(household?.id);
   // Capturado una vez al montar, no en cada render: `useFrequentCategories`
   // compara por `now.getTime()`, así que un `Date` estable evita

@@ -53,7 +53,7 @@ export default function CurrenciesPage() {
 
   const handleSaveOverride = async () => {
     if (!editingPair) return;
-    await fxRepo.setManualOverride(editingPair, baseCurrency, manualRate);
+    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, manualRate);
     await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
     setEditingPair(null);
     toast(t("currenciesPage.overrideSaved", { pair: `${editingPair} → ${baseCurrency}` }));

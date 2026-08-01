@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Amount, Button, EmptyState, Icon, Keypad, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
-import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money, subtract } from "@/lib/money/money";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
@@ -23,7 +23,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const userId = useCurrentUserId();
   const { data: account, isLoading } = useAccount(id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
+  const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const [expr, setExpr] = useState("");
   const [saving, setSaving] = useState(false);
 

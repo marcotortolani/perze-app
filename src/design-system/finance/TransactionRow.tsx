@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import { useTranslations } from "next-intl";
 import { Icon, type IconName } from "../core/Icon";
 import { Amount } from "../money/Amount";
 import type { Money } from "@/lib/money/money";
@@ -29,6 +30,8 @@ export interface TransactionRowProps {
   hasAttachment?: boolean | undefined;
   /** Cuota N de M — `null`/`undefined` si no es una compra en cuotas. */
   installment?: { number: number; total: number } | undefined;
+  /** C12 — este movimiento no llegó al servidor tal cual está local: `conflict` = otro miembro lo editó a la vez; `rejected` = el servidor lo rechazó. Icono funcional, no decorativo — nunca se omite si el estado es real. */
+  syncIssue?: "conflict" | "rejected" | undefined;
   onClick?: (() => void) | undefined;
   style?: CSSProperties | undefined;
 }
@@ -46,9 +49,11 @@ export function TransactionRow({
   shared = false,
   hasAttachment = false,
   installment,
+  syncIssue,
   onClick,
   style,
 }: TransactionRowProps) {
+  const t = useTranslations();
   const [pressed, setPressed] = useState(false);
   return (
     <div
@@ -92,6 +97,11 @@ export function TransactionRow({
           </span>
           {hasAttachment ? <Icon name="receipt" size={13} color="var(--text-muted)" /> : null}
           {shared ? <Icon name="users" size={13} color="var(--text-muted)" /> : null}
+          {syncIssue ? (
+            <span title={t(`ds.transactionRow.syncIssue.${syncIssue}`)}>
+              <Icon name="alert" size={13} color="var(--critical)" />
+            </span>
+          ) : null}
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {meta ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -8,6 +8,9 @@ import { Icon, OtpInput, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
+
+/** B10 — el mismo cooldown que la Edge Function ya exige del lado servidor (rate limit de `signInWithOtp`); acá es solo para no dejar tocar "Reenviar" en loop y quemar los reintentos sin que el usuario se entere por qué. */
+const RESEND_COOLDOWN_SECONDS = 60;
 
 /** A3 — verificación del código de 6 dígitos que manda `signInWithOtp` (A2). */
 export default function OnboardingVerifyPage() {
@@ -17,6 +20,18 @@ export default function OnboardingVerifyPage() {
   const [code, setCode] = useState("");
   const [invalid, setInvalid] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  // Arranca en cooldown: llegar acá ya implica que se mandó un código recién (A2).
+  // `handleResend` lo vuelve a poner en `RESEND_COOLDOWN_SECONDS` directo
+  // (evento de usuario, no un efecto) — el único trabajo del efecto es
+  // tickear cada segundo, sin volver a sincronizar nada externo.
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCooldown((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleChange = async (value: string) => {
     setCode(value);
@@ -42,10 +57,14 @@ export default function OnboardingVerifyPage() {
   };
 
   const handleResend = async () => {
+    if (cooldown > 0) return;
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
     if (error) toast.error(error.message);
-    else toast(t("onboarding.verify.resent"));
+    else {
+      toast(t("onboarding.verify.resent"));
+      setCooldown(RESEND_COOLDOWN_SECONDS);
+    }
   };
 
   return (
@@ -76,8 +95,13 @@ export default function OnboardingVerifyPage() {
       ) : null}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", marginTop: "auto" }}>
-        <button type="button" onClick={handleResend} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--primary-ink)", fontSize: 14 }}>
-          {t("onboarding.verify.resend")}
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={cooldown > 0}
+          style={{ background: "none", border: 0, cursor: cooldown > 0 ? "default" : "pointer", color: cooldown > 0 ? "var(--text-muted)" : "var(--primary-ink)", fontSize: 14 }}
+        >
+          {cooldown > 0 ? t("onboarding.verify.resendCooldown", { seconds: cooldown }) : t("onboarding.verify.resend")}
         </button>
         <button type="button" onClick={() => router.push("/onboarding")} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }}>
           {t("onboarding.verify.changeEmail")}
