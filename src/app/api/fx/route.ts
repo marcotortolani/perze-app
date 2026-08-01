@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { formatRate, parseRate, type ScaledRate } from "@/lib/fx/rate";
 import { type FxManualOverride, type FxRateRecord, resolveFxRate } from "@/lib/fx/resolve";
 import { createDolarApiProvider } from "@/lib/fx/providers/dolarapi";
@@ -36,6 +37,28 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * B5 — antes: sin `getUser()`, `date` interpolado crudo en un `.or()` de
+ * PostgREST (`?date=2026-01-01,rate.gte.0` reescribía el filtro entero),
+ * y `base`/`quote`/`householdId` sin validar. El regex de `date` por sí
+ * solo ya cierra la inyección (los únicos caracteres permitidos son
+ * dígitos y guiones — no hay forma de colar una coma). Los códigos de
+ * moneda NO se acotan a 3 letras (`CLAUDE.md`: "USDT no entra en tres
+ * caracteres") — la forma se valida acá, la existencia real contra el
+ * catálogo de `currencies` en el propio handler.
+ */
+const querySchema = z.object({
+  base: z.string().regex(/^[A-Z0-9]{2,10}$/, "MONEDA_INVALIDA"),
+  quote: z.string().regex(/^[A-Z0-9]{2,10}$/, "MONEDA_INVALIDA"),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "FECHA_INVALIDA")
+    .optional(),
+  householdId: z.uuid("HOUSEHOLD_INVALIDO").optional(),
+  provider: z.string().max(40).optional(),
+  quoteKind: z.string().max(40).optional(),
+});
+
 async function fetchAllQuotes(base: string, quote: string): Promise<FxRateRecord[]> {
   const supporting = providers.filter((p) => p.supports(base, quote));
   const results = await Promise.allSettled(supporting.map((p) => p.fetchQuotes(base, quote)));
@@ -60,23 +83,50 @@ async function fetchAllQuotes(base: string, quote: string): Promise<FxRateRecord
   return records;
 }
 
+const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const base = searchParams.get("base");
-  const quote = searchParams.get("quote");
-  const date = searchParams.get("date") ?? todayIso();
-  const householdId = searchParams.get("householdId");
-  const preferredProvider = searchParams.get("provider") ?? undefined;
-  const preferredQuoteKind = searchParams.get("quoteKind") ?? undefined;
+  const supabase = await createClient();
 
-  if (!base || !quote) {
-    // Código estable, no un mensaje humano: un route handler no conoce el
-    // locale del cliente que lo llama. El cliente traduce este código a
-    // `errors.*` (ver `messages/*.json`) antes de mostrarlo.
-    return NextResponse.json({ error: "MISSING_PARAMS" }, { status: 400 });
+  // B5 — 401 sin sesión: antes cualquier anónimo disparaba fetches
+  // salientes a dolarapi/frankfurter gratis (amplificación, riesgo de
+  // baneo por IP) y podía leer overrides de cualquier household.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
-  const supabase = await createClient();
+  const parsed = querySchema.safeParse({
+    base: searchParams.get("base") ?? undefined,
+    quote: searchParams.get("quote") ?? undefined,
+    date: searchParams.get("date") ?? undefined,
+    householdId: searchParams.get("householdId") ?? undefined,
+    provider: searchParams.get("provider") ?? undefined,
+    quoteKind: searchParams.get("quoteKind") ?? undefined,
+  });
+  if (!parsed.success) {
+    return NextResponse.json({ error: "PARAMS_INVALIDOS", issues: parsed.error.issues }, { status: 400, headers: NO_STORE_HEADERS });
+  }
+  const { base, quote, householdId, provider: preferredProvider, quoteKind: preferredQuoteKind } = parsed.data;
+  const date = parsed.data.date ?? todayIso();
+
+  // Existencia real contra el catálogo — el regex de arriba solo valida
+  // forma, no que la moneda exista (Patrón C: catálogo global, ver `CLAUDE.md`).
+  const codesToCheck = base === quote ? [base] : [base, quote];
+  const { data: knownCurrencies, error: currenciesError } = await supabase
+    .from("currencies")
+    .select("code")
+    .in("code", codesToCheck)
+    .eq("is_active", true);
+  if (currenciesError) {
+    return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500, headers: NO_STORE_HEADERS });
+  }
+  if ((knownCurrencies ?? []).length !== codesToCheck.length) {
+    return NextResponse.json({ error: "MONEDA_DESCONOCIDA" }, { status: 400, headers: NO_STORE_HEADERS });
+  }
 
   // Paso 1 de la cadena: override manual vigente del household, a la
   // fecha del movimiento (no "el último"). `rate::text` evita que
@@ -141,12 +191,15 @@ export async function GET(request: Request) {
     preferredQuoteKind,
   });
 
-  return NextResponse.json({
-    rate: resolution.rate === null ? null : formatRate(resolution.rate),
-    source: resolution.source,
-    provider: resolution.provider,
-    quoteKind: resolution.quoteKind,
-    asOf: resolution.asOf,
-    isStale: resolution.isStale,
-  });
+  return NextResponse.json(
+    {
+      rate: resolution.rate === null ? null : formatRate(resolution.rate),
+      source: resolution.source,
+      provider: resolution.provider,
+      quoteKind: resolution.quoteKind,
+      asOf: resolution.asOf,
+      isStale: resolution.isStale,
+    },
+    { headers: NO_STORE_HEADERS }
+  );
 }

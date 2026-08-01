@@ -20,7 +20,11 @@ export function createFrankfurterProvider(fetchImpl: typeof fetch = fetch): FxPr
       return base !== quote && SUPPORTED.has(base) && SUPPORTED.has(quote);
     },
     async fetchQuotes(base, quote): Promise<ProviderQuote[]> {
-      const url = `https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${quote}`;
+      // B5 — encodeURIComponent explícito: hoy `supports()` ya acota
+      // `base`/`quote` al allowlist de `SUPPORTED`, pero este provider no
+      // debe depender de que el caller lo haya chequeado (inyección de
+      // parámetros en la URL del upstream si alguna vez se llama directo).
+      const url = `https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(quote)}`;
       const res = await fetchImpl(url);
       if (!res.ok) throw new Error(`frankfurter respondió ${res.status}`);
       const data = (await res.json()) as FrankfurterResponse;

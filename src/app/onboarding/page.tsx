@@ -10,6 +10,7 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { seedDemoHousehold } from "@/lib/seed/demo-household";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { createClient } from "@/lib/supabase/client";
+import { env } from "@/env";
 
 /**
  * A2 — auth. `CLAUDE.md` § "Orden de A2": con OAuth registrado, Google/Apple
@@ -21,7 +22,7 @@ import { createClient } from "@/lib/supabase/client";
  * `NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS` (env, no un toggle en código) es lo
  * único que hay que tocar acá.
  */
-const OAUTH_PROVIDERS = (process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS ?? "")
+const OAUTH_PROVIDERS = (env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS ?? "")
   .split(",")
   .map((p) => p.trim())
   .filter((p): p is "google" | "apple" => p === "google" || p === "apple");

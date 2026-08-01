@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextPath } from "@/lib/auth/safe-next-path";
 
 /**
  * C7 — destino del login por OAuth (Google/Apple, cuando haya credenciales
@@ -10,12 +11,12 @@ import { createClient } from "@/lib/supabase/server";
  * `?code=...`; esto lo canjea por una sesión real y deja las cookies
  * puestas antes de mandar al usuario a seguir el onboarding. `next` deja
  * seguir directo a la app si el login fue para re-entrar, no para un
- * onboarding nuevo.
+ * onboarding nuevo — validado por `safeNextPath` (B11).
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/onboarding/country";
+  const next = safeNextPath(searchParams.get("next"));
 
   if (code) {
     const supabase = await createClient();
