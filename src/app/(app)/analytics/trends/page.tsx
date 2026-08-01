@@ -1,8 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, BarChart, Skeleton, StatTile } from "@/design-system";
+import { AppHeader, Skeleton, StatTile } from "@/design-system";
+
+// C15/auditoría: importar `BarChart` directo de su archivo (no del barrel
+// `@/design-system`, que re-exporta los 13 componentes de charts juntos)
+// y diferirlo con `next/dynamic` — así su código queda en un chunk propio
+// de esta ruta, no en el chunk compartido de `(app)/layout.tsx`.
+const BarChart = dynamic(() => import("@/design-system/charts/BarChart").then((m) => m.BarChart), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
 import { formatAmountCompact } from "@/lib/money/format";

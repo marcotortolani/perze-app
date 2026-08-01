@@ -2,9 +2,13 @@
 
 import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, EmptyState, Icon, LineChart, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, EmptyState, Icon, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+
+// C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
+const LineChart = dynamic(() => import("@/design-system/charts/LineChart").then((m) => m.LineChart), { ssr: false });
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";

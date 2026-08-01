@@ -18,10 +18,19 @@ declare const self: ServiceWorkerGlobalScope;
  * local-first (Dexie/outbox), así que esto solo cubre una navegación nueva
  * a una ruta que todavía no está en caché sin red, nunca el guardado de datos.
  */
+/**
+ * C18/auditoría — `skipWaiting: true` activaba el service worker nuevo de
+ * inmediato, en medio de la sesión: la próxima navegación (o incluso un
+ * fetch en curso) podía servirse con JS de una versión y CSS/chunks de
+ * otra ("chunk load error" clásico de PWA post-deploy), sin que el
+ * usuario supiera que la app cambió debajo suyo. Ahora el SW nuevo queda
+ * "esperando" hasta que `ServiceWorkerRegister` (cliente) confirma con un
+ * toast — recién ahí este `message` listener de abajo lo activa.
+ */
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: true,
-  clientsClaim: true,
+  skipWaiting: false,
+  clientsClaim: false,
   navigationPreload: true,
   runtimeCaching: defaultCache,
   fallbacks: {
@@ -35,6 +44,10 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
+});
 
 /**
  * K12 — push. El payload lo arma la Edge Function `send-push` (nunca el

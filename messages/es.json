@@ -6,6 +6,10 @@
     "shortcutAddExpenseShort": "Gasto",
     "shortcutAddExpenseDescription": "Ir directo al keypad de captura"
   },
+  "pwa": {
+    "updateAvailable": "Hay una versión nueva de PERZE.",
+    "updateNow": "Actualizar"
+  },
   "nav": {
     "home": "Inicio",
     "homeShort": "Inicio",
