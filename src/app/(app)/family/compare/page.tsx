@@ -42,7 +42,7 @@ export default function ComparePage() {
   });
 
   const categoriesData = useMemo(() => {
-    if (!household || !members || !categories || !transactions || !sharesQuery.data) return [];
+    if (!household || !members || !categories || !transactions || !sharesQuery.data || !userId) return [];
     const { start, end } = previousClosedPeriodBounds(household.periodStartDay || 1, new Date());
     const txById = new Map(transactions.map((tx) => [tx.id, tx]));
     const otherMembers = members.filter((m) => m.profileId !== userId).slice(0, 2);
@@ -75,7 +75,7 @@ export default function ComparePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, members, categories, transactions, sharesQuery.data, userId]);
 
-  if (!household || !members || !categories || !transactions || sharesQuery.isLoading) return <Skeleton height={260} style={{ marginTop: 16 }} />;
+  if (!household || !members || !categories || !transactions || !userId || sharesQuery.isLoading) return <Skeleton height={260} style={{ marginTop: 16 }} />;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

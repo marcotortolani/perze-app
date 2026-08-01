@@ -30,7 +30,7 @@ export default function NewCategorizationRulePage() {
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   const category = categories.find((c) => c.id === categoryId);
   const canSave = name.trim() !== "" && value.trim() !== "" && categoryId !== null;

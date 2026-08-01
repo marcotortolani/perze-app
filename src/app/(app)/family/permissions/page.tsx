@@ -41,7 +41,7 @@ export default function PermissionsPage() {
   const [grants, setGrants] = useState<VisibilityGrant[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(false);
 
-  if (!household || !accounts || !categories || !members) return <Skeleton height={300} style={{ marginTop: 16 }} />;
+  if (!household || !accounts || !categories || !members || !userId) return <Skeleton height={300} style={{ marginTop: 16 }} />;
 
   const otherMembers = members.filter((m) => m.profileId !== userId);
   if (otherMembers.length === 0) {

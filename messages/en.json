@@ -529,7 +529,11 @@
     "security": "Security",
     "profile": "Profile",
     "tagsAndPayees": "Tags and payees",
-    "rules": "Auto-categorization rules"
+    "rules": "Auto-categorization rules",
+    "signOut": "Sign out",
+    "signOutConfirmTitle": "Unsynced changes",
+    "signOutUnsyncedWarning": "{count, plural, one {You have # change that hasn't uploaded to the server yet.} other {You have # changes that haven't uploaded to the server yet.}} Signing out now will lose them.",
+    "signOutConfirmAction": "Sign out anyway"
   },
   "conflictsPage": {
     "title": "Sync conflicts",

@@ -529,7 +529,11 @@
     "security": "Segurança",
     "profile": "Perfil",
     "tagsAndPayees": "Tags e comerciantes",
-    "rules": "Regras de auto-categorização"
+    "rules": "Regras de auto-categorização",
+    "signOut": "Sair da conta",
+    "signOutConfirmTitle": "Alterações não sincronizadas",
+    "signOutUnsyncedWarning": "{count, plural, one {Você tem # alteração que ainda não foi enviada ao servidor.} other {Você tem # alterações que ainda não foram enviadas ao servidor.}} Se sair agora, elas se perdem.",
+    "signOutConfirmAction": "Sair mesmo assim"
   },
   "conflictsPage": {
     "title": "Conflitos de sincronização",

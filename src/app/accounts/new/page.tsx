@@ -13,7 +13,7 @@ export default function NewAccountPage() {
   const userId = useCurrentUserId();
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
-  if (!household) return null;
+  if (!household || !userId) return null;
 
   return (
     <AccountFormFlow

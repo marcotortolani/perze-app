@@ -6,6 +6,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "@/components/ui/sonner";
 import { OnboardingGate } from "@/components/onboarding-gate";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { DbOwnerSync } from "@/components/db-owner-sync";
+import { PinGate } from "@/components/pin-gate";
 import { useSyncLoop } from "@/lib/offline/use-sync-loop";
 
 /**
@@ -44,8 +46,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ServiceWorkerRegister />
+      <DbOwnerSync />
       <SyncLoop />
-      <OnboardingGate>{children}</OnboardingGate>
+      <PinGate>
+        <OnboardingGate>{children}</OnboardingGate>
+      </PinGate>
       <Toaster richColors position="top-center" />
       {process.env.NODE_ENV === "development" && (
         <ReactQueryDevtools initialIsOpen={false} />

@@ -146,15 +146,52 @@ export class PerzeDatabase extends Dexie {
 }
 
 let instance: PerzeDatabase | null = null;
+let activeName = "perze";
 
 /** Singleton — Dexie ya maneja una sola conexión física por nombre de DB. */
 export function getDb(): PerzeDatabase {
-  if (!instance) instance = new PerzeDatabase();
+  if (!instance) instance = new PerzeDatabase(activeName);
   return instance;
 }
 
 /** Solo para tests: fuerza una base fresca (con nombre propio) detrás del singleton. */
 export function resetDbForTests(name: string): PerzeDatabase {
+  activeName = name;
   instance = new PerzeDatabase(name);
   return instance;
+}
+
+/**
+ * B4 — namespaced por usuario: `perze-${userId}` en vez de una sola base
+ * `"perze"` compartida por cualquier cuenta que haya iniciado sesión en
+ * este navegador. Sin esto, el usuario B ve todos los movimientos, cuentas
+ * y saldos del usuario A que estuvo antes en el mismo perfil de navegador
+ * (el gate de B1 pasa igual, porque hay household local), y el outbox
+ * intenta empujar las filas de A bajo la sesión de B.
+ *
+ * Cierra la conexión anterior antes de abrir la nueva — Dexie no permite
+ * dos `Dexie` abiertas al mismo nombre, pero sí varias bases distintas en
+ * paralelo, así que esto es seguro incluso si algo todavía tiene una
+ * referencia vieja de `instance` en un closure.
+ */
+export function switchToUserDb(userId: string): PerzeDatabase {
+  const name = `perze-${userId}`;
+  if (name === activeName && instance) return instance;
+  instance?.close();
+  activeName = name;
+  instance = new PerzeDatabase(name);
+  return instance;
+}
+
+/** De vuelta a la base anónima/demo (`"perze"`) — se usa después de `signOut()`. */
+export function switchToAnonymousDb(): PerzeDatabase {
+  if (activeName === "perze" && instance) return instance;
+  instance?.close();
+  activeName = "perze";
+  instance = new PerzeDatabase("perze");
+  return instance;
+}
+
+export function getActiveDbName(): string {
+  return activeName;
 }

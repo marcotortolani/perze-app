@@ -9,6 +9,7 @@ import { APP_VERSION } from "@/lib/version";
 import { setLocale } from "@/i18n/actions";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@/i18n/formatting";
+import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 
 const LANGUAGE_MESSAGE_KEY = {
   es: "morePage.languageNames.es",
@@ -36,6 +37,8 @@ export default function MorePage() {
   const modules = household?.enabledModules ?? [];
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm" | "signing-out">("none");
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
 
   const handleSelectLocale = (next: Locale) => {
     if (next === locale) {
@@ -47,6 +50,22 @@ export default function MorePage() {
       setLanguageSheetOpen(false);
       router.refresh();
     });
+  };
+
+  const handleSignOutRequest = async () => {
+    const count = await countUnsyncedChanges();
+    if (count > 0) {
+      setUnsyncedCount(count);
+      setSignOutSheet("confirm");
+      return;
+    }
+    await doSignOut();
+  };
+
+  const doSignOut = async () => {
+    setSignOutSheet("signing-out");
+    await signOut();
+    router.replace("/onboarding");
   };
 
   return (
@@ -100,6 +119,10 @@ export default function MorePage() {
         <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
       </Card>
 
+      <Card padding="4px 16px">
+        <ListRow icon="sign-out" label={t("morePage.signOut")} onClick={handleSignOutRequest} />
+      </Card>
+
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>
         {t("morePage.version", { version: APP_VERSION })}
       </p>
@@ -116,6 +139,28 @@ export default function MorePage() {
               onClick={() => handleSelectLocale(candidate)}
             />
           ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={signOutSheet === "confirm"} title={t("morePage.signOutConfirmTitle")} onClose={() => setSignOutSheet("none")} height={260}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+            {t("morePage.signOutUnsyncedWarning", { count: unsyncedCount })}
+          </p>
+          <button
+            type="button"
+            onClick={doSignOut}
+            style={{ background: "var(--critical)", color: "var(--primary-on-fill)", border: 0, borderRadius: "var(--radius-button)", height: 56, cursor: "pointer", fontSize: 17, fontWeight: 600 }}
+          >
+            {t("morePage.signOutConfirmAction")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSignOutSheet("none")}
+            style={{ background: "none", border: 0, cursor: "pointer", fontSize: 15, color: "var(--text-secondary)", padding: 8 }}
+          >
+            {t("common.cancel")}
+          </button>
         </div>
       </Sheet>
     </div>

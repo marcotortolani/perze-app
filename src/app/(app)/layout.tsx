@@ -10,7 +10,6 @@ import { usePendingMutations } from "@/lib/offline";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { SAW_WELCOME_KEY } from "@/lib/onboarding/welcome-flag";
-import { PinGate } from "@/components/pin-gate";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
 import { contentWidthFor } from "@/lib/nav/content-width";
@@ -152,7 +151,6 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const maxWidth = `var(${contentWidthFor(pathname) === "wide" ? "--content-max-width-wide" : "--content-max-width"})`;
 
   return (
-    <PinGate>
     <div className="app-shell">
       <Sidebar
         tabs={tabs}
@@ -194,6 +192,5 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
       {modal}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
-    </PinGate>
   );
 }

@@ -34,7 +34,7 @@ export default function SettleUpPage() {
     enabled: !!household,
   });
 
-  if (!household || !members || sharesQuery.isLoading) return <Skeleton height={260} style={{ marginTop: 16 }} />;
+  if (!household || !members || !userId || sharesQuery.isLoading) return <Skeleton height={260} style={{ marginTop: 16 }} />;
 
   const baseCurrency = household.baseCurrency;
   const shares = sharesQuery.data ?? [];
