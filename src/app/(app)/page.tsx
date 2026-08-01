@@ -25,7 +25,8 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { usePendingMutations } from "@/lib/offline";
 import { usePrivacyStore } from "@/stores/privacy-store";
-import { add, money, zero } from "@/lib/money/money";
+import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
+import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -102,21 +103,28 @@ export default function HomePage() {
   // Sparkline del héroe: flujo neto (ingreso − gasto) acumulado de los
   // últimos 14 días, en base a movimientos reales — no un historial de
   // patrimonio snapshot a snapshot (esa tabla todavía no existe), pero sí
-  // una tendencia genuina, no inventada.
-  let running = 0;
-  const heroTrend: number[] = [];
+  // una tendencia genuina, no inventada. Todo el cálculo es bigint vía
+  // lib/money; `toMajorUnitsUnsafe` solo se usa al final, para el pixel del
+  // Sparkline — nunca para el delta que se muestra como plata.
+  let runningNet = zero(baseCurrency);
+  const heroTrendMoney: Money[] = [];
   for (let i = 13; i >= 0; i--) {
     const [start, end] = dayBounds(now, i);
-    const dayNet = allTransactions
-      .filter((t) => t.kind !== "transfer" && t.amountBase !== null && t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString())
-      .reduce((s, t) => s + Number(t.amountBase) * (t.kind === "income" ? 1 : -1), 0);
-    running += dayNet;
-    heroTrend.push(running);
+    const dayTransactions = allTransactions.filter(
+      (t) => t.kind !== "transfer" && t.amountBase !== null && t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString(),
+    );
+    const dayNet = sum(
+      baseCurrency,
+      dayTransactions.map((t) => money(t.kind === "income" ? t.amountBase! : -t.amountBase!, baseCurrency)),
+    );
+    runningNet = add(runningNet, dayNet);
+    heroTrendMoney.push(runningNet);
   }
-  const last7Net = heroTrend[13]! - heroTrend[6]!;
-  const prev7Net = heroTrend[6]!;
-  const deltaPolarity = last7Net >= prev7Net ? "positive" : "negative";
-  const deltaArrow = last7Net >= prev7Net ? "↑" : "↓";
+  const heroTrend = heroTrendMoney.map((m) => toMajorUnitsUnsafe(m));
+  const last7Net = subtract(heroTrendMoney[13]!, heroTrendMoney[6]!);
+  const prev7Net = heroTrendMoney[6]!;
+  const deltaPolarity = compare(last7Net, prev7Net) >= 0 ? "positive" : "negative";
+  const deltaArrow = compare(last7Net, prev7Net) >= 0 ? "↑" : "↓";
 
   const needsFxCount = allTransactions.filter((t) => t.fxRate === null).length;
   const topCategoryEntry = [...spendByCategory.entries()].sort((a, b) => (b[1] > a[1] ? 1 : -1))[0];
@@ -161,7 +169,7 @@ export default function HomePage() {
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: deltaPolarity === "positive" ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
-            {deltaArrow} {formatAmountCompact(money(BigInt(Math.round(Math.abs(last7Net - prev7Net))), baseCurrency), { showSign: false })}
+            {deltaArrow} {formatAmountCompact(abs(subtract(last7Net, prev7Net)), { showSign: false })}
           </span>
           <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t("home.vsLastWeek")}</span>
         </div>

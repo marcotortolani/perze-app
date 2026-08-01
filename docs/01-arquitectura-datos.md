@@ -6,15 +6,15 @@
 
 ### Confirmado por vos
 
-| Capa         | Elección                                 | Notas para Next.js 16                                                                                                                                                                                                                                                   |
-| ------------ | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework    | **Next.js 16** (App Router)              | Turbopack por defecto; `middleware.ts` → **`proxy.ts`**; `params`/`searchParams`/`cookies()`/`headers()` son **async**; `next lint` fue removido; `revalidateTag(tag, profile)` ahora pide perfil de `cacheLife`; `updateTag()` para read-your-writes en Server Actions |
-| Lenguaje     | **TypeScript strict**                    | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`                                                                                                                                                                                                      |
-| Estilos      | **Tailwind CSS v4**                      | Config en CSS (`@theme`), tokens como CSS vars                                                                                                                                                                                                                          |
-| Animación    | **Motion** (`motion` — ex framer-motion) | + **React 19.2 View Transitions** para transiciones de ruta                                                                                                                                                                                                             |
-| Backend      | **Supabase**                             | Postgres + Auth + Storage + Realtime + Edge Functions + pg_cron                                                                                                                                                                                                         |
-| UI base      | **shadcn/ui** customizado                | Con registry propio para tus componentes derivados                                                                                                                                                                                                                      |
-| Distribución | **PWA**                                  | Serwist                                                                                                                                                                                                                                                                 |
+| Capa | Elección | Notas para Next.js 16 |
+|---|---|---|
+| Framework | **Next.js 16** (App Router) | Turbopack por defecto; `middleware.ts` → **`proxy.ts`**; `params`/`searchParams`/`cookies()`/`headers()` son **async**; `next lint` fue removido; `revalidateTag(tag, profile)` ahora pide perfil de `cacheLife`; `updateTag()` para read-your-writes en Server Actions |
+| Lenguaje | **TypeScript strict** | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` |
+| Estilos | **Tailwind CSS v4** | Config en CSS (`@theme`), tokens como CSS vars |
+| Animación | **Motion** (`motion` — ex framer-motion) | + **React 19.2 View Transitions** para transiciones de ruta |
+| Backend | **Supabase** | Postgres + Auth + Storage + Realtime + Edge Functions + pg_cron |
+| UI base | **shadcn/ui** customizado | Con registry propio para tus componentes derivados |
+| Distribución | **PWA** | Serwist |
 
 ### Recomendaciones adicionales
 
@@ -78,7 +78,7 @@ Convenciones:
 - **Montos**: `bigint` en unidades mínimas, sin excepción. **Cantidades y precios** de instrumentos: `numeric(38,12)`. **Rates**: `numeric(24,12)`. Un importe nunca es `numeric`; una cantidad nunca es `bigint`.
 - **Códigos de moneda**: `text` en todas las tablas (nunca `char(3)` — no entra `USDT` y `char` padea con espacios). FK contra `currencies(code)`.
 - **Entidades raíz** (las que cuelgan directo del household: `accounts`, `categories`, `tags`, `payees`, `transactions`, `budgets`, `goals`, `recurring_rules`, `debts`, `portfolios`, `settlements`, `visibility_grants`, `fx_overrides`, `rules`, `insights`, `import_batches`): llevan `household_id`, `created_by`, `created_at`, `updated_at`, `deleted_at`. `archived_at` es distinto de `deleted_at`: archivar es del usuario, borrar es soft delete.
-  **`instruments` NO es raíz**: es catálogo global con clonado, Patrón C de § 3. La clasificación completa de las 14 tablas que no entran en ninguna de las dos listas está en § 3, _Clasificación de tablas_.
+  **`instruments` NO es raíz**: es catálogo global con clonado, Patrón C de § 3. La clasificación completa de las 14 tablas que no entran en ninguna de las dos listas está en § 3, *Clasificación de tablas*.
 - **Entidades hijas** (`account_balance_snapshots`, `transaction_tags`, `transaction_splits`, `transaction_shares`, `budget_lines`, `debt_schedule`, `trades`, `price_snapshots`, `target_allocations`, `portfolio_snapshots`): **no** llevan `household_id`. Heredan el acceso vía la clave foránea al padre, con el patrón de RLS de § 3.
 - RLS en **todas** las tablas, sin excepción. Las políticas van en la misma migración que la tabla.
 
@@ -288,14 +288,28 @@ transactions (
   account_id uuid NOT NULL,
   counter_account_id uuid NULL,             -- solo transfer
 
-  amount bigint NOT NULL,                   -- unidades mínimas
+  -- SON DOS CONVERSIONES, NO UNA. Ésta es la capa que mueve el saldo.
+  -- `amount` y `currency_code` están SIEMPRE en la moneda de la cuenta: por eso
+  -- `current_balance` nunca necesita FX y un movimiento sin cotización no lo afecta.
+  amount bigint NOT NULL,                   -- unidades mínimas, en moneda de la cuenta
   -- Signo: para expense/income/transfer, `amount` es SIEMPRE POSITIVO y el signo lo
   -- da `kind`. Para `adjustment` puede ser negativo (la conciliación baja el saldo).
   -- CHECK (kind = 'adjustment' OR amount > 0)
-  currency_code text NOT NULL,
+  currency_code text NOT NULL,              -- = accounts.currency_code, siempre
 
-  -- conversión congelada a la moneda base del household.
-  -- NULLABLE a propósito: ver "El estado needs_fx" más abajo. Nunca se cae a 1.
+  -- Lo que el usuario gastó de verdad, cuando difiere de la moneda de la cuenta.
+  -- Caso típico: pagás USD con una tarjeta en pesos. Lo que sale de la cuenta son
+  -- pesos al cambio del banco (`amount`), y esto guarda el dato original.
+  original_amount bigint NULL,
+  original_currency text NULL,
+  original_rate numeric(24,12) NULL,        -- original_currency → currency_code
+  CONSTRAINT original_triple CHECK (
+    (original_amount IS NULL) = (original_currency IS NULL)
+    AND (original_amount IS NULL) = (original_rate IS NULL)
+  ),
+
+  -- Segunda conversión: moneda de la cuenta → moneda base del household.
+  -- ACÁ vive needs_fx, y solo acá. NULLABLE a propósito. Nunca se cae a 1.
   fx_rate numeric(24,12) NULL,
   fx_source text CHECK (fx_source IN
     ('identity','api','manual','inherited','pending')) default 'identity',
@@ -312,7 +326,7 @@ transactions (
   counter_fx_rate numeric(24,12) NULL,
 
   category_id uuid NULL, payee_id uuid NULL,
-  note text,
+  note text, 
   attachments jsonb default '[]',           -- [{path, mime, size, thumb}]
   location jsonb NULL,                      -- {lat, lng, label}
 
@@ -423,14 +437,14 @@ La salida correcta es **guardar el movimiento sin conversión**: `fx_rate` y `am
 
 Consecuencias que atraviesan toda la app y hay que implementar:
 
-| Dónde                  | Qué tiene que pasar                                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Saldo de la cuenta     | **No se afecta**: el saldo está en la moneda de la cuenta y no necesita conversión. Funciona normal.                                                    |
-| Patrimonio neto y KPIs | Excluyen los pendientes y muestran un aviso con el conteo: "1 movimiento sin convertir". Nunca los cuentan como 0 ni como monto original.               |
-| Presupuestos           | Igual: excluidos del consumido, con aviso en la pantalla del presupuesto afectado.                                                                      |
-| Analytics              | Excluidos de todo agregado en moneda base, listados aparte.                                                                                             |
-| Lista de movimientos   | Badge propio en la fila, distinto del de "pendiente de sincronizar". Son dos cosas distintas y se confunden fácil.                                      |
-| Resolución             | Al recuperar conexión se intenta automático. Si falla, entrada en el home: "Falta el tipo de cambio de N movimientos" → pantalla de resolución en lote. |
+| Dónde | Qué tiene que pasar |
+|---|---|
+| Saldo de la cuenta | **No se afecta, y ahora es literalmente cierto**: `amount` está siempre en la moneda de la cuenta, así que el saldo no necesita ninguna conversión. Si el usuario cargó en otra moneda, esa conversión es `original_rate` y ocurre en la captura, no acá. |
+| Patrimonio neto y KPIs | Excluyen los pendientes y muestran un aviso con el conteo: "1 movimiento sin convertir". Nunca los cuentan como 0 ni como monto original. |
+| Presupuestos | Igual: excluidos del consumido, con aviso en la pantalla del presupuesto afectado. |
+| Analytics | Excluidos de todo agregado en moneda base, listados aparte. |
+| Lista de movimientos | Badge propio en la fila, distinto del de "pendiente de sincronizar". Son dos cosas distintas y se confunden fácil. |
+| Resolución | Al recuperar conexión se intenta automático. Si falla, entrada en el home: "Falta el tipo de cambio de N movimientos" → pantalla de resolución en lote. |
 
 **Inmutabilidad del rate — la regla y su única excepción.** Un `fx_rate` ya resuelto no se recalcula nunca: es el que estaba vigente cuando ocurrió el movimiento. La única excepción es el rate `inherited` —el que se tomó de un cache viejo estando sin conexión—: al sincronizar, la app ofrece **una sola vez** reemplazarlo por el real del día del movimiento. Si el usuario dice que no, o si ya pasó esa ventana, queda congelado como cualquier otro. Fuera de esa ventana no hay ninguna vía para reescribir un rate.
 
@@ -477,19 +491,19 @@ CREATE INDEX ON fx_overrides (household_id, base_currency, quote_currency, valid
 1. Override manual vigente del household para ese par **a la fecha del movimiento** (`fx_overrides`) → `fx_source = 'manual'`
 2. Cotización del día en `fx_rates` → `'api'`
 3. Último valor conocido, de cualquier fecha → `'inherited'`, con badge de antigüedad
-4. Nada → **`'pending'`**: se guarda sin conversión (ver § 2.5, _El estado `needs_fx`_)
+4. Nada → **`'pending'`**: se guarda sin conversión (ver § 2.5, *El estado `needs_fx`*)
 
 Nunca hay un paso 5 con `rate = 1`. Un `1` inventado es indistinguible de un `1` legítimo (una transacción en la propia moneda base) y contamina el patrimonio sin dejar rastro.
 
 **Fuentes:**
 
-| Fuente                                        | Cubre                                                                         | Key       | Uso                                  |
-| --------------------------------------------- | ----------------------------------------------------------------------------- | --------- | ------------------------------------ |
-| [DolarApi](https://dolarapi.com/docs/)        | AR, UY, CL, VE, MX, BO, BR, CO — oficial, blue, MEP, CCL, mayorista, paralelo | No        | La clave para LatAm                  |
-| [Frankfurter](https://frankfurter.dev/)       | ~30 monedas del BCE, histórico                                                | No        | FX internacional y series históricas |
-| [ArgentinaDatos](https://argentinadatos.com/) | Dólares, inflación, UVA, plazo fijo                                           | No        | Ajuste por inflación e IPC           |
-| CoinGecko                                     | Crypto                                                                        | Free tier | Crypto                               |
-| open.er-api.com / exchangerate.host           | Fallback general                                                              | Free tier | Respaldo                             |
+| Fuente | Cubre | Key | Uso |
+|---|---|---|---|
+| [DolarApi](https://dolarapi.com/docs/) | AR, UY, CL, VE, MX, BO, BR, CO — oficial, blue, MEP, CCL, mayorista, paralelo | No | La clave para LatAm |
+| [Frankfurter](https://frankfurter.dev/) | ~30 monedas del BCE, histórico | No | FX internacional y series históricas |
+| [ArgentinaDatos](https://argentinadatos.com/) | Dólares, inflación, UVA, plazo fijo | No | Ajuste por inflación e IPC |
+| CoinGecko | Crypto | Free tier | Crypto |
+| open.er-api.com / exchangerate.host | Fallback general | Free tier | Respaldo |
 
 ### 2.7 Presupuestos, metas, recurrentes, deudas
 
@@ -616,13 +630,13 @@ portfolio_snapshots (                        -- para TWR y gráficos históricos
 
 **Fuentes de precios:**
 
-| Fuente                                            | Cubre                                    | Notas                                                                   |
-| ------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
-| [Data912](https://data912.apidocs.ar/)            | Acciones AR, CEDEARs, bonos, ONs, letras | Comunitaria, gratuita, sin key. Buena para BYMA.                        |
-| [BYMA APIs](https://www.byma.com.ar/en/byma-apis) | Mercado argentino oficial                | Producto pago                                                           |
-| CoinGecko                                         | Crypto                                   | Free tier generoso                                                      |
-| Finnhub / Twelve Data / Alpha Vantage             | Acciones y ETFs internacionales          | Free tier con límite diario                                             |
-| **Manual**                                        | Todo                                     | Siempre disponible. Instrumentos ilíquidos, FCI, plazo fijo, inmuebles. |
+| Fuente | Cubre | Notas |
+|---|---|---|
+| [Data912](https://data912.apidocs.ar/) | Acciones AR, CEDEARs, bonos, ONs, letras | Comunitaria, gratuita, sin key. Buena para BYMA. |
+| [BYMA APIs](https://www.byma.com.ar/en/byma-apis) | Mercado argentino oficial | Producto pago |
+| CoinGecko | Crypto | Free tier generoso |
+| Finnhub / Twelve Data / Alpha Vantage | Acciones y ETFs internacionales | Free tier con límite diario |
+| **Manual** | Todo | Siempre disponible. Instrumentos ilíquidos, FCI, plazo fijo, inmuebles. |
 
 El `price_provider` es una columna por instrumento, no un supuesto global. Y siempre se puede ingresar precio a mano — sin eso, no sirve para ONs poco líquidas ni para un departamento.
 
@@ -786,9 +800,9 @@ WITH CHECK (household_id IS NOT NULL AND public.can_write(household_id));
 
 **El Patrón C tiene dos variantes, y la diferencia importa.**
 
-_Con clonado_ — `institutions`, `instruments`, `asset_classes`. Tienen filas globales **y** filas propias del household, porque el usuario las edita: I7 crea instrumentos e I8 renombra clases.
+*Con clonado* — `institutions`, `instruments`, `asset_classes`. Tienen filas globales **y** filas propias del household, porque el usuario las edita: I7 crea instrumentos e I8 renombra clases.
 
-_Puro_ — `currencies`, `countries`, `fx_rates`. **Nunca tienen fila propia de un household**: nadie edita una moneda ni una cotización de mercado. Lectura para todo autenticado, escritura solo por seeds y cron. **No llevan `source_id` ni columnas de auditoría de usuario**, porque no hay usuario que las cree.
+*Puro* — `currencies`, `countries`, `fx_rates`. **Nunca tienen fila propia de un household**: nadie edita una moneda ni una cotización de mercado. Lectura para todo autenticado, escritura solo por seeds y cron. **No llevan `source_id` ni columnas de auditoría de usuario**, porque no hay usuario que las cree.
 
 **Clonado al editar (copy-on-write), solo en la variante con clonado.** Cuando I8 renombra una clase de activo global o I7 modifica un instrumento del catálogo, **no se muta la fila global**: se clona al household con un `source_id` que apunta al original.
 
@@ -804,21 +818,21 @@ Es lo que mantiene el catálogo compartido utilizable: sin esto, un usuario que 
 
 Las que no entran en las dos listas de § 2. La regla: **raíz** lleva `household_id` y ancla su propia política; **hija** se alcanza con `EXISTS` sobre el padre y nunca duplica `household_id`.
 
-| Tabla                                            | Clasificación                                                                                                 | Columnas de auditoría                                                                                                           |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`                                       | **Fuera del patrón household.** Ancla en `id = auth.uid()`, no en `household_id`. No hay padre que le aplique | Vida atada a `auth.users`. No necesita `created_by` ni `deleted_at` propios                                                     |
-| `households`                                     | **Raíz ancla.** No lleva `household_id` porque _es_ el household. RLS: `id IN (SELECT current_households())`  | `created_at`, `updated_at`, `deleted_at`                                                                                        |
-| `household_members`                              | Raíz (Patrón A). Es la tabla que consulta `current_households()`                                              | `joined_at`, `left_at`, `status`, `updated_at`                                                                                  |
-| `household_invites`                              | Raíz (Patrón A)                                                                                               | `created_at`, `expires_at`, `revoked_at`, `accepted_by`                                                                         |
-| `visibility_grants`                              | Raíz (Patrón A)                                                                                               | `granted_by`, `granted_at`, `revoked_at` — el ciclo entero                                                                      |
-| `household_fx_preferences`                       | Raíz (Patrón A), PK compuesta con `household_id`                                                              | `created_at`, `updated_at`                                                                                                      |
-| `fx_overrides`                                   | Raíz (Patrón A)                                                                                               | `created_by`, `created_at`. `valid_from`/`valid_to` hacen de bitácora inmutable: un cambio crea fila nueva, no pisa la anterior |
-| `rules`                                          | Raíz (Patrón A)                                                                                               | Las cuatro: las crea y edita el usuario                                                                                         |
-| `insights`                                       | Raíz (Patrón A)                                                                                               | `created_at`, `dismissed_at`. **Sin `created_by`**: las genera el sistema                                                       |
-| `audit_log`                                      | Raíz (Patrón A), solo lectura                                                                                 | `at` y `actor_id` son `created_at` y `created_by` con otro nombre. **Sin `updated_at` ni `deleted_at`**: append-only            |
-| `import_batches`                                 | Raíz (Patrón A)                                                                                               | `created_by`, `created_at`, `updated_at`, `status`                                                                              |
-| `currencies` · `countries` · `fx_rates`          | **Patrón C puro**                                                                                             | Ninguna de usuario: nadie las crea                                                                                              |
-| `institutions` · `instruments` · `asset_classes` | **Patrón C con clonado**                                                                                      | `source_id` cuando la fila vino de una global                                                                                   |
+| Tabla | Clasificación | Columnas de auditoría |
+|---|---|---|
+| `profiles` | **Fuera del patrón household.** Ancla en `id = auth.uid()`, no en `household_id`. No hay padre que le aplique | Vida atada a `auth.users`. No necesita `created_by` ni `deleted_at` propios |
+| `households` | **Raíz ancla.** No lleva `household_id` porque *es* el household. RLS: `id IN (SELECT current_households())` | `created_at`, `updated_at`, `deleted_at` |
+| `household_members` | Raíz (Patrón A). Es la tabla que consulta `current_households()` | `joined_at`, `left_at`, `status`, `updated_at` |
+| `household_invites` | Raíz (Patrón A) | `created_at`, `expires_at`, `revoked_at`, `accepted_by` |
+| `visibility_grants` | Raíz (Patrón A) | `granted_by`, `granted_at`, `revoked_at` — el ciclo entero |
+| `household_fx_preferences` | Raíz (Patrón A), PK compuesta con `household_id` | `created_at`, `updated_at` |
+| `fx_overrides` | Raíz (Patrón A) | `created_by`, `created_at`. `valid_from`/`valid_to` hacen de bitácora inmutable: un cambio crea fila nueva, no pisa la anterior |
+| `rules` | Raíz (Patrón A) | Las cuatro: las crea y edita el usuario |
+| `insights` | Raíz (Patrón A) | `created_at`, `dismissed_at`. **Sin `created_by`**: las genera el sistema |
+| `audit_log` | Raíz (Patrón A), solo lectura | `at` y `actor_id` son `created_at` y `created_by` con otro nombre. **Sin `updated_at` ni `deleted_at`**: append-only |
+| `import_batches` | Raíz (Patrón A) | `created_by`, `created_at`, `updated_at`, `status` |
+| `currencies` · `countries` · `fx_rates` | **Patrón C puro** | Ninguna de usuario: nadie las crea |
+| `institutions` · `instruments` · `asset_classes` | **Patrón C con clonado** | `source_id` cuando la fila vino de una global |
 
 ### Reglas transversales
 
@@ -926,18 +940,19 @@ supabase/
 
 Estos son los que se rompen silenciosamente. Todos en `lib/analytics/`, todos con tests de Vitest:
 
-| Cálculo                      | Cuidado con                                                          |
-| ---------------------------- | -------------------------------------------------------------------- |
-| Saldo de cuenta              | Transferencias contadas dos veces; transacciones `pending`; redondeo |
-| Patrimonio neto multi-moneda | Qué rate se usa (histórico vs. actual); pasivos con signo            |
-| Presupuesto consumido        | Reembolsos, splits, rollover, período que no empieza el día 1        |
-| Safe to spend                | Recurrentes futuros del período aún no posteados                     |
-| Efecto FX                    | Descomposición `Δ = flujo + retorno + FX` tiene que cerrar exacto    |
-| XIRR / MWR                   | Convergencia con flujos irregulares; casos sin solución              |
-| TWR                          | Sub-períodos entre cada flujo de caja                                |
-| Ajuste por inflación         | Índice base, meses faltantes, interpolación                          |
-| Amortización de bonos        | Cupones, amortizaciones parciales, precio limpio vs. sucio           |
-| Ratio de CEDEAR              | Conversión a subyacente, splits corporativos                         |
+| Cálculo | Cuidado con |
+|---|---|
+| Saldo de cuenta | Transferencias contadas dos veces; transacciones `pending`; redondeo |
+| Patrimonio neto multi-moneda | Qué rate se usa (histórico vs. actual); pasivos con signo |
+| Presupuesto consumido | Reembolsos, splits, rollover, período que no empieza el día 1 |
+| Safe to spend | Recurrentes futuros del período aún no posteados |
+| Efecto FX | Descomposición `Δ = flujo + retorno + FX` tiene que cerrar exacto |
+| XIRR / MWR | Convergencia con flujos irregulares; casos sin solución |
+| TWR | Sub-períodos entre cada flujo de caja |
+| Ajuste por inflación | Índice base, meses faltantes, interpolación |
+| Amortización de bonos | Cupones, amortizaciones parciales, precio limpio vs. sucio |
+| Ratio de CEDEAR | Conversión a subyacente, splits corporativos |
+
 
 ---
 
@@ -945,17 +960,19 @@ Estos son los que se rompen silenciosamente. Todos en `lib/analytics/`, todos co
 
 La reconciliación encontró nueve violaciones de reglas cerradas dentro de este mismo documento y seis decisiones sin tomar que bloqueaban la primera migración. Todas quedaron resueltas arriba, en el lugar donde se leen. Este es el registro de qué cambió y por qué, para no volver a abrirlas.
 
-| #   | Qué era                                                                                                            | Cómo quedó                                                                                                                                                                                                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | La visibilidad era binaria y `categories` no tenía ninguna, pero J4 dibuja visibilidad por miembro y por categoría | `visibility` suma el valor `'custom'` como camino rápido y **`visibility_grants` guarda solo las excepciones** (§ 2.4b). El helper `can_see()` la resuelve; el modo espejo se implementa del lado servidor y nunca amplía el acceso de quien mira |
-| 2   | Ningún patrón de RLS cubría las filas de catálogo global                                                           | **Patrón C**: lectura para todo autenticado, escritura solo por seeds y Edge Functions, y **clonado al editar** con `source_id`                                                                                                                   |
-| 3   | `trades` tenía `fx_rate` y `amount_base` sin `fx_source` ni `CHECK` pareado: inversiones nacía violando `needs_fx` | Misma forma que `transactions`, con `trades_fx_pair`. Ídem `transaction_splits`, `transaction_shares` y `settlements`                                                                                                                             |
-| 4   | El estado de sincronización no existía en el servidor y D2 filtra por él dentro de la lista servida                | `sync_state` en `transactions` para lo que **llegó y salió mal** (`rejected`, `conflict`). Lo que nunca llegó vive solo en el outbox de Dexie: no puede tener columna en el servidor                                                              |
-| 5   | El paso 1 de la cadena de resolución de FX no tenía dónde guardarse                                                | Tabla `fx_overrides` con `valid_from` / `valid_to`. Es un hecho con fecha, no una preferencia, y tiene que consultarse por la fecha del movimiento                                                                                                |
-| 6   | `households.enabled_modules` era `text[]` sin `CHECK` y la lista canónica vivía en un comentario                   | `CONSTRAINT enabled_modules_valid` con los seis                                                                                                                                                                                                   |
-| 7   | Cinco índices declarados, los cinco sobre `transactions`, ninguno sobre las FK que las políticas usan              | Once índices más en § 3, incluido `household_members(profile_id)` que usa `current_households()`                                                                                                                                                  |
-| 8   | `settlements` no tenía forma de expresar método ni condonación, y J7/J10 los muestran                              | `method` y `status`, más `share_pct` y `split_mode` en `transaction_shares` para el "62 y 38" de J5                                                                                                                                               |
+| # | Qué era | Cómo quedó |
+|---|---|---|
+| 1 | La visibilidad era binaria y `categories` no tenía ninguna, pero J4 dibuja visibilidad por miembro y por categoría | `visibility` suma el valor `'custom'` como camino rápido y **`visibility_grants` guarda solo las excepciones** (§ 2.4b). El helper `can_see()` la resuelve; el modo espejo se implementa del lado servidor y nunca amplía el acceso de quien mira |
+| 2 | Ningún patrón de RLS cubría las filas de catálogo global | **Patrón C**: lectura para todo autenticado, escritura solo por seeds y Edge Functions, y **clonado al editar** con `source_id` |
+| 3 | `trades` tenía `fx_rate` y `amount_base` sin `fx_source` ni `CHECK` pareado: inversiones nacía violando `needs_fx` | Misma forma que `transactions`, con `trades_fx_pair`. Ídem `transaction_splits`, `transaction_shares` y `settlements` |
+| 4 | El estado de sincronización no existía en el servidor y D2 filtra por él dentro de la lista servida | `sync_state` en `transactions` para lo que **llegó y salió mal** (`rejected`, `conflict`). Lo que nunca llegó vive solo en el outbox de Dexie: no puede tener columna en el servidor |
+| 5 | El paso 1 de la cadena de resolución de FX no tenía dónde guardarse | Tabla `fx_overrides` con `valid_from` / `valid_to`. Es un hecho con fecha, no una preferencia, y tiene que consultarse por la fecha del movimiento |
+| 6 | `households.enabled_modules` era `text[]` sin `CHECK` y la lista canónica vivía en un comentario | `CONSTRAINT enabled_modules_valid` con los seis |
+| 7 | Cinco índices declarados, los cinco sobre `transactions`, ninguno sobre las FK que las políticas usan | Once índices más en § 3, incluido `household_members(profile_id)` que usa `current_households()` |
+| 8 | `settlements` no tenía forma de expresar método ni condonación, y J7/J10 los muestran | `method` y `status`, más `share_pct` y `split_mode` en `transaction_shares` para el "62 y 38" de J5 |
 
-**Queda una por resolver y no bloquea la migración inicial: V9, el patrimonio no reconcilia.** § 2.5 dice que el saldo de la cuenta no se afecta por un movimiento sin cotización, pero el patrimonio sí los excluye — y E1 y K1 lo construyen sumando `accounts.current_balance`, que ya los incluye. O el patrimonio se calcula desde los movimientos con `amount_base IS NOT NULL` en vez de desde los saldos, o `accounts` necesita un segundo saldo convertible. Es una decisión de cálculo, no de schema, y vive en § 6.
+**V9 quedó resuelta, y era más grande de lo que decía el hallazgo original.** No era solo que el patrimonio no reconciliara: era que **el schema modelaba una sola conversión donde hay dos**. Un gasto en dólares contra una cuenta en pesos, sin cotización, no tenía forma de actualizar el saldo — `fx_rate` va de la moneda del movimiento a la base, no a la de la cuenta.
+
+Resuelto separando las dos capas. `amount` y `currency_code` están **siempre en la moneda de la cuenta**: mueven `current_balance` y no necesitan FX nunca. `original_amount` / `original_currency` / `original_rate` guardan lo que el usuario gastó cuando difiere, que es lo fiel a la realidad — pagás USD con tarjeta en pesos y lo que sale de la cuenta son pesos. Y `fx_rate` / `amount_base` van de moneda de cuenta a moneda base: **ahí vive `needs_fx`, y solo ahí**. El patrimonio reconcilia sin necesidad de un segundo saldo en `accounts`.
 
 **La clasificación raíz/hija de las tablas que quedan sin clasificar** es mecánica y la propone Claude Code en una pasada: raíz es la que lleva `household_id` y ancla la política; hija es la que se alcanza con `EXISTS` sobre su padre y nunca duplica `household_id`.

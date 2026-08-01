@@ -22,6 +22,14 @@ Vas a encontrar contradicciones. Son inevitables: el diseño se hizo en once blo
 
 Cuando encuentres una contradicción que este orden no resuelva, **paralo y preguntá**. No la resuelvas en silencio.
 
+**Un documento, una copia.** El fallo más repetido de este proyecto no es una contradicción entre dos documentos: es **el mismo documento en dos rutas con contenido distinto**, donde la copia vieja no falla ruidosamente. Ya pasó con las vistas de diseño, con el contrato de componentes y con este mismo archivo. Las reglas:
+
+- **`CLAUDE.md` vive solo en la raíz del repo.** Si aparece uno en `docs/`, es un residuo de haber descomprimido el paquete ahí: se borra, no se concilia.
+- **`docs/` es la única ruta de autoridad** para `contrato-componentes.md`, `auditoria-visual.md` y los documentos numerados. Una segunda copia bajo `docs/design/` o donde sea es residuo.
+- **`docs/design/INDEX.md`** es la excepción que confirma la regla: ahí sí hay varios archivos que definen la misma vista a propósito, y por eso existe un índice que dice cuál manda.
+
+Antes de escribir código contra un documento, verificá que no haya otra copia: `find . -name "<archivo>" -not -path "./node_modules/*"`. Si hay dos, resolvelo antes de seguir.
+
 **Dos cosas que no están donde uno las busca.** `L6`, la pantalla de bloqueo, vive en `docs/design/bloque-a-onboarding.html`, no en el archivo del bloque L. Y `E8` —resolver cotizaciones faltantes en lote, con sus dos vistas E8.1 y E8.2— está diseñada y en el mapa maestro pero **no figura en `03` ni en `04`**: es parte del inventario oficial y cierra la cadena de resolución de FX.
 
 ---
@@ -58,7 +66,9 @@ La cadena de resolución tiene exactamente cuatro pasos y no hay un quinto: over
 
 **La única escritura legítima de un `amount_base` después de la inserción** es cuando un movimiento `pending` se resuelve: antes era `NULL`, no un valor congelado. Ahí también hay que recalcular el de sus hijos. Fuera de ese caso, un `amount_base` no se toca nunca.
 
-**V9 sigue abierta y no bloquea la migración: el patrimonio no reconcilia.** § 2.5 dice que el saldo de la cuenta no se afecta por un movimiento sin cotización, pero el patrimonio sí los excluye — y E1 y K1 lo construyen sumando `accounts.current_balance`, que ya los incluye. O el patrimonio se calcula desde los movimientos con `amount_base IS NOT NULL`, o `accounts` necesita un segundo saldo convertible. Es una decisión de cálculo y hay que tomarla antes de programar E1.
+**Hay DOS conversiones, no una, y confundirlas es V9.** `amount` y `currency_code` están **siempre en la moneda de la cuenta**: mueven `current_balance` y no necesitan FX jamás. Si el usuario cargó en otra moneda, eso va en `original_amount` / `original_currency` / `original_rate`, y esa conversión ocurre en la captura. `fx_rate` / `amount_base` van de moneda de cuenta a moneda base, y **`needs_fx` vive ahí y solo ahí**.
+
+**Plata y cantidades son dos dominios.** `formatAmount(money, opts)` sobre `bigint` es el único camino para dinero y nunca toma `number`. `formatNumber(value, decimals)` es solo para cantidades de instrumento, que son `numeric(38,12)`: ahí sí hay un `number` y `decimals` no tiene default.
 
 **RLS.** Toda tabla nace con RLS habilitado y sus políticas en la misma migración. Cada política de `UPDATE` necesita **`USING` y `WITH CHECK`**, las dos: sin `WITH CHECK` se puede mover una fila al household de otro. `auth.uid()` siempre envuelto en `(SELECT auth.uid())`. Las funciones helper van `SECURITY DEFINER` + `SET search_path = ''`. Las entidades hijas heredan acceso con `EXISTS` sobre el padre, nunca con un `household_id` duplicado que puede quedar desincronizado.
 
@@ -214,10 +224,31 @@ Están implementadas en `01-arquitectura-datos.md` y registradas en su § 7. No 
 
 ---
 
-## Decisiones abiertas
+## Las tres últimas decisiones, ya cerradas
 
-> Borrá esta sección cuando estén cerradas. Mientras estén acá, **preguntá antes de asumir**.
+**Licencia: MIT.** Para un proyecto personal que se libera por gusto, es la que deja que alguien lo tome y haga lo que quiera. Desbloquea K13 y C21.
 
-1. **Arranque sin conexión.** El estado offline de A3 ofrece "Empezar sin conexión", pero en ese punto no hay sesión y todo el schema apoya en `auth.uid()`. Requiere un almacén local pre-sesión que se reclama contra el primer login exitoso. Sin esa decisión, ese estado de A3 no se puede programar.
-2. **Orden de A2.** Magic link principal con Google y Apple secundarios, o al revés. La propuesta es: primario el que esté configurado — con OAuth registrado, Google y Apple arriba; sin OAuth, el link por email.
-3. **Licencia.** MIT o AGPL. La necesita K13 y el README del repo.
+**Orden de A2: lo decide la configuración, y lo que no está configurado no se renderiza.** Con OAuth registrado, Google y Apple son los botones primarios y el campo de email colapsa bajo "usar mi email" — ese camino mide unos 35 segundos y es el único que arregla el p90 de los 90 segundos. Sin OAuth, el campo de email es primario y los botones de Google y Apple **no se dibujan**: no van deshabilitados en gris, van ausentes. Un botón muerto en un self-host sin credenciales se lee como una app rota. Es una pantalla con dos estados, no dos diseños.
+
+**Arranque sin conexión: se descarta.** El estado offline de A3 ofrecía "Empezar sin conexión" con una tarjeta de "mientras tanto podés cargar gastos". **Eso no se programa.** Sostenerlo exige una identidad local sin sesión, `household_id` colgando de nada, un reclamo transaccional contra el primer login, y una historia de conflicto para el caso en que el usuario entre a una cuenta que ya tiene datos. Todo eso para un usuario que **todavía no cargó nada**: la regla de que la app nunca puede perder un gasto protege a quien ya tiene cuenta, y acá no hay nada que perder. El que se quedó sin señal en el medio del signup espera un minuto.
+
+Consecuencia concreta, y hay que respetarla al programar A3: **el diseño muestra una tarjeta "MIENTRAS TANTO" y un botón primario "Empezar sin conexión" que el código NO implementa.** La pantalla queda con el estado de error, la línea de que el email quedó guardado y se manda solo al volver la señal, y "Probar de nuevo". No es un olvido ni una pantalla a medias: es esta decisión. Si alguien la "restaura" mirando el archivo de diseño, está reabriendo esto.
+
+Se puede sumar en una versión futura sin migración: la maquinaria de outbox ya existe y lo único que falta es la identidad previa a la cuenta.
+
+---
+
+## Las dos decisiones de imagen, cerradas
+
+**Logos de instituciones: baldosa de monograma, no el logo real.** A6 muestra presets de bancos y billeteras. Esos logos son marcas registradas de terceros: en un repo privado no pasa nada, el día que se libera se está distribuyendo propiedad intelectual ajena. Y hoy además todas se ven iguales, porque comparten un ícono genérico.
+
+La solución son **dos letras sobre el color de la institución**, que es un dato de la tabla `institutions` —ya tiene la columna `color`— y no un archivo. Se distinguen entre sí, no hay un solo binario de terceros en el repo, y funciona sin conexión porque no hay nada que descargar. `institutions.logo_url` queda como slot opcional para quien quiera poner los logos reales en una carpeta local ignorada por git. Toca **A6, E1 y E3**.
+
+**Banderas: no van en ningún lado.** Y esto es más simple que "usar un chip", que era mi propuesta anterior.
+
+Los emoji de bandera **no se renderizan en Chrome sobre Windows**: aparecen las dos letras del código regional en un recuadro. Eso solo ya los descarta. Pero mirándolo de cerca hay dos casos distintos y se resuelven distinto:
+
+- Donde el token identifica una **moneda** —los pares de E6, H6, I2, las listas de K3— la bandera es directamente el símbolo equivocado: es del país, no de la moneda, y se rompe sola apenas entran el dólar o el euro. Va un **chip con el código**: `UYU`, `USD`, `ARS`.
+- Donde identifica un **país** —A4 y el país de una cuenta— la bandera es semánticamente correcta, pero **al lado ya está el nombre del país escrito**. O sea que es un ícono decorativo, y el presupuesto de ruido los prohíbe. Se va, queda el nombre.
+
+Resultado: **cero banderas en toda la app**, chip de código donde hace falta identificar una moneda, nombre del país donde hace falta identificar un país. Sin set de SVG que mantener. Toca **A4, E6, H6, I2 y K3**.

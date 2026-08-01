@@ -35,6 +35,19 @@ Estas seis reglas se verifican en revisión de código, no en revisión de dise�
    ingreso o progreso, naranja es gasto en gráficos o negativo enfatizado, y nunca se usa
    verde/rojo como polaridad de dinero.
 
+**Dinero y cantidades son dos dominios distintos, con dos funciones distintas.** La v2 de este
+contrato los confundió en una sola `formatNumber(value: number, decimals)` — y esa firma recibe
+un `number`, que es exactamente lo que las reglas de dinero prohíben para un monto. Corregido:
+
+- **Plata** → `formatAmount(money: Money, opts)` sobre `bigint` en unidades mínimas. **Nunca**
+  toma `number`. Es el único camino de formateo de dinero y lo consume `Amount`.
+- **Cantidades de instrumento** → `formatNumber(value: number, decimals: number)`, sin default
+  en `decimals`. Son `numeric(38,12)` y no `bigint`, así que acá sí hay un `number`: es donde
+  bitcoin necesita sus 8 decimales y un plazo fijo cero.
+
+`decimalsFor()` tiene que aceptar `instrument` además de `currency`, porque un instrumento
+declara su propia `quantityDecimals` y gana sobre el default de la moneda.
+
 **Precisión decimal.** No es fija y no se asume: se deriva del par de monedas o del
 instrumento y se pasa como prop. `formatNumber(value, decimals)` exige `decimals`.
 `PRECISION` es sólo el default por moneda (UYU 0, USD 2, BTC 8); un instrumento puede

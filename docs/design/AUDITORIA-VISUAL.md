@@ -51,12 +51,14 @@ riel de allocation aparece con violeta de marca (slot 1) dentro de un control ar
 J2/J6 los tramos usan colores de miembro que en otras pantallas significan identidad de
 persona. Es la única contradicción directa entre un token y un componente del sistema. → *D04*
 
-**5 · Faltan pasos entre bloques y hay siete vistas a las que no se llega desde ningún lado.**
-Sin diseñar: el importador de CSV completo (K9, uno de los diez flujos críticos), el selector de
-transacción con tarjeta que alimenta G6, el formulario de "crear instrumento a mano" que promete
-I7, y el modo espejo que promete J4. Huérfanas: I9, I10, I11, H12 y J8 no tienen entrada desde
-ninguna pantalla diseñada. Encontrar esto ahora son dos días de wireframe; encontrarlo con las
-rutas programadas es replumbing de navegación. → *D05, D06*
+**5 · Cerrado.** K9 (importador de CSV, uno de los diez flujos críticos) ya estaba diseñado
+antes de este punto, partido en tres pasos (K9a archivo · K9b columnas · K9c duplicados). El
+selector de transacción con tarjeta que alimenta G6 se cerró como **G6a**, el formulario de
+"crear instrumento a mano" que promete I7 como **I7b**, y el modo espejo que promete J4 como
+**J4b**, todos en `adenda-01-huecos-navegacion.html` y `adenda-02-modo-espejo.html`. Las cinco
+huérfanas (I9, I10, I11, H12, J8) tienen entrada resuelta desde I2 y J2. Ver
+`docs/design/INDEX.md` para el archivo que manda en cada caso — **esto vuelve a código, no a
+diseño**. → *D05, D06*
 
 ---
 
@@ -154,11 +156,11 @@ Detalle de D03. Cumplen: F0, F0m, F1, F5, H1, H2, H4, H5, H6, H7.
 
 | # | Flujo | Hallazgo |
 |---|---|---|
-| D05a | Importar CSV | **Sin diseñar.** K9 quedó fuera cuando K se cortó. Es uno de los diez y el único que trae datos sucios. |
-| D05b | Crear plan de cuotas desde una transacción con tarjeta | **Falta el paso del medio**: G6 arranca con la compra ya elegida y el selector de transacciones con tarjeta no existe en D ni en G. |
-| D05c | Agregar instrumento a mano | I7 termina en el botón: el formulario de cuatro campos que promete no está dibujado. |
-| D05d | Ver la app como la ve el otro miembro | J4 promete el modo espejo y no existe. Es lo que convierte J4 de promesa en prueba. |
-| D06a | Vistas huérfanas | **I9, I10, I11, H12, J8** no tienen entrada desde ninguna pantalla diseñada. I2 tiene dos tiles que deberían llevar a I10 y no son filas; J2 tiene filas a J4 y J9 pero no a J8. |
+| D05a | Importar CSV | **Cerrado.** K9 diseñado en tres pasos: K9a archivo · K9b columnas · K9c duplicados, en `bloque-k-ajustes.html`. |
+| D05b | Crear plan de cuotas desde una transacción con tarjeta | **Cerrado.** Resuelto como `G6a` en `adenda-01-huecos-navegacion.html`. |
+| D05c | Agregar instrumento a mano | **Cerrado.** Resuelto como `I7b` en `adenda-01-huecos-navegacion.html`. |
+| D05d | Ver la app como la ve el otro miembro | **Cerrado.** Resuelto como `J4b` en `adenda-02-modo-espejo.html`; `J4` (el botón que lo promete) sigue en `bloque-j-familiar.html`, sin tocar. |
+| D06a | Vistas huérfanas | **Cerrado.** I9, I10, I11 y H12 tienen entrada resuelta desde I2/H1; J8 desde J2, en `adenda-01-huecos-navegacion.html`. |
 | D40 | Conflicto de sincronización | Bien: J10 y L3 son la misma pantalla y quedó unificada. Único pendiente: el conflicto de **cuenta** y de **presupuesto** usa la misma plantilla pero nadie definió qué campos compara. |
 | D41 | Primer gasto en menos de 90 s, gasto en otra moneda, transferencia, gasto offline, gasto compartido, presupuesto excedido | Cerrados de punta a punta según los contratos de A–E y F4/J6. **[cruzado]** |
 
