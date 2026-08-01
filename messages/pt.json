@@ -111,7 +111,8 @@
     },
     "otpInput": {
       "groupLabel": "Código de verificação",
-      "digitLabel": "Dígito {index} de {total}"
+      "digitLabel": "Dígito {index} de {total}",
+      "pasteCode": "Colar código"
     },
     "keypad": {
       "operatorPlus": "Somar",

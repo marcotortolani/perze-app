@@ -156,11 +156,18 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+# Bug reportado: el mail de verificación llegaba con un link a
+# "localhost:3000" en vez del dominio real — porque `site_url` seguía en
+# el valor por defecto de desarrollo local. `NEXT_PUBLIC_SITE_URL` (env de
+# la app) ya apuntaba bien a producción; este es el ajuste que le faltaba
+# del lado de Supabase Auth (que arma el link a partir de ESTE valor, no
+# del env de la app).
+site_url = "https://perze.tortolani.cc"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# localhost queda para poder seguir probando el login OAuth con `pnpm dev` contra el proyecto remoto.
+additional_redirect_urls = ["https://perze.tortolani.cc", "http://localhost:3000", "http://127.0.0.1:3000"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -265,6 +272,15 @@ otp_expiry = 600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# signInWithOtp (login/signup por email, ver src/app/onboarding/page.tsx)
+# manda el tipo "magic_link" tanto para alta como para reingreso. La
+# plantilla por defecto de Supabase es un botón de link, no un código — la
+# app pide tipear {{ .Token }} a mano (src/app/onboarding/verify/page.tsx),
+# así que hace falta esta plantilla propia. Ver el comentario del HTML.
+[auth.email.template.magic_link]
+subject = "Tu código de PERZE"
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

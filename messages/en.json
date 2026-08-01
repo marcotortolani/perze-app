@@ -111,7 +111,8 @@
     },
     "otpInput": {
       "groupLabel": "Verification code",
-      "digitLabel": "Digit {index} of {total}"
+      "digitLabel": "Digit {index} of {total}",
+      "pasteCode": "Paste code"
     },
     "keypad": {
       "operatorPlus": "Add",

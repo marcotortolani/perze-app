@@ -111,7 +111,8 @@
     },
     "otpInput": {
       "groupLabel": "Código de verificación",
-      "digitLabel": "Dígito {index} de {total}"
+      "digitLabel": "Dígito {index} de {total}",
+      "pasteCode": "Pegar código"
     },
     "keypad": {
       "operatorPlus": "Sumar",
