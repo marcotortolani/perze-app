@@ -104,6 +104,24 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
     toast(t("movements.editFlow.updated"));
   };
 
+  // Un solo botón, en dos lugares: al lado de "=" en el paso del monto
+  // (`AmountStep.footerButton`) y solo en el paso de categoría.
+  const nextOrSaveButton = (
+    <MorphButton
+      disabled={!canSave()}
+      onConfirm={async () => {
+        if (draft.kind !== "transfer" && step === "amount" && !draft.categoryId) {
+          setStep("category");
+          return;
+        }
+        await doSave();
+      }}
+      onComplete={onClose}
+    >
+      {step === "amount" && draft.kind !== "transfer" && !draft.categoryId ? t("movements.editFlow.next") : t("movements.editFlow.saveChanges")}
+    </MorphButton>
+  );
+
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -147,32 +165,20 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
           onOpenDetails={() => setSheet("details")}
           onVoice={() => toast(t("movements.editFlow.voiceUnavailable"))}
           onPhoto={() => toast(t("movements.editFlow.photoComingSoon"))}
+          footerButton={nextOrSaveButton}
         />
       ) : (
-        <CategoryStep
-          categories={sameKindCategories}
-          frequent={frequentCategories}
-          selectedId={draft.categoryId}
-          onSelect={(c) => setField("categoryId", c.id)}
-          onCreate={handleCreateCategory}
-        />
+        <>
+          <CategoryStep
+            categories={sameKindCategories}
+            frequent={frequentCategories}
+            selectedId={draft.categoryId}
+            onSelect={(c) => setField("categoryId", c.id)}
+            onCreate={handleCreateCategory}
+          />
+          <div style={{ marginTop: "auto" }}>{nextOrSaveButton}</div>
+        </>
       )}
-
-      <div style={{ marginTop: "auto" }}>
-        <MorphButton
-          disabled={!canSave()}
-          onConfirm={async () => {
-            if (draft.kind !== "transfer" && step === "amount" && !draft.categoryId) {
-              setStep("category");
-              return;
-            }
-            await doSave();
-          }}
-          onComplete={onClose}
-        >
-          {step === "amount" && draft.kind !== "transfer" && !draft.categoryId ? t("movements.editFlow.next") : t("movements.editFlow.saveChanges")}
-        </MorphButton>
-      </div>
 
       <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
       <AccountPickerSheet

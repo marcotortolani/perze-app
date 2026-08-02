@@ -121,7 +121,10 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24, paddingBottom: 24 }}>
+      <div
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-0"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24 }}
+      >
         <ListRow icon="plus" label={t("accountsPage.list.newAccount")} variant="action" onClick={() => router.push("/accounts/new")} />
         {!simple ? <ListRow icon="bank" label={t("accountsPage.list.currenciesAndRates")} onClick={() => router.push("/currencies")} /> : null}
         {pendingFxCount > 0 ? (

@@ -28,6 +28,9 @@ function tabForPathname(pathname: string): string {
   return ROUTE_TO_TAB.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
 }
 
+/** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
+const OWN_SCROLLER_ROUTES = new Set(["/transactions", "/accounts"]);
+
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
  * FAB central. Tres slots fijos, uno elegido por el usuario (K3, default
@@ -189,14 +192,15 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             pending={pending ?? 0}
           />
         </div>
-        {/* `/transactions` lleva su propio scroller virtualizado que llena
-            exacto esta caja (`height: 100%`) y por eso nunca scrollea A
-            TRAVÉS de este padding — queda como una banda fija pegada al tab
-            bar, más alta que en el resto de las pantallas. Ahí el padding
-            de despeje del FAB se le pasa a la pantalla para que lo sume
-            dentro de su propio scroller (ver `transactions/page.tsx`), en
-            vez de vivir acá afuera donde no hay nada que lo atraviese. */}
-        <main className={`app-shell-main ${pathname === "/transactions" ? "" : "pb-[calc(var(--block-gap)+18px)]"} lg:pb-6`}>
+        {/* `/transactions` y `/accounts` llevan su propio scroller interno
+            que llena exacto esta caja (`height: 100%`) y por eso nunca
+            scrollean A TRAVÉS de este padding — queda como una banda fija
+            pegada al tab bar, más alta que en el resto de las pantallas.
+            En esas dos el padding de despeje del FAB se le pasa a la
+            pantalla para que lo sume dentro de su propio scroller (ver
+            `transactions/page.tsx` y `accounts/page.tsx`), en vez de vivir
+            acá afuera donde no hay nada que lo atraviese. */}
+        <main className={`app-shell-main ${OWN_SCROLLER_ROUTES.has(pathname) ? "" : "pb-[calc(var(--block-gap)+18px)]"} lg:pb-6`}>
           {/* `height: 100%` — Movimientos (D1) usa `height: "100%"` en su
               virtualizador y necesita que este contenedor tenga una altura
               definida para resolverlo, no solo `flex: 1` en el ancestro.

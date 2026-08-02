@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.24] — 2026-08-02
+
+### Agregado/Corregido — "=" comparte fila con Siguiente, resolver FX pendiente y tab bar de cuentas
+
+- **"=" y "Siguiente"/"Guardar" comparten fila en `/add`**, ahorrando el alto de una fila
+  entera de keypad. En reposo, "=" ocupa 1 columna y el botón 3; con una cuenta pendiente
+  (`12+8` sin resolver), pasan a 2 y 2 con una transición animada, y vuelven al reparto
+  original apenas se confirma con "=". `AmountStep` suma una prop `footerButton` para esto —
+  el botón lo sigue armando el caller (`CaptureFlow`/`EditTransactionFlow`, con su propio
+  `onConfirm`/`onComplete`), `AmountStep` solo le arma el lugar al lado de "=".
+- **"Resolver tipos de cambio pendientes" (dentro de Cuentas) tenía el keypad sin conectar**
+  — tocar la cifra no abría nada, la única forma de ajustar el rate era el slider ±5%. Es un
+  componente distinto de `/currencies` a propósito (resuelve movimientos `pending`
+  existentes en lote, algo que fijar un override no hace solo — CLAUDE.md § `needs_fx`), así
+  que no se unificó con esa pantalla; se le wireó el mismo patrón de keypad que ya funciona
+  bien ahí (`onOpenKeypad`, `operators={false}`, botón `Button` en vez de uno inline).
+- **`/accounts` tenía el mismo problema visual de tab bar que `/transactions`** (la banda de
+  despeje del FAB quedaba fija y pegada al tab bar en vez de formar parte del scroll,
+  porque la pantalla usa su propio scroller interno en vez del de `<main>`) — mismo arreglo:
+  el padding pasa a vivir dentro del scroller propio de la pantalla.
+
 ## [0.9.23] — 2026-08-02
 
 ### Corregido/Agregado — header, keypad "=", foco del picker, plantilla persistida, draft sucio y edición de categorías

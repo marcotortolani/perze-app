@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
+import type { ReactNode } from "react";
+import { motion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
-import { AmountScrubber, Chip, Icon, Keypad, SegmentedControl } from "@/design-system";
+import { AmountScrubber, Chip, Icon, Keypad, KeypadKey, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
 import { formatAmount } from "@/lib/money/format";
@@ -33,6 +35,13 @@ export interface AmountStepProps {
   onOpenDetails: () => void;
   onVoice: () => void;
   onPhoto: () => void;
+  /**
+   * El `MorphButton` de "Siguiente"/"Guardar" del caller — se dibuja en la
+   * misma fila que "=", no debajo, para ahorrar el alto que le cuesta al
+   * keypad tener una fila entera para sí solo. `AmountStep` no sabe nada
+   * de guardar/confirmar, solo le arma el lugar al lado de "=".
+   */
+  footerButton?: ReactNode | undefined;
 }
 
 /**
@@ -73,6 +82,7 @@ export function AmountStep({
   onOpenDetails,
   onVoice,
   onPhoto,
+  footerButton,
 }: AmountStepProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
@@ -209,23 +219,32 @@ export function AmountStep({
         </button>
       </div>
 
-      <div style={{ marginTop: "auto" }}>
-        <Keypad
-          equals
-          onKey={(key) => {
-            // "=" resuelve la cuenta armada y reemplaza la expresión entera
-            // por el resultado plano — de ahí en más se sigue editando
-            // desde un número simple, no desde "12+8". Sin operador
-            // pendiente no hace nada: no hay nada que confirmar todavía.
-            if (key === "=") {
-              if (pending) onAmountChange(amountToExpression(evaluated.amount, currency, locale));
-              return;
-            }
-            onAmountKey(key);
-          }}
-          onClear={() => onAmountKey("clear")}
-          announceValue={formatAmount(hero, { showSign: false })}
-        />
+      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+        <Keypad onKey={onAmountKey} onClear={() => onAmountKey("clear")} announceValue={formatAmount(hero, { showSign: false })} />
+        {/* "=" + el botón de Siguiente/Guardar comparten fila para ahorrar
+            el alto de una fila entera de keypad. 1:3 en reposo, 2:2
+            mientras hay una cuenta pendiente (más lugar para confirmarla) —
+            `flex` anima solo, sin tocar el ancho real de "=" o del botón,
+            que ya son `width: 100%` de su celda. */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <motion.div animate={{ flex: pending ? 2 : 1 }} transition={{ duration: 0.24, ease: [0.24, 1.05, 0.32, 1] }} style={{ minWidth: 0 }}>
+            <KeypadKey
+              label="="
+              ariaLabel={t("ds.keypad.equals")}
+              fullWidth
+              onPress={() => {
+                // Resuelve la cuenta armada y reemplaza la expresión entera
+                // por el resultado plano — de ahí en más se sigue editando
+                // desde un número simple, no desde "12+8". Sin operador
+                // pendiente no hace nada: no hay nada que confirmar todavía.
+                if (pending) onAmountChange(amountToExpression(evaluated.amount, currency, locale));
+              }}
+            />
+          </motion.div>
+          <motion.div animate={{ flex: pending ? 2 : 3 }} transition={{ duration: 0.24, ease: [0.24, 1.05, 0.32, 1] }} style={{ minWidth: 0 }}>
+            {footerButton}
+          </motion.div>
+        </div>
       </div>
     </div>
   );

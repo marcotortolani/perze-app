@@ -3,5 +3,6 @@ export { AmountScrubber, type AmountScrubberProps } from "./AmountScrubber";
 export { CurrencyChip, type CurrencyChipProps } from "./CurrencyChip";
 export { FxEditor, type FxEditorProps } from "./FxEditor";
 export { Keypad, type KeypadProps } from "./Keypad";
+export { KeypadKey, type KeypadKeyProps } from "./KeypadKey";
 export { PinKeypad, type PinKeypadProps } from "./PinKeypad";
 export { PrivacyBlur, type PrivacyBlurProps } from "./PrivacyBlur";
