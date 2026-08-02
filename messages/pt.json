@@ -238,7 +238,17 @@
    "listening": "Ouvindo…",
    "prompt": "Diga algo como “gastei 1200 no mercado”",
    "summary": "Valor: {amount} · Estabelecimento: {payee}",
+   "kindLabel": "Tipo",
+   "categoryLabel": "Categoria",
+   "categoryUnmatched": "Não reconhecida — escolha na próxima etapa",
    "empty": "—",
+   "errors": {
+    "notAllowed": "Não conseguimos acessar o microfone — confira a permissão nas configurações do navegador ou do app instalado.",
+    "noSpeech": "Não entendemos nada. Tente de novo, mais perto do microfone.",
+    "noMic": "Nenhum microfone encontrado neste dispositivo.",
+    "network": "O reconhecimento de voz precisa de conexão — tente de novo com internet.",
+    "other": "Não foi possível ouvir. Tente de novo ou use o teclado."
+   },
    "useThis": "Usar isto",
    "startListening": "Começar a escutar"
   },

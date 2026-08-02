@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.4] — 2026-08-02
+
+### Agregado — captura por voz determina tipo y categoría, no solo el monto
+
+- "Gasté 2500 en transporte" solo cargaba el monto — el parser (`parse-voice.ts`) nunca
+  intentó determinar el tipo de movimiento ni matchear una categoría; "transporte" quedaba
+  como texto libre en el campo de comercio, sin comparar contra nada. Ahora detecta el tipo
+  por el verbo (gasté/pagué/compré → gasto; cobré/recibí/ingresé → ingreso; transferí →
+  transferencia) y matchea el texto capturado contra el nombre de las categorías del
+  household (sin acentos/mayúsculas, en cualquiera de los dos sentidos)
+- El resumen de la hoja de voz ahora muestra tipo y categoría interpretados, además de monto
+  y comercio, antes de aplicar — la confirmación real sigue siendo el paso normal de captura
+  (toggle de tipo + chip de categoría + el botón "Guardar" de siempre), así que un acierto
+  parcial nunca bloquea ni fuerza un dato mal interpretado
+
+### Corregido — un error de voz quedaba completamente silencioso
+
+- `onerror` descartaba el evento entero y solo apagaba el estado de "escuchando" — sin
+  distinguir "navegador sin soporte" de "soportado pero falló" (permiso de micrófono
+  denegado, sin micrófono, sin red, no se entendió nada). El código de error real ahora se
+  mapea a un mensaje específico y se muestra en la hoja; también se agrega un `try/catch`
+  alrededor de `recognition.start()` para que un fallo síncrono no deje el botón colgado.
+  **Nota:** esto da diagnóstico donde antes no había nada, pero no puedo confirmar sin
+  probar en el dispositivo real si el permiso de micrófono es justo lo que está fallando en
+  la PWA instalada — `docs/plan-de-trabajo.md` (CONS-C09) ya marcaba el soporte de Web
+  Speech API fuera de una pestaña de escritorio como sin verificar
+
 ## [0.9.3] — 2026-08-02
 
 ### Corregido — la sesión por contraseña no sobrevivía a cerrar la PWA instalada

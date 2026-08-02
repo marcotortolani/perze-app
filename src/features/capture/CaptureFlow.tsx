@@ -262,9 +262,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         key={sheet === "voice" ? "voice-open" : "voice-closed"}
         open={sheet === "voice"}
         onClose={() => setSheet("none")}
-        onApply={({ amountExpression, payeeName }) => {
+        categories={categories}
+        onApply={({ amountExpression, payeeName, kind: voiceKind, categoryId }) => {
           if (amountExpression) setField("amountExpression", amountExpression);
           if (payeeName) setField("payeeName", payeeName);
+          if (voiceKind) setKind(voiceKind);
+          if (categoryId) setField("categoryId", categoryId);
         }}
       />
     </ScreenShell>

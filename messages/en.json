@@ -238,7 +238,17 @@
    "listening": "Listening…",
    "prompt": "Say something like “spent 1200 on groceries”",
    "summary": "Amount: {amount} · Merchant: {payee}",
+   "kindLabel": "Type",
+   "categoryLabel": "Category",
+   "categoryUnmatched": "Not recognized — pick it in the next step",
    "empty": "—",
+   "errors": {
+    "notAllowed": "We couldn't access the microphone — check the permission in your browser or installed app settings.",
+    "noSpeech": "We didn't catch that. Try again, closer to the microphone.",
+    "noMic": "No microphone found on this device.",
+    "network": "Voice recognition needs a connection — try again with internet.",
+    "other": "Couldn't listen. Try again or use the keypad."
+   },
    "useThis": "Use this",
    "startListening": "Start listening"
   },
