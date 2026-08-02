@@ -59,8 +59,10 @@ export function AmountScrubber({ value, step = 1000n, onChange, onOpenKeypad, st
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       style={{
-        display: "inline-flex",
+        display: "flex",
+        width: "100%",
         alignItems: "baseline",
+        justifyContent: "center",
         touchAction: "none",
         cursor: "ew-resize",
         transform: active ? "scale(1.02)" : "scale(1)",
@@ -68,7 +70,12 @@ export function AmountScrubber({ value, step = 1000n, onChange, onOpenKeypad, st
         ...style,
       }}
     >
-      <Amount value={value} size="hero-xl" showSign={false} mutedDecimals />
+      {/* `fit` necesita un contenedor de ancho real para medir contra —
+          `inline-flex` se ajustaba al contenido y nunca podía saber cuánto
+          espacio había. El 90% (en vez de 100%) es el padding pedido: dejar
+          un margen fijo a los costados en vez de que el texto llegue al
+          borde. */}
+      <Amount value={value} size="hero-xl" showSign={false} mutedDecimals fit style={{ width: "90%" }} />
     </div>
   );
 }

@@ -6,6 +6,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.6] — 2026-08-02
+
+### Corregido — el monto se salía de la pantalla en `/add` con números grandes
+
+- `AmountScrubber` (la cifra arrastrable de C1, `hero-xl` 64px) quedó afuera cuando se agregó
+  la prop `fit` a `Amount`: su contenedor era `inline-flex`, que se ajusta al contenido y
+  nunca puede medir cuánto espacio hay disponible — nada contra qué encoger. Pasa a `flex` +
+  `width: 100%` y usa `fit` con `style={{ width: "90%" }}`: el 10% restante es el padding
+  fijo a los costados que pide `fit`, con el mismo piso de legibilidad (55% del tamaño
+  nominal) que ya usan el patrimonio del home y de `/accounts`
+
 ## [0.9.5] — 2026-08-02
 
 ### Corregido — PWA instalada rota en iPhone con isla dinámica (safe areas)
