@@ -78,7 +78,7 @@ export default function OnboardingSuccessPage() {
 
       const accountName = draft.accountPreset ?? "Efectivo";
       const accountKind = PRESET_KIND[accountName] ?? (accountName === "Otro" ? "other" : "wallet");
-      const { accountId } = await completeOnboarding({
+      const { householdId, accountId } = await completeOnboarding({
         userId: user.id,
         countryCode: draft.countryCode,
         currencyCode: draft.currencyCode,
@@ -86,6 +86,11 @@ export default function OnboardingSuccessPage() {
         accountName,
         accountKind,
       });
+      // AC-3 — publica el household activo en el perfil para que un
+      // dispositivo nuevo sepa cuál restaurar. Best-effort: si falla, la
+      // hidratación cae al household más viejo, que para un usuario con
+      // uno solo es el mismo.
+      void profilesRepo.setDefaultHousehold(user.id, householdId).catch(() => {});
       setField("pendingBalanceAccountId", accountId);
       invalidateHousehold();
       setStatus("ready");

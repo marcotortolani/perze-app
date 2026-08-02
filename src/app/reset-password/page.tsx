@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { setOwnPassword, translateAuthError } from "@/features/auth/password-auth";
 import { PASSWORD_PATTERN } from "@/features/auth/password-rules";
 import { markRegistered } from "@/lib/auth/registered-cookie";
+import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 
 /**
  * C7 — último paso de recuperación. Requiere la sesión de `type=recovery`
@@ -60,7 +61,14 @@ export default function ResetPasswordPage() {
         return;
       }
       markRegistered();
-      router.replace("/");
+      // Mismo criterio que /login: dispositivo con datos → app; dispositivo
+      // nuevo → restauración. El caso que rompía en producción (loop
+      // /login ↔ /) era exactamente este redirect a "/" a secas.
+      try {
+        router.replace(await resolveOnboardingDestination());
+      } catch {
+        router.replace("/");
+      }
     } finally {
       setSubmitting(false);
     }

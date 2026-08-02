@@ -82,4 +82,16 @@ export const profilesRepo = {
     const { error } = await supabase.from("profiles").update({ country }).eq("id", userId);
     if (error) throw error;
   },
+
+  /**
+   * AC-3 (`docs/auditoria-acceso.md`) — el household activo vivía SOLO en
+   * el `meta` de Dexie: el único dato que un dispositivo nuevo necesita
+   * era el único que nunca salía del dispositivo. Se escribe al cerrar A11
+   * y `hydrateFromRemote()` lo usa para elegir qué household activar.
+   */
+  async setDefaultHousehold(userId: string, householdId: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ default_household_id: householdId }).eq("id", userId);
+    if (error) throw error;
+  },
 };

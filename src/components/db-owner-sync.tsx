@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { getActiveDbName, getDb, switchToUserDb } from "@/lib/db/client";
 import { clearDemoCookie } from "@/lib/demo/demo-mode";
@@ -34,15 +35,17 @@ import { DEMO_USER_ID } from "@/lib/demo-user";
  */
 export function DbOwnerSync() {
   const userId = useCurrentUserId();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
 
     (async () => {
+      const before = getActiveDbName();
       // Solo inspecciona/borra la base anónima — si otro efecto ya cambió a
       // la base del usuario, no hay nada legacy ni demo que evaluar acá.
-      if (getActiveDbName() === "perze") {
+      if (before === "perze") {
         const households = await getDb().households.toArray();
         if (cancelled) return;
         const isDemoLeftover = households.some((h) => h.createdBy === DEMO_USER_ID);
@@ -55,12 +58,19 @@ export function DbOwnerSync() {
         }
       }
       switchToUserDb(userId);
+      // AC-4 (`docs/auditoria-acceso.md`) — cambiar de base Dexie invalida
+      // TODO lo cacheado contra la base anterior: con `staleTime: Infinity`,
+      // un household resuelto contra la base anónima seguía sirviéndose
+      // después del cambio a `perze-<uid>` como si fuera del usuario.
+      if (getActiveDbName() !== before) {
+        void queryClient.invalidateQueries();
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, queryClient]);
 
   return null;
 }

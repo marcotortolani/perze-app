@@ -6,6 +6,65 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.8.0] — 2026-08-02
+
+Auditoría completa del flujo de acceso (`docs/auditoria-acceso.md`, hallazgos `AC-1`…`AC-16`)
+y su corrección central: **hidratación desde el servidor**. La sincronización era exclusivamente
+push (outbox → Supabase); no existía ningún camino que bajara datos a un dispositivo nuevo, así
+que toda sesión sin Dexie poblado moría en el onboarding — duplicando el household o, desde
+v0.7.1, en un freno sin salida. Un usuario existente ahora entra desde cualquier dispositivo y
+recupera sus cuentas, categorías, movimientos, presupuestos y configuración del household.
+
+### Agregado — `hydrateFromRemote()` y `/onboarding/restore` (AC-1)
+
+- `src/lib/offline/hydrate.ts`: baja las once tablas sincronizadas (households, members,
+  accounts, categories, tags, payees, transactions, budgets, goals, recurring_rules, rules) al
+  Dexie local. Contracara de `sync-config.ts`, con las mismas reglas de dinero: todo
+  `bigint`/`numeric` viaja como `::text` (PostgREST pierde precisión arriba de 2^53 en
+  silencio), rates por `parseRate`, `NULL` de FX preservado como `needs_fx` legítimo, y
+  `current_balance` tomado del servidor tal cual (recomputar localmente con datos parciales por
+  `can_see` daría un saldo falso). Todo paginado y dentro de `withoutOutbox()`
+- `/onboarding/restore` reemplaza al freno `/onboarding/existing-household` de v0.7.1: en vez de
+  avisar que los datos no están, los trae y entra a la app
+- `/login` y `/reset-password` resuelven destino con `resolveOnboardingDestination()` en vez de
+  ir a `/` a secas — dispositivo con datos → app; dispositivo nuevo → restauración
+
+### Corregido — el invitado nunca llegaba al household que aceptó (AC-2)
+
+- `/join` solo escribía `meta.currentHouseholdId`: sin ninguna fila local, el gate lo rebotaba
+  al onboarding y podía crear un household duplicado. Ahora hidrata (scoped) el household de la
+  invitación — sin tocar el resto de la base local
+
+### Corregido — el household activo nunca salía del dispositivo (AC-3)
+
+- `profiles.default_household_id` existía en el schema y nada lo escribía ni leía. Se publica al
+  cerrar A11 y la hidratación lo usa para elegir qué household activar en un dispositivo nuevo
+
+### Corregido — flujo y descubribilidad
+
+- **AC-4**: `DbOwnerSync` cambiaba de base Dexie sin invalidar React Query — con
+  `staleTime: Infinity`, un household cacheado contra la base anónima seguía sirviéndose después
+  del cambio a `perze-<uid>`
+- **AC-7**: A2 no tenía "Ya tengo cuenta" — el único camino al login (y a "olvidé mi
+  contraseña") era el toggle de contraseña, poco descubrible
+- **AC-8**: el login con contraseña desde A2 (y la detección de sesión existente) no seteaban la
+  cookie `perze_registered`
+- **AC-9**: `resolveOnboardingDestination()` sin manejo de error — sin red, la promesa rechazaba
+  dentro del efecto y el usuario quedaba en A2 sin feedback. Nunca degrada hacia A4 (el camino
+  que duplica): avisa y deja reintentar
+- **AC-11**: el PIN local bloqueaba `/login`, `/forgot-password`, `/reset-password` y
+  `/pending` — pantallas sin datos que pueden pertenecer a otra cuenta que la del PIN
+- **AC-15**: `hasRemoteHousehold()` contaba households soft-deleted (la policy de SELECT ya no
+  filtra `deleted_at` a propósito) — un household borrado disparaba la restauración para siempre
+
+### Documentado — pendientes con dueño (`docs/auditoria-acceso.md`)
+
+- **AC-5** salvaguarda legacy pegajosa de `DbOwnerSync` · **AC-6** doble redirect
+  `OnboardingGate`/`(app)/layout` · **AC-12** preferencias de UI solo locales
+  (`profiles.settings` sin uso) · **AC-14** la hidratación es de una sola vez, no continua (el
+  multi-dispositivo simultáneo sigue siendo trabajo futuro) · **AC-16** loop de recarga del
+  service worker tras un deploy
+
 ## [0.7.1] — 2026-08-02
 
 Un fix sobre v0.7.0, encontrado probando el reset de contraseña real: el gate del shell

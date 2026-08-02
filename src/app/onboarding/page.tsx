@@ -15,6 +15,7 @@ import { signInWithPassword, translateAuthError } from "@/features/auth/password
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
+import { markRegistered } from "@/lib/auth/registered-cookie";
 import { env } from "@/env";
 
 /**
@@ -111,9 +112,22 @@ export default function OnboardingAuthPage() {
         return;
       }
 
-      const destination = await resolveOnboardingDestination();
-      if (cancelled) return;
-      router.replace(destination);
+      // AC-8 — si hay sesión, en este dispositivo YA hubo una cuenta: sin
+      // la marca, al vencer la sesión el proxy volvía a mostrar la pantalla
+      // de alta en vez de /login.
+      markRegistered();
+
+      // AC-9 — `resolveOnboardingDestination` consulta el servidor y puede
+      // fallar (sin red, proyecto pausado). Nunca degradar en silencio a
+      // A4: ese es el camino que crea un household duplicado. Se avisa y el
+      // usuario se queda acá, con la pantalla utilizable.
+      try {
+        const destination = await resolveOnboardingDestination();
+        if (cancelled) return;
+        router.replace(destination);
+      } catch {
+        if (!cancelled) toast.error(t("onboarding.auth.checkError"));
+      }
     })();
 
     return () => {
@@ -168,6 +182,7 @@ export default function OnboardingAuthPage() {
         setPasswordError(translateAuthError(result, t as (key: string) => string));
         return;
       }
+      markRegistered();
       const supabase = createClient();
       const {
         data: { user },
@@ -177,7 +192,14 @@ export default function OnboardingAuthPage() {
         router.push("/pending");
         return;
       }
-      router.push("/onboarding/country");
+      // Mismo destino que el efecto de arriba — antes esto empujaba A4 a
+      // secas, que para un usuario con datos (locales o remotos) es el
+      // camino del household duplicado.
+      try {
+        router.push(await resolveOnboardingDestination());
+      } catch {
+        toast.error(t("onboarding.auth.checkError"));
+      }
     } finally {
       setSigningIn(false);
     }
@@ -274,6 +296,17 @@ export default function OnboardingAuthPage() {
           style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
         >
           {usePassword ? t("onboarding.auth.preferCode") : t("onboarding.auth.preferPassword")}
+        </button>
+
+        {/* AC-7 — el camino al login (y desde ahí a "olvidé mi contraseña")
+            no existía desde esta pantalla: quien entraba a la app en un
+            dispositivo nuevo veía solo la pantalla de alta. */}
+        <button
+          type="button"
+          onClick={() => router.push("/login")}
+          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
+        >
+          {t("onboarding.auth.haveAccount")}
         </button>
       </div>
 

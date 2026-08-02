@@ -57,10 +57,17 @@ export default function OnboardingRegisterPage() {
       if (cancelled) return;
       if (alreadyRegistered) {
         markRegistered();
-        const destination = await resolveOnboardingDestination();
-        if (cancelled) return;
-        router.replace(destination);
-        return;
+        // AC-9 — si el chequeo remoto falla, cae al formulario (recuperable:
+        // re-fijar la contraseña es inocuo y el envío re-resuelve destino).
+        try {
+          const destination = await resolveOnboardingDestination();
+          if (cancelled) return;
+          router.replace(destination);
+          return;
+        } catch {
+          if (cancelled) return;
+          toast.error(t("onboarding.auth.checkError"));
+        }
       }
 
       userId.current = user.id;
@@ -91,7 +98,10 @@ export default function OnboardingRegisterPage() {
       await profilesRepo.updateDisplayName(userId.current, name.trim());
       await profilesRepo.markRegistrationCompleted(userId.current);
       markRegistered();
-      router.replace("/onboarding/country");
+      // Para un alta nueva esto resuelve a A4; para una cuenta que ya tiene
+      // household remoto (p. ej. registro re-abierto en otro dispositivo),
+      // a la restauración — nunca al camino que duplica households.
+      router.replace(await resolveOnboardingDestination());
     } catch {
       toast.error(t("onboarding.register.genericError"));
     } finally {

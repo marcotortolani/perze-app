@@ -467,7 +467,9 @@
    "loadingDemo": "Cargando datos de ejemplo…",
    "tryDemo": "Probar con datos de ejemplo",
    "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
-   "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo."
+   "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo.",
+   "haveAccount": "Ya tengo cuenta",
+   "checkError": "No pudimos verificar tu cuenta — revisá la conexión y probá de nuevo."
   },
   "verify": {
    "back": "Volver",
@@ -567,11 +569,12 @@
    "submitting": "Creando cuenta…",
    "genericError": "No se pudo crear la cuenta — probá de nuevo."
   },
-  "existingHousehold": {
-   "title": "Este dispositivo no tiene tus datos",
-   "subtitle": "Ya tenés una cuenta con un household — este navegador todavía no puede traer esos datos acá. Entrá desde el dispositivo donde los cargaste, o cerrá sesión y usá otra cuenta.",
-   "signOut": "Cerrar sesión",
-   "signingOut": "Cerrando sesión…"
+  "restore": {
+   "title": "Trayendo tus datos",
+   "subtitle": "Tus cuentas, categorías y movimientos vienen en camino — unos segundos.",
+   "errorTitle": "No pudimos traer tus datos",
+   "errorSubtitle": "Revisá la conexión y probá de nuevo. No se perdió nada: tus datos siguen en el servidor.",
+   "retry": "Probar de nuevo"
   }
  },
  "morePage": {

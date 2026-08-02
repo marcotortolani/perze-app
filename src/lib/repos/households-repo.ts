@@ -88,7 +88,10 @@ export const householdsRepo = {
     // módulo, aunque nunca se ejecutara esta función.
     const { createClient } = await import("../supabase/client");
     const supabase = createClient();
-    const { data, error } = await supabase.from("households").select("id").limit(1);
+    // AC-15 — la policy de SELECT ya no filtra `deleted_at` (a propósito,
+    // fix de soft-delete RLS): sin este filtro, un household borrado
+    // dispararía la restauración para siempre.
+    const { data, error } = await supabase.from("households").select("id").is("deleted_at", null).limit(1);
     if (error) throw error;
     return (data?.length ?? 0) > 0;
   },

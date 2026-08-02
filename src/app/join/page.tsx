@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button, Icon, Input } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { invitesRepo } from "@/lib/repos/invites-repo";
-import { householdsRepo } from "@/lib/repos/households-repo";
+import { hydrateFromRemote } from "@/lib/offline/hydrate";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 
 /**
@@ -29,7 +29,13 @@ export default function JoinHouseholdPage() {
     setError(false);
     try {
       const householdId = await invitesRepo.accept(code.trim().toUpperCase());
-      await householdsRepo.setCurrentHouseholdId(householdId);
+      // AC-2 (`docs/auditoria-acceso.md`) — antes esto solo escribía
+      // `meta.currentHouseholdId`: sin ninguna fila local del household
+      // aceptado, `useCurrentHousehold` devolvía null y el invitado
+      // rebotaba al onboarding sin llegar jamás a donde lo invitaron.
+      // La hidratación scoped baja SOLO ese household (cuentas, categorías,
+      // movimientos…) y lo deja activo, sin tocar el resto de la base local.
+      await hydrateFromRemote({ householdId });
       invalidateHousehold();
       toast(t("familyPage.joined"));
       router.push("/");

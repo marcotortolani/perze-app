@@ -467,7 +467,9 @@
    "loadingDemo": "Loading sample data…",
    "tryDemo": "Try with sample data",
    "demoError": "Couldn't load the sample data — try again.",
-   "linkError": "That link no longer works — enter your email and request a new code."
+   "linkError": "That link no longer works — enter your email and request a new code.",
+   "haveAccount": "I already have an account",
+   "checkError": "We couldn't verify your account — check your connection and try again."
   },
   "verify": {
    "back": "Back",
@@ -567,11 +569,12 @@
    "submitting": "Creating account…",
    "genericError": "We couldn't create the account — try again."
   },
-  "existingHousehold": {
-   "title": "This device doesn't have your data",
-   "subtitle": "You already have an account with a household — this browser can't bring that data over yet. Sign in from the device where you set it up, or sign out and use a different account.",
-   "signOut": "Sign out",
-   "signingOut": "Signing out…"
+  "restore": {
+   "title": "Bringing your data over",
+   "subtitle": "Your accounts, categories, and transactions are on their way — a few seconds.",
+   "errorTitle": "We couldn't bring your data over",
+   "errorSubtitle": "Check your connection and try again. Nothing was lost: your data is still on the server.",
+   "retry": "Try again"
   }
  },
  "morePage": {

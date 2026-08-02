@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { signInWithPassword, translateAuthError } from "@/features/auth/password-auth";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { markRegistered } from "@/lib/auth/registered-cookie";
+import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 
 /**
  * C7 — solución de transición (ver `docs/mejora-auth-oauth-y-email.md`):
@@ -48,7 +49,15 @@ export default function LoginPage() {
         router.replace("/pending");
         return;
       }
-      router.replace("/");
+      // AC-1 — con household local va directo a la app; en un dispositivo
+      // nuevo va a `/onboarding/restore` a bajar sus datos, sin pasar por
+      // la pantalla de alta. Si el chequeo falla, "/" deja que el gate
+      // reintente por el camino normal.
+      try {
+        router.replace(await resolveOnboardingDestination());
+      } catch {
+        router.replace("/");
+      }
     } finally {
       setSigningIn(false);
     }
