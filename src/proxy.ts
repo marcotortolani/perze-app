@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import { isPublicPath } from "@/lib/auth/public-paths";
 import { DEMO_COOKIE_NAME, isDemoCookieValue } from "@/lib/demo/demo-cookie";
+import { REGISTERED_COOKIE_NAME, isRegisteredCookieValue } from "@/lib/auth/registered-cookie";
+import { hasAuthCallbackParams } from "@/lib/auth/has-auth-callback-params";
 
 /**
  * Next.js 16 renombró `middleware.ts` → `proxy.ts` (`CLAUDE.md` § gotchas).
@@ -42,6 +44,19 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  // B12 — un link de verificación con `redirect_to` a la raíz (plantilla
+  // default de Supabase, o cualquier link ya mandado antes de este fix)
+  // vuelve como `?code=...` a CUALQUIER pathname, no solo `/auth/callback`.
+  // Si el chequeo de sesión de abajo lo viera primero, `redirectTo()`
+  // pisaría la URL con `url.search = ""` y el código se perdería sin que
+  // nadie lo canjeara — la app entera queda inaccesible por mail. Server-side
+  // y antes que nada más: reenviar preservando el query completo.
+  if (hasAuthCallbackParams(request.nextUrl.searchParams) && request.nextUrl.pathname !== "/auth/callback") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -52,8 +67,13 @@ export async function proxy(request: NextRequest) {
   // exigiendo `auth.uid()` real para cualquier fila.
   const isDemo = isDemoCookieValue(request.cookies.get(DEMO_COOKIE_NAME)?.value);
 
+  // C7 — sin sesión, `perze_registered` decide entre "primera vez"
+  // (`/onboarding`) y "ya se registró en este dispositivo" (`/login`): sin
+  // esto, cualquiera que ya tiene cuenta ve de nuevo la pantalla de alta.
+  const isRegistered = isRegisteredCookieValue(request.cookies.get(REGISTERED_COOKIE_NAME)?.value);
+
   if (!user && !isDemo && !isPublicPath(request.nextUrl.pathname)) {
-    return redirectTo(request, response, "/onboarding");
+    return redirectTo(request, response, isRegistered ? "/login" : "/onboarding");
   }
 
   // Acceso controlado (§3.2) — verificarse por OTP/contraseña no alcanza:

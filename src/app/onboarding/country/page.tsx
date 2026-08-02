@@ -7,6 +7,8 @@ import { Button, IconButton, OptionCard, ProgressSteps } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
+import { createClient } from "@/lib/supabase/client";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
 
 function guessCountry(): string {
   if (typeof navigator === "undefined") return "UY";
@@ -39,6 +41,19 @@ export default function OnboardingCountryPage() {
   const handleConfirm = () => {
     setField("countryCode", country.code);
     setField("currencyCode", country.defaultCurrency);
+
+    // `profiles.country` — documentado desde `20260801180000_access_control.sql`
+    // como completado acá, pero nunca se escribía (la métrica `byCountry` del
+    // panel de operador leía siempre "desconocido"). Best-effort: nunca
+    // bloquea el avance del onboarding si falla.
+    void (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) await profilesRepo.updateCountry(user.id, country.code).catch(() => {});
+    })();
+
     router.push("/onboarding/usage");
   };
 

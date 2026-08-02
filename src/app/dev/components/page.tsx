@@ -24,6 +24,7 @@ import {
   GroupCard,
   InsightCard,
   InstitutionTile,
+  Input,
   Keypad,
   LineChart,
   ListRow,
@@ -148,6 +149,11 @@ export default function ComponentsPage() {
         </Row>
         <Row>
           <OtpInput value={otp} onChange={setOtp} />
+        </Row>
+        <Row>
+          <Input label="Nombre" placeholder="Tu nombre" style={{ width: 200 }} />
+          <Input label="Email" value="vos@ejemplo.com" readOnly style={{ width: 200 }} />
+          <Input label="Contraseña" type="password" placeholder="••••••••" revealable style={{ width: 200 }} />
         </Row>
         <SectionGroup label="Cuentas" count={2} onSeeAll={() => {}} seeAllLabel="Ver todos">
           <ListRow label="Itaú Caja de Ahorro" meta="UYU" icon="wallet" />

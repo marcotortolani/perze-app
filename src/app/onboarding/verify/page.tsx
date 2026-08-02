@@ -9,11 +9,23 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
+import { env } from "@/env";
 
 /** B10 — el mismo cooldown que la Edge Function ya exige del lado servidor (rate limit de `signInWithOtp`); acá es solo para no dejar tocar "Reenviar" en loop y quemar los reintentos sin que el usuario se entere por qué. */
 const RESEND_COOLDOWN_SECONDS = 60;
 
-/** A3 — verificación del código de 6 dígitos que manda `signInWithOtp` (A2). */
+/**
+ * C7 — bypass momentáneo del código de 6 dígitos: sin plantilla de mail
+ * propia (bloqueada en plan free, `supabase/config.toml`), el mail que
+ * llega es el link default de Supabase, no un código. Con el flag apagado
+ * (default) esta pantalla no ofrece tipear nada — solo esperar el link,
+ * que ahora sí resuelve en `/auth/callback` → `/onboarding/register`
+ * (fix de C7). El código de `verifyOtp` de abajo queda intacto para
+ * reactivarlo el día que haya plantilla propia (Resend).
+ */
+const OTP_CODE_ENABLED = env.NEXT_PUBLIC_AUTH_OTP_CODE === "1";
+
+/** A3 — espera del link de verificación que manda `signInWithOtp` (A2); código de 6 dígitos disponible detrás de `NEXT_PUBLIC_AUTH_OTP_CODE`. */
 export default function OnboardingVerifyPage() {
   const t = useTranslations();
   const router = useRouter();
@@ -71,10 +83,16 @@ export default function OnboardingVerifyPage() {
   const handleResend = async () => {
     if (cooldown > 0) return;
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/register`,
+      },
+    });
     if (error) toast.error(error.message);
     else {
-      toast(t("onboarding.verify.resent"));
+      toast(t(OTP_CODE_ENABLED ? "onboarding.verify.resent" : "onboarding.verify.resentLink"));
       setCooldown(RESEND_COOLDOWN_SECONDS);
     }
   };
@@ -84,25 +102,38 @@ export default function OnboardingVerifyPage() {
       <IconButton icon="chevron-left" ariaLabel={t("onboarding.verify.back")} onClick={() => router.push("/onboarding")} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
-        <h1 className="t-title" style={{ margin: 0 }}>{t("onboarding.verify.title")}</h1>
+        <h1 className="t-title" style={{ margin: 0 }}>
+          {t(OTP_CODE_ENABLED ? "onboarding.verify.title" : "onboarding.verify.waitingTitle")}
+        </h1>
         <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 8 }}>
-          {t.rich("onboarding.verify.sentTo", { email: email || t("onboarding.verify.yourEmail"), b: (chunks) => <strong>{chunks}</strong> })}
+          {t.rich(OTP_CODE_ENABLED ? "onboarding.verify.sentTo" : "onboarding.verify.sentLinkTo", {
+            email: email || t("onboarding.verify.yourEmail"),
+            b: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <OtpInput value={code} onChange={handleChange} invalid={invalid} disabled={verifying} />
-      </div>
-      {invalid ? (
-        <p className="t-label" style={{ color: "var(--critical)", textAlign: "center" }}>
-          {t("onboarding.verify.invalidCode")}
-        </p>
-      ) : null}
-      {verifying ? (
+      {OTP_CODE_ENABLED ? (
+        <>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <OtpInput value={code} onChange={handleChange} invalid={invalid} disabled={verifying} />
+          </div>
+          {invalid ? (
+            <p className="t-label" style={{ color: "var(--critical)", textAlign: "center" }}>
+              {t("onboarding.verify.invalidCode")}
+            </p>
+          ) : null}
+          {verifying ? (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <ZMark size={10} gap={3} animated variant="sweep" aria-label={t("app.name")} />
+            </div>
+          ) : null}
+        </>
+      ) : (
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <ZMark size={10} gap={3} animated variant="sweep" aria-label={t("app.name")} />
+          <ZMark size={24} gap={8} animated variant="sweep" aria-label={t("app.name")} />
         </div>
-      ) : null}
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", marginTop: "auto" }}>
         <button
@@ -111,7 +142,9 @@ export default function OnboardingVerifyPage() {
           disabled={cooldown > 0}
           style={{ background: "none", border: 0, cursor: cooldown > 0 ? "default" : "pointer", color: cooldown > 0 ? "var(--text-muted)" : "var(--primary-ink)", fontSize: 14 }}
         >
-          {cooldown > 0 ? t("onboarding.verify.resendCooldown", { seconds: cooldown }) : t("onboarding.verify.resend")}
+          {cooldown > 0
+            ? t(OTP_CODE_ENABLED ? "onboarding.verify.resendCooldown" : "onboarding.verify.resendLinkCooldown", { seconds: cooldown })
+            : t(OTP_CODE_ENABLED ? "onboarding.verify.resend" : "onboarding.verify.resendLink")}
         </button>
         <button type="button" onClick={() => router.push("/onboarding")} style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }}>
           {t("onboarding.verify.changeEmail")}

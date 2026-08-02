@@ -11,7 +11,7 @@ import { seedDemoHousehold } from "@/lib/seed/demo-household";
 import { clearDemoCookie, enterDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { createClient } from "@/lib/supabase/client";
-import { signInWithPassword } from "@/features/auth/password-auth";
+import { signInWithPassword, translateAuthError } from "@/features/auth/password-auth";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { householdsRepo } from "@/lib/repos/households-repo";
@@ -138,7 +138,14 @@ export default function OnboardingAuthPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          // C7/proxy — sin esto GoTrue arma el link con el `site_url` pelado
+          // (`supabase/config.toml`), que vuelve como `?code=` a la raíz y
+          // nunca pasa por el canje de `/auth/callback`. `next` manda al
+          // registro nuevo (nombre + contraseña), no directo a A4.
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/register`,
+        },
       });
       if (error) {
         toast.error(error.message);
@@ -156,9 +163,9 @@ export default function OnboardingAuthPage() {
     setSigningIn(true);
     setPasswordError(null);
     try {
-      const { error } = await signInWithPassword(email, password);
-      if (error) {
-        setPasswordError(error);
+      const result = await signInWithPassword(email, password);
+      if (result.errorCode) {
+        setPasswordError(translateAuthError(result, t as (key: string) => string));
         return;
       }
       const supabase = createClient();

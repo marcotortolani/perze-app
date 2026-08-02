@@ -1,1338 +1,1406 @@
 {
-  "app": {
-    "name": "PERZE",
-    "description": "Multi-account, multi-currency, multi-country personal finances. Minimalist, mobile-first, offline-first.",
-    "shortcutAddExpense": "Add an expense",
-    "shortcutAddExpenseShort": "Expense",
-    "shortcutAddExpenseDescription": "Go straight to the capture keypad"
-  },
-  "pwa": {
-    "updateAvailable": "A new version of PERZE is available.",
-    "updateNow": "Update"
-  },
-  "nav": {
-    "home": "Home",
-    "homeShort": "Home",
-    "movements": "Transactions",
-    "movementsShort": "Txns",
-    "add": "Add",
-    "analysis": "Analysis",
-    "more": "More",
-    "accounts": "Accounts",
-    "investments": "Investments",
-    "budgets": "Budgets",
-    "scope": {
-      "personal": "Personal",
-      "shared": "Shared",
-      "all": "All"
-    }
-  },
-  "common": {
-    "loading": "Loading…",
-    "retry": "Retry",
-    "undo": "Undo",
-    "save": "Save",
-    "cancel": "Cancel",
-    "edit": "Edit",
-    "delete": "Delete",
-    "seeAll": "See all",
-    "continue": "Continue"
-  },
-  "ds": {
-    "errorState": {
-      "retry": "Retry"
-    },
-    "progressSteps": {
-      "skip": "Skip"
-    },
-    "resultGroup": {
-      "seeAll": "See all"
-    },
-    "banner": {
-      "offline": "Offline — you can keep working as usual.",
-      "warning": "Something needs your attention.",
-      "error": "Sync failed.",
-      "pending": "{count, plural, one {# pending} other {# pending}}"
-    },
-    "undoToast": {
-      "undo": "Undo",
-      "progressSeconds": "{seconds, plural, one {# s} other {# s}}"
-    },
-    "dismissibleNotice": {
-      "dismiss": "Dismiss"
-    },
-    "insightCard": {
-      "dismiss": "Dismiss"
-    },
-    "appHeader": {
-      "back": "Back",
-      "search": "Search"
-    },
-    "sidebar": {
-      "navLabel": "Main navigation",
-      "money": "Money",
-      "people": "People",
-      "system": "System"
-    },
-    "tabBar": {
-      "add": "Add",
-      "badgeCount": "{count, plural, one {# notification} other {# notifications}}",
-      "budgetAlertsBadge": "{count, plural, one {# budget at its limit} other {# budgets at their limit}}"
-    },
-    "contextualTooltip": {
-      "gotIt": "Got it"
-    },
-    "lockScreen": {
-      "enterPin": "Enter your PIN",
-      "wrongPin": "Wrong PIN, try again",
-      "useBiometrics": "Use biometrics",
-      "lockedOut": "Three tries in a row. Try again in {seconds} seconds. Your data is untouched."
-    },
-    "fxEditor": {
-      "ageHours": "{hours} h ago",
-      "source": "DolarApi · official"
-    },
-    "priceStatus": {
-      "fresh": "Up to date",
-      "stale": "{hours} h ago",
-      "manual": "Manual",
-      "marketClosed": "Market closed",
-      "update": "Update price"
-    },
-    "needsFxBanner": {
-      "message": "{count, plural, one {# item without a rate} other {# items without a rate}}",
-      "resolve": "Resolve"
-    },
-    "transactionRow": {
-      "syncIssue": {
-        "conflict": "Edited by another member at the same time — unresolved",
-        "rejected": "Couldn't sync"
-      }
-    },
-    "otpInput": {
-      "groupLabel": "Verification code",
-      "digitLabel": "Digit {index} of {total}",
-      "pasteCode": "Paste code"
-    },
-    "keypad": {
-      "operatorPlus": "Add",
-      "operatorMinus": "Subtract",
-      "operatorMultiply": "Multiply",
-      "operatorDivide": "Divide",
-      "backspace": "Backspace",
-      "decimalSeparator": "Decimal separator"
-    }
-  },
-  "reference": {
-    "category": {
-      "groceries": "Groceries",
-      "restaurants": "Restaurants",
-      "transport": "Transport",
-      "housing": "Housing",
-      "health": "Health",
-      "entertainment": "Entertainment",
-      "salary": "Salary",
-      "otherIncome": "Other income",
-      "groceriesPantry": "Pantry",
-      "groceriesProduce": "Produce",
-      "groceriesButcher": "Butcher",
-      "transportFuel": "Fuel",
-      "transportPublic": "Public transport",
-      "transportParking": "Parking",
-      "healthPharmacy": "Pharmacy",
-      "healthAppointments": "Appointments",
-      "healthInsurance": "Health insurance",
-      "clothing": "Clothing",
-      "education": "Education",
-      "pets": "Pets",
-      "gifts": "Gifts"
-    },
-    "accountKind": {
-      "cash": "Cash",
-      "checking": "Checking account",
-      "savings": "Savings account",
-      "credit_card": "Credit card",
-      "wallet": "Digital wallet",
-      "broker": "Investment account",
-      "loan": "Loan",
-      "receivable": "Receivable",
-      "other": "Other account"
-    },
-    "debtKind": {
-      "installment_plan": "Installment plan",
-      "loan": "Loan",
-      "credit_line": "Credit line",
-      "personal": "Personal debt"
-    },
-    "country": {
-      "UY": "Uruguay",
-      "AR": "Argentina",
-      "BR": "Brazil",
-      "US": "United States",
-      "MX": "Mexico",
-      "CL": "Chile"
-    },
-    "currency": {
-      "UYU": "Uruguayan peso",
-      "ARS": "Argentine peso",
-      "USD": "US dollar",
-      "BRL": "Brazilian real",
-      "MXN": "Mexican peso",
-      "CLP": "Chilean peso",
-      "EUR": "Euro"
-    }
-  },
-  "capture": {
-    "close": "Close",
-    "back": "Back",
-    "burstCount": "{count} added",
-    "kind": {
-      "expense": "Expense",
-      "income": "Income",
-      "transfer": "Transfer"
-    },
-    "category": {
-      "other": "Other",
-      "frequent": "Most used",
-      "sheetTitle": "Choose a category",
-      "searchPlaceholder": "Search category…",
-      "createNew": "Create \"{name}\"",
-      "noResults": "We couldn't find any category.",
-      "nameTooLong": "That name is too long."
-    },
-    "chooseAccount": "Choose account",
-    "from": "FROM",
-    "to": "TO",
-    "invert": "Swap",
-    "voice": "Voice",
-    "photo": "Photo",
-    "details": "Details",
-    "voiceLabel": "Add by voice",
-    "photoLabel": "Receipt photo",
-    "photoComingSoon": "Receipt photo isn't available yet — coming soon.",
-    "next": "Next",
-    "save": "Save",
-    "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online.",
-    "saved": "Transaction saved",
-    "undo": "Undo",
-    "accountPicker": {
-      "sourceTitle": "Choose account",
-      "destinationTitle": "Destination account"
-    },
-    "details_sheet": {
-      "title": "Details",
-      "account": "Account",
-      "date": "Date",
-      "payee": "Merchant",
-      "payeePlaceholder": "Where was it?",
-      "note": "Note",
-      "notePlaceholder": "Optional",
-      "burstMode": "Keep adding (burst mode)",
-      "today": "Today",
-      "yesterday": "Yesterday"
-    },
-    "voice_sheet": {
-      "title": "Voice capture",
-      "unsupported": "Your browser doesn't support speech recognition. You can still add the expense with the keypad.",
-      "listening": "Listening…",
-      "prompt": "Say something like “spent 1200 on groceries”",
-      "summary": "Amount: {amount} · Merchant: {payee}",
-      "empty": "—",
-      "useThis": "Use this",
-      "startListening": "Start listening"
-    },
-    "savedOffline": "Saved on your phone. It'll go out once you're back online."
-  },
-  "movements": {
-    "filters": {
-      "title": "Filters",
-      "period": "Period",
-      "type": "Type",
-      "accounts": "Accounts",
-      "categories": "Categories",
-      "onlyPending": "Only without a resolved exchange rate",
-      "clearAll": "Clear all",
-      "seeResults": "See {count, plural, one {# result} other {# results}}",
-      "date": {
-        "all": "All",
-        "thisMonth": "This month",
-        "lastMonth": "Last month",
-        "last7": "Last 7 days",
-        "last30": "Last 30 days"
-      },
-      "kindAll": "All"
-    },
-    "editFlow": {
-      "title": "Edit transaction",
-      "stale": "This transaction is old — changing the amount will resolve the exchange rate again.",
-      "next": "Next",
-      "saveChanges": "Save changes",
-      "updated": "Transaction updated",
-      "voiceUnavailable": "Voice capture isn't available while editing.",
-      "photoComingSoon": "Receipt photo isn't available yet."
-    }
-  },
-  "accounts": {
-    "form": {
-      "back": "Back",
-      "close": "Close",
-      "editTitle": "Edit account",
-      "newTitle": "New account",
-      "change": "change",
-      "name": "Name",
-      "namePlaceholder": "e.g. Chase Savings",
-      "country": "Country",
-      "currency": "Currency",
-      "openingBalance": "Opening balance",
-      "statementDay": "Statement day",
-      "dayPlaceholder": "1-31",
-      "dueDay": "Due day",
-      "interestRate": "Annual rate (%)",
-      "interestRatePlaceholder": "e.g. 45.5",
-      "termMonths": "Term (months)",
-      "termMonthsPlaceholder": "e.g. 12",
-      "includeInNetWorth": "Include in net worth",
-      "visibility": "Visibility",
-      "private": "Private",
-      "shared": "Shared",
-      "saveChanges": "Save changes",
-      "createAccount": "Create account",
-      "updated": "Account updated",
-      "created": "Account created",
-      "kindDescription": {
-        "cash": "Bills and coins",
-        "checking": "Bank debit",
-        "savings": "Bank savings",
-        "credit_card": "With a billing cycle",
-        "wallet": "Venmo, PayPal…",
-        "broker": "Broker, crypto",
-        "loan": "With a rate and term",
-        "receivable": "A tab, a loan you made",
-        "other": "Doesn't fit above"
-      },
-      "kindLabel": {
-        "loan": "Loan (I owe)",
-        "receivable": "Receivable (owed to me)",
-        "other": "Other"
-      }
-    }
-  },
-  "transactions": {
-    "list": {
-      "filters": "Filters",
-      "calendar": "Calendar",
-      "cancel": "Cancel",
-      "income": "Income",
-      "expenses": "Expenses",
-      "balance": "Balance",
-      "empty": "You haven't added any transactions yet.",
-      "emptyAction": "Add my first expense",
-      "emptyFiltered": "No transactions match these filters.",
-      "clearFilters": "Clear filters",
-      "transfer": "Transfer",
-      "movement": "Transaction",
-      "deleted": "Transaction deleted",
-      "undo": "Undo",
-      "deletedBulk": "{count, plural, one {# transaction deleted} other {# transactions deleted}}",
-      "deleteCount": "Delete {count}",
-      "categorize": "Categorize",
-      "categorizeComingSoon": "Bulk categorizing isn't available yet.",
-      "errorWhat": "We couldn't load your movements."
-    },
-    "detail": {
-      "selectPrompt": "Pick a transaction from the list to see its detail here.",
-      "notFound": "We couldn't find that transaction.",
-      "backToList": "Back to transactions",
-      "back": "Back",
-      "notIncludedInTotal": "Not included in the total",
-      "category": "Category",
-      "noCategory": "No category",
-      "account": "Account",
-      "toAccount": "To {account}",
-      "date": "Date",
-      "payee": "Merchant",
-      "note": "Note",
-      "fxRateUsed": "Exchange rate used",
-      "fxUnresolved": "Unresolved — needs_fx",
-      "createdOn": "Added on {date}",
-      "editedOn": " · Edited on {date}",
-      "edit": "Edit",
-      "duplicate": "Duplicate",
-      "duplicated": "Transaction duplicated — with today's date.",
-      "recurring": "Make recurring",
-      "recurringComingSoon": "Recurring transactions aren't available yet.",
-      "split": "Split by category",
-      "splitComingSoon": "Splitting a transaction isn't available yet.",
-      "delete": "Delete",
-      "fxSource": {
-        "identity": "Same currency",
-        "manual": "Manual override",
-        "api": "Day's exchange rate",
-        "inherited": "Last known rate",
-        "pending": "Unresolved"
-      }
-    },
-    "calendar": {
-      "back": "Back",
-      "prevMonth": "Previous month",
-      "nextMonth": "Next month",
-      "empty": "No transactions that day."
-    },
-    "edit": {
-      "notFound": "We couldn't find that transaction.",
-      "back": "Back"
-    }
-  },
-  "accountsPage": {
-    "list": {
-      "netWorth": "Net worth",
-      "assets": "Assets",
-      "liabilities": "Liabilities",
-      "empty": "You haven't created any accounts yet.",
-      "emptyAction": "Create account",
-      "newAccount": "New account",
-      "currenciesAndRates": "Currencies and exchange rates",
-      "resolvePendingFx": "Resolve pending exchange rates",
-      "pendingFxCount": "{count, plural, one {# transaction} other {# transactions}}",
-      "archived": "Archived",
-      "creditLimitUsage": "{percent}% of limit",
-      "errorWhat": "We couldn't load your accounts.",
-      "reorder": "Reorder {name}"
-    },
-    "moveUp": "Move up",
-    "moveDown": "Move down",
-    "detail": {
-      "selectPrompt": "Pick an account from the list to see its detail here.",
-      "back": "Back",
-      "notFound": "We couldn't find that account.",
-      "backToList": "Back to accounts",
-      "cycleSummary": "Cycle summary",
-      "cycleOf": "{spent} of {limit}",
-      "cycleConsumption": "Cycle spend: {amount}",
-      "cycleCloses": "Closes on {statementDay} · Due on {dueDay}",
-      "cycleProjection": "Projected charge: {amount}",
-      "edit": "Edit",
-      "reconcile": "Reconcile",
-      "transfer": "Transfer",
-      "archive": "Archive",
-      "archived": "Account archived",
-      "transactionsTitle": "Transactions in this account",
-      "noTransactions": "No transactions yet."
-    },
-    "reconcile": {
-      "back": "Back",
-      "notFound": "We couldn't find that account.",
-      "prompt": "How much does {account} say you have?",
-      "yourRecord": "Your record says",
-      "difference": "Difference:",
-      "createAdjustment": "Create adjustment",
-      "noDifference": "No difference",
-      "reconciled": "Account reconciled — an adjustment was created",
-      "adjustmentNote": "Reconciliation adjustment"
-    },
-    "resolveFx": {
-      "back": "Back",
-      "empty": "No transactions waiting for an exchange rate.",
-      "emptyAction": "Back to accounts",
-      "explanation": "These transactions were saved without an exchange rate. Pick one per currency and it applies to every pending transaction in that currency.",
-      "count": "{count, plural, one {# transaction} other {# transactions}} · {total}",
-      "unresolved": "Unresolved",
-      "resolve": "Resolve",
-      "applyToAll": "Apply to all",
-      "resolvedCount": "{count, plural, one {# transaction resolved} other {# transactions resolved}}"
-    }
-  },
-  "onboarding": {
-    "welcome": {
-      "skip": "Skip",
-      "title": "Log an expense: five seconds.",
-      "subtitle": "No forms, no system keyboard, no connection needed.",
-      "demoPlaceholder": "Keypad demo, looping",
-      "start": "Get started"
-    },
-    "auth": {
-      "tagline": "Personal finances, without friction.",
-      "continueWithGoogle": "Continue with Google",
-      "continueWithApple": "Continue with Apple",
-      "connectedWith": "Connected with {provider}",
-      "orWithEmail": "or with your email",
-      "emailPlaceholder": "you@email.com",
-      "sendLink": "Send sign-in link",
-      "sendingLink": "Sending…",
-      "passwordPlaceholder": "Your password",
-      "signInWithPassword": "Sign in",
-      "signingIn": "Signing in…",
-      "preferPassword": "I'd rather use my password",
-      "preferCode": "I'd rather use the email code",
-      "loadingDemo": "Loading sample data…",
-      "tryDemo": "Try with sample data",
-      "demoError": "Couldn't load the sample data — try again.",
-      "linkError": "That link no longer works — enter your email and request a new code."
-    },
-    "verify": {
-      "back": "Back",
-      "title": "Check your email",
-      "sentTo": "We sent a code to <b>{email}</b>.",
-      "yourEmail": "your email",
-      "invalidCode": "That code expired or isn't valid. Request a new one.",
-      "resend": "Resend code",
-      "resendCooldown": "Resend in {seconds}s",
-      "resent": "We resent the code",
-      "changeEmail": "Change email"
-    },
-    "country": {
-      "back": "Back",
-      "title": "Where do you live?",
-      "subtitle": "We use this for your currency and the banks we offer you later.",
-      "yourCurrency": "Your currency: {currency}",
-      "continue": "Continue"
-    },
-    "usage": {
-      "back": "Back",
-      "title": "How will you use the app?",
-      "continue": "Continue",
-      "options": {
-        "solo": {
-          "title": "Just me",
-          "description": "Your accounts, your expenses"
-        },
-        "pareja": {
-          "title": "With my partner",
-          "description": "Turns on the family group"
-        },
-        "familia": {
-          "title": "With my family",
-          "description": "Turns on the family group"
-        }
-      }
-    },
-    "account": {
-      "back": "Back",
-      "title": "Your first account",
-      "subtitle": "Choose where the money comes from — you can add more later.",
-      "searchPlaceholder": "Search your bank or wallet",
-      "continue": "Continue"
-    },
-    "success": {
-      "title": "All set!",
-      "subtitle": "Your account is ready. Add your first expense to start seeing your summary.",
-      "cta": "Add my first expense",
-      "errorTitle": "We couldn't finish setting up your account",
-      "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
-      "retry": "Try again"
-    },
-    "pending": {
-      "pendingTitle": "Your access is waiting for approval",
-      "pendingSubtitle": "Whoever runs this install hasn't approved your entry yet. We'll let you in as soon as they do.",
-      "rejectedTitle": "Your access wasn't approved",
-      "rejectedSubtitle": "Whoever runs this install decided not to grant you access.",
-      "verifiedAs": "Verified as {email}",
-      "refresh": "I've been approved — refresh",
-      "stillPending": "Not yet — you're still waiting for approval.",
-      "signOut": "Sign out"
-    },
-    "complete": {
-      "balanceTitle": "How much do you have in {account}?",
-      "yourAccount": "your account",
-      "balanceSubtitle": "So your net worth starts correct. You can leave it at 0 and adjust it later.",
-      "continue": "Continue",
-      "installTitle": "Install PERZE",
-      "installPromptAvailable": "Get in faster, like a native app.",
-      "installPromptIos": "Tap Safari's share icon and choose \"Add to Home Screen\".",
-      "installPromptOther": "Look for \"Install app\" in your browser's menu.",
-      "install": "Install",
-      "later": "Not now",
-      "laterToast": "You can install it later from Settings"
-    }
-  },
-  "morePage": {
-    "money": "Money",
-    "accounts": "Accounts",
-    "budgets": "Budgets",
-    "goals": "Goals",
-    "recurring": "Recurring",
-    "debts": "Debts",
-    "people": "People",
-    "family": "Family group",
-    "system": "System",
-    "settings": "Settings",
-    "importExport": "Import / Export",
-    "about": "About",
-    "enableMoreFeatures": "Enable more features",
-    "comingSoon": "{label} isn't available in this version yet.",
-    "version": "PERZE v{version}",
-    "language": "Language",
-    "languageSheetTitle": "Choose your language",
-    "languageNames": {
-      "es": "Español",
-      "en": "English",
-      "pt": "Português"
-    },
-    "categories": "Categories",
-    "modules": "Modules",
-    "security": "Security",
-    "profile": "Profile",
-    "tagsAndPayees": "Tags and payees",
-    "rules": "Auto-categorization rules",
-    "signOut": "Sign out",
-    "exitDemo": "Exit demo",
-    "signOutConfirmTitle": "Unsynced changes",
-    "signOutUnsyncedWarning": "{count, plural, one {You have # change that hasn't uploaded to the server yet.} other {You have # changes that haven't uploaded to the server yet.}} Signing out now will lose them.",
-    "signOutConfirmAction": "Sign out anyway"
-  },
-  "adminPage": {
-    "title": "Operator panel",
-    "pendingSectionTitle": "Pending requests",
-    "pendingEmpty": "No requests waiting for approval.",
-    "requestedOn": "Requested on {date}",
-    "unknownCountry": "No country chosen yet",
-    "approve": "Approve",
-    "reject": "Reject",
-    "approvedToast": "Access approved.",
-    "rejectedToast": "Access rejected.",
-    "metricsSectionTitle": "Metrics",
-    "totalUsers": "Total users",
-    "pendingCount": "Pending",
-    "approvedCount": "Approved",
-    "rejectedCount": "Rejected",
-    "byCountryTitle": "By country",
-    "noCountryData": "No approved users with a chosen country yet.",
-    "activitySectionTitle": "Activity",
-    "activeToday": "Active today",
-    "active7d": "Active in 7 days",
-    "active30d": "Active in 30 days",
-    "inactive": "No recent activity"
-  },
-  "conflictsPage": {
-    "title": "Sync conflicts",
-    "empty": "You have no pending conflicts.",
-    "explainer": "You and another member edited this same transaction while one of you was offline. Pick which one stays — the other gets discarded.",
-    "yours": "Your version",
-    "theirs": "Their version",
-    "noCategory": "No category",
-    "keepMine": "Keep mine",
-    "keepTheirs": "Keep theirs",
-    "resolved": "Conflict resolved.",
-    "badgeCount": "{count, plural, one {# conflict} other {# conflicts}}",
-    "homeBanner": "{count, plural, one {There is # transaction with a sync conflict.} other {There are # transactions with a sync conflict.}}",
-    "homeBannerAction": "Review"
-  },
-  "syncDiagnosticsPage": {
-    "title": "Sync status",
-    "empty": "There are no pending mutations to sync.",
-    "entryLabel": "{op} on {table}",
-    "ops": {
-      "insert": "Create",
-      "update": "Update",
-      "delete": "Delete"
-    },
-    "statuses": {
-      "pending": "Pending",
-      "syncing": "Syncing",
-      "failed": "Failed, retrying",
-      "conflict": "In conflict",
-      "dead": "Unable to sync"
-    },
-    "createdAt": "Created on {when}",
-    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
-    "retry": "Retry now",
-    "retried": "Queued for the next attempt."
-  },
-  "notificationsPage": {
-    "title": "Notifications",
-    "enablePush": "Receive notifications",
-    "enablePushMeta": "On this device. Turn them off anytime.",
-    "pushUnsupported": "This browser doesn't support push notifications.",
-    "pushError": "We couldn't turn on notifications. Try again.",
-    "noEngagementPromise": "We don't send notifications to get you to reopen the app. Only what you chose above.",
-    "toggles": {
-      "budgetAlerts": {
-        "label": "Budget at its limit",
-        "description": "When a category hits 80% or goes over"
-      },
-      "weeklySummary": {
-        "label": "Weekly summary",
-        "description": "A weekly recap every Sunday"
-      },
-      "recurringReminders": {
-        "label": "Recurring reminders",
-        "description": "When a fixed charge's date is coming up"
-      },
-      "insights": {
-        "label": "Insights",
-        "description": "Things we noticed about your money"
-      }
-    }
-  },
-  "importCsvPage": {
-    "title": "Import CSV",
-    "chooseFile": "Choose CSV file",
-    "weRead": "We read",
-    "destinationAccount": "Which account they go to",
-    "mapColumns": "Confirm which column holds each piece of data.",
-    "field": {
-      "date": "Date",
-      "description": "Description",
-      "amount": "Amount"
-    },
-    "duplicatesFound": "{count, plural, =0 {We didn't find any duplicates.} one {We found # possible duplicate, already excluded.} other {We found # possible duplicates, already excluded.}}",
-    "duplicate": "Duplicate",
-    "noDescription": "No description",
-    "importCount": "Import {count, plural, one {# transaction} other {# transactions}}",
-    "imported": "{count, plural, one {# transaction imported.} other {# transactions imported.}}",
-    "done": "Import finished.",
-    "viewTransactions": "View transactions"
-  },
-  "categorizationRulesPage": {
-    "title": "Auto-categorization rules",
-    "empty": "You haven't created any rules yet.",
-    "newRule": "New rule",
-    "created": "Rule created",
-    "name": "Name",
-    "namePlaceholder": "e.g. Uber → Transport",
-    "conditionField": "If",
-    "conditionValue": "Contains",
-    "thenCategory": "Assign this category",
-    "chooseCategory": "Choose category",
-    "noCategoryAction": "no category",
-    "meta": "If {field} contains \"{value}\" → {category} · applied {count} times",
-    "field": {
-      "note": "the note",
-      "payeeName": "the payee"
-    }
-  },
-  "tagsPayeesPage": {
-    "title": "Tags and payees",
-    "tags": "Tags",
-    "payees": "Payees",
-    "addTag": "New tag",
-    "addPayee": "New payee",
-    "editTitle": "Edit",
-    "newTitle": "New",
-    "name": "Name"
-  },
-  "profilePage": {
-    "title": "Profile",
-    "displayName": "Display name",
-    "saved": "Name updated."
-  },
-  "exportPage": {
-    "headerTitle": "Export and backup",
-    "title": "Your data is yours",
-    "subtitle": "Take it all whenever you want, in a format that opens anywhere, no permission needed and nothing gets deleted here.",
-    "whatsIncluded": "What the JSON takes with it",
-    "rows": {
-      "transactions": "Transactions",
-      "accounts": "Accounts",
-      "categories": "Categories",
-      "tags": "Tags",
-      "payees": "Payees",
-      "budgets": "Budgets",
-      "goals": "Goals",
-      "recurringRules": "Recurring"
-    },
-    "notIncluded": "Doesn't include what only lives in Supabase: invites, expenses shared with other members, or your investment portfolio.",
-    "download": "Download backup"
-  },
-  "aboutPage": {
-    "title": "About",
-    "name": "PERZE",
-    "versionLine": "Version {version} · pronounced PER-se",
-    "sourceCode": "Source code",
-    "sourceCodeMeta": "Readable, copyable, and runnable on your own server",
-    "license": "License",
-    "licenseBadge": "MIT",
-    "dataStorage": "What data we keep",
-    "dataStorageMeta": "And what never leaves your phone",
-    "dataStorageBody": "Your transactions, accounts, and budgets live first on your phone (IndexedDB) and sync with your own Supabase project when you're online. Nothing is ever shared with third parties or used to train anything. If you self-host PERZE, that server is you.",
-    "operatorVisibility": "Who can see what",
-    "operatorVisibilityMeta": "What whoever runs this install can see",
-    "madeWith": "Made with",
-    "madeWithBody": "Geist Sans and Geist Mono, Phosphor icons, and exchange rates from BROU. MIT licensed — the code is yours to read, change, and run anywhere."
-  },
-  "privacyNotice": {
-    "title": "Who can see what",
-    "who": "This install of PERZE is run by one person, who manually approves every new access request.",
-    "sees": "Sees: your email, your country, and when you last used the app.",
-    "neverSees": "Never sees: your transactions, balances, accounts, or budgets. That restriction lives in the database, not a promise.",
-    "noThirdParty": "No third-party analytics: none of this ever leaves this install."
-  },
-  "home": {
-    "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
-    "emptyAction": "Add my first expense",
-    "netWorth": "Net worth",
-    "showAmounts": "Show amounts",
-    "hideAmounts": "Hide amounts",
-    "vsLastWeek": "vs. last week",
-    "excludedAccounts": "{count} account(s) without an exchange rate, excluded from the total.",
-    "convertedTotal": "Converted total",
-    "accountsCount": "{count} accounts",
-    "spentThisPeriod": "Spent this period",
-    "incomeThisPeriod": "Income this period",
-    "needsFxInsight": "You have {count, plural, one {# transaction} other {# transactions}} without a resolved exchange rate.",
-    "budgetExceededInsight": "You went over the {category} budget — you're at {percent}%.",
-    "budgetWarningInsight": "You're at {percent}% of the {category} budget.",
-    "seeBudgets": "See budgets",
-    "seeTransactions": "See transactions",
-    "topCategoryInsight": "Your top spending category this period is <b>{category}</b>.",
-    "recentTransactions": "Recent transactions",
-    "transfer": "Transfer",
-    "movement": "Transaction",
-    "errorWhat": "We couldn't load your summary.",
-    "privacyTooltip": "Tap the eye to blur amounts — handy in public."
-  },
-  "analyticsPage": {
-    "unavailable": "Analytics isn't available yet in this version.",
-    "errorWhat": "We couldn't calculate this period's numbers.",
-    "empty": "Nothing to analyze yet. Log your first expense and in 7 days we'll show your net worth line.",
-    "emptyAction": "Log an expense",
-    "netWorth": "Net worth",
-    "savingsRate": "Savings rate",
-    "dailySpend": "Daily spend",
-    "savingsRatePending": "Savings rate and cashflow show up once your first period closes. {days} days left.",
-    "availableNow": "Available now",
-    "notYet": "Not yet",
-    "missingClosedPeriod": "These need a closed period. {days} days left.",
-    "missingMonths": "These need 2 months of history. {days, plural, one {# day} other {# days}} left.",
-    "cards": {
-      "trends": {
-        "title": "Trends",
-        "subtitle": "Spending more than last week?"
-      },
-      "calendar": {
-        "title": "Calendar",
-        "subtitle": "Which days does money go?"
-      },
-      "netWorth": {
-        "title": "Net worth",
-        "subtitle": "Are you going up?"
-      },
-      "categories": {
-        "title": "Categories",
-        "subtitle": "Where's the money going?"
-      },
-      "merchants": {
-        "title": "Merchants",
-        "subtitle": "Where do you spend most often?"
-      },
-      "flow": {
-        "title": "Money flow",
-        "subtitle": "Where it comes from and where it goes"
-      },
-      "insights": {
-        "title": "Insights",
-        "subtitle": "What you didn't know about your money"
-      },
-      "currencies": {
-        "title": "Currencies",
-        "subtitle": "How much net worth you hold in each"
-      },
-      "inflation": {
-        "title": "Inflation",
-        "subtitle": "Nominal vs. today's money"
-      },
-      "weekly": {
-        "title": "Your week",
-        "subtitle": "Three facts and a comparison"
-      },
-      "export": {
-        "title": "Export",
-        "subtitle": "One period, as CSV"
-      },
-      "wrapped": {
-        "title": "Your year in numbers",
-        "subtitle": "Twelve months, six screens"
-      }
-    },
-    "gaps": {
-      "closedPeriodAnalyses": "Categories, cashflow and merchants",
-      "currencyAnalyses": "Inflation and multi-currency"
-    }
-  },
-  "offlinePage": {
-    "message": "Offline — this screen hasn't loaded once yet. Screens you already visited still work."
-  },
-  "search": {
-    "title": "Search",
-    "close": "Close search",
-    "hint": "⌘K or Ctrl+K to open",
-    "placeholder": "Search transactions, accounts, categories…",
-    "prompt": "Type to search your transactions, accounts, categories, and merchants.",
-    "noResults": "We couldn't find anything for \"{query}\".",
-    "empty": "No results.",
-    "groupActions": "Go to",
-    "transactions": "Transactions",
-    "accounts": "Accounts",
-    "categories": "Categories",
-    "merchants": "Merchants",
-    "movement": "Transaction",
-    "noNote": "No note",
-    "actions": {
-      "add": "Log an expense",
-      "home": "Home",
-      "movements": "Movements",
-      "accounts": "Accounts",
-      "analytics": "Analytics",
-      "more": "More"
-    }
-  },
-  "currenciesPage": {
-    "back": "Back",
-    "refresh": "Refresh",
-    "empty": "With a single currency in use, there's no exchange rate to manage.",
-    "emptyAction": "Back to accounts",
-    "noQuote": "No quote — tap to enter manually",
-    "manualOverride": "Manual override",
-    "noProvider": "No provider",
-    "asOf": "as of {date}",
-    "today": "today",
-    "overrideSaved": "Override saved for {pair}",
-    "howManyWorth": "How many {base} is 1 {quote} worth",
-    "ratePlaceholder": "e.g. 40",
-    "saveOverride": "Save override"
-  },
-  "pinKeypad": {
-    "progress": "{current} of {total} digits"
-  },
-  "categoryTemplate": {
-    "title": "Categories",
-    "subtitle": "You started with the basic set. Change it whenever you want — nothing you've logged is lost.",
-    "basicTitle": "Basic",
-    "basicCount": "{count} categories",
-    "completeTitle": "Complete",
-    "completeCount": "{count} categories",
-    "completeDescription": "With subcategories for groceries, transport and health.",
-    "scratchTitle": "Start from scratch",
-    "scratchDescription": "You create them yourself, as you go.",
-    "save": "Save",
-    "saved": "Categories updated"
-  },
-  "settingsPage": {
-    "yourCurrency": "Your currency",
-    "baseCurrency": "Base currency",
-    "fourthTab": "Fourth menu shortcut",
-    "closeDay": "Close day",
-    "closeDayHint": "Budgets and analysis periods run from one close day to the next. Applies to the whole group.",
-    "closeDayRestricted": "Only the owner or an admin can change the close day.",
-    "dayOfMonth": "Day {day}",
-    "fxSources": "Exchange rates"
-  },
-  "modulesPage": {
-    "subtitle": "Whatever's off doesn't show up anywhere. Only turn on what you'll actually use.",
-    "footnote": "If you turn one off, its data stays saved and comes back untouched when you turn it on again.",
-    "confirmTitle": "Turn off module",
-    "confirmDisable": "Turn off anyway",
-    "modules": {
-      "budgets": {
-        "label": "Budgets",
-        "description": "A limit per category and how much you have left per day."
-      },
-      "goals": {
-        "label": "Goals",
-        "description": "Save for something, with an estimated arrival date."
-      },
-      "recurring": {
-        "label": "Recurring",
-        "description": "Subscriptions and debits, with a heads-up on increases."
-      },
-      "debts": {
-        "label": "Debts & installments",
-        "description": "Installment plans and loans, with what's committed."
-      },
-      "investments": {
-        "label": "Investments",
-        "description": "Portfolio, trades and performance."
-      },
-      "family": {
-        "label": "Family group",
-        "description": "Share accounts and expenses with other people."
-      }
-    },
-    "confirmBody": {
-      "budgets": "You don't have any active budgets yet — safe to turn off.",
-      "goals": "You don't have any active goals yet — safe to turn off.",
-      "recurring": "{count, plural, one {You have # recurring item logged.} other {You have # recurring items logged.}} They'll stop showing up, but the saved transactions stay untouched.",
-      "debts": "{count, plural, one {You have # active debt or installment plan.} other {You have # active debts or installment plans.}} They'll stop showing up, but the saved transactions stay untouched.",
-      "investments": "{count, plural, one {You have # investment account.} other {You have # investment accounts.}} It'll drop out of net worth, but the data stays saved.",
-      "family": "{count, plural, one {You're sharing the app with # other person.} other {You're sharing the app with # other people.}} They'll stop seeing shared data until you turn it back on."
-    }
-  },
-  "securityPage": {
-    "title": "Security",
-    "pinLock": "PIN lock",
-    "pinLockDescription": "Ask for a PIN to view balances and transactions. Logging an expense never asks for it.",
-    "createPrompt": "Choose a 6-digit PIN",
-    "confirmPrompt": "Enter it again to confirm",
-    "mismatch": "Doesn't match — try again",
-    "pinSet": "PIN turned on",
-    "biometricLock": "Biometric unlock",
-    "biometricLockDescription": "Use Face ID, fingerprint, or another device sensor instead of the PIN",
-    "biometricEnabled": "Biometric unlock turned on",
-    "biometricEnrollError": "Couldn't turn on the sensor — try again",
-    "password": "Password",
-    "passwordDescription": "An alternative to the email code for signing in",
-    "newPassword": "New password",
-    "confirmPassword": "Confirm password",
-    "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
-    "passwordMismatch": "The two passwords don't match.",
-    "savePassword": "Save password",
-    "savingPassword": "Saving…",
-    "passwordSaved": "Password updated"
-  },
-  "trendsPage": {
-    "title": "Trends",
-    "thisWeek": "This week",
-    "vsLastWeek": "vs. last week"
-  },
-  "categoriesAnalyticsPage": {
-    "title": "Categories",
-    "other": "Other"
-  },
-  "calendarAnalyticsPage": {
-    "title": "Calendar"
-  },
-  "merchantsAnalyticsPage": {
-    "title": "Merchants",
-    "empty": "No expenses with a merchant logged in the last period yet."
-  },
-  "netWorthAnalyticsPage": {
-    "title": "Net worth",
-    "current": "Net worth",
-    "last30": "{amount} over the last 30 days"
-  },
-  "moneyFlowPage": {
-    "title": "Money flow",
-    "needsClosedPeriod": "The flow needs a closed period for the split to be real. {days} days left.",
-    "empty": "Not enough income and expenses yet to build this period's flow.",
-    "otherIncome": "Other income",
-    "otherExpense": "Other expenses"
-  },
-  "inflationPage": {
-    "title": "Inflation",
-    "needsHistory": "We need 2 months to adjust for prices. {months} months to go.",
-    "nominal": "Spent (nominal)",
-    "adjusted": "In today's money",
-    "explainer": "The price index rose {percent}% since that period.",
-    "noIndex": "There's no price index loaded for your currency yet — showing nominal spend without adjustment."
-  },
-  "currencyExposurePage": {
-    "title": "Currencies",
-    "total": "Total net worth"
-  },
-  "insightsPage": {
-    "title": "Insights",
-    "empty": "Not enough data yet to generate insights for this period.",
-    "streak": "You've logged {days} days in a row.",
-    "budgetPace": "At this pace, you'll go over the {category} budget on {date}.",
-    "wholeHousehold": "the whole household"
-  },
-  "weeklySummaryPage": {
-    "title": "Your week",
-    "empty": "You haven't logged anything this week. If you spent and didn't log it, you can still log it with a past date.",
-    "emptyAction": "Log an expense",
-    "range": "{from} to {to}",
-    "mostExpensiveDay": "Most expensive day",
-    "topPayee": "Where you went most",
-    "visits": "{count} visits",
-    "biggestChange": "What changed most"
-  },
-  "wrappedPage": {
-    "needsHistory": "Your year in numbers unlocks at 12 closed months. {count} to go.",
-    "coverTitle": "Your year in numbers",
-    "coverSubtitle": "Twelve months of money, in six screens.",
-    "netWorthLine": "You ended the year with this net worth.",
-    "transactionCountLine": "transactions logged this year.",
-    "topPayeeLine": "{visits} visits · {amount}",
-    "noPayeeData": "No merchants logged this year.",
-    "savingsRateLine": "Of everything that came in, this stayed.",
-    "daysActiveLine": "active days logging this year.",
-    "share": "Share",
-    "shareText": "My year in PERZE",
-    "back": "Back",
-    "next": "Next"
-  },
-  "exportReportsPage": {
-    "title": "Export",
-    "period": "Period",
-    "periodOptions": {
-      "current": "This month",
-      "previous": "Previous",
-      "twoAgo": "2 months ago"
-    },
-    "whatsIncluded": "What's included",
-    "transactions": "Transactions",
-    "transactionsCount": "{count} rows · with category, account, and rate",
-    "accountsAndBalances": "Accounts and balances",
-    "accountsCount": "{count} accounts · current balance",
-    "needsFxNote": "Transactions without a resolved rate still export, with an empty conversion column.",
-    "export": "Export",
-    "promise": "Your data is yours. You can also download a full backup.",
-    "csvDate": "Date",
-    "csvKind": "Kind",
-    "csvAccount": "Account",
-    "csvCategory": "Category",
-    "csvPayee": "Payee",
-    "csvAmount": "Amount",
-    "csvAmountBase": "Amount in base currency",
-    "csvNote": "Note",
-    "csvAccountName": "Account",
-    "csvBalance": "Balance"
-  },
-  "budgetsPage": {
-    "empty": "You haven't set up any budget yet.",
-    "emptyAction": "Create budget",
-    "newBudget": "New budget",
-    "of": "of",
-    "wholeHousehold": "Whole household",
-    "category": "Category",
-    "created": "Budget created",
-    "notFound": "We couldn't find that budget.",
-    "back": "Back to budgets",
-    "deleted": "Budget deleted",
-    "delete": "Delete budget",
-    "remaining": "You have left",
-    "over": "You're over by"
-  },
-  "goalsPage": {
-    "empty": "You haven't set up any goal yet.",
-    "emptyAction": "Create goal",
-    "newGoal": "New goal",
-    "name": "Name",
-    "namePlaceholder": "e.g. Trip to Bariloche",
-    "account": "Account",
-    "chooseAccount": "Choose account",
-    "created": "Goal created",
-    "of": "of",
-    "ofTarget": "{percent}% of target",
-    "notFound": "We couldn't find that goal.",
-    "back": "Back to goals",
-    "deleted": "Goal deleted",
-    "delete": "Delete goal",
-    "remainingToTarget": "You still need",
-    "reached": "Goal reached!",
-    "noAccountLinked": "This goal isn't linked to an account yet — progress stays at 0 until you pick one.",
-    "realPace": "Real pace (last 6 months)",
-    "estimatedArrival": "Estimated arrival",
-    "arrivalUnknown": "No recent contributions",
-    "useCushion": "Use a 3-month cushion ({amount})"
-  },
-  "recurringPage": {
-    "empty": "You haven't set up any recurring charge yet.",
-    "emptyAction": "Create recurring charge",
-    "newRule": "New recurring charge",
-    "name": "Name",
-    "namePlaceholder": "e.g. Netflix",
-    "day": "Day of month",
-    "noCategory": "No category",
-    "created": "Recurring charge created",
-    "dayOfMonth": "Day {day}",
-    "chargedThisMonth": "Already charged this month",
-    "notYetChargedThisMonth": "Not charged yet this month",
-    "notFound": "We couldn't find this recurring charge.",
-    "back": "Back",
-    "updated": "Recurring charge updated.",
-    "archived": "Recurring charge archived.",
-    "archive": "Archive",
-    "committedPerMonth": "Committed per month",
-    "viewCalendar": "View the month in a calendar"
-  },
-  "recurringCalendarPage": {
-    "title": "Recurring calendar",
-    "prevMonth": "Previous month",
-    "nextMonth": "Next month",
-    "noneThatDay": "Nothing due that day."
-  },
-  "debtsPage": {
-    "empty": "No debts or cards with a pending balance.",
-    "emptyAction": "Add account",
-    "newDebt": "New debt",
-    "name": "Name",
-    "namePlaceholder": "e.g. Laptop on installments",
-    "installmentCount": "Number of installments",
-    "linkedAccount": "Linked account",
-    "noLinkedAccount": "No linked account",
-    "created": "Debt created",
-    "fromTransactionDefaultName": "Installment purchase"
-  },
-  "debtDetailPage": {
-    "notFound": "We couldn't find this debt.",
-    "remaining": "Remaining",
-    "installmentsProgress": "{paid} of {total} installments paid",
-    "paidSoFar": "Paid so far",
-    "nextDue": "Next due",
-    "schedule": "Schedule",
-    "noSchedule": "This debt has no installments logged.",
-    "installmentNumber": "Installment {number} of {total}"
-  },
-  "cardCyclePage": {
-    "notFound": "This account isn't a credit card.",
-    "dueOn": "Due on {date}",
-    "dueUnknown": "No due date logged",
-    "closesOn": "Closes on {date} · {days} days left",
-    "cycleConsumptions": "Cycle spending",
-    "cycleConsumptionsMeta": "{count} transactions since {date}",
-    "installments": "Installments from previous cycles",
-    "recentConsumptions": "Recent spending",
-    "convertToInstallments": "Convert a purchase to installments",
-    "noConsumptions": "No purchases this cycle to convert.",
-    "payCard": "Pay the card"
-  },
-  "cardInstallmentsPage": {
-    "title": "Installments and projection",
-    "empty": "This card has no active installment plans.",
-    "committed": "Committed to installments",
-    "summary": "{count} plans · {monthly} per month until {date}",
-    "activePlans": "Active plans",
-    "installmentMeta": "{left} of {total} installments left · {monthly} per month",
-    "upcomingCycles": "Upcoming statements",
-    "noEstimate": "Only adds up what's already committed. Doesn't estimate new spending."
-  },
-  "familyPage": {
-    "empty": "You're still the only member. Invite someone to share accounts and expenses.",
-    "invite": "Invite someone",
-    "members": "Members",
-    "unnamed": "Unnamed",
-    "compare": "Compare between members",
-    "pendingInvites": "Pending invites",
-    "pending": "Pending",
-    "codeInvite": "Code {code}",
-    "joined": "You joined the household",
-    "joinTitle": "Join a household",
-    "enterCode": "Invite code",
-    "invalidCode": "That code expired or isn't valid.",
-    "join": "Join",
-    "shareCode": "Share this code with the person you invited.",
-    "copyCode": "Copy code",
-    "codeCopied": "Code copied",
-    "emailOptional": "Email (optional)",
-    "emailOptionalHint": "We don't send the email ourselves yet — copy the code and share it yourself.",
-    "generateCode": "Generate code",
-    "roles": {
-      "owner": "Owner",
-      "admin": "Admin",
-      "member": "Member",
-      "viewer": "Read-only"
-    },
-    "mirrorBanner": "Viewing the app as {name}",
-    "exitMirror": "Exit",
-    "mirrorNoAccounts": "No accounts visible to this member.",
-    "mirrorNoTransactions": "No transactions visible to this member.",
-    "mustSettleFirst": "This member has a pending balance — settle up or forgive it before removing them.",
-    "removed": "Member removed from the household",
-    "remove": "Remove {name} from the household"
-  },
-  "permissionsPage": {
-    "title": "Permissions & visibility",
-    "needsMembers": "Invite someone to the household to configure what each person sees.",
-    "accounts": "Accounts",
-    "categories": "Categories",
-    "updated": "Permissions updated",
-    "whoCanSee": "Who can see it",
-    "privateHint": "Only you",
-    "householdHint": "Whole household",
-    "customHint": "You choose who",
-    "visibility": {
-      "private": "Private",
-      "household": "Shared",
-      "custom": "Custom"
-    }
-  },
-  "splitPage": {
-    "title": "Split expense",
-    "back": "Back",
-    "equal": "Equal parts",
-    "percent": "Percentage",
-    "you": "You",
-    "saved": "Split saved"
-  },
-  "settlePage": {
-    "title": "Settle up",
-    "allSettled": "All settled up — nobody owes anybody.",
-    "owesYou": "Owes you",
-    "youOwe": "You owe",
-    "settle": "Settle",
-    "howTitle": "How was it settled?",
-    "methodCash": "Cash",
-    "methodTransfer": "Transfer",
-    "methodForgiven": "Forgive it",
-    "settled": "Settled"
-  },
-  "comparePage": {
-    "title": "Compare",
-    "empty": "No shared expenses in the last closed period."
-  },
-  "activityPage": {
-    "title": "Activity",
-    "empty": "No permission changes to show yet.",
-    "granted": "{granter} gave {member} access to {subject}",
-    "revoked": "{granter} removed {member}'s access to {subject}"
-  },
-  "investmentsPage": {
-    "noPortfolio": "You don't have an investment portfolio yet.",
-    "createPortfolio": "Create portfolio",
-    "defaultPortfolioName": "My portfolio",
-    "otherAssetClass": "Other",
-    "noPositions": "You haven't logged any trades yet.",
-    "recordTrade": "Log a trade",
-    "newInstrument": "Create instrument manually",
-    "positions": "Positions"
-  },
-  "newInstrumentPage": {
-    "symbol": "Symbol",
-    "name": "Name",
-    "assetClass": "Asset class",
-    "chooseAssetClass": "Choose asset class",
-    "currency": "Currency",
-    "created": "Instrument created",
-    "fixedIncomeSection": "Fixed income (optional)",
-    "maturityDate": "Maturity date",
-    "couponRate": "Annual coupon rate (%)",
-    "couponFrequency": "Payments per year"
-  },
-  "newTradePage": {
-    "buy": "Buy",
-    "sell": "Sell",
-    "instrument": "Instrument",
-    "chooseInstrument": "Choose instrument",
-    "settlementAccount": "Settlement account",
-    "quantity": "Quantity",
-    "unitPrice": "Unit price",
-    "saved": "Trade saved",
-    "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."
-  },
-  "allocationPage": {
-    "title": "Allocation"
-  },
-  "performancePage": {
-    "title": "Performance",
-    "empty": "You haven't logged any trades in this portfolio yet.",
-    "needsHistory": "Your return needs 2 cash flows and 30 days. {days} days left.",
-    "xirr": "Annualized XIRR",
-    "xirrExplainer": "Annualized rate of return, accounting for when each peso went in and came out.",
-    "benchmarksUnavailable": "Benchmark and inflation comparison aren't available yet: they need a market data feed this project doesn't ship with."
-  },
-  "futureIncomePage": {
-    "title": "Future income",
-    "empty": "None of your positions pay income. Bonds, notes, and time deposits show up here with their calendar.",
-    "kind": {
-      "coupon": "Coupon",
-      "amortization": "Amortization",
-      "maturity": "Maturity"
-    }
-  },
-  "pricesStatusPage": {
-    "title": "Price status",
-    "empty": "You haven't logged any trades yet, so there are no prices to show.",
-    "updatePrice": "Update {symbol}'s price",
-    "price": "Price ({currency})"
-  },
-  "assetClassesPage": {
-    "title": "Asset classes",
-    "newClass": "New class",
-    "editTitle": "Edit class",
-    "name": "Name",
-    "global": "Global",
-    "globalEditNote": "This is a global class. Saving creates your own copy — the original template stays untouched.",
-    "reorder": "Reorder {name}"
+ "app": {
+  "name": "PERZE",
+  "description": "Multi-account, multi-currency, multi-country personal finances. Minimalist, mobile-first, offline-first.",
+  "shortcutAddExpense": "Add an expense",
+  "shortcutAddExpenseShort": "Expense",
+  "shortcutAddExpenseDescription": "Go straight to the capture keypad"
+ },
+ "pwa": {
+  "updateAvailable": "A new version of PERZE is available.",
+  "updateNow": "Update"
+ },
+ "nav": {
+  "home": "Home",
+  "homeShort": "Home",
+  "movements": "Transactions",
+  "movementsShort": "Txns",
+  "add": "Add",
+  "analysis": "Analysis",
+  "more": "More",
+  "accounts": "Accounts",
+  "investments": "Investments",
+  "budgets": "Budgets",
+  "scope": {
+   "personal": "Personal",
+   "shared": "Shared",
+   "all": "All"
   }
+ },
+ "common": {
+  "loading": "Loading…",
+  "retry": "Retry",
+  "undo": "Undo",
+  "save": "Save",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "delete": "Delete",
+  "seeAll": "See all",
+  "continue": "Continue"
+ },
+ "ds": {
+  "errorState": {
+   "retry": "Retry"
+  },
+  "progressSteps": {
+   "skip": "Skip"
+  },
+  "resultGroup": {
+   "seeAll": "See all"
+  },
+  "banner": {
+   "offline": "Offline — you can keep working as usual.",
+   "warning": "Something needs your attention.",
+   "error": "Sync failed.",
+   "pending": "{count, plural, one {# pending} other {# pending}}"
+  },
+  "undoToast": {
+   "undo": "Undo",
+   "progressSeconds": "{seconds, plural, one {# s} other {# s}}"
+  },
+  "dismissibleNotice": {
+   "dismiss": "Dismiss"
+  },
+  "insightCard": {
+   "dismiss": "Dismiss"
+  },
+  "appHeader": {
+   "back": "Back",
+   "search": "Search"
+  },
+  "sidebar": {
+   "navLabel": "Main navigation",
+   "money": "Money",
+   "people": "People",
+   "system": "System"
+  },
+  "tabBar": {
+   "add": "Add",
+   "badgeCount": "{count, plural, one {# notification} other {# notifications}}",
+   "budgetAlertsBadge": "{count, plural, one {# budget at its limit} other {# budgets at their limit}}"
+  },
+  "contextualTooltip": {
+   "gotIt": "Got it"
+  },
+  "lockScreen": {
+   "enterPin": "Enter your PIN",
+   "wrongPin": "Wrong PIN, try again",
+   "useBiometrics": "Use biometrics",
+   "lockedOut": "Three tries in a row. Try again in {seconds} seconds. Your data is untouched."
+  },
+  "fxEditor": {
+   "ageHours": "{hours} h ago",
+   "source": "DolarApi · official"
+  },
+  "priceStatus": {
+   "fresh": "Up to date",
+   "stale": "{hours} h ago",
+   "manual": "Manual",
+   "marketClosed": "Market closed",
+   "update": "Update price"
+  },
+  "needsFxBanner": {
+   "message": "{count, plural, one {# item without a rate} other {# items without a rate}}",
+   "resolve": "Resolve"
+  },
+  "transactionRow": {
+   "syncIssue": {
+    "conflict": "Edited by another member at the same time — unresolved",
+    "rejected": "Couldn't sync"
+   }
+  },
+  "otpInput": {
+   "groupLabel": "Verification code",
+   "digitLabel": "Digit {index} of {total}",
+   "pasteCode": "Paste code"
+  },
+  "keypad": {
+   "operatorPlus": "Add",
+   "operatorMinus": "Subtract",
+   "operatorMultiply": "Multiply",
+   "operatorDivide": "Divide",
+   "backspace": "Backspace",
+   "decimalSeparator": "Decimal separator"
+  }
+ },
+ "reference": {
+  "category": {
+   "groceries": "Groceries",
+   "restaurants": "Restaurants",
+   "transport": "Transport",
+   "housing": "Housing",
+   "health": "Health",
+   "entertainment": "Entertainment",
+   "salary": "Salary",
+   "otherIncome": "Other income",
+   "groceriesPantry": "Pantry",
+   "groceriesProduce": "Produce",
+   "groceriesButcher": "Butcher",
+   "transportFuel": "Fuel",
+   "transportPublic": "Public transport",
+   "transportParking": "Parking",
+   "healthPharmacy": "Pharmacy",
+   "healthAppointments": "Appointments",
+   "healthInsurance": "Health insurance",
+   "clothing": "Clothing",
+   "education": "Education",
+   "pets": "Pets",
+   "gifts": "Gifts"
+  },
+  "accountKind": {
+   "cash": "Cash",
+   "checking": "Checking account",
+   "savings": "Savings account",
+   "credit_card": "Credit card",
+   "wallet": "Digital wallet",
+   "broker": "Investment account",
+   "loan": "Loan",
+   "receivable": "Receivable",
+   "other": "Other account"
+  },
+  "debtKind": {
+   "installment_plan": "Installment plan",
+   "loan": "Loan",
+   "credit_line": "Credit line",
+   "personal": "Personal debt"
+  },
+  "country": {
+   "UY": "Uruguay",
+   "AR": "Argentina",
+   "BR": "Brazil",
+   "US": "United States",
+   "MX": "Mexico",
+   "CL": "Chile"
+  },
+  "currency": {
+   "UYU": "Uruguayan peso",
+   "ARS": "Argentine peso",
+   "USD": "US dollar",
+   "BRL": "Brazilian real",
+   "MXN": "Mexican peso",
+   "CLP": "Chilean peso",
+   "EUR": "Euro"
+  }
+ },
+ "capture": {
+  "close": "Close",
+  "back": "Back",
+  "burstCount": "{count} added",
+  "kind": {
+   "expense": "Expense",
+   "income": "Income",
+   "transfer": "Transfer"
+  },
+  "category": {
+   "other": "Other",
+   "frequent": "Most used",
+   "sheetTitle": "Choose a category",
+   "searchPlaceholder": "Search category…",
+   "createNew": "Create \"{name}\"",
+   "noResults": "We couldn't find any category.",
+   "nameTooLong": "That name is too long."
+  },
+  "chooseAccount": "Choose account",
+  "from": "FROM",
+  "to": "TO",
+  "invert": "Swap",
+  "voice": "Voice",
+  "photo": "Photo",
+  "details": "Details",
+  "voiceLabel": "Add by voice",
+  "photoLabel": "Receipt photo",
+  "photoComingSoon": "Receipt photo isn't available yet — coming soon.",
+  "next": "Next",
+  "save": "Save",
+  "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online.",
+  "saved": "Transaction saved",
+  "undo": "Undo",
+  "accountPicker": {
+   "sourceTitle": "Choose account",
+   "destinationTitle": "Destination account"
+  },
+  "details_sheet": {
+   "title": "Details",
+   "account": "Account",
+   "date": "Date",
+   "payee": "Merchant",
+   "payeePlaceholder": "Where was it?",
+   "note": "Note",
+   "notePlaceholder": "Optional",
+   "burstMode": "Keep adding (burst mode)",
+   "today": "Today",
+   "yesterday": "Yesterday"
+  },
+  "voice_sheet": {
+   "title": "Voice capture",
+   "unsupported": "Your browser doesn't support speech recognition. You can still add the expense with the keypad.",
+   "listening": "Listening…",
+   "prompt": "Say something like “spent 1200 on groceries”",
+   "summary": "Amount: {amount} · Merchant: {payee}",
+   "empty": "—",
+   "useThis": "Use this",
+   "startListening": "Start listening"
+  },
+  "savedOffline": "Saved on your phone. It'll go out once you're back online."
+ },
+ "movements": {
+  "filters": {
+   "title": "Filters",
+   "period": "Period",
+   "type": "Type",
+   "accounts": "Accounts",
+   "categories": "Categories",
+   "onlyPending": "Only without a resolved exchange rate",
+   "clearAll": "Clear all",
+   "seeResults": "See {count, plural, one {# result} other {# results}}",
+   "date": {
+    "all": "All",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last7": "Last 7 days",
+    "last30": "Last 30 days"
+   },
+   "kindAll": "All"
+  },
+  "editFlow": {
+   "title": "Edit transaction",
+   "stale": "This transaction is old — changing the amount will resolve the exchange rate again.",
+   "next": "Next",
+   "saveChanges": "Save changes",
+   "updated": "Transaction updated",
+   "voiceUnavailable": "Voice capture isn't available while editing.",
+   "photoComingSoon": "Receipt photo isn't available yet."
+  }
+ },
+ "accounts": {
+  "form": {
+   "back": "Back",
+   "close": "Close",
+   "editTitle": "Edit account",
+   "newTitle": "New account",
+   "change": "change",
+   "name": "Name",
+   "namePlaceholder": "e.g. Chase Savings",
+   "country": "Country",
+   "currency": "Currency",
+   "openingBalance": "Opening balance",
+   "statementDay": "Statement day",
+   "dayPlaceholder": "1-31",
+   "dueDay": "Due day",
+   "interestRate": "Annual rate (%)",
+   "interestRatePlaceholder": "e.g. 45.5",
+   "termMonths": "Term (months)",
+   "termMonthsPlaceholder": "e.g. 12",
+   "includeInNetWorth": "Include in net worth",
+   "visibility": "Visibility",
+   "private": "Private",
+   "shared": "Shared",
+   "saveChanges": "Save changes",
+   "createAccount": "Create account",
+   "updated": "Account updated",
+   "created": "Account created",
+   "kindDescription": {
+    "cash": "Bills and coins",
+    "checking": "Bank debit",
+    "savings": "Bank savings",
+    "credit_card": "With a billing cycle",
+    "wallet": "Venmo, PayPal…",
+    "broker": "Broker, crypto",
+    "loan": "With a rate and term",
+    "receivable": "A tab, a loan you made",
+    "other": "Doesn't fit above"
+   },
+   "kindLabel": {
+    "loan": "Loan (I owe)",
+    "receivable": "Receivable (owed to me)",
+    "other": "Other"
+   }
+  }
+ },
+ "transactions": {
+  "list": {
+   "filters": "Filters",
+   "calendar": "Calendar",
+   "cancel": "Cancel",
+   "income": "Income",
+   "expenses": "Expenses",
+   "balance": "Balance",
+   "empty": "You haven't added any transactions yet.",
+   "emptyAction": "Add my first expense",
+   "emptyFiltered": "No transactions match these filters.",
+   "clearFilters": "Clear filters",
+   "transfer": "Transfer",
+   "movement": "Transaction",
+   "deleted": "Transaction deleted",
+   "undo": "Undo",
+   "deletedBulk": "{count, plural, one {# transaction deleted} other {# transactions deleted}}",
+   "deleteCount": "Delete {count}",
+   "categorize": "Categorize",
+   "categorizeComingSoon": "Bulk categorizing isn't available yet.",
+   "errorWhat": "We couldn't load your movements."
+  },
+  "detail": {
+   "selectPrompt": "Pick a transaction from the list to see its detail here.",
+   "notFound": "We couldn't find that transaction.",
+   "backToList": "Back to transactions",
+   "back": "Back",
+   "notIncludedInTotal": "Not included in the total",
+   "category": "Category",
+   "noCategory": "No category",
+   "account": "Account",
+   "toAccount": "To {account}",
+   "date": "Date",
+   "payee": "Merchant",
+   "note": "Note",
+   "fxRateUsed": "Exchange rate used",
+   "fxUnresolved": "Unresolved — needs_fx",
+   "createdOn": "Added on {date}",
+   "editedOn": " · Edited on {date}",
+   "edit": "Edit",
+   "duplicate": "Duplicate",
+   "duplicated": "Transaction duplicated — with today's date.",
+   "recurring": "Make recurring",
+   "recurringComingSoon": "Recurring transactions aren't available yet.",
+   "split": "Split by category",
+   "splitComingSoon": "Splitting a transaction isn't available yet.",
+   "delete": "Delete",
+   "fxSource": {
+    "identity": "Same currency",
+    "manual": "Manual override",
+    "api": "Day's exchange rate",
+    "inherited": "Last known rate",
+    "pending": "Unresolved"
+   }
+  },
+  "calendar": {
+   "back": "Back",
+   "prevMonth": "Previous month",
+   "nextMonth": "Next month",
+   "empty": "No transactions that day."
+  },
+  "edit": {
+   "notFound": "We couldn't find that transaction.",
+   "back": "Back"
+  }
+ },
+ "accountsPage": {
+  "list": {
+   "netWorth": "Net worth",
+   "assets": "Assets",
+   "liabilities": "Liabilities",
+   "empty": "You haven't created any accounts yet.",
+   "emptyAction": "Create account",
+   "newAccount": "New account",
+   "currenciesAndRates": "Currencies and exchange rates",
+   "resolvePendingFx": "Resolve pending exchange rates",
+   "pendingFxCount": "{count, plural, one {# transaction} other {# transactions}}",
+   "archived": "Archived",
+   "creditLimitUsage": "{percent}% of limit",
+   "errorWhat": "We couldn't load your accounts.",
+   "reorder": "Reorder {name}"
+  },
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "detail": {
+   "selectPrompt": "Pick an account from the list to see its detail here.",
+   "back": "Back",
+   "notFound": "We couldn't find that account.",
+   "backToList": "Back to accounts",
+   "cycleSummary": "Cycle summary",
+   "cycleOf": "{spent} of {limit}",
+   "cycleConsumption": "Cycle spend: {amount}",
+   "cycleCloses": "Closes on {statementDay} · Due on {dueDay}",
+   "cycleProjection": "Projected charge: {amount}",
+   "edit": "Edit",
+   "reconcile": "Reconcile",
+   "transfer": "Transfer",
+   "archive": "Archive",
+   "archived": "Account archived",
+   "transactionsTitle": "Transactions in this account",
+   "noTransactions": "No transactions yet."
+  },
+  "reconcile": {
+   "back": "Back",
+   "notFound": "We couldn't find that account.",
+   "prompt": "How much does {account} say you have?",
+   "yourRecord": "Your record says",
+   "difference": "Difference:",
+   "createAdjustment": "Create adjustment",
+   "noDifference": "No difference",
+   "reconciled": "Account reconciled — an adjustment was created",
+   "adjustmentNote": "Reconciliation adjustment"
+  },
+  "resolveFx": {
+   "back": "Back",
+   "empty": "No transactions waiting for an exchange rate.",
+   "emptyAction": "Back to accounts",
+   "explanation": "These transactions were saved without an exchange rate. Pick one per currency and it applies to every pending transaction in that currency.",
+   "count": "{count, plural, one {# transaction} other {# transactions}} · {total}",
+   "unresolved": "Unresolved",
+   "resolve": "Resolve",
+   "applyToAll": "Apply to all",
+   "resolvedCount": "{count, plural, one {# transaction resolved} other {# transactions resolved}}"
+  }
+ },
+ "onboarding": {
+  "welcome": {
+   "skip": "Skip",
+   "title": "Log an expense: five seconds.",
+   "subtitle": "No forms, no system keyboard, no connection needed.",
+   "demoPlaceholder": "Keypad demo, looping",
+   "start": "Get started"
+  },
+  "auth": {
+   "tagline": "Personal finances, without friction.",
+   "continueWithGoogle": "Continue with Google",
+   "continueWithApple": "Continue with Apple",
+   "connectedWith": "Connected with {provider}",
+   "orWithEmail": "or with your email",
+   "emailPlaceholder": "you@email.com",
+   "sendLink": "Send sign-in link",
+   "sendingLink": "Sending…",
+   "passwordPlaceholder": "Your password",
+   "signInWithPassword": "Sign in",
+   "signingIn": "Signing in…",
+   "preferPassword": "I'd rather use my password",
+   "preferCode": "I'd rather use the email code",
+   "loadingDemo": "Loading sample data…",
+   "tryDemo": "Try with sample data",
+   "demoError": "Couldn't load the sample data — try again.",
+   "linkError": "That link no longer works — enter your email and request a new code."
+  },
+  "verify": {
+   "back": "Back",
+   "title": "Check your email",
+   "sentTo": "We sent a code to <b>{email}</b>.",
+   "yourEmail": "your email",
+   "invalidCode": "That code expired or isn't valid. Request a new one.",
+   "resend": "Resend code",
+   "resendCooldown": "Resend in {seconds}s",
+   "resent": "We resent the code",
+   "changeEmail": "Change email",
+   "waitingTitle": "Waiting for the link",
+   "sentLinkTo": "Open the link we sent to <b>{email}</b>.",
+   "resendLink": "Resend the link",
+   "resendLinkCooldown": "Resend the link in {seconds}s",
+   "resentLink": "We resent the link"
+  },
+  "country": {
+   "back": "Back",
+   "title": "Where do you live?",
+   "subtitle": "We use this for your currency and the banks we offer you later.",
+   "yourCurrency": "Your currency: {currency}",
+   "continue": "Continue"
+  },
+  "usage": {
+   "back": "Back",
+   "title": "How will you use the app?",
+   "continue": "Continue",
+   "options": {
+    "solo": {
+     "title": "Just me",
+     "description": "Your accounts, your expenses"
+    },
+    "pareja": {
+     "title": "With my partner",
+     "description": "Turns on the family group"
+    },
+    "familia": {
+     "title": "With my family",
+     "description": "Turns on the family group"
+    }
+   }
+  },
+  "account": {
+   "back": "Back",
+   "title": "Your first account",
+   "subtitle": "Choose where the money comes from — you can add more later.",
+   "searchPlaceholder": "Search your bank or wallet",
+   "continue": "Continue"
+  },
+  "success": {
+   "title": "All set!",
+   "subtitle": "Your account is ready. Add your first expense to start seeing your summary.",
+   "cta": "Add my first expense",
+   "errorTitle": "We couldn't finish setting up your account",
+   "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
+   "retry": "Try again"
+  },
+  "pending": {
+   "pendingTitle": "Your access is waiting for approval",
+   "pendingSubtitle": "Whoever runs this install hasn't approved your entry yet. We'll let you in as soon as they do.",
+   "rejectedTitle": "Your access wasn't approved",
+   "rejectedSubtitle": "Whoever runs this install decided not to grant you access.",
+   "verifiedAs": "Verified as {email}",
+   "refresh": "I've been approved — refresh",
+   "stillPending": "Not yet — you're still waiting for approval.",
+   "signOut": "Sign out"
+  },
+  "complete": {
+   "balanceTitle": "How much do you have in {account}?",
+   "yourAccount": "your account",
+   "balanceSubtitle": "So your net worth starts correct. You can leave it at 0 and adjust it later.",
+   "continue": "Continue",
+   "installTitle": "Install PERZE",
+   "installPromptAvailable": "Get in faster, like a native app.",
+   "installPromptIos": "Tap Safari's share icon and choose \"Add to Home Screen\".",
+   "installPromptOther": "Look for \"Install app\" in your browser's menu.",
+   "install": "Install",
+   "later": "Not now",
+   "laterToast": "You can install it later from Settings"
+  },
+  "register": {
+   "title": "Finish creating your account",
+   "subtitle": "Name and password — country and currency come next.",
+   "nameLabel": "Name",
+   "namePlaceholder": "Your name",
+   "emailLabel": "Email",
+   "passwordLabel": "Password",
+   "passwordPlaceholder": "Choose a password",
+   "confirmPasswordLabel": "Confirm the password",
+   "confirmPasswordPlaceholder": "Type the password again",
+   "showPassword": "Show password",
+   "hidePassword": "Hide password",
+   "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
+   "passwordMismatch": "The two passwords don't match.",
+   "submit": "Create account",
+   "submitting": "Creating account…",
+   "genericError": "We couldn't create the account — try again."
+  }
+ },
+ "morePage": {
+  "money": "Money",
+  "accounts": "Accounts",
+  "budgets": "Budgets",
+  "goals": "Goals",
+  "recurring": "Recurring",
+  "debts": "Debts",
+  "people": "People",
+  "family": "Family group",
+  "system": "System",
+  "settings": "Settings",
+  "importExport": "Import / Export",
+  "about": "About",
+  "enableMoreFeatures": "Enable more features",
+  "comingSoon": "{label} isn't available in this version yet.",
+  "version": "PERZE v{version}",
+  "language": "Language",
+  "languageSheetTitle": "Choose your language",
+  "languageNames": {
+   "es": "Español",
+   "en": "English",
+   "pt": "Português"
+  },
+  "categories": "Categories",
+  "modules": "Modules",
+  "security": "Security",
+  "profile": "Profile",
+  "tagsAndPayees": "Tags and payees",
+  "rules": "Auto-categorization rules",
+  "signOut": "Sign out",
+  "exitDemo": "Exit demo",
+  "signOutConfirmTitle": "Unsynced changes",
+  "signOutUnsyncedWarning": "{count, plural, one {You have # change that hasn't uploaded to the server yet.} other {You have # changes that haven't uploaded to the server yet.}} Signing out now will lose them.",
+  "signOutConfirmAction": "Sign out anyway"
+ },
+ "adminPage": {
+  "title": "Operator panel",
+  "pendingSectionTitle": "Pending requests",
+  "pendingEmpty": "No requests waiting for approval.",
+  "requestedOn": "Requested on {date}",
+  "unknownCountry": "No country chosen yet",
+  "approve": "Approve",
+  "reject": "Reject",
+  "approvedToast": "Access approved.",
+  "rejectedToast": "Access rejected.",
+  "metricsSectionTitle": "Metrics",
+  "totalUsers": "Total users",
+  "pendingCount": "Pending",
+  "approvedCount": "Approved",
+  "rejectedCount": "Rejected",
+  "byCountryTitle": "By country",
+  "noCountryData": "No approved users with a chosen country yet.",
+  "activitySectionTitle": "Activity",
+  "activeToday": "Active today",
+  "active7d": "Active in 7 days",
+  "active30d": "Active in 30 days",
+  "inactive": "No recent activity"
+ },
+ "conflictsPage": {
+  "title": "Sync conflicts",
+  "empty": "You have no pending conflicts.",
+  "explainer": "You and another member edited this same transaction while one of you was offline. Pick which one stays — the other gets discarded.",
+  "yours": "Your version",
+  "theirs": "Their version",
+  "noCategory": "No category",
+  "keepMine": "Keep mine",
+  "keepTheirs": "Keep theirs",
+  "resolved": "Conflict resolved.",
+  "badgeCount": "{count, plural, one {# conflict} other {# conflicts}}",
+  "homeBanner": "{count, plural, one {There is # transaction with a sync conflict.} other {There are # transactions with a sync conflict.}}",
+  "homeBannerAction": "Review"
+ },
+ "syncDiagnosticsPage": {
+  "title": "Sync status",
+  "empty": "There are no pending mutations to sync.",
+  "entryLabel": "{op} on {table}",
+  "ops": {
+   "insert": "Create",
+   "update": "Update",
+   "delete": "Delete"
+  },
+  "statuses": {
+   "pending": "Pending",
+   "syncing": "Syncing",
+   "failed": "Failed, retrying",
+   "conflict": "In conflict",
+   "dead": "Unable to sync"
+  },
+  "createdAt": "Created on {when}",
+  "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+  "retry": "Retry now",
+  "retried": "Queued for the next attempt."
+ },
+ "notificationsPage": {
+  "title": "Notifications",
+  "enablePush": "Receive notifications",
+  "enablePushMeta": "On this device. Turn them off anytime.",
+  "pushUnsupported": "This browser doesn't support push notifications.",
+  "pushError": "We couldn't turn on notifications. Try again.",
+  "noEngagementPromise": "We don't send notifications to get you to reopen the app. Only what you chose above.",
+  "toggles": {
+   "budgetAlerts": {
+    "label": "Budget at its limit",
+    "description": "When a category hits 80% or goes over"
+   },
+   "weeklySummary": {
+    "label": "Weekly summary",
+    "description": "A weekly recap every Sunday"
+   },
+   "recurringReminders": {
+    "label": "Recurring reminders",
+    "description": "When a fixed charge's date is coming up"
+   },
+   "insights": {
+    "label": "Insights",
+    "description": "Things we noticed about your money"
+   }
+  }
+ },
+ "importCsvPage": {
+  "title": "Import CSV",
+  "chooseFile": "Choose CSV file",
+  "weRead": "We read",
+  "destinationAccount": "Which account they go to",
+  "mapColumns": "Confirm which column holds each piece of data.",
+  "field": {
+   "date": "Date",
+   "description": "Description",
+   "amount": "Amount"
+  },
+  "duplicatesFound": "{count, plural, =0 {We didn't find any duplicates.} one {We found # possible duplicate, already excluded.} other {We found # possible duplicates, already excluded.}}",
+  "duplicate": "Duplicate",
+  "noDescription": "No description",
+  "importCount": "Import {count, plural, one {# transaction} other {# transactions}}",
+  "imported": "{count, plural, one {# transaction imported.} other {# transactions imported.}}",
+  "done": "Import finished.",
+  "viewTransactions": "View transactions"
+ },
+ "categorizationRulesPage": {
+  "title": "Auto-categorization rules",
+  "empty": "You haven't created any rules yet.",
+  "newRule": "New rule",
+  "created": "Rule created",
+  "name": "Name",
+  "namePlaceholder": "e.g. Uber → Transport",
+  "conditionField": "If",
+  "conditionValue": "Contains",
+  "thenCategory": "Assign this category",
+  "chooseCategory": "Choose category",
+  "noCategoryAction": "no category",
+  "meta": "If {field} contains \"{value}\" → {category} · applied {count} times",
+  "field": {
+   "note": "the note",
+   "payeeName": "the payee"
+  }
+ },
+ "tagsPayeesPage": {
+  "title": "Tags and payees",
+  "tags": "Tags",
+  "payees": "Payees",
+  "addTag": "New tag",
+  "addPayee": "New payee",
+  "editTitle": "Edit",
+  "newTitle": "New",
+  "name": "Name"
+ },
+ "profilePage": {
+  "title": "Profile",
+  "displayName": "Display name",
+  "saved": "Name updated."
+ },
+ "exportPage": {
+  "headerTitle": "Export and backup",
+  "title": "Your data is yours",
+  "subtitle": "Take it all whenever you want, in a format that opens anywhere, no permission needed and nothing gets deleted here.",
+  "whatsIncluded": "What the JSON takes with it",
+  "rows": {
+   "transactions": "Transactions",
+   "accounts": "Accounts",
+   "categories": "Categories",
+   "tags": "Tags",
+   "payees": "Payees",
+   "budgets": "Budgets",
+   "goals": "Goals",
+   "recurringRules": "Recurring"
+  },
+  "notIncluded": "Doesn't include what only lives in Supabase: invites, expenses shared with other members, or your investment portfolio.",
+  "download": "Download backup"
+ },
+ "aboutPage": {
+  "title": "About",
+  "name": "PERZE",
+  "versionLine": "Version {version} · pronounced PER-se",
+  "sourceCode": "Source code",
+  "sourceCodeMeta": "Readable, copyable, and runnable on your own server",
+  "license": "License",
+  "licenseBadge": "MIT",
+  "dataStorage": "What data we keep",
+  "dataStorageMeta": "And what never leaves your phone",
+  "dataStorageBody": "Your transactions, accounts, and budgets live first on your phone (IndexedDB) and sync with your own Supabase project when you're online. Nothing is ever shared with third parties or used to train anything. If you self-host PERZE, that server is you.",
+  "operatorVisibility": "Who can see what",
+  "operatorVisibilityMeta": "What whoever runs this install can see",
+  "madeWith": "Made with",
+  "madeWithBody": "Geist Sans and Geist Mono, Phosphor icons, and exchange rates from BROU. MIT licensed — the code is yours to read, change, and run anywhere."
+ },
+ "privacyNotice": {
+  "title": "Who can see what",
+  "who": "This install of PERZE is run by one person, who manually approves every new access request.",
+  "sees": "Sees: your email, your country, and when you last used the app.",
+  "neverSees": "Never sees: your transactions, balances, accounts, or budgets. That restriction lives in the database, not a promise.",
+  "noThirdParty": "No third-party analytics: none of this ever leaves this install."
+ },
+ "home": {
+  "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
+  "emptyAction": "Add my first expense",
+  "netWorth": "Net worth",
+  "showAmounts": "Show amounts",
+  "hideAmounts": "Hide amounts",
+  "vsLastWeek": "vs. last week",
+  "excludedAccounts": "{count} account(s) without an exchange rate, excluded from the total.",
+  "convertedTotal": "Converted total",
+  "accountsCount": "{count} accounts",
+  "spentThisPeriod": "Spent this period",
+  "incomeThisPeriod": "Income this period",
+  "needsFxInsight": "You have {count, plural, one {# transaction} other {# transactions}} without a resolved exchange rate.",
+  "budgetExceededInsight": "You went over the {category} budget — you're at {percent}%.",
+  "budgetWarningInsight": "You're at {percent}% of the {category} budget.",
+  "seeBudgets": "See budgets",
+  "seeTransactions": "See transactions",
+  "topCategoryInsight": "Your top spending category this period is <b>{category}</b>.",
+  "recentTransactions": "Recent transactions",
+  "transfer": "Transfer",
+  "movement": "Transaction",
+  "errorWhat": "We couldn't load your summary.",
+  "privacyTooltip": "Tap the eye to blur amounts — handy in public."
+ },
+ "analyticsPage": {
+  "unavailable": "Analytics isn't available yet in this version.",
+  "errorWhat": "We couldn't calculate this period's numbers.",
+  "empty": "Nothing to analyze yet. Log your first expense and in 7 days we'll show your net worth line.",
+  "emptyAction": "Log an expense",
+  "netWorth": "Net worth",
+  "savingsRate": "Savings rate",
+  "dailySpend": "Daily spend",
+  "savingsRatePending": "Savings rate and cashflow show up once your first period closes. {days} days left.",
+  "availableNow": "Available now",
+  "notYet": "Not yet",
+  "missingClosedPeriod": "These need a closed period. {days} days left.",
+  "missingMonths": "These need 2 months of history. {days, plural, one {# day} other {# days}} left.",
+  "cards": {
+   "trends": {
+    "title": "Trends",
+    "subtitle": "Spending more than last week?"
+   },
+   "calendar": {
+    "title": "Calendar",
+    "subtitle": "Which days does money go?"
+   },
+   "netWorth": {
+    "title": "Net worth",
+    "subtitle": "Are you going up?"
+   },
+   "categories": {
+    "title": "Categories",
+    "subtitle": "Where's the money going?"
+   },
+   "merchants": {
+    "title": "Merchants",
+    "subtitle": "Where do you spend most often?"
+   },
+   "flow": {
+    "title": "Money flow",
+    "subtitle": "Where it comes from and where it goes"
+   },
+   "insights": {
+    "title": "Insights",
+    "subtitle": "What you didn't know about your money"
+   },
+   "currencies": {
+    "title": "Currencies",
+    "subtitle": "How much net worth you hold in each"
+   },
+   "inflation": {
+    "title": "Inflation",
+    "subtitle": "Nominal vs. today's money"
+   },
+   "weekly": {
+    "title": "Your week",
+    "subtitle": "Three facts and a comparison"
+   },
+   "export": {
+    "title": "Export",
+    "subtitle": "One period, as CSV"
+   },
+   "wrapped": {
+    "title": "Your year in numbers",
+    "subtitle": "Twelve months, six screens"
+   }
+  },
+  "gaps": {
+   "closedPeriodAnalyses": "Categories, cashflow and merchants",
+   "currencyAnalyses": "Inflation and multi-currency"
+  }
+ },
+ "offlinePage": {
+  "message": "Offline — this screen hasn't loaded once yet. Screens you already visited still work."
+ },
+ "search": {
+  "title": "Search",
+  "close": "Close search",
+  "hint": "⌘K or Ctrl+K to open",
+  "placeholder": "Search transactions, accounts, categories…",
+  "prompt": "Type to search your transactions, accounts, categories, and merchants.",
+  "noResults": "We couldn't find anything for \"{query}\".",
+  "empty": "No results.",
+  "groupActions": "Go to",
+  "transactions": "Transactions",
+  "accounts": "Accounts",
+  "categories": "Categories",
+  "merchants": "Merchants",
+  "movement": "Transaction",
+  "noNote": "No note",
+  "actions": {
+   "add": "Log an expense",
+   "home": "Home",
+   "movements": "Movements",
+   "accounts": "Accounts",
+   "analytics": "Analytics",
+   "more": "More"
+  }
+ },
+ "currenciesPage": {
+  "back": "Back",
+  "refresh": "Refresh",
+  "empty": "With a single currency in use, there's no exchange rate to manage.",
+  "emptyAction": "Back to accounts",
+  "noQuote": "No quote — tap to enter manually",
+  "manualOverride": "Manual override",
+  "noProvider": "No provider",
+  "asOf": "as of {date}",
+  "today": "today",
+  "overrideSaved": "Override saved for {pair}",
+  "howManyWorth": "How many {base} is 1 {quote} worth",
+  "ratePlaceholder": "e.g. 40",
+  "saveOverride": "Save override"
+ },
+ "pinKeypad": {
+  "progress": "{current} of {total} digits"
+ },
+ "categoryTemplate": {
+  "title": "Categories",
+  "subtitle": "You started with the basic set. Change it whenever you want — nothing you've logged is lost.",
+  "basicTitle": "Basic",
+  "basicCount": "{count} categories",
+  "completeTitle": "Complete",
+  "completeCount": "{count} categories",
+  "completeDescription": "With subcategories for groceries, transport and health.",
+  "scratchTitle": "Start from scratch",
+  "scratchDescription": "You create them yourself, as you go.",
+  "save": "Save",
+  "saved": "Categories updated"
+ },
+ "settingsPage": {
+  "yourCurrency": "Your currency",
+  "baseCurrency": "Base currency",
+  "fourthTab": "Fourth menu shortcut",
+  "closeDay": "Close day",
+  "closeDayHint": "Budgets and analysis periods run from one close day to the next. Applies to the whole group.",
+  "closeDayRestricted": "Only the owner or an admin can change the close day.",
+  "dayOfMonth": "Day {day}",
+  "fxSources": "Exchange rates"
+ },
+ "modulesPage": {
+  "subtitle": "Whatever's off doesn't show up anywhere. Only turn on what you'll actually use.",
+  "footnote": "If you turn one off, its data stays saved and comes back untouched when you turn it on again.",
+  "confirmTitle": "Turn off module",
+  "confirmDisable": "Turn off anyway",
+  "modules": {
+   "budgets": {
+    "label": "Budgets",
+    "description": "A limit per category and how much you have left per day."
+   },
+   "goals": {
+    "label": "Goals",
+    "description": "Save for something, with an estimated arrival date."
+   },
+   "recurring": {
+    "label": "Recurring",
+    "description": "Subscriptions and debits, with a heads-up on increases."
+   },
+   "debts": {
+    "label": "Debts & installments",
+    "description": "Installment plans and loans, with what's committed."
+   },
+   "investments": {
+    "label": "Investments",
+    "description": "Portfolio, trades and performance."
+   },
+   "family": {
+    "label": "Family group",
+    "description": "Share accounts and expenses with other people."
+   }
+  },
+  "confirmBody": {
+   "budgets": "You don't have any active budgets yet — safe to turn off.",
+   "goals": "You don't have any active goals yet — safe to turn off.",
+   "recurring": "{count, plural, one {You have # recurring item logged.} other {You have # recurring items logged.}} They'll stop showing up, but the saved transactions stay untouched.",
+   "debts": "{count, plural, one {You have # active debt or installment plan.} other {You have # active debts or installment plans.}} They'll stop showing up, but the saved transactions stay untouched.",
+   "investments": "{count, plural, one {You have # investment account.} other {You have # investment accounts.}} It'll drop out of net worth, but the data stays saved.",
+   "family": "{count, plural, one {You're sharing the app with # other person.} other {You're sharing the app with # other people.}} They'll stop seeing shared data until you turn it back on."
+  }
+ },
+ "securityPage": {
+  "title": "Security",
+  "pinLock": "PIN lock",
+  "pinLockDescription": "Ask for a PIN to view balances and transactions. Logging an expense never asks for it.",
+  "createPrompt": "Choose a 6-digit PIN",
+  "confirmPrompt": "Enter it again to confirm",
+  "mismatch": "Doesn't match — try again",
+  "pinSet": "PIN turned on",
+  "biometricLock": "Biometric unlock",
+  "biometricLockDescription": "Use Face ID, fingerprint, or another device sensor instead of the PIN",
+  "biometricEnabled": "Biometric unlock turned on",
+  "biometricEnrollError": "Couldn't turn on the sensor — try again",
+  "password": "Password",
+  "passwordDescription": "An alternative to the email code for signing in",
+  "newPassword": "New password",
+  "confirmPassword": "Confirm password",
+  "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
+  "passwordMismatch": "The two passwords don't match.",
+  "savePassword": "Save password",
+  "savingPassword": "Saving…",
+  "passwordSaved": "Password updated"
+ },
+ "trendsPage": {
+  "title": "Trends",
+  "thisWeek": "This week",
+  "vsLastWeek": "vs. last week"
+ },
+ "categoriesAnalyticsPage": {
+  "title": "Categories",
+  "other": "Other"
+ },
+ "calendarAnalyticsPage": {
+  "title": "Calendar"
+ },
+ "merchantsAnalyticsPage": {
+  "title": "Merchants",
+  "empty": "No expenses with a merchant logged in the last period yet."
+ },
+ "netWorthAnalyticsPage": {
+  "title": "Net worth",
+  "current": "Net worth",
+  "last30": "{amount} over the last 30 days"
+ },
+ "moneyFlowPage": {
+  "title": "Money flow",
+  "needsClosedPeriod": "The flow needs a closed period for the split to be real. {days} days left.",
+  "empty": "Not enough income and expenses yet to build this period's flow.",
+  "otherIncome": "Other income",
+  "otherExpense": "Other expenses"
+ },
+ "inflationPage": {
+  "title": "Inflation",
+  "needsHistory": "We need 2 months to adjust for prices. {months} months to go.",
+  "nominal": "Spent (nominal)",
+  "adjusted": "In today's money",
+  "explainer": "The price index rose {percent}% since that period.",
+  "noIndex": "There's no price index loaded for your currency yet — showing nominal spend without adjustment."
+ },
+ "currencyExposurePage": {
+  "title": "Currencies",
+  "total": "Total net worth"
+ },
+ "insightsPage": {
+  "title": "Insights",
+  "empty": "Not enough data yet to generate insights for this period.",
+  "streak": "You've logged {days} days in a row.",
+  "budgetPace": "At this pace, you'll go over the {category} budget on {date}.",
+  "wholeHousehold": "the whole household"
+ },
+ "weeklySummaryPage": {
+  "title": "Your week",
+  "empty": "You haven't logged anything this week. If you spent and didn't log it, you can still log it with a past date.",
+  "emptyAction": "Log an expense",
+  "range": "{from} to {to}",
+  "mostExpensiveDay": "Most expensive day",
+  "topPayee": "Where you went most",
+  "visits": "{count} visits",
+  "biggestChange": "What changed most"
+ },
+ "wrappedPage": {
+  "needsHistory": "Your year in numbers unlocks at 12 closed months. {count} to go.",
+  "coverTitle": "Your year in numbers",
+  "coverSubtitle": "Twelve months of money, in six screens.",
+  "netWorthLine": "You ended the year with this net worth.",
+  "transactionCountLine": "transactions logged this year.",
+  "topPayeeLine": "{visits} visits · {amount}",
+  "noPayeeData": "No merchants logged this year.",
+  "savingsRateLine": "Of everything that came in, this stayed.",
+  "daysActiveLine": "active days logging this year.",
+  "share": "Share",
+  "shareText": "My year in PERZE",
+  "back": "Back",
+  "next": "Next"
+ },
+ "exportReportsPage": {
+  "title": "Export",
+  "period": "Period",
+  "periodOptions": {
+   "current": "This month",
+   "previous": "Previous",
+   "twoAgo": "2 months ago"
+  },
+  "whatsIncluded": "What's included",
+  "transactions": "Transactions",
+  "transactionsCount": "{count} rows · with category, account, and rate",
+  "accountsAndBalances": "Accounts and balances",
+  "accountsCount": "{count} accounts · current balance",
+  "needsFxNote": "Transactions without a resolved rate still export, with an empty conversion column.",
+  "export": "Export",
+  "promise": "Your data is yours. You can also download a full backup.",
+  "csvDate": "Date",
+  "csvKind": "Kind",
+  "csvAccount": "Account",
+  "csvCategory": "Category",
+  "csvPayee": "Payee",
+  "csvAmount": "Amount",
+  "csvAmountBase": "Amount in base currency",
+  "csvNote": "Note",
+  "csvAccountName": "Account",
+  "csvBalance": "Balance"
+ },
+ "budgetsPage": {
+  "empty": "You haven't set up any budget yet.",
+  "emptyAction": "Create budget",
+  "newBudget": "New budget",
+  "of": "of",
+  "wholeHousehold": "Whole household",
+  "category": "Category",
+  "created": "Budget created",
+  "notFound": "We couldn't find that budget.",
+  "back": "Back to budgets",
+  "deleted": "Budget deleted",
+  "delete": "Delete budget",
+  "remaining": "You have left",
+  "over": "You're over by"
+ },
+ "goalsPage": {
+  "empty": "You haven't set up any goal yet.",
+  "emptyAction": "Create goal",
+  "newGoal": "New goal",
+  "name": "Name",
+  "namePlaceholder": "e.g. Trip to Bariloche",
+  "account": "Account",
+  "chooseAccount": "Choose account",
+  "created": "Goal created",
+  "of": "of",
+  "ofTarget": "{percent}% of target",
+  "notFound": "We couldn't find that goal.",
+  "back": "Back to goals",
+  "deleted": "Goal deleted",
+  "delete": "Delete goal",
+  "remainingToTarget": "You still need",
+  "reached": "Goal reached!",
+  "noAccountLinked": "This goal isn't linked to an account yet — progress stays at 0 until you pick one.",
+  "realPace": "Real pace (last 6 months)",
+  "estimatedArrival": "Estimated arrival",
+  "arrivalUnknown": "No recent contributions",
+  "useCushion": "Use a 3-month cushion ({amount})"
+ },
+ "recurringPage": {
+  "empty": "You haven't set up any recurring charge yet.",
+  "emptyAction": "Create recurring charge",
+  "newRule": "New recurring charge",
+  "name": "Name",
+  "namePlaceholder": "e.g. Netflix",
+  "day": "Day of month",
+  "noCategory": "No category",
+  "created": "Recurring charge created",
+  "dayOfMonth": "Day {day}",
+  "chargedThisMonth": "Already charged this month",
+  "notYetChargedThisMonth": "Not charged yet this month",
+  "notFound": "We couldn't find this recurring charge.",
+  "back": "Back",
+  "updated": "Recurring charge updated.",
+  "archived": "Recurring charge archived.",
+  "archive": "Archive",
+  "committedPerMonth": "Committed per month",
+  "viewCalendar": "View the month in a calendar"
+ },
+ "recurringCalendarPage": {
+  "title": "Recurring calendar",
+  "prevMonth": "Previous month",
+  "nextMonth": "Next month",
+  "noneThatDay": "Nothing due that day."
+ },
+ "debtsPage": {
+  "empty": "No debts or cards with a pending balance.",
+  "emptyAction": "Add account",
+  "newDebt": "New debt",
+  "name": "Name",
+  "namePlaceholder": "e.g. Laptop on installments",
+  "installmentCount": "Number of installments",
+  "linkedAccount": "Linked account",
+  "noLinkedAccount": "No linked account",
+  "created": "Debt created",
+  "fromTransactionDefaultName": "Installment purchase"
+ },
+ "debtDetailPage": {
+  "notFound": "We couldn't find this debt.",
+  "remaining": "Remaining",
+  "installmentsProgress": "{paid} of {total} installments paid",
+  "paidSoFar": "Paid so far",
+  "nextDue": "Next due",
+  "schedule": "Schedule",
+  "noSchedule": "This debt has no installments logged.",
+  "installmentNumber": "Installment {number} of {total}"
+ },
+ "cardCyclePage": {
+  "notFound": "This account isn't a credit card.",
+  "dueOn": "Due on {date}",
+  "dueUnknown": "No due date logged",
+  "closesOn": "Closes on {date} · {days} days left",
+  "cycleConsumptions": "Cycle spending",
+  "cycleConsumptionsMeta": "{count} transactions since {date}",
+  "installments": "Installments from previous cycles",
+  "recentConsumptions": "Recent spending",
+  "convertToInstallments": "Convert a purchase to installments",
+  "noConsumptions": "No purchases this cycle to convert.",
+  "payCard": "Pay the card"
+ },
+ "cardInstallmentsPage": {
+  "title": "Installments and projection",
+  "empty": "This card has no active installment plans.",
+  "committed": "Committed to installments",
+  "summary": "{count} plans · {monthly} per month until {date}",
+  "activePlans": "Active plans",
+  "installmentMeta": "{left} of {total} installments left · {monthly} per month",
+  "upcomingCycles": "Upcoming statements",
+  "noEstimate": "Only adds up what's already committed. Doesn't estimate new spending."
+ },
+ "familyPage": {
+  "empty": "You're still the only member. Invite someone to share accounts and expenses.",
+  "invite": "Invite someone",
+  "members": "Members",
+  "unnamed": "Unnamed",
+  "compare": "Compare between members",
+  "pendingInvites": "Pending invites",
+  "pending": "Pending",
+  "codeInvite": "Code {code}",
+  "joined": "You joined the household",
+  "joinTitle": "Join a household",
+  "enterCode": "Invite code",
+  "invalidCode": "That code expired or isn't valid.",
+  "join": "Join",
+  "shareCode": "Share this code with the person you invited.",
+  "copyCode": "Copy code",
+  "codeCopied": "Code copied",
+  "emailOptional": "Email (optional)",
+  "emailOptionalHint": "We don't send the email ourselves yet — copy the code and share it yourself.",
+  "generateCode": "Generate code",
+  "roles": {
+   "owner": "Owner",
+   "admin": "Admin",
+   "member": "Member",
+   "viewer": "Read-only"
+  },
+  "mirrorBanner": "Viewing the app as {name}",
+  "exitMirror": "Exit",
+  "mirrorNoAccounts": "No accounts visible to this member.",
+  "mirrorNoTransactions": "No transactions visible to this member.",
+  "mustSettleFirst": "This member has a pending balance — settle up or forgive it before removing them.",
+  "removed": "Member removed from the household",
+  "remove": "Remove {name} from the household"
+ },
+ "permissionsPage": {
+  "title": "Permissions & visibility",
+  "needsMembers": "Invite someone to the household to configure what each person sees.",
+  "accounts": "Accounts",
+  "categories": "Categories",
+  "updated": "Permissions updated",
+  "whoCanSee": "Who can see it",
+  "privateHint": "Only you",
+  "householdHint": "Whole household",
+  "customHint": "You choose who",
+  "visibility": {
+   "private": "Private",
+   "household": "Shared",
+   "custom": "Custom"
+  }
+ },
+ "splitPage": {
+  "title": "Split expense",
+  "back": "Back",
+  "equal": "Equal parts",
+  "percent": "Percentage",
+  "you": "You",
+  "saved": "Split saved"
+ },
+ "settlePage": {
+  "title": "Settle up",
+  "allSettled": "All settled up — nobody owes anybody.",
+  "owesYou": "Owes you",
+  "youOwe": "You owe",
+  "settle": "Settle",
+  "howTitle": "How was it settled?",
+  "methodCash": "Cash",
+  "methodTransfer": "Transfer",
+  "methodForgiven": "Forgive it",
+  "settled": "Settled"
+ },
+ "comparePage": {
+  "title": "Compare",
+  "empty": "No shared expenses in the last closed period."
+ },
+ "activityPage": {
+  "title": "Activity",
+  "empty": "No permission changes to show yet.",
+  "granted": "{granter} gave {member} access to {subject}",
+  "revoked": "{granter} removed {member}'s access to {subject}"
+ },
+ "investmentsPage": {
+  "noPortfolio": "You don't have an investment portfolio yet.",
+  "createPortfolio": "Create portfolio",
+  "defaultPortfolioName": "My portfolio",
+  "otherAssetClass": "Other",
+  "noPositions": "You haven't logged any trades yet.",
+  "recordTrade": "Log a trade",
+  "newInstrument": "Create instrument manually",
+  "positions": "Positions"
+ },
+ "newInstrumentPage": {
+  "symbol": "Symbol",
+  "name": "Name",
+  "assetClass": "Asset class",
+  "chooseAssetClass": "Choose asset class",
+  "currency": "Currency",
+  "created": "Instrument created",
+  "fixedIncomeSection": "Fixed income (optional)",
+  "maturityDate": "Maturity date",
+  "couponRate": "Annual coupon rate (%)",
+  "couponFrequency": "Payments per year"
+ },
+ "newTradePage": {
+  "buy": "Buy",
+  "sell": "Sell",
+  "instrument": "Instrument",
+  "chooseInstrument": "Choose instrument",
+  "settlementAccount": "Settlement account",
+  "quantity": "Quantity",
+  "unitPrice": "Unit price",
+  "saved": "Trade saved",
+  "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."
+ },
+ "allocationPage": {
+  "title": "Allocation"
+ },
+ "performancePage": {
+  "title": "Performance",
+  "empty": "You haven't logged any trades in this portfolio yet.",
+  "needsHistory": "Your return needs 2 cash flows and 30 days. {days} days left.",
+  "xirr": "Annualized XIRR",
+  "xirrExplainer": "Annualized rate of return, accounting for when each peso went in and came out.",
+  "benchmarksUnavailable": "Benchmark and inflation comparison aren't available yet: they need a market data feed this project doesn't ship with."
+ },
+ "futureIncomePage": {
+  "title": "Future income",
+  "empty": "None of your positions pay income. Bonds, notes, and time deposits show up here with their calendar.",
+  "kind": {
+   "coupon": "Coupon",
+   "amortization": "Amortization",
+   "maturity": "Maturity"
+  }
+ },
+ "pricesStatusPage": {
+  "title": "Price status",
+  "empty": "You haven't logged any trades yet, so there are no prices to show.",
+  "updatePrice": "Update {symbol}'s price",
+  "price": "Price ({currency})"
+ },
+ "assetClassesPage": {
+  "title": "Asset classes",
+  "newClass": "New class",
+  "editTitle": "Edit class",
+  "name": "Name",
+  "global": "Global",
+  "globalEditNote": "This is a global class. Saving creates your own copy — the original template stays untouched.",
+  "reorder": "Reorder {name}"
+ },
+ "login": {
+  "subtitle": "Sign in with your email and password.",
+  "emailPlaceholder": "you@email.com",
+  "passwordPlaceholder": "Your password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "submit": "Sign in",
+  "signingIn": "Signing in…",
+  "forgotPassword": "Forgot my password",
+  "createAccount": "Create an account"
+ },
+ "forgotPassword": {
+  "back": "Back",
+  "title": "Recover your password",
+  "subtitle": "We'll send you a link to choose a new one.",
+  "emailPlaceholder": "you@email.com",
+  "submit": "Send link",
+  "sending": "Sending…",
+  "sentTitle": "Check your email",
+  "sentSubtitle": "If that account exists, a link to choose a new password is on its way.",
+  "backToLogin": "Back to sign in",
+  "linkExpired": "That link no longer works — request a new one."
+ },
+ "resetPassword": {
+  "title": "Choose a new password",
+  "subtitle": "You'll use it to sign in next time.",
+  "passwordLabel": "New password",
+  "passwordPlaceholder": "Choose a password",
+  "confirmPasswordLabel": "Confirm the password",
+  "confirmPasswordPlaceholder": "Type the password again",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
+  "passwordMismatch": "The two passwords don't match.",
+  "submit": "Save password",
+  "submitting": "Saving…"
+ },
+ "auth": {
+  "errors": {
+   "invalid_credentials": "We couldn't find an account with that email and password — try the email code instead of the password.",
+   "weak_password": "The password needs at least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
+   "rate_limited": "Too many attempts in a row — wait a minute and try again.",
+   "other": "Something failed — try again in a moment."
+  }
+ }
 }

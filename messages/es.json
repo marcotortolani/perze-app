@@ -1,1338 +1,1406 @@
 {
-  "app": {
-    "name": "PERZE",
-    "description": "Finanzas personales multi-cuenta, multi-moneda y multi-país. Minimalista, mobile-first, offline-first.",
-    "shortcutAddExpense": "Cargar un gasto",
-    "shortcutAddExpenseShort": "Gasto",
-    "shortcutAddExpenseDescription": "Ir directo al keypad de captura"
-  },
-  "pwa": {
-    "updateAvailable": "Hay una versión nueva de PERZE.",
-    "updateNow": "Actualizar"
-  },
-  "nav": {
-    "home": "Inicio",
-    "homeShort": "Inicio",
-    "movements": "Movimientos",
-    "movementsShort": "Movim.",
-    "add": "Agregar",
-    "analysis": "Análisis",
-    "more": "Más",
-    "accounts": "Cuentas",
-    "investments": "Inversiones",
-    "budgets": "Presupuestos",
-    "scope": {
-      "personal": "Personal",
-      "shared": "Compartido",
-      "all": "Todo"
-    }
-  },
-  "common": {
-    "loading": "Cargando…",
-    "retry": "Reintentar",
-    "undo": "Deshacer",
-    "save": "Guardar",
-    "cancel": "Cancelar",
-    "edit": "Editar",
-    "delete": "Borrar",
-    "seeAll": "Ver todos",
-    "continue": "Continuar"
-  },
-  "ds": {
-    "errorState": {
-      "retry": "Reintentar"
-    },
-    "progressSteps": {
-      "skip": "Saltear"
-    },
-    "resultGroup": {
-      "seeAll": "Ver todos"
-    },
-    "banner": {
-      "offline": "Sin conexión — seguís operando normalmente.",
-      "warning": "Hay algo que necesita tu atención.",
-      "error": "Falló la sincronización.",
-      "pending": "{count, plural, one {# pendiente} other {# pendientes}}"
-    },
-    "undoToast": {
-      "undo": "Deshacer",
-      "progressSeconds": "{seconds, plural, one {# s} other {# s}}"
-    },
-    "dismissibleNotice": {
-      "dismiss": "Descartar"
-    },
-    "insightCard": {
-      "dismiss": "Descartar"
-    },
-    "appHeader": {
-      "back": "Volver",
-      "search": "Buscar"
-    },
-    "sidebar": {
-      "navLabel": "Navegación principal",
-      "money": "Dinero",
-      "people": "Personas",
-      "system": "Sistema"
-    },
-    "tabBar": {
-      "add": "Agregar",
-      "badgeCount": "{count, plural, one {# notificación} other {# notificaciones}}",
-      "budgetAlertsBadge": "{count, plural, one {# presupuesto al límite} other {# presupuestos al límite}}"
-    },
-    "contextualTooltip": {
-      "gotIt": "Entendido"
-    },
-    "lockScreen": {
-      "enterPin": "Ingresá tu PIN",
-      "wrongPin": "PIN incorrecto, probá de nuevo",
-      "useBiometrics": "Usar biometría",
-      "lockedOut": "Tres intentos seguidos. Probá de nuevo en {seconds} segundos. Tus datos están intactos."
-    },
-    "fxEditor": {
-      "ageHours": "hace {hours} h",
-      "source": "DolarApi · oficial"
-    },
-    "priceStatus": {
-      "fresh": "Actualizado",
-      "stale": "Hace {hours} h",
-      "manual": "Manual",
-      "marketClosed": "Mercado cerrado",
-      "update": "Actualizar precio"
-    },
-    "needsFxBanner": {
-      "message": "{count, plural, one {# movimiento sin cotización} other {# movimientos sin cotización}}",
-      "resolve": "Resolver"
-    },
-    "transactionRow": {
-      "syncIssue": {
-        "conflict": "Editado por otro miembro a la vez — sin resolver",
-        "rejected": "No se pudo sincronizar"
-      }
-    },
-    "otpInput": {
-      "groupLabel": "Código de verificación",
-      "digitLabel": "Dígito {index} de {total}",
-      "pasteCode": "Pegar código"
-    },
-    "keypad": {
-      "operatorPlus": "Sumar",
-      "operatorMinus": "Restar",
-      "operatorMultiply": "Multiplicar",
-      "operatorDivide": "Dividir",
-      "backspace": "Borrar",
-      "decimalSeparator": "Separador decimal"
-    }
-  },
-  "reference": {
-    "category": {
-      "groceries": "Supermercado",
-      "restaurants": "Restaurantes",
-      "transport": "Transporte",
-      "housing": "Vivienda",
-      "health": "Salud",
-      "entertainment": "Entretenimiento",
-      "salary": "Sueldo",
-      "otherIncome": "Otros ingresos",
-      "groceriesPantry": "Almacén",
-      "groceriesProduce": "Verdulería",
-      "groceriesButcher": "Carnicería",
-      "transportFuel": "Nafta",
-      "transportPublic": "Transporte público",
-      "transportParking": "Estacionamiento",
-      "healthPharmacy": "Farmacia",
-      "healthAppointments": "Consultas",
-      "healthInsurance": "Seguro médico",
-      "clothing": "Ropa",
-      "education": "Educación",
-      "pets": "Mascotas",
-      "gifts": "Regalos"
-    },
-    "accountKind": {
-      "cash": "Efectivo",
-      "checking": "Cuenta corriente",
-      "savings": "Caja de ahorro",
-      "credit_card": "Tarjeta de crédito",
-      "wallet": "Billetera digital",
-      "broker": "Cuenta de inversión",
-      "loan": "Préstamo",
-      "receivable": "Por cobrar",
-      "other": "Otra cuenta"
-    },
-    "debtKind": {
-      "installment_plan": "Plan de cuotas",
-      "loan": "Préstamo",
-      "credit_line": "Línea de crédito",
-      "personal": "Deuda personal"
-    },
-    "country": {
-      "UY": "Uruguay",
-      "AR": "Argentina",
-      "BR": "Brasil",
-      "US": "Estados Unidos",
-      "MX": "México",
-      "CL": "Chile"
-    },
-    "currency": {
-      "UYU": "Peso uruguayo",
-      "ARS": "Peso argentino",
-      "USD": "Dólar estadounidense",
-      "BRL": "Real brasileño",
-      "MXN": "Peso mexicano",
-      "CLP": "Peso chileno",
-      "EUR": "Euro"
-    }
-  },
-  "capture": {
-    "close": "Cerrar",
-    "back": "Volver",
-    "burstCount": "{count} cargados",
-    "kind": {
-      "expense": "Gasto",
-      "income": "Ingreso",
-      "transfer": "Transferencia"
-    },
-    "category": {
-      "other": "Otro",
-      "frequent": "Más usadas",
-      "sheetTitle": "Elegí una categoría",
-      "searchPlaceholder": "Buscar categoría…",
-      "createNew": "Crear \"{name}\"",
-      "noResults": "No encontramos ninguna categoría.",
-      "nameTooLong": "El nombre es demasiado largo."
-    },
-    "chooseAccount": "Elegir cuenta",
-    "from": "DESDE",
-    "to": "HACIA",
-    "invert": "Invertir",
-    "voice": "Voz",
-    "photo": "Foto",
-    "details": "Detalles",
-    "voiceLabel": "Cargar por voz",
-    "photoLabel": "Foto del ticket",
-    "photoComingSoon": "La foto de ticket todavía no está disponible — próximamente.",
-    "next": "Siguiente",
-    "save": "Guardar",
-    "savedPendingFx": "Guardado sin tipo de cambio — se resuelve solo al reconectar.",
-    "saved": "Movimiento guardado",
-    "undo": "Deshacer",
-    "accountPicker": {
-      "sourceTitle": "Elegir cuenta",
-      "destinationTitle": "Cuenta de destino"
-    },
-    "details_sheet": {
-      "title": "Detalles",
-      "account": "Cuenta",
-      "date": "Fecha",
-      "payee": "Comercio",
-      "payeePlaceholder": "¿Dónde fue?",
-      "note": "Nota",
-      "notePlaceholder": "Opcional",
-      "burstMode": "Seguir cargando (modo ráfaga)",
-      "today": "Hoy",
-      "yesterday": "Ayer"
-    },
-    "voice_sheet": {
-      "title": "Captura por voz",
-      "unsupported": "Tu navegador no soporta reconocimiento de voz. Podés cargar el gasto con el keypad.",
-      "listening": "Escuchando…",
-      "prompt": "Decí algo como “gasté 1200 en el súper”",
-      "summary": "Monto: {amount} · Comercio: {payee}",
-      "empty": "—",
-      "useThis": "Usar esto",
-      "startListening": "Empezar a escuchar"
-    },
-    "savedOffline": "Guardado en el teléfono. Sale al reconectar."
-  },
-  "movements": {
-    "filters": {
-      "title": "Filtros",
-      "period": "Período",
-      "type": "Tipo",
-      "accounts": "Cuentas",
-      "categories": "Categorías",
-      "onlyPending": "Solo sin tipo de cambio resuelto",
-      "clearAll": "Limpiar todo",
-      "seeResults": "Ver {count, plural, one {# resultado} other {# resultados}}",
-      "date": {
-        "all": "Todo",
-        "thisMonth": "Este mes",
-        "lastMonth": "Mes pasado",
-        "last7": "Últimos 7 días",
-        "last30": "Últimos 30 días"
-      },
-      "kindAll": "Todo"
-    },
-    "editFlow": {
-      "title": "Editar movimiento",
-      "stale": "Este movimiento es viejo — si cambiás el monto, se vuelve a resolver el tipo de cambio.",
-      "next": "Siguiente",
-      "saveChanges": "Guardar cambios",
-      "updated": "Movimiento actualizado",
-      "voiceUnavailable": "La captura por voz no está disponible al editar.",
-      "photoComingSoon": "La foto de ticket todavía no está disponible."
-    }
-  },
-  "accounts": {
-    "form": {
-      "back": "Volver",
-      "close": "Cerrar",
-      "editTitle": "Editar cuenta",
-      "newTitle": "Nueva cuenta",
-      "change": "cambiar",
-      "name": "Nombre",
-      "namePlaceholder": "Ej: Itaú Caja de Ahorro",
-      "country": "País",
-      "currency": "Moneda",
-      "openingBalance": "Saldo inicial",
-      "statementDay": "Día de cierre",
-      "dayPlaceholder": "1-31",
-      "dueDay": "Día de vencimiento",
-      "interestRate": "Tasa anual (%)",
-      "interestRatePlaceholder": "Ej: 45.5",
-      "termMonths": "Plazo (meses)",
-      "termMonthsPlaceholder": "Ej: 12",
-      "includeInNetWorth": "Incluir en patrimonio neto",
-      "visibility": "Visibilidad",
-      "private": "Privada",
-      "shared": "Compartida",
-      "saveChanges": "Guardar cambios",
-      "createAccount": "Crear cuenta",
-      "updated": "Cuenta actualizada",
-      "created": "Cuenta creada",
-      "kindDescription": {
-        "cash": "Billetes y monedas",
-        "checking": "Débito del banco",
-        "savings": "Ahorros del banco",
-        "credit_card": "Con ciclo de cierre",
-        "wallet": "Mercado Pago, PayPal…",
-        "broker": "Broker, cripto",
-        "loan": "Con tasa y plazo",
-        "receivable": "Un fiado, un préstamo hecho",
-        "other": "Lo que no encaja arriba"
-      },
-      "kindLabel": {
-        "loan": "Préstamo (debo)",
-        "receivable": "Por cobrar (me deben)",
-        "other": "Otro"
-      }
-    }
-  },
-  "transactions": {
-    "list": {
-      "filters": "Filtros",
-      "calendar": "Calendario",
-      "cancel": "Cancelar",
-      "income": "Ingresos",
-      "expenses": "Gastos",
-      "balance": "Balance",
-      "empty": "Todavía no cargaste ningún movimiento.",
-      "emptyAction": "Cargar mi primer gasto",
-      "emptyFiltered": "Ningún movimiento coincide con estos filtros.",
-      "clearFilters": "Limpiar filtros",
-      "transfer": "Transferencia",
-      "movement": "Movimiento",
-      "deleted": "Movimiento borrado",
-      "undo": "Deshacer",
-      "deletedBulk": "{count, plural, one {# movimiento borrado} other {# movimientos borrados}}",
-      "deleteCount": "Borrar {count}",
-      "categorize": "Categorizar",
-      "categorizeComingSoon": "Categorizar en lote todavía no está disponible.",
-      "errorWhat": "No pudimos cargar tus movimientos."
-    },
-    "detail": {
-      "selectPrompt": "Elegí un movimiento de la lista para ver el detalle acá.",
-      "notFound": "No encontramos ese movimiento.",
-      "backToList": "Volver a movimientos",
-      "back": "Volver",
-      "notIncludedInTotal": "No suma al total",
-      "category": "Categoría",
-      "noCategory": "Sin categoría",
-      "account": "Cuenta",
-      "toAccount": "Hacia {account}",
-      "date": "Fecha",
-      "payee": "Comercio",
-      "note": "Nota",
-      "fxRateUsed": "Tipo de cambio usado",
-      "fxUnresolved": "Sin resolver — needs_fx",
-      "createdOn": "Cargado el {date}",
-      "editedOn": " · Editado el {date}",
-      "edit": "Editar",
-      "duplicate": "Duplicar",
-      "duplicated": "Movimiento duplicado — con la fecha de hoy.",
-      "recurring": "Convertir en recurrente",
-      "recurringComingSoon": "Los movimientos recurrentes todavía no están disponibles.",
-      "split": "Dividir en categorías",
-      "splitComingSoon": "Dividir un movimiento todavía no está disponible.",
-      "delete": "Borrar",
-      "fxSource": {
-        "identity": "Misma moneda",
-        "manual": "Override manual",
-        "api": "Cotización del día",
-        "inherited": "Última cotización conocida",
-        "pending": "Sin resolver"
-      }
-    },
-    "calendar": {
-      "back": "Volver",
-      "prevMonth": "Mes anterior",
-      "nextMonth": "Mes siguiente",
-      "empty": "Sin movimientos ese día."
-    },
-    "edit": {
-      "notFound": "No encontramos ese movimiento.",
-      "back": "Volver"
-    }
-  },
-  "accountsPage": {
-    "list": {
-      "netWorth": "Patrimonio neto",
-      "assets": "Activos",
-      "liabilities": "Pasivos",
-      "empty": "Todavía no creaste ninguna cuenta.",
-      "emptyAction": "Crear cuenta",
-      "newAccount": "Nueva cuenta",
-      "currenciesAndRates": "Monedas y tipos de cambio",
-      "resolvePendingFx": "Resolver tipos de cambio pendientes",
-      "pendingFxCount": "{count, plural, one {# movimiento} other {# movimientos}}",
-      "archived": "Archivadas",
-      "creditLimitUsage": "{percent}% del límite",
-      "errorWhat": "No pudimos cargar tus cuentas.",
-      "reorder": "Reordenar {name}"
-    },
-    "moveUp": "Mover hacia arriba",
-    "moveDown": "Mover hacia abajo",
-    "detail": {
-      "selectPrompt": "Elegí una cuenta de la lista para ver el detalle acá.",
-      "back": "Volver",
-      "notFound": "No encontramos esa cuenta.",
-      "backToList": "Volver a cuentas",
-      "cycleSummary": "Resumen del ciclo",
-      "cycleOf": "{spent} de {limit}",
-      "cycleConsumption": "Consumo del ciclo: {amount}",
-      "cycleCloses": "Cierra el {statementDay} · Vence el {dueDay}",
-      "cycleProjection": "Proyección a debitar: {amount}",
-      "edit": "Editar",
-      "reconcile": "Conciliar",
-      "transfer": "Transferir",
-      "archive": "Archivar",
-      "archived": "Cuenta archivada",
-      "transactionsTitle": "Movimientos de esta cuenta",
-      "noTransactions": "Todavía no hay movimientos."
-    },
-    "reconcile": {
-      "back": "Volver",
-      "notFound": "No encontramos esa cuenta.",
-      "prompt": "¿Cuánto dice {account} que tenés?",
-      "yourRecord": "Tu registro dice",
-      "difference": "Diferencia:",
-      "createAdjustment": "Crear ajuste",
-      "noDifference": "Sin diferencia",
-      "reconciled": "Cuenta conciliada — se creó un ajuste",
-      "adjustmentNote": "Ajuste por conciliación"
-    },
-    "resolveFx": {
-      "back": "Volver",
-      "empty": "No hay movimientos esperando tipo de cambio.",
-      "emptyAction": "Volver a cuentas",
-      "explanation": "Estos movimientos se guardaron sin tipo de cambio. Elegí uno por moneda y se aplica a todos los pendientes de esa moneda.",
-      "count": "{count, plural, one {# movimiento} other {# movimientos}} · {total}",
-      "unresolved": "Sin resolver",
-      "resolve": "Resolver",
-      "applyToAll": "Aplicar a todos",
-      "resolvedCount": "{count, plural, one {# movimiento resuelto} other {# movimientos resueltos}}"
-    }
-  },
-  "onboarding": {
-    "welcome": {
-      "skip": "Saltear",
-      "title": "Cargar un gasto: cinco segundos.",
-      "subtitle": "Sin formularios, sin teclado del sistema, sin conexión si hace falta.",
-      "demoPlaceholder": "Demo del keypad en loop",
-      "start": "Empezar"
-    },
-    "auth": {
-      "tagline": "Finanzas personales, sin fricción.",
-      "continueWithGoogle": "Continuar con Google",
-      "continueWithApple": "Continuar con Apple",
-      "connectedWith": "Conectado con {provider}",
-      "orWithEmail": "o con tu email",
-      "emailPlaceholder": "tu@email.com",
-      "sendLink": "Enviar link de acceso",
-      "sendingLink": "Enviando…",
-      "passwordPlaceholder": "Tu contraseña",
-      "signInWithPassword": "Iniciar sesión",
-      "signingIn": "Entrando…",
-      "preferPassword": "Prefiero usar mi contraseña",
-      "preferCode": "Prefiero el código por email",
-      "loadingDemo": "Cargando datos de ejemplo…",
-      "tryDemo": "Probar con datos de ejemplo",
-      "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
-      "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo."
-    },
-    "verify": {
-      "back": "Volver",
-      "title": "Revisá tu email",
-      "sentTo": "Te mandamos un código a <b>{email}</b>.",
-      "yourEmail": "tu email",
-      "invalidCode": "Ese código venció o no es válido. Pedí uno nuevo.",
-      "resend": "Reenviar código",
-      "resendCooldown": "Reenviar en {seconds}s",
-      "resent": "Te reenviamos el código",
-      "changeEmail": "Cambiar email"
-    },
-    "country": {
-      "back": "Volver",
-      "title": "¿Dónde vivís?",
-      "subtitle": "Usamos esto para tu moneda y los bancos que te ofrecemos después.",
-      "yourCurrency": "Tu moneda: {currency}",
-      "continue": "Continuar"
-    },
-    "usage": {
-      "back": "Volver",
-      "title": "¿Cómo vas a usar la app?",
-      "continue": "Continuar",
-      "options": {
-        "solo": {
-          "title": "Solo",
-          "description": "Tus cuentas, tus gastos"
-        },
-        "pareja": {
-          "title": "Con mi pareja",
-          "description": "Activa el grupo familiar"
-        },
-        "familia": {
-          "title": "Con mi familia",
-          "description": "Activa el grupo familiar"
-        }
-      }
-    },
-    "account": {
-      "back": "Volver",
-      "title": "Tu primera cuenta",
-      "subtitle": "Elegí de dónde sale la plata — lo podés sumar todo después.",
-      "searchPlaceholder": "Buscar tu banco o billetera",
-      "continue": "Continuar"
-    },
-    "success": {
-      "title": "¡Listo!",
-      "subtitle": "Tu cuenta está creada. Cargá tu primer gasto para empezar a ver tu resumen.",
-      "cta": "Cargar mi primer gasto",
-      "errorTitle": "No pudimos terminar de crear tu cuenta",
-      "errorSubtitle": "Puede ser tu conexión. Probá de nuevo — no se perdió nada de lo que ya elegiste.",
-      "retry": "Probar de nuevo"
-    },
-    "pending": {
-      "pendingTitle": "Tu acceso está esperando aprobación",
-      "pendingSubtitle": "Quien administra esta instalación todavía no aprobó tu entrada. Te avisamos apenas puedas pasar.",
-      "rejectedTitle": "Tu acceso no fue aprobado",
-      "rejectedSubtitle": "Quien administra esta instalación decidió no darte acceso.",
-      "verifiedAs": "Verificado como {email}",
-      "refresh": "Ya me aprobaron — actualizar",
-      "stillPending": "Todavía no — seguís esperando aprobación.",
-      "signOut": "Cerrar sesión"
-    },
-    "complete": {
-      "balanceTitle": "¿Cuánto tenés en {account}?",
-      "yourAccount": "tu cuenta",
-      "balanceSubtitle": "Para que tu patrimonio arranque correcto. Podés dejarlo en 0 y ajustarlo después.",
-      "continue": "Continuar",
-      "installTitle": "Instalá PERZE",
-      "installPromptAvailable": "Accedé más rápido, como una app nativa.",
-      "installPromptIos": "Tocá el ícono de compartir de Safari y elegí \"Agregar a inicio\".",
-      "installPromptOther": "Buscá \"Instalar app\" en el menú de tu navegador.",
-      "install": "Instalar",
-      "later": "Ahora no",
-      "laterToast": "Podés instalarla más tarde desde Ajustes"
-    }
-  },
-  "morePage": {
-    "money": "Dinero",
-    "accounts": "Cuentas",
-    "budgets": "Presupuestos",
-    "goals": "Metas",
-    "recurring": "Recurrentes",
-    "debts": "Deudas",
-    "people": "Personas",
-    "family": "Grupo familiar",
-    "system": "Sistema",
-    "settings": "Ajustes",
-    "importExport": "Importar / Exportar",
-    "about": "Acerca de",
-    "enableMoreFeatures": "Activar más funciones",
-    "comingSoon": "{label} todavía no está disponible en esta versión.",
-    "version": "PERZE v{version}",
-    "language": "Idioma",
-    "languageSheetTitle": "Elegí el idioma",
-    "languageNames": {
-      "es": "Español",
-      "en": "English",
-      "pt": "Português"
-    },
-    "categories": "Categorías",
-    "modules": "Módulos",
-    "security": "Seguridad",
-    "profile": "Perfil",
-    "tagsAndPayees": "Tags y comercios",
-    "rules": "Reglas de auto-categorización",
-    "signOut": "Cerrar sesión",
-    "exitDemo": "Salir del demo",
-    "signOutConfirmTitle": "Cambios sin sincronizar",
-    "signOutUnsyncedWarning": "{count, plural, one {Tenés # cambio que todavía no se subió al servidor.} other {Tenés # cambios que todavía no se subieron al servidor.}} Si cerrás sesión ahora, se pierden.",
-    "signOutConfirmAction": "Cerrar sesión igual"
-  },
-  "adminPage": {
-    "title": "Panel del operador",
-    "pendingSectionTitle": "Solicitudes pendientes",
-    "pendingEmpty": "No hay solicitudes esperando aprobación.",
-    "requestedOn": "Pedido el {date}",
-    "unknownCountry": "País sin elegir todavía",
-    "approve": "Aprobar",
-    "reject": "Rechazar",
-    "approvedToast": "Acceso aprobado.",
-    "rejectedToast": "Acceso rechazado.",
-    "metricsSectionTitle": "Métricas",
-    "totalUsers": "Usuarios totales",
-    "pendingCount": "Pendientes",
-    "approvedCount": "Aprobados",
-    "rejectedCount": "Rechazados",
-    "byCountryTitle": "Por país",
-    "noCountryData": "Todavía no hay usuarios aprobados con país elegido.",
-    "activitySectionTitle": "Actividad",
-    "activeToday": "Activos hoy",
-    "active7d": "Activos en 7 días",
-    "active30d": "Activos en 30 días",
-    "inactive": "Sin actividad reciente"
-  },
-  "conflictsPage": {
-    "title": "Conflictos de sincronización",
-    "empty": "No tenés conflictos pendientes.",
-    "explainer": "Vos y otro miembro editaron este mismo movimiento mientras alguno estaba sin conexión. Elegí cuál se queda — la otra versión se descarta.",
-    "yours": "Tu versión",
-    "theirs": "La otra versión",
-    "noCategory": "Sin categoría",
-    "keepMine": "Quedarme con la mía",
-    "keepTheirs": "Quedarme con la otra",
-    "resolved": "Conflicto resuelto.",
-    "badgeCount": "{count, plural, one {# conflicto} other {# conflictos}}",
-    "homeBanner": "{count, plural, one {Hay # movimiento con un conflicto de sincronización.} other {Hay # movimientos con un conflicto de sincronización.}}",
-    "homeBannerAction": "Revisar"
-  },
-  "syncDiagnosticsPage": {
-    "title": "Estado de sincronización",
-    "empty": "No hay mutaciones pendientes de sincronizar.",
-    "entryLabel": "{op} en {table}",
-    "ops": {
-      "insert": "Creación",
-      "update": "Edición",
-      "delete": "Borrado"
-    },
-    "statuses": {
-      "pending": "Pendiente",
-      "syncing": "Sincronizando",
-      "failed": "Falló, reintentando",
-      "conflict": "En conflicto",
-      "dead": "Sin poder sincronizar"
-    },
-    "createdAt": "Creado el {when}",
-    "attempts": "{count, plural, one {# intento} other {# intentos}}",
-    "retry": "Reintentar ahora",
-    "retried": "En cola para el próximo intento."
-  },
-  "notificationsPage": {
-    "title": "Notificaciones",
-    "enablePush": "Recibir notificaciones",
-    "enablePushMeta": "En este dispositivo. Podés apagarlas cuando quieras.",
-    "pushUnsupported": "Este navegador no soporta notificaciones push.",
-    "pushError": "No pudimos activar las notificaciones. Probá de nuevo.",
-    "noEngagementPromise": "No mandamos notificaciones para que vuelvas a abrir la app. Solo lo que elegiste acá arriba.",
-    "toggles": {
-      "budgetAlerts": {
-        "label": "Presupuesto al límite",
-        "description": "Cuando una categoría llega al 80% o se pasa"
-      },
-      "weeklySummary": {
-        "label": "Resumen semanal",
-        "description": "Los domingos, un resumen de la semana"
-      },
-      "recurringReminders": {
-        "label": "Recordatorios de recurrentes",
-        "description": "Cuando se acerca la fecha de un cobro fijo"
-      },
-      "insights": {
-        "label": "Insights",
-        "description": "Cosas que notamos sobre tu plata"
-      }
-    }
-  },
-  "importCsvPage": {
-    "title": "Importar CSV",
-    "chooseFile": "Elegir archivo CSV",
-    "weRead": "Leímos",
-    "destinationAccount": "A qué cuenta van",
-    "mapColumns": "Confirmá qué columna es cada dato.",
-    "field": {
-      "date": "Fecha",
-      "description": "Detalle",
-      "amount": "Importe"
-    },
-    "duplicatesFound": "{count, plural, =0 {No encontramos duplicados.} one {Encontramos # posible duplicado, ya excluido.} other {Encontramos # posibles duplicados, ya excluidos.}}",
-    "duplicate": "Duplicado",
-    "noDescription": "Sin detalle",
-    "importCount": "Importar {count, plural, one {# movimiento} other {# movimientos}}",
-    "imported": "{count, plural, one {Se importó # movimiento.} other {Se importaron # movimientos.}}",
-    "done": "Importación terminada.",
-    "viewTransactions": "Ver movimientos"
-  },
-  "categorizationRulesPage": {
-    "title": "Reglas de auto-categorización",
-    "empty": "Todavía no creaste ninguna regla.",
-    "newRule": "Nueva regla",
-    "created": "Regla creada",
-    "name": "Nombre",
-    "namePlaceholder": "Ej: Uber → Transporte",
-    "conditionField": "Si",
-    "conditionValue": "Contiene",
-    "thenCategory": "Asigná esta categoría",
-    "chooseCategory": "Elegir categoría",
-    "noCategoryAction": "sin categoría",
-    "meta": "Si {field} contiene \"{value}\" → {category} · se aplicó {count} veces",
-    "field": {
-      "note": "la nota",
-      "payeeName": "el comercio"
-    }
-  },
-  "tagsPayeesPage": {
-    "title": "Tags y comercios",
-    "tags": "Tags",
-    "payees": "Comercios",
-    "addTag": "Nuevo tag",
-    "addPayee": "Nuevo comercio",
-    "editTitle": "Editar",
-    "newTitle": "Nuevo",
-    "name": "Nombre"
-  },
-  "profilePage": {
-    "title": "Perfil",
-    "displayName": "Nombre visible",
-    "saved": "Nombre actualizado."
-  },
-  "exportPage": {
-    "headerTitle": "Exportar y backup",
-    "title": "Tus datos son tuyos",
-    "subtitle": "Te llevás todo cuando quieras, en un formato que se abre en cualquier lado, sin pedir permiso y sin borrar nada de acá.",
-    "whatsIncluded": "Qué se lleva el JSON",
-    "rows": {
-      "transactions": "Movimientos",
-      "accounts": "Cuentas",
-      "categories": "Categorías",
-      "tags": "Tags",
-      "payees": "Comercios",
-      "budgets": "Presupuestos",
-      "goals": "Metas",
-      "recurringRules": "Recurrentes"
-    },
-    "notIncluded": "No incluye lo que vive solo en Supabase: invitaciones, gastos compartidos con otros miembros ni tu portfolio de inversiones.",
-    "download": "Descargar backup"
-  },
-  "aboutPage": {
-    "title": "Acerca de",
-    "name": "PERZE",
-    "versionLine": "Versión {version} · se pronuncia PER-se",
-    "sourceCode": "Código fuente",
-    "sourceCodeMeta": "Se puede leer, copiar y correr en tu servidor",
-    "license": "Licencia",
-    "licenseBadge": "MIT",
-    "dataStorage": "Qué datos guardamos",
-    "dataStorageMeta": "Y cuáles nunca salen de tu teléfono",
-    "dataStorageBody": "Tus movimientos, cuentas y presupuestos viven primero en tu teléfono (IndexedDB) y se sincronizan con tu propio proyecto de Supabase cuando hay conexión. Nunca se comparten con terceros ni se usan para entrenar nada. Si autohospedás PERZE, ese servidor sos vos.",
-    "operatorVisibility": "Quién puede ver qué",
-    "operatorVisibilityMeta": "Qué ve quien administra esta instalación",
-    "madeWith": "Hecho con",
-    "madeWithBody": "Geist Sans y Geist Mono, íconos de Phosphor, y cotizaciones del BROU. Licencia MIT — el código es tuyo para leer, modificar y correr donde quieras."
-  },
-  "privacyNotice": {
-    "title": "Quién puede ver qué",
-    "who": "Esta instalación de PERZE la administra una persona, que aprueba manualmente cada acceso nuevo.",
-    "sees": "Ve: tu email, tu país y cuándo usaste la app por última vez.",
-    "neverSees": "Nunca ve: tus movimientos, saldos, cuentas ni presupuestos. Esa restricción está en la base de datos, no es una promesa.",
-    "noThirdParty": "No hay analytics de terceros: nada de esto sale de esta instalación."
-  },
-  "home": {
-    "empty": "Todavía no cargaste ningún movimiento. Registrá tu primer gasto para ver tu resumen acá.",
-    "emptyAction": "Cargar mi primer gasto",
-    "netWorth": "Patrimonio neto",
-    "showAmounts": "Mostrar montos",
-    "hideAmounts": "Ocultar montos",
-    "vsLastWeek": "vs. semana pasada",
-    "excludedAccounts": "{count} cuenta(s) sin tipo de cambio, excluida(s) del total.",
-    "convertedTotal": "Total convertido",
-    "accountsCount": "{count} cuentas",
-    "spentThisPeriod": "Gastado este período",
-    "incomeThisPeriod": "Ingresado este período",
-    "needsFxInsight": "Tenés {count, plural, one {# movimiento} other {# movimientos}} sin tipo de cambio resuelto.",
-    "budgetExceededInsight": "Superaste el presupuesto de {category} — vas al {percent}%.",
-    "budgetWarningInsight": "Vas al {percent}% del presupuesto de {category}.",
-    "seeBudgets": "Ver presupuestos",
-    "seeTransactions": "Ver movimientos",
-    "topCategoryInsight": "Tu categoría con más gasto este período es <b>{category}</b>.",
-    "recentTransactions": "Últimos movimientos",
-    "transfer": "Transferencia",
-    "movement": "Movimiento",
-    "errorWhat": "No pudimos cargar tu resumen.",
-    "privacyTooltip": "Tocá el ojo para difuminar los montos — útil en público."
-  },
-  "analyticsPage": {
-    "unavailable": "El análisis todavía no está disponible en esta versión.",
-    "errorWhat": "No pudimos calcular los indicadores del período.",
-    "empty": "Todavía no hay nada para analizar. Cargá tu primer gasto y en 7 días te mostramos la línea de patrimonio.",
-    "emptyAction": "Cargar gasto",
-    "netWorth": "Patrimonio neto",
-    "savingsRate": "Tasa de ahorro",
-    "dailySpend": "Gasto diario",
-    "savingsRatePending": "Tasa de ahorro y cashflow salen cuando cierre tu primer período. Faltan {days} días.",
-    "availableNow": "Ya se puede ver",
-    "notYet": "Todavía no",
-    "missingClosedPeriod": "Necesitan un período cerrado. Faltan {days} días.",
-    "missingMonths": "Necesitan 2 meses de historial. Faltan {days, plural, one {# día} other {# días}}.",
-    "cards": {
-      "trends": {
-        "title": "Tendencias",
-        "subtitle": "¿Gastás más que la semana pasada?"
-      },
-      "calendar": {
-        "title": "Calendario",
-        "subtitle": "¿Qué días se te va la plata?"
-      },
-      "netWorth": {
-        "title": "Patrimonio neto",
-        "subtitle": "¿Vas para arriba?"
-      },
-      "categories": {
-        "title": "Categorías",
-        "subtitle": "¿En qué se te va la plata?"
-      },
-      "merchants": {
-        "title": "Comercios",
-        "subtitle": "¿Dónde gastás más seguido?"
-      },
-      "flow": {
-        "title": "Flujo de dinero",
-        "subtitle": "De dónde viene y a dónde va"
-      },
-      "insights": {
-        "title": "Insights",
-        "subtitle": "Lo que no sabías de tu plata"
-      },
-      "currencies": {
-        "title": "Monedas",
-        "subtitle": "Cuánto patrimonio tenés en cada una"
-      },
-      "inflation": {
-        "title": "Inflación",
-        "subtitle": "Nominal vs. en pesos de hoy"
-      },
-      "weekly": {
-        "title": "Tu semana",
-        "subtitle": "Tres datos y una comparación"
-      },
-      "export": {
-        "title": "Exportar",
-        "subtitle": "Un período, en CSV"
-      },
-      "wrapped": {
-        "title": "Tu año en números",
-        "subtitle": "Doce meses, seis pantallas"
-      }
-    },
-    "gaps": {
-      "closedPeriodAnalyses": "Categorías, flujo y comercios",
-      "currencyAnalyses": "Inflación y multi-moneda"
-    }
-  },
-  "offlinePage": {
-    "message": "Sin conexión — esta pantalla todavía no se cargó una vez. Las que ya visitaste siguen andando igual."
-  },
-  "search": {
-    "title": "Buscar",
-    "close": "Cerrar buscador",
-    "hint": "⌘K o Ctrl+K para abrir",
-    "placeholder": "Buscar movimientos, cuentas, categorías…",
-    "prompt": "Escribí para buscar en tus movimientos, cuentas, categorías y comercios.",
-    "noResults": "No encontramos nada para \"{query}\".",
-    "empty": "Sin resultados.",
-    "groupActions": "Ir a",
-    "transactions": "Movimientos",
-    "accounts": "Cuentas",
-    "categories": "Categorías",
-    "merchants": "Comercios",
-    "movement": "Movimiento",
-    "noNote": "Sin nota",
-    "actions": {
-      "add": "Cargar un gasto",
-      "home": "Inicio",
-      "movements": "Movimientos",
-      "accounts": "Cuentas",
-      "analytics": "Análisis",
-      "more": "Más"
-    }
-  },
-  "currenciesPage": {
-    "back": "Volver",
-    "refresh": "Actualizar",
-    "empty": "Con una sola moneda en uso, no hace falta gestionar tipos de cambio.",
-    "emptyAction": "Volver a cuentas",
-    "noQuote": "Sin cotización — tocá para cargar a mano",
-    "manualOverride": "Override manual",
-    "noProvider": "Sin proveedor",
-    "asOf": "del {date}",
-    "today": "hoy",
-    "overrideSaved": "Override guardado para {pair}",
-    "howManyWorth": "Cuántos {base} vale 1 {quote}",
-    "ratePlaceholder": "Ej: 40",
-    "saveOverride": "Guardar override"
-  },
-  "pinKeypad": {
-    "progress": "{current} de {total} dígitos"
-  },
-  "categoryTemplate": {
-    "title": "Categorías",
-    "subtitle": "Arrancaste con la básica. Cambiala cuando quieras: no se pierde nada de lo cargado.",
-    "basicTitle": "Básica",
-    "basicCount": "{count} categorías",
-    "completeTitle": "Completa",
-    "completeCount": "{count} categorías",
-    "completeDescription": "Con subcategorías de supermercado, transporte y salud.",
-    "scratchTitle": "Empezar de cero",
-    "scratchDescription": "Las creás vos, a medida que cargás.",
-    "save": "Guardar",
-    "saved": "Categorías actualizadas"
-  },
-  "settingsPage": {
-    "yourCurrency": "Tu moneda",
-    "baseCurrency": "Moneda base",
-    "fourthTab": "Cuarto acceso del menú",
-    "closeDay": "Día de cierre",
-    "closeDayHint": "El período de presupuestos y análisis va de un día de cierre al siguiente. Aplica a todo el grupo.",
-    "closeDayRestricted": "Solo el dueño o un administrador puede cambiar el día de cierre.",
-    "dayOfMonth": "Día {day}",
-    "fxSources": "Tipos de cambio"
-  },
-  "modulesPage": {
-    "subtitle": "Lo que está apagado no aparece en ningún lado. Prendé solo lo que vayas a usar.",
-    "footnote": "Si apagás uno, sus datos quedan guardados y vuelven intactos al prenderlo.",
-    "confirmTitle": "Apagar módulo",
-    "confirmDisable": "Apagar igual",
-    "modules": {
-      "budgets": {
-        "label": "Presupuestos",
-        "description": "Un límite por categoría y cuánto te queda por día."
-      },
-      "goals": {
-        "label": "Metas",
-        "description": "Ahorrar para algo, con fecha estimada de llegada."
-      },
-      "recurring": {
-        "label": "Recurrentes",
-        "description": "Suscripciones y débitos, con aviso de aumentos."
-      },
-      "debts": {
-        "label": "Deudas y cuotas",
-        "description": "Planes de cuotas y préstamos, con lo comprometido."
-      },
-      "investments": {
-        "label": "Inversiones",
-        "description": "Portfolio, operaciones y rendimiento."
-      },
-      "family": {
-        "label": "Grupo familiar",
-        "description": "Compartir cuentas y gastos con otras personas."
-      }
-    },
-    "confirmBody": {
-      "budgets": "No tenés presupuestos activos todavía — se puede apagar sin perder nada.",
-      "goals": "No tenés metas activas todavía — se puede apagar sin perder nada.",
-      "recurring": "{count, plural, one {Tenés # recurrente cargado.} other {Tenés # recurrentes cargados.}} Van a dejar de verse, pero los movimientos ya guardados quedan intactos.",
-      "debts": "{count, plural, one {Tenés # deuda o plan de cuotas activo.} other {Tenés # deudas o planes de cuotas activos.}} Van a dejar de verse, pero los movimientos ya guardados quedan intactos.",
-      "investments": "{count, plural, one {Tenés # cuenta de inversión.} other {Tenés # cuentas de inversión.}} Van a salir del patrimonio neto, pero los datos quedan guardados.",
-      "family": "{count, plural, one {Compartís la app con # persona más.} other {Compartís la app con # personas más.}} Van a dejar de ver lo compartido hasta que lo prendas de nuevo."
-    }
-  },
-  "securityPage": {
-    "title": "Seguridad",
-    "pinLock": "Bloqueo por PIN",
-    "pinLockDescription": "Pedir un PIN para ver saldos y movimientos. Cargar un gasto nunca lo pide.",
-    "createPrompt": "Elegí un PIN de 6 dígitos",
-    "confirmPrompt": "Repetilo para confirmar",
-    "mismatch": "No coincide — probá de nuevo",
-    "pinSet": "PIN activado",
-    "biometricLock": "Desbloqueo biométrico",
-    "biometricLockDescription": "Usar Face ID, huella u otro sensor del dispositivo en vez del PIN",
-    "biometricEnabled": "Desbloqueo biométrico activado",
-    "biometricEnrollError": "No se pudo activar el sensor — probá de nuevo",
-    "password": "Contraseña",
-    "passwordDescription": "Alternativa al código por email para iniciar sesión",
-    "newPassword": "Contraseña nueva",
-    "confirmPassword": "Confirmá la contraseña",
-    "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
-    "passwordMismatch": "Las dos contraseñas no coinciden.",
-    "savePassword": "Guardar contraseña",
-    "savingPassword": "Guardando…",
-    "passwordSaved": "Contraseña actualizada"
-  },
-  "trendsPage": {
-    "title": "Tendencias",
-    "thisWeek": "Esta semana",
-    "vsLastWeek": "vs. semana pasada"
-  },
-  "categoriesAnalyticsPage": {
-    "title": "Categorías",
-    "other": "Otros"
-  },
-  "calendarAnalyticsPage": {
-    "title": "Calendario"
-  },
-  "merchantsAnalyticsPage": {
-    "title": "Comercios",
-    "empty": "Todavía no hay gastos con comercio cargado en el último período."
-  },
-  "netWorthAnalyticsPage": {
-    "title": "Patrimonio neto",
-    "current": "Patrimonio neto",
-    "last30": "{amount} en los últimos 30 días"
-  },
-  "moneyFlowPage": {
-    "title": "Flujo de dinero",
-    "needsClosedPeriod": "El flujo necesita un período cerrado para que el reparto sea real. Faltan {days} días.",
-    "empty": "Todavía no hay ingresos y gastos suficientes para armar el flujo de este período.",
-    "otherIncome": "Otros ingresos",
-    "otherExpense": "Otros gastos"
-  },
-  "inflationPage": {
-    "title": "Inflación",
-    "needsHistory": "Necesitamos 2 meses para ajustar por precios. Faltan {months} meses.",
-    "nominal": "Gastado (nominal)",
-    "adjusted": "En pesos de hoy",
-    "explainer": "El índice de precios subió {percent}% desde ese período.",
-    "noIndex": "Todavía no hay un índice de precios cargado para tu moneda — se muestra el gasto nominal sin ajuste."
-  },
-  "currencyExposurePage": {
-    "title": "Monedas",
-    "total": "Patrimonio total"
-  },
-  "insightsPage": {
-    "title": "Insights",
-    "empty": "Todavía no hay suficientes datos para generar insights este período.",
-    "streak": "Llevás {days} días seguidos registrando.",
-    "budgetPace": "A este ritmo, superás el presupuesto de {category} el {date}.",
-    "wholeHousehold": "todo el hogar"
-  },
-  "weeklySummaryPage": {
-    "title": "Tu semana",
-    "empty": "No cargaste nada esta semana. Si gastaste y no lo cargaste, se puede cargar con fecha.",
-    "emptyAction": "Cargar gasto",
-    "range": "Del {from} al {to}",
-    "mostExpensiveDay": "Día más caro",
-    "topPayee": "Dónde más fuiste",
-    "visits": "{count} visitas",
-    "biggestChange": "Lo que más cambió"
-  },
-  "wrappedPage": {
-    "needsHistory": "Tu año en números se habilita con 12 meses cerrados. Faltan {count}.",
-    "coverTitle": "Tu año en números",
-    "coverSubtitle": "Doce meses de plata, en seis pantallas.",
-    "netWorthLine": "Terminaste el año con este patrimonio.",
-    "transactionCountLine": "movimientos cargados este año.",
-    "topPayeeLine": "{visits} visitas · {amount}",
-    "noPayeeData": "Sin comercios registrados este año.",
-    "savingsRateLine": "De todo lo que entró, esto quedó.",
-    "daysActiveLine": "días activos registrando este año.",
-    "share": "Compartir",
-    "shareText": "Mi año en PERZE",
-    "back": "Volver",
-    "next": "Siguiente"
-  },
-  "exportReportsPage": {
-    "title": "Exportar",
-    "period": "Período",
-    "periodOptions": {
-      "current": "Este mes",
-      "previous": "Anterior",
-      "twoAgo": "Hace 2 meses"
-    },
-    "whatsIncluded": "Qué va adentro",
-    "transactions": "Movimientos",
-    "transactionsCount": "{count} filas · con categoría, cuenta y cotización",
-    "accountsAndBalances": "Cuentas y saldos",
-    "accountsCount": "{count} cuentas · saldo actual",
-    "needsFxNote": "Los movimientos sin cotización se exportan igual, con la columna de conversión vacía.",
-    "export": "Exportar",
-    "promise": "Tus datos son tuyos. También podés bajar un backup completo.",
-    "csvDate": "Fecha",
-    "csvKind": "Tipo",
-    "csvAccount": "Cuenta",
-    "csvCategory": "Categoría",
-    "csvPayee": "Comercio",
-    "csvAmount": "Monto",
-    "csvAmountBase": "Monto en moneda base",
-    "csvNote": "Nota",
-    "csvAccountName": "Cuenta",
-    "csvBalance": "Saldo"
-  },
-  "budgetsPage": {
-    "empty": "Todavía no cargaste ningún presupuesto.",
-    "emptyAction": "Crear presupuesto",
-    "newBudget": "Nuevo presupuesto",
-    "of": "de",
-    "wholeHousehold": "Todo el hogar",
-    "category": "Categoría",
-    "created": "Presupuesto creado",
-    "notFound": "No encontramos ese presupuesto.",
-    "back": "Volver a presupuestos",
-    "deleted": "Presupuesto eliminado",
-    "delete": "Eliminar presupuesto",
-    "remaining": "Te queda",
-    "over": "Te pasaste por"
-  },
-  "goalsPage": {
-    "empty": "Todavía no cargaste ninguna meta.",
-    "emptyAction": "Crear meta",
-    "newGoal": "Nueva meta",
-    "name": "Nombre",
-    "namePlaceholder": "Ej: Viaje a Bariloche",
-    "account": "Cuenta",
-    "chooseAccount": "Elegir cuenta",
-    "created": "Meta creada",
-    "of": "de",
-    "ofTarget": "{percent}% del objetivo",
-    "notFound": "No encontramos esa meta.",
-    "back": "Volver a metas",
-    "deleted": "Meta eliminada",
-    "delete": "Eliminar meta",
-    "remainingToTarget": "Te faltan",
-    "reached": "¡Meta alcanzada!",
-    "noAccountLinked": "Esta meta no tiene una cuenta asignada — el progreso queda en 0 hasta que elijas una.",
-    "realPace": "Ritmo real (últimos 6 meses)",
-    "estimatedArrival": "Llegada estimada",
-    "arrivalUnknown": "Sin aportes recientes",
-    "useCushion": "Usar colchón de 3 meses ({amount})"
-  },
-  "recurringPage": {
-    "empty": "Todavía no cargaste ninguna recurrente.",
-    "emptyAction": "Crear recurrente",
-    "newRule": "Nueva recurrente",
-    "name": "Nombre",
-    "namePlaceholder": "Ej: Netflix",
-    "day": "Día del mes",
-    "noCategory": "Sin categoría",
-    "created": "Recurrente creada",
-    "dayOfMonth": "Día {day}",
-    "chargedThisMonth": "Ya se cargó este mes",
-    "notYetChargedThisMonth": "Todavía no se cargó este mes",
-    "notFound": "No encontramos esta recurrente.",
-    "back": "Volver",
-    "updated": "Recurrente actualizada.",
-    "archived": "Recurrente archivada.",
-    "archive": "Archivar",
-    "committedPerMonth": "Comprometido por mes",
-    "viewCalendar": "Ver el mes en calendario"
-  },
-  "recurringCalendarPage": {
-    "title": "Calendario de recurrentes",
-    "prevMonth": "Mes anterior",
-    "nextMonth": "Mes siguiente",
-    "noneThatDay": "Nada vence este día."
-  },
-  "debtsPage": {
-    "empty": "No tenés deudas ni tarjetas con saldo pendiente.",
-    "emptyAction": "Agregar cuenta",
-    "newDebt": "Nueva deuda",
-    "name": "Nombre",
-    "namePlaceholder": "Ej: Notebook en cuotas",
-    "installmentCount": "Cantidad de cuotas",
-    "linkedAccount": "Cuenta vinculada",
-    "noLinkedAccount": "Sin cuenta vinculada",
-    "created": "Deuda creada",
-    "fromTransactionDefaultName": "Consumo en cuotas"
-  },
-  "debtDetailPage": {
-    "notFound": "No encontramos esta deuda.",
-    "remaining": "Pendiente",
-    "installmentsProgress": "{paid} de {total} cuotas pagas",
-    "paidSoFar": "Pagado hasta ahora",
-    "nextDue": "Próximo vencimiento",
-    "schedule": "Cronograma",
-    "noSchedule": "Esta deuda no tiene cuotas cargadas.",
-    "installmentNumber": "Cuota {number} de {total}"
-  },
-  "cardCyclePage": {
-    "notFound": "Esta cuenta no es una tarjeta de crédito.",
-    "dueOn": "A pagar el {date}",
-    "dueUnknown": "Sin fecha de vencimiento cargada",
-    "closesOn": "Cierra el {date} · faltan {days} días",
-    "cycleConsumptions": "Consumos del ciclo",
-    "cycleConsumptionsMeta": "{count} movimientos desde el {date}",
-    "installments": "Cuotas de períodos anteriores",
-    "recentConsumptions": "Últimos consumos",
-    "convertToInstallments": "Convertir un consumo a cuotas",
-    "noConsumptions": "No hay consumos este ciclo para convertir.",
-    "payCard": "Pagar la tarjeta"
-  },
-  "cardInstallmentsPage": {
-    "title": "Cuotas y proyección",
-    "empty": "Esta tarjeta no tiene planes de cuotas activos.",
-    "committed": "Comprometido en cuotas",
-    "summary": "{count} planes · {monthly} por mes hasta {date}",
-    "activePlans": "Planes activos",
-    "installmentMeta": "{left} de {total} cuotas pendientes · {monthly} por mes",
-    "upcomingCycles": "Próximos resúmenes",
-    "noEstimate": "Suma solo las cuotas ya comprometidas. No estima consumos nuevos."
-  },
-  "familyPage": {
-    "empty": "Todavía sos el único miembro. Invitá a alguien para compartir cuentas y gastos.",
-    "invite": "Invitar a alguien",
-    "members": "Miembros",
-    "unnamed": "Sin nombre",
-    "compare": "Comparar entre miembros",
-    "pendingInvites": "Invitaciones pendientes",
-    "pending": "Pendiente",
-    "codeInvite": "Código {code}",
-    "joined": "Te uniste al hogar",
-    "joinTitle": "Unirte a un hogar",
-    "enterCode": "Código de invitación",
-    "invalidCode": "Ese código venció o no es válido.",
-    "join": "Unirme",
-    "shareCode": "Compartí este código con la persona que invitaste.",
-    "copyCode": "Copiar código",
-    "codeCopied": "Código copiado",
-    "emailOptional": "Email (opcional)",
-    "emailOptionalHint": "Todavía no mandamos el email solos — copiá el código y compartilo vos.",
-    "generateCode": "Generar código",
-    "roles": {
-      "owner": "Dueño",
-      "admin": "Admin",
-      "member": "Miembro",
-      "viewer": "Solo lectura"
-    },
-    "mirrorBanner": "Viendo la app como {name}",
-    "exitMirror": "Salir",
-    "mirrorNoAccounts": "No hay cuentas visibles para este miembro.",
-    "mirrorNoTransactions": "No hay movimientos visibles para este miembro.",
-    "mustSettleFirst": "Este miembro tiene saldo pendiente — liquidá o condoná antes de sacarlo.",
-    "removed": "Miembro removido del hogar",
-    "remove": "Sacar a {name} del hogar"
-  },
-  "permissionsPage": {
-    "title": "Permisos y visibilidad",
-    "needsMembers": "Invitá a alguien al hogar para poder configurar qué ve cada uno.",
-    "accounts": "Cuentas",
-    "categories": "Categorías",
-    "updated": "Permisos actualizados",
-    "whoCanSee": "Quién la puede ver",
-    "privateHint": "Solo vos",
-    "householdHint": "Todo el hogar",
-    "customHint": "Elegís quién",
-    "visibility": {
-      "private": "Privada",
-      "household": "Compartida",
-      "custom": "Personalizada"
-    }
-  },
-  "splitPage": {
-    "title": "Dividir gasto",
-    "back": "Volver",
-    "equal": "Partes iguales",
-    "percent": "Porcentaje",
-    "you": "Vos",
-    "saved": "Reparto guardado"
-  },
-  "settlePage": {
-    "title": "Liquidar",
-    "allSettled": "Están al día — nadie le debe nada a nadie.",
-    "owesYou": "Te debe",
-    "youOwe": "Le debés",
-    "settle": "Liquidar",
-    "howTitle": "¿Cómo se liquidó?",
-    "methodCash": "En efectivo",
-    "methodTransfer": "Transferencia",
-    "methodForgiven": "Se lo perdono",
-    "settled": "Liquidado"
-  },
-  "comparePage": {
-    "title": "Comparar",
-    "empty": "No hay gastos compartidos en el último período cerrado."
-  },
-  "activityPage": {
-    "title": "Actividad",
-    "empty": "Todavía no hay cambios de permisos para mostrar.",
-    "granted": "{granter} le dio acceso a {member} a {subject}",
-    "revoked": "{granter} le sacó el acceso a {member} a {subject}"
-  },
-  "investmentsPage": {
-    "noPortfolio": "Todavía no tenés un portfolio de inversiones.",
-    "createPortfolio": "Crear portfolio",
-    "defaultPortfolioName": "Mi portfolio",
-    "otherAssetClass": "Otros",
-    "noPositions": "Todavía no cargaste ninguna operación.",
-    "recordTrade": "Cargar operación",
-    "newInstrument": "Crear instrumento a mano",
-    "positions": "Posiciones"
-  },
-  "newInstrumentPage": {
-    "symbol": "Símbolo",
-    "name": "Nombre",
-    "assetClass": "Clase de activo",
-    "chooseAssetClass": "Elegir clase de activo",
-    "currency": "Moneda",
-    "created": "Instrumento creado",
-    "fixedIncomeSection": "Renta fija (opcional)",
-    "maturityDate": "Fecha de vencimiento",
-    "couponRate": "Tasa de cupón anual (%)",
-    "couponFrequency": "Pagos por año"
-  },
-  "newTradePage": {
-    "buy": "Compra",
-    "sell": "Venta",
-    "instrument": "Instrumento",
-    "chooseInstrument": "Elegir instrumento",
-    "settlementAccount": "Cuenta de liquidación",
-    "quantity": "Cantidad",
-    "unitPrice": "Precio unitario",
-    "saved": "Operación guardada",
-    "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar."
-  },
-  "allocationPage": {
-    "title": "Asignación"
-  },
-  "performancePage": {
-    "title": "Rendimiento",
-    "empty": "Todavía no cargaste operaciones en esta cartera.",
-    "needsHistory": "Tu rendimiento necesita 2 movimientos de plata y 30 días. Faltan {days} días.",
-    "xirr": "XIRR anualizado",
-    "xirrExplainer": "Tasa de retorno anualizada, considerando cuándo entró y salió cada peso.",
-    "benchmarksUnavailable": "La comparación con benchmarks y con inflación todavía no está disponible: necesitan una fuente de datos de mercado que este proyecto no trae integrada."
-  },
-  "futureIncomePage": {
-    "title": "Renta futura",
-    "empty": "Ninguna de tus posiciones paga renta. Los bonos, las ONs y los plazos fijos aparecen acá con su calendario.",
-    "kind": {
-      "coupon": "Cupón",
-      "amortization": "Amortización",
-      "maturity": "Vencimiento"
-    }
-  },
-  "pricesStatusPage": {
-    "title": "Estado de los precios",
-    "empty": "Todavía no cargaste operaciones para tener precios que mostrar.",
-    "updatePrice": "Actualizar precio de {symbol}",
-    "price": "Precio ({currency})"
-  },
-  "assetClassesPage": {
-    "title": "Clases de activo",
-    "newClass": "Nueva clase",
-    "editTitle": "Editar clase",
-    "name": "Nombre",
-    "global": "Global",
-    "globalEditNote": "Es una clase global. Guardar crea tu propia copia — la plantilla original no se toca.",
-    "reorder": "Reordenar {name}"
+ "app": {
+  "name": "PERZE",
+  "description": "Finanzas personales multi-cuenta, multi-moneda y multi-país. Minimalista, mobile-first, offline-first.",
+  "shortcutAddExpense": "Cargar un gasto",
+  "shortcutAddExpenseShort": "Gasto",
+  "shortcutAddExpenseDescription": "Ir directo al keypad de captura"
+ },
+ "pwa": {
+  "updateAvailable": "Hay una versión nueva de PERZE.",
+  "updateNow": "Actualizar"
+ },
+ "nav": {
+  "home": "Inicio",
+  "homeShort": "Inicio",
+  "movements": "Movimientos",
+  "movementsShort": "Movim.",
+  "add": "Agregar",
+  "analysis": "Análisis",
+  "more": "Más",
+  "accounts": "Cuentas",
+  "investments": "Inversiones",
+  "budgets": "Presupuestos",
+  "scope": {
+   "personal": "Personal",
+   "shared": "Compartido",
+   "all": "Todo"
   }
+ },
+ "common": {
+  "loading": "Cargando…",
+  "retry": "Reintentar",
+  "undo": "Deshacer",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "edit": "Editar",
+  "delete": "Borrar",
+  "seeAll": "Ver todos",
+  "continue": "Continuar"
+ },
+ "ds": {
+  "errorState": {
+   "retry": "Reintentar"
+  },
+  "progressSteps": {
+   "skip": "Saltear"
+  },
+  "resultGroup": {
+   "seeAll": "Ver todos"
+  },
+  "banner": {
+   "offline": "Sin conexión — seguís operando normalmente.",
+   "warning": "Hay algo que necesita tu atención.",
+   "error": "Falló la sincronización.",
+   "pending": "{count, plural, one {# pendiente} other {# pendientes}}"
+  },
+  "undoToast": {
+   "undo": "Deshacer",
+   "progressSeconds": "{seconds, plural, one {# s} other {# s}}"
+  },
+  "dismissibleNotice": {
+   "dismiss": "Descartar"
+  },
+  "insightCard": {
+   "dismiss": "Descartar"
+  },
+  "appHeader": {
+   "back": "Volver",
+   "search": "Buscar"
+  },
+  "sidebar": {
+   "navLabel": "Navegación principal",
+   "money": "Dinero",
+   "people": "Personas",
+   "system": "Sistema"
+  },
+  "tabBar": {
+   "add": "Agregar",
+   "badgeCount": "{count, plural, one {# notificación} other {# notificaciones}}",
+   "budgetAlertsBadge": "{count, plural, one {# presupuesto al límite} other {# presupuestos al límite}}"
+  },
+  "contextualTooltip": {
+   "gotIt": "Entendido"
+  },
+  "lockScreen": {
+   "enterPin": "Ingresá tu PIN",
+   "wrongPin": "PIN incorrecto, probá de nuevo",
+   "useBiometrics": "Usar biometría",
+   "lockedOut": "Tres intentos seguidos. Probá de nuevo en {seconds} segundos. Tus datos están intactos."
+  },
+  "fxEditor": {
+   "ageHours": "hace {hours} h",
+   "source": "DolarApi · oficial"
+  },
+  "priceStatus": {
+   "fresh": "Actualizado",
+   "stale": "Hace {hours} h",
+   "manual": "Manual",
+   "marketClosed": "Mercado cerrado",
+   "update": "Actualizar precio"
+  },
+  "needsFxBanner": {
+   "message": "{count, plural, one {# movimiento sin cotización} other {# movimientos sin cotización}}",
+   "resolve": "Resolver"
+  },
+  "transactionRow": {
+   "syncIssue": {
+    "conflict": "Editado por otro miembro a la vez — sin resolver",
+    "rejected": "No se pudo sincronizar"
+   }
+  },
+  "otpInput": {
+   "groupLabel": "Código de verificación",
+   "digitLabel": "Dígito {index} de {total}",
+   "pasteCode": "Pegar código"
+  },
+  "keypad": {
+   "operatorPlus": "Sumar",
+   "operatorMinus": "Restar",
+   "operatorMultiply": "Multiplicar",
+   "operatorDivide": "Dividir",
+   "backspace": "Borrar",
+   "decimalSeparator": "Separador decimal"
+  }
+ },
+ "reference": {
+  "category": {
+   "groceries": "Supermercado",
+   "restaurants": "Restaurantes",
+   "transport": "Transporte",
+   "housing": "Vivienda",
+   "health": "Salud",
+   "entertainment": "Entretenimiento",
+   "salary": "Sueldo",
+   "otherIncome": "Otros ingresos",
+   "groceriesPantry": "Almacén",
+   "groceriesProduce": "Verdulería",
+   "groceriesButcher": "Carnicería",
+   "transportFuel": "Nafta",
+   "transportPublic": "Transporte público",
+   "transportParking": "Estacionamiento",
+   "healthPharmacy": "Farmacia",
+   "healthAppointments": "Consultas",
+   "healthInsurance": "Seguro médico",
+   "clothing": "Ropa",
+   "education": "Educación",
+   "pets": "Mascotas",
+   "gifts": "Regalos"
+  },
+  "accountKind": {
+   "cash": "Efectivo",
+   "checking": "Cuenta corriente",
+   "savings": "Caja de ahorro",
+   "credit_card": "Tarjeta de crédito",
+   "wallet": "Billetera digital",
+   "broker": "Cuenta de inversión",
+   "loan": "Préstamo",
+   "receivable": "Por cobrar",
+   "other": "Otra cuenta"
+  },
+  "debtKind": {
+   "installment_plan": "Plan de cuotas",
+   "loan": "Préstamo",
+   "credit_line": "Línea de crédito",
+   "personal": "Deuda personal"
+  },
+  "country": {
+   "UY": "Uruguay",
+   "AR": "Argentina",
+   "BR": "Brasil",
+   "US": "Estados Unidos",
+   "MX": "México",
+   "CL": "Chile"
+  },
+  "currency": {
+   "UYU": "Peso uruguayo",
+   "ARS": "Peso argentino",
+   "USD": "Dólar estadounidense",
+   "BRL": "Real brasileño",
+   "MXN": "Peso mexicano",
+   "CLP": "Peso chileno",
+   "EUR": "Euro"
+  }
+ },
+ "capture": {
+  "close": "Cerrar",
+  "back": "Volver",
+  "burstCount": "{count} cargados",
+  "kind": {
+   "expense": "Gasto",
+   "income": "Ingreso",
+   "transfer": "Transferencia"
+  },
+  "category": {
+   "other": "Otro",
+   "frequent": "Más usadas",
+   "sheetTitle": "Elegí una categoría",
+   "searchPlaceholder": "Buscar categoría…",
+   "createNew": "Crear \"{name}\"",
+   "noResults": "No encontramos ninguna categoría.",
+   "nameTooLong": "El nombre es demasiado largo."
+  },
+  "chooseAccount": "Elegir cuenta",
+  "from": "DESDE",
+  "to": "HACIA",
+  "invert": "Invertir",
+  "voice": "Voz",
+  "photo": "Foto",
+  "details": "Detalles",
+  "voiceLabel": "Cargar por voz",
+  "photoLabel": "Foto del ticket",
+  "photoComingSoon": "La foto de ticket todavía no está disponible — próximamente.",
+  "next": "Siguiente",
+  "save": "Guardar",
+  "savedPendingFx": "Guardado sin tipo de cambio — se resuelve solo al reconectar.",
+  "saved": "Movimiento guardado",
+  "undo": "Deshacer",
+  "accountPicker": {
+   "sourceTitle": "Elegir cuenta",
+   "destinationTitle": "Cuenta de destino"
+  },
+  "details_sheet": {
+   "title": "Detalles",
+   "account": "Cuenta",
+   "date": "Fecha",
+   "payee": "Comercio",
+   "payeePlaceholder": "¿Dónde fue?",
+   "note": "Nota",
+   "notePlaceholder": "Opcional",
+   "burstMode": "Seguir cargando (modo ráfaga)",
+   "today": "Hoy",
+   "yesterday": "Ayer"
+  },
+  "voice_sheet": {
+   "title": "Captura por voz",
+   "unsupported": "Tu navegador no soporta reconocimiento de voz. Podés cargar el gasto con el keypad.",
+   "listening": "Escuchando…",
+   "prompt": "Decí algo como “gasté 1200 en el súper”",
+   "summary": "Monto: {amount} · Comercio: {payee}",
+   "empty": "—",
+   "useThis": "Usar esto",
+   "startListening": "Empezar a escuchar"
+  },
+  "savedOffline": "Guardado en el teléfono. Sale al reconectar."
+ },
+ "movements": {
+  "filters": {
+   "title": "Filtros",
+   "period": "Período",
+   "type": "Tipo",
+   "accounts": "Cuentas",
+   "categories": "Categorías",
+   "onlyPending": "Solo sin tipo de cambio resuelto",
+   "clearAll": "Limpiar todo",
+   "seeResults": "Ver {count, plural, one {# resultado} other {# resultados}}",
+   "date": {
+    "all": "Todo",
+    "thisMonth": "Este mes",
+    "lastMonth": "Mes pasado",
+    "last7": "Últimos 7 días",
+    "last30": "Últimos 30 días"
+   },
+   "kindAll": "Todo"
+  },
+  "editFlow": {
+   "title": "Editar movimiento",
+   "stale": "Este movimiento es viejo — si cambiás el monto, se vuelve a resolver el tipo de cambio.",
+   "next": "Siguiente",
+   "saveChanges": "Guardar cambios",
+   "updated": "Movimiento actualizado",
+   "voiceUnavailable": "La captura por voz no está disponible al editar.",
+   "photoComingSoon": "La foto de ticket todavía no está disponible."
+  }
+ },
+ "accounts": {
+  "form": {
+   "back": "Volver",
+   "close": "Cerrar",
+   "editTitle": "Editar cuenta",
+   "newTitle": "Nueva cuenta",
+   "change": "cambiar",
+   "name": "Nombre",
+   "namePlaceholder": "Ej: Itaú Caja de Ahorro",
+   "country": "País",
+   "currency": "Moneda",
+   "openingBalance": "Saldo inicial",
+   "statementDay": "Día de cierre",
+   "dayPlaceholder": "1-31",
+   "dueDay": "Día de vencimiento",
+   "interestRate": "Tasa anual (%)",
+   "interestRatePlaceholder": "Ej: 45.5",
+   "termMonths": "Plazo (meses)",
+   "termMonthsPlaceholder": "Ej: 12",
+   "includeInNetWorth": "Incluir en patrimonio neto",
+   "visibility": "Visibilidad",
+   "private": "Privada",
+   "shared": "Compartida",
+   "saveChanges": "Guardar cambios",
+   "createAccount": "Crear cuenta",
+   "updated": "Cuenta actualizada",
+   "created": "Cuenta creada",
+   "kindDescription": {
+    "cash": "Billetes y monedas",
+    "checking": "Débito del banco",
+    "savings": "Ahorros del banco",
+    "credit_card": "Con ciclo de cierre",
+    "wallet": "Mercado Pago, PayPal…",
+    "broker": "Broker, cripto",
+    "loan": "Con tasa y plazo",
+    "receivable": "Un fiado, un préstamo hecho",
+    "other": "Lo que no encaja arriba"
+   },
+   "kindLabel": {
+    "loan": "Préstamo (debo)",
+    "receivable": "Por cobrar (me deben)",
+    "other": "Otro"
+   }
+  }
+ },
+ "transactions": {
+  "list": {
+   "filters": "Filtros",
+   "calendar": "Calendario",
+   "cancel": "Cancelar",
+   "income": "Ingresos",
+   "expenses": "Gastos",
+   "balance": "Balance",
+   "empty": "Todavía no cargaste ningún movimiento.",
+   "emptyAction": "Cargar mi primer gasto",
+   "emptyFiltered": "Ningún movimiento coincide con estos filtros.",
+   "clearFilters": "Limpiar filtros",
+   "transfer": "Transferencia",
+   "movement": "Movimiento",
+   "deleted": "Movimiento borrado",
+   "undo": "Deshacer",
+   "deletedBulk": "{count, plural, one {# movimiento borrado} other {# movimientos borrados}}",
+   "deleteCount": "Borrar {count}",
+   "categorize": "Categorizar",
+   "categorizeComingSoon": "Categorizar en lote todavía no está disponible.",
+   "errorWhat": "No pudimos cargar tus movimientos."
+  },
+  "detail": {
+   "selectPrompt": "Elegí un movimiento de la lista para ver el detalle acá.",
+   "notFound": "No encontramos ese movimiento.",
+   "backToList": "Volver a movimientos",
+   "back": "Volver",
+   "notIncludedInTotal": "No suma al total",
+   "category": "Categoría",
+   "noCategory": "Sin categoría",
+   "account": "Cuenta",
+   "toAccount": "Hacia {account}",
+   "date": "Fecha",
+   "payee": "Comercio",
+   "note": "Nota",
+   "fxRateUsed": "Tipo de cambio usado",
+   "fxUnresolved": "Sin resolver — needs_fx",
+   "createdOn": "Cargado el {date}",
+   "editedOn": " · Editado el {date}",
+   "edit": "Editar",
+   "duplicate": "Duplicar",
+   "duplicated": "Movimiento duplicado — con la fecha de hoy.",
+   "recurring": "Convertir en recurrente",
+   "recurringComingSoon": "Los movimientos recurrentes todavía no están disponibles.",
+   "split": "Dividir en categorías",
+   "splitComingSoon": "Dividir un movimiento todavía no está disponible.",
+   "delete": "Borrar",
+   "fxSource": {
+    "identity": "Misma moneda",
+    "manual": "Override manual",
+    "api": "Cotización del día",
+    "inherited": "Última cotización conocida",
+    "pending": "Sin resolver"
+   }
+  },
+  "calendar": {
+   "back": "Volver",
+   "prevMonth": "Mes anterior",
+   "nextMonth": "Mes siguiente",
+   "empty": "Sin movimientos ese día."
+  },
+  "edit": {
+   "notFound": "No encontramos ese movimiento.",
+   "back": "Volver"
+  }
+ },
+ "accountsPage": {
+  "list": {
+   "netWorth": "Patrimonio neto",
+   "assets": "Activos",
+   "liabilities": "Pasivos",
+   "empty": "Todavía no creaste ninguna cuenta.",
+   "emptyAction": "Crear cuenta",
+   "newAccount": "Nueva cuenta",
+   "currenciesAndRates": "Monedas y tipos de cambio",
+   "resolvePendingFx": "Resolver tipos de cambio pendientes",
+   "pendingFxCount": "{count, plural, one {# movimiento} other {# movimientos}}",
+   "archived": "Archivadas",
+   "creditLimitUsage": "{percent}% del límite",
+   "errorWhat": "No pudimos cargar tus cuentas.",
+   "reorder": "Reordenar {name}"
+  },
+  "moveUp": "Mover hacia arriba",
+  "moveDown": "Mover hacia abajo",
+  "detail": {
+   "selectPrompt": "Elegí una cuenta de la lista para ver el detalle acá.",
+   "back": "Volver",
+   "notFound": "No encontramos esa cuenta.",
+   "backToList": "Volver a cuentas",
+   "cycleSummary": "Resumen del ciclo",
+   "cycleOf": "{spent} de {limit}",
+   "cycleConsumption": "Consumo del ciclo: {amount}",
+   "cycleCloses": "Cierra el {statementDay} · Vence el {dueDay}",
+   "cycleProjection": "Proyección a debitar: {amount}",
+   "edit": "Editar",
+   "reconcile": "Conciliar",
+   "transfer": "Transferir",
+   "archive": "Archivar",
+   "archived": "Cuenta archivada",
+   "transactionsTitle": "Movimientos de esta cuenta",
+   "noTransactions": "Todavía no hay movimientos."
+  },
+  "reconcile": {
+   "back": "Volver",
+   "notFound": "No encontramos esa cuenta.",
+   "prompt": "¿Cuánto dice {account} que tenés?",
+   "yourRecord": "Tu registro dice",
+   "difference": "Diferencia:",
+   "createAdjustment": "Crear ajuste",
+   "noDifference": "Sin diferencia",
+   "reconciled": "Cuenta conciliada — se creó un ajuste",
+   "adjustmentNote": "Ajuste por conciliación"
+  },
+  "resolveFx": {
+   "back": "Volver",
+   "empty": "No hay movimientos esperando tipo de cambio.",
+   "emptyAction": "Volver a cuentas",
+   "explanation": "Estos movimientos se guardaron sin tipo de cambio. Elegí uno por moneda y se aplica a todos los pendientes de esa moneda.",
+   "count": "{count, plural, one {# movimiento} other {# movimientos}} · {total}",
+   "unresolved": "Sin resolver",
+   "resolve": "Resolver",
+   "applyToAll": "Aplicar a todos",
+   "resolvedCount": "{count, plural, one {# movimiento resuelto} other {# movimientos resueltos}}"
+  }
+ },
+ "onboarding": {
+  "welcome": {
+   "skip": "Saltear",
+   "title": "Cargar un gasto: cinco segundos.",
+   "subtitle": "Sin formularios, sin teclado del sistema, sin conexión si hace falta.",
+   "demoPlaceholder": "Demo del keypad en loop",
+   "start": "Empezar"
+  },
+  "auth": {
+   "tagline": "Finanzas personales, sin fricción.",
+   "continueWithGoogle": "Continuar con Google",
+   "continueWithApple": "Continuar con Apple",
+   "connectedWith": "Conectado con {provider}",
+   "orWithEmail": "o con tu email",
+   "emailPlaceholder": "tu@email.com",
+   "sendLink": "Enviar link de acceso",
+   "sendingLink": "Enviando…",
+   "passwordPlaceholder": "Tu contraseña",
+   "signInWithPassword": "Iniciar sesión",
+   "signingIn": "Entrando…",
+   "preferPassword": "Prefiero usar mi contraseña",
+   "preferCode": "Prefiero el código por email",
+   "loadingDemo": "Cargando datos de ejemplo…",
+   "tryDemo": "Probar con datos de ejemplo",
+   "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
+   "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo."
+  },
+  "verify": {
+   "back": "Volver",
+   "title": "Revisá tu email",
+   "sentTo": "Te mandamos un código a <b>{email}</b>.",
+   "yourEmail": "tu email",
+   "invalidCode": "Ese código venció o no es válido. Pedí uno nuevo.",
+   "resend": "Reenviar código",
+   "resendCooldown": "Reenviar en {seconds}s",
+   "resent": "Te reenviamos el código",
+   "changeEmail": "Cambiar email",
+   "waitingTitle": "Esperando el link",
+   "sentLinkTo": "Abrí el link que te mandamos a <b>{email}</b>.",
+   "resendLink": "Reenviar el link",
+   "resendLinkCooldown": "Reenviar el link en {seconds}s",
+   "resentLink": "Te reenviamos el link"
+  },
+  "country": {
+   "back": "Volver",
+   "title": "¿Dónde vivís?",
+   "subtitle": "Usamos esto para tu moneda y los bancos que te ofrecemos después.",
+   "yourCurrency": "Tu moneda: {currency}",
+   "continue": "Continuar"
+  },
+  "usage": {
+   "back": "Volver",
+   "title": "¿Cómo vas a usar la app?",
+   "continue": "Continuar",
+   "options": {
+    "solo": {
+     "title": "Solo",
+     "description": "Tus cuentas, tus gastos"
+    },
+    "pareja": {
+     "title": "Con mi pareja",
+     "description": "Activa el grupo familiar"
+    },
+    "familia": {
+     "title": "Con mi familia",
+     "description": "Activa el grupo familiar"
+    }
+   }
+  },
+  "account": {
+   "back": "Volver",
+   "title": "Tu primera cuenta",
+   "subtitle": "Elegí de dónde sale la plata — lo podés sumar todo después.",
+   "searchPlaceholder": "Buscar tu banco o billetera",
+   "continue": "Continuar"
+  },
+  "success": {
+   "title": "¡Listo!",
+   "subtitle": "Tu cuenta está creada. Cargá tu primer gasto para empezar a ver tu resumen.",
+   "cta": "Cargar mi primer gasto",
+   "errorTitle": "No pudimos terminar de crear tu cuenta",
+   "errorSubtitle": "Puede ser tu conexión. Probá de nuevo — no se perdió nada de lo que ya elegiste.",
+   "retry": "Probar de nuevo"
+  },
+  "pending": {
+   "pendingTitle": "Tu acceso está esperando aprobación",
+   "pendingSubtitle": "Quien administra esta instalación todavía no aprobó tu entrada. Te avisamos apenas puedas pasar.",
+   "rejectedTitle": "Tu acceso no fue aprobado",
+   "rejectedSubtitle": "Quien administra esta instalación decidió no darte acceso.",
+   "verifiedAs": "Verificado como {email}",
+   "refresh": "Ya me aprobaron — actualizar",
+   "stillPending": "Todavía no — seguís esperando aprobación.",
+   "signOut": "Cerrar sesión"
+  },
+  "complete": {
+   "balanceTitle": "¿Cuánto tenés en {account}?",
+   "yourAccount": "tu cuenta",
+   "balanceSubtitle": "Para que tu patrimonio arranque correcto. Podés dejarlo en 0 y ajustarlo después.",
+   "continue": "Continuar",
+   "installTitle": "Instalá PERZE",
+   "installPromptAvailable": "Accedé más rápido, como una app nativa.",
+   "installPromptIos": "Tocá el ícono de compartir de Safari y elegí \"Agregar a inicio\".",
+   "installPromptOther": "Buscá \"Instalar app\" en el menú de tu navegador.",
+   "install": "Instalar",
+   "later": "Ahora no",
+   "laterToast": "Podés instalarla más tarde desde Ajustes"
+  },
+  "register": {
+   "title": "Terminá de crear tu cuenta",
+   "subtitle": "Nombre y contraseña — país y moneda van en el próximo paso.",
+   "nameLabel": "Nombre",
+   "namePlaceholder": "Tu nombre",
+   "emailLabel": "Email",
+   "passwordLabel": "Contraseña",
+   "passwordPlaceholder": "Elegí una contraseña",
+   "confirmPasswordLabel": "Confirmá la contraseña",
+   "confirmPasswordPlaceholder": "Repetí la contraseña",
+   "showPassword": "Mostrar contraseña",
+   "hidePassword": "Ocultar contraseña",
+   "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
+   "passwordMismatch": "Las dos contraseñas no coinciden.",
+   "submit": "Crear cuenta",
+   "submitting": "Creando cuenta…",
+   "genericError": "No se pudo crear la cuenta — probá de nuevo."
+  }
+ },
+ "morePage": {
+  "money": "Dinero",
+  "accounts": "Cuentas",
+  "budgets": "Presupuestos",
+  "goals": "Metas",
+  "recurring": "Recurrentes",
+  "debts": "Deudas",
+  "people": "Personas",
+  "family": "Grupo familiar",
+  "system": "Sistema",
+  "settings": "Ajustes",
+  "importExport": "Importar / Exportar",
+  "about": "Acerca de",
+  "enableMoreFeatures": "Activar más funciones",
+  "comingSoon": "{label} todavía no está disponible en esta versión.",
+  "version": "PERZE v{version}",
+  "language": "Idioma",
+  "languageSheetTitle": "Elegí el idioma",
+  "languageNames": {
+   "es": "Español",
+   "en": "English",
+   "pt": "Português"
+  },
+  "categories": "Categorías",
+  "modules": "Módulos",
+  "security": "Seguridad",
+  "profile": "Perfil",
+  "tagsAndPayees": "Tags y comercios",
+  "rules": "Reglas de auto-categorización",
+  "signOut": "Cerrar sesión",
+  "exitDemo": "Salir del demo",
+  "signOutConfirmTitle": "Cambios sin sincronizar",
+  "signOutUnsyncedWarning": "{count, plural, one {Tenés # cambio que todavía no se subió al servidor.} other {Tenés # cambios que todavía no se subieron al servidor.}} Si cerrás sesión ahora, se pierden.",
+  "signOutConfirmAction": "Cerrar sesión igual"
+ },
+ "adminPage": {
+  "title": "Panel del operador",
+  "pendingSectionTitle": "Solicitudes pendientes",
+  "pendingEmpty": "No hay solicitudes esperando aprobación.",
+  "requestedOn": "Pedido el {date}",
+  "unknownCountry": "País sin elegir todavía",
+  "approve": "Aprobar",
+  "reject": "Rechazar",
+  "approvedToast": "Acceso aprobado.",
+  "rejectedToast": "Acceso rechazado.",
+  "metricsSectionTitle": "Métricas",
+  "totalUsers": "Usuarios totales",
+  "pendingCount": "Pendientes",
+  "approvedCount": "Aprobados",
+  "rejectedCount": "Rechazados",
+  "byCountryTitle": "Por país",
+  "noCountryData": "Todavía no hay usuarios aprobados con país elegido.",
+  "activitySectionTitle": "Actividad",
+  "activeToday": "Activos hoy",
+  "active7d": "Activos en 7 días",
+  "active30d": "Activos en 30 días",
+  "inactive": "Sin actividad reciente"
+ },
+ "conflictsPage": {
+  "title": "Conflictos de sincronización",
+  "empty": "No tenés conflictos pendientes.",
+  "explainer": "Vos y otro miembro editaron este mismo movimiento mientras alguno estaba sin conexión. Elegí cuál se queda — la otra versión se descarta.",
+  "yours": "Tu versión",
+  "theirs": "La otra versión",
+  "noCategory": "Sin categoría",
+  "keepMine": "Quedarme con la mía",
+  "keepTheirs": "Quedarme con la otra",
+  "resolved": "Conflicto resuelto.",
+  "badgeCount": "{count, plural, one {# conflicto} other {# conflictos}}",
+  "homeBanner": "{count, plural, one {Hay # movimiento con un conflicto de sincronización.} other {Hay # movimientos con un conflicto de sincronización.}}",
+  "homeBannerAction": "Revisar"
+ },
+ "syncDiagnosticsPage": {
+  "title": "Estado de sincronización",
+  "empty": "No hay mutaciones pendientes de sincronizar.",
+  "entryLabel": "{op} en {table}",
+  "ops": {
+   "insert": "Creación",
+   "update": "Edición",
+   "delete": "Borrado"
+  },
+  "statuses": {
+   "pending": "Pendiente",
+   "syncing": "Sincronizando",
+   "failed": "Falló, reintentando",
+   "conflict": "En conflicto",
+   "dead": "Sin poder sincronizar"
+  },
+  "createdAt": "Creado el {when}",
+  "attempts": "{count, plural, one {# intento} other {# intentos}}",
+  "retry": "Reintentar ahora",
+  "retried": "En cola para el próximo intento."
+ },
+ "notificationsPage": {
+  "title": "Notificaciones",
+  "enablePush": "Recibir notificaciones",
+  "enablePushMeta": "En este dispositivo. Podés apagarlas cuando quieras.",
+  "pushUnsupported": "Este navegador no soporta notificaciones push.",
+  "pushError": "No pudimos activar las notificaciones. Probá de nuevo.",
+  "noEngagementPromise": "No mandamos notificaciones para que vuelvas a abrir la app. Solo lo que elegiste acá arriba.",
+  "toggles": {
+   "budgetAlerts": {
+    "label": "Presupuesto al límite",
+    "description": "Cuando una categoría llega al 80% o se pasa"
+   },
+   "weeklySummary": {
+    "label": "Resumen semanal",
+    "description": "Los domingos, un resumen de la semana"
+   },
+   "recurringReminders": {
+    "label": "Recordatorios de recurrentes",
+    "description": "Cuando se acerca la fecha de un cobro fijo"
+   },
+   "insights": {
+    "label": "Insights",
+    "description": "Cosas que notamos sobre tu plata"
+   }
+  }
+ },
+ "importCsvPage": {
+  "title": "Importar CSV",
+  "chooseFile": "Elegir archivo CSV",
+  "weRead": "Leímos",
+  "destinationAccount": "A qué cuenta van",
+  "mapColumns": "Confirmá qué columna es cada dato.",
+  "field": {
+   "date": "Fecha",
+   "description": "Detalle",
+   "amount": "Importe"
+  },
+  "duplicatesFound": "{count, plural, =0 {No encontramos duplicados.} one {Encontramos # posible duplicado, ya excluido.} other {Encontramos # posibles duplicados, ya excluidos.}}",
+  "duplicate": "Duplicado",
+  "noDescription": "Sin detalle",
+  "importCount": "Importar {count, plural, one {# movimiento} other {# movimientos}}",
+  "imported": "{count, plural, one {Se importó # movimiento.} other {Se importaron # movimientos.}}",
+  "done": "Importación terminada.",
+  "viewTransactions": "Ver movimientos"
+ },
+ "categorizationRulesPage": {
+  "title": "Reglas de auto-categorización",
+  "empty": "Todavía no creaste ninguna regla.",
+  "newRule": "Nueva regla",
+  "created": "Regla creada",
+  "name": "Nombre",
+  "namePlaceholder": "Ej: Uber → Transporte",
+  "conditionField": "Si",
+  "conditionValue": "Contiene",
+  "thenCategory": "Asigná esta categoría",
+  "chooseCategory": "Elegir categoría",
+  "noCategoryAction": "sin categoría",
+  "meta": "Si {field} contiene \"{value}\" → {category} · se aplicó {count} veces",
+  "field": {
+   "note": "la nota",
+   "payeeName": "el comercio"
+  }
+ },
+ "tagsPayeesPage": {
+  "title": "Tags y comercios",
+  "tags": "Tags",
+  "payees": "Comercios",
+  "addTag": "Nuevo tag",
+  "addPayee": "Nuevo comercio",
+  "editTitle": "Editar",
+  "newTitle": "Nuevo",
+  "name": "Nombre"
+ },
+ "profilePage": {
+  "title": "Perfil",
+  "displayName": "Nombre visible",
+  "saved": "Nombre actualizado."
+ },
+ "exportPage": {
+  "headerTitle": "Exportar y backup",
+  "title": "Tus datos son tuyos",
+  "subtitle": "Te llevás todo cuando quieras, en un formato que se abre en cualquier lado, sin pedir permiso y sin borrar nada de acá.",
+  "whatsIncluded": "Qué se lleva el JSON",
+  "rows": {
+   "transactions": "Movimientos",
+   "accounts": "Cuentas",
+   "categories": "Categorías",
+   "tags": "Tags",
+   "payees": "Comercios",
+   "budgets": "Presupuestos",
+   "goals": "Metas",
+   "recurringRules": "Recurrentes"
+  },
+  "notIncluded": "No incluye lo que vive solo en Supabase: invitaciones, gastos compartidos con otros miembros ni tu portfolio de inversiones.",
+  "download": "Descargar backup"
+ },
+ "aboutPage": {
+  "title": "Acerca de",
+  "name": "PERZE",
+  "versionLine": "Versión {version} · se pronuncia PER-se",
+  "sourceCode": "Código fuente",
+  "sourceCodeMeta": "Se puede leer, copiar y correr en tu servidor",
+  "license": "Licencia",
+  "licenseBadge": "MIT",
+  "dataStorage": "Qué datos guardamos",
+  "dataStorageMeta": "Y cuáles nunca salen de tu teléfono",
+  "dataStorageBody": "Tus movimientos, cuentas y presupuestos viven primero en tu teléfono (IndexedDB) y se sincronizan con tu propio proyecto de Supabase cuando hay conexión. Nunca se comparten con terceros ni se usan para entrenar nada. Si autohospedás PERZE, ese servidor sos vos.",
+  "operatorVisibility": "Quién puede ver qué",
+  "operatorVisibilityMeta": "Qué ve quien administra esta instalación",
+  "madeWith": "Hecho con",
+  "madeWithBody": "Geist Sans y Geist Mono, íconos de Phosphor, y cotizaciones del BROU. Licencia MIT — el código es tuyo para leer, modificar y correr donde quieras."
+ },
+ "privacyNotice": {
+  "title": "Quién puede ver qué",
+  "who": "Esta instalación de PERZE la administra una persona, que aprueba manualmente cada acceso nuevo.",
+  "sees": "Ve: tu email, tu país y cuándo usaste la app por última vez.",
+  "neverSees": "Nunca ve: tus movimientos, saldos, cuentas ni presupuestos. Esa restricción está en la base de datos, no es una promesa.",
+  "noThirdParty": "No hay analytics de terceros: nada de esto sale de esta instalación."
+ },
+ "home": {
+  "empty": "Todavía no cargaste ningún movimiento. Registrá tu primer gasto para ver tu resumen acá.",
+  "emptyAction": "Cargar mi primer gasto",
+  "netWorth": "Patrimonio neto",
+  "showAmounts": "Mostrar montos",
+  "hideAmounts": "Ocultar montos",
+  "vsLastWeek": "vs. semana pasada",
+  "excludedAccounts": "{count} cuenta(s) sin tipo de cambio, excluida(s) del total.",
+  "convertedTotal": "Total convertido",
+  "accountsCount": "{count} cuentas",
+  "spentThisPeriod": "Gastado este período",
+  "incomeThisPeriod": "Ingresado este período",
+  "needsFxInsight": "Tenés {count, plural, one {# movimiento} other {# movimientos}} sin tipo de cambio resuelto.",
+  "budgetExceededInsight": "Superaste el presupuesto de {category} — vas al {percent}%.",
+  "budgetWarningInsight": "Vas al {percent}% del presupuesto de {category}.",
+  "seeBudgets": "Ver presupuestos",
+  "seeTransactions": "Ver movimientos",
+  "topCategoryInsight": "Tu categoría con más gasto este período es <b>{category}</b>.",
+  "recentTransactions": "Últimos movimientos",
+  "transfer": "Transferencia",
+  "movement": "Movimiento",
+  "errorWhat": "No pudimos cargar tu resumen.",
+  "privacyTooltip": "Tocá el ojo para difuminar los montos — útil en público."
+ },
+ "analyticsPage": {
+  "unavailable": "El análisis todavía no está disponible en esta versión.",
+  "errorWhat": "No pudimos calcular los indicadores del período.",
+  "empty": "Todavía no hay nada para analizar. Cargá tu primer gasto y en 7 días te mostramos la línea de patrimonio.",
+  "emptyAction": "Cargar gasto",
+  "netWorth": "Patrimonio neto",
+  "savingsRate": "Tasa de ahorro",
+  "dailySpend": "Gasto diario",
+  "savingsRatePending": "Tasa de ahorro y cashflow salen cuando cierre tu primer período. Faltan {days} días.",
+  "availableNow": "Ya se puede ver",
+  "notYet": "Todavía no",
+  "missingClosedPeriod": "Necesitan un período cerrado. Faltan {days} días.",
+  "missingMonths": "Necesitan 2 meses de historial. Faltan {days, plural, one {# día} other {# días}}.",
+  "cards": {
+   "trends": {
+    "title": "Tendencias",
+    "subtitle": "¿Gastás más que la semana pasada?"
+   },
+   "calendar": {
+    "title": "Calendario",
+    "subtitle": "¿Qué días se te va la plata?"
+   },
+   "netWorth": {
+    "title": "Patrimonio neto",
+    "subtitle": "¿Vas para arriba?"
+   },
+   "categories": {
+    "title": "Categorías",
+    "subtitle": "¿En qué se te va la plata?"
+   },
+   "merchants": {
+    "title": "Comercios",
+    "subtitle": "¿Dónde gastás más seguido?"
+   },
+   "flow": {
+    "title": "Flujo de dinero",
+    "subtitle": "De dónde viene y a dónde va"
+   },
+   "insights": {
+    "title": "Insights",
+    "subtitle": "Lo que no sabías de tu plata"
+   },
+   "currencies": {
+    "title": "Monedas",
+    "subtitle": "Cuánto patrimonio tenés en cada una"
+   },
+   "inflation": {
+    "title": "Inflación",
+    "subtitle": "Nominal vs. en pesos de hoy"
+   },
+   "weekly": {
+    "title": "Tu semana",
+    "subtitle": "Tres datos y una comparación"
+   },
+   "export": {
+    "title": "Exportar",
+    "subtitle": "Un período, en CSV"
+   },
+   "wrapped": {
+    "title": "Tu año en números",
+    "subtitle": "Doce meses, seis pantallas"
+   }
+  },
+  "gaps": {
+   "closedPeriodAnalyses": "Categorías, flujo y comercios",
+   "currencyAnalyses": "Inflación y multi-moneda"
+  }
+ },
+ "offlinePage": {
+  "message": "Sin conexión — esta pantalla todavía no se cargó una vez. Las que ya visitaste siguen andando igual."
+ },
+ "search": {
+  "title": "Buscar",
+  "close": "Cerrar buscador",
+  "hint": "⌘K o Ctrl+K para abrir",
+  "placeholder": "Buscar movimientos, cuentas, categorías…",
+  "prompt": "Escribí para buscar en tus movimientos, cuentas, categorías y comercios.",
+  "noResults": "No encontramos nada para \"{query}\".",
+  "empty": "Sin resultados.",
+  "groupActions": "Ir a",
+  "transactions": "Movimientos",
+  "accounts": "Cuentas",
+  "categories": "Categorías",
+  "merchants": "Comercios",
+  "movement": "Movimiento",
+  "noNote": "Sin nota",
+  "actions": {
+   "add": "Cargar un gasto",
+   "home": "Inicio",
+   "movements": "Movimientos",
+   "accounts": "Cuentas",
+   "analytics": "Análisis",
+   "more": "Más"
+  }
+ },
+ "currenciesPage": {
+  "back": "Volver",
+  "refresh": "Actualizar",
+  "empty": "Con una sola moneda en uso, no hace falta gestionar tipos de cambio.",
+  "emptyAction": "Volver a cuentas",
+  "noQuote": "Sin cotización — tocá para cargar a mano",
+  "manualOverride": "Override manual",
+  "noProvider": "Sin proveedor",
+  "asOf": "del {date}",
+  "today": "hoy",
+  "overrideSaved": "Override guardado para {pair}",
+  "howManyWorth": "Cuántos {base} vale 1 {quote}",
+  "ratePlaceholder": "Ej: 40",
+  "saveOverride": "Guardar override"
+ },
+ "pinKeypad": {
+  "progress": "{current} de {total} dígitos"
+ },
+ "categoryTemplate": {
+  "title": "Categorías",
+  "subtitle": "Arrancaste con la básica. Cambiala cuando quieras: no se pierde nada de lo cargado.",
+  "basicTitle": "Básica",
+  "basicCount": "{count} categorías",
+  "completeTitle": "Completa",
+  "completeCount": "{count} categorías",
+  "completeDescription": "Con subcategorías de supermercado, transporte y salud.",
+  "scratchTitle": "Empezar de cero",
+  "scratchDescription": "Las creás vos, a medida que cargás.",
+  "save": "Guardar",
+  "saved": "Categorías actualizadas"
+ },
+ "settingsPage": {
+  "yourCurrency": "Tu moneda",
+  "baseCurrency": "Moneda base",
+  "fourthTab": "Cuarto acceso del menú",
+  "closeDay": "Día de cierre",
+  "closeDayHint": "El período de presupuestos y análisis va de un día de cierre al siguiente. Aplica a todo el grupo.",
+  "closeDayRestricted": "Solo el dueño o un administrador puede cambiar el día de cierre.",
+  "dayOfMonth": "Día {day}",
+  "fxSources": "Tipos de cambio"
+ },
+ "modulesPage": {
+  "subtitle": "Lo que está apagado no aparece en ningún lado. Prendé solo lo que vayas a usar.",
+  "footnote": "Si apagás uno, sus datos quedan guardados y vuelven intactos al prenderlo.",
+  "confirmTitle": "Apagar módulo",
+  "confirmDisable": "Apagar igual",
+  "modules": {
+   "budgets": {
+    "label": "Presupuestos",
+    "description": "Un límite por categoría y cuánto te queda por día."
+   },
+   "goals": {
+    "label": "Metas",
+    "description": "Ahorrar para algo, con fecha estimada de llegada."
+   },
+   "recurring": {
+    "label": "Recurrentes",
+    "description": "Suscripciones y débitos, con aviso de aumentos."
+   },
+   "debts": {
+    "label": "Deudas y cuotas",
+    "description": "Planes de cuotas y préstamos, con lo comprometido."
+   },
+   "investments": {
+    "label": "Inversiones",
+    "description": "Portfolio, operaciones y rendimiento."
+   },
+   "family": {
+    "label": "Grupo familiar",
+    "description": "Compartir cuentas y gastos con otras personas."
+   }
+  },
+  "confirmBody": {
+   "budgets": "No tenés presupuestos activos todavía — se puede apagar sin perder nada.",
+   "goals": "No tenés metas activas todavía — se puede apagar sin perder nada.",
+   "recurring": "{count, plural, one {Tenés # recurrente cargado.} other {Tenés # recurrentes cargados.}} Van a dejar de verse, pero los movimientos ya guardados quedan intactos.",
+   "debts": "{count, plural, one {Tenés # deuda o plan de cuotas activo.} other {Tenés # deudas o planes de cuotas activos.}} Van a dejar de verse, pero los movimientos ya guardados quedan intactos.",
+   "investments": "{count, plural, one {Tenés # cuenta de inversión.} other {Tenés # cuentas de inversión.}} Van a salir del patrimonio neto, pero los datos quedan guardados.",
+   "family": "{count, plural, one {Compartís la app con # persona más.} other {Compartís la app con # personas más.}} Van a dejar de ver lo compartido hasta que lo prendas de nuevo."
+  }
+ },
+ "securityPage": {
+  "title": "Seguridad",
+  "pinLock": "Bloqueo por PIN",
+  "pinLockDescription": "Pedir un PIN para ver saldos y movimientos. Cargar un gasto nunca lo pide.",
+  "createPrompt": "Elegí un PIN de 6 dígitos",
+  "confirmPrompt": "Repetilo para confirmar",
+  "mismatch": "No coincide — probá de nuevo",
+  "pinSet": "PIN activado",
+  "biometricLock": "Desbloqueo biométrico",
+  "biometricLockDescription": "Usar Face ID, huella u otro sensor del dispositivo en vez del PIN",
+  "biometricEnabled": "Desbloqueo biométrico activado",
+  "biometricEnrollError": "No se pudo activar el sensor — probá de nuevo",
+  "password": "Contraseña",
+  "passwordDescription": "Alternativa al código por email para iniciar sesión",
+  "newPassword": "Contraseña nueva",
+  "confirmPassword": "Confirmá la contraseña",
+  "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
+  "passwordMismatch": "Las dos contraseñas no coinciden.",
+  "savePassword": "Guardar contraseña",
+  "savingPassword": "Guardando…",
+  "passwordSaved": "Contraseña actualizada"
+ },
+ "trendsPage": {
+  "title": "Tendencias",
+  "thisWeek": "Esta semana",
+  "vsLastWeek": "vs. semana pasada"
+ },
+ "categoriesAnalyticsPage": {
+  "title": "Categorías",
+  "other": "Otros"
+ },
+ "calendarAnalyticsPage": {
+  "title": "Calendario"
+ },
+ "merchantsAnalyticsPage": {
+  "title": "Comercios",
+  "empty": "Todavía no hay gastos con comercio cargado en el último período."
+ },
+ "netWorthAnalyticsPage": {
+  "title": "Patrimonio neto",
+  "current": "Patrimonio neto",
+  "last30": "{amount} en los últimos 30 días"
+ },
+ "moneyFlowPage": {
+  "title": "Flujo de dinero",
+  "needsClosedPeriod": "El flujo necesita un período cerrado para que el reparto sea real. Faltan {days} días.",
+  "empty": "Todavía no hay ingresos y gastos suficientes para armar el flujo de este período.",
+  "otherIncome": "Otros ingresos",
+  "otherExpense": "Otros gastos"
+ },
+ "inflationPage": {
+  "title": "Inflación",
+  "needsHistory": "Necesitamos 2 meses para ajustar por precios. Faltan {months} meses.",
+  "nominal": "Gastado (nominal)",
+  "adjusted": "En pesos de hoy",
+  "explainer": "El índice de precios subió {percent}% desde ese período.",
+  "noIndex": "Todavía no hay un índice de precios cargado para tu moneda — se muestra el gasto nominal sin ajuste."
+ },
+ "currencyExposurePage": {
+  "title": "Monedas",
+  "total": "Patrimonio total"
+ },
+ "insightsPage": {
+  "title": "Insights",
+  "empty": "Todavía no hay suficientes datos para generar insights este período.",
+  "streak": "Llevás {days} días seguidos registrando.",
+  "budgetPace": "A este ritmo, superás el presupuesto de {category} el {date}.",
+  "wholeHousehold": "todo el hogar"
+ },
+ "weeklySummaryPage": {
+  "title": "Tu semana",
+  "empty": "No cargaste nada esta semana. Si gastaste y no lo cargaste, se puede cargar con fecha.",
+  "emptyAction": "Cargar gasto",
+  "range": "Del {from} al {to}",
+  "mostExpensiveDay": "Día más caro",
+  "topPayee": "Dónde más fuiste",
+  "visits": "{count} visitas",
+  "biggestChange": "Lo que más cambió"
+ },
+ "wrappedPage": {
+  "needsHistory": "Tu año en números se habilita con 12 meses cerrados. Faltan {count}.",
+  "coverTitle": "Tu año en números",
+  "coverSubtitle": "Doce meses de plata, en seis pantallas.",
+  "netWorthLine": "Terminaste el año con este patrimonio.",
+  "transactionCountLine": "movimientos cargados este año.",
+  "topPayeeLine": "{visits} visitas · {amount}",
+  "noPayeeData": "Sin comercios registrados este año.",
+  "savingsRateLine": "De todo lo que entró, esto quedó.",
+  "daysActiveLine": "días activos registrando este año.",
+  "share": "Compartir",
+  "shareText": "Mi año en PERZE",
+  "back": "Volver",
+  "next": "Siguiente"
+ },
+ "exportReportsPage": {
+  "title": "Exportar",
+  "period": "Período",
+  "periodOptions": {
+   "current": "Este mes",
+   "previous": "Anterior",
+   "twoAgo": "Hace 2 meses"
+  },
+  "whatsIncluded": "Qué va adentro",
+  "transactions": "Movimientos",
+  "transactionsCount": "{count} filas · con categoría, cuenta y cotización",
+  "accountsAndBalances": "Cuentas y saldos",
+  "accountsCount": "{count} cuentas · saldo actual",
+  "needsFxNote": "Los movimientos sin cotización se exportan igual, con la columna de conversión vacía.",
+  "export": "Exportar",
+  "promise": "Tus datos son tuyos. También podés bajar un backup completo.",
+  "csvDate": "Fecha",
+  "csvKind": "Tipo",
+  "csvAccount": "Cuenta",
+  "csvCategory": "Categoría",
+  "csvPayee": "Comercio",
+  "csvAmount": "Monto",
+  "csvAmountBase": "Monto en moneda base",
+  "csvNote": "Nota",
+  "csvAccountName": "Cuenta",
+  "csvBalance": "Saldo"
+ },
+ "budgetsPage": {
+  "empty": "Todavía no cargaste ningún presupuesto.",
+  "emptyAction": "Crear presupuesto",
+  "newBudget": "Nuevo presupuesto",
+  "of": "de",
+  "wholeHousehold": "Todo el hogar",
+  "category": "Categoría",
+  "created": "Presupuesto creado",
+  "notFound": "No encontramos ese presupuesto.",
+  "back": "Volver a presupuestos",
+  "deleted": "Presupuesto eliminado",
+  "delete": "Eliminar presupuesto",
+  "remaining": "Te queda",
+  "over": "Te pasaste por"
+ },
+ "goalsPage": {
+  "empty": "Todavía no cargaste ninguna meta.",
+  "emptyAction": "Crear meta",
+  "newGoal": "Nueva meta",
+  "name": "Nombre",
+  "namePlaceholder": "Ej: Viaje a Bariloche",
+  "account": "Cuenta",
+  "chooseAccount": "Elegir cuenta",
+  "created": "Meta creada",
+  "of": "de",
+  "ofTarget": "{percent}% del objetivo",
+  "notFound": "No encontramos esa meta.",
+  "back": "Volver a metas",
+  "deleted": "Meta eliminada",
+  "delete": "Eliminar meta",
+  "remainingToTarget": "Te faltan",
+  "reached": "¡Meta alcanzada!",
+  "noAccountLinked": "Esta meta no tiene una cuenta asignada — el progreso queda en 0 hasta que elijas una.",
+  "realPace": "Ritmo real (últimos 6 meses)",
+  "estimatedArrival": "Llegada estimada",
+  "arrivalUnknown": "Sin aportes recientes",
+  "useCushion": "Usar colchón de 3 meses ({amount})"
+ },
+ "recurringPage": {
+  "empty": "Todavía no cargaste ninguna recurrente.",
+  "emptyAction": "Crear recurrente",
+  "newRule": "Nueva recurrente",
+  "name": "Nombre",
+  "namePlaceholder": "Ej: Netflix",
+  "day": "Día del mes",
+  "noCategory": "Sin categoría",
+  "created": "Recurrente creada",
+  "dayOfMonth": "Día {day}",
+  "chargedThisMonth": "Ya se cargó este mes",
+  "notYetChargedThisMonth": "Todavía no se cargó este mes",
+  "notFound": "No encontramos esta recurrente.",
+  "back": "Volver",
+  "updated": "Recurrente actualizada.",
+  "archived": "Recurrente archivada.",
+  "archive": "Archivar",
+  "committedPerMonth": "Comprometido por mes",
+  "viewCalendar": "Ver el mes en calendario"
+ },
+ "recurringCalendarPage": {
+  "title": "Calendario de recurrentes",
+  "prevMonth": "Mes anterior",
+  "nextMonth": "Mes siguiente",
+  "noneThatDay": "Nada vence este día."
+ },
+ "debtsPage": {
+  "empty": "No tenés deudas ni tarjetas con saldo pendiente.",
+  "emptyAction": "Agregar cuenta",
+  "newDebt": "Nueva deuda",
+  "name": "Nombre",
+  "namePlaceholder": "Ej: Notebook en cuotas",
+  "installmentCount": "Cantidad de cuotas",
+  "linkedAccount": "Cuenta vinculada",
+  "noLinkedAccount": "Sin cuenta vinculada",
+  "created": "Deuda creada",
+  "fromTransactionDefaultName": "Consumo en cuotas"
+ },
+ "debtDetailPage": {
+  "notFound": "No encontramos esta deuda.",
+  "remaining": "Pendiente",
+  "installmentsProgress": "{paid} de {total} cuotas pagas",
+  "paidSoFar": "Pagado hasta ahora",
+  "nextDue": "Próximo vencimiento",
+  "schedule": "Cronograma",
+  "noSchedule": "Esta deuda no tiene cuotas cargadas.",
+  "installmentNumber": "Cuota {number} de {total}"
+ },
+ "cardCyclePage": {
+  "notFound": "Esta cuenta no es una tarjeta de crédito.",
+  "dueOn": "A pagar el {date}",
+  "dueUnknown": "Sin fecha de vencimiento cargada",
+  "closesOn": "Cierra el {date} · faltan {days} días",
+  "cycleConsumptions": "Consumos del ciclo",
+  "cycleConsumptionsMeta": "{count} movimientos desde el {date}",
+  "installments": "Cuotas de períodos anteriores",
+  "recentConsumptions": "Últimos consumos",
+  "convertToInstallments": "Convertir un consumo a cuotas",
+  "noConsumptions": "No hay consumos este ciclo para convertir.",
+  "payCard": "Pagar la tarjeta"
+ },
+ "cardInstallmentsPage": {
+  "title": "Cuotas y proyección",
+  "empty": "Esta tarjeta no tiene planes de cuotas activos.",
+  "committed": "Comprometido en cuotas",
+  "summary": "{count} planes · {monthly} por mes hasta {date}",
+  "activePlans": "Planes activos",
+  "installmentMeta": "{left} de {total} cuotas pendientes · {monthly} por mes",
+  "upcomingCycles": "Próximos resúmenes",
+  "noEstimate": "Suma solo las cuotas ya comprometidas. No estima consumos nuevos."
+ },
+ "familyPage": {
+  "empty": "Todavía sos el único miembro. Invitá a alguien para compartir cuentas y gastos.",
+  "invite": "Invitar a alguien",
+  "members": "Miembros",
+  "unnamed": "Sin nombre",
+  "compare": "Comparar entre miembros",
+  "pendingInvites": "Invitaciones pendientes",
+  "pending": "Pendiente",
+  "codeInvite": "Código {code}",
+  "joined": "Te uniste al hogar",
+  "joinTitle": "Unirte a un hogar",
+  "enterCode": "Código de invitación",
+  "invalidCode": "Ese código venció o no es válido.",
+  "join": "Unirme",
+  "shareCode": "Compartí este código con la persona que invitaste.",
+  "copyCode": "Copiar código",
+  "codeCopied": "Código copiado",
+  "emailOptional": "Email (opcional)",
+  "emailOptionalHint": "Todavía no mandamos el email solos — copiá el código y compartilo vos.",
+  "generateCode": "Generar código",
+  "roles": {
+   "owner": "Dueño",
+   "admin": "Admin",
+   "member": "Miembro",
+   "viewer": "Solo lectura"
+  },
+  "mirrorBanner": "Viendo la app como {name}",
+  "exitMirror": "Salir",
+  "mirrorNoAccounts": "No hay cuentas visibles para este miembro.",
+  "mirrorNoTransactions": "No hay movimientos visibles para este miembro.",
+  "mustSettleFirst": "Este miembro tiene saldo pendiente — liquidá o condoná antes de sacarlo.",
+  "removed": "Miembro removido del hogar",
+  "remove": "Sacar a {name} del hogar"
+ },
+ "permissionsPage": {
+  "title": "Permisos y visibilidad",
+  "needsMembers": "Invitá a alguien al hogar para poder configurar qué ve cada uno.",
+  "accounts": "Cuentas",
+  "categories": "Categorías",
+  "updated": "Permisos actualizados",
+  "whoCanSee": "Quién la puede ver",
+  "privateHint": "Solo vos",
+  "householdHint": "Todo el hogar",
+  "customHint": "Elegís quién",
+  "visibility": {
+   "private": "Privada",
+   "household": "Compartida",
+   "custom": "Personalizada"
+  }
+ },
+ "splitPage": {
+  "title": "Dividir gasto",
+  "back": "Volver",
+  "equal": "Partes iguales",
+  "percent": "Porcentaje",
+  "you": "Vos",
+  "saved": "Reparto guardado"
+ },
+ "settlePage": {
+  "title": "Liquidar",
+  "allSettled": "Están al día — nadie le debe nada a nadie.",
+  "owesYou": "Te debe",
+  "youOwe": "Le debés",
+  "settle": "Liquidar",
+  "howTitle": "¿Cómo se liquidó?",
+  "methodCash": "En efectivo",
+  "methodTransfer": "Transferencia",
+  "methodForgiven": "Se lo perdono",
+  "settled": "Liquidado"
+ },
+ "comparePage": {
+  "title": "Comparar",
+  "empty": "No hay gastos compartidos en el último período cerrado."
+ },
+ "activityPage": {
+  "title": "Actividad",
+  "empty": "Todavía no hay cambios de permisos para mostrar.",
+  "granted": "{granter} le dio acceso a {member} a {subject}",
+  "revoked": "{granter} le sacó el acceso a {member} a {subject}"
+ },
+ "investmentsPage": {
+  "noPortfolio": "Todavía no tenés un portfolio de inversiones.",
+  "createPortfolio": "Crear portfolio",
+  "defaultPortfolioName": "Mi portfolio",
+  "otherAssetClass": "Otros",
+  "noPositions": "Todavía no cargaste ninguna operación.",
+  "recordTrade": "Cargar operación",
+  "newInstrument": "Crear instrumento a mano",
+  "positions": "Posiciones"
+ },
+ "newInstrumentPage": {
+  "symbol": "Símbolo",
+  "name": "Nombre",
+  "assetClass": "Clase de activo",
+  "chooseAssetClass": "Elegir clase de activo",
+  "currency": "Moneda",
+  "created": "Instrumento creado",
+  "fixedIncomeSection": "Renta fija (opcional)",
+  "maturityDate": "Fecha de vencimiento",
+  "couponRate": "Tasa de cupón anual (%)",
+  "couponFrequency": "Pagos por año"
+ },
+ "newTradePage": {
+  "buy": "Compra",
+  "sell": "Venta",
+  "instrument": "Instrumento",
+  "chooseInstrument": "Elegir instrumento",
+  "settlementAccount": "Cuenta de liquidación",
+  "quantity": "Cantidad",
+  "unitPrice": "Precio unitario",
+  "saved": "Operación guardada",
+  "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar."
+ },
+ "allocationPage": {
+  "title": "Asignación"
+ },
+ "performancePage": {
+  "title": "Rendimiento",
+  "empty": "Todavía no cargaste operaciones en esta cartera.",
+  "needsHistory": "Tu rendimiento necesita 2 movimientos de plata y 30 días. Faltan {days} días.",
+  "xirr": "XIRR anualizado",
+  "xirrExplainer": "Tasa de retorno anualizada, considerando cuándo entró y salió cada peso.",
+  "benchmarksUnavailable": "La comparación con benchmarks y con inflación todavía no está disponible: necesitan una fuente de datos de mercado que este proyecto no trae integrada."
+ },
+ "futureIncomePage": {
+  "title": "Renta futura",
+  "empty": "Ninguna de tus posiciones paga renta. Los bonos, las ONs y los plazos fijos aparecen acá con su calendario.",
+  "kind": {
+   "coupon": "Cupón",
+   "amortization": "Amortización",
+   "maturity": "Vencimiento"
+  }
+ },
+ "pricesStatusPage": {
+  "title": "Estado de los precios",
+  "empty": "Todavía no cargaste operaciones para tener precios que mostrar.",
+  "updatePrice": "Actualizar precio de {symbol}",
+  "price": "Precio ({currency})"
+ },
+ "assetClassesPage": {
+  "title": "Clases de activo",
+  "newClass": "Nueva clase",
+  "editTitle": "Editar clase",
+  "name": "Nombre",
+  "global": "Global",
+  "globalEditNote": "Es una clase global. Guardar crea tu propia copia — la plantilla original no se toca.",
+  "reorder": "Reordenar {name}"
+ },
+ "login": {
+  "subtitle": "Entrá con tu email y contraseña.",
+  "emailPlaceholder": "tu@email.com",
+  "passwordPlaceholder": "Tu contraseña",
+  "showPassword": "Mostrar contraseña",
+  "hidePassword": "Ocultar contraseña",
+  "submit": "Entrar",
+  "signingIn": "Entrando…",
+  "forgotPassword": "Olvidé mi contraseña",
+  "createAccount": "Crear una cuenta"
+ },
+ "forgotPassword": {
+  "back": "Volver",
+  "title": "Recuperar tu contraseña",
+  "subtitle": "Te mandamos un link para elegir una nueva.",
+  "emailPlaceholder": "tu@email.com",
+  "submit": "Enviar link",
+  "sending": "Enviando…",
+  "sentTitle": "Revisá tu email",
+  "sentSubtitle": "Si esa cuenta existe, te llegó un link para elegir una contraseña nueva.",
+  "backToLogin": "Volver a entrar",
+  "linkExpired": "Ese link ya no sirve — pedí uno nuevo."
+ },
+ "resetPassword": {
+  "title": "Elegí una contraseña nueva",
+  "subtitle": "Vas a usarla para entrar la próxima vez.",
+  "passwordLabel": "Contraseña nueva",
+  "passwordPlaceholder": "Elegí una contraseña",
+  "confirmPasswordLabel": "Confirmá la contraseña",
+  "confirmPasswordPlaceholder": "Repetí la contraseña",
+  "showPassword": "Mostrar contraseña",
+  "hidePassword": "Ocultar contraseña",
+  "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
+  "passwordMismatch": "Las dos contraseñas no coinciden.",
+  "submit": "Guardar contraseña",
+  "submitting": "Guardando…"
+ },
+ "auth": {
+  "errors": {
+   "invalid_credentials": "No encontramos una cuenta con esa combinación de email y contraseña — probá con el código por email en vez de la contraseña.",
+   "weak_password": "La contraseña necesita al menos 8 caracteres, con una mayúscula, una minúscula y un número.",
+   "rate_limited": "Demasiados intentos seguidos — esperá un minuto y probá de nuevo.",
+   "other": "Algo falló — probá de nuevo en un momento."
+  }
+ }
 }

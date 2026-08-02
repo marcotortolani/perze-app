@@ -1,5 +1,8 @@
-import { useId } from "react";
+"use client";
+
+import { useId, useState } from "react";
 import type { ChangeEvent, CSSProperties, ElementType } from "react";
+import { IconButton } from "./IconButton";
 
 export interface InputProps {
   label?: string | undefined;
@@ -17,6 +20,12 @@ export interface InputProps {
   /** `"password"` para contraseñas (§1, acceso controlado) — nunca para montos, eso sigue siendo el Keypad. Default `"text"`. */
   type?: "text" | "email" | "password" | undefined;
   autoComplete?: string | undefined;
+  /** Campo mostrado pero no editable (p. ej. el email en `/onboarding/register`, ya fijado por la sesión). Texto en `--text-secondary` sobre `--surface-2` para leerse como apagado, no como error. */
+  readOnly?: boolean | undefined;
+  disabled?: boolean | undefined;
+  /** Solo con `type="password"` — agrega el botón ver/ocultar (target 44×44) exigido por cualquier campo de contraseña del flujo de acceso controlado. */
+  revealable?: boolean | undefined;
+  revealLabels?: { show: string; hide: string } | undefined;
 }
 
 /**
@@ -30,11 +39,15 @@ export interface InputProps {
  * en el hint solo cuando `invalid` (un hint normal no es una alerta — se
  * leería como interrupción cada vez que aparece sin que haya pasado nada).
  */
-export function Input({ label, hint, invalid = false, multiline = false, style, id, ...rest }: InputProps) {
+export function Input({ label, hint, invalid = false, multiline = false, style, id, readOnly = false, disabled = false, revealable = false, revealLabels, type = "text", ...rest }: InputProps) {
   const Tag: ElementType = multiline ? "textarea" : "input";
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const hintId = hint ? `${inputId}-hint` : undefined;
+  // Solo tiene efecto si `revealable` && `type === "password"` — para
+  // cualquier otro campo el estado queda sin usar.
+  const [revealed, setRevealed] = useState(false);
+  const canReveal = revealable && type === "password";
   return (
     <label style={{ display: "block" }} htmlFor={inputId}>
       {label ? (
@@ -51,27 +64,42 @@ export function Input({ label, hint, invalid = false, multiline = false, style, 
           {label}
         </span>
       ) : null}
-      <Tag
-        {...rest}
-        id={inputId}
-        aria-invalid={invalid || undefined}
-        aria-describedby={hintId}
-        style={{
-          width: "100%",
-          minHeight: multiline ? 88 : 48,
-          padding: multiline ? "12px 14px" : "0 14px",
-          background: "var(--surface-3)",
-          color: "var(--text-primary)",
-          border: `1px solid ${invalid ? "var(--critical)" : "var(--border)"}`,
-          borderRadius: "var(--radius-input)",
-          fontFamily: "var(--font-sans)",
-          fontSize: 16,
-          lineHeight: "24px",
-          outline: "none",
-          resize: multiline ? "vertical" : undefined,
-          ...style,
-        }}
-      />
+      <div style={{ position: "relative" }}>
+        <Tag
+          {...rest}
+          type={canReveal && revealed ? "text" : type}
+          id={inputId}
+          readOnly={readOnly}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-describedby={hintId}
+          style={{
+            width: "100%",
+            minHeight: multiline ? 88 : 48,
+            padding: multiline ? "12px 14px" : `0 ${canReveal ? 44 : 14}px 0 14px`,
+            background: readOnly || disabled ? "var(--surface-2)" : "var(--surface-3)",
+            color: readOnly || disabled ? "var(--text-secondary)" : "var(--text-primary)",
+            border: `1px solid ${invalid ? "var(--critical)" : "var(--border)"}`,
+            borderRadius: "var(--radius-input)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 16,
+            lineHeight: "24px",
+            outline: "none",
+            resize: multiline ? "vertical" : undefined,
+            ...style,
+          }}
+        />
+        {canReveal ? (
+          <IconButton
+            icon={revealed ? "eye-off" : "eye"}
+            ariaLabel={revealed ? (revealLabels?.hide ?? "Ocultar contraseña") : (revealLabels?.show ?? "Mostrar contraseña")}
+            onClick={() => setRevealed((v) => !v)}
+            size={40}
+            iconSize={18}
+            style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)" }}
+          />
+        ) : null}
+      </div>
       {hint ? (
         <span
           id={hintId}

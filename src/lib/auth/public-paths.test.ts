@@ -16,6 +16,10 @@ describe("isPublicPath (B1)", () => {
     expect(isPublicPath("/offline")).toBe(true);
     expect(isPublicPath("/api/fx")).toBe(true);
     expect(isPublicPath("/dev/components")).toBe(true);
+    // C7 — solución de transición (docs/mejora-auth-oauth-y-email.md § 0.1)
+    expect(isPublicPath("/login")).toBe(true);
+    expect(isPublicPath("/forgot-password")).toBe(true);
+    expect(isPublicPath("/reset-password")).toBe(true);
   });
 
   it("bloquea todo lo demás, incluido lo que arranca parecido a una ruta pública", () => {

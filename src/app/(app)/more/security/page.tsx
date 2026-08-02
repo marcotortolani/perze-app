@@ -6,15 +6,11 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { AppHeader, Button, Icon, Input, PinKeypad, Sheet, Switch } from "@/design-system";
 import { usePinStore } from "@/stores/pin-store";
-import { setOwnPassword } from "@/features/auth/password-auth";
+import { setOwnPassword, translateAuthError } from "@/features/auth/password-auth";
+import { PASSWORD_PATTERN } from "@/features/auth/password-rules";
 import { isBiometricAvailable, registerBiometric } from "@/lib/security/webauthn";
 
 const PIN_LENGTH = 6;
-
-// Mismo criterio que `password_requirements = lower_upper_letters_digits`
-// en `config.toml` (E15/E16) — validar acá evita el viaje de red solo para
-// enterarse de que falta un dígito.
-const PASSWORD_VALID = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 /**
  * L6 (ajustes) — activar/desactivar el bloqueo por PIN. Apagado por
@@ -110,7 +106,7 @@ export default function SecurityPage() {
 
   const handleSavePassword = async () => {
     if (savingPassword) return;
-    if (!PASSWORD_VALID.test(newPassword)) {
+    if (!PASSWORD_PATTERN.test(newPassword)) {
       setPasswordError(t("securityPage.passwordRequirements"));
       return;
     }
@@ -120,9 +116,9 @@ export default function SecurityPage() {
     }
     setSavingPassword(true);
     try {
-      const { error } = await setOwnPassword(newPassword);
-      if (error) {
-        setPasswordError(error);
+      const result = await setOwnPassword(newPassword);
+      if (result.errorCode) {
+        setPasswordError(translateAuthError(result, t as (key: string) => string));
         return;
       }
       setPasswordSheetOpen(false);

@@ -167,7 +167,14 @@ site_url = "https://perze.tortolani.cc"
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # localhost queda para poder seguir probando el login OAuth con `pnpm dev` contra el proyecto remoto.
-additional_redirect_urls = ["https://perze.tortolani.cc", "http://localhost:3000", "http://127.0.0.1:3000"]
+# Comodín `/**` — `emailRedirectTo`/`redirectTo` ahora apuntan a `/auth/callback`
+# con querystring (`?next=...`), no a la raíz pelada; sin el comodín Supabase
+# rechaza esas URLs por no matchear "exacto" (C7, fix del magic link roto).
+additional_redirect_urls = [
+  "https://perze.tortolani.cc/**",
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

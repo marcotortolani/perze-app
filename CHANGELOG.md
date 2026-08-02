@@ -6,6 +6,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.7.0] — 2026-08-02
+
+Arregla la causa raíz de que el link de verificación no iniciara sesión, y agrega una vía de
+acceso con contraseña — registro, login y recuperación — mientras no haya Google Auth ni Resend
+con plantilla propia. Es una solución de transición documentada como tal
+(`docs/mejora-auth-oauth-y-email.md` § 0.1): el diseño real de A2/A3/A4 sigue siendo sin
+contraseñas, y este flujo se revierte en un solo movimiento cuando esas dos piezas estén.
+
+### Corregido — el link del mail volvía a pedir el email, ahora sin señal de qué pasó
+
+- **Causa raíz**: `signInWithOtp` no pasaba `emailRedirectTo`, así que GoTrue armaba el link con
+  el `site_url` pelado. Un token PKCE ahí vuelve como `?code=...` a la raíz del sitio — en el
+  query string, no en el fragment — y `src/proxy.ts` lo descartaba (`url.search = ""`) antes de
+  que nadie lo canjeara. El código se perdía sin que la app pudiera saber si el mail se había
+  validado o no
+- `signInWithOtp` ahora pasa `emailRedirectTo` apuntando a `/auth/callback`, que ya sabía canjear
+  `code`/`token_hash` pero nunca era el destino real del link
+- `src/proxy.ts` reenvía a `/auth/callback` conservando el query completo apenas detecta
+  `code`/`token_hash`/`error_code`, cualquiera sea el pathname — red de seguridad para los links
+  ya enviados con el `redirect_to` viejo
+- `additional_redirect_urls` en Supabase Auth pasa a comodín (`/**`): un link con querystring no
+  matcheaba la URL exacta que exigía la config anterior
+
+### Agregado — registro con contraseña, login y recuperación (transición)
+
+- `/onboarding/register` — nombre y contraseña (con confirmación y ver/ocultar), destino real del
+  link ya canjeado. País y moneda siguen siendo A4 (`/onboarding/country`), sin duplicar nada
+- `/login` — email y contraseña para quien ya se registró; `/forgot-password` → `/reset-password`
+  para recuperarla (`resetPasswordForEmail`, mismo canje de `/auth/callback` que ya sabía manejar
+  `recovery`)
+- Cookie `perze_registered` (`lib/auth/registered-cookie.ts`): sin sesión viva, decide entre
+  `/login` (ya hubo una cuenta en este dispositivo) y `/onboarding` (primera vez) —
+  `src/proxy.ts` y `OnboardingGate` la consultan por igual
+- El código de 6 dígitos de A3 no se borró: queda detrás de `NEXT_PUBLIC_AUTH_OTP_CODE` (apagado
+  por default), listo para reactivarse con una plantilla de mail propia
+- `Input` (design system) suma `readOnly`, `disabled` y `revealable` — el toggle ver/ocultar
+  contraseña que hasta ahora no existía en ningún campo, ni en `more/security`
+- Errores de `signInWithPassword`/`setOwnPassword`/`requestPasswordReset` pasan a códigos
+  tipados + `translateAuthError()`, traducidos en ES/EN/PT (antes hardcodeados en español)
+
+### Corregido — de paso
+
+- Loop infinito `/pending` ↔ `/onboarding`: `OnboardingGate` no eximía `/pending`, así que un
+  usuario sin aprobar y sin household local rebotaba entre las dos pantallas sin parar
+- `profiles.country` nunca se escribía pese a estar documentado como completado en A4 — la
+  métrica `byCountry` del panel de operador leía siempre "desconocido". Ahora se escribe al
+  confirmar el país en `/onboarding/country`
+
 ## [0.6.1] — 2026-08-01
 
 Tres fixes sobre el acceso controlado de v0.6.0, encontrados probando el registro real del

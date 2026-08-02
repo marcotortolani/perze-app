@@ -51,6 +51,45 @@ reales:
   hecho lo anterior: registro → mail → código tipeado Y link clickeado →
   `/pending` → aprobación desde el panel del operador → onboarding.
 
+## 0.1 Solución de transición: registro con contraseña, `/login`, `/forgot-password`
+
+> **Esto es temporal y contradice el diseño a propósito.** No se toca de
+> nuevo por accidente — se revierte en un solo movimiento cuando este
+> documento haya resuelto Google Auth (§ 2) y Resend con plantilla propia
+> (§ 5), momento en el que el flujo real vuelve a ser el que ya describen
+> `docs/design/bloque-a-onboarding.html` (A2/A3/A4) y `CLAUDE.md`: **sin
+> contraseñas, ni acá ni nunca**, login y signup indistinguibles en A2.
+
+El 2026-08-02 el link del mail seguía sin funcionar en producción — GoTrue
+devolvía `?code=...` a la raíz del sitio y `src/proxy.ts` lo descartaba
+antes de canjearlo (fix aparte, ver el commit que acompaña este cambio).
+Mientras ese fix no se probaba en un mail real y no había ni plantilla
+propia (§ 0, bloqueada en plan free) ni el operador de la instancia podía
+entrar (contraseña nunca fijada), se agregó una vía de acceso adicional:
+
+- **`/onboarding/register`** — destino del link ya canjeado. Pide nombre y
+  contraseña (con confirmación); el email queda fijo, tomado de la sesión.
+  País y moneda siguen siendo A4 (`/onboarding/country`), sin duplicar nada.
+- **`/login`** — email + contraseña, para quien ya se registró. `src/proxy.ts`
+  y `OnboardingGate` deciden entre esta pantalla y `/onboarding` con la
+  cookie `perze_registered` (`src/lib/auth/registered-cookie.ts`).
+- **`/forgot-password` → `/reset-password`** — dispara
+  `resetPasswordForEmail` (tipo `recovery`, mismo canje en
+  `auth/callback/route.ts` que ya sabía manejar `token_hash`/`code`) y
+  define la contraseña nueva.
+- El código de 6 dígitos (A3) **no se borró**: queda detrás de
+  `NEXT_PUBLIC_AUTH_OTP_CODE` (default apagado), listo para reactivarse
+  cuando haya plantilla de mail con código propio.
+
+**Al volver al flujo de diseño**, hay que: apagar/borrar `/login`,
+`/onboarding/register`, `/forgot-password`, `/reset-password`; borrar la
+cookie `perze_registered` y su lectura en `proxy.ts`/`OnboardingGate`;
+quitar el `emailRedirectTo` a `/onboarding/register` de `signInWithOtp` (que
+vuelve a apuntar donde corresponda una vez que el link haga login/signup
+directo); y decidir si `profiles.registration_completed_at` se elimina en
+una migración nueva o se deja de escribir sin más (es append-only, no se
+edita la migración que la creó).
+
 ## 1. Estado actual (por qué esto no es un bug)
 
 `CLAUDE.md` § "Orden de A2" cierra una decisión de producto: la pantalla de

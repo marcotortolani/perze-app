@@ -1748,6 +1748,7 @@ export type Database = {
           is_app_admin: boolean
           last_seen_at: string | null
           locale: string
+          registration_completed_at: string | null
           settings: Json
           timezone: string | null
         }
@@ -1764,6 +1765,7 @@ export type Database = {
           is_app_admin?: boolean
           last_seen_at?: string | null
           locale?: string
+          registration_completed_at?: string | null
           settings?: Json
           timezone?: string | null
         }
@@ -1780,6 +1782,7 @@ export type Database = {
           is_app_admin?: boolean
           last_seen_at?: string | null
           locale?: string
+          registration_completed_at?: string | null
           settings?: Json
           timezone?: string | null
         }
