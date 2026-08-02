@@ -6,6 +6,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.7] — 2026-08-02
+
+### Corregido — el detalle de movimiento se veía encimado con la lista en mobile
+
+- `Modal` (`position: fixed; inset: 0`) no tenía color de fondo — funcionaba bien para
+  `/add` y `/accounts/new` porque esas pantallas pintan el suyo propio vía `ScreenShell`,
+  pero el detalle de movimiento no usa `ScreenShell` (asume el fondo de `(app)/layout.tsx`,
+  de donde normalmente vive). En mobile, `transactions/layout.tsx` apila lista y detalle en
+  el mismo DOM (`<>{children}{detail}</>`) — sin un fondo sólido en el medio, el texto de
+  la lista de atrás se transparentaba a través del modal. Se agrega `background: var(--page)`
+  al `Modal` compartido (y `overflowY: auto` para contenido más alto que el viewport, que
+  antes no tenía scroll propio) — beneficia a las tres rutas que lo usan, no solo a esta
+
 ## [0.9.6] — 2026-08-02
 
 ### Corregido — el monto se salía de la pantalla en `/add` con números grandes
