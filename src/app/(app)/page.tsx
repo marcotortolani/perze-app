@@ -111,6 +111,31 @@ export default function HomePage() {
   const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
   const wantsUsd = netWorthDisplayCurrency === "usd" && household?.baseCurrency !== "USD";
   const netWorthUsd = useNetWorthInCurrency(household?.id, netWorth.data?.netWorth, wantsUsd ? "USD" : null);
+
+  // Gastado/ingresado del período, en moneda base — se calcula acá arriba
+  // (antes del `return` de loading) para poder pedir la conversión a USD
+  // con el mismo hook y el mismo toggle que el patrimonio, sin romper las
+  // reglas de hooks. `amountBase` (ya convertido al guardar): los
+  // movimientos `needs_fx` (amountBase null) quedan afuera, nunca se
+  // cuentan como si valieran 0.
+  const baseCurrencyForPeriod = household?.baseCurrency ?? "UYU";
+  const periodStart = startOfPeriod(new Date(), household?.periodStartDay || 1).toISOString();
+  const spendByCategory = new Map<string, bigint>();
+  let expenseThisPeriod = zero(baseCurrencyForPeriod);
+  let incomeThisPeriod = zero(baseCurrencyForPeriod);
+  for (const tx of transactions ?? []) {
+    if (tx.occurredAt < periodStart || tx.kind === "transfer" || tx.amountBase === null) continue;
+    const m = money(tx.amountBase, baseCurrencyForPeriod);
+    if (tx.kind === "expense") {
+      expenseThisPeriod = add(expenseThisPeriod, m);
+      if (tx.categoryId) spendByCategory.set(tx.categoryId, (spendByCategory.get(tx.categoryId) ?? 0n) + tx.amountBase);
+    } else if (tx.kind === "income") {
+      incomeThisPeriod = add(incomeThisPeriod, m);
+    }
+  }
+  const expenseThisPeriodUsd = useNetWorthInCurrency(household?.id, expenseThisPeriod, wantsUsd ? "USD" : null);
+  const incomeThisPeriodUsd = useNetWorthInCurrency(household?.id, incomeThisPeriod, wantsUsd ? "USD" : null);
+
   const budgetAlerts = useBudgetAlerts();
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const privacy = usePrivacyStore((s) => s.privacyMode);
@@ -144,24 +169,6 @@ export default function HomePage() {
   const baseCurrency = household.baseCurrency;
   const currencies = new Set(allAccounts.map((a) => a.currencyCode));
   const now = new Date();
-
-  // Estado del mes: gasto vs. ingreso del período, en moneda base. Se usa
-  // `amountBase` (ya convertido al guardar) — los movimientos `needs_fx`
-  // (amountBase null) quedan afuera, nunca se cuentan como si valieran 0.
-  const periodStart = startOfPeriod(now, household.periodStartDay || 1).toISOString();
-  let expenseThisPeriod = zero(baseCurrency);
-  let incomeThisPeriod = zero(baseCurrency);
-  const spendByCategory = new Map<string, bigint>();
-  for (const tx of allTransactions) {
-    if (tx.occurredAt < periodStart || tx.kind === "transfer" || tx.amountBase === null) continue;
-    const m = money(tx.amountBase, baseCurrency);
-    if (tx.kind === "expense") {
-      expenseThisPeriod = add(expenseThisPeriod, m);
-      if (tx.categoryId) spendByCategory.set(tx.categoryId, (spendByCategory.get(tx.categoryId) ?? 0n) + tx.amountBase);
-    } else if (tx.kind === "income") {
-      incomeThisPeriod = add(incomeThisPeriod, m);
-    }
-  }
 
   // Sparkline del héroe: flujo neto (ingreso − gasto) acumulado de los
   // últimos 14 días, en base a movimientos reales — no un historial de
@@ -226,7 +233,7 @@ export default function HomePage() {
         <Banner
           status="error"
           message={t("conflictsPage.homeBanner", { count: conflicts.length })}
-          action={{ label: t("conflictsPage.homeBannerAction"), onClick: () => router.push("/more/conflicts") }}
+          action={{ label: t("conflictsPage.homeBannerAction"), onClick: () => router.push("/more/sync") }}
           style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
         />
       ) : null}
@@ -290,14 +297,20 @@ export default function HomePage() {
           onClick={() => router.push(`/transactions?kind=expense&from=${encodeURIComponent(periodStart)}`)}
           style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
-          <StatTile label={t("home.spentThisPeriod")} value={<FitStatValue text={formatAmountCompact(expenseThisPeriod, { showSign: false })} />} />
+          <StatTile
+            label={t("home.spentThisPeriod")}
+            value={<FitStatValue text={formatAmountCompact(wantsUsd && expenseThisPeriodUsd.data ? expenseThisPeriodUsd.data : expenseThisPeriod, { showSign: false })} />}
+          />
         </button>
         <button
           type="button"
           onClick={() => router.push(`/transactions?kind=income&from=${encodeURIComponent(periodStart)}`)}
           style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
-          <StatTile label={t("home.incomeThisPeriod")} value={<FitStatValue text={formatAmountCompact(incomeThisPeriod, { showSign: false })} />} />
+          <StatTile
+            label={t("home.incomeThisPeriod")}
+            value={<FitStatValue text={formatAmountCompact(wantsUsd && incomeThisPeriodUsd.data ? incomeThisPeriodUsd.data : incomeThisPeriod, { showSign: false })} />}
+          />
         </button>
       </section>
 

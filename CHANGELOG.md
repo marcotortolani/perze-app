@@ -6,6 +6,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.9] — 2026-08-02
+
+### Agregado — "gastado"/"ingresado este período" también respetan el toggle de moneda del home
+
+- El toggle base⇄USD del patrimonio neto ahora también convierte los dos `StatTile` de
+  "gastado"/"ingresado este período" — antes solo se aplicaba a la cifra héroe. Mismo criterio
+  de `needs_fx`: si no hay cotización hoy, cada tile cae a la moneda base sin inventar un valor
+
 ## [0.9.8] — 2026-08-02
 
 ### Agregado — clamp de tamaño en "gastado"/"ingresado este período" del home + clickeables
