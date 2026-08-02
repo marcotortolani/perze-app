@@ -16,7 +16,7 @@ export default function InterceptedTransactionDetailPage({ params }: { params: P
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   if (isSplit) return <TransactionDetailPage params={params} />;
   return (
-    <Modal>
+    <Modal contained>
       <TransactionDetailPage params={params} />
     </Modal>
   );

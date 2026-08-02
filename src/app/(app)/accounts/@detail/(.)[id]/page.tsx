@@ -9,7 +9,7 @@ export default function InterceptedAccountDetailPage({ params }: { params: Promi
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   if (isSplit) return <AccountDetailPage params={params} />;
   return (
-    <Modal>
+    <Modal contained>
       <AccountDetailPage params={params} />
     </Modal>
   );

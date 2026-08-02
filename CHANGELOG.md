@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.14] — 2026-08-02
+
+### Corregido — el detalle de cuenta ocupaba el 100% del ancho sin control en mobile
+
+- Mismo caso que el detalle de movimiento, pero del lado del padding/ancho máximo en vez del
+  fondo: el detalle de cuenta no usa `ScreenShell` (asume el centrado y el padding lateral
+  que le da `(app)/layout.tsx` normalmente), así que interceptado en `Modal` quedaba pegado
+  borde a borde. Nueva prop `contained` en `Modal` — replica el padding y el
+  `--content-max-width` centrado que la pantalla pierde al salir del shell. Se activa en los
+  dos detalles que lo necesitan (cuenta, movimiento); `/add` y `/accounts/new` quedan igual
+  que antes porque ya se centran solos vía `ScreenShell`
+
 ## [0.9.13] — 2026-08-02
 
 ### Agregado — separador decimal y formato de fecha configurables en Ajustes
