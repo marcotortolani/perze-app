@@ -72,10 +72,11 @@ export function AmountScrubber({ value, step = 1000n, onChange, onOpenKeypad, st
     >
       {/* `fit` necesita un contenedor de ancho real para medir contra —
           `inline-flex` se ajustaba al contenido y nunca podía saber cuánto
-          espacio había. El 90% (en vez de 100%) es el padding pedido: dejar
-          un margen fijo a los costados en vez de que el texto llegue al
-          borde. */}
-      <Amount value={value} size="hero-xl" showSign={false} mutedDecimals fit style={{ width: "90%" }} />
+          espacio había. Piso más bajo que el default (35% en vez de 55%):
+          esta es la única cifra que el usuario construye tecla a tecla y
+          sin cota superior — tiene que entrar siempre, completa, sin
+          scroll ni corte, aunque se vea chica en el extremo. */}
+      <Amount value={value} size="hero-xl" showSign={false} mutedDecimals fit fitFloor={0.35} style={{ width: "100%" }} />
     </div>
   );
 }

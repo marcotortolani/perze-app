@@ -130,6 +130,9 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
         display: "flex",
         alignItems: "center",
         background: "var(--page)",
+        // Mismo color que la página de atrás — sin este hairline no se ve
+        // dónde empieza el tab bar.
+        borderTop: "var(--border-hairline) solid var(--border)",
         ...style,
       }}
     >

@@ -117,7 +117,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
-      <IconButton icon="chevron-left" ariaLabel={t("transactions.detail.back")} onClick={() => router.push("/transactions")} style={{ alignSelf: "flex-start", margin: -11 }} />
+      {/* `router.back()`, no `push("/transactions")`: la ruta ya está montada
+          por detrás del slot @detail, así que un push blando no desmonta el
+          interceptor — no pasa nada visible, pero la entrada se apila en el
+          historial y el gesto de volver después necesita dos swipes. */}
+      <IconButton icon="chevron-left" ariaLabel={t("transactions.detail.back")} onClick={() => router.back()} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
         <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />

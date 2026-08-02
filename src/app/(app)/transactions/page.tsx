@@ -281,7 +281,11 @@ export default function MovementsPage() {
       {items.length === 0 ? (
         <EmptyState message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
       ) : (
-        <div ref={parentRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative" }}>
+        <div
+          ref={parentRef}
+          className="pb-[calc(var(--block-gap)+18px)] lg:pb-0"
+          style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative" }}
+        >
           <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = items[virtualRow.index];

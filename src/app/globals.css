@@ -710,3 +710,19 @@
     background: var(--zmark-ink);
   }
 }
+
+/* `input[type="date"]` en WebKit/Blink trae su propio ancho mínimo (los tres
+   campos internos + el ícono de calendario) que ignora `width: 100%` — el
+   control se desborda de su caja aunque el ancestro esté bien dimensionado.
+   `min-width: 0` sobre el control MISMO (no solo sobre un ancestro flex) es
+   el arreglo estándar para un control nativo que se niega a encogerse. */
+input[type="date"] {
+  min-width: 0;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+}

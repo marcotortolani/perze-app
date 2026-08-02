@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.19] — 2026-08-02
+
+### Corregido — la cifra héroe nunca encogía (`fit` no funcionaba), chevron de volver y tab bar
+
+- **El mecanismo `fit` de `Amount` nunca funcionó, en ningún lado.** El `<span>` interno que
+  mide el ancho del texto no tenía `display` explícito — quedaba `inline`, y una caja
+  `inline` da `scrollWidth: 0` en Blink/WebKit al medirla desde JS. `fitScale()` recibía
+  siempre 0 y devolvía la escala anterior (1) sin cambios: los números nunca se encogían,
+  se cortaban por los bordes cuando no entraban. El arreglo es una línea (`display:
+  inline-block` en el span medido) más una nueva prop `fitFloor` para pisos custom — el
+  keypad de captura (`AmountScrubber`, sin cota superior en la cifra que el usuario está
+  tecleando) pasa a un piso de 35% en vez del 55% general, para que un monto de 9+ dígitos
+  siga entrando completo en un teléfono angosto
+- El chevron de "volver" en el detalle de un movimiento no hacía nada visible: usaba
+  `router.push("/transactions")` hacia una ruta que ya estaba montada por detrás del slot
+  interceptor `@detail`, así que Next no desmontaba nada pero sí apilaba una entrada en el
+  historial — de ahí que el gesto de volver necesitara después dos swipes en vez de uno.
+  Ahora usa `router.back()`, el mismo patrón que el resto de las pantallas interceptadas
+- El tab bar no tenía separación visual del fondo de la página (mismo color) — ahora lleva
+  un hairline superior. Y en `/transactions` específicamente se veía más alto que en el
+  resto: su scroller virtualizado llena exacto la caja de `<main>` y por eso nunca scrollea
+  a través del padding de despeje del FAB, que quedaba como una banda fija pegada al tab
+  bar. Ese padding pasa a vivir dentro del propio scroller de la pantalla en vez de en
+  `<main>`, igual que en el resto de las pantallas
+- La fecha de nacimiento del perfil seguía desbordando el ancho de la página. El arreglo
+  anterior (`minWidth: 0` en el `<label>` de `Input`) partía de un diagnóstico equivocado —
+  ese contenedor es flex en columna, y `min-width` solo gobierna el eje principal, que ahí
+  es el vertical. La causa real es que `input[type="date"]` trae su propio ancho mínimo en
+  WebKit/Blink que ignora `width: 100%`; el arreglo va sobre el control mismo, en
+  `globals.css`
+
 ## [0.9.18] — 2026-08-02
 
 ### Corregido — navegación lenta entre tabs en la PWA instalada

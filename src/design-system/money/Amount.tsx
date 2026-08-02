@@ -39,13 +39,13 @@ const FIT_EPSILON = 0.01;
  * ancho medido a la escala anterior (`naturalWidthAtScale1` ya viene
  * normalizado a escala 1 — ver el call site). Pura para poder testearla
  * sin DOM. Nunca sube de 1 (no agranda una cifra chica) y nunca baja de
- * `FIT_FLOOR`. Devuelve `previousScale` sin cambios si la diferencia es
- * menor al epsilon, para no oscilar entre renders.
+ * `floor` (default `FIT_FLOOR`). Devuelve `previousScale` sin cambios si
+ * la diferencia es menor al epsilon, para no oscilar entre renders.
  */
-export function fitScale(containerWidth: number, naturalWidthAtScale1: number, previousScale: number): number {
+export function fitScale(containerWidth: number, naturalWidthAtScale1: number, previousScale: number, floor: number = FIT_FLOOR): number {
   if (containerWidth <= 0 || naturalWidthAtScale1 <= 0) return previousScale;
   const next = Math.min(1, containerWidth / naturalWidthAtScale1);
-  const clamped = Math.max(FIT_FLOOR, next);
+  const clamped = Math.max(floor, next);
   return Math.abs(clamped - previousScale) < FIT_EPSILON ? previousScale : clamped;
 }
 
@@ -77,6 +77,8 @@ export interface AmountProps {
    * padre con `max-width`), no uno intrínseco.
    */
   fit?: boolean | undefined;
+  /** Piso de `fit` cuando el default (55%) no alcanza — ver `AmountScrubber`. */
+  fitFloor?: number | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -95,6 +97,7 @@ export function Amount({
   mutedDecimals = false,
   privacy = false,
   fit = false,
+  fitFloor = FIT_FLOOR,
   style,
   ...rest
 }: AmountProps) {
@@ -130,14 +133,14 @@ export function Amount({
       // dividir por la escala actual recupera el ancho "natural" (100%) sin
       // necesitar un nodo de medición oculto ni un flash a tamaño completo.
       const naturalWidth = inner.scrollWidth / scale;
-      setScale((prev) => fitScale(containerWidth, naturalWidth, prev));
+      setScale((prev) => fitScale(containerWidth, naturalWidth, prev, fitFloor));
     };
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(outer);
     return () => observer.disconnect();
-  }, [fit, scale, intFormatted, fracPart, symbol]);
+  }, [fit, fitFloor, scale, intFormatted, fracPart, symbol]);
 
   const inner = (
     <span
@@ -147,6 +150,11 @@ export function Amount({
         fontVariantNumeric: tabular ? "tabular-nums" : "proportional-nums",
         color,
         whiteSpace: "nowrap",
+        // `inline-block` es lo que hace que `scrollWidth` mida algo: una
+        // caja `inline` (el default) siempre da 0 en Blink/WebKit cuando se
+        // mide desde JS, lo que rompía TODO el mecanismo de `fit` en
+        // silencio (la escala nunca bajaba de 1, sin importar el contenedor).
+        ...(fit ? { display: "inline-block" } : null),
         ...SIZES[size],
         ...(fit ? { fontSize: `calc(${SIZES[size]!.fontSize} * ${scale})`, lineHeight: `calc(${SIZES[size]!.lineHeight} * ${scale})` } : null),
         filter: privacy ? "blur(8px)" : "none",
