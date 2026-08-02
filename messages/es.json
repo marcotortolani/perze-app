@@ -460,11 +460,6 @@
    "emailPlaceholder": "tu@email.com",
    "sendLink": "Enviar link de acceso",
    "sendingLink": "Enviando…",
-   "passwordPlaceholder": "Tu contraseña",
-   "signInWithPassword": "Iniciar sesión",
-   "signingIn": "Entrando…",
-   "preferPassword": "Prefiero usar mi contraseña",
-   "preferCode": "Prefiero el código por email",
    "loadingDemo": "Cargando datos de ejemplo…",
    "tryDemo": "Probar con datos de ejemplo",
    "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
@@ -959,7 +954,10 @@
   "closeDayHint": "El período de presupuestos y análisis va de un día de cierre al siguiente. Aplica a todo el grupo.",
   "closeDayRestricted": "Solo el dueño o un administrador puede cambiar el día de cierre.",
   "dayOfMonth": "Día {day}",
-  "fxSources": "Tipos de cambio"
+  "fxSources": "Tipos de cambio",
+  "baseCurrencyHint": "Los movimientos se cargan siempre en la moneda de la cuenta que uses. La moneda base solo se usa para mostrar los totales convertidos.",
+  "baseCurrencyLocked": "No se puede cambiar una vez que hay movimientos cargados.",
+  "baseCurrencyChanged": "Moneda base actualizada a {currency}"
  },
  "modulesPage": {
   "subtitle": "Lo que está apagado no aparece en ningún lado. Prendé solo lo que vayas a usar.",

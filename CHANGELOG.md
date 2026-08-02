@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.2] — 2026-08-02
+
+### Agregado — cambiar la moneda base desde Ajustes
+
+- "Moneda base" en Ajustes llevaba a `/currencies`, una pantalla que solo edita tipos de
+  cambio contra la base — no existía ningún control para cambiar la base en sí. Ahora abre
+  un picker propio. Solo se ofrece si el household **todavía no cargó ningún movimiento**:
+  `fx_rate`/`amount_base` se congelan para siempre en cada transacción, así que cambiar la
+  base con movimientos ya cargados dejaría el histórico mezclado en dos monedas sin aviso.
+  Con movimientos, la fila queda deshabilitada con una nota explicando por qué. La fila
+  separada "Tipos de cambio" (multi-moneda) sigue yendo a `/currencies` sin cambios
+
+### Corregido — dos opciones para lo mismo en el login del onboarding
+
+- A2 tenía "Prefiero usar mi contraseña" (togglea un campo de contraseña en la misma
+  pantalla) y "Ya tengo cuenta" (navega a `/login`) — dos caminos al mismo destino
+  (`signInWithPassword`). Se elimina el primero: el mock de A2 es explícitamente sin
+  contraseña ("no hay contraseñas, ni acá ni nunca"), y `/login` ya cubre ese caso con más
+  contexto (incluida la recuperación de contraseña, que el toggle inline no ofrecía)
+
 ## [0.9.1] — 2026-08-02
 
 ### Agregado — E6 completa: agregar moneda, teclado numérico y "Actualizar" real

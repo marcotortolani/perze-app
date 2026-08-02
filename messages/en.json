@@ -460,11 +460,6 @@
    "emailPlaceholder": "you@email.com",
    "sendLink": "Send sign-in link",
    "sendingLink": "Sending…",
-   "passwordPlaceholder": "Your password",
-   "signInWithPassword": "Sign in",
-   "signingIn": "Signing in…",
-   "preferPassword": "I'd rather use my password",
-   "preferCode": "I'd rather use the email code",
    "loadingDemo": "Loading sample data…",
    "tryDemo": "Try with sample data",
    "demoError": "Couldn't load the sample data — try again.",
@@ -959,7 +954,10 @@
   "closeDayHint": "Budgets and analysis periods run from one close day to the next. Applies to the whole group.",
   "closeDayRestricted": "Only the owner or an admin can change the close day.",
   "dayOfMonth": "Day {day}",
-  "fxSources": "Exchange rates"
+  "fxSources": "Exchange rates",
+  "baseCurrencyHint": "Transactions are always logged in the currency of the account you use. The base currency is only used to show converted totals.",
+  "baseCurrencyLocked": "Can't be changed once there are transactions logged.",
+  "baseCurrencyChanged": "Base currency updated to {currency}"
  },
  "modulesPage": {
   "subtitle": "Whatever's off doesn't show up anywhere. Only turn on what you'll actually use.",

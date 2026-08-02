@@ -11,7 +11,6 @@ import { seedDemoHousehold } from "@/lib/seed/demo-household";
 import { clearDemoCookie, enterDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { createClient } from "@/lib/supabase/client";
-import { signInWithPassword, translateAuthError } from "@/features/auth/password-auth";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
@@ -42,14 +41,6 @@ export default function OnboardingAuthPage() {
   const [email, setEmail] = useState("");
   const [seeding, setSeeding] = useState(false);
   const [sending, setSending] = useState(false);
-  // §1 — contraseña como ALTERNATIVA al código, nunca el default: arranca
-  // siempre en modo código (`usePassword = false`), y quien ya se definió
-  // una contraseña en Ajustes → Seguridad puede tocar "Prefiero usar mi
-  // contraseña" para saltarse la espera del email.
-  const [usePassword, setUsePassword] = useState(false);
-  const [password, setPassword] = useState("");
-  const [signingIn, setSigningIn] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -181,39 +172,6 @@ export default function OnboardingAuthPage() {
     }
   };
 
-  const handlePasswordSignIn = async () => {
-    if (!emailValid || !password || signingIn) return;
-    setSigningIn(true);
-    setPasswordError(null);
-    try {
-      const result = await signInWithPassword(email, password);
-      if (result.errorCode) {
-        setPasswordError(translateAuthError(result, t as (key: string) => string));
-        return;
-      }
-      markRegistered();
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const access = user ? await profilesRepo.getOwnAccess(user.id) : null;
-      if (access && access.accessStatus !== "approved") {
-        router.push("/pending");
-        return;
-      }
-      // Mismo destino que el efecto de arriba — antes esto empujaba A4 a
-      // secas, que para un usuario con datos (locales o remotos) es el
-      // camino del household duplicado.
-      try {
-        router.push(await resolveOnboardingDestination());
-      } catch {
-        toast.error(t("onboarding.auth.checkError"));
-      }
-    } finally {
-      setSigningIn(false);
-    }
-  };
-
   const handleDemo = async () => {
     setSeeding(true);
     try {
@@ -271,41 +229,9 @@ export default function OnboardingAuthPage() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {usePassword ? (
-          <Input
-            type="password"
-            autoComplete="current-password"
-            placeholder={t("onboarding.auth.passwordPlaceholder")}
-            value={password}
-            invalid={!!passwordError}
-            hint={passwordError ?? undefined}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setPasswordError(null);
-            }}
-          />
-        ) : null}
-
-        {usePassword ? (
-          <Button disabled={!emailValid || !password || signingIn} onClick={handlePasswordSignIn}>
-            {signingIn ? t("onboarding.auth.signingIn") : t("onboarding.auth.signInWithPassword")}
-          </Button>
-        ) : (
-          <Button disabled={!emailValid || sending} icon="mail" onClick={handleMagicLink}>
-            {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
-          </Button>
-        )}
-
-        <button
-          type="button"
-          onClick={() => {
-            setUsePassword((v) => !v);
-            setPasswordError(null);
-          }}
-          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
-        >
-          {usePassword ? t("onboarding.auth.preferCode") : t("onboarding.auth.preferPassword")}
-        </button>
+        <Button disabled={!emailValid || sending} icon="mail" onClick={handleMagicLink}>
+          {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
+        </Button>
 
         {/* AC-7 — el camino al login (y desde ahí a "olvidé mi contraseña")
             no existía desde esta pantalla: quien entraba a la app en un
