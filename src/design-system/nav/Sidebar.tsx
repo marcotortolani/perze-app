@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Icon, type IconName } from "../core/Icon";
 import { Logo } from "../core/Logo";
@@ -37,29 +38,48 @@ export interface SidebarProps {
   style?: CSSProperties | undefined;
 }
 
-function NavButton({ icon, label, on, onClick }: { icon: IconName; label: string; on: boolean; onClick: () => void }) {
+const navButtonStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  height: 44,
+  padding: "0 12px",
+  borderRadius: "var(--radius-chip)",
+  border: 0,
+  cursor: "pointer",
+  textAlign: "left",
+  width: "100%",
+  textDecoration: "none",
+};
+
+function NavButtonContent({ icon, label, on }: { icon: IconName; label: string; on: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        height: 44,
-        padding: "0 12px",
-        borderRadius: "var(--radius-chip)",
-        border: 0,
-        background: on ? "var(--surface-2)" : "transparent",
-        cursor: "pointer",
-        textAlign: "left",
-        width: "100%",
-      }}
-    >
+    <>
       <Icon name={icon} size={20} strokeWidth={on ? 1.9 : 1.5} color={on ? "var(--primary-ink)" : "var(--text-secondary)"} />
       <span style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 500, color: on ? "var(--text-primary)" : "var(--text-secondary)" }}>
         {label}
       </span>
+    </>
+  );
+}
+
+/**
+ * Fase 1 del plan de fluidez de navegación: con `href` renderiza
+ * `<Link prefetch>` (el sidebar entero está siempre en viewport, así que
+ * toda la navegación de escritorio queda prefetcheada apenas hidrata) — sin
+ * `href` mantiene el `<button onClick>` de siempre.
+ */
+function NavButton({ icon, label, on, href, onClick }: { icon: IconName; label: string; on: boolean; href?: string | undefined; onClick: () => void }) {
+  if (href) {
+    return (
+      <Link href={href} prefetch style={{ ...navButtonStyle, background: on ? "var(--surface-2)" : "transparent" }}>
+        <NavButtonContent icon={icon} label={label} on={on} />
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} style={{ ...navButtonStyle, background: on ? "var(--surface-2)" : "transparent" }}>
+      <NavButtonContent icon={icon} label={label} on={on} />
     </button>
   );
 }
@@ -146,14 +166,14 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, cla
                 </div>
               ) : null}
               {group.items.map((item) => (
-                <NavButton key={item.id} icon={item.icon} label={item.label} on={item.id === active} onClick={() => onNavigate?.(item.route)} />
+                <NavButton key={item.id} icon={item.icon} label={item.label} on={item.id === active} href={item.route} onClick={() => onNavigate?.(item.route)} />
               ))}
             </div>
           ))
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {navTabs.map((tab) => (
-              <NavButton key={tab.id} icon={tab.icon} label={tab.label} on={tab.id === active} onClick={() => onChange?.(tab.id)} />
+              <NavButton key={tab.id} icon={tab.icon} label={tab.label} on={tab.id === active} href={tab.href} onClick={() => onChange?.(tab.id)} />
             ))}
           </div>
         )}

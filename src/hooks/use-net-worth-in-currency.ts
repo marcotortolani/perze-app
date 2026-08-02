@@ -19,6 +19,10 @@ export function useNetWorthInCurrency(householdId: string | undefined, amount: M
 
   return useQuery({
     queryKey: ["net-worth-fx", householdId, amount?.currency, amount?.amount.toString(), targetCurrency],
+    // Mismo motivo que en `use-net-worth.ts`: la key lleva el monto exacto,
+    // así que cada cambio arma una entrada nueva — `gcTime` corto para que
+    // no se acumulen bajo el default largo del resto de la app.
+    gcTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Money | null> => {
       const resolution = await fxRepo.resolve({ householdId: householdId!, base: amount!.currency, quote: targetCurrency!, date: todayIso() });
       if (!resolution.rate) return null;

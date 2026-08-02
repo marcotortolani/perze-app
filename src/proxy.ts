@@ -4,6 +4,7 @@ import { env } from "@/env";
 import { isPublicPath } from "@/lib/auth/public-paths";
 import { DEMO_COOKIE_NAME, isDemoCookieValue } from "@/lib/demo/demo-cookie";
 import { REGISTERED_COOKIE_NAME, isRegisteredCookieValue } from "@/lib/auth/registered-cookie";
+import { ACCESS_APPROVAL_COOKIE_NAME, ACCESS_APPROVAL_TTL_SECONDS, isAccessApprovalCookieValidFor } from "@/lib/auth/access-approval-cookie";
 import { hasAuthCallbackParams } from "@/lib/auth/has-auth-callback-params";
 
 /**
@@ -57,9 +58,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Fase 2 del plan de fluidez de navegación — `getUser()` pega contra el
+  // Auth server de Supabase en CADA navegación (un round-trip de red antes
+  // de que Next empiece a renderizar). El proyecto está migrado a JWT
+  // signing keys asimétricas (ES256, `/.well-known/jwks.json` lo confirma),
+  // así que `getClaims()` verifica el JWT localmente con la clave pública
+  // cacheada — sin red, salvo la primera vez que trae el JWKS. Si el
+  // proyecto alguna vez vuelve al secreto compartido legacy, el propio SDK
+  // cae solo a `getUser()` puertas adentro (ver `auth-js`), así que esto
+  // nunca queda roto en silencio, solo pierde la ganancia.
+  const { data: claimsResult } = await supabase.auth.getClaims();
+  const userId = claimsResult?.claims.sub;
+  const user = userId ? { id: userId } : null;
 
   // Modo demo (§0, plan de acceso controlado) — 100% local, sin sesión de
   // Supabase a propósito. La cookie es la única señal que este chokepoint
@@ -82,27 +92,50 @@ export async function proxy(request: NextRequest) {
   // ahí es donde alguien SIN aprobación todavía tiene que poder aterrizar
   // en `/pending`; esa pantalla también queda afuera para no loopear.
   if (user && !isPublicPath(request.nextUrl.pathname) && request.nextUrl.pathname !== "/pending") {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("access_status, last_seen_at")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Fase 2 — el `SELECT` de abajo corría en CADA navegación. Si ya
+    // sabemos (cookie httpOnly, atada a este `user.id`) que este usuario
+    // está aprobado desde hace menos de `ACCESS_APPROVAL_TTL_SECONDS`,
+    // saltamos la consulta entera — con el costo de que revocar acceso
+    // tarda hasta ese TTL en expulsar a alguien ya navegando (ver el
+    // comentario de `access-approval-cookie.ts`).
+    const approvalCached = isAccessApprovalCookieValidFor(user.id, request.cookies.get(ACCESS_APPROVAL_COOKIE_NAME)?.value);
 
-    if (profile && profile.access_status !== "approved") {
-      return redirectTo(request, response, "/pending");
-    }
-
-    // Recencia de uso para las métricas del operador (§3.4) — un timestamp,
-    // no un log. Acotado a la fila propia (self-only en RLS) y a lo sumo
-    // una vez por día por usuario, para no convertir cada navegación en un
-    // UPDATE. Best-effort: un fallo acá nunca bloquea la request real.
-    const lastSeenAt = profile?.last_seen_at ? new Date(profile.last_seen_at).getTime() : 0;
-    if (Date.now() - lastSeenAt > 24 * 60 * 60 * 1000) {
-      await supabase
+    if (!approvalCached) {
+      const { data: profile } = await supabase
         .from("profiles")
-        .update({ last_seen_at: new Date().toISOString() })
+        .select("access_status, last_seen_at")
         .eq("id", user.id)
-        .then(() => {}, () => {});
+        .maybeSingle();
+
+      if (profile && profile.access_status !== "approved") {
+        return redirectTo(request, response, "/pending");
+      }
+
+      if (profile) {
+        response.cookies.set(ACCESS_APPROVAL_COOKIE_NAME, user.id, {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: ACCESS_APPROVAL_TTL_SECONDS,
+          secure: env.NODE_ENV === "production",
+        });
+      }
+
+      // Recencia de uso para las métricas del operador (§3.4) — un timestamp,
+      // no un log. Acotado a la fila propia (self-only en RLS) y a lo sumo
+      // una vez por día por usuario, para no convertir cada navegación en un
+      // UPDATE. Best-effort: un fallo acá nunca bloquea la request real.
+      // Con la cookie de aprobación puesta, este chequeo se salta también —
+      // el próximo `last_seen_at` llega, a lo sumo, `ACCESS_APPROVAL_TTL_SECONDS`
+      // más tarde que antes, irrelevante para una métrica de recencia.
+      const lastSeenAt = profile?.last_seen_at ? new Date(profile.last_seen_at).getTime() : 0;
+      if (Date.now() - lastSeenAt > 24 * 60 * 60 * 1000) {
+        await supabase
+          .from("profiles")
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq("id", user.id)
+          .then(() => {}, () => {});
+      }
     }
   }
 
@@ -126,9 +159,14 @@ function redirectTo(request: NextRequest, response: NextResponse, pathname: stri
 export const config = {
   matcher: [
     /*
-     * Corre en todo salvo assets estáticos y el propio service worker —
-     * tocar esas rutas en cada request rompería el cacheo de Serwist.
+     * Corre en todo salvo assets estáticos, el propio service worker, y
+     * `/api/*` — tocar los assets rompería el cacheo de Serwist, y
+     * `/api/fx` (única ruta hoy) ya se autentica sola (`getUser()` propio,
+     * 401 explícito sin sesión — Fase 2 del plan de fluidez) y refresca su
+     * propia cookie de sesión vía Route Handler, así que el round-trip de
+     * este proxy ahí es puro costo sin nada que proteja. `manifest.webmanifest`
+     * tampoco necesita el gate de acceso.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons|splash|serwist|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons|splash|serwist|api|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

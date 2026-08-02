@@ -9,7 +9,6 @@ import {
   AmountScrubber,
   AppHeader,
   Banner,
-  BarChart,
   BudgetRing,
   Button,
   Card,
@@ -26,7 +25,6 @@ import {
   InstitutionTile,
   Input,
   Keypad,
-  LineChart,
   ListRow,
   OptionCard,
   OtpInput,
@@ -38,11 +36,9 @@ import {
   ResolutionChain,
   SectionGroup,
   SegmentedControl,
-  SeriesLegend,
   Sheet,
   Skeleton,
   SkeletonRow,
-  Sparkline,
   SplitBar,
   StatTile,
   StatusBadge,
@@ -52,6 +48,7 @@ import {
   TransactionRow,
   UndoToast,
 } from "@/design-system";
+import { BarChart, LineChart, SeriesLegend, Sparkline } from "@/design-system/charts";
 import { ContextualTooltip, LockScreen } from "@/design-system/systems";
 import { CountUp, MorphButton, Pressable, StaggerList } from "@/components/motion";
 import { money } from "@/lib/money/money";

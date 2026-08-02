@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, SeriesLegend, Skeleton } from "@/design-system";
+import { AppHeader, Skeleton } from "@/design-system";
+import { SeriesLegend } from "@/design-system/charts";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const Donut = dynamic(() => import("@/design-system/charts/Donut").then((m) => m.Donut), { ssr: false });

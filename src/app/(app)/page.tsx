@@ -13,15 +13,15 @@ import {
   SectionGroup,
   SegmentedControl,
   Skeleton,
-  SkeletonRow,
-  Sparkline,
   StatTile,
   TransactionRow,
   fitScale,
 } from "@/design-system";
+import { Sparkline } from "@/design-system/charts";
 import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
 import { CountUp } from "@/components/motion";
+import { HomeSkeleton } from "@/components/home-skeleton";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -375,27 +375,6 @@ export default function HomePage() {
           })}
         </div>
       </SectionGroup>
-    </div>
-  );
-}
-
-function HomeSkeleton() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        <Skeleton width={120} height={12} />
-        <Skeleton width={180} height={44} />
-        <Skeleton width={100} height={14} />
-      </div>
-      <div style={{ display: "flex", gap: 12 }}>
-        <Skeleton width={208} height={92} radius={16} />
-        <Skeleton width={208} height={92} radius={16} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <SkeletonRow />
-        <SkeletonRow />
-        <SkeletonRow />
-      </div>
     </div>
   );
 }

@@ -21,6 +21,20 @@ export const currentUserKey = ["auth", "user"] as const;
  * diferir mientras no haya un `string` real — `DEMO_USER_ID` queda
  * reservado exclusivamente al household sembrado por `seedDemoHousehold()`
  * (que no pasa por este hook).
+ *
+ * Fase 6 del plan de fluidez de navegación — antes esto resolvía con
+ * `getUser()`, que pega contra el Auth server en CADA arranque en frío de
+ * la PWA: `OnboardingGate` retiene el render entero (`ZMark` girando)
+ * hasta que esto resuelve, así que ese round-trip era, en los hechos, el
+ * primer paint de la app. `getSession()` lee la sesión ya guardada en el
+ * storage local (cookies vía `@supabase/ssr`) sin red salvo que el access
+ * token esté por vencer — se usa para resolver el tri-estado al toque, y
+ * `getUser()` corre en paralelo, sin bloquear, para confirmar contra el
+ * servidor: si discrepan (sesión revocada en otro dispositivo, token que
+ * ya no vale), se corrige el cache y el gate reacciona igual que siempre.
+ * El aviso de seguridad de Supabase sobre no confiar en `getSession()`
+ * aplica a decisiones de autorización — acá es solo la señal de "pinta el
+ * shell o no"; la barrera real sigue siendo RLS server-side en cada query.
  */
 export function useCurrentUserId(): string | null | undefined {
   const queryClient = useQueryClient();
@@ -40,9 +54,18 @@ export function useCurrentUserId(): string | null | undefined {
     queryFn: async () => {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      return user?.id ?? null;
+        data: { session },
+      } = await supabase.auth.getSession();
+      const optimisticId = session?.user?.id ?? null;
+
+      void supabase.auth.getUser().then(({ data: { user }, error }) => {
+        const confirmedId = error ? null : (user?.id ?? null);
+        if (confirmedId !== optimisticId) {
+          queryClient.setQueryData(currentUserKey, confirmedId);
+        }
+      });
+
+      return optimisticId;
     },
     staleTime: Infinity,
   });
