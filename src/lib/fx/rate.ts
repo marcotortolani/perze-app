@@ -12,15 +12,29 @@ export const RATE_SCALE = 10n ** BigInt(RATE_DECIMALS);
  */
 export type ScaledRate = bigint;
 
-/** Parsea un decimal plano ("1234.567890123456", formato interno — no de usuario) a rate escalado. */
+/**
+ * Parsea un decimal plano ("1234.567890123456", formato interno — no de
+ * usuario) a rate escalado. Si el texto trae más dígitos decimales que los
+ * que `RATE_DECIMALS` puede guardar, el último dígito que entra se
+ * **redondea** (half-even), nunca se trunca — perder el resto en silencio
+ * corrompería un valor que el usuario tipeó exacto.
+ */
 export function parseRate(raw: string): ScaledRate {
   const negative = raw.startsWith("-");
   const s = negative ? raw.slice(1) : raw;
   const [intPartRaw, fracPartRaw = ""] = s.split(".");
   const intPart = intPartRaw || "0";
-  const frac = fracPartRaw.padEnd(RATE_DECIMALS, "0").slice(0, RATE_DECIMALS);
-  const digits = `${intPart}${frac}`.replace(/^0+(?=\d)/, "");
-  return BigInt((negative ? "-" : "") + digits);
+
+  if (fracPartRaw.length <= RATE_DECIMALS) {
+    const frac = fracPartRaw.padEnd(RATE_DECIMALS, "0");
+    const digits = `${intPart}${frac}`.replace(/^0+(?=\d)/, "");
+    return BigInt((negative ? "-" : "") + digits);
+  }
+
+  const extraDigits = fracPartRaw.length - RATE_DECIMALS;
+  const fullDigits = `${intPart}${fracPartRaw}`.replace(/^0+(?=\d)/, "");
+  const rounded = roundHalfEven(BigInt(fullDigits || "0"), 10n ** BigInt(extraDigits));
+  return negative ? -rounded : rounded;
 }
 
 /** Inverso de `parseRate` — para persistir o mostrar el rate crudo. */

@@ -6,6 +6,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.20] — 2026-08-02
+
+### Corregido — precisión del tipo de cambio manual y selector de ámbito con un solo miembro
+
+- **En `/currencies`, modo invertido, tipear "1500" guardaba "1499,99999925".**
+  `manualRate` se guardaba siempre en la dirección canónica y se volvía a invertir cada vez
+  que había que mostrarlo — `invertRate()` redondea porque casi ningún recíproco termina, y
+  aplicarlo dos veces en el mismo round-trip (al guardar y de nuevo al mostrar) componía el
+  error. Ahora el estado vive en la dirección que se está mostrando y la única inversión de
+  todo el flujo pasa a `handleSaveOverride`, una sola vez, justo antes de persistir
+- `parseRate()` truncaba en silencio cuando el usuario tipeaba más de los 12 decimales que
+  entran en `numeric(24,12)` — ahora redondea (half-even) el último dígito, como pide la
+  regla de nunca perder precisión sin avisar
+- El slider ±5% de `FxEditor` calculaba el ajuste con `Number()` y `.toFixed(12)` — el único
+  camino de punto flotante que quedaba sobre un rate. Pasa a aritmética `bigint` completa;
+  el único `Number` que sobrevive es la posición del propio `<input type="range">`, que no
+  tiene otra forma de recibirla
+- El segmentado Personal/Compartido/Todo del header se dibujaba siempre, incluso con un solo
+  miembro en el household — no hay nada que discriminar. Ahora se oculta con
+  `useHouseholdMembers`, y se resuelve a `false` (no a un estado intermedio) mientras la
+  query carga, para que no aparezca y desaparezca al montar
+
 ## [0.9.19] — 2026-08-02
 
 ### Corregido — la cifra héroe nunca encogía (`fit` no funcionaba), chevron de volver y tab bar

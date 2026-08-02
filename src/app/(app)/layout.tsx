@@ -9,6 +9,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { usePendingMutations } from "@/lib/offline";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
@@ -51,6 +52,12 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const pending = usePendingMutations();
   const online = useOnlineStatus();
   const { data: household, isLoading: householdLoading } = useCurrentHousehold();
+  // El segmentado Personal/Compartido/Todo no tiene nada que discriminar con
+  // un solo miembro — se oculta hasta que haya un segundo. Mientras la
+  // query carga, `showScope` queda en `false` (no `undefined`) para que no
+  // aparezca y desaparezca en el mismo montaje.
+  const { data: householdMembers } = useHouseholdMembers(household?.id);
+  const showScope = (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -171,6 +178,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
       <div className="app-shell-column">
         <div className="mx-auto w-full" style={{ maxWidth }}>
           <AppHeader
+            showScope={showScope}
             scope={scopeLabel}
             onScopeChange={handleScopeChange}
             scopeOptions={scopeOptions}

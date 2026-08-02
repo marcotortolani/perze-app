@@ -13,6 +13,29 @@ describe("parseRate / formatRate", () => {
   });
 });
 
+describe("parseRate — más de RATE_DECIMALS dígitos", () => {
+  it("redondea el último dígito en vez de truncarlo", () => {
+    // 13 decimales, el 13° (7) redondea el 12° hacia arriba — truncar
+    // habría dejado "...789012", perdiendo el 7 en silencio.
+    expect(formatRate(parseRate("1.1234567890127"))).toBe("1.123456789013");
+  });
+
+  it("half-even: dos mitades exactas redondean las dos al mismo par", () => {
+    // 13,5 sube a 14 (par); 14,5 se queda en 14 (ya par) — el ejemplo
+    // clásico de redondeo bancario, no "5 siempre para arriba".
+    expect(formatRate(parseRate("0.0000000000135"))).toBe("0.000000000014");
+    expect(formatRate(parseRate("0.0000000000145"))).toBe("0.000000000014");
+  });
+
+  it("el redondeo puede acarrear hasta la parte entera", () => {
+    expect(formatRate(parseRate("1.9999999999995"))).toBe("2.000000000000");
+  });
+
+  it("con exactamente RATE_DECIMALS dígitos no cambia nada", () => {
+    expect(formatRate(parseRate("1.123456789012"))).toBe("1.123456789012");
+  });
+});
+
 describe("formatRateTrimmed", () => {
   it("saca los ceros finales, nunca corta un dígito significativo", () => {
     expect(formatRateTrimmed(parseRate("1560.250000000000"))).toBe("1560.25");

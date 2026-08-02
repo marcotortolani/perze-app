@@ -5,7 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Icon } from "../core/Icon";
 import { StatusBadge } from "../core/StatusBadge";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
-import { formatRate, formatRateTrimmed, parseRate, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, type ScaledRate } from "@/lib/fx/rate";
+import { roundHalfEven } from "@/lib/money/money";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /**
@@ -60,9 +61,14 @@ export function FxEditor({
   const locale = useLocale() as Locale;
   const resolvedSource = source ?? t("ds.fxEditor.source");
   const baseRate = suggested ?? rate;
-  const baseRateNumber = Number(formatRate(baseRate));
-  const rateNumber = Number(formatRate(rate));
-  const pct = baseRateNumber === 0 ? 0 : Math.max(-5, Math.min(5, ((rateNumber - baseRateNumber) / baseRateNumber) * 100));
+  // Ningún rate pasa por `Number()`/`toFixed()` — la posición del slider se
+  // deriva en bigint (décimos de punto porcentual: 23 = 2,3%) y recién al
+  // final se angosta a `Number` para el `value` del `<input type="range">`,
+  // que es un control nativo y no tiene otra forma de recibirlo. El único
+  // punto que sí escribe un rate (el `onChange` de abajo) hace la cuenta
+  // inversa en bigint, sin volver a pasar por acá.
+  const pctTenths = baseRate === 0n ? 0n : ((rate - baseRate) * 1000n) / baseRate;
+  const pct = Number(pctTenths < -50n ? -50n : pctTenths > 50n ? 50n : pctTenths) / 10;
 
   return (
     <div style={style}>
@@ -119,9 +125,13 @@ export function FxEditor({
         step={0.1}
         value={pct}
         onChange={(e) => {
-          const nextPct = Number(e.target.value);
-          const nextNumber = baseRateNumber * (1 + nextPct / 100);
-          onChange?.(parseRate(nextNumber.toFixed(12)));
+          // El `<input type="range">` solo puede darnos un `number` — se
+          // redondea al décimo de punto exacto (el `step` del slider) antes
+          // de volver a bigint, así que el único float que se toca es un
+          // entero pequeño (p. ej. 23 para 2,3%), nunca el rate en sí.
+          const tenths = BigInt(Math.round(Number(e.target.value) * 10));
+          const next = roundHalfEven(baseRate * (1000n + tenths), 1000n);
+          onChange?.(next);
         }}
         style={{ width: "100%", margin: "16px 0 8px", accentColor: "var(--surface-3)" }}
       />

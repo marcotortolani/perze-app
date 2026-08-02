@@ -33,6 +33,17 @@ export default function CurrenciesPage() {
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [] } = useAccounts(household?.id);
   const [editingPair, setEditingPair] = useState<string | null>(null);
+  /**
+   * El rate tal cual se está mostrando/editando AHORA — en la dirección que
+   * indica `inverted`, no siempre en la canónica (`editingPair → baseCurrency`).
+   * Antes se guardaba siempre canónico y se invertía para mostrar cada vez
+   * que `inverted` estaba activo; como `invertRate` redondea (casi ningún
+   * recíproco termina), invertir dos veces en el mismo round-trip —al
+   * guardar y de vuelta al mostrar— componía el error y "1500" volvía como
+   * "1499,99999925". Ahora la pantalla nunca reinvierte para mostrar: el
+   * único `invertRate` del flujo pasa a `handleSaveOverride`, una sola vez,
+   * al convertir a la dirección canónica justo antes de persistir.
+   */
   const [manualRate, setManualRate] = useState<ScaledRate>(rateFromInteger(1));
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [addingCurrency, setAddingCurrency] = useState(false);
@@ -119,17 +130,17 @@ export default function CurrenciesPage() {
     // Arranca el teclado desde el rate actual, sin ceros finales — misma
     // precisión que muestra el número grande de FxEditor. Un corte fijo a
     // 2 decimales dejaba una tasa invertida chica (1 ARS = 0,00064 USD)
-    // en "0,00". Si está invertido, el número que se ve/tipea es el
-    // invertido también.
-    const displayed = inverted ? invertRate(manualRate) : manualRate;
-    const [wholePart, decPart] = formatRateTrimmed(displayed).split(".");
+    // en "0,00". `manualRate` ya vive en la dirección que se está
+    // mostrando (ver la nota en el `useState` de más abajo), así que no
+    // hay que invertir para mostrarlo.
+    const [wholePart, decPart] = formatRateTrimmed(manualRate).split(".");
     setKeypadDigits(decPart ? `${wholePart}${decimalSeparator}${decPart}` : wholePart!);
   };
 
   const commitKeypad = () => {
     if (keypadDigits !== null) {
       const parsed = parseKeypadRate(keypadDigits, decimalSeparator);
-      if (parsed !== null) setManualRate(inverted ? invertRate(parsed) : parsed);
+      if (parsed !== null) setManualRate(parsed);
     }
     setKeypadDigits(null);
   };
@@ -145,7 +156,11 @@ export default function CurrenciesPage() {
 
   const handleSaveOverride = async () => {
     if (!editingPair) return;
-    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, manualRate);
+    // Única inversión del flujo: `manualRate` vive en la dirección que se
+    // está mostrando, `fx_rate` se guarda siempre canónico
+    // (`editingPair → baseCurrency`).
+    const canonicalRate = inverted ? invertRate(manualRate) : manualRate;
+    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, canonicalRate);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
       queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] }),
@@ -175,10 +190,14 @@ export default function CurrenciesPage() {
 
   // Términos de edición, ya resueltos según `inverted` — de acá para abajo
   // todo lee `displayFrom`/`displayTo`/`displayRate`, nunca `editingPair`/
-  // `baseCurrency`/`manualRate` directo, así que invertir es un solo lugar.
+  // `baseCurrency` directo. `manualRate` YA está en la dirección mostrada
+  // (ver la nota del `useState`), así que `displayRate` es directo, sin
+  // invertir. `editingResolution.rate` en cambio siempre llega canónico
+  // desde `resolve()` — ese sí se invierte para mostrar, una sola vez,
+  // nunca de vuelta.
   const displayFrom = inverted ? baseCurrency : (editingPair ?? "");
   const displayTo = inverted ? (editingPair ?? "") : baseCurrency;
-  const displayRate = inverted ? invertRate(manualRate) : manualRate;
+  const displayRate = manualRate;
   const displaySuggested = editingResolution.rate ? (inverted ? invertRate(editingResolution.rate) : editingResolution.rate) : undefined;
 
   const directionToggle = editingPair ? (
@@ -188,7 +207,11 @@ export default function CurrenciesPage() {
         { id: "inverted", label: `1 ${baseCurrency} = ${editingPair}` },
       ]}
       value={inverted ? "inverted" : "normal"}
-      onChange={(id) => setInverted(id === "inverted")}
+      onChange={(id) => {
+        const next = id === "inverted";
+        if (next !== inverted) setManualRate(invertRate(manualRate));
+        setInverted(next);
+      }}
       size="sm"
     />
   ) : null;
@@ -310,7 +333,7 @@ export default function CurrenciesPage() {
                   placeholder={t("currenciesPage.ratePlaceholder")}
                   onChange={(e) => {
                     const rate = parseTypedRate(e.target.value);
-                    if (rate !== null) setManualRate(inverted ? invertRate(rate) : rate);
+                    if (rate !== null) setManualRate(rate);
                   }}
                 />
               ) : null}
@@ -321,7 +344,7 @@ export default function CurrenciesPage() {
                 suggested={displaySuggested}
                 source={editingResolution.source === "manual" ? t("currenciesPage.manualOverride") : (editingResolution.provider ?? t("currenciesPage.noProvider"))}
                 stale={editingResolution.isStale}
-                onChange={(next) => setManualRate(inverted ? invertRate(next) : next)}
+                onChange={(next) => setManualRate(next)}
                 onOpenKeypad={openKeypad}
               />
               <Button variant="primary" onClick={handleSaveOverride}>
