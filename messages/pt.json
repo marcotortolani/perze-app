@@ -668,7 +668,9 @@
   "createdAt": "Criado em {when}",
   "attempts": "{count, plural, one {# tentativa} other {# tentativas}}",
   "retry": "Tentar de novo agora",
-  "retried": "Na fila para a próxima tentativa."
+  "retried": "Na fila para a próxima tentativa.",
+  "retryAll": "Tentar todas de novo ({count})",
+  "retriedAll": "{count} entradas de volta na fila"
  },
  "notificationsPage": {
   "title": "Notificações",

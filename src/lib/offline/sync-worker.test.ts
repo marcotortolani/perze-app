@@ -13,11 +13,17 @@ import { drainOutbox } from "./sync-worker";
  * enrutamiento por tabla, la traducción camelCase→snake_case, y que un
  * error en una fila no frena las demás.
  */
-function fakeSupabase(opts: { failTables?: Set<string>; serverRowsById?: Record<string, Record<string, unknown>> } = {}) {
+function fakeSupabase(opts: { failTables?: Set<string>; duplicateTables?: Set<string>; serverRowsById?: Record<string, Record<string, unknown>> } = {}) {
   const calls: Array<{ table: string; method: string; args: unknown[] }> = [];
   const shouldFail = (table: string) => opts.failTables?.has(table) ?? false;
 
   const from = vi.fn((table: string) => ({
+    insert: vi.fn(async (row: unknown) => {
+      calls.push({ table, method: "insert", args: [row] });
+      // 23505 = duplicate key — el reintento de un insert ya sincronizado (AC-17).
+      if (opts.duplicateTables?.has(table)) return { error: { code: "23505", message: `duplicate key para ${table}` } };
+      return shouldFail(table) ? { error: new Error(`insert falló para ${table}`) } : { error: null };
+    }),
     upsert: vi.fn(async (row: unknown) => {
       calls.push({ table, method: "upsert", args: [row] });
       return shouldFail(table) ? { error: new Error(`upsert falló para ${table}`) } : { error: null };
@@ -53,7 +59,7 @@ describe("drainOutbox — BASE-05", () => {
     await getDb().delete();
   });
 
-  it("hace upsert de un insert de accounts, con bigint convertido a string", async () => {
+  it("hace INSERT plano de un insert de accounts, con bigint convertido a string", async () => {
     await outbox.enqueue({
       table: "accounts",
       op: "insert",
@@ -94,11 +100,47 @@ describe("drainOutbox — BASE-05", () => {
     expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.table).toBe("accounts");
-    expect(calls[0]?.method).toBe("upsert");
+    // AC-17 — insert plano, NUNCA upsert: `INSERT ... ON CONFLICT` bajo RLS
+    // muere con 42501 para filas cuya policy depende de una membresía que
+    // todavía no sincronizó (households y todo lo que cuelga de él).
+    expect(calls[0]?.method).toBe("insert");
     const row = calls[0]?.args[0] as Record<string, unknown>;
     expect(row.opening_balance).toBe("50000"); // bigint -> string, nunca number
     expect(row.current_balance).toBeUndefined(); // nunca se pushea: lo mantiene el trigger
     expect(await outbox.count()).toBe(0); // se sacó de la cola
+  });
+
+  it("un 23505 (duplicate key) en un insert cuenta como sincronizada — reintento de un intento interrumpido", async () => {
+    await outbox.enqueue({
+      table: "tags",
+      op: "insert",
+      entityId: "tag-dup",
+      payload: { id: "tag-dup", householdId: "hh-1", name: "viaje", color: null },
+      clientRev: 1,
+    });
+
+    const { client } = fakeSupabase({ duplicateTables: new Set(["tags"]) });
+    const result = await drainOutbox(client);
+
+    expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
+    expect(await outbox.count()).toBe(0);
+  });
+
+  it("un update sí usa upsert — a esa altura la fila y la membresía ya existen en el servidor", async () => {
+    await outbox.enqueue({
+      table: "tags",
+      op: "update",
+      entityId: "tag-up",
+      payload: { id: "tag-up", householdId: "hh-1", name: "trabajo", color: null },
+      clientRev: 2,
+    });
+
+    const { client, calls } = fakeSupabase();
+    const result = await drainOutbox(client);
+
+    expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
+    const upsertCall = calls.find((c) => c.method === "upsert");
+    expect(upsertCall?.table).toBe("tags");
   });
 
   it("traduce un delete de transactions a un UPDATE de deleted_at, nunca un DELETE real", async () => {

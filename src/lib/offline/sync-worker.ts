@@ -121,6 +121,31 @@ async function syncOne(
   }
 
   const row = config.toRow(payload);
+
+  if (entry.op === "insert") {
+    // AC-17 (`docs/auditoria-acceso.md`) — la causa de que NADA sincronizara
+    // jamás: `upsert` genera `INSERT ... ON CONFLICT`, y bajo RLS esa forma
+    // exige poder ver/actualizar la fila en conflicto. Para un household
+    // recién creado la membresía todavía no existe (`current_households()`
+    // vacío hasta que sincronice el member), así que el primer insert moría
+    // con 42501 — y toda la cola detrás, porque las demás tablas dependen
+    // de ese household. Verificado contra el proyecto remoto: INSERT plano
+    // pasa; `ON CONFLICT DO NOTHING` y `DO UPDATE` fallan igual sin
+    // membresía; `DO UPDATE` recién pasa cuando la membresía ya existe.
+    //
+    // INSERT plano solo evalúa el WITH CHECK de la policy de INSERT. La
+    // idempotencia del reintento la da el 23505 (duplicate key): significa
+    // "ya sincronizada por un intento anterior interrumpido" — el payload
+    // de un op insert no cambia entre reintentos, así que es un éxito.
+    const { error } = await supabase.from(config.supabaseTable).insert(row);
+    if (error && error.code !== "23505") throw error;
+    return;
+  }
+
+  // op === "update": acá el upsert sí es legítimo — la fila y la membresía
+  // ya existen en el servidor (FIFO: su insert sincronizó antes), así que
+  // el brazo DO UPDATE pasa RLS, y cubre el caso borde de una fila que el
+  // servidor perdió.
   const { error } = await supabase.from(config.supabaseTable).upsert(row);
   if (error) throw error;
 }

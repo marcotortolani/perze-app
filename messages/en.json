@@ -668,7 +668,9 @@
   "createdAt": "Created on {when}",
   "attempts": "{count, plural, one {# attempt} other {# attempts}}",
   "retry": "Retry now",
-  "retried": "Queued for the next attempt."
+  "retried": "Queued for the next attempt.",
+  "retryAll": "Retry all ({count})",
+  "retriedAll": "{count} entries back in the queue"
  },
  "notificationsPage": {
   "title": "Notifications",

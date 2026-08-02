@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.8.1] — 2026-08-02
+
+Probando v0.8.0 en producción, la restauración devolvió "nada que restaurar" — y la base remota
+resultó estar **completamente vacía** pese a varios onboardings completados. La hidratación
+funcionaba; lo que nunca funcionó, desde ningún navegador, fue la **subida**. Diagnóstico
+verificado sentencia por sentencia contra el proyecto remoto (adenda de
+`docs/auditoria-acceso.md`).
+
+### Corregido — nada sincronizó jamás: el upsert moría con RLS en el primer insert (AC-17)
+
+- **Causa raíz**: `syncOne` usaba `upsert` para todo. `upsert` genera
+  `INSERT ... ON CONFLICT`, y bajo RLS esa forma exige poder ver/actualizar la fila en
+  conflicto — para un household recién creado la membresía todavía no existe
+  (`current_households()` vacío hasta que sincronice el member), así que el primer insert moría
+  con 42501, pasaba a dead-letter tras 8 reintentos, y arrastraba a toda la cola: member,
+  cuentas, categorías y movimientos dependen de ese household. Verificado: `INSERT` plano pasa;
+  `ON CONFLICT DO NOTHING` y `DO UPDATE` fallan sin membresía; `DO UPDATE` pasa con membresía
+- op `insert` ahora usa `INSERT` plano, con `23505` (duplicate key) tratado como "ya
+  sincronizada por un intento anterior interrumpido" — la idempotencia que el upsert daba, sin
+  su problema de RLS. op `update` conserva el `upsert`: a esa altura la fila y la membresía ya
+  existen en el servidor
+
+### Corregido — el loop de sync moría en silencio para toda la sesión (AC-17b)
+
+- En `use-sync-loop.ts`, `outbox.count()` corría fuera de todo catch: un rechazo suyo (típico:
+  `DatabaseClosedError`, porque `DbOwnerSync` cierra/borra la base Dexie justo en el login)
+  tumbaba la promesa del tick **antes** de re-armar el timer — nada volvía a drenar hasta
+  recargar la página. Ahora el timer se re-arma en un `finally`, siempre
+
+### Agregado — "Reintentar todas" en el diagnóstico de sincronización
+
+- Después del fix, lo normal en un dispositivo con datos viejos es una cola entera en `dead` —
+  `outbox.retryAllDead()` + botón en Más → Sincronización las devuelve a la cola de un tap, en
+  vez de resucitarlas de a una
+
 ## [0.8.0] — 2026-08-02
 
 Auditoría completa del flujo de acceso (`docs/auditoria-acceso.md`, hallazgos `AC-1`…`AC-16`)

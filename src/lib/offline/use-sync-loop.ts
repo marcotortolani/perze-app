@@ -29,17 +29,25 @@ export function useSyncLoop(): void {
 
     async function tick() {
       if (cancelled) return;
-      const online = typeof navigator === "undefined" || navigator.onLine;
-      if (online) {
-        const pending = await outbox.count();
-        if (pending > 0) {
-          await drainOutbox(supabaseRef.current!).catch(() => {
-            // Un error acá (no el de una entrada puntual, que ya maneja
-            // drainOutbox) sería algo más grave que el próximo tick igual reintenta.
-          });
+      try {
+        const online = typeof navigator === "undefined" || navigator.onLine;
+        if (online) {
+          const pending = await outbox.count();
+          if (pending > 0) {
+            await drainOutbox(supabaseRef.current!);
+          }
         }
+      } catch {
+        // AC-17b (`docs/auditoria-acceso.md`) — antes `outbox.count()`
+        // corría FUERA de todo catch: un rechazo suyo (típico:
+        // DatabaseClosedError, porque `DbOwnerSync` cierra/borra la base
+        // Dexie justo en el login) mataba la promesa de tick ANTES de
+        // re-armar el timer, y el loop de sync quedaba muerto en silencio
+        // para toda la sesión — nada volvía a drenar hasta recargar la
+        // página. El próximo tick reintenta lo que sea que haya fallado.
+      } finally {
+        if (!cancelled) timer = setTimeout(tick, POLL_INTERVAL_MS);
       }
-      if (!cancelled) timer = setTimeout(tick, POLL_INTERVAL_MS);
     }
 
     void tick();

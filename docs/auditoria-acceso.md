@@ -119,6 +119,33 @@ rates por `parseRate`, nunca un `number` para plata).
   (detección de chunk faltante → update forzado) es trabajo aparte del flujo de
   acceso.
 
+## Adenda post-deploy (v0.8.1): por qué "no había nada que restaurar"
+
+Probando v0.8.0 en producción, la restauración "no funcionó" — y la base remota
+resultó estar **completamente vacía** (0 households, 0 cuentas, 0 movimientos)
+pese a varios onboardings completados. La hidratación funcionaba; lo que nunca
+funcionó fue la **subida**. Dos hallazgos nuevos:
+
+- **AC-17 — el `upsert` del sync-worker moría con RLS en el primer insert,
+  siempre.** `supabase.from(t).upsert(row)` genera `INSERT ... ON CONFLICT`, y
+  bajo RLS esa forma exige poder ver/actualizar la fila en conflicto. Para un
+  household recién creado, la membresía todavía no existe
+  (`current_households()` vacío hasta que sincronice el member) → 42501 → 8
+  reintentos → dead-letter, y toda la cola detrás (member, cuentas, categorías
+  y movimientos dependen de ese household). Verificado contra el proyecto
+  remoto: `INSERT` plano ✅ · `ON CONFLICT DO NOTHING` ❌ · `ON CONFLICT DO
+  UPDATE` ❌ sin membresía / ✅ con membresía. **Corregido**: op `insert` usa
+  `INSERT` plano con `23505` (duplicate key) tratado como "ya sincronizada";
+  op `update` conserva el `upsert` (a esa altura la membresía existe).
+- **AC-17b — el loop de sync moría en silencio para toda la sesión.** En
+  `use-sync-loop.ts`, `outbox.count()` corría fuera de todo catch: un rechazo
+  suyo (típico: `DatabaseClosedError`, porque `DbOwnerSync` cierra/borra la
+  base Dexie justo en el login) tumbaba la promesa del tick antes de re-armar
+  el timer. **Corregido**: try/finally — el timer se re-arma siempre.
+- Consecuencia operativa: los dispositivos con datos viejos tienen la cola en
+  `dead`. La pantalla de diagnóstico (Más → Sincronización) suma **"Reintentar
+  todas"** para resucitarla de un tap después de deployar el fix.
+
 ## Decisiones de la hidratación (para quien la toque después)
 
 - **Fidelidad sobre filtrado**: se bajan también filas soft-deleted (con su

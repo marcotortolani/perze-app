@@ -28,8 +28,10 @@ export default function SyncDiagnosticsPage() {
   const t = useTranslations();
   const router = useRouter();
   const [retrying, setRetrying] = useState<number | null>(null);
+  const [retryingAll, setRetryingAll] = useState(false);
 
   const entries = useLiveQuery(() => getDb().outbox.toCollection().toArray(), []);
+  const deadCount = entries?.filter((e) => e.status === "dead").length ?? 0;
 
   const handleRetry = async (entry: OutboxEntryRow) => {
     if (retrying !== null || entry.id === undefined) return;
@@ -42,10 +44,28 @@ export default function SyncDiagnosticsPage() {
     }
   };
 
+  // AC-17 — el bug del upsert mataba TODA la cola: después del fix, lo
+  // normal es tener muchas entradas `dead` legítimas, no una.
+  const handleRetryAllDead = async () => {
+    if (retryingAll) return;
+    setRetryingAll(true);
+    try {
+      const count = await outbox.retryAllDead();
+      toast(t("syncDiagnosticsPage.retriedAll", { count }));
+    } finally {
+      setRetryingAll(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <AppHeader title={t("syncDiagnosticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 12, paddingBottom: 24 }}>
+        {deadCount > 1 ? (
+          <Button variant="secondary" disabled={retryingAll} onClick={handleRetryAllDead}>
+            {t("syncDiagnosticsPage.retryAll", { count: deadCount })}
+          </Button>
+        ) : null}
         {entries === undefined ? null : entries.length === 0 ? (
           <EmptyState message={t("syncDiagnosticsPage.empty")} />
         ) : (

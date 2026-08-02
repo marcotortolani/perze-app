@@ -134,6 +134,17 @@ export const outbox = {
   async retry(id: number): Promise<void> {
     await getDb().outbox.update(id, { status: "pending", nextAttemptAt: null });
   },
+
+  /**
+   * Reintento masivo (AC-17) — después de corregir la causa por la que TODA
+   * la cola moría (el upsert que RLS rechazaba), las entradas `dead` son
+   * legítimas de nuevo: un solo botón en la pantalla de diagnóstico en vez
+   * de resucitarlas de a una. `attempts`/`lastError` quedan como historia,
+   * igual que en `retry()`.
+   */
+  async retryAllDead(): Promise<number> {
+    return getDb().outbox.where("status").equals("dead").modify({ status: "pending", nextAttemptAt: null });
+  },
 };
 
 /** Techo de reintentos automáticos antes de dead-letter (C32) — exportado para el test de backoff. */

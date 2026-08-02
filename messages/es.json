@@ -668,7 +668,9 @@
   "createdAt": "Creado el {when}",
   "attempts": "{count, plural, one {# intento} other {# intentos}}",
   "retry": "Reintentar ahora",
-  "retried": "En cola para el próximo intento."
+  "retried": "En cola para el próximo intento.",
+  "retryAll": "Reintentar todas ({count})",
+  "retriedAll": "{count} entradas vuelven a la cola"
  },
  "notificationsPage": {
   "title": "Notificaciones",
