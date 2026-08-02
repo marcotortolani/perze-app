@@ -121,7 +121,8 @@
    "operatorMultiply": "Multiplicar",
    "operatorDivide": "Dividir",
    "backspace": "Apagar",
-   "decimalSeparator": "Separador decimal"
+   "decimalSeparator": "Separador decimal",
+   "equals": "Igual"
   }
  },
  "reference": {

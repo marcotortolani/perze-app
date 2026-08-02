@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AmountScrubber, Chip, Icon, Keypad, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
-import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
 import { formatAmount } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
@@ -84,13 +84,29 @@ export function AmountStep({
     { id: "transfer", label: t("capture.kind.transfer") },
   ];
   const currency = draft.currency || account?.currencyCode || "UYU";
+  const expression = draft.amountExpression || "0";
+  // Mientras haya un operador tipeado, el héroe se queda congelado en el
+  // monto ANTES de ese operador — antes se reevaluaba en cada tecla y
+  // "12+8" pasaba visiblemente por 12 apenas se tipeaba el "+", sin que el
+  // usuario viera la cuenta que estaba armando. La expresión cruda se
+  // muestra aparte (`pendingPreview`, más abajo) y el resultado recién
+  // reemplaza al héroe cuando se toca "=".
+  const pending = hasKeypadOperator(expression);
   const hero = useMemo(() => {
     try {
-      return evaluateKeypadExpression(draft.amountExpression || "0", currency, numberLocale);
+      return pending ? firstOperand(expression, currency, numberLocale) : evaluateKeypadExpression(expression, currency, numberLocale);
     } catch {
       return money(0n, currency);
     }
-  }, [draft.amountExpression, currency, numberLocale]);
+  }, [expression, pending, currency, numberLocale]);
+  const evaluated = useMemo(() => {
+    try {
+      return evaluateKeypadExpression(expression, currency, numberLocale);
+    } catch {
+      return money(0n, currency);
+    }
+  }, [expression, currency, numberLocale]);
+  const pendingPreview = pending ? formatKeypadExpressionPreview(expression) : null;
 
   const isTransfer = draft.kind === "transfer";
   const hasAccounts = accounts.length > 0;
@@ -107,6 +123,12 @@ export function AmountStep({
             es un no-op acá), el drag ajusta el monto con aceleración. */}
         <AmountScrubber value={hero} onChange={(next) => onAmountChange(amountToExpression(next, currency, locale))} onOpenKeypad={() => {}} />
       </div>
+
+      {pendingPreview ? (
+        <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
+          {pendingPreview}
+        </p>
+      ) : null}
 
       {isTransfer ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -188,7 +210,22 @@ export function AmountStep({
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        <Keypad onKey={onAmountKey} onClear={() => onAmountKey("clear")} announceValue={formatAmount(hero, { showSign: false })} />
+        <Keypad
+          equals
+          onKey={(key) => {
+            // "=" resuelve la cuenta armada y reemplaza la expresión entera
+            // por el resultado plano — de ahí en más se sigue editando
+            // desde un número simple, no desde "12+8". Sin operador
+            // pendiente no hace nada: no hay nada que confirmar todavía.
+            if (key === "=") {
+              if (pending) onAmountChange(amountToExpression(evaluated.amount, currency, locale));
+              return;
+            }
+            onAmountKey(key);
+          }}
+          onClear={() => onAmountKey("clear")}
+          announceValue={formatAmount(hero, { showSign: false })}
+        />
       </div>
     </div>
   );

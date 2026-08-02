@@ -78,10 +78,40 @@ export function evaluateKeypadExpression(
   return acc;
 }
 
-/** El resultado se resuelve recién al confirmar — nunca hay un botón "=". */
+/**
+ * El guardado tolera una expresión con un operador colgando ("12+") —
+ * `evaluateKeypadExpression` ya la resuelve al operando anterior, esto
+ * solo decide si el CTA de guardar debe estar habilitado.
+ */
 export function isCompleteKeypadExpression(raw: string): boolean {
   const trimmed = raw.trim();
   if (trimmed.length === 0) return false;
   const lastChar = trimmed.at(-1) ?? "";
   return OPERATOR_ALIASES[lastChar] === undefined;
+}
+
+/** ¿La expresión tiene algún operador tipeado, completo o no? Ver `firstOperand`. */
+export function hasKeypadOperator(raw: string): boolean {
+  return OPERATOR_PATTERN.test(raw);
+}
+
+/**
+ * El monto antes del primer operador — la cifra en la que el héroe se
+ * queda congelado mientras se arma una cuenta con `+`/`−`/`×`/`÷`, hasta
+ * que el usuario confirma con "=" (`AmountStep`). Antes de esto, la
+ * captura evaluaba y mostraba el resultado parcial en cada tecla ("12+8"
+ * pasaba por 12 apenas se tipeaba el operador, sin que el usuario viera
+ * la cuenta que estaba armando).
+ */
+export function firstOperand(raw: string, currency: string, locale: NumberLocale = "es-UY"): Money {
+  const first = raw.trim().split(OPERATOR_PATTERN)[0]?.trim() || "0";
+  return parseAmountString(first, currency, locale);
+}
+
+/** "12+8" → "12 + 8" — solo para la línea de preview, nunca para guardar/parsear. */
+export function formatKeypadExpressionPreview(raw: string): string {
+  return raw
+    .replace(/([+\-−×xX*÷/])/g, " $1 ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

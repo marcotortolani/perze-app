@@ -188,10 +188,10 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ### Keypad (captura)
 - **Existe para:** ingresar montos sin el teclado del sistema.
-- **Props:** `onKey: (k: string) => void` · `onClear?: () => void` · `operators?: boolean` (default true) · `decimalSeparator?: ','` · `gap?: number`.
-- **Estados:** normal · tecla presionada · con expresión pendiente (el consumidor muestra el resultado).
+- **Props:** `onKey: (k: string) => void` · `onClear?: () => void` · `operators?: boolean` (default `true`; en `false` no dibuja la columna de operadores — `/currencies`, donde eran botones muertos) · `equals?: boolean` (default `false`; en `true` suma una tecla "=" que ocupa toda la fila — solo la captura de gasto la usa) · `announceValue?: string` · `gap?: number`.
+- **Estados:** normal · tecla presionada · con expresión pendiente (el consumidor muestra el resultado, y con `equals` congela el héroe hasta que se confirma).
 - **Tokens:** los de `KeypadKey` más `--space-2`.
-- **A11y:** la cifra que el keypad alimenta lleva `aria-live="polite"`; el backspace tiene `aria-label="Borrar"` y long-press `"Limpiar"`.
+- **A11y:** la cifra que el keypad alimenta lleva `aria-live="polite"`; el backspace tiene `aria-label="Borrar"` y long-press `"Limpiar"`; "=" tiene `aria-label` propio (`ds.keypad.equals`).
 - **Bloques:** A7, C1, C4, C5, C6, F3, F7, I5, I6.
 
 ### PinKeypad
@@ -231,6 +231,7 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **A11y:** `role="dialog"`, `aria-modal="true"`, label desde `title`; foco atrapado adentro y Escape cierra; el scrim es `aria-hidden`. El scrim oscurece al 60% y **no** blurea.
 - **Bloques:** D2, F0, G0d, I1b, J7, K4.
 - **Nota:** `container="parent"` es el default porque el sheet tiene que poder vivir dentro de un frame de 390×844 (documentación, previews, desktop de dos columnas). El `position: fixed` anterior lo hacía inservible ahí.
+- **Nota:** el panel nunca pasa el 80% del alto útil (`max-height: 80dvh` en `Overlay`), sea cual sea el `height` que se le pase — con `height="auto"` (preferible para contenido nuevo) crece con su contenido hasta ese tope y recién ahí scrollea; un `height` fijo sigue pudiendo dejar aire de más si el contenido es corto, el tope no resuelve eso.
 
 ### ScopeSwitcher — **eliminado**
 - El bloque B lo resolvió con `SegmentedControl emphasis="brand"` dentro de `AppHeader`.

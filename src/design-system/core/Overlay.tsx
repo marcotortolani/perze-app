@@ -108,6 +108,14 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
                 boxShadow: "var(--shadow-sheet)",
                 padding: "10px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))",
                 height: normalizeSize(height ?? "auto"),
+                // Tope duro: ningún sheet pasa el 80% del alto útil, sea
+                // cual sea el `height` que le pase el caller. Con
+                // `height="auto"` (el default, y lo que todo caller nuevo
+                // debería usar) el panel crece con su contenido hasta acá
+                // y recién ahí scrollea — un `height` fijo sigue pudiendo
+                // dejar espacio vacío si el contenido es corto, este tope
+                // no resuelve eso, solo el techo.
+                maxHeight: "80dvh",
                 overflow: "auto",
                 ...style,
               }

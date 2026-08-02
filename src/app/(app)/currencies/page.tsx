@@ -275,7 +275,7 @@ export default function CurrenciesPage() {
         <ListRow icon="plus" label={t("currenciesPage.addCurrency")} variant="action" onClick={() => setAddingCurrency(true)} />
       ) : null}
 
-      <Sheet open={addingCurrency} title={sheetTitle} onClose={closeEditor} height={520}>
+      <Sheet open={addingCurrency} title={sheetTitle} onClose={closeEditor} height="auto">
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div>
             <Input
@@ -300,7 +300,7 @@ export default function CurrenciesPage() {
         </div>
       </Sheet>
 
-      <Sheet open={editingPair !== null} title={sheetTitle} onClose={closeEditor} height={keypadDigits !== null ? 520 : 420}>
+      <Sheet open={editingPair !== null} title={sheetTitle} onClose={closeEditor} height="auto">
         {editingPair ? (
           keypadDigits !== null ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -314,7 +314,10 @@ export default function CurrenciesPage() {
                   {keypadDigits === "" ? "0" : keypadDigits}
                 </div>
               </div>
-              <Keypad onKey={(key) => setKeypadDigits((d) => appendKeypadRateDigit(d ?? "", key, decimalSeparator))} onClear={() => setKeypadDigits("")} />
+              {/* Sin operadores: una tasa no se suma ni se multiplica, y
+                  `appendKeypadRateDigit` ya los ignora si llegan — acá
+                  directamente no se dibujan. */}
+              <Keypad operators={false} onKey={(key) => setKeypadDigits((d) => appendKeypadRateDigit(d ?? "", key, decimalSeparator))} onClear={() => setKeypadDigits("")} />
               <div style={{ display: "flex", gap: 12 }}>
                 <Button variant="secondary" onClick={() => setKeypadDigits(null)}>
                   {t("currenciesPage.keypadCancel")}

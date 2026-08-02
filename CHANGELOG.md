@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.22] — 2026-08-02
+
+### Agregado — tope de 80% para las hojas modales, y botón "=" con preview en la captura
+
+- **Ninguna hoja modal pasa el 80% del alto útil.** `Overlay` (la primitiva detrás de
+  `Sheet`) suma `max-height: 80dvh` a la variante `sheet` — aplica a las ~26 hojas de la app
+  sin tocar cada una. Las dos de `/currencies` (donde el problema se notaba de verdad: el
+  editor de tipo de cambio con el keypad abierto necesitaba scroll) pasan de un alto fijo en
+  píxeles a `height="auto"`: crecen con su contenido y recién ahí, si hace falta, tocan el
+  tope
+- El teclado de tipo de cambio en `/currencies` ya no dibuja los operadores `+ − × ÷` —
+  `rate-keypad.ts` los ignoraba al procesar la tecla, así que eran botones sin efecto. Nueva
+  prop `operators` en `Keypad` (default `true`, sin cambios para el resto de los callers)
+- **La captura de gasto suma un botón "=" y una vista previa de la cuenta que se está
+  armando.** Antes, tipear "12+8" mostraba el resultado parcial en cada tecla — el héroe
+  pasaba por 12 apenas se tocaba el "+", sin que se viera la cuenta en construcción. Ahora el
+  héroe se congela en el último valor confirmado, aparece "12 + 8" debajo en una línea chica,
+  y recién al tocar "=" se resuelve y reemplaza la expresión por el resultado plano. Nueva
+  prop `equals` en `Keypad`, y `firstOperand`/`hasKeypadOperator`/`formatKeypadExpressionPreview`
+  en `lib/money/keypad.ts`
+
 ## [0.9.21] — 2026-08-02
 
 ### Corregido/Agregado — categorías: duplicados, subcategorías desplegables y edición
