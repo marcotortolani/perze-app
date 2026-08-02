@@ -9,6 +9,7 @@ import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { DbOwnerSync } from "@/components/db-owner-sync";
 import { PinGate } from "@/components/pin-gate";
 import { useSyncLoop } from "@/lib/offline/use-sync-loop";
+import { useRealtimeSync } from "@/lib/offline/use-realtime-sync";
 
 /**
  * Todo el estado de dominio (cuentas, movimientos, household…) vive en Dexie
@@ -37,6 +38,10 @@ function makeQueryClient() {
 
 function SyncLoop() {
   useSyncLoop();
+  // F3 (`docs/plan-sync-incremental.md` § 6) — atajo de latencia sobre el
+  // pull de 30s de arriba, nunca un camino propio: ver la nota en
+  // `use-realtime-sync.ts`.
+  useRealtimeSync();
   return null;
 }
 

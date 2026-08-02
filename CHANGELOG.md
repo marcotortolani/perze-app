@@ -6,6 +6,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.0] — 2026-08-02
+
+### Agregado — sincronización incremental multi-dispositivo (AC-14)
+
+- Diseño cerrado en `docs/plan-sync-incremental.md` desde v0.8.3, implementado en las tres
+  fases previstas. Hasta ahora la app solo bajaba datos del servidor una vez, al entrar en un
+  dispositivo sin datos (`hydrate.ts`): después de eso, un segundo dispositivo nunca volvía a
+  mirar el servidor y un cambio hecho en el teléfono no aparecía en la tablet sin restaurar
+  manual. Cubre el multi-dispositivo *simultáneo* que la hidratación no resolvía
+- **F1 — el pull incremental (`pull.ts`).** `transactions` (la única tabla sin cota de tamaño)
+  se trae por cursor, paginado por keyset sobre `(updated_at, id)` — no por offset, que puede
+  saltear una fila que entra al conjunto mientras se pagina — con un watermark en `meta` que
+  guarda 5 segundos de solape contra el skew de reloj entre dispositivos. El resto de las
+  tablas (households, members, accounts, categories, tags, payees, budgets, goals,
+  recurring_rules, rules) se refrescan completas en cada ciclo y podan localmente lo que ya no
+  vino del servidor — con la excepción de cualquier fila que tenga una entrada en el outbox
+  local, que nunca se pisa ni se poda: está en camino al servidor o esperando resolución
+  explícita de un conflicto. `accounts.currentBalance` tiene además su propia excepción:
+  mientras el outbox tenga una transaction pendiente, el saldo remoto puede estar calculado
+  sin ella todavía, así que no se pisa el valor local hasta que esa cola se vacíe. Nueva
+  migración: índice `transactions_household_updated_idx (household_id, updated_at, id)`
+- **F2 — cableado al ciclo de sync.** `use-sync-loop.ts` corre el pull siempre que hay un
+  household activo, sin importar si el outbox local tiene algo pendiente (a diferencia del
+  push): un dispositivo que solo lee tiene el outbox vacío por definición, y antes el pull
+  hubiera quedado sin correr nunca ahí. Push primero, pull después, mismo tick de 30s
+- **F3 — Realtime como atajo de latencia (opcional).** Suscripción `postgres_changes` sobre
+  `transactions` filtrada por household, con el pull de 30s como red de seguridad para
+  reconexiones y eventos perdidos — nunca aplica el payload del evento directo, solo dispara
+  el mismo `pullFromRemote`. Nueva migración: `REPLICA IDENTITY FULL` + alta en la publication
+  de `transactions`; sin policy de RLS nueva, `tx_select` ya filtra los eventos por household,
+  visibilidad y `can_see` de la cuenta
+
 ## [0.8.5] — 2026-08-02
 
 ### Corregido — `/more/categories` no scrolleaba (A8)

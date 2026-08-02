@@ -1,7 +1,20 @@
-import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "../supabase/client";
 import { getDb } from "../db/client";
 import { withoutOutbox } from "./outbox";
+import { fetchPaged } from "./paging";
+import {
+  ACCOUNTS_COLUMNS,
+  BUDGETS_COLUMNS,
+  CATEGORIES_COLUMNS,
+  GOALS_COLUMNS,
+  HOUSEHOLD_MEMBERS_COLUMNS,
+  HOUSEHOLDS_COLUMNS,
+  PAYEES_COLUMNS,
+  RECURRING_RULES_COLUMNS,
+  RULES_COLUMNS,
+  TAGS_COLUMNS,
+  TRANSACTIONS_COLUMNS,
+} from "./sync-columns";
 import { parseRate } from "../fx/rate";
 import { nowIso } from "../repos/ids";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "../reference/category-templates";
@@ -52,8 +65,6 @@ import type {
  *   nunca pisa un dispositivo con ediciones pendientes en el outbox.
  *   Modo scoped (`householdId`, para `/join`): solo toca ese household.
  */
-
-const PAGE_SIZE = 1000;
 
 /** `name` → `i18nKey` para reconstruir la clave de traducción que Postgres no tiene (igual que el backfill v2 de Dexie, pero sobre las DOS plantillas). */
 const I18N_KEY_BY_NAME: ReadonlyMap<string, string> = (() => {
@@ -521,18 +532,6 @@ export function ruleFromRow(row: RawRule): CategorizationRuleRow {
 // Runner
 // ---------------------------------------------------------------------------
 
-/** PostgREST corta en `max_rows` (1000) EN SILENCIO — todo se pagina, no solo transactions. */
-async function fetchPaged<T>(fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: PostgrestError | null }>): Promise<T[]> {
-  const all: T[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await fetchPage(from, from + PAGE_SIZE - 1);
-    if (error) throw new Error(error.message);
-    const rows = data ?? [];
-    all.push(...rows);
-    if (rows.length < PAGE_SIZE) return all;
-  }
-}
-
 export interface HydrateOptions {
   /**
    * Scoped (p. ej. `/join`, recién aceptada la invitación): baja SOLO ese
@@ -565,11 +564,7 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   }
 
   const householdsQuery = () => {
-    let q = supabase
-      .from("households")
-      .select("id, name, base_currency, base_country, period_start_day, week_start, enabled_modules, settings, created_by, created_at, updated_at, client_rev")
-      .is("deleted_at", null)
-      .order("id");
+    let q = supabase.from("households").select(HOUSEHOLDS_COLUMNS).is("deleted_at", null).order("id");
     if (scopedId) q = q.eq("id", scopedId);
     return q;
   };
@@ -583,55 +578,18 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   const scoped = <Q extends { eq: (col: string, v: string) => Q }>(q: Q): Q => (scopedId ? q.eq("household_id", scopedId) : q);
 
   const [rawMembers, rawAccounts, rawCategories, rawTags, rawPayees, rawBudgets, rawGoals, rawRecurring, rawRules] = await Promise.all([
-    fetchPaged((f, t) => scoped(supabase.from("household_members").select("household_id, profile_id, role, display_name, color, status, joined_at").order("household_id").order("profile_id")).range(f, t)),
-    fetchPaged((f, t) =>
-      scoped(
-        supabase
-          .from("accounts")
-          .select(
-            "id, household_id, owner_id, name, kind, institution_id, country_code, currency_code, opening_balance::text, opening_date, current_balance::text, credit_limit::text, statement_day, due_day, interest_rate::text, term_months, include_in_net_worth, visibility, color, icon, sort_order, archived_at, created_by, created_at, updated_at, deleted_at, client_rev"
-          )
-          .order("id")
-      ).range(f, t)
-    ),
-    fetchPaged((f, t) =>
-      scoped(
-        supabase
-          .from("categories")
-          .select("id, household_id, parent_id, name, icon, color, kind, nature, is_system, sort_order, archived_at, visibility, owner_id, created_by, created_at, updated_at, deleted_at, client_rev")
-          .order("id")
-      ).range(f, t)
-    ),
-    fetchPaged((f, t) => scoped(supabase.from("tags").select("id, household_id, name, color, client_rev").order("id")).range(f, t)),
-    fetchPaged((f, t) => scoped(supabase.from("payees").select("id, household_id, name, default_category_id, default_account_id, logo_url, aliases, client_rev").order("id")).range(f, t)),
-    fetchPaged((f, t) => scoped(supabase.from("budgets").select("id, household_id, category_id, name, amount_limit::text, currency_code, archived_at, created_by, created_at, updated_at, client_rev").order("id")).range(f, t)),
-    fetchPaged((f, t) =>
-      scoped(supabase.from("goals").select("id, household_id, name, icon, color, target_amount::text, currency_code, target_date, account_id, archived_at, created_by, created_at, updated_at, client_rev").order("id")).range(f, t)
-    ),
-    fetchPaged((f, t) =>
-      scoped(
-        supabase
-          .from("recurring_rules")
-          .select("id, household_id, name, kind, category_id, account_id, expected_amount::text, currency_code, day_of_month, archived_at, created_by, created_at, updated_at, client_rev")
-          .order("id")
-      ).range(f, t)
-    ),
-    fetchPaged((f, t) =>
-      scoped(supabase.from("rules").select("id, household_id, name, priority, match, actions, is_active, hit_count, created_by, created_at, updated_at, deleted_at, client_rev").order("id")).range(f, t)
-    ),
+    fetchPaged((f, t) => scoped(supabase.from("household_members").select(HOUSEHOLD_MEMBERS_COLUMNS).order("household_id").order("profile_id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("accounts").select(ACCOUNTS_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("categories").select(CATEGORIES_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("tags").select(TAGS_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("payees").select(PAYEES_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("budgets").select(BUDGETS_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("goals").select(GOALS_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("recurring_rules").select(RECURRING_RULES_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("rules").select(RULES_COLUMNS).order("id")).range(f, t)),
   ]);
 
-  const rawTransactions = await fetchPaged((f, t) =>
-    scoped(
-      supabase
-        .from("transactions")
-        .select(
-          "id, household_id, created_by, kind, occurred_at, account_id, counter_account_id, amount::text, currency_code, original_amount::text, original_currency, original_rate::text, fx_rate::text, fx_source, fx_provider, fx_quote_kind, fx_resolved_at, amount_base::text, counter_amount::text, counter_currency_code, counter_fx_rate::text, category_id, payee_id, note, attachments, location, status, visibility, recurring_id, installment_group_id, installment_number, installment_total, created_at, updated_at, deleted_at, client_rev, source"
-        )
-        .order("occurred_at")
-        .order("id")
-    ).range(f, t)
-  );
+  const rawTransactions = await fetchPaged((f, t) => scoped(supabase.from("transactions").select(TRANSACTIONS_COLUMNS).order("occurred_at").order("id")).range(f, t));
 
   const members = rawMembers.filter((m) => m.status === "active").map(memberFromRow);
   const accounts = rawAccounts.map(accountFromRow);
