@@ -33,6 +33,16 @@ export function formatRate(scaled: ScaledRate): string {
   return `${negative ? "-" : ""}${intPart}.${fracPart}`;
 }
 
+/**
+ * `formatRate` a los 12 decimales internos nunca es lo que un usuario tiene
+ * que leer (su propio comentario ya lo dice). Trunca —no redondea, mismo
+ * criterio que ya usaba `RateRow`— a `decimals` dígitos para mostrar.
+ */
+export function formatRateShort(scaled: ScaledRate, decimals = 2): string {
+  const [intPart, fracPart = ""] = formatRate(scaled).split(".");
+  return `${intPart}.${fracPart.slice(0, decimals).padEnd(decimals, "0")}`;
+}
+
 export function rateFromInteger(n: number): ScaledRate {
   return BigInt(n) * RATE_SCALE;
 }

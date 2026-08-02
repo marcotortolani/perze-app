@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useLocale } from "next-intl";
 import { StatusBadge } from "../core/StatusBadge";
-import { formatRate, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateShort, type ScaledRate } from "@/lib/fx/rate";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
 export interface RateRowProps {
@@ -24,7 +24,7 @@ export interface RateRowProps {
  */
 export function RateRow({ pair, source, ageLabel, rate, stale = false, style }: RateRowProps) {
   const locale = useLocale() as Locale;
-  const [intPart, fracPart = ""] = formatRate(rate).split(".");
+  const [intPart, fracPart = ""] = formatRateShort(rate).split(".");
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "11px 0", ...style }}>
       <div>
@@ -35,7 +35,7 @@ export function RateRow({ pair, source, ageLabel, rate, stale = false, style }: 
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 15, color: "var(--text-primary)" }}>
-          {`${intPart}${decimalSeparatorForLocale(locale)}${fracPart.slice(0, 2).padEnd(2, "0")}`}
+          {`${intPart}${decimalSeparatorForLocale(locale)}${fracPart}`}
         </span>
         {stale ? (
           <StatusBadge status="warning" icon="clock">

@@ -11,6 +11,7 @@ import {
   Icon,
   InsightCard,
   SectionGroup,
+  SegmentedControl,
   Skeleton,
   SkeletonRow,
   Sparkline,
@@ -26,11 +27,13 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
+import { useNetWorthInCurrency } from "@/hooks/use-net-worth-in-currency";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { usePendingMutations } from "@/lib/offline";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { usePrivacyStore } from "@/stores/privacy-store";
+import { useNetWorthCurrencyStore } from "@/stores/net-worth-currency-store";
 import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
 import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -62,6 +65,10 @@ export default function HomePage() {
   const transactionsQuery = useTransactions(household?.id);
   const { data: transactions, isLoading: txLoading } = transactionsQuery;
   const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const netWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.displayCurrency);
+  const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
+  const wantsUsd = netWorthDisplayCurrency === "usd" && household?.baseCurrency !== "USD";
+  const netWorthUsd = useNetWorthInCurrency(household?.id, netWorth.data?.netWorth, wantsUsd ? "USD" : null);
   const budgetAlerts = useBudgetAlerts();
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const privacy = usePrivacyStore((s) => s.privacyMode);
@@ -135,6 +142,13 @@ export default function HomePage() {
     heroTrendMoney.push(runningNet);
   }
   const heroTrend = heroTrendMoney.map((m) => toMajorUnitsUnsafe(m));
+
+  // Toggle "ver en USD" — solo la cifra grande (CON-28-adjacent: el delta y
+  // el sparkline de arriba son tendencia diaria en base, convertirlos
+  // pediría cotización histórica por día). Si no hay rate hoy (needs_fx),
+  // nunca se inventa un valor: se cae a la cifra en base y se avisa.
+  const heroMoney = wantsUsd && netWorthUsd.data ? netWorthUsd.data : null;
+  const heroFxPending = wantsUsd && netWorthUsd.isSuccess && netWorthUsd.data === null;
   const last7Net = subtract(heroTrendMoney[13]!, heroTrendMoney[6]!);
   const prev7Net = heroTrendMoney[6]!;
   const deltaPolarity = compare(last7Net, prev7Net) >= 0 ? "positive" : "negative";
@@ -191,12 +205,27 @@ export default function HomePage() {
               </button>
             </ContextualTooltip>
           )}
+          {baseCurrency !== "USD" ? (
+            <SegmentedControl
+              options={[baseCurrency, "USD"]}
+              value={netWorthDisplayCurrency === "usd" ? "USD" : baseCurrency}
+              onChange={(id) => setNetWorthDisplayCurrency(id === "USD" ? "usd" : "base")}
+              size="sm"
+            />
+          ) : null}
         </div>
         {netWorth.data ? (
-          <CountUp value={netWorth.data.netWorth.amount} currency={baseCurrency} size="hero" fit showSign={false} polarity="neutral" privacy={privacy} />
+          heroMoney ? (
+            <CountUp value={heroMoney.amount} currency={heroMoney.currency} size="hero" fit showSign={false} polarity="neutral" privacy={privacy} />
+          ) : (
+            <CountUp value={netWorth.data.netWorth.amount} currency={baseCurrency} size="hero" fit showSign={false} polarity="neutral" privacy={privacy} />
+          )
         ) : (
           <Skeleton width={180} height={44} />
         )}
+        {heroFxPending ? (
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("home.netWorthUsdPending", { currency: baseCurrency })}</span>
+        ) : null}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: deltaPolarity === "positive" ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
             {deltaArrow} {formatAmountCompact(abs(subtract(last7Net, prev7Net)), { showSign: false })}

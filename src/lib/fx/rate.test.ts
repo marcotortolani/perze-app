@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { money } from "../money/money";
-import { convert, formatRate, invertRate, parseRate, rateFromInteger } from "./rate";
+import { convert, formatRate, formatRateShort, invertRate, parseRate, rateFromInteger } from "./rate";
 
 describe("parseRate / formatRate", () => {
   it("ida y vuelta sin pérdida", () => {
@@ -10,6 +10,26 @@ describe("parseRate / formatRate", () => {
 
   it("negativo", () => {
     expect(formatRate(parseRate("-0.5"))).toBe("-0.500000000000");
+  });
+});
+
+describe("formatRateShort", () => {
+  it("trunca a 2 decimales por default — nunca los 12 internos de formatRate", () => {
+    expect(formatRateShort(parseRate("1560.000000000000"))).toBe("1560.00");
+    expect(formatRateShort(parseRate("3.333333333333"))).toBe("3.33");
+  });
+
+  it("rellena con ceros si hay menos decimales que los pedidos", () => {
+    expect(formatRateShort(rateFromInteger(1000))).toBe("1000.00");
+  });
+
+  it("acepta una cantidad de decimales distinta", () => {
+    expect(formatRateShort(parseRate("3.333333333333"), 4)).toBe("3.3333");
+  });
+
+  it("trunca, no redondea (mismo criterio que RateRow ya usaba)", () => {
+    // 3.339... truncado a 2 decimales da 3.33, no 3.34
+    expect(formatRateShort(parseRate("3.339999999999"))).toBe("3.33");
   });
 });
 

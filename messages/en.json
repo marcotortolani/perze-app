@@ -799,6 +799,7 @@
   "hideAmounts": "Hide amounts",
   "vsLastWeek": "vs. last week",
   "excludedAccounts": "{count} account(s) without an exchange rate, excluded from the total.",
+  "netWorthUsdPending": "USD rate not available today — showing in {currency}.",
   "convertedTotal": "Converted total",
   "accountsCount": "{count} accounts",
   "spentThisPeriod": "Spent this period",

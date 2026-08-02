@@ -13,7 +13,7 @@ import { usePayees } from "@/hooks/use-payees";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
-import { formatRate } from "@/lib/fx/rate";
+import { formatRateShort } from "@/lib/fx/rate";
 import { money } from "@/lib/money/money";
 import type { Locale } from "@/i18n/formatting";
 
@@ -140,7 +140,12 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           meta={t("transactions.detail.category")}
           variant="value"
         />
-        <ListRow icon="wallet" label={account?.name ?? "—"} meta={counterAccount ? t("transactions.detail.toAccount", { account: counterAccount.name }) : t("transactions.detail.account")} variant="value" />
+        <ListRow
+          icon="wallet"
+          label={account ? `${account.name} · ${account.currencyCode}` : "—"}
+          meta={counterAccount ? t("transactions.detail.toAccount", { account: counterAccount.name }) : t("transactions.detail.account")}
+          variant="value"
+        />
         <ListRow icon="calendar" label={new Date(transaction.occurredAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })} meta={t("transactions.detail.date")} variant="value" />
         {payee ? <ListRow icon="tag" label={payee.name} meta={t("transactions.detail.payee")} variant="value" /> : null}
         {transaction.note ? <ListRow icon="edit" label={transaction.note} meta={t("transactions.detail.note")} variant="value" /> : null}
@@ -153,7 +158,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           </span>
           {transaction.fxRate !== null ? (
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>
-              {`1 ${transaction.currencyCode} = ${formatRate(transaction.fxRate)} ${household.baseCurrency}`}
+              {`1 ${transaction.currencyCode} = ${formatRateShort(transaction.fxRate)} ${household.baseCurrency}`}
             </span>
           ) : (
             <StatusBadge status="neutral">{t("transactions.detail.fxUnresolved")}</StatusBadge>
