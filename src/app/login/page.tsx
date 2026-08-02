@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 import { Button, Input, Logo } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { createClient } from "@/lib/supabase/client";
-import { signInWithPassword, translateAuthError } from "@/features/auth/password-auth";
+import { translateAuthError } from "@/features/auth/password-auth";
+import { signInWithPasswordAction } from "@/features/auth/sign-in-with-password.action";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { markRegistered } from "@/lib/auth/registered-cookie";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
@@ -34,12 +35,16 @@ export default function LoginPage() {
     setSigningIn(true);
     setError(null);
     try {
-      const result = await signInWithPassword(email, password);
+      const result = await signInWithPasswordAction(email, password);
       if (result.errorCode) {
         setError(translateAuthError(result, t as (key: string) => string));
         return;
       }
       markRegistered();
+      // La sesión ya quedó en cookies reales (Set-Cookie de la Server
+      // Action); este cliente del browser las lee para seguir operando
+      // como siempre — outbox, RLS, etc. — con la misma instancia de acá
+      // en adelante.
       const supabase = createClient();
       const {
         data: { user },

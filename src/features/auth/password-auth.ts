@@ -23,7 +23,7 @@ export interface PasswordAuthResult {
  * lower_upper_letters_digits` en `config.toml`, pusheados en la sesión
  * anterior) — lo único que faltaba era la UI y el mapeo de errores.
  */
-function mapError(message: string): PasswordAuthResult {
+export function mapError(message: string): PasswordAuthResult {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials")) {
     return { errorCode: "invalid_credentials" };

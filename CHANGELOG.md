@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.3] — 2026-08-02
+
+### Corregido — la sesión por contraseña no sobrevivía a cerrar la PWA instalada
+
+- Login por email+contraseña era el único camino de auth de la app que nunca pasaba por el
+  servidor: `signInWithPassword` corría en el cliente y la cookie de sesión se escribía por
+  `document.cookie`. OAuth, magic link y OTP ya canjean su sesión en `/auth/callback` (Route
+  Handler, `Set-Cookie` real) — password quedaba afuera de ese camino. Una cookie escrita
+  solo por script queda sujeta al recorte de vida real que aplican Safari/WebKit (y las PWA
+  standalone que corren sobre ese motor) sin importar el `Max-Age` pedido, que es
+  exactamente el síntoma reportado: funciona después de loguearse, pero al cerrar y reabrir
+  la PWA instalada vuelve a pedir contraseña en vez de restaurar la sesión
+- Nueva Server Action `signInWithPasswordAction` (`src/features/auth/sign-in-with-password.action.ts`):
+  mismo `signInWithPassword`, corriendo del lado del servidor con el cliente de
+  `next/headers` `cookies()`, así la sesión sale como `Set-Cookie` real. `/login` la usa en
+  vez de la versión de cliente
+- El bloqueo por PIN (opcional) no se toca — sigue gateando con sesión viva, independiente
+  de esto
+
 ## [0.9.2] — 2026-08-02
 
 ### Agregado — cambiar la moneda base desde Ajustes
