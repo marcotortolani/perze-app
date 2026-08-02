@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, Donut, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton } from "@/design-system";
+import { Amount, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton } from "@/design-system";
+import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";

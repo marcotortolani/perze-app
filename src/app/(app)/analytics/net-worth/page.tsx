@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Skeleton, Sparkline, StatTile } from "@/design-system";
+import { AppHeader, Skeleton, StatTile } from "@/design-system";
+import { Sparkline } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";

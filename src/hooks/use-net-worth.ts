@@ -19,6 +19,12 @@ export function useNetWorth(householdId: string | undefined, baseCurrency: strin
 
   return useQuery({
     queryKey: ["net-worth", householdId, baseCurrency, currencies, accounts.map((a) => `${a.id}:${a.currentBalance}`)],
+    // Fase 3 del plan de fluidez — la key incluye el saldo de cada cuenta,
+    // así que cada cambio de saldo arma una entrada de cache nueva; con el
+    // `gcTime` largo del resto de la app (24h) esas entradas viejas nunca
+    // se vuelven a pedir y solo se acumulan. `gcTime` corto acá, propio de
+    // esta query, en vez de tocar el default global.
+    gcTime: 5 * 60 * 1000,
     queryFn: async () => {
       const date = todayIso();
       const rates = new Map<string, bigint | null>();

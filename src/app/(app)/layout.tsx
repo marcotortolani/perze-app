@@ -14,11 +14,18 @@ import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
 import { contentWidthFor } from "@/lib/nav/content-width";
 
-const ROUTE_TO_TAB: Record<string, string> = {
-  "/": "home",
-  "/transactions": "movements",
-  "/more": "more",
-};
+// `startsWith` en vez de igualdad exacta: antes cualquier subruta
+// (`/transactions/abc`, `/more/settings`) resolvía a `""` y el tab bar
+// quedaba sin ningún tab resaltado. `/` es la única entrada que necesita
+// coincidencia exacta — todo lo demás cuelga de un prefijo.
+const ROUTE_TO_TAB: [string, string][] = [
+  ["/transactions", "movements"],
+  ["/more", "more"],
+];
+function tabForPathname(pathname: string): string {
+  if (pathname === "/") return "home";
+  return ROUTE_TO_TAB.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
+}
 
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
@@ -101,29 +108,30 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   if (!householdLoading && household === null) return null;
 
   const fourthTabRoute: Record<string, { path: string; item: TabItem }> = {
-    analytics: { path: "/analytics", item: { id: "analytics", label: t("nav.analysis"), icon: "chart" } },
-    accounts: { path: "/accounts", item: { id: "accounts", label: t("nav.accounts"), icon: "wallet" } },
-    investments: { path: "/investments", item: { id: "investments", label: t("nav.investments"), icon: "invest" } },
+    analytics: { path: "/analytics", item: { id: "analytics", label: t("nav.analysis"), icon: "chart", href: "/analytics" } },
+    accounts: { path: "/accounts", item: { id: "accounts", label: t("nav.accounts"), icon: "wallet", href: "/accounts" } },
+    investments: { path: "/investments", item: { id: "investments", label: t("nav.investments"), icon: "invest", href: "/investments" } },
     budgets: {
       path: "/budgets",
       item: {
         id: "budgets",
         label: t("nav.budgets"),
         icon: "target",
+        href: "/budgets",
         ...(budgetAlerts.length > 0 ? { badge: budgetAlerts.length, badgeLabel: t("ds.tabBar.budgetAlertsBadge", { count: budgetAlerts.length }) } : {}),
       },
     },
   };
   const fourth = fourthTabRoute[fourthTab] ?? fourthTabRoute.analytics!;
   const tabs: TabItem[] = [
-    { id: "home", label: t("nav.homeShort"), icon: "home" },
-    { id: "movements", label: t("nav.movementsShort"), icon: "list" },
-    { id: "add", label: "", icon: "plus", fab: true },
+    { id: "home", label: t("nav.homeShort"), icon: "home", href: "/" },
+    { id: "movements", label: t("nav.movementsShort"), icon: "list", href: "/transactions" },
+    { id: "add", label: "", icon: "plus", fab: true, href: "/add" },
     fourth.item,
-    { id: "more", label: t("nav.more"), icon: "more" },
+    { id: "more", label: t("nav.more"), icon: "more", href: "/more" },
   ];
 
-  const activeTab = ROUTE_TO_TAB[pathname] ?? (pathname === fourth.path ? fourth.item.id : "");
+  const activeTab = tabForPathname(pathname) || (pathname.startsWith(fourth.path) ? fourth.item.id : "");
 
   const scopeLabels: Record<(typeof SCOPE_ORDER)[number], string> = {
     personal: t("nav.scope.personal"),

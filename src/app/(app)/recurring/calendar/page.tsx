@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Icon, ListRow, MonthCalendar, Skeleton } from "@/design-system";
+import { Amount, AppHeader, Icon, ListRow, Skeleton } from "@/design-system";
+import { MonthCalendar } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { money } from "@/lib/money/money";

@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { AppHeader, NeedsFxBanner, SeriesLegend, Skeleton, StatTile } from "@/design-system";
+import { AppHeader, NeedsFxBanner, Skeleton, StatTile } from "@/design-system";
+import { SeriesLegend } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { computeCurrencyExposure } from "@/lib/analytics/currency-exposure";

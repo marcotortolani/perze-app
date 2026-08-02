@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { outbox } from "./outbox";
 import { drainOutbox } from "./sync-worker";
 import { pullFromRemote } from "./pull";
+import { invalidateAfterPull } from "./invalidate-after-pull";
 
 const POLL_INTERVAL_MS = 30_000;
 const CURRENT_HOUSEHOLD_META_KEY = "currentHouseholdId";
@@ -46,13 +47,21 @@ export function useSyncLoop(): void {
         if (online) {
           const pending = await outbox.count();
           if (pending > 0) {
-            await drainOutbox(supabaseRef.current!);
+            const drained = await drainOutbox(supabaseRef.current!);
+            // `drainOutbox` puede crear conflictos sin que el pull de abajo
+            // vea una sola fila nueva (el conflicto es sobre algo que YA
+            // estaba en Dexie) — esa key se invalida acá, aparte de la
+            // invalidación scopeada del pull.
+            const householdIdForConflicts = (await getDb().meta.get(CURRENT_HOUSEHOLD_META_KEY))?.value as string | undefined;
+            if (!cancelled && drained.conflicts > 0 && householdIdForConflicts) {
+              queryClient.invalidateQueries({ queryKey: ["conflicts", householdIdForConflicts] });
+            }
           }
 
           const householdId = (await getDb().meta.get(CURRENT_HOUSEHOLD_META_KEY))?.value as string | undefined;
           if (householdId) {
-            await pullFromRemote(householdId);
-            if (!cancelled) await queryClient.invalidateQueries();
+            const result = await pullFromRemote(householdId);
+            if (!cancelled) invalidateAfterPull(queryClient, result);
           }
         }
       } catch {

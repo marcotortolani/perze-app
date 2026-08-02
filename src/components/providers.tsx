@@ -19,12 +19,25 @@ import { useRealtimeSync } from "@/lib/offline/use-realtime-sync";
  * docs/perze-plan-redesign-first-5-blocks.md). Por eso un solo QueryClient
  * de cliente alcanza: nada de la variante server/browser de las guías de
  * SSR de TanStack Query, que resuelve un problema que acá no existe.
+ *
+ * Fase 3 del plan de fluidez de navegación — `staleTime`/`gcTime` estaban
+ * pensados para datos remotos (30s de fresco, 5 min de `gcTime` por
+ * default): volver a un tab después de esa ventana mostraba el skeleton de
+ * vuelta aunque Dexie tuviera los datos ahí mismo. Acá la fuente de verdad
+ * es local y toda escritura ya invalida lo que corresponde vía
+ * `createOptimisticMutation()`, y el sync loop invalida lo que el pull
+ * remoto haya tocado (`invalidate-after-pull.ts`) — nada se vuelve
+ * silenciosamente obsoleto por quedarse quieto. `refetchOnMount`/
+ * `refetchOnReconnect` en `false` por el mismo motivo: un mount o una
+ * reconexión no son señal de que Dexie cambió, y la invalidación explícita
+ * ya cubre los casos en que sí cambió.
  */
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30 * 1000,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
         retry: (failureCount, error) => {
           // Sin red: no tiene sentido reintentar contra un servidor que no
           // existe hoy. Cuando se conecte Supabase, esto vuelve a un backoff normal.
@@ -32,6 +45,8 @@ function makeQueryClient() {
           return failureCount < 2;
         },
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
       },
     },
   });

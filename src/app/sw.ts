@@ -1,5 +1,5 @@
 import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from "serwist";
-import { NetworkOnly, Serwist } from "serwist";
+import { NetworkFirst, NetworkOnly, StaleWhileRevalidate, Serwist } from "serwist";
 import { defaultCache } from "@serwist/turbopack/worker";
 
 declare global {
@@ -34,6 +34,55 @@ const API_NETWORK_ONLY: RuntimeCaching = {
 };
 
 /**
+ * Fase 4 del plan de fluidez de navegación — ninguna de las reglas de
+ * `defaultCache` para navegaciones (`pages`, `pages-rsc`,
+ * `pages-rsc-prefetch`) trae `networkTimeoutSeconds`: son `NetworkFirst`
+ * sin límite, así que con señal pobre una navegación espera a la red
+ * indefinidamente en vez de caer al cache que ya tiene. Estas dos reglas
+ * van ANTES de `...defaultCache` (gana el primer matcher, mismo patrón que
+ * `API_NETWORK_ONLY`) y replican los matchers exactos de
+ * `@serwist/turbopack` para RSC prefetch / RSC / documento, con la
+ * diferencia de estrategia:
+ *
+ * - RSC de prefetch (`Next-Router-Prefetch: 1`): un prefetch por
+ *   definición no debe bloquear nada — `StaleWhileRevalidate` sirve el
+ *   cache al toque y revalida en segundo plano, nunca espera a la red.
+ * - RSC/documento de una navegación real: `NetworkFirst` con
+ *   `networkTimeoutSeconds: 3` — en 3 segundos sin respuesta cae al cache
+ *   (o al fallback `/offline` si tampoco hay cache), en vez de colgarse.
+ */
+const NAVIGATION_PREFETCH_STALE_WHILE_REVALIDATE: RuntimeCaching = {
+  matcher: ({ request, url: { pathname }, sameOrigin }) =>
+    request.headers.get("RSC") === "1" && request.headers.get("Next-Router-Prefetch") === "1" && sameOrigin && !pathname.startsWith("/api/"),
+  handler: new StaleWhileRevalidate({ cacheName: "pages-rsc-prefetch" }),
+};
+
+const NAVIGATION_RSC_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
+  matcher: ({ request, url: { pathname }, sameOrigin }) => request.headers.get("RSC") === "1" && sameOrigin && !pathname.startsWith("/api/"),
+  handler: new NetworkFirst({ cacheName: "pages-rsc", networkTimeoutSeconds: 3 }),
+};
+
+const NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
+  matcher: ({ request, url: { pathname }, sameOrigin }) =>
+    request.headers.get("Content-Type")?.includes("text/html") === true && sameOrigin && !pathname.startsWith("/api/"),
+  handler: new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3 }),
+};
+
+/**
+ * B5/C25 (comentario original) también flagueaba que las respuestas de
+ * Supabase caen en el bucket genérico `cross-origin` de `defaultCache`
+ * (`NetworkFirst`, hasta 1h de cache) — respuestas autenticadas de
+ * PostgREST quedando en CacheStorage sin purga por logout. Se matchea por
+ * los prefijos de path que expone cualquier deployment de Supabase (cloud
+ * o self-host detrás de Kong), no por hostname — así funciona igual para
+ * quien haga self-host con un dominio propio.
+ */
+const SUPABASE_NETWORK_ONLY: RuntimeCaching = {
+  matcher: ({ url: { pathname } }) => /^\/(rest|auth|realtime|storage)\/v1\//.test(pathname),
+  handler: new NetworkOnly(),
+};
+
+/**
  * C18/auditoría — `skipWaiting: true` activaba el service worker nuevo de
  * inmediato, en medio de la sesión: la próxima navegación (o incluso un
  * fetch en curso) podía servirse con JS de una versión y CSS/chunks de
@@ -47,7 +96,14 @@ const serwist = new Serwist({
   skipWaiting: false,
   clientsClaim: false,
   navigationPreload: true,
-  runtimeCaching: [API_NETWORK_ONLY, ...defaultCache],
+  runtimeCaching: [
+    API_NETWORK_ONLY,
+    SUPABASE_NETWORK_ONLY,
+    NAVIGATION_PREFETCH_STALE_WHILE_REVALIDATE,
+    NAVIGATION_RSC_NETWORK_FIRST_WITH_TIMEOUT,
+    NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT,
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {

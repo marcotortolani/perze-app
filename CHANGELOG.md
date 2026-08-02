@@ -6,6 +6,45 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.18] — 2026-08-02
+
+### Corregido — navegación lenta entre tabs en la PWA instalada
+
+- Tocar un tab (Inicio → Movimientos) no daba ningún feedback hasta que la navegación
+  commiteaba: la `TabBar`/`Sidebar` usaban `<button onClick>` + `router.push`, sin prefetch,
+  sin press state, sin un solo `loading.tsx` en todo el repo. Ahora `TabItem` lleva `href` y
+  se renderiza como `<Link prefetch>` (con fallback a `<button>` donde no hay `href`, p. ej.
+  `/dev/components`): las cuatro rutas quedan prefetcheadas apenas hidrata la tab bar, el tab
+  tocado se pinta activo en el mismo frame (activo optimista, se descarta solo cuando el
+  pathname real lo alcanza), y cada ruta de tab tiene su propio `loading.tsx`
+- `proxy.ts` hacía `supabase.auth.getUser()` — un round-trip al Auth server — más un `SELECT`
+  a `profiles` en CADA navegación, antes de que Next empezara a renderizar. El proyecto ya
+  firma con JWT asimétrico (ES256), así que pasa a `getClaims()` (verificación local del JWT,
+  sin red) y cachea el resultado de `access_status` en una cookie httpOnly de 15 minutos
+  atada al `userId`; revocar un acceso ahora tarda hasta ese TTL en expulsar a alguien ya
+  navegando — RLS sigue siendo la barrera real, esto es solo el gate de UX
+- El sync loop invalidaba TODO el cache de TanStack Query cada 30 segundos
+  (`queryClient.invalidateQueries()` sin key), tirara o no el pull una sola fila nueva —
+  incluidas queries con `staleTime: Infinity` como el household actual. Ahora solo invalida
+  cuando el pull trajo transacciones nuevas o detectó borrados, y nunca toca lo que
+  `pullFromRemote` no puede haber tocado (sesión, inversiones). `staleTime`/`gcTime` del
+  `QueryClient` pasan a 5 min / 24h — la fuente de verdad es Dexie local, no un servidor
+  remoto, así que volver a un tab ya no muestra el skeleton de vuelta solo por haberse
+  quedado quieto
+- El service worker no tenía `networkTimeoutSeconds` en las reglas de navegación/RSC: con
+  señal pobre, una navegación esperaba a la red sin límite en vez de caer al cache. Ahora cae
+  en 3 segundos; el prefetch de rutas usa `StaleWhileRevalidate` (nunca bloquea), y las
+  respuestas de Supabase quedan `NetworkOnly` explícito en vez de caer en el bucket genérico
+  `cross-origin` que las cacheaba hasta 1 hora
+- `design-system/index.ts` reexportaba `charts` (13 componentes SVG) y `systems` desde el
+  barril raíz: cualquier pantalla que solo necesitaba `Card`/`Skeleton` arrastraba el grafo
+  completo. Ahora se importan directo desde `@/design-system/charts`/`@/design-system/systems`
+  donde se usan; `next.config.ts` suma `optimizePackageImports` para `@phosphor-icons/react`,
+  `motion` y `date-fns`
+- El arranque en frío de la PWA quedaba con un spinner hasta que `getUser()` resolvía por
+  red. Ahora resuelve primero con `getSession()` (local, sin red) y confirma con `getUser()`
+  en segundo plano, sin bloquear el primer paint
+
 ## [0.9.17] — 2026-08-02
 
 ### Agregado — historial de tipo de cambio: promedio mensual

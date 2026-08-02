@@ -18,8 +18,17 @@ const nextConfig: NextConfig = {
   turbopack: {},
   cacheComponents: true,
   experimental: {
-    viewTransition: true,
+    // Fase 5 del plan de fluidez de navegación — `@phosphor-icons/react`
+    // (barril de íconos), `motion` y `date-fns` se importan por nombre en
+    // todo el código; sin esto Turbopack no puede garantizar que solo el
+    // ícono/función usada entre al chunk de cada ruta.
+    optimizePackageImports: ["@phosphor-icons/react", "motion", "date-fns"],
     turbopackFileSystemCacheForDev: true,
+    // `viewTransition` estaba encendido sin un solo consumidor (`ViewTransition`
+    // no se importa en ningún lado, sin `view-transition-name` en el CSS) —
+    // se apaga acá para no mezclar variables mientras se mide el resto de
+    // esta pasada. Es la guinda de la fluidez de navegación, no el problema:
+    // evaluar aparte, con los otros cambios ya medidos.
   },
 };
 

@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, CalendarHeatmap, Skeleton } from "@/design-system";
+import { AppHeader, Skeleton } from "@/design-system";
+import { CalendarHeatmap } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
 

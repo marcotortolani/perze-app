@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import Link, { useLinkStatus } from "next/link";
 import { useTranslations } from "next-intl";
 import { Icon, type IconName } from "../core/Icon";
 
@@ -18,6 +19,17 @@ export interface TabItem {
    */
   badge?: number | undefined;
   badgeLabel?: string | undefined;
+  /**
+   * Fase 1 del plan de fluidez de navegación: con `href` presente, el tab
+   * se renderiza como `<Link prefetch>` en vez de `<button onClick>` — la
+   * tab bar está siempre en viewport, así que las cuatro rutas quedan
+   * prefetcheadas apenas hidrata, y el tap navega desde el router cache
+   * del cliente en vez de pedir el payload recién al tocar. Sin `href`
+   * (uso fuera del shell, p. ej. `/dev/components`) se mantiene el
+   * `<button>` de siempre — no es un cambio de contrato, es un modo
+   * adicional.
+   */
+  href?: string | undefined;
 }
 
 export interface TabBarProps {
@@ -35,10 +47,66 @@ export interface TabBarProps {
   style?: CSSProperties | undefined;
 }
 
+/** Ícono + label de un tab, compartido entre el modo `<Link>` y `<button>`. `withPendingOpacity` solo se pasa `true` dentro de un `<Link>` — `useLinkStatus` no es válido fuera de uno. */
+function TabIconLabel({ item, on, opacity }: { item: TabItem; on: boolean; opacity?: number }) {
+  const t = useTranslations();
+  return (
+    <>
+      <span style={{ position: "relative", display: "inline-flex" }}>
+        <Icon name={item.icon} size={22} strokeWidth={on ? 1.9 : 1.5} color={on ? "var(--primary-ink)" : "var(--text-muted)"} style={opacity !== undefined ? { opacity } : undefined} />
+        {item.badge !== undefined && item.badge > 0 ? (
+          <span
+            role="status"
+            aria-label={item.badgeLabel ?? t("ds.tabBar.badgeCount", { count: item.badge })}
+            style={{
+              position: "absolute",
+              top: -4,
+              right: -8,
+              minWidth: 16,
+              height: 16,
+              padding: "0 4px",
+              borderRadius: 999,
+              background: "var(--critical)",
+              color: "#ffffff",
+              fontSize: 10,
+              fontWeight: 700,
+              lineHeight: "16px",
+              textAlign: "center",
+            }}
+          >
+            {item.badge > 99 ? "99+" : item.badge}
+          </span>
+        ) : null}
+      </span>
+      <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 500, color: on ? "var(--primary-ink)" : "var(--text-muted)" }}>{item.label}</span>
+    </>
+  );
+}
+
+/** Wrapper que solo existe para poder llamar `useLinkStatus` dentro del `<Link>` — el hook no funciona fuera de uno. */
+function LinkTabIconLabel({ item, on }: { item: TabItem; on: boolean }) {
+  const { pending } = useLinkStatus();
+  return <TabIconLabel item={item} on={on} opacity={pending ? 0.6 : 1} />;
+}
+
 /** Tab bar inferior de 64px con el FAB en el slot central. */
 export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
   const t = useTranslations();
   const [pressed, setPressed] = useState<string | null>(null);
+  // Activo optimista: `active` viene derivado de `usePathname()` en el
+  // caller, así que solo cambia cuando la navegación ya commiteó. Pintar
+  // el tab tocado como activo desde el tap (y no esperar el commit) es lo
+  // que hace que la interfaz responda en el mismo frame. Se descarta
+  // ajustando el estado durante el render (patrón de React, no un efecto)
+  // en cuanto `active` alcanza al tab pendiente.
+  const [pendingActive, setPendingActive] = useState<string | null>(null);
+  const [lastActive, setLastActive] = useState(active);
+  if (active !== lastActive) {
+    setLastActive(active);
+    if (pendingActive !== null) setPendingActive(null);
+  }
+  const effectiveActive = pendingActive ?? active;
+
   const items: TabItem[] =
     tabs ??
     [
@@ -48,6 +116,9 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
       { id: "analytics", label: t("nav.analysis"), icon: "chart" },
       { id: "more", label: t("nav.more"), icon: "more" },
     ];
+
+  const buttonStyle: CSSProperties = { flex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, background: "none", border: 0, cursor: "pointer", textDecoration: "none" };
+
   return (
     <nav
       style={{
@@ -63,36 +134,75 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
       }}
     >
       {items.map((item) => {
-        const on = item.id === active;
+        const on = item.id === effectiveActive;
+        const handlePress = () => {
+          setPressed(item.id);
+          if (item.href && item.id !== active) setPendingActive(item.id);
+        };
         if (item.fab) {
+          const fabInner = (
+            <span
+              style={{
+                width: "var(--fab-size)",
+                height: "var(--fab-size)",
+                borderRadius: 999,
+                background: "var(--primary-fill)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "var(--shadow-sheet)",
+                transform: `translateY(-18px) scale(${pressed === item.id ? "var(--press-scale)" : "1"})`,
+                transition: "transform var(--duration-fast) var(--ease-spring-snappy)",
+              }}
+            >
+              <Icon name="plus" size={28} strokeWidth={2} color="var(--primary-on-fill)" />
+            </span>
+          );
+          if (item.href) {
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                prefetch
+                aria-label={t("ds.tabBar.add")}
+                onPointerDown={handlePress}
+                onPointerUp={() => setPressed(null)}
+                onPointerLeave={() => setPressed(null)}
+                style={{ flex: 1, display: "flex", justifyContent: "center", background: "none", border: 0, cursor: "pointer", textDecoration: "none" }}
+              >
+                {fabInner}
+              </Link>
+            );
+          }
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => onChange?.(item.id)}
               aria-label={t("ds.tabBar.add")}
-              onPointerDown={() => setPressed(item.id)}
+              onPointerDown={handlePress}
               onPointerUp={() => setPressed(null)}
               onPointerLeave={() => setPressed(null)}
               style={{ flex: 1, display: "flex", justifyContent: "center", background: "none", border: 0, cursor: "pointer" }}
             >
-              <span
-                style={{
-                  width: "var(--fab-size)",
-                  height: "var(--fab-size)",
-                  borderRadius: 999,
-                  background: "var(--primary-fill)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "var(--shadow-sheet)",
-                  transform: `translateY(-18px) scale(${pressed === item.id ? "var(--press-scale)" : "1"})`,
-                  transition: "transform var(--duration-fast) var(--ease-spring-snappy)",
-                }}
-              >
-                <Icon name="plus" size={28} strokeWidth={2} color="var(--primary-on-fill)" />
-              </span>
+              {fabInner}
             </button>
+          );
+        }
+        const scale = pressed === item.id ? "var(--press-scale)" : "1";
+        if (item.href) {
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              prefetch
+              onPointerDown={handlePress}
+              onPointerUp={() => setPressed(null)}
+              onPointerLeave={() => setPressed(null)}
+              style={{ ...buttonStyle, transform: `scale(${scale})`, transition: "transform var(--duration-fast) var(--ease-spring-snappy)" }}
+            >
+              <LinkTabIconLabel item={item} on={on} />
+            </Link>
           );
         }
         return (
@@ -100,35 +210,12 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
             key={item.id}
             type="button"
             onClick={() => onChange?.(item.id)}
-            style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, background: "none", border: 0, cursor: "pointer" }}
+            onPointerDown={handlePress}
+            onPointerUp={() => setPressed(null)}
+            onPointerLeave={() => setPressed(null)}
+            style={{ ...buttonStyle, transform: `scale(${scale})`, transition: "transform var(--duration-fast) var(--ease-spring-snappy)" }}
           >
-            <span style={{ position: "relative", display: "inline-flex" }}>
-              <Icon name={item.icon} size={22} strokeWidth={on ? 1.9 : 1.5} color={on ? "var(--primary-ink)" : "var(--text-muted)"} />
-              {item.badge !== undefined && item.badge > 0 ? (
-                <span
-                  role="status"
-                  aria-label={item.badgeLabel ?? t("ds.tabBar.badgeCount", { count: item.badge })}
-                  style={{
-                    position: "absolute",
-                    top: -4,
-                    right: -8,
-                    minWidth: 16,
-                    height: 16,
-                    padding: "0 4px",
-                    borderRadius: 999,
-                    background: "var(--critical)",
-                    color: "#ffffff",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    lineHeight: "16px",
-                    textAlign: "center",
-                  }}
-                >
-                  {item.badge > 99 ? "99+" : item.badge}
-                </span>
-              ) : null}
-            </span>
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 500, color: on ? "var(--primary-ink)" : "var(--text-muted)" }}>{item.label}</span>
+            <TabIconLabel item={item} on={on} />
           </button>
         );
       })}

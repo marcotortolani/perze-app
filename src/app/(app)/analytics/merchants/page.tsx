@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, RankingBar, Skeleton } from "@/design-system";
+import { AppHeader, EmptyState, Skeleton } from "@/design-system";
+import { RankingBar } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";

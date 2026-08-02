@@ -6,6 +6,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { pullFromRemote } from "./pull";
+import { invalidateAfterPull } from "./invalidate-after-pull";
 
 const DEBOUNCE_MS = 300;
 
@@ -39,8 +40,8 @@ export function useRealtimeSync(): void {
       debounceRef.current = setTimeout(() => {
         void (async () => {
           try {
-            await pullFromRemote(householdId!);
-            if (!cancelled) await queryClient.invalidateQueries();
+            const result = await pullFromRemote(householdId!);
+            if (!cancelled) invalidateAfterPull(queryClient, result);
           } catch {
             // Red de seguridad real: el próximo tick de 30s de
             // `use-sync-loop.ts` reintenta con el mismo watermark. Un
