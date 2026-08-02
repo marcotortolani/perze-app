@@ -999,6 +999,21 @@
    "macos": "En Safari: menú Archivo → Agregar al Dock. En Chrome o Edge: tocá el ícono de instalar (⊕) en la barra de direcciones.",
    "windows": "En Chrome o Edge: tocá el ícono de instalar (⊕) en la barra de direcciones, o abrí el menú y elegí \"Instalar PERZE\".",
    "other": "Buscá \"Instalar app\" o \"Agregar a la pantalla de inicio\" en el menú de tu navegador."
+  },
+  "decimalSeparator": "Separador decimal",
+  "decimalSeparatorHint": "Solo cambia cómo se muestran los montos — los datos se guardan siempre igual.",
+  "decimalSeparatorOptions": {
+   "locale": "Según el idioma",
+   "comma": "Coma (1234,56)",
+   "period": "Punto (1234.56)"
+  },
+  "dateFormat": "Formato de fecha",
+  "dateFormatHint": "Solo cambia cómo se muestran las fechas numéricas — los datos se guardan siempre igual.",
+  "dateFormatOptions": {
+   "locale": "Según el idioma",
+   "dmy": "Día/mes/año",
+   "mdy": "Mes/día/año",
+   "ymd": "Año-mes-día"
   }
  },
  "modulesPage": {

@@ -9,8 +9,8 @@ import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow,
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatRateTrimmed, invertRate, parseRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
-import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
+import { formatRateTrimmed, invertRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
@@ -309,11 +309,8 @@ export default function CurrenciesPage() {
                   label={t("currenciesPage.howManyWorth", { base: displayTo, quote: displayFrom })}
                   placeholder={t("currenciesPage.ratePlaceholder")}
                   onChange={(e) => {
-                    const parsed = Number(e.target.value.replace(",", "."));
-                    if (!Number.isNaN(parsed) && parsed > 0) {
-                      const rate = parseRate(parsed.toFixed(12));
-                      setManualRate(inverted ? invertRate(rate) : rate);
-                    }
+                    const rate = parseTypedRate(e.target.value);
+                    if (rate !== null) setManualRate(inverted ? invertRate(rate) : rate);
                   }}
                 />
               ) : null}

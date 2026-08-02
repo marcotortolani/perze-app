@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppHeader, Button, EmptyState, ListRow, Skeleton, StatTile } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
 import { useOwnAccess } from "@/hooks/use-own-access";
+import { formatNumericDate, type Locale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 const ACCESS_REQUESTS_KEY = ["admin", "access-requests"] as const;
 const METRICS_KEY = ["admin", "metrics"] as const;
@@ -21,6 +23,8 @@ const METRICS_KEY = ["admin", "metrics"] as const;
  */
 export default function AdminPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [acting, setActing] = useState<string | null>(null);
@@ -84,7 +88,7 @@ export default function AdminPage() {
                     {request.email ?? request.displayName ?? request.profileId}
                   </div>
                   <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                    {request.country ?? t("adminPage.unknownCountry")} · {t("adminPage.requestedOn", { date: new Date(request.accessRequestedAt).toLocaleDateString() })}
+                    {request.country ?? t("adminPage.unknownCountry")} · {t("adminPage.requestedOn", { date: formatNumericDate(locale, new Date(request.accessRequestedAt), dateFormat) })}
                   </div>
                   <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                     <Button variant="secondary" disabled={acting === request.profileId} onClick={() => handleDecide(request.profileId, "approved")} style={{ flex: 1 }}>

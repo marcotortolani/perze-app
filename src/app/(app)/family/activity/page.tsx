@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, EmptyState, ListRow, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
@@ -10,10 +10,14 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { visibilityGrantsRepo } from "@/lib/repos/visibility-grants-repo";
+import { formatNumericDate, type Locale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 /** J9 — actividad: quién le dio o le sacó acceso a quién, y sobre qué. Audita `visibility_grants`. */
 export default function ActivityPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
@@ -53,7 +57,7 @@ export default function ActivityPage() {
                   ? t("activityPage.revoked", { granter: memberById.get(entry.grantedBy)?.displayName ?? t("familyPage.unnamed"), member: memberById.get(entry.memberId)?.displayName ?? t("familyPage.unnamed"), subject: subjectLabel(entry.subjectType, entry.subjectId) })
                   : t("activityPage.granted", { granter: memberById.get(entry.grantedBy)?.displayName ?? t("familyPage.unnamed"), member: memberById.get(entry.memberId)?.displayName ?? t("familyPage.unnamed"), subject: subjectLabel(entry.subjectType, entry.subjectId) })
               }
-              meta={new Date(entry.revokedAt ?? entry.grantedAt).toLocaleDateString()}
+              meta={formatNumericDate(locale, new Date(entry.revokedAt ?? entry.grantedAt), dateFormat)}
             />
           ))
         )}

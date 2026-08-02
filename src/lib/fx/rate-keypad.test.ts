@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { appendKeypadRateDigit, parseKeypadRate } from "./rate-keypad";
-import { formatRate } from "./rate";
+import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "./rate-keypad";
+import { formatRate, formatRateTrimmed } from "./rate";
 
 describe("appendKeypadRateDigit", () => {
   it("acumula dígitos", () => {
@@ -53,5 +53,30 @@ describe("parseKeypadRate", () => {
 
   it("un decimal a medio escribir (termina en separador) igual se parsea", () => {
     expect(formatRate(parseKeypadRate("40,", ",")!)).toBe("40.000000000000");
+  });
+});
+
+describe("parseTypedRate — <input> nativo, nunca pasa por Number()/toFixed()", () => {
+  it("guarda exactamente lo tipeado, sin completar ni redondear", () => {
+    expect(formatRateTrimmed(parseTypedRate("1500.00")!)).toBe("1500");
+    expect(formatRateTrimmed(parseTypedRate("1500.55")!)).toBe("1500.55");
+    expect(formatRateTrimmed(parseTypedRate("0.0023478")!)).toBe("0.0023478");
+  });
+
+  it("acepta coma o punto como separador, sin importar cuál", () => {
+    expect(formatRateTrimmed(parseTypedRate("1500,55")!)).toBe("1500.55");
+  });
+
+  it("vacío, solo separador, cero o negativo son inválidos", () => {
+    expect(parseTypedRate("")).toBeNull();
+    expect(parseTypedRate(".")).toBeNull();
+    expect(parseTypedRate("0")).toBeNull();
+    expect(parseTypedRate("-5")).toBeNull();
+  });
+
+  it("una tasa con más de 12 decimales tipeados no se corta silenciosamente distinto de lo guardado internamente", () => {
+    // La precisión interna es de 12 decimales (numeric(24,12) del schema) —
+    // esto es el límite real de almacenamiento, no un redondeo agregado acá.
+    expect(formatRateTrimmed(parseTypedRate("0.123456789012")!)).toBe("0.123456789012");
   });
 });

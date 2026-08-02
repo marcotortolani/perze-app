@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AppHeader, ListRow, Sheet, Skeleton } from "@/design-system";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
@@ -15,6 +15,16 @@ import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
 import { usePwaStore } from "@/stores/pwa-store";
 import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
+import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref } from "@/stores/format-preferences-store";
+
+const DECIMAL_SEPARATOR_OPTIONS: DecimalSeparatorPref[] = ["locale", "comma", "period"];
+const DATE_FORMAT_OPTIONS: DateFormatPref[] = ["locale", "dmy", "mdy", "ymd"];
+
+function decimalSeparatorExample(pref: DecimalSeparatorPref, localeChar: string): string {
+  const sep = pref === "locale" ? localeChar : pref === "comma" ? "," : ".";
+  return `1234${sep}56`;
+}
 
 const FOURTH_TAB_MESSAGE_KEY = {
   analytics: "nav.analysis",
@@ -28,8 +38,16 @@ const CLOSE_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
 /** K3 — preferencias: cuarto slot del tab bar, día de cierre por household, moneda del hogar. */
 export default function SettingsPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
   const userId = useCurrentUserId();
+  const decimalSeparatorPref = useFormatPreferencesStore((s) => s.decimalSeparator);
+  const setDecimalSeparatorPref = useFormatPreferencesStore((s) => s.setDecimalSeparator);
+  const dateFormatPref = useFormatPreferencesStore((s) => s.dateFormat);
+  const setDateFormatPref = useFormatPreferencesStore((s) => s.setDateFormat);
+  const [decimalSheetOpen, setDecimalSheetOpen] = useState(false);
+  const [dateFormatSheetOpen, setDateFormatSheetOpen] = useState(false);
+  const localeDecimalSeparator = numberLocaleForUiLocale(locale) === "en-US" ? "." : ",";
   const { data: household } = useCurrentHousehold();
   const invalidateHousehold = useInvalidateHousehold();
   const { data: members } = useHouseholdMembers(household?.id);
@@ -144,11 +162,26 @@ export default function SettingsPage() {
         {!isOwnerOrAdmin ? (
           <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
         ) : null}
+        <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
         {installState?.standalone ? (
           <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
         ) : installState ? (
           <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
         ) : null}
+        <ListRow
+          icon="globe"
+          label={t("settingsPage.decimalSeparator")}
+          value={decimalSeparatorExample(decimalSeparatorPref, localeDecimalSeparator)}
+          variant="value"
+          onClick={() => setDecimalSheetOpen(true)}
+        />
+        <ListRow
+          icon="calendar"
+          label={t("settingsPage.dateFormat")}
+          value={formatNumericDate(locale, new Date(), dateFormatPref)}
+          variant="value"
+          onClick={() => setDateFormatSheetOpen(true)}
+        />
       </div>
 
       <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)} height={280}>
@@ -205,6 +238,44 @@ export default function SettingsPage() {
         <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
           {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
         </p>
+      </Sheet>
+
+      <Sheet open={decimalSheetOpen} title={t("settingsPage.decimalSeparator")} onClose={() => setDecimalSheetOpen(false)} height={320}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.decimalSeparatorHint")}</p>
+          {DECIMAL_SEPARATOR_OPTIONS.map((pref) => (
+            <ListRow
+              key={pref}
+              label={t(`settingsPage.decimalSeparatorOptions.${pref}`)}
+              meta={decimalSeparatorExample(pref, localeDecimalSeparator)}
+              variant="value"
+              value={pref === decimalSeparatorPref ? "✓" : undefined}
+              onClick={() => {
+                setDecimalSeparatorPref(pref);
+                setDecimalSheetOpen(false);
+              }}
+            />
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={dateFormatSheetOpen} title={t("settingsPage.dateFormat")} onClose={() => setDateFormatSheetOpen(false)} height={360}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.dateFormatHint")}</p>
+          {DATE_FORMAT_OPTIONS.map((pref) => (
+            <ListRow
+              key={pref}
+              label={t(`settingsPage.dateFormatOptions.${pref}`)}
+              meta={formatNumericDate(locale, new Date(), pref)}
+              variant="value"
+              value={pref === dateFormatPref ? "✓" : undefined}
+              onClick={() => {
+                setDateFormatPref(pref);
+                setDateFormatSheetOpen(false);
+              }}
+            />
+          ))}
+        </div>
       </Sheet>
     </div>
   );

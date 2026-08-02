@@ -113,10 +113,6 @@ export default function MorePage() {
       ) : null}
 
       <Card padding="4px 16px">
-        <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
-      </Card>
-
-      <Card padding="4px 16px">
         {demoActive ? (
           <ListRow icon="sign-out" label={t("morePage.exitDemo")} onClick={handleExitDemo} />
         ) : (

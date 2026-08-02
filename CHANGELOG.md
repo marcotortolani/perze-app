@@ -6,6 +6,44 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.13] — 2026-08-02
+
+### Agregado — separador decimal y formato de fecha configurables en Ajustes
+
+- Dos preferencias nuevas, con ejemplos en vivo al elegir: separador decimal (coma/punto/según
+  el idioma) y formato de fecha numérica (DD/MM/AAAA, MM/DD/AAAA, AAAA-MM-DD, según el
+  idioma). Puramente de visualización — nunca tocan cómo se guarda un monto o una fecha
+- El separador decimal se resuelve centralizado en `decimalSeparatorForLocale`, así que
+  todo lo que ya pasaba por ahí (`Amount`, `Keypad`, `FxEditor`, `RateRow`, `/currencies`) lo
+  respeta sin tocar esos ~20 call sites uno por uno
+- El formato de fecha numérica es nuevo (`formatNumericDate`) — la mayoría de las fechas de
+  la app son "narrativas" a propósito (nombre de mes/día, no números) y esa elección de
+  diseño no cambia; se aplicó a las dos pantallas que sí mostraban una fecha puramente
+  numérica (actividad de familia, panel de admin)
+
+### Cambiado — "Habilitar más funciones" pasa a vivir dentro de Ajustes
+
+- Antes era una entrada suelta al final de "Más". Ahora es una fila más de Ajustes, junto al
+  resto de las preferencias del household
+
+### Corregido — desborde horizontal en el home y en el input de fecha del perfil
+
+- Las cards de "gastado"/"ingresado este período" ya tenían el clamp de tamaño de texto,
+  pero el `<button>` que las envuelve es un ítem flex sin `minWidth: 0` — por default no
+  encoge por debajo del ancho intrínseco de su contenido, así que la fila entera (y la
+  página) se forzaba más ancha que la pantalla aunque el texto de adentro ya se hubiera
+  achicado. Mismo bug en el input de fecha de nacimiento del perfil (`type="date"` puede
+  tener un ancho intrínseco grande): se agrega `minWidth: 0` al `<label>` raíz de `Input`,
+  así queda blindado en cualquier pantalla que lo use dentro de un contenedor flex, no solo
+  en el perfil
+
+### Corregido — cargar un tipo de cambio a mano completaba/redondeaba el valor tipeado
+
+- El campo de texto para una tasa sin cotización sugerida pasaba lo tipeado por `Number()` +
+  `.toFixed(12)` antes de guardarlo — la regla que el proyecto prohíbe para plata y tasas.
+  Nuevo `parseTypedRate` parsea el string tal cual, sin pasar por punto flotante: "1500.00"
+  queda exactamente 1500, "0.0023478" queda exactamente eso, nunca se completa ni redondea
+
 ## [0.9.12] — 2026-08-02
 
 ### Corregido — el tipo de cambio se cortaba a 2 decimales, incluso cuando eso perdía precisión

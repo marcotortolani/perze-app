@@ -49,7 +49,7 @@ export function Input({ label, hint, invalid = false, multiline = false, style, 
   const [revealed, setRevealed] = useState(false);
   const canReveal = revealable && type === "password";
   return (
-    <label style={{ display: "block" }} htmlFor={inputId}>
+    <label style={{ display: "block", minWidth: 0 }} htmlFor={inputId}>
       {label ? (
         <span
           style={{

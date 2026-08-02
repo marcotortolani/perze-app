@@ -26,3 +26,17 @@ export function parseKeypadRate(raw: string, decimalSeparator: string): ScaledRa
   const rate = parseRate(normalized);
   return rate > 0n ? rate : null;
 }
+
+/**
+ * Para un `<input type="text">` nativo (no el `<Keypad>` propio): acepta
+ * "," o "." como separador —el teclado físico/OS decide cuál manda, no la
+ * preferencia de la app— y parsea el string tal cual, sin pasar por
+ * `Number()`/`toFixed()`. "1500.00" queda 1500 exacto, "0.0023478" queda
+ * exactamente eso — nunca se completa, redondea ni modifica lo tipeado.
+ */
+export function parseTypedRate(raw: string): ScaledRate | null {
+  const normalized = raw.trim().replace(",", ".");
+  if (normalized === "" || normalized === "." || !/^\d*\.?\d*$/.test(normalized)) return null;
+  const rate = parseRate(normalized);
+  return rate > 0n ? rate : null;
+}

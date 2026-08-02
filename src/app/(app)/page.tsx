@@ -295,7 +295,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => router.push(`/transactions?kind=expense&from=${encodeURIComponent(periodStart)}`)}
-          style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
+          style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
           <StatTile
             label={t("home.spentThisPeriod")}
@@ -305,7 +305,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => router.push(`/transactions?kind=income&from=${encodeURIComponent(periodStart)}`)}
-          style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
+          style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
           <StatTile
             label={t("home.incomeThisPeriod")}
