@@ -1741,6 +1741,7 @@ export type Database = {
           access_reviewed_by: string | null
           access_status: string
           avatar_url: string | null
+          birth_date: string | null
           country: string | null
           default_household_id: string | null
           display_name: string | null
@@ -1758,6 +1759,7 @@ export type Database = {
           access_reviewed_by?: string | null
           access_status?: string
           avatar_url?: string | null
+          birth_date?: string | null
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null
@@ -1775,6 +1777,7 @@ export type Database = {
           access_reviewed_by?: string | null
           access_status?: string
           avatar_url?: string | null
+          birth_date?: string | null
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null

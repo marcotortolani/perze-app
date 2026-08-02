@@ -594,7 +594,7 @@
   "family": "Grupo familiar",
   "system": "Sistema",
   "settings": "Ajustes",
-  "importExport": "Importar / Exportar",
+  "dataAndBackup": "Datos y backup",
   "about": "Acerca de",
   "enableMoreFeatures": "Activar más funciones",
   "comingSoon": "{label} todavía no está disponible en esta versión.",
@@ -657,6 +657,7 @@
  },
  "syncDiagnosticsPage": {
   "title": "Estado de sincronización",
+  "outboxSection": "Estado del outbox",
   "empty": "No hay mutaciones pendientes de sincronizar.",
   "entryLabel": "{op} en {table}",
   "ops": {
@@ -754,7 +755,25 @@
  "profilePage": {
   "title": "Perfil",
   "displayName": "Nombre visible",
-  "saved": "Nombre actualizado."
+  "saved": "Nombre actualizado.",
+  "email": "Email",
+  "emailHint": "Es tu dato de identificación — no se puede cambiar.",
+  "birthDate": "Fecha de nacimiento",
+  "birthDateHint": "Opcional, es solo para estadística.",
+  "country": "País",
+  "countryUnset": "Sin elegir",
+  "countrySheetTitle": "Elegí tu país",
+  "theme": "Tema",
+  "themeSheetTitle": "Elegí el tema",
+  "themeOptions": {
+   "system": "Sistema",
+   "light": "Claro",
+   "dark": "Oscuro"
+  }
+ },
+ "dataPage": {
+  "exportMeta": "Backup completo en JSON",
+  "importMeta": "Traé movimientos desde un CSV"
  },
  "exportPage": {
   "headerTitle": "Exportar y backup",
@@ -966,8 +985,18 @@
   "dayOfMonth": "Día {day}",
   "fxSources": "Tipos de cambio",
   "baseCurrencyHint": "Los movimientos se cargan siempre en la moneda de la cuenta que uses. La moneda base solo se usa para mostrar los totales convertidos.",
-  "baseCurrencyLocked": "No se puede cambiar una vez que hay movimientos cargados.",
-  "baseCurrencyChanged": "Moneda base actualizada a {currency}"
+  "baseCurrencyNote": "El patrimonio neto se recalcula al instante en la moneda que elijas. \"Gastado\"/\"ingresado este período\" puede mezclar monedas justo en el período donde cambiás — se resuelve solo en el próximo cierre.",
+  "baseCurrencyChanged": "Moneda base actualizada a {currency}",
+  "install": "Instalar app",
+  "installedAlready": "App instalada",
+  "installAccepted": "¡Instalada! Ya la tenés en tu pantalla de inicio.",
+  "installGuide": {
+   "ios": "Tocá el ícono Compartir en Safari y elegí \"Agregar a inicio\". El acceso directo abre siempre en el inicio de PERZE.",
+   "android": "Abrí el menú de tu navegador (⋮) y elegí \"Instalar app\" o \"Agregar a la pantalla de inicio\".",
+   "macos": "En Safari: menú Archivo → Agregar al Dock. En Chrome o Edge: tocá el ícono de instalar (⊕) en la barra de direcciones.",
+   "windows": "En Chrome o Edge: tocá el ícono de instalar (⊕) en la barra de direcciones, o abrí el menú y elegí \"Instalar PERZE\".",
+   "other": "Buscá \"Instalar app\" o \"Agregar a la pantalla de inicio\" en el menú de tu navegador."
+  }
  },
  "modulesPage": {
   "subtitle": "Lo que está apagado no aparece en ningún lado. Prendé solo lo que vayas a usar.",

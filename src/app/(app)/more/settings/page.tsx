@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -13,6 +13,8 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { householdsRepo } from "@/lib/repos/households-repo";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
+import { usePwaStore } from "@/stores/pwa-store";
+import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
 
 const FOURTH_TAB_MESSAGE_KEY = {
   analytics: "nav.analysis",
@@ -39,6 +41,16 @@ export default function SettingsPage() {
   const [closeDaySheetOpen, setCloseDaySheetOpen] = useState(false);
   const [baseCurrencySheetOpen, setBaseCurrencySheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const deferredPrompt = usePwaStore((s) => s.deferredPrompt);
+  const setDeferredPrompt = usePwaStore((s) => s.setDeferredPrompt);
+  const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lee `navigator`/`matchMedia`, no existe en SSR.
+    setInstallState({ platform: detectInstallPlatform(), standalone: isStandalonePwa() });
+  }, []);
 
   const isMultiCurrency = useMemo(() => new Set((accounts ?? []).map((a) => a.currencyCode)).size > 1, [accounts]);
   const hasTransactions = (transactions?.length ?? 0) > 0;
@@ -82,6 +94,23 @@ export default function SettingsPage() {
     }
   };
 
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      if (installing) return;
+      setInstalling(true);
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        setDeferredPrompt(null);
+        if (choice.outcome === "accepted") toast(t("settingsPage.installAccepted"));
+      } finally {
+        setInstalling(false);
+      }
+      return;
+    }
+    setInstallSheetOpen(true);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <AppHeader title={t("morePage.settings")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
@@ -91,11 +120,10 @@ export default function SettingsPage() {
           label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
           value={household.baseCurrency}
           variant="value"
-          disabled={hasTransactions}
-          onClick={() => !hasTransactions && setBaseCurrencySheetOpen(true)}
+          onClick={() => setBaseCurrencySheetOpen(true)}
         />
         {hasTransactions ? (
-          <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyLocked")}</p>
+          <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
         ) : null}
         {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
         <ListRow
@@ -115,6 +143,11 @@ export default function SettingsPage() {
         />
         {!isOwnerOrAdmin ? (
           <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
+        ) : null}
+        {installState?.standalone ? (
+          <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
+        ) : installState ? (
+          <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
         ) : null}
       </div>
 
@@ -166,6 +199,12 @@ export default function SettingsPage() {
             />
           ))}
         </div>
+      </Sheet>
+
+      <Sheet open={installSheetOpen} title={t("settingsPage.install")} onClose={() => setInstallSheetOpen(false)} height={280}>
+        <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+          {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
+        </p>
       </Sheet>
     </div>
   );

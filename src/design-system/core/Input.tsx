@@ -17,8 +17,8 @@ export interface InputProps {
   id?: string | undefined;
   maxLength?: number | undefined;
   autoFocus?: boolean | undefined;
-  /** `"password"` para contraseñas (§1, acceso controlado) — nunca para montos, eso sigue siendo el Keypad. Default `"text"`. */
-  type?: "text" | "email" | "password" | undefined;
+  /** `"password"` para contraseñas (§1, acceso controlado) — nunca para montos, eso sigue siendo el Keypad. `"date"` usa el picker nativo del sistema, aceptable para fechas fuera del contexto de un movimiento (p. ej. fecha de nacimiento en el perfil) — `DateStrip` es solo para fechar un movimiento cerca de "hoy". Default `"text"`. */
+  type?: "text" | "email" | "password" | "date" | undefined;
   autoComplete?: string | undefined;
   /** Campo mostrado pero no editable (p. ej. el email en `/onboarding/register`, ya fijado por la sesión). Texto en `--text-secondary` sobre `--surface-2` para leerse como apagado, no como error. */
   readOnly?: boolean | undefined;

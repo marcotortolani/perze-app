@@ -4,6 +4,8 @@ export interface Profile {
   id: string;
   displayName: string | null;
   avatarUrl: string | null;
+  country: string | null;
+  birthDate: string | null;
 }
 
 export type AccessStatus = "pending" | "approved" | "rejected";
@@ -22,9 +24,9 @@ export interface OwnAccess {
 export const profilesRepo = {
   async getOwn(userId: string): Promise<Profile | null> {
     const supabase = createClient();
-    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url").eq("id", userId).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url, country, birth_date").eq("id", userId).maybeSingle();
     if (error) throw error;
-    return data ? { id: data.id, displayName: data.display_name, avatarUrl: data.avatar_url } : null;
+    return data ? { id: data.id, displayName: data.display_name, avatarUrl: data.avatar_url, country: data.country, birthDate: data.birth_date } : null;
   },
 
   /**
@@ -80,6 +82,13 @@ export const profilesRepo = {
   async updateCountry(userId: string, country: string): Promise<void> {
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ country }).eq("id", userId);
+    if (error) throw error;
+  },
+
+  /** K2 — opcional, solo estadística agregada. `null` la borra (el campo no es obligatorio). */
+  async updateBirthDate(userId: string, birthDate: string | null): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", userId);
     if (error) throw error;
   },
 

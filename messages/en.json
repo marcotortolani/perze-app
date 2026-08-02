@@ -594,7 +594,7 @@
   "family": "Family group",
   "system": "System",
   "settings": "Settings",
-  "importExport": "Import / Export",
+  "dataAndBackup": "Data & backup",
   "about": "About",
   "enableMoreFeatures": "Enable more features",
   "comingSoon": "{label} isn't available in this version yet.",
@@ -657,6 +657,7 @@
  },
  "syncDiagnosticsPage": {
   "title": "Sync status",
+  "outboxSection": "Outbox status",
   "empty": "There are no pending mutations to sync.",
   "entryLabel": "{op} on {table}",
   "ops": {
@@ -754,7 +755,25 @@
  "profilePage": {
   "title": "Profile",
   "displayName": "Display name",
-  "saved": "Name updated."
+  "saved": "Name updated.",
+  "email": "Email",
+  "emailHint": "This is your identifying data — it can't be changed.",
+  "birthDate": "Date of birth",
+  "birthDateHint": "Optional, used only for statistics.",
+  "country": "Country",
+  "countryUnset": "Not set",
+  "countrySheetTitle": "Choose your country",
+  "theme": "Theme",
+  "themeSheetTitle": "Choose the theme",
+  "themeOptions": {
+   "system": "System",
+   "light": "Light",
+   "dark": "Dark"
+  }
+ },
+ "dataPage": {
+  "exportMeta": "Full JSON backup",
+  "importMeta": "Bring in transactions from a CSV"
  },
  "exportPage": {
   "headerTitle": "Export and backup",
@@ -966,8 +985,18 @@
   "dayOfMonth": "Day {day}",
   "fxSources": "Exchange rates",
   "baseCurrencyHint": "Transactions are always logged in the currency of the account you use. The base currency is only used to show converted totals.",
-  "baseCurrencyLocked": "Can't be changed once there are transactions logged.",
-  "baseCurrencyChanged": "Base currency updated to {currency}"
+  "baseCurrencyNote": "Net worth recalculates instantly in whichever currency you pick. \"Spent\"/\"income this period\" can mix currencies for the period where you switch — it settles on its own at the next close.",
+  "baseCurrencyChanged": "Base currency updated to {currency}",
+  "install": "Install app",
+  "installedAlready": "App installed",
+  "installAccepted": "Installed! You'll find it on your home screen.",
+  "installGuide": {
+   "ios": "Tap the Share icon in Safari and choose \"Add to Home Screen\". The shortcut always opens at PERZE's home.",
+   "android": "Open your browser's menu (⋮) and choose \"Install app\" or \"Add to Home screen\".",
+   "macos": "In Safari: File menu → Add to Dock. In Chrome or Edge: tap the install icon (⊕) in the address bar.",
+   "windows": "In Chrome or Edge: tap the install icon (⊕) in the address bar, or open the menu and choose \"Install PERZE\".",
+   "other": "Look for \"Install app\" or \"Add to Home screen\" in your browser's menu."
+  }
  },
  "modulesPage": {
   "subtitle": "Whatever's off doesn't show up anywhere. Only turn on what you'll actually use.",

@@ -12,12 +12,8 @@ import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
-
-type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void> };
-
-function isIos(): boolean {
-  return typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
+import { usePwaStore } from "@/stores/pwa-store";
+import { detectInstallPlatform } from "@/lib/pwa/platform";
 
 /**
  * A7 + A10 — fuera del camino crítico: se piden acá, después del primer
@@ -36,15 +32,13 @@ export default function OnboardingCompletePage() {
   const invalidateAccounts = useInvalidateAccounts(household?.id);
   const [step, setStep] = useState<"balance" | "install">("balance");
   const [expr, setExpr] = useState("");
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const installPrompt = usePwaStore((s) => s.deferredPrompt);
+  const setDeferredPrompt = usePwaStore((s) => s.setDeferredPrompt);
+  const [isIosDevice, setIsIosDevice] = useState(false);
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- detección de UA, no derivable en SSR.
+    setIsIosDevice(detectInstallPlatform() === "ios");
   }, []);
 
   useEffect(() => {
@@ -65,7 +59,7 @@ export default function OnboardingCompletePage() {
   const handleInstall = async () => {
     if (installPrompt) {
       await installPrompt.prompt();
-      setInstallPrompt(null);
+      setDeferredPrompt(null);
     }
     finish();
   };
@@ -103,7 +97,7 @@ export default function OnboardingCompletePage() {
         <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
           {t("onboarding.complete.installPromptAvailable")}
         </p>
-      ) : isIos() ? (
+      ) : isIosDevice ? (
         <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
           {t("onboarding.complete.installPromptIos")}
         </p>

@@ -594,7 +594,7 @@
   "family": "Grupo familiar",
   "system": "Sistema",
   "settings": "Ajustes",
-  "importExport": "Importar / Exportar",
+  "dataAndBackup": "Dados e backup",
   "about": "Sobre",
   "enableMoreFeatures": "Ativar mais funções",
   "comingSoon": "{label} ainda não está disponível nesta versão.",
@@ -657,6 +657,7 @@
  },
  "syncDiagnosticsPage": {
   "title": "Status de sincronização",
+  "outboxSection": "Status da fila de saída",
   "empty": "Não há mutações pendentes para sincronizar.",
   "entryLabel": "{op} em {table}",
   "ops": {
@@ -754,7 +755,25 @@
  "profilePage": {
   "title": "Perfil",
   "displayName": "Nome visível",
-  "saved": "Nome atualizado."
+  "saved": "Nome atualizado.",
+  "email": "Email",
+  "emailHint": "É seu dado de identificação — não pode ser alterado.",
+  "birthDate": "Data de nascimento",
+  "birthDateHint": "Opcional, usado só para estatística.",
+  "country": "País",
+  "countryUnset": "Não definido",
+  "countrySheetTitle": "Escolha seu país",
+  "theme": "Tema",
+  "themeSheetTitle": "Escolha o tema",
+  "themeOptions": {
+   "system": "Sistema",
+   "light": "Claro",
+   "dark": "Escuro"
+  }
+ },
+ "dataPage": {
+  "exportMeta": "Backup completo em JSON",
+  "importMeta": "Traga movimentos de um CSV"
  },
  "exportPage": {
   "headerTitle": "Exportar e backup",
@@ -966,8 +985,18 @@
   "dayOfMonth": "Dia {day}",
   "fxSources": "Taxas de câmbio",
   "baseCurrencyHint": "As movimentações são sempre lançadas na moeda da conta usada. A moeda base só serve para mostrar os totais convertidos.",
-  "baseCurrencyLocked": "Não pode ser alterada depois que já houver movimentações lançadas.",
-  "baseCurrencyChanged": "Moeda base atualizada para {currency}"
+  "baseCurrencyNote": "O patrimônio líquido recalcula na hora na moeda que você escolher. \"Gasto\"/\"recebido neste período\" pode misturar moedas justo no período da troca — se resolve sozinho no próximo fechamento.",
+  "baseCurrencyChanged": "Moeda base atualizada para {currency}",
+  "install": "Instalar app",
+  "installedAlready": "App instalado",
+  "installAccepted": "Instalado! Você vai encontrá-lo na tela inicial.",
+  "installGuide": {
+   "ios": "Toque no ícone Compartilhar do Safari e escolha \"Adicionar à Tela de Início\". O atalho sempre abre no início do PERZE.",
+   "android": "Abra o menu do navegador (⋮) e escolha \"Instalar app\" ou \"Adicionar à tela inicial\".",
+   "macos": "No Safari: menu Arquivo → Adicionar ao Dock. No Chrome ou Edge: toque no ícone de instalar (⊕) na barra de endereço.",
+   "windows": "No Chrome ou Edge: toque no ícone de instalar (⊕) na barra de endereço, ou abra o menu e escolha \"Instalar PERZE\".",
+   "other": "Procure \"Instalar app\" ou \"Adicionar à tela inicial\" no menu do navegador."
+  }
  },
  "modulesPage": {
   "subtitle": "O que está desligado não aparece em nenhum lugar. Ligue só o que você vai usar.",

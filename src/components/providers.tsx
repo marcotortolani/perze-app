@@ -8,6 +8,7 @@ import { OnboardingGate } from "@/components/onboarding-gate";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { DbOwnerSync } from "@/components/db-owner-sync";
 import { PinGate } from "@/components/pin-gate";
+import { PwaInstallListener } from "@/components/pwa-install-listener";
 import { useSyncLoop } from "@/lib/offline/use-sync-loop";
 import { useRealtimeSync } from "@/lib/offline/use-realtime-sync";
 
@@ -51,6 +52,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ServiceWorkerRegister />
+      <PwaInstallListener />
       <DbOwnerSync />
       <SyncLoop />
       <PinGate>

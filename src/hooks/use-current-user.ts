@@ -49,3 +49,25 @@ export function useCurrentUserId(): string | null | undefined {
 
   return data;
 }
+
+/**
+ * Email de sesión — dato de identificación real (`auth.users.email`), no
+ * vive en `profiles` y por eso no pasa por `profilesRepo`. Perfil (K2) lo
+ * muestra de solo lectura: cambiar el email de auth no es un simple update,
+ * requiere confirmación, y queda fuera de alcance de esta versión.
+ */
+export function useCurrentUserEmail(): string | null | undefined {
+  const { data } = useQuery({
+    queryKey: ["auth", "user", "email"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user?.email ?? null;
+    },
+    staleTime: Infinity,
+  });
+
+  return data;
+}

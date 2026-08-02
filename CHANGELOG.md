@@ -6,6 +6,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.10] — 2026-08-02
+
+### Cambiado — reorganización de "Más": Perfil agrupa identidad, Sync se fusiona, Datos y backup se fusiona
+
+- **Tema claro/oscuro/sistema** tenía toda la infraestructura (`THEME_STORAGE_KEY`, script
+  anti-flash) pero cero control de usuario — el tema era 100% del sistema operativo. Nuevo
+  selector en Perfil (`lib/theme/apply-theme.ts` + `use-theme-preference.ts`), aplicación
+  inmediata sin remount
+- **Perfil** (K2) ahora agrupa lo que antes vivía suelto en el índice de Más — decisión de
+  producto explícita: nombre (editable), email (solo lectura, es el dato de identificación de
+  `auth.users`, cambiarlo requiere confirmación y queda fuera de alcance), país (editable,
+  aplica al toque), **fecha de nacimiento** (nueva, opcional, solo para estadística agregada —
+  columna `profiles.birth_date`, migración `20260802030000_profile_birth_date.sql`), idioma y
+  tema (movidos desde el índice de Más)
+- **Sync** — "Conflictos" y "Estado de sincronización" eran dos pantallas separadas sin
+  cruzarse; ahora una sola (`/more/sync`) con dos secciones apiladas: conflictos pendientes
+  arriba solo si los hay, diagnóstico del outbox siempre abajo. `/more/conflicts` se elimina
+- **Datos y backup** — "Exportar backup" e "Importar CSV" eran dos filas sueltas; ahora un
+  hub (`/more/data`) con dos accesos a las mismas pantallas (`/more/export`, `/more/import`),
+  sin tocarlas
+- **Instalar app** — Ajustes (K3) tenía una promesa sin cumplir ("Podés instalarla más tarde
+  desde Ajustes", copy del onboarding) y ningún botón real. Nuevo: detecta plataforma
+  (iOS/Android/macOS/Windows) y usa el prompt nativo del navegador cuando está disponible, o
+  instrucciones específicas por plataforma cuando no. El listener de `beforeinstallprompt` se
+  centralizó (`pwa-store.ts` + `PwaInstallListener`, montado una vez en `Providers`) — antes
+  vivía duplicado en el flujo de onboarding (A10), ahora ambos puntos de entrada comparten el
+  mismo evento capturado
+- **Nota:** verificado con `pnpm build`/`lint`/`test` limpios y probado en el navegador con
+  datos demo (índice de Más, Ajustes, Sync, Datos y backup). Perfil no se pudo probar
+  interactivamente ahí porque el modo demo no tiene sesión real de Supabase — comportamiento
+  preexistente de `useCurrentUserId()`, no algo que cambió acá; con una cuenta logueada de
+  verdad debería andar normal
+
 ## [0.9.9] — 2026-08-02
 
 ### Agregado — "gastado"/"ingresado este período" también respetan el toggle de moneda del home

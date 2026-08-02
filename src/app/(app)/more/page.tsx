@@ -1,24 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Card, ListRow, Sheet, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { useOwnAccess } from "@/hooks/use-own-access";
 import { APP_VERSION } from "@/lib/version";
-import { setLocale } from "@/i18n/actions";
-import { routing } from "@/i18n/routing";
-import type { Locale } from "@/i18n/formatting";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { exitDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
-
-const LANGUAGE_MESSAGE_KEY = {
-  es: "morePage.languageNames.es",
-  en: "morePage.languageNames.en",
-  pt: "morePage.languageNames.pt",
-} as const;
 
 const CAPTION_STYLE = {
   fontFamily: "var(--font-sans)",
@@ -34,28 +25,13 @@ const CAPTION_STYLE = {
 /** Índice de secciones (B7) — Bloque B, Fase 6. Los módulos apagados no aparecen. */
 export default function MorePage() {
   const t = useTranslations();
-  const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { conflicts } = useConflicts(household?.id);
   const ownAccess = useOwnAccess();
   const modules = household?.enabledModules ?? [];
-  const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm" | "signing-out">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
-
-  const handleSelectLocale = (next: Locale) => {
-    if (next === locale) {
-      setLanguageSheetOpen(false);
-      return;
-    }
-    startTransition(async () => {
-      await setLocale(next);
-      setLanguageSheetOpen(false);
-      router.refresh();
-    });
-  };
 
   const handleSignOutRequest = async () => {
     const count = await countUnsyncedChanges();
@@ -112,27 +88,18 @@ export default function MorePage() {
       <section>
         <div style={CAPTION_STYLE}>{t("morePage.system")}</div>
         <Card padding="4px 16px">
-          <ListRow
-            icon="globe"
-            label={t("morePage.language")}
-            value={t(LANGUAGE_MESSAGE_KEY[locale])}
-            variant="value"
-            onClick={() => setLanguageSheetOpen(true)}
-          />
           <ListRow icon="user" label={t("morePage.profile")} onClick={() => router.push("/more/profile")} />
           <ListRow icon="lock" label={t("morePage.security")} onClick={() => router.push("/more/security")} />
           <ListRow icon="alert" label={t("notificationsPage.title")} onClick={() => router.push("/more/notifications")} />
           <ListRow
             icon="refresh"
-            label={t("conflictsPage.title")}
+            label={t("syncDiagnosticsPage.title")}
             chevron
             value={conflicts.length > 0 ? <StatusBadge status="critical">{t("conflictsPage.badgeCount", { count: conflicts.length })}</StatusBadge> : undefined}
-            onClick={() => router.push("/more/conflicts")}
+            onClick={() => router.push("/more/sync")}
           />
-          <ListRow icon="refresh" label={t("syncDiagnosticsPage.title")} onClick={() => router.push("/more/sync")} />
           <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
-          <ListRow icon="install" label={t("morePage.importExport")} onClick={() => router.push("/more/export")} />
-          <ListRow icon="install" label={t("importCsvPage.title")} onClick={() => router.push("/more/import")} />
+          <ListRow icon="install" label={t("morePage.dataAndBackup")} onClick={() => router.push("/more/data")} />
           <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
         </Card>
       </section>
@@ -160,21 +127,6 @@ export default function MorePage() {
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>
         {t("morePage.version", { version: APP_VERSION })}
       </p>
-
-      <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)} height={280}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {routing.locales.map((candidate) => (
-            <ListRow
-              key={candidate}
-              label={t(LANGUAGE_MESSAGE_KEY[candidate])}
-              variant="value"
-              value={candidate === locale ? "✓" : undefined}
-              disabled={pending}
-              onClick={() => handleSelectLocale(candidate)}
-            />
-          ))}
-        </div>
-      </Sheet>
 
       <Sheet open={signOutSheet === "confirm"} title={t("morePage.signOutConfirmTitle")} onClose={() => setSignOutSheet("none")} height={260}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
