@@ -11,6 +11,8 @@ export interface KeypadKeyProps {
   iconSize?: number | undefined;
   onPress: (key: string) => void;
   onLongPress?: (() => void) | undefined;
+  /** La tecla "=" ocupa toda la fila (`Keypad`, `gridColumn: 1 / -1`) — sin esto el botón queda del ancho de su contenido en vez de estirarse. */
+  fullWidth?: boolean | undefined;
   /**
    * D14/auditoría: sin esto, un dígito se anuncia bien solo porque es su
    * propio texto visible, pero `backspace` (ícono sin texto) quedaba
@@ -30,7 +32,7 @@ export interface KeypadKeyProps {
  * `aria-live` opuestos, modelos de error distintos) — no unificar más allá
  * de esta tecla.
  */
-export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress, ariaLabel }: KeypadKeyProps) {
+export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress, ariaLabel, fullWidth = false }: KeypadKeyProps) {
   const [pressed, setPressed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -53,6 +55,7 @@ export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, 
       onPointerLeave={up}
       onClick={() => onPress(label)}
       style={{
+        width: fullWidth ? "100%" : undefined,
         height: "var(--keypad-key-height)",
         borderRadius: "var(--radius-keypad-key)",
         border: 0,

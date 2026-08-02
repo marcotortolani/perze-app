@@ -91,7 +91,7 @@ export function Keypad({ onKey, onClear, announceValue, operators = true, equals
       ))}
       {equals ? (
         <div style={{ gridColumn: `1 / -1` }}>
-          <KeypadKey label="=" onPress={onKey} ariaLabel={ARIA_LABEL["="]} />
+          <KeypadKey label="=" onPress={onKey} ariaLabel={ARIA_LABEL["="]} fullWidth />
         </div>
       ) : null}
     </div>

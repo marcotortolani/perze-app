@@ -180,7 +180,7 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ### KeypadKey
 - **Existe para:** ser la tecla de los dos keypads.
-- **Props:** `label: ReactNode` · `ariaLabel?: string` · `onPress: () => void` · `onLongPress?: () => void` · `size?: number` (tamaño de fuente, default 32).
+- **Props:** `label: ReactNode` · `ariaLabel?: string` · `onPress: () => void` · `onLongPress?: () => void` · `size?: number` (tamaño de fuente, default 32) · `fullWidth?: boolean` (default `false`; la tecla "=" de `Keypad` la usa para ocupar toda su fila — sin esto el `<button>` no hereda el ancho del `<div>` que lo envuelve).
 - **Estados:** normal · presionada · con long-press.
 - **Tokens:** `--keypad-key-height --radius-keypad-key --surface-2 --press-scale --duration-micro --ease-spring-snappy`.
 - **A11y:** `button` real con `aria-label` (obligatorio cuando el label es un ícono). Alto 64, mínimo 44 de ancho.
@@ -257,9 +257,10 @@ y no requieren ningún cambio — esta sección es la ficha que faltaba, no una 
 ### AppHeader
 - **Existe para:** el header de 56px de toda pantalla: volver/scope, título, buscar, `SyncDot`.
 - **Props:** `title?: string` · `scope?: string` · `onScopeChange?: (scope: string) => void` · `scopeOptions?: string[]` · `onSearch?: () => void` · `onBack?: () => void` · `backLabel?: string` (requerido con `onBack`) · `searchLabel?: string` (requerido con `onSearch`) · `syncState?: 'synced'|'syncing'|'offline'` · `pending?: number` · `showScope?: boolean` (default `true`) · `right?: ReactNode`.
-- **Estados:** dashboard (scope switcher visible) · pantalla empujada (`onBack` presente, oculta el scope switcher) · con buscador · con `right` custom.
+- **Estados:** dashboard (scope switcher visible) · dashboard con un solo miembro (`showScope=false`, sin `onBack` ni `title`: el logo ocupa el hueco en vez de quedar vacío) · pantalla empujada (`onBack` presente, oculta el scope switcher) · con buscador · con `right` custom.
 - **Tokens:** `--header-height --screen-padding --text-primary --text-secondary --page`.
 - **A11y:** el botón de volver y el de buscar son de 44×44 con `aria-label` obligatorio (`backLabel`/`searchLabel`, resueltos por el caller vía `useTranslations` — el componente no trae copy propia). El scope switcher es un `SegmentedControl emphasis="brand"`, no un componente separado (`ScopeSwitcher` está eliminado, ver § 2).
+- **Nota:** el logo (`<Logo>`, wordmark "PERZE" con la Z en `--primary-ink`) en el slot del scope switcher contradice la regla de `CLAUDE.md` § "Interfaz" ("el logotipo no aparece dentro de la app") — está puesto por pedido explícito y puntual del usuario, no como una revisión de esa decisión cerrada.
 - **Bloques:** todos.
 
 ### Amount

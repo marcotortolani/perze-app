@@ -998,7 +998,10 @@
   "scratchTitle": "Começar do zero",
   "scratchDescription": "Você as cria conforme for usando.",
   "save": "Salvar",
-  "saved": "Categorias atualizadas"
+  "saved": "Categorias atualizadas",
+  "yourCategoriesTitle": "Suas categorias",
+  "yourCategoriesEmpty": "Você ainda não criou nenhuma categoria própria — crie uma em \"Outro\" ao registrar um gasto.",
+  "templateSectionTitle": "Modelo"
  },
  "settingsPage": {
   "yourCurrency": "Sua moeda",

@@ -998,7 +998,10 @@
   "scratchTitle": "Start from scratch",
   "scratchDescription": "You create them yourself, as you go.",
   "save": "Save",
-  "saved": "Categories updated"
+  "saved": "Categories updated",
+  "yourCategoriesTitle": "Your categories",
+  "yourCategoriesEmpty": "You haven't created any category yet — create one from \"Other\" while capturing an expense.",
+  "templateSectionTitle": "Template"
  },
  "settingsPage": {
   "yourCurrency": "Your currency",

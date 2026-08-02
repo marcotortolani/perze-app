@@ -6,6 +6,44 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.23] — 2026-08-02
+
+### Corregido/Agregado — header, keypad "=", foco del picker, plantilla persistida, draft sucio y edición de categorías
+
+- **El logo ocupa el hueco que dejaba el selector de ámbito oculto.** Con un solo miembro en
+  el household ese espacio quedaba vacío en el header — ahora muestra el wordmark "PERZE"
+  (la "Z" en violeta, `--primary-ink`), ya adaptado a claro/oscuro por token. Nota: esto
+  contradice la regla cerrada de `CLAUDE.md` ("el logotipo no aparece dentro de la app") —
+  se implementó igual porque el pedido fue explícito y puntual, pero queda señalado por si
+  hace falta reabrir esa decisión más adelante.
+- **El botón "=" del keypad se veía roto.** La fila que lo contiene (`gridColumn: 1 / -1`)
+  estiraba bien el `<div>`, pero `KeypadKey` nunca le pasaba `width: 100%` al propio
+  `<button>`, que quedaba angosto y pegado a un costado. Nueva prop `fullWidth` en
+  `KeypadKey`.
+- **El picker de categorías seguía levantando el teclado.** Dos causas superpuestas:
+  `Overlay` enfocaba el primer elemento focuseable del panel al abrir, y ese elemento
+  resultaba ser el buscador de texto (aunque ya no tuviera `autoFocus`) — ahora prefiere un
+  control que no sea un `<input>` (botón, fila) y, si no hay ninguno, enfoca el panel mismo.
+  Además, `Sheet` pasaba un `onClose` con una referencia nueva en cada render
+  (`onClose ?? (() => {})`), lo que hacía que el efecto de foco de `Overlay` se
+  re-ejecutara en CADA re-render mientras el sheet seguía abierto — desplegar las
+  subcategorías de "Salud" disparaba un `setState` que volvía a robar el foco hacia el
+  buscador. El `onClose` ahora vive en un `ref`, desacoplado de las dependencias del efecto.
+- **La plantilla de categorías ("básica"/"completa") no se acordaba de la elección.** Vivía
+  en un `useState` que arrancaba siempre en `"basic"`, sin leer nada guardado. Ahora se
+  persiste en `households.settings` (jsonb, ya sincroniza a Supabase) — acompaña a la
+  cuenta entre dispositivos, no queda solo en un navegador.
+- **El botón "+" a veces arrancaba con un monto viejo en memoria.** El store del draft de
+  captura es un singleton en memoria sin `persist`, así que sobrevivía a cualquier cierre
+  que no pasara por el guardado exitoso o el botón de cancelar explícito — el backdrop del
+  modal, un swipe-back, cambiar de tab. Ahora se reinicia una vez por cada montaje de
+  `CaptureFlow`, así que tocar "+" siempre arranca en blanco sin importar cómo terminó la
+  sesión anterior.
+- **No había forma de editar nombre/ícono de una categoría desde Ajustes → Categorías** — la
+  edición que se agregó la sesión pasada solo estaba enganchada al picker de "Otro" de la
+  captura. Ahora la misma pantalla de plantillas lista las categorías propias del household
+  con el mismo lápiz y la misma hoja de edición.
+
 ## [0.9.22] — 2026-08-02
 
 ### Agregado — tope de 80% para las hojas modales, y botón "=" con preview en la captura

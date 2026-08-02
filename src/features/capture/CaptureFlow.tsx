@@ -58,6 +58,18 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // recalcular el ranking en cada tecla del keypad.
   const [now] = useState(() => new Date());
 
+  // El store del draft es un singleton en memoria, no atado al ciclo de
+  // vida de este componente — sobrevive a cualquier forma de cerrar `/add`
+  // que no pase por `handleAfterSaveComplete`/`handleCancel` (el backdrop
+  // del modal hace `router.back()` directo, un swipe-back o un tab
+  // también). El próximo `+` heredaba lo que haya quedado. Reiniciar acá,
+  // una sola vez por montaje (inicializador perezoso de `useState`, no un
+  // efecto: corre ANTES del primer render, así que el selector de `draft`
+  // de la línea de abajo ya lee el estado limpio, sin flash del valor
+  // viejo) garantiza que tocar "+" siempre arranca en blanco,
+  // independientemente de cómo terminó la sesión anterior.
+  useState(() => useCaptureDraftStore.getState().reset());
+
   const draft = useCaptureDraftStore((s) => s.draft);
   const setField = useCaptureDraftStore((s) => s.setField);
   const setKind = useCaptureDraftStore((s) => s.setKind);

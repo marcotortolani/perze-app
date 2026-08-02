@@ -34,13 +34,33 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
   const isDesktop = useIsDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
+  // La mayoría de los callers pasan `onClose` como un closure inline (o
+  // `Sheet` lo envuelve en `?? (() => {})`), así que es una referencia
+  // nueva en cada render. Si el efecto de abajo dependiera de `onClose`
+  // directo, se re-ejecutaría en CADA re-render mientras el sheet sigue
+  // abierto — no solo al abrirlo — y volvería a robar el foco cada vez
+  // (el bug real detrás de "seleccionar una categoría con subcategorías
+  // reabre el teclado"). Guardarlo en un ref lo desacopla: el efecto
+  // pesado corre una sola vez por apertura, esto se actualiza en cada
+  // render sin re-disparar nada.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement;
     const panel = panelRef.current;
-    const focusable = panel?.querySelector<HTMLElement>('input, button, [href], [tabindex]:not([tabindex="-1"])');
-    focusable?.focus();
+    // Nunca el primer `<input>` de texto: enfocarlo de entrada levanta el
+    // teclado nativo apenas se abre el sheet, sin que el usuario haya
+    // tocado nada — molesto en un buscador que la mayoría de las veces se
+    // usa tocando la lista, no escribiendo. Se prefiere un control no-input
+    // (botón, fila, chip); si no hay ninguno, el foco va al panel mismo
+    // (`tabIndex=-1`), nunca a un input por default.
+    const focusable = panel?.querySelector<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])');
+    if (focusable) focusable.focus();
+    else panel?.focus();
 
     const originalOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -48,7 +68,7 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab" || !panel) return;
@@ -71,7 +91,7 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
       document.documentElement.style.overflow = originalOverflow;
       if (previouslyFocused.current instanceof HTMLElement) previouslyFocused.current.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -97,6 +117,9 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        // Fallback de foco cuando el panel no tiene ningún control que no
+        // sea un `<input>` de texto — ver el efecto de arriba.
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={
           isSheet

@@ -4,13 +4,34 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, OptionCard, Skeleton } from "@/design-system";
-import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { AppHeader, Button, IconButton, ListRow, OptionCard, Skeleton } from "@/design-system";
+import type { IconName } from "@/design-system/core/Icon";
+import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
+import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useTransactions } from "@/hooks/use-transactions";
+import { householdsRepo } from "@/lib/repos/households-repo";
+import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { applyCategoryTemplate, type CategoryTemplateChoice } from "@/lib/onboarding/apply-category-template";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "@/lib/reference/category-templates";
+import type { CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
+import { EditCategorySheet } from "@/features/capture/EditCategorySheet";
+
+const TEMPLATE_CHOICES: CategoryTemplateChoice[] = ["basic", "complete", "scratch"];
+
+/**
+ * `households.settings` (jsonb, ya sincroniza a Supabase — comentario de
+ * la migración: "tema, acento, intensidad de animación, modo privacidad")
+ * es donde vive esta preferencia: antes el `useState` arrancaba siempre en
+ * "basic" y se olvidaba apenas se salía de la pantalla, aunque el usuario
+ * hubiera elegido "completa" la vez anterior — ahora acompaña a la cuenta
+ * entre dispositivos, no queda solo en este navegador.
+ */
+function templateChoiceFrom(settings: Record<string, unknown>): CategoryTemplateChoice {
+  const stored = settings.categoryTemplateChoice;
+  return typeof stored === "string" && (TEMPLATE_CHOICES as string[]).includes(stored) ? (stored as CategoryTemplateChoice) : "basic";
+}
 
 function countTemplateItems(items: typeof BASIC_CATEGORY_TEMPLATE): number {
   return items.reduce((sum, item) => sum + 1 + (item.children?.length ?? 0), 0);
@@ -45,17 +66,11 @@ function CategoryTemplatePreview({ items }: { items: CategoryTemplateItem[] }) {
 
 /** A8 — plantilla de categorías. Fuera del camino crítico: Ajustes → Categorías. */
 export default function CategoryTemplatePage() {
-  const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
   const { data: categories } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
-  const invalidateCategories = useInvalidateCategories(household?.id);
-  const [choice, setChoice] = useState<CategoryTemplateChoice>("basic");
-  const [saving, setSaving] = useState(false);
-
-  const usedCategoryIds = useMemo(() => new Set((transactions ?? []).map((tx) => tx.categoryId).filter((id): id is string => id !== null)), [transactions]);
 
   if (!household || !categories || !transactions || !userId) {
     return (
@@ -67,19 +82,105 @@ export default function CategoryTemplatePage() {
     );
   }
 
+  return <CategoryTemplateForm household={household} categories={categories} transactions={transactions} userId={userId} onBack={() => router.back()} />;
+}
+
+/**
+ * Ítem 13 pedía poder editar nombre/ícono de una categoría propia; se
+ * resolvió primero desde el picker de "Otro" en la captura
+ * (`CategoryStep`), pero acá — Ajustes → Categorías, el lugar donde
+ * alguien esperaría encontrarlo — no había ninguna forma de hacerlo. Mismo
+ * `EditCategorySheet`, mismo `categoriesRepo.update`, un caller más.
+ */
+function YourCategoriesSection({ categories, onEdit }: { categories: CategoryRow[]; onEdit: (id: string, patch: { name: string; icon: IconName }) => Promise<void> }) {
+  const t = useTranslations();
+  const categoryLabel = useCategoryLabel();
+  const [editing, setEditing] = useState<CategoryRow | null>(null);
+  const own = categories.filter((c) => !c.isSystem);
+
+  return (
+    <div>
+      <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
+        {t("categoryTemplate.yourCategoriesTitle")}
+      </p>
+      {own.length === 0 ? (
+        <p className="t-body" style={{ margin: 0, color: "var(--text-muted)" }}>
+          {t("categoryTemplate.yourCategoriesEmpty")}
+        </p>
+      ) : (
+        own.map((c) => (
+          <ListRow
+            key={c.id}
+            icon={c.icon as IconName}
+            label={categoryLabel(c)}
+            chevron={false}
+            right={
+              <span onClick={(e) => e.stopPropagation()}>
+                <IconButton icon="edit" ariaLabel={t("capture.category.edit")} size={36} iconSize={16} onClick={() => setEditing(c)} />
+              </span>
+            }
+          />
+        ))
+      )}
+      <EditCategorySheet key={editing?.id ?? "none"} category={editing} onClose={() => setEditing(null)} onSave={onEdit} />
+    </div>
+  );
+}
+
+/**
+ * Separado del wrapper de arriba a propósito: `useState(templateChoiceFrom(household.settings))`
+ * solo lee el valor guardado correctamente si `household` YA está cargado
+ * en el primer render de este componente — con el `useState` en el
+ * wrapper (que también renderiza mientras `household` es `undefined`),
+ * React fija el default "basic" en el montaje y nunca lo vuelve a leer
+ * aunque el household llegue después.
+ */
+function CategoryTemplateForm({
+  household,
+  categories,
+  transactions,
+  userId,
+  onBack,
+}: {
+  household: HouseholdRow;
+  categories: CategoryRow[];
+  transactions: TransactionRow[];
+  userId: string;
+  onBack: () => void;
+}) {
+  const t = useTranslations();
+  const invalidateCategories = useInvalidateCategories(household.id);
+  const invalidateHousehold = useInvalidateHousehold();
+  const [choice, setChoice] = useState<CategoryTemplateChoice>(() => templateChoiceFrom(household.settings));
+  const [saving, setSaving] = useState(false);
+
+  const usedCategoryIds = useMemo(() => new Set(transactions.map((tx) => tx.categoryId).filter((id): id is string => id !== null)), [transactions]);
+
+  const handleEditCategory = async (id: string, patch: { name: string; icon: IconName }) => {
+    await categoriesRepo.update(id, patch);
+    invalidateCategories();
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await applyCategoryTemplate(household.id, choice, userId, usedCategoryIds);
+    await householdsRepo.update(household.id, { settings: { ...household.settings, categoryTemplateChoice: choice } });
     invalidateCategories();
+    invalidateHousehold();
     setSaving(false);
     toast(t("categoryTemplate.saved"));
-    router.back();
+    onBack();
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <AppHeader title={t("categoryTemplate.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
+      <AppHeader title={t("categoryTemplate.title")} showScope={false} onBack={onBack} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
+        <YourCategoriesSection categories={categories} onEdit={handleEditCategory} />
+        <div style={{ height: 10 }} />
+        <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
+          {t("categoryTemplate.templateSectionTitle")}
+        </p>
         <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
           {t("categoryTemplate.subtitle")}
         </p>

@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "../core/Icon";
+import { Logo } from "../core/Logo";
 import { SegmentedControl } from "../core/SegmentedControl";
 import { SyncDot } from "./SyncDot";
 
@@ -62,6 +63,11 @@ export function AppHeader({
       ) : null}
       {showScope && !onBack && scopeOptions ? (
         <SegmentedControl options={scopeOptions} value={scope} onChange={onScopeChange} size="sm" emphasis="brand" />
+      ) : !showScope && !onBack && !title ? (
+        // El segmentado Personal/Compartido/Todo se oculta con un solo
+        // miembro en el household (nada que discriminar) y dejaba este
+        // espacio vacío — el logo lo ocupa en su lugar, en vez de nada.
+        <Logo />
       ) : null}
       {/* D11/auditoría: había CERO `<h1>` en `src/app/(app)` — el título de pantalla
           era un `<div>`, así que un lector de pantalla no tenía forma de saltar
