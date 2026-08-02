@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.1] — 2026-08-02
+
+### Agregado — E6 completa: agregar moneda, teclado numérico y "Actualizar" real
+
+- **"Agregar una moneda"**: hasta ahora `/currencies` solo listaba las monedas que ya
+  respaldaban una cuenta — no había forma de trackear un par sin tener una cuenta en esa
+  moneda. Ahora una fila de acción abre el catálogo completo (`CURRENCIES`) y, al guardar un
+  override manual para un par nuevo, ese par persiste y reaparece solo (nuevo
+  `fxRepo.listOverrideCurrencies`)
+- **Teclado numérico en el editor de tipo de cambio**: `FxEditor` ya tenía el número héroe y
+  el slider de ajuste fino ±5%, pero tocarlo no abría nada (`onOpenKeypad` sin conectar en
+  ningún lugar de la app). Se agrega el ícono de lápiz junto al número y se conecta un
+  teclado numérico real (dígitos + separador decimal + backspace, sin operadores — un tipo
+  de cambio no es una cuenta) que después vuelve al slider para el ajuste fino
+- **"Actualizar" ahora fuerza la red de verdad**: antes `invalidateQueries` solo
+  recalculaba desde el mismo cache local — `fxRepo.resolve` solo pegaba a `/api/fx` cuando
+  el estado era `pending` o `inherited` de hoy. Nuevo parámetro `forceRefresh` que salta esa
+  condición (el override manual sigue ganando siempre, esto nunca lo pisa), con spinner y
+  toast de resultado
+
+### Corregido — "tipo de cambio usado" mostraba 12 decimales
+
+- El detalle de un movimiento mostraba `1 USD = 1560.000000000000 ARS` — `formatRate` es el
+  formateador interno (12 decimales, `numeric(24,12)`), nunca pensado para mostrarse al
+  usuario, y su propio comentario ya lo decía. Nuevo `formatRateShort` (trunca a 2
+  decimales, mismo criterio que ya usaba `RateRow`) reemplaza el uso directo en el detalle
+  de transacción y en `RateRow`
+
+### Corregido — la fila de cuenta en el detalle de movimiento no mostraba la moneda
+
+- Mostraba solo el nombre ("Itaú"); ahora suma el código de moneda ("Itaú · USD"), relevante
+  para households con cuentas en más de una moneda
+
+### Agregado — toggle para ver el patrimonio neto del home en USD
+
+- Nuevo segmentado (superficie neutra, no compite con el violeta del scope switcher) junto
+  al ícono de privacidad: alterna la cifra grande de "Patrimonio neto" entre la moneda base
+  y USD. Preferencia persistida por dispositivo (Zustand + `persist`, mismo patrón que el
+  modo privacidad). Solo la cifra grande — el delta semanal y el sparkline se quedan en
+  moneda base, porque convertirlos pediría cotización histórica día a día. Si no hay
+  cotización base→USD hoy, cae a la moneda base y avisa — nunca inventa un valor
+
 ## [0.9.0] — 2026-08-02
 
 ### Agregado — sincronización incremental multi-dispositivo (AC-14)

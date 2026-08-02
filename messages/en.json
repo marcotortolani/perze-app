@@ -90,7 +90,8 @@
   },
   "fxEditor": {
    "ageHours": "{hours} h ago",
-   "source": "DolarApi · official"
+   "source": "DolarApi · official",
+   "editRate": "Edit the exchange rate with the keypad"
   },
   "priceStatus": {
    "fresh": "Up to date",
@@ -914,8 +915,14 @@
  "currenciesPage": {
   "back": "Back",
   "refresh": "Refresh",
-  "empty": "With a single currency in use, there's no exchange rate to manage.",
-  "emptyAction": "Back to accounts",
+  "refreshing": "Refreshing…",
+  "refreshDone": "{count, plural, one {# rate updated} other {# rates updated}}",
+  "refreshNothingNew": "Already up to date — nothing new to fetch.",
+  "refreshOffline": "No connection — couldn't refresh",
+  "empty": "No other currency to track yet.",
+  "addCurrency": "Add a currency",
+  "addCurrencyTitle": "Choose a currency",
+  "addCurrencyEmpty": "You've already added every available currency.",
   "noQuote": "No quote — tap to enter manually",
   "manualOverride": "Manual override",
   "noProvider": "No provider",
@@ -924,7 +931,9 @@
   "overrideSaved": "Override saved for {pair}",
   "howManyWorth": "How many {base} is 1 {quote} worth",
   "ratePlaceholder": "e.g. 40",
-  "saveOverride": "Save override"
+  "saveOverride": "Save override",
+  "keypadCancel": "Cancel",
+  "keypadDone": "Done"
  },
  "pinKeypad": {
   "progress": "{current} of {total} digits"

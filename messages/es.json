@@ -90,7 +90,8 @@
   },
   "fxEditor": {
    "ageHours": "hace {hours} h",
-   "source": "DolarApi · oficial"
+   "source": "DolarApi · oficial",
+   "editRate": "Editar el tipo de cambio con el teclado"
   },
   "priceStatus": {
    "fresh": "Actualizado",
@@ -914,8 +915,14 @@
  "currenciesPage": {
   "back": "Volver",
   "refresh": "Actualizar",
-  "empty": "Con una sola moneda en uso, no hace falta gestionar tipos de cambio.",
-  "emptyAction": "Volver a cuentas",
+  "refreshing": "Actualizando…",
+  "refreshDone": "{count, plural, one {# cotización actualizada} other {# cotizaciones actualizadas}}",
+  "refreshNothingNew": "Ya estaban al día — nada nuevo para traer.",
+  "refreshOffline": "Sin conexión — no se pudo actualizar",
+  "empty": "Todavía no hay otra moneda para trackear.",
+  "addCurrency": "Agregar una moneda",
+  "addCurrencyTitle": "Elegir moneda",
+  "addCurrencyEmpty": "Ya agregaste todas las monedas disponibles.",
   "noQuote": "Sin cotización — tocá para cargar a mano",
   "manualOverride": "Override manual",
   "noProvider": "Sin proveedor",
@@ -924,7 +931,9 @@
   "overrideSaved": "Override guardado para {pair}",
   "howManyWorth": "Cuántos {base} vale 1 {quote}",
   "ratePlaceholder": "Ej: 40",
-  "saveOverride": "Guardar override"
+  "saveOverride": "Guardar override",
+  "keypadCancel": "Cancelar",
+  "keypadDone": "Listo"
  },
  "pinKeypad": {
   "progress": "{current} de {total} dígitos"

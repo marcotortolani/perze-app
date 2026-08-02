@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Icon } from "../core/Icon";
 import { StatusBadge } from "../core/StatusBadge";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
 import { formatRate, parseRate, type ScaledRate } from "@/lib/fx/rate";
@@ -78,7 +79,11 @@ export function FxEditor({
           <button
             type="button"
             onClick={onOpenKeypad}
+            aria-label={t("ds.fxEditor.editRate")}
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
               background: "none",
               border: 0,
               padding: 0,
@@ -93,6 +98,7 @@ export function FxEditor({
             }}
           >
             {displayRate(rate, to, locale)}
+            <Icon name="edit" size={18} strokeWidth={1.75} color="var(--text-muted)" />
           </button>
         </div>
         {stale ? (

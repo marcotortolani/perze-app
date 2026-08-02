@@ -1,3 +1,4 @@
+import Dexie from "dexie";
 import { getDb } from "../db/client";
 import type { FxRateRow } from "../db/schema";
 import { type FxRateRecord, type FxResolution, resolveFxRate } from "../fx/resolve";
@@ -81,6 +82,19 @@ export const fxRepo = {
     await getDb().fxRates.put(row);
   },
 
+  /**
+   * Monedas con override manual contra `quote` para este household, aunque
+   * ninguna cuenta las use — E6 ("Agregar una moneda") las suma a la lista
+   * de pares además de las que ya aportan las cuentas.
+   */
+  async listOverrideCurrencies(householdId: string, quote: string): Promise<string[]> {
+    const rows = await getDb()
+      .fxRates.where("[householdId+base+quote]")
+      .between([householdId, Dexie.minKey, Dexie.minKey], [householdId, Dexie.maxKey, Dexie.maxKey])
+      .toArray();
+    return [...new Set(rows.filter((r) => r.provider === MANUAL_PROVIDER && r.quote === quote).map((r) => r.base))];
+  },
+
   async clearManualOverride(householdId: string, base: string, quote: string): Promise<void> {
     const rows = await ratesForPair(base, quote);
     const manualKeys = rows
@@ -105,8 +119,10 @@ export const fxRepo = {
     base: string;
     quote: string;
     date: string;
+    /** Botón "Actualizar" de E6: pega a `/api/fx` aunque el cache ya tenga la cotización de hoy. El override manual sigue ganando igual — esto nunca lo pisa. */
+    forceRefresh?: boolean;
   }): Promise<FxResolution> {
-    const { householdId, base, quote, date } = params;
+    const { householdId, base, quote, date, forceRefresh = false } = params;
     if (base === quote) {
       return resolveFxRate({ base, quote, date, ratesForPair: [] });
     }
@@ -135,7 +151,7 @@ export const fxRepo = {
     // conexión — se sigue prefiriendo el cache si ya tiene la cotización
     // de hoy (`resolution.source === "api"`), pero un `inherited` para la
     // fecha de hoy vale la pena refrescar.
-    const shouldRefetch = resolution.source === "pending" || (resolution.source === "inherited" && date === todayIso());
+    const shouldRefetch = forceRefresh || resolution.source === "pending" || (resolution.source === "inherited" && date === todayIso());
     if (shouldRefetch && isOnline) {
       try {
         const url = new URL("/api/fx", typeof window !== "undefined" ? window.location.origin : "http://localhost");
