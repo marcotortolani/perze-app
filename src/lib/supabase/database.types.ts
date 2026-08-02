@@ -846,6 +846,48 @@ export type Database = {
           },
         ]
       }
+      fx_rate_monthly_averages: {
+        Row: {
+          avg_rate: number
+          base: string
+          computed_at: string
+          quote: string
+          sample_count: number
+          year_month: string
+        }
+        Insert: {
+          avg_rate: number
+          base: string
+          computed_at?: string
+          quote: string
+          sample_count: number
+          year_month: string
+        }
+        Update: {
+          avg_rate?: number
+          base?: string
+          computed_at?: string
+          quote?: string
+          sample_count?: number
+          year_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_rate_monthly_averages_base_fkey"
+            columns: ["base"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fx_rate_monthly_averages_quote_fkey"
+            columns: ["quote"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       fx_rates: {
         Row: {
           as_of: string
@@ -2718,6 +2760,7 @@ export type Database = {
         Returns: string
       }
       close_overdue_card_statements: { Args: never; Returns: undefined }
+      compute_fx_monthly_averages: { Args: never; Returns: undefined }
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }

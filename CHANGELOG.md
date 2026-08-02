@@ -6,6 +6,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.17] — 2026-08-02
+
+### Agregado — historial de tipo de cambio: promedio mensual
+
+- Base para métricas/gráficos de tendencia a lo largo del tiempo (pedido explícitamente para
+  después, no para esta sesión) — no un registro diario perfecto, un promedio por mes
+  alcanza. Resulta que ya existía un cron diario (`daily-fx-sync`, E20) juntando una foto de
+  `fx_rates` todos los días — no hizo falta un snapshot semanal nuevo, el promedio mensual
+  se calcula agregando lo que esa tabla ya junta sola
+- Tabla nueva `fx_rate_monthly_averages` (Patrón C, igual que `fx_rates`/`price_snapshots`:
+  lectura para todo autenticado, escritura solo por el cron) + función
+  `compute_fx_monthly_averages()`, programada a diario a las 9:10 UTC, justo después del
+  sync existente. Un solo `quote_kind` por par ("oficial"/"default", la misma referencia que
+  ya usa el resto de la app) — promediar oficial/blue/mep/ccl juntos mezclaría cotizaciones
+  que no son la misma cosa
+- Nuevo `fxRateHistoryRepo.monthlyAverages(base, quote)` del lado cliente, listo para
+  cuando se construya la pantalla que lo consuma — ninguna pantalla lo usa todavía
+
 ## [0.9.16] — 2026-08-02
 
 ### Corregido — filtrar por "gasto" en movimientos ponía "ingresos" en 0
