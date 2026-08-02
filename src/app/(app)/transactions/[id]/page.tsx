@@ -13,7 +13,7 @@ import { usePayees } from "@/hooks/use-payees";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
-import { formatRateShort } from "@/lib/fx/rate";
+import { formatRateTrimmed } from "@/lib/fx/rate";
 import { money } from "@/lib/money/money";
 import type { Locale } from "@/i18n/formatting";
 
@@ -158,7 +158,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           </span>
           {transaction.fxRate !== null ? (
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>
-              {`1 ${transaction.currencyCode} = ${formatRateShort(transaction.fxRate)} ${household.baseCurrency}`}
+              {`1 ${transaction.currencyCode} = ${formatRateTrimmed(transaction.fxRate)} ${household.baseCurrency}`}
             </span>
           ) : (
             <StatusBadge status="neutral">{t("transactions.detail.fxUnresolved")}</StatusBadge>

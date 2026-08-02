@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { money } from "../money/money";
-import { convert, formatRate, formatRateShort, invertRate, parseRate, rateFromInteger } from "./rate";
+import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromInteger } from "./rate";
 
 describe("parseRate / formatRate", () => {
   it("ida y vuelta sin pérdida", () => {
@@ -13,23 +13,29 @@ describe("parseRate / formatRate", () => {
   });
 });
 
-describe("formatRateShort", () => {
-  it("trunca a 2 decimales por default — nunca los 12 internos de formatRate", () => {
-    expect(formatRateShort(parseRate("1560.000000000000"))).toBe("1560.00");
-    expect(formatRateShort(parseRate("3.333333333333"))).toBe("3.33");
+describe("formatRateTrimmed", () => {
+  it("saca los ceros finales, nunca corta un dígito significativo", () => {
+    expect(formatRateTrimmed(parseRate("1560.250000000000"))).toBe("1560.25");
+    expect(formatRateTrimmed(parseRate("3.333333333333"))).toBe("3.333333333333");
   });
 
-  it("rellena con ceros si hay menos decimales que los pedidos", () => {
-    expect(formatRateShort(rateFromInteger(1000))).toBe("1000.00");
+  it("un rate entero queda sin punto decimal", () => {
+    expect(formatRateTrimmed(rateFromInteger(1000))).toBe("1000");
+    expect(formatRateTrimmed(parseRate("1560.000000000000"))).toBe("1560");
   });
 
-  it("acepta una cantidad de decimales distinta", () => {
-    expect(formatRateShort(parseRate("3.333333333333"), 4)).toBe("3.3333");
+  it("una tasa invertida chica no pierde precisión (nunca '0,00')", () => {
+    // 1/1560 ≈ 0.000641025641026
+    const small = invertRate(rateFromInteger(1560));
+    expect(formatRateTrimmed(small)).toBe("0.000641025641");
   });
 
-  it("trunca, no redondea (mismo criterio que RateRow ya usaba)", () => {
-    // 3.339... truncado a 2 decimales da 3.33, no 3.34
-    expect(formatRateShort(parseRate("3.339999999999"))).toBe("3.33");
+  it("un solo cero final se saca, como pide el ejemplo de referencia", () => {
+    expect(formatRateTrimmed(parseRate("0.025000000000"))).toBe("0.025");
+  });
+
+  it("negativo", () => {
+    expect(formatRateTrimmed(parseRate("-0.500000000000"))).toBe("-0.5");
   });
 });
 

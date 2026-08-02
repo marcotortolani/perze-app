@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.12] — 2026-08-02
+
+### Corregido — el tipo de cambio se cortaba a 2 decimales, incluso cuando eso perdía precisión
+
+- Con el toggle de dirección invertible (v0.9.11), una tasa como "1 ARS = 0,00064 USD" se
+  mostraba y editaba como "0,00" — el corte fijo a 2 decimales servía para tasas grandes
+  pero rompía cualquier tasa chica. Nuevo `formatRateTrimmed` (reemplaza `formatRateShort`,
+  eliminado): muestra la precisión completa pero saca los ceros finales que no aportan nada
+  ("1560,000000000000" → "1560"; "0,025000000000" → "0,025"; una tasa chica como
+  "0,000641025641" se sigue leyendo entera). Aplica al número héroe de `FxEditor`, al
+  prefill del teclado numérico, a `RateRow` (lista de `/currencies`) y al "tipo de cambio
+  usado" del detalle de movimiento — de paso este último deja de ignorar el separador
+  decimal del locale
+
 ## [0.9.11] — 2026-08-02
 
 ### Agregado — `/currencies`: código libre, catálogo real de Frankfurter y dirección invertible

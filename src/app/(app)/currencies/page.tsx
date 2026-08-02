@@ -9,7 +9,7 @@ import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow,
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatRateShort, invertRate, parseRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, invertRate, parseRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
@@ -116,12 +116,14 @@ export default function CurrenciesPage() {
   };
 
   const openKeypad = () => {
-    // Arranca el teclado desde el rate actual, a 2 decimales — misma
-    // precisión que muestra el número grande de FxEditor. Si está
-    // invertido, el número que se ve/tipea es el invertido también.
+    // Arranca el teclado desde el rate actual, sin ceros finales — misma
+    // precisión que muestra el número grande de FxEditor. Un corte fijo a
+    // 2 decimales dejaba una tasa invertida chica (1 ARS = 0,00064 USD)
+    // en "0,00". Si está invertido, el número que se ve/tipea es el
+    // invertido también.
     const displayed = inverted ? invertRate(manualRate) : manualRate;
-    const [wholePart, decPart] = formatRateShort(displayed, 2).split(".");
-    setKeypadDigits(`${wholePart}${decimalSeparator}${decPart}`);
+    const [wholePart, decPart] = formatRateTrimmed(displayed).split(".");
+    setKeypadDigits(decPart ? `${wholePart}${decimalSeparator}${decPart}` : wholePart!);
   };
 
   const commitKeypad = () => {

@@ -5,14 +5,19 @@ import { useLocale, useTranslations } from "next-intl";
 import { Icon } from "../core/Icon";
 import { StatusBadge } from "../core/StatusBadge";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
-import { formatRate, parseRate, type ScaledRate } from "@/lib/fx/rate";
-import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { formatRate, formatRateTrimmed, parseRate, type ScaledRate } from "@/lib/fx/rate";
+import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
+/**
+ * Sin ceros finales, no cortado a 2 decimales: una tasa invertida chica
+ * (1 ARS = 0,00064 USD) necesita más dígitos para leerse, y un rate
+ * "redondo" (1560,00) se muestra mejor sin el resto de ceros.
+ */
 function displayRate(rate: ScaledRate, toCurrency: string, locale: Locale): string {
-  const [intPart, fracPart = ""] = formatRate(rate).split(".");
+  const [intPart, fracPart] = formatRateTrimmed(rate).split(".");
   const symbol = CURRENCY_SYMBOLS[toCurrency.toUpperCase()] ?? toCurrency;
   const groupedInt = new Intl.NumberFormat(numberLocaleForUiLocale(locale)).format(BigInt(intPart ?? "0"));
-  return `${symbol} ${groupedInt},${fracPart.slice(0, 2).padEnd(2, "0")}`;
+  return fracPart ? `${symbol} ${groupedInt}${decimalSeparatorForLocale(locale)}${fracPart}` : `${symbol} ${groupedInt}`;
 }
 
 export interface FxEditorProps {

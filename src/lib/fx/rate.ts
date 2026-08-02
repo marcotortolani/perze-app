@@ -34,13 +34,16 @@ export function formatRate(scaled: ScaledRate): string {
 }
 
 /**
- * `formatRate` a los 12 decimales internos nunca es lo que un usuario tiene
- * que leer (su propio comentario ya lo dice). Trunca —no redondea, mismo
- * criterio que ya usaba `RateRow`— a `decimals` dígitos para mostrar.
+ * `formatRate` sin los ceros finales que no aportan nada — "1560,000000000000"
+ * queda "1560", "0,025500000000" queda "0,0255". A diferencia de
+ * `formatRateShort`, nunca trunca un dígito significativo: una tasa
+ * invertida chica (1 ARS = 0,000641 USD) se sigue leyendo, no se pierde
+ * redondeando a 2 decimales.
  */
-export function formatRateShort(scaled: ScaledRate, decimals = 2): string {
-  const [intPart, fracPart = ""] = formatRate(scaled).split(".");
-  return `${intPart}.${fracPart.slice(0, decimals).padEnd(decimals, "0")}`;
+export function formatRateTrimmed(scaled: ScaledRate): string {
+  const [intPart, fracPart] = formatRate(scaled).split(".");
+  const trimmed = (fracPart ?? "").replace(/0+$/, "");
+  return trimmed === "" ? intPart! : `${intPart}.${trimmed}`;
 }
 
 export function rateFromInteger(n: number): ScaledRate {
