@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -8,11 +8,13 @@ import { Button, Icon, Input, Logo, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { seedDemoHousehold } from "@/lib/seed/demo-household";
-import { enterDemoMode } from "@/lib/demo/demo-mode";
+import { clearDemoCookie, enterDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
 import { createClient } from "@/lib/supabase/client";
 import { signInWithPassword } from "@/features/auth/password-auth";
+import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
+import { householdsRepo } from "@/lib/repos/households-repo";
 import { env } from "@/env";
 
 /**
@@ -48,6 +50,77 @@ export default function OnboardingAuthPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  /**
+   * El link del mail de verificación termina acá con los tokens en el
+   * fragment (flujo implícito del verify de GoTrue — ver
+   * `lib/auth/hash-tokens.ts`): el proxy no puede verlos (el fragment no
+   * viaja al servidor) y el cliente PKCE no los consume solo, así que sin
+   * este efecto la pantalla volvía a pedir el email a alguien que YA
+   * verificó. Consume los tokens, y si hay sesión (por esto o de antes),
+   * salta A2 hacia donde corresponda: `/pending` sin aprobación del
+   * operador, la app si ya hay household local, o A4 para seguir el
+   * registro.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const supabase = createClient();
+      const fromLink = parseAuthHash(window.location.hash);
+      const searchError = new URLSearchParams(window.location.search).get("error");
+      if (fromLink || searchError) {
+        // Limpia URL antes de cualquier await: un remount no debe reprocesarla.
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
+      if (fromLink?.kind === "error" || searchError) {
+        toast.error(t("onboarding.auth.linkError"));
+        if (!fromLink || fromLink.kind === "error") return;
+      }
+
+      if (fromLink?.kind === "tokens") {
+        const { error } = await supabase.auth.setSession({
+          access_token: fromLink.accessToken,
+          refresh_token: fromLink.refreshToken,
+        });
+        if (error) {
+          toast.error(t("onboarding.auth.linkError"));
+          return;
+        }
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const access = await profilesRepo.getOwnAccess(user.id);
+      if (cancelled) return;
+      if (access && access.accessStatus !== "approved") {
+        router.replace("/pending");
+        return;
+      }
+
+      // Venía del demo y se registró: la cookie muere acá; el wipe de la
+      // base anónima con los datos de ejemplo lo hace `DbOwnerSync` al ver
+      // la sesión real (es quien sabe qué base está activa).
+      if (isDemoModeActive()) {
+        clearDemoCookie();
+        router.replace("/onboarding/country");
+        return;
+      }
+
+      const householdId = await householdsRepo.getCurrentHouseholdId();
+      if (cancelled) return;
+      router.replace(householdId ? "/" : "/onboarding/country");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOAuth = async (provider: "google" | "apple") => {
     const supabase = createClient();

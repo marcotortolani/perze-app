@@ -19,6 +19,7 @@ App PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con gru
 | — | `contrato-componentes.md` | La biblioteca: props, estados, tokens y accesibilidad de cada componente. Manda sobre la API de toda pieza | Fase 3 |
 | — | `auditoria-visual.md` | 49 defectos ordenados por costo de arreglarlos después. Corrige al diseño y al contrato | Antes de programar pantallas |
 | — | `marca/` | Sistema de marca: logotipo, ícono, favicon, splash, y los assets ya generados para el repo | Antes del primer deploy |
+| — | `mejora-auth-oauth-y-email.md` | Runbook de configuración: encender login con Google, por qué Apple queda descartado, y reemplazar el proveedor de mail default de Supabase por Resend (SMTP de Auth + transaccionales) | Cuando se decida prender OAuth o resolver el límite de 2 mails/hora del proveedor default |
 
 ## Estado
 
@@ -26,9 +27,20 @@ App PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con gru
 
 **La sesión 0 de reconciliación ya corrió.** K9 quedó diseñado; faltan dos pantallas, cinco entradas de navegación y el modo espejo de J4. Lo que de verdad bloquea son **seis decisiones de schema**, no diseño. Está todo en `08`.
 
+### Mejoras pendientes (configuración, no diseño)
+
+Detalle completo en `mejora-auth-oauth-y-email.md`:
+
+- **Login con Google**: código ya implementado (`signInWithOAuth`, callback PKCE, íconos e i18n listos); solo falta registrar el OAuth client en Google Cloud Console y setear `NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS=google`. Costo US$ 0.
+- **Login con Apple**: descartado por decisión, no pendiente — US$ 99/año, secret que rota cada 6 meses, cobertura marginal frente a Google, y el relay de "ocultar mi correo" rompe el matcheo de invitaciones por email.
+- **Colapso del email bajo "usar mi email" en A2**: falta programar cuando haya al menos un proveedor OAuth activo — hoy el input queda siempre visible.
+- **Verificar el retorno del login OAuth en PWA instalada** y que `?next=` sobrevive el viaje completo.
+- **Reemplazar el proveedor de mail default de Supabase por Resend** (plan gratis: 3.000/mes, tope 100/día): destraba el límite de 2 mails/hora que frenó las pruebas de A2 y habilita la plantilla `magic_link.html` que hoy `supabase config push` rechaza en plan free.
+- **Mails transaccionales con Resend**: invitación al household (la columna `email` de `household_invites` existe y no se usa), resumen semanal y alertas de presupuesto (hoy solo push, que en iOS exige la PWA instalada), confirmación de export/borrado de cuenta.
+
 ## El camino
 
-```
+```text
 00 + 01 (leer)
    ↓
 PROMPT 0  ──► PROMPT W0 (mapa y flujos) ──► W1…W10 ──► WV (auditoría)

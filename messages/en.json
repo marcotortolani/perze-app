@@ -466,7 +466,8 @@
       "preferCode": "I'd rather use the email code",
       "loadingDemo": "Loading sample data…",
       "tryDemo": "Try with sample data",
-      "demoError": "Couldn't load the sample data — try again."
+      "demoError": "Couldn't load the sample data — try again.",
+      "linkError": "That link no longer works — enter your email and request a new code."
     },
     "verify": {
       "back": "Back",

@@ -6,6 +6,53 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.6.1] — 2026-08-01
+
+Tres fixes sobre el acceso controlado de v0.6.0, encontrados probando el registro real del
+operador: el link del mail de verificación no iniciaba sesión (devolvía a la pantalla del
+email), el bootstrap de operador no cubría cuentas creadas después de la migración, y los
+datos de ejemplo del demo sobrevivían al registro.
+
+### Corregido — el link del mail de verificación devolvía a pedir el email
+
+- **Causa raíz**: la plantilla propia del mail (`eea7061`) nunca llegó al proyecto remoto —
+  `supabase config push` quedó pendiente y el plan free la rechaza — así que el mail real es el
+  default de Supabase: un botón de link sin código. Ese link usa el flujo implícito de GoTrue y
+  deja los tokens en el fragment de la URL (`#access_token=...`), que el proxy no puede ver (el
+  fragment no viaja al servidor) y el cliente PKCE de `@supabase/ssr` no consume solo. El
+  usuario aterrizaba en A2 con una sesión válida colgando de la URL y la pantalla le volvía a
+  pedir el email
+- A2 ahora consume esos tokens (`lib/auth/hash-tokens.ts` + `setSession()`) y redirige según el
+  estado real: `/pending` sin aprobación del operador, la app si ya hay household local, o A4
+  para seguir el registro. También saltea A2 cuando ya hay sesión, y un link vencido o inválido
+  muestra el aviso proponiendo pedir un código nuevo (`onboarding.auth.linkError`, ES/EN/PT)
+- `/auth/callback` acepta además links `?token_hash=...&type=email` verificados server-side
+  (`verifyOtp`), y la plantilla `supabase/templates/magic_link.html` ahora trae las dos vías:
+  el código de 6 dígitos para tipear y un botón "O continuá con un click" que apunta ahí —
+  nunca a `{{ .ConfirmationURL }}`, que es el que termina en el flujo implícito
+
+### Corregido — el bootstrap de operador no cubría cuentas nuevas
+
+- El bootstrap de `20260801180000` corría una sola vez contra los perfiles ya existentes: si la
+  cuenta del operador se creaba (o recreaba) después de la migración, nacía `pending` y la
+  instancia quedaba sin nadie que pudiera aprobar — el operador bloqueado por su propio gate.
+  Migración `20260801190000_operator_bootstrap_on_signup.sql`: `handle_new_user()` otorga
+  operador + aprobación directamente en el alta cuando el email es el del operador (el trigger
+  `profiles_protect_access` es `BEFORE UPDATE`, así que el `INSERT` no lo pelea), y re-corre el
+  bootstrap original de forma idempotente
+
+### Corregido — los datos de ejemplo del demo sobrevivían al registro
+
+- **Causa raíz**: la salvaguarda de migración de `DbOwnerSync` (B4) leía el household demo de la
+  base Dexie anónima como "datos legacy reales" y nunca cambiaba a la base namespaced del
+  usuario — quien exploraba el demo y después se registraba quedaba mirando los datos de
+  ejemplo para siempre
+- `DbOwnerSync` ahora distingue el household demo (`createdBy === DEMO_USER_ID`): al aparecer
+  una sesión real borra la base anónima entera y la cookie `perze-demo`, y recién ahí abre la
+  base del usuario. La salvaguarda para datos legacy reales queda intacta
+- A2 también mata la cookie demo en el momento del registro (`clearDemoCookie()`), para que la
+  señal muera aunque el wipe de Dexie corra después
+
 ## [0.6.0] — 2026-08-01
 
 Acceso controlado: contraseña como alternativa al OTP, desbloqueo por biometría además del PIN,
@@ -1149,14 +1196,14 @@ Resuelve los cuatro ítems pendientes de la Fase 0 identificados en la revisión
 
 ### Corregido
 
-**PWA — íconos PNG generados correctamente**
+#### PWA — íconos PNG generados correctamente
 
 - Generados `icon-192.png`, `icon-512.png`, `icon-192-maskable.png`, `icon-512-maskable.png` a partir del SVG existente con `sharp`
 - El ícono maskable incluye fondo esmeralda con 10 % de safe-zone (contenido al 80 %) según la especificación W3C
 - `manifest.webmanifest` actualizado: 4 entradas separadas con `purpose` correcto (`"any"` y `"maskable"` como entradas distintas)
 - El PWA ahora puede instalarse correctamente en Android/Chrome
 
-**Auth — contraseñas hasheadas en lugar de texto plano**
+#### Auth — contraseñas hasheadas en lugar de texto plano
 
 - Introducido `src/lib/hash.ts` con hash FNV-1a 32-bit + salt de aplicación, sincrónico y sin dependencias externas
 - `auth-store` actualizado: el campo `_passwordHash` reemplaza a `_password`; ninguna contraseña en texto plano se persiste en localStorage
@@ -1164,12 +1211,12 @@ Resuelve los cuatro ítems pendientes de la Fase 0 identificados en la revisión
 - `partialize` explícito en el persist documenta qué se almacena; los hashes de contraseña se almacenan (para permitir login tras recarga) pero nunca el texto plano
 - Nota: sigue siendo mock — la autenticación real con Supabase Auth se implementa en Fase 6
 
-**`formatMoney` — negativos con signo correcto**
+#### `formatMoney` — negativos con signo correcto
 
 - `src/lib/money.ts`: separa el signo antes de formatear con `Math.abs(amount)`, produciendo `-$1.200` en lugar de `$-1.200`
 - Comportamiento ahora consistente con `formatCompact` que ya lo manejaba correctamente
 
-**Validación en mutaciones del store de transacciones**
+#### Validación en mutaciones del store de transacciones
 
 - Creado `src/lib/schemas.ts` con `TransactionSchema` (Zod) como única fuente de verdad para la estructura de una transacción
 - `transactions-store` actualizado: `addTransaction` y `updateTransaction` validan con Zod antes de persistir; retornan `{ success, error? }` en lugar de `void`/`Transaction`
@@ -1373,4 +1420,4 @@ Todas las páginas usan react-hook-form + Zod para validación. El logo se ocult
 
 ---
 
-_Para el plan completo de próximas versiones ver [`docs/plan-next-steps.md`](docs/plan-next-steps.md)._
+*Para el plan completo de próximas versiones ver [`docs/plan-next-steps.md`](docs/plan-next-steps.md).*

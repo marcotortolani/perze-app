@@ -466,7 +466,8 @@
       "preferCode": "Prefiro o código por email",
       "loadingDemo": "Carregando dados de exemplo…",
       "tryDemo": "Testar com dados de exemplo",
-      "demoError": "Não foi possível carregar os dados de exemplo — tente de novo."
+      "demoError": "Não foi possível carregar os dados de exemplo — tente de novo.",
+      "linkError": "Esse link não funciona mais — digite seu email e peça um novo código."
     },
     "verify": {
       "back": "Voltar",

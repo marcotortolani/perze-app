@@ -24,13 +24,24 @@ export function isDemoModeActive(): boolean {
 }
 
 /**
+ * Borra SOLO la cookie, sin tocar Dexie — para el momento en que aparece
+ * una sesión real con la cookie de demo todavía viva (el usuario fue del
+ * demo directo a registrarse): la señal de demo tiene que morir ya, pero
+ * el wipe de la base anónima lo decide `DbOwnerSync`, que es quien sabe
+ * qué base está activa y evita borrar la base namespaced del usuario.
+ */
+export function clearDemoCookie(): void {
+  document.cookie = `${DEMO_COOKIE_NAME}=; path=/; max-age=0; samesite=lax`;
+}
+
+/**
  * Sale del demo: borra la cookie y la base Dexie anónima entera (mismo
  * wipe que `signOut()` hace para una sesión real) para que un login
  * posterior no encuentre el household de demo y `DbOwnerSync` namespaced
  * la base sin la salvaguarda de "legacy ya tiene household" de por medio.
  */
 export async function exitDemoMode(): Promise<void> {
-  document.cookie = `${DEMO_COOKIE_NAME}=; path=/; max-age=0; samesite=lax`;
+  clearDemoCookie();
   await getDb().delete();
   switchToAnonymousDb();
 }

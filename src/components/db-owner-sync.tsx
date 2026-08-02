@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { useCurrentUserId } from "@/hooks/use-current-user";
-import { getDb, switchToUserDb } from "@/lib/db/client";
+import { getActiveDbName, getDb, switchToUserDb } from "@/lib/db/client";
+import { clearDemoCookie } from "@/lib/demo/demo-mode";
+import { DEMO_USER_ID } from "@/lib/demo-user";
 
 /**
  * B4 — namespacea la base Dexie por usuario (`perze-${userId}`) apenas hay
@@ -21,6 +23,14 @@ import { getDb, switchToUserDb } from "@/lib/db/client";
  * todavía no, no se cambia — cambiar acá abandonaría en silencio los datos
  * reales del usuario en una base que nadie vuelve a abrir. El namespacing
  * aplica de lleno recién para sesiones nuevas en un dispositivo limpio.
+ *
+ * Excepción a la salvaguarda: el household de demo (§0, sembrado por
+ * `seedDemoHousehold()` con `createdBy = DEMO_USER_ID`). Sin distinguirlo,
+ * alguien que exploró el demo y después se registró quedaba clavado para
+ * siempre en la base anónima mirando los datos de ejemplo — la salvaguarda
+ * lo leía como "datos reales legacy" y nunca cambiaba a la base del
+ * usuario. El demo no tiene nada real que perder: se borra entero (base y
+ * cookie) y recién ahí se namespacea.
  */
 export function DbOwnerSync() {
   const userId = useCurrentUserId();
@@ -30,9 +40,20 @@ export function DbOwnerSync() {
     let cancelled = false;
 
     (async () => {
-      const legacyHasHousehold = (await getDb().households.count()) > 0;
-      if (cancelled) return;
-      if (legacyHasHousehold) return; // ver nota de migración arriba
+      // Solo inspecciona/borra la base anónima — si otro efecto ya cambió a
+      // la base del usuario, no hay nada legacy ni demo que evaluar acá.
+      if (getActiveDbName() === "perze") {
+        const households = await getDb().households.toArray();
+        if (cancelled) return;
+        const isDemoLeftover = households.some((h) => h.createdBy === DEMO_USER_ID);
+        if (isDemoLeftover) {
+          clearDemoCookie();
+          await getDb().delete();
+          if (cancelled) return;
+        } else if (households.length > 0) {
+          return; // ver nota de migración arriba
+        }
+      }
       switchToUserDb(userId);
     })();
 
