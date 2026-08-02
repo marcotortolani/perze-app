@@ -566,6 +566,12 @@
    "submit": "Create account",
    "submitting": "Creating account…",
    "genericError": "We couldn't create the account — try again."
+  },
+  "existingHousehold": {
+   "title": "This device doesn't have your data",
+   "subtitle": "You already have an account with a household — this browser can't bring that data over yet. Sign in from the device where you set it up, or sign out and use a different account.",
+   "signOut": "Sign out",
+   "signingOut": "Signing out…"
   }
  },
  "morePage": {

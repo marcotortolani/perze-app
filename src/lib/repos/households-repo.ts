@@ -68,4 +68,28 @@ export const householdsRepo = {
   async setCurrentHouseholdId(id: string): Promise<void> {
     await getDb().meta.put({ key: CURRENT_HOUSEHOLD_META_KEY, value: id });
   },
+
+  /**
+   * C7 — guarda contra el household duplicado: si este dispositivo/navegador
+   * no tiene household local (Dexie vacío) pero el usuario YA es miembro de
+   * uno en el servidor, el onboarding NO debe crear uno segundo. No hay
+   * pull-sync todavía (BASE-05, `household-members-remote.ts`) — esto no
+   * trae los datos acá, solo detecta que existen para poder bloquear a
+   * tiempo en vez de duplicar en silencio. `households_select` en RLS ya
+   * filtra por membresía (`id IN (SELECT current_households())`), así que
+   * cualquier fila que vuelva es un household real del usuario.
+   */
+  async hasRemoteHousehold(): Promise<boolean> {
+    // Import dinámico — a diferencia del resto de este repo (puro Dexie),
+    // esto es lo único acá que toca Supabase. `households-repo.ts` lo
+    // importan tests que nunca llaman a este método y no mockean `@/env`
+    // (`complete-onboarding.test.ts`); un import estático rompía esos
+    // tests con "Invalid environment variables" en cuanto cargaba el
+    // módulo, aunque nunca se ejecutara esta función.
+    const { createClient } = await import("../supabase/client");
+    const supabase = createClient();
+    const { data, error } = await supabase.from("households").select("id").limit(1);
+    if (error) throw error;
+    return (data?.length ?? 0) > 0;
+  },
 };

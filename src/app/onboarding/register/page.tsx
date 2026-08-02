@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { setOwnPassword, translateAuthError } from "@/features/auth/password-auth";
 import { PASSWORD_PATTERN } from "@/features/auth/password-rules";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
-import { householdsRepo } from "@/lib/repos/households-repo";
+import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 import { markRegistered } from "@/lib/auth/registered-cookie";
 
 /**
@@ -57,9 +57,9 @@ export default function OnboardingRegisterPage() {
       if (cancelled) return;
       if (alreadyRegistered) {
         markRegistered();
-        const householdId = await householdsRepo.getCurrentHouseholdId();
+        const destination = await resolveOnboardingDestination();
         if (cancelled) return;
-        router.replace(householdId ? "/" : "/onboarding/country");
+        router.replace(destination);
         return;
       }
 

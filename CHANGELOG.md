@@ -6,6 +6,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.7.1] — 2026-08-02
+
+Un fix sobre v0.7.0, encontrado probando el reset de contraseña real: el gate del shell
+mandaba de vuelta a `/login` a cualquier sesión válida sin household local, en vez de dejarla
+seguir el onboarding — loop infinito de login. De paso, evita que completar el onboarding en un
+dispositivo nuevo cree un household duplicado cuando el usuario ya tiene uno.
+
+### Corregido — loop infinito entre `/login` y `/` después de un reset de contraseña exitoso
+
+- **Causa raíz**: `OnboardingGate` trata como "bloqueado" tanto la falta de sesión como una
+  sesión válida sin household local (dispositivo/navegador donde nunca se completó el
+  onboarding). El redirect a `/login` que decide la cookie `perze_registered` (v0.7.0) solo
+  tiene sentido en el primer caso — con sesión viva, volver a loguearse nunca crea el household
+  local, así que el gate seguía bloqueado después de cada login exitoso y volvía a mandar a
+  `/login`
+- Ahora solo la ausencia real de sesión (`userId === null`) consulta la cookie; con sesión viva
+  y sin household local, sigue siempre a `/onboarding`, que ya detecta la sesión existente y
+  salta directo a A4
+
+### Agregado — guarda contra el household duplicado en un dispositivo nuevo
+
+- Si el onboarding va a crear un household nuevo pero el usuario ya es miembro de uno en el
+  servidor (típico de un navegador distinto al que usó para registrarse), se frena antes de A4:
+  `resolveOnboardingDestination()` usa `households_select` (RLS, ya filtra por membresía) para
+  detectarlo, y `/onboarding/existing-household` explica que este dispositivo no tiene los datos
+  sincronizados todavía. No hay pull-sync completo (BASE-05, sigue diferido) — esta pantalla es
+  el freno, no una solución
+
 ## [0.7.0] — 2026-08-02
 
 Arregla la causa raíz de que el link de verificación no iniciara sesión, y agrega una vía de

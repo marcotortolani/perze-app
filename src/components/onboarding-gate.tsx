@@ -42,8 +42,17 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const blocked = !isLoading && (household === null || userId === null) && !isDemoModeActive();
 
   useEffect(() => {
-    if (!exempt && blocked) router.replace(readRegisteredCookie() ? "/login" : "/onboarding");
-  }, [exempt, blocked, router]);
+    if (exempt || !blocked) return;
+    // C7 — el bug real, encontrado en producción: `blocked` es `true` tanto
+    // sin sesión como CON sesión pero sin household local (dispositivo/
+    // navegador nuevo para una cuenta que ya existe). Mandar este segundo
+    // caso a `/login` es un loop infinito — volver a loguearse no crea
+    // ningún household local, así que `blocked` sigue `true` después de
+    // cada login exitoso. Solo la ausencia real de sesión (`userId === null`)
+    // consulta la cookie; con sesión viva, sigue a `/onboarding`, que ya
+    // detecta la sesión existente y salta directo a `/onboarding/country`.
+    router.replace(userId === null ? (readRegisteredCookie() ? "/login" : "/onboarding") : "/onboarding");
+  }, [exempt, blocked, userId, router]);
 
   if (!exempt && blocked) return null;
   return <>{children}</>;

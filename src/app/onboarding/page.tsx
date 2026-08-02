@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { signInWithPassword, translateAuthError } from "@/features/auth/password-auth";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
-import { householdsRepo } from "@/lib/repos/households-repo";
+import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 import { env } from "@/env";
 
 /**
@@ -111,9 +111,9 @@ export default function OnboardingAuthPage() {
         return;
       }
 
-      const householdId = await householdsRepo.getCurrentHouseholdId();
+      const destination = await resolveOnboardingDestination();
       if (cancelled) return;
-      router.replace(householdId ? "/" : "/onboarding/country");
+      router.replace(destination);
     })();
 
     return () => {

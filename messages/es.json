@@ -566,6 +566,12 @@
    "submit": "Crear cuenta",
    "submitting": "Creando cuenta…",
    "genericError": "No se pudo crear la cuenta — probá de nuevo."
+  },
+  "existingHousehold": {
+   "title": "Este dispositivo no tiene tus datos",
+   "subtitle": "Ya tenés una cuenta con un household — este navegador todavía no puede traer esos datos acá. Entrá desde el dispositivo donde los cargaste, o cerrá sesión y usá otra cuenta.",
+   "signOut": "Cerrar sesión",
+   "signingOut": "Cerrando sesión…"
   }
  },
  "morePage": {
