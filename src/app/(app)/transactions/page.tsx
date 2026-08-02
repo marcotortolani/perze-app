@@ -106,10 +106,24 @@ export default function MovementsPage() {
     });
   }, [transactions, from, to, filters, payeeIdParam]);
 
+  // Ingresos/Gastos/Balance son el resumen del PERÍODO, no de lo que se ve
+  // en la lista — solo respetan el rango de fecha (mismo concepto que
+  // "gastado este período" del home). Los demás filtros (tipo, cuenta,
+  // categoría, pendientes) narrowean qué se MUESTRA en la lista, y no
+  // tienen por qué vaciar "ingresos" a 0 cuando el filtro activo es "gasto".
+  const dateFiltered = useMemo(() => {
+    if (!transactions) return [];
+    return transactions.filter((t) => {
+      if (from && t.occurredAt < from) return false;
+      if (to && t.occurredAt >= to) return false;
+      return true;
+    });
+  }, [transactions, from, to]);
+
   const baseCurrency = household?.baseCurrency ?? "UYU";
   let periodIncome = zero(baseCurrency);
   let periodExpense = zero(baseCurrency);
-  for (const t of filtered) {
+  for (const t of dateFiltered) {
     if (t.kind === "transfer" || t.amountBase === null) continue;
     const m = money(t.amountBase, baseCurrency);
     if (t.kind === "income") periodIncome = add(periodIncome, m);

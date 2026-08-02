@@ -6,6 +6,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.16] — 2026-08-02
+
+### Corregido — filtrar por "gasto" en movimientos ponía "ingresos" en 0
+
+- El resumen "Ingresos/Gastos/Balance" se calculaba de la misma lista ya filtrada por
+  tipo/cuenta/categoría/pendientes que alimenta el listado — filtrar por "gasto" vaciaba
+  la lista de ingresos a cero, y el resumen mostraba eso literal. El resumen ahora es del
+  PERÍODO (solo respeta el rango de fecha, mismo concepto que "gastado este período" del
+  home); el resto de los filtros narrowean qué se ve en la lista, nunca el resumen
+
 ## [0.9.15] — 2026-08-02
 
 ### Agregado — color de identidad por cuenta
