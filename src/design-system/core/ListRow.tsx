@@ -11,6 +11,14 @@ export interface ListRowProps {
   /** Valor actual alineado a la derecha (variant "value"). Pasar un `<Amount>` para plata. */
   value?: ReactNode | undefined;
   icon?: IconName | undefined;
+  /**
+   * Fondo de la baldosa del ícono (ej. `accounts.color`, uno de los 12
+   * slots de identidad) — default `var(--surface-2)`, neutro, igual que
+   * siempre. Con un fondo propio el glifo pasa a blanco (mismo criterio
+   * que `InstitutionTile` sobre `institutions.color`): un slot de dato
+   * tiene luminancia media, `--text-secondary` no contrasta lo bastante.
+   */
+  iconBackground?: string | undefined;
   /** navigation = empuja una pantalla (chevron); value = muestra el valor actual de un ajuste; action = el label mismo es la acción, en tinta de marca. */
   variant?: "navigation" | "value" | "action" | undefined;
   /** Por defecto true para filas navigation. */
@@ -29,6 +37,7 @@ export function ListRow({
   meta,
   value,
   icon,
+  iconBackground,
   variant = "navigation",
   chevron,
   right,
@@ -83,14 +92,14 @@ export function ListRow({
             width: 40,
             height: 40,
             borderRadius: 12,
-            background: "var(--surface-2)",
+            background: iconBackground ?? "var(--surface-2)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <Icon name={icon} size={19} color={destructive ? "var(--critical)" : "var(--text-secondary)"} />
+          <Icon name={icon} size={19} color={destructive ? "var(--critical)" : iconBackground ? "#ffffff" : "var(--text-secondary)"} />
         </span>
       ) : null}
       <span style={{ flex: 1, minWidth: 0 }}>

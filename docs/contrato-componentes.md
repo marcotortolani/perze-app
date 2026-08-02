@@ -131,7 +131,7 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ### ListRow
 - **Existe para:** la fila de lista de todo el producto.
-- **Props:** `label: string` · `meta?: ReactNode` · `value?: ReactNode` · `secondaryValue?: ReactNode` · `icon?: IconName` · `variant?: 'navigation'|'action'|'static'` · `chevron?: boolean` · `right?: ReactNode` · `destructive?: boolean` · `disabled?: boolean` · `onClick?: () => void`.
+- **Props:** `label: string` · `meta?: ReactNode` · `value?: ReactNode` · `secondaryValue?: ReactNode` · `icon?: IconName` · `iconBackground?: string` (fondo de la baldosa del ícono, default `--surface-2`; con uno propio el glifo pasa a blanco — ver `accountColorVar()`) · `variant?: 'navigation'|'action'|'static'` · `chevron?: boolean` · `right?: ReactNode` · `destructive?: boolean` · `disabled?: boolean` · `onClick?: () => void`.
 - **Estados:** navegación · acción (label en `--primary-ink`, y entonces es la acción primaria de la pantalla) · estática · destructiva · deshabilitada · presionada (`scale(.96)`).
 - **Tokens:** `--text-primary --text-muted --text-secondary --primary-ink --critical --surface-2 --press-scale`.
 - **A11y:** con `right` la fila es `div` y el control anidado porta el rol (un `button` no puede contener contenido interactivo). Sin `right` e interactiva, es `button`. `meta` acepta ReactNode: si lleva un `StatusBadge`, el badge aporta su propio `role="status"`.

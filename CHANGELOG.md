@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.15] — 2026-08-02
+
+### Agregado — color de identidad por cuenta
+
+- `accounts.color` ya existía en el schema (columna sin usar desde siempre) — sin migración.
+  El formulario de cuenta suma un picker de 12 colores (grilla que se reacomoda sola según
+  el ancho de pantalla); default sin elegir sigue con el `--surface-2` neutro de siempre. Los
+  primeros 5 son los mismos slots de datos ya validados por contraste/daltonismo
+  (`--data-1..5`); los 7 restantes son una extensión de una sola pasada, sin la misma
+  validación formal — señalado en el propio código para una auditoría de color futura
+- El color pinta el fondo del ícono en todos los lugares que YA dibujaban uno: lista de
+  cuentas (mobile y desktop) y el selector de cuenta de la captura. El carrusel del home y
+  el header de detalle de cuenta no tienen ícono hoy — agregarles uno queda fuera de este
+  cambio, es una pieza de diseño aparte
+- `ListRow` suma `iconBackground` (opcional, default sin cambios) — con un fondo propio el
+  glifo pasa a blanco para contraste, mismo criterio que ya usaba `InstitutionTile`
+
 ## [0.9.14] — 2026-08-02
 
 ### Corregido — el detalle de cuenta ocupaba el 100% del ancho sin control en mobile

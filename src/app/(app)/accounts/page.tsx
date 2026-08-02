@@ -12,6 +12,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { money } from "@/lib/money/money";
 import { ACCOUNT_KIND_ICON, ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
+import { accountColorVar } from "@/lib/reference/account-colors";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import type { AccountRow } from "@/lib/db/schema";
 
@@ -186,10 +187,17 @@ function DesktopAccountCard({
 }) {
   const t = useTranslations();
   const usage = account.kind === "credit_card" && account.creditLimit ? Number(-account.currentBalance) / Number(account.creditLimit) : null;
+  const iconBackground = accountColorVar(account.color);
   return (
     <Card bordered padding={16} style={{ display: "flex", flexDirection: "column", gap: 12, cursor: "pointer" }} onClick={onClick}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={22} color="var(--text-secondary)" />
+        {iconBackground ? (
+          <span style={{ width: 36, height: 36, borderRadius: 10, background: iconBackground, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={18} color="#ffffff" />
+          </span>
+        ) : (
+          <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={22} color="var(--text-secondary)" />
+        )}
         <div style={{ display: "flex", gap: 2 }}>
           <button
             type="button"
@@ -235,6 +243,7 @@ function AccountCard({ account, onClick, muted = false }: { account: AccountRow;
     <div style={{ opacity: muted ? 0.55 : 1 }}>
       <ListRow
         icon={ACCOUNT_KIND_ICON[account.kind]}
+        iconBackground={accountColorVar(account.color)}
         label={account.name}
         meta={`${t(ACCOUNT_KIND_MESSAGE_KEY[account.kind])}${
           account.countryCode && account.countryCode in COUNTRY_MESSAGE_KEY

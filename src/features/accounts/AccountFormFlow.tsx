@@ -10,6 +10,7 @@ import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { COUNTRIES, CURRENCIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
+import { ACCOUNT_COLOR_KEYS, accountColorVar, type AccountColorKey } from "@/lib/reference/account-colors";
 import { todayIso } from "@/lib/repos/ids";
 import type { AccountKind, AccountRow, Visibility } from "@/lib/db/schema";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -53,6 +54,9 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [name, setName] = useState(existing?.name ?? "");
   const [countryCode, setCountryCode] = useState(existing?.countryCode ?? "UY");
   const [currencyCode, setCurrencyCode] = useState(existing?.currencyCode ?? COUNTRIES.find((c) => c.code === "UY")!.defaultCurrency);
+  const [color, setColor] = useState<AccountColorKey | null>(
+    existing?.color && (ACCOUNT_COLOR_KEYS as readonly string[]).includes(existing.color) ? (existing.color as AccountColorKey) : null
+  );
   const [openingExpr, setOpeningExpr] = useState("");
   const [includeInNetWorth, setIncludeInNetWorth] = useState(existing?.includeInNetWorth ?? true);
   // "custom" se define en J4 (permisos), no en este formulario — si la
@@ -78,6 +82,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
         kind,
         countryCode,
         currencyCode,
+        color,
         creditLimit: null,
         statementDay: kind === "credit_card" ? Number(statementDay) : null,
         dueDay: kind === "credit_card" ? Number(dueDay) : null,
@@ -98,7 +103,6 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           institutionId: null,
           openingBalance,
           openingDate: todayIso(),
-          color: null,
           icon: null,
           archivedAt: null,
           createdBy: userId,
@@ -135,11 +139,66 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", paddingBottom: 24 }}>
           <button type="button" onClick={() => setStep("kind")} style={{ alignSelf: "flex-start", background: "none", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-            <Icon name={KIND_OPTIONS.find((k) => k.id === kind)!.icon} size={20} color="var(--text-secondary)" />
+            <span
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: color ? accountColorVar(color) : "var(--surface-2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Icon name={KIND_OPTIONS.find((k) => k.id === kind)!.icon} size={17} color={color ? "#ffffff" : "var(--text-secondary)"} />
+            </span>
             <span style={{ fontSize: 14, color: "var(--primary-ink)" }}>{KIND_OPTIONS.find((k) => k.id === kind)!.label} · {t("accounts.form.change")}</span>
           </button>
 
           <Input label={t("accounts.form.name")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("accounts.form.namePlaceholder")} />
+
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.color")}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setColor(null)}
+                aria-label={t("accounts.form.colorNone")}
+                aria-pressed={color === null}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  background: "var(--surface-2)",
+                  border: `2px solid ${color === null ? "var(--selection-ring)" : "transparent"}`,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icon name="close" size={16} color="var(--text-muted)" />
+              </button>
+              {ACCOUNT_COLOR_KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setColor(key)}
+                  aria-label={t(`accounts.form.colors.${key}`)}
+                  aria-pressed={color === key}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 999,
+                    background: accountColorVar(key),
+                    border: `2px solid ${color === key ? "var(--text-primary)" : "transparent"}`,
+                    cursor: "pointer",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
 
           <div>
             <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.country")}</p>

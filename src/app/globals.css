@@ -70,6 +70,30 @@
   --data-magenta-dark: #d55181;
   --data-magenta-light: #c9457a;
 
+  /*
+   * Identidad de cuenta — 12 slots (CON-app: `accounts.color`, elegido a
+   * mano por el usuario, `null` = sin elegir, sigue con `--surface-2`
+   * neutro de siempre). Los primeros 5 SON los slots de datos de arriba,
+   * reusados tal cual — son los únicos colores del sistema ya validados
+   * (contraste AA, separación por daltonismo). Los 7 restantes son una
+   * extensión de una sola pasada, no pasaron la misma validación formal:
+   * si en algún momento se audita el sistema de color, empezar por acá.
+   */
+  --account-gold-dark: #d1a536;
+  --account-gold-light: #9c7a1f;
+  --account-cyan-dark: #35b8d9;
+  --account-cyan-light: #1a8fac;
+  --account-indigo-dark: #6c7ae0;
+  --account-indigo-light: #4a51c7;
+  --account-rose-dark: #e06ba0;
+  --account-rose-light: #bf4a80;
+  --account-brown-dark: #c17a4e;
+  --account-brown-light: #96552f;
+  --account-teal-dark: #2f9e8f;
+  --account-teal-light: #1d7a6d;
+  --account-slate-dark: #8890a0;
+  --account-slate-light: #5f6779;
+
   /* rampa secuencial violeta */
   --violet-100: #e1e3ff;
   --violet-150: #d2d3ff;
@@ -224,6 +248,20 @@
   --bar-radius: 4px;
   --line-width: 2px;
   --marker-size: 8px;
+
+  /* Identidad de cuenta — ver el comentario junto a los hex crudos más arriba. 1-5 = los mismos data-N. */
+  --account-color-1: var(--violet-ink-dark);
+  --account-color-2: var(--aqua-dark);
+  --account-color-3: var(--orange-dark);
+  --account-color-4: var(--data-blue-dark);
+  --account-color-5: var(--data-magenta-dark);
+  --account-color-6: var(--account-gold-dark);
+  --account-color-7: var(--account-cyan-dark);
+  --account-color-8: var(--account-indigo-dark);
+  --account-color-9: var(--account-rose-dark);
+  --account-color-10: var(--account-brown-dark);
+  --account-color-11: var(--account-teal-dark);
+  --account-color-12: var(--account-slate-dark);
 }
 .light,
 [data-theme="light"] {
@@ -235,6 +273,19 @@
   --data-other: var(--n-ink3-light);
   --chart-diverge-mid: var(--n-border-light);
   --chart-separator: var(--n-s1-light);
+
+  --account-color-1: var(--violet-ink-light);
+  --account-color-2: var(--aqua-light);
+  --account-color-3: var(--orange-light);
+  --account-color-4: var(--data-blue-light);
+  --account-color-5: var(--data-magenta-light);
+  --account-color-6: var(--account-gold-light);
+  --account-color-7: var(--account-cyan-light);
+  --account-color-8: var(--account-indigo-light);
+  --account-color-9: var(--account-rose-light);
+  --account-color-10: var(--account-brown-light);
+  --account-color-11: var(--account-teal-light);
+  --account-color-12: var(--account-slate-light);
 }
 
 /* ---- tokens/typography.css ---- */

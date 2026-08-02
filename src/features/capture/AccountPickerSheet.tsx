@@ -4,6 +4,7 @@ import { AccountRow, Sheet } from "@/design-system";
 import type { AccountRow as AccountRowData } from "@/lib/db/schema";
 import { money } from "@/lib/money/money";
 import { ACCOUNT_KIND_ICON } from "@/lib/reference/account-kind-labels";
+import { accountColorVar } from "@/lib/reference/account-colors";
 import { usePinUnlocked } from "@/components/pin-gate";
 
 export interface AccountPickerSheetProps {
@@ -35,6 +36,7 @@ export function AccountPickerSheet({ open, title, accounts, onSelect, onClose }:
             meta={a.currencyCode}
             balance={money(a.currentBalance, a.currencyCode)}
             icon={ACCOUNT_KIND_ICON[a.kind]}
+            iconBackground={accountColorVar(a.color)}
             privacy={!pinUnlocked}
             onClick={() => {
               onSelect(a);
