@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.8.5] — 2026-08-02
+
+### Corregido — `/more/categories` no scrolleaba (A8)
+
+- Mismo bug de `min-height: auto` en un hijo flex de columna que ya se había corregido en
+  `/accounts` y `/transactions`: el contenedor de las tres opciones no tenía `minHeight: 0`
+  ni `overflowY: auto`, así que si el contenido no entraba en la pantalla quedaba
+  inalcanzable. Ahora el contenido scrollea en su propio contenedor y el botón "Guardar"
+  queda fijo abajo, fuera del área de scroll
+
+### Agregado — vista previa de categorías y subcategorías por plantilla (A8)
+
+- Las tres opciones ("Básica", "Completa", "Empezar de cero") solo mostraban un conteo
+  ("21 categorías") sin decir cuáles son. La opción seleccionada ahora despliega los
+  nombres reales: las categorías con subcategorías (Supermercado, Transporte, Salud en
+  "Completa") en su propia línea con las hijas debajo, el resto agrupado en una línea final
+
 ## [0.8.4] — 2026-08-02
 
 ### Corregido — "Nueva cuenta" no abría nada (E3)

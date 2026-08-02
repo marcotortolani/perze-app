@@ -10,10 +10,37 @@ import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { applyCategoryTemplate, type CategoryTemplateChoice } from "@/lib/onboarding/apply-category-template";
-import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE } from "@/lib/reference/category-templates";
+import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "@/lib/reference/category-templates";
 
 function countTemplateItems(items: typeof BASIC_CATEGORY_TEMPLATE): number {
   return items.reduce((sum, item) => sum + 1 + (item.children?.length ?? 0), 0);
+}
+
+/**
+ * Nombres reales de la plantilla, para la opción seleccionada — antes solo
+ * se veía un conteo ("21 categorías"), sin saber cuáles son. Los ítems con
+ * subcategorías van en su propia línea con las hijas debajo; el resto se
+ * agrupa en una línea final separada por "·".
+ */
+function CategoryTemplatePreview({ items }: { items: CategoryTemplateItem[] }) {
+  const withChildren = items.filter((item) => item.children && item.children.length > 0);
+  const withoutChildren = items.filter((item) => !item.children || item.children.length === 0);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4, marginBottom: 4, paddingLeft: 14, borderLeft: "2px solid var(--border)" }}>
+      {withChildren.map((item) => (
+        <div key={item.i18nKey}>
+          <span style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{item.name}</span>
+          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+            {item.children!.map((child) => child.name).join(" · ")}
+          </span>
+        </div>
+      ))}
+      {withoutChildren.length > 0 ? (
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{withoutChildren.map((item) => item.name).join(" · ")}</span>
+      ) : null}
+    </div>
+  );
 }
 
 /** A8 — plantilla de categorías. Fuera del camino crítico: Ajustes → Categorías. */
@@ -50,9 +77,9 @@ export default function CategoryTemplatePage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <AppHeader title={t("categoryTemplate.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
         <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
           {t("categoryTemplate.subtitle")}
         </p>
@@ -63,23 +90,25 @@ export default function CategoryTemplatePage() {
           selected={choice === "basic"}
           onClick={() => setChoice("basic")}
         />
+        {choice === "basic" ? <CategoryTemplatePreview items={BASIC_CATEGORY_TEMPLATE} /> : null}
         <OptionCard
           title={t("categoryTemplate.completeTitle")}
           description={`${t("categoryTemplate.completeCount", { count: countTemplateItems(COMPLETE_CATEGORY_TEMPLATE) })} — ${t("categoryTemplate.completeDescription")}`}
           selected={choice === "complete"}
           onClick={() => setChoice("complete")}
         />
+        {choice === "complete" ? <CategoryTemplatePreview items={COMPLETE_CATEGORY_TEMPLATE} /> : null}
         <OptionCard
           title={t("categoryTemplate.scratchTitle")}
           description={t("categoryTemplate.scratchDescription")}
           selected={choice === "scratch"}
           onClick={() => setChoice("scratch")}
         />
-        <div style={{ marginTop: "auto", paddingBottom: 24 }}>
-          <Button onClick={handleSave} disabled={saving}>
-            {t("categoryTemplate.save")}
-          </Button>
-        </div>
+      </div>
+      <div style={{ paddingTop: 16, paddingBottom: 24 }}>
+        <Button onClick={handleSave} disabled={saving}>
+          {t("categoryTemplate.save")}
+        </Button>
       </div>
     </div>
   );
