@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.21] — 2026-08-02
+
+### Corregido/Agregado — categorías: duplicados, subcategorías desplegables y edición
+
+- **"Supermercado" y "Otros ingresos" aparecían duplicados.** `applyCategoryTemplate` (el
+  cambio de plantilla en Ajustes) archivaba solo las categorías de sistema sin uso y después
+  recreaba la plantilla entera sin condición — cualquier categoría con movimientos ya
+  cargados sobrevivía al archivado y le nacía un duplicado al lado. Ahora reconcilia por
+  `i18nKey` (identidad estable de una categoría de plantilla): lo que ya existe, usado o
+  archivado, no se vuelve a crear; una archivada que reaparece en la plantilla nueva se
+  revive en vez de duplicarse
+- Abrir "Otro" en el selector de categorías levantaba el teclado solo (`autoFocus`), tapando
+  media lista antes de que el usuario llegara a tocar nada
+- Las categorías con subcategorías (Salud → Farmacia/Consultas, Transporte → Nafta/etc.) se
+  seleccionaban directo al tocarlas — no había forma de ver ni elegir una hija más
+  específica. Ahora despliegan sus hijas en el lugar; la primera fila del grupo abierto es
+  la categoría general, que sigue siendo seleccionable. Buscando, el árbol se aplana
+- **Nuevo: editar nombre e ícono de una categoría propia.** No existía ninguna forma de
+  hacerlo — ni siquiera el nombre, pese a que `categoriesRepo.update()` ya lo soportaba
+  desde hace rato sin un solo caller real. Un lápiz en el picker de "Otro" (solo en
+  categorías creadas por el usuario, nunca en las de sistema) abre una hoja chica con
+  nombre + una grilla de 16 íconos curados
+- Los chips de categorías frecuentes en la captura de gasto no truncaban — con nombres
+  largos ("Supermercado", "Entretenimiento") el set de 5 + "Otros" pasaba a 3 filas en un
+  teléfono angosto. `Chip` suma un `maxWidth` opcional con elipsis (el ícono nunca se
+  recorta, el nombre completo queda en el `title`)
+
 ## [0.9.20] — 2026-08-02
 
 ### Corregido — precisión del tipo de cambio manual y selector de ámbito con un solo miembro

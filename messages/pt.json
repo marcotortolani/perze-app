@@ -199,7 +199,12 @@
    "searchPlaceholder": "Buscar categoria…",
    "createNew": "Criar \"{name}\"",
    "noResults": "Não encontramos nenhuma categoria.",
-   "nameTooLong": "Esse nome é muito longo."
+   "nameTooLong": "Esse nome é muito longo.",
+   "edit": "Editar categoria",
+   "editTitle": "Editar categoria",
+   "editName": "Nome",
+   "editIcon": "Ícone",
+   "selectGeneral": "Usar \"{name}\" em geral"
   },
   "chooseAccount": "Escolher conta",
   "from": "DE",

@@ -199,7 +199,12 @@
    "searchPlaceholder": "Search category…",
    "createNew": "Create \"{name}\"",
    "noResults": "We couldn't find any category.",
-   "nameTooLong": "That name is too long."
+   "nameTooLong": "That name is too long.",
+   "edit": "Edit category",
+   "editTitle": "Edit category",
+   "editName": "Name",
+   "editIcon": "Icon",
+   "selectGeneral": "Use \"{name}\" in general"
   },
   "chooseAccount": "Choose account",
   "from": "FROM",

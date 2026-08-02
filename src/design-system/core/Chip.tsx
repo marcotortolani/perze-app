@@ -10,11 +10,13 @@ export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>,
   selected?: boolean | undefined;
   icon?: IconName | undefined;
   onClick?: (() => void) | undefined;
+  /** Trunca el label con elipsis en vez de estirar el chip — para filas de varios chips que tienen que entrar en un ancho fijo (ítem 11: 5 + "Otros" en 2 filas). El ícono nunca se recorta. */
+  maxWidth?: number | string | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Píldora de 36px para filtros, atajos de gasto frecuente y opciones de scope. */
-export function Chip({ children, selected = false, icon, onClick, style, ...rest }: ChipProps) {
+export function Chip({ children, selected = false, icon, onClick, maxWidth, style, ...rest }: ChipProps) {
   const [pressed, setPressed] = useState(false);
   const interactive = typeof onClick === "function";
   return (
@@ -30,6 +32,7 @@ export function Chip({ children, selected = false, icon, onClick, style, ...rest
         gap: 6,
         height: 36,
         padding: "0 14px",
+        maxWidth,
         borderRadius: "var(--radius-chip)",
         fontFamily: "var(--font-sans)",
         fontWeight: 500,
@@ -45,8 +48,12 @@ export function Chip({ children, selected = false, icon, onClick, style, ...rest
       }}
       {...rest}
     >
-      {icon ? <Icon name={icon} size={15} strokeWidth={1.75} /> : null}
-      {children}
+      {icon ? <Icon name={icon} size={15} strokeWidth={1.75} style={{ flexShrink: 0 }} /> : null}
+      {maxWidth !== undefined ? (
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{children}</span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { getDb } from "../db/client";
 import { categoriesRepo } from "../repos/categories-repo";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "../reference/category-templates";
 import type { CategoryRow } from "../db/schema";
@@ -10,29 +11,64 @@ export type CategoryTemplateChoice = "basic" | "complete" | "scratch";
  * CLAUDE.md § "apagar oculta, nunca borra" aplica igual acá) solo si nadie
  * la usó todavía; las que ya tienen un movimiento cargado quedan como
  * están, con o sin plantilla nueva encima.
+ *
+ * Antes de esto: cualquier categoría CON uso sobrevivía al archivado y
+ * `createFromTemplate` la recreaba igual, sin condición — "Supermercado" u
+ * "Otros ingresos" quedaban duplicados apenas el household tenía algún
+ * movimiento cargado contra ellas. Ahora se reconcilia por `i18nKey`
+ * (identidad estable de una categoría de plantilla, a diferencia del
+ * `name` traducido): lo que ya existe —usado o archivado— no se vuelve a
+ * crear; lo archivado que reaparece en la plantilla nueva se revive en vez
+ * de duplicarse.
  */
 export async function applyCategoryTemplate(householdId: string, choice: CategoryTemplateChoice, userId: string, usedCategoryIds: Set<string>): Promise<void> {
-  const existing = await categoriesRepo.list(householdId);
-  const unusedSystemCategories = existing.filter((c) => c.isSystem && !usedCategoryIds.has(c.id));
+  // `categoriesRepo.list` filtra los archivados — acá hace falta verlos
+  // también, para revivir en vez de duplicar.
+  const allExisting = await getDb().categories.where("householdId").equals(householdId).toArray();
+  const existing = allExisting.filter((c) => c.archivedAt === null);
 
+  const template = choice === "scratch" ? [] : choice === "complete" ? COMPLETE_CATEGORY_TEMPLATE : BASIC_CATEGORY_TEMPLATE;
+  const templateKeys = new Set(flattenTemplate(template).map((item) => item.i18nKey));
+
+  const unusedSystemCategories = existing.filter((c) => c.isSystem && !usedCategoryIds.has(c.id) && !(c.i18nKey && templateKeys.has(c.i18nKey)));
   for (const category of unusedSystemCategories) {
     await categoriesRepo.archive(category.id);
   }
 
   if (choice === "scratch") return;
 
-  const template = choice === "complete" ? COMPLETE_CATEGORY_TEMPLATE : BASIC_CATEGORY_TEMPLATE;
-  await createFromTemplate(householdId, userId, template);
+  await createFromTemplate(householdId, userId, template, allExisting);
 }
 
-async function createFromTemplate(householdId: string, userId: string, template: CategoryTemplateItem[]): Promise<void> {
+function flattenTemplate(template: CategoryTemplateItem[]): CategoryTemplateItem[] {
+  return template.flatMap((item) => [item, ...(item.children ?? [])]);
+}
+
+async function createFromTemplate(householdId: string, userId: string, template: CategoryTemplateItem[], allExisting: CategoryRow[]): Promise<void> {
+  const byI18nKey = new Map(allExisting.filter((c) => c.i18nKey).map((c) => [c.i18nKey!, c]));
   let sortOrder = 0;
   for (const item of template) {
-    const parent = await createOne(householdId, userId, item, null, sortOrder++);
+    const parent = await createOrReviveOne(householdId, userId, item, null, sortOrder++, byI18nKey);
     for (const child of item.children ?? []) {
-      await createOne(householdId, userId, child, parent.id, sortOrder++);
+      await createOrReviveOne(householdId, userId, child, parent.id, sortOrder++, byI18nKey);
     }
   }
+}
+
+async function createOrReviveOne(
+  householdId: string,
+  userId: string,
+  item: CategoryTemplateItem,
+  parentId: string | null,
+  sortOrder: number,
+  byI18nKey: Map<string, CategoryRow>
+): Promise<CategoryRow> {
+  const found = byI18nKey.get(item.i18nKey);
+  if (found) {
+    if (found.archivedAt !== null) await categoriesRepo.update(found.id, { archivedAt: null });
+    return found;
+  }
+  return createOne(householdId, userId, item, parentId, sortOrder);
 }
 
 async function createOne(householdId: string, userId: string, item: CategoryTemplateItem, parentId: string | null, sortOrder: number): Promise<CategoryRow> {

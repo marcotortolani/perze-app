@@ -145,13 +145,17 @@ export function AmountStep({
       )}
 
       {!isTransfer ? (
+        // Ítem 11: 5 chips + "Otros" tienen que entrar en 2 filas en un
+        // teléfono angosto (~360px) — sin tope, nombres largos como
+        // "Supermercado"/"Entretenimiento" empujaban a una 3ª fila. El
+        // `title` lleva el nombre completo: el truncado es solo visual.
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
           {frequent.map((c) => (
-            <Chip key={c.id} icon={c.icon as IconName} onClick={() => onQuickCategory(c)}>
+            <Chip key={c.id} icon={c.icon as IconName} maxWidth={104} title={categoryLabel(c)} onClick={() => onQuickCategory(c)}>
               {categoryLabel(c)}
             </Chip>
           ))}
-          <Chip icon="more" onClick={onOpenCategoryPicker}>
+          <Chip icon="more" maxWidth={104} onClick={onOpenCategoryPicker}>
             {t("capture.category.other")}
           </Chip>
         </div>
