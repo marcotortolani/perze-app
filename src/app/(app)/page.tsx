@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -17,6 +17,7 @@ import {
   Sparkline,
   StatTile,
   TransactionRow,
+  fitScale,
 } from "@/design-system";
 import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
@@ -51,6 +52,47 @@ function dayBounds(now: Date, daysAgo: number): [Date, Date] {
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
   const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
   return [start, end];
+}
+
+/**
+ * Mismo clamp que `Amount`'s `fit` (`ResizeObserver` + `fitScale`, mismo
+ * piso de legibilidad), pero para las cifras compactas de los `StatTile`
+ * de "gastado"/"ingresado este período" — pasan por `formatAmountCompact`
+ * (ya abrevia, "$ 1,2 M"), no por `<Amount>`, así que `fit` no aplica
+ * directo: acá el tamaño nominal es el mismo 30px que ya usa `StatTile`
+ * tamaño `md`, no uno de los tokens de `size` de `Amount`.
+ */
+function FitStatValue({ text }: { text: string }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLSpanElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    const measure = () => {
+      const naturalWidth = inner.scrollWidth / scale;
+      setScale((prev) => fitScale(outer.clientWidth, naturalWidth, prev));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(outer);
+    return () => observer.disconnect();
+  }, [scale, text]);
+
+  return (
+    <div ref={outerRef} style={{ width: "100%", overflow: "hidden" }}>
+      <span
+        ref={innerRef}
+        style={{ display: "inline-block", whiteSpace: "nowrap", fontFamily: "var(--font-mono)", fontSize: `calc(30px * ${scale})`, lineHeight: `calc(36px * ${scale})` }}
+      >
+        {text}
+      </span>
+    </div>
+  );
 }
 
 /** Home real — Bloque B, Fase 6: hero de patrimonio, cuentas, estado del mes, insight, últimos movimientos. */
@@ -243,8 +285,20 @@ export default function HomePage() {
       <AccountCarousel accounts={accountSummaries} privacy={privacy} onSelect={() => router.push("/accounts")} />
 
       <section style={{ display: "flex", gap: 24 }}>
-        <StatTile label={t("home.spentThisPeriod")} value={<span style={{ fontFamily: "var(--font-mono)" }}>{formatAmountCompact(expenseThisPeriod, { showSign: false })}</span>} style={{ flex: 1 }} />
-        <StatTile label={t("home.incomeThisPeriod")} value={<span style={{ fontFamily: "var(--font-mono)" }}>{formatAmountCompact(incomeThisPeriod, { showSign: false })}</span>} style={{ flex: 1 }} />
+        <button
+          type="button"
+          onClick={() => router.push(`/transactions?kind=expense&from=${encodeURIComponent(periodStart)}`)}
+          style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
+        >
+          <StatTile label={t("home.spentThisPeriod")} value={<FitStatValue text={formatAmountCompact(expenseThisPeriod, { showSign: false })} />} />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push(`/transactions?kind=income&from=${encodeURIComponent(periodStart)}`)}
+          style={{ flex: 1, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
+        >
+          <StatTile label={t("home.incomeThisPeriod")} value={<FitStatValue text={formatAmountCompact(incomeThisPeriod, { showSign: false })} />} />
+        </button>
       </section>
 
       {!insightDismissed ? (

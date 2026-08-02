@@ -6,6 +6,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.8] — 2026-08-02
+
+### Agregado — clamp de tamaño en "gastado"/"ingresado este período" del home + clickeables
+
+- Mismo mecanismo del patrimonio (`ResizeObserver` + `fitScale`, piso de legibilidad al 55%),
+  ahora también en los dos `StatTile` del home. No pasan por `<Amount>` (usan
+  `formatAmountCompact`, que abrevia — "$ 1,2 M" — algo que `Amount` no sabe hacer), así que
+  se extrae el clamp a un componente local (`FitStatValue`) en vez de forzarlo dentro de
+  `Amount`
+- Las dos cards ahora navegan a `/transactions` filtrado por tipo (gasto/ingreso) y por el
+  inicio del período del household — mismo `periodStartDay` que ya usaba el cálculo de
+  "este período", no el mes calendario. `transactions/page.tsx` suma soporte para
+  `?kind=&from=&to=` como deep link, mismo patrón que ya tenía para `?category=`/`?payee=`
+  del buscador
+
 ## [0.9.7] — 2026-08-02
 
 ### Corregido — el detalle de movimiento se veía encimado con la lista en mobile

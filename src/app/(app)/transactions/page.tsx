@@ -69,16 +69,28 @@ export default function MovementsPage() {
   // acá ya filtrados en vez de en una lista sin filtrar — ver `SearchOverlay`.
   const categoryIdParam = searchParams.get("category");
   const payeeIdParam = searchParams.get("payee");
+  // Home ("gastado"/"ingresado este período") linkea acá con el tipo y el
+  // rango del período del household ya resueltos — `from`/`to` puentean el
+  // sistema de presets (que no conoce el `periodStartDay` del household)
+  // en vez de forzar un preset nuevo solo para este deep link.
+  const kindParam = searchParams.get("kind");
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
   useEffect(() => {
-    if (!categoryIdParam) return;
-    setFilters((f) => (f.categoryIds.includes(categoryIdParam) ? f : { ...f, categoryIds: [categoryIdParam] }));
-  }, [categoryIdParam]);
+    if (!categoryIdParam && !kindParam) return;
+    setFilters((f) => {
+      const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
+      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" ? kindParam : f.kind;
+      if (nextCategoryIds === f.categoryIds && nextKind === f.kind) return f;
+      return { ...f, categoryIds: nextCategoryIds, kind: nextKind };
+    });
+  }, [categoryIdParam, kindParam]);
 
   const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   const now = new Date();
-  const { from, to } = periodStartFor(filters.datePreset, now);
+  const { from, to } = fromParam ? { from: fromParam, to: toParam ?? undefined } : periodStartFor(filters.datePreset, now);
 
   const filtered = useMemo(() => {
     if (!transactions) return [];
