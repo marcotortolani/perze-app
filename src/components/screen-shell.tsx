@@ -17,7 +17,7 @@ export interface ScreenShellProps {
  */
 export function ScreenShell({ children, style, background = "var(--page)", onClick }: ScreenShellProps) {
   return (
-    <div style={{ minHeight: "100svh", background, display: "flex", justifyContent: "center" }} onClick={onClick}>
+    <div style={{ minHeight: "100svh", paddingTop: "var(--safe-top)", background, display: "flex", justifyContent: "center" }} onClick={onClick}>
       {/* `position: relative` — para que un `<Sheet>` (`position: absolute;
           inset: 0`) hijo quede acotado a esta columna en vez de taparle
           todo el viewport en desktop. */}

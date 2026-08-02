@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.5] — 2026-08-02
+
+### Corregido — PWA instalada rota en iPhone con isla dinámica (safe areas)
+
+- La tab bar inferior desbordaba sus íconos y solapaba el FAB en cualquier equipo con
+  `safe-area-inset-bottom` (iPhone con isla dinámica/notch, PWA instalada): `TabBar.tsx`
+  fijaba `height: 64px` y además `paddingBottom: env(safe-area-inset-bottom)` sobre
+  `box-sizing: border-box`, así que el inset (34px en iPhone 16 Pro) se restaba del alto en
+  vez de sumarse — la caja de contenido real quedaba en ~30px para un ícono de 22px + label.
+  `docs/02-design-system.md` § 4 ya documentaba "Tab bar 64px + safe area"; el código
+  implementaba lo contrario. Nuevo token `--tabbar-total-height` (`--tabbar-height` + safe
+  area) resuelve la caja a 64px reales en cualquier equipo; `--tabbar-height` no cambia de
+  valor porque `globals-tokens.test.ts` lo assertea contra el doc
+- El alto de pantalla tampoco se ajustaba al área utilizable: `viewport-fit: cover` +
+  `statusBarStyle: "black-translucent"` extienden el layout bajo la isla dinámica, pero
+  `env(safe-area-inset-top)` no se usaba en ningún lugar del repo — el header y ~59px de
+  contenido quedaban tapados. `.app-shell` ahora absorbe el inset superior una sola vez;
+  las pantallas full-screen fuera del shell de `(app)` (`ScreenShell`, `LockScreen`,
+  `/offline`, el loader de `onboarding-gate`) suman el mismo inset a su padding superior
+- El `<main>` del shell de `(app)` restaba `var(--tabbar-height) + 24px` de su alto de
+  scroll aunque la tab bar es un hermano flex, no un overlay — quedaban ~88px de scroll
+  muertos abajo de cada pantalla; ahora solo deja aire para el voladizo del FAB
+- Splash screens de iOS (`apple-touch-startup-image`): faltaban las entradas de iPhone 16
+  Pro y 16 Pro Max en la tabla de dispositivos, así que esos equipos no matcheaban ninguna
+  media query y el arranque de la PWA mostraba una pantalla lisa en vez del splash — se
+  agregaron y se regeneraron los 4 PNG (`scripts/generate-splash-screens.mjs`)
+- **Nota:** todo esto se verificó con `pnpm lint`/`pnpm test`/`pnpm build` limpios y con
+  `env()` inspeccionado a mano contra los insets documentados de iPhone 16 Pro (59px top,
+  34px bottom) — la validación real en el dispositivo, con la PWA reinstalada para
+  descartar HTML/CSS cacheado por el service worker, queda pendiente
+
 ## [0.9.4] — 2026-08-02
 
 ### Agregado — captura por voz determina tipo y categoría, no solo el monto

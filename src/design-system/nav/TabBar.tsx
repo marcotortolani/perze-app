@@ -49,7 +49,19 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
       { id: "more", label: t("nav.more"), icon: "more" },
     ];
   return (
-    <nav style={{ height: "var(--tabbar-height)", display: "flex", alignItems: "center", background: "var(--page)", paddingBottom: "env(safe-area-inset-bottom)", ...style }}>
+    <nav
+      style={{
+        height: "var(--tabbar-total-height)",
+        paddingBottom: "var(--safe-bottom)",
+        flexShrink: 0,
+        position: "relative",
+        zIndex: 1,
+        display: "flex",
+        alignItems: "center",
+        background: "var(--page)",
+        ...style,
+      }}
+    >
       {items.map((item) => {
         const on = item.id === active;
         if (item.fab) {

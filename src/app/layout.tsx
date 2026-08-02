@@ -29,6 +29,8 @@ const SPLASH_DEVICES: Array<{ name: string; width: number; height: number; ratio
   { name: "iphone-12-pro-max", width: 428, height: 926, ratio: 3 },
   { name: "iphone-14-pro", width: 393, height: 852, ratio: 3 },
   { name: "iphone-14-pro-max", width: 430, height: 932, ratio: 3 },
+  { name: "iphone-16-pro", width: 402, height: 874, ratio: 3 },
+  { name: "iphone-16-pro-max", width: 440, height: 956, ratio: 3 },
   { name: "ipad-9-7", width: 768, height: 1024, ratio: 2 },
   { name: "ipad-pro-10-5", width: 834, height: 1112, ratio: 2 },
   { name: "ipad-pro-11", width: 834, height: 1194, ratio: 2 },

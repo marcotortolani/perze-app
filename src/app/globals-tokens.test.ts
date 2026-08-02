@@ -86,6 +86,13 @@ describe("geometría y espacio — docs/02-design-system.md § 4", () => {
     expectToken("--touch-min: 44px");
   });
 
+  it("safe areas — Tab bar 64px + safe area, no 64px con el inset comido adentro", () => {
+    expectToken("--tabbar-height: 64px");
+    expectToken("--safe-top: env(safe-area-inset-top, 0px)");
+    expectToken("--safe-bottom: env(safe-area-inset-bottom, 0px)");
+    expectToken("--tabbar-total-height: calc(var(--tabbar-height) + var(--safe-bottom))");
+  });
+
   it("radios", () => {
     expectToken("--radius-input: 14px");
     expectToken("--radius-button: 16px");

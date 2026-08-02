@@ -65,7 +65,7 @@ export function LockScreen({ onSubmit, onBiometric, pinLength = 6, lockoutSecond
         justifyContent: "center",
         gap: 24,
         minHeight: "100svh",
-        padding: "48px var(--screen-padding)",
+        padding: "calc(48px + var(--safe-top)) var(--screen-padding) 48px",
         ...style,
       }}
     >

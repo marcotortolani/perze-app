@@ -27,6 +27,8 @@ const DEVICES = [
   { name: "iphone-12-pro-max", width: 1284, height: 2778, ratio: 3 },
   { name: "iphone-14-pro", width: 1179, height: 2556, ratio: 3 },
   { name: "iphone-14-pro-max", width: 1290, height: 2796, ratio: 3 },
+  { name: "iphone-16-pro", width: 1206, height: 2622, ratio: 3 },
+  { name: "iphone-16-pro-max", width: 1320, height: 2868, ratio: 3 },
   { name: "ipad-9-7", width: 1536, height: 2048, ratio: 2 },
   { name: "ipad-pro-10-5", width: 1668, height: 2224, ratio: 2 },
   { name: "ipad-pro-11", width: 1668, height: 2388, ratio: 2 },

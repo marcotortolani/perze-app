@@ -72,7 +72,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   // animado — nunca el flash del onboarding ni un blanco sin explicación.
   if (!exempt && (!ready || blocked)) {
     return (
-      <div style={{ minHeight: "100svh", display: "grid", placeItems: "center", background: "var(--page)" }}>
+      <div style={{ minHeight: "100svh", paddingTop: "var(--safe-top)", display: "grid", placeItems: "center", background: "var(--page)" }}>
         <ZMark size={16} gap={5} animated variant="sweep" aria-label={t("app.name")} />
       </div>
     );

@@ -316,6 +316,21 @@
   --keypad-key-height: 64px;
 
   /*
+   * Safe areas — PWA instalada en equipos con isla dinámica/notch. Sin
+   * fallback explícito `env()` ya resuelve a 0px en equipos sin inset
+   * (Android, desktop), pero lo dejamos explícito para que quede documentado.
+   * `docs/02-design-system.md` § 4: "Tab bar 64px + safe area" — el 64 es la
+   * caja de contenido, el inset se SUMA, nunca se resta de adentro.
+   */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* `--tabbar-height` sigue en 64px literal — `globals-tokens.test.ts` lo
+     assertea como string contra § 4 del design system. */
+  --tabbar-total-height: calc(var(--tabbar-height) + var(--safe-bottom));
+
+  /*
    * Responsive — el diseño de origen es mobile-first (390px). Un solo corte
    * de navegación, 1024px (`lg:` de Tailwind, `DESKTOP_BREAKPOINT` en
    * `use-is-desktop.ts`): hasta ahí, TabBar inferior; desde ahí, `Sidebar`
@@ -451,6 +466,7 @@
   --spacing-screen-padding: var(--screen-padding);
   --spacing-block-gap: var(--block-gap);
   --spacing-tabbar-height: var(--tabbar-height);
+  --spacing-tabbar-total-height: var(--tabbar-total-height);
   --spacing-header-height: var(--header-height);
   --spacing-fab-size: var(--fab-size);
   --spacing-thumb-zone: var(--thumb-zone);
@@ -593,6 +609,12 @@
   display: flex;
   height: 100dvh;
   overflow: hidden;
+  /* Isla dinámica/notch — `viewport-fit: cover` + `black-translucent` hacen
+     que `100dvh` cubra la pantalla entera, así que el inset superior se
+     absorbe acá, una sola vez, en vez de en cada `AppHeader`. */
+  padding-top: var(--safe-top);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 @utility app-shell-column {
   display: flex;

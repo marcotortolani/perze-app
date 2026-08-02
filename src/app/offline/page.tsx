@@ -20,7 +20,7 @@ export default async function OfflinePage() {
         alignItems: "center",
         justifyContent: "center",
         gap: 16,
-        padding: "var(--screen-padding)",
+        padding: "calc(var(--screen-padding) + var(--safe-top)) var(--screen-padding) var(--screen-padding)",
         textAlign: "center",
       }}
     >

@@ -173,7 +173,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             pending={pending ?? 0}
           />
         </div>
-        <main className="app-shell-main pb-[calc(var(--tabbar-height)+24px)] lg:pb-6">
+        <main className="app-shell-main pb-[calc(var(--block-gap)+18px)] lg:pb-6">
           {/* `height: 100%` — Movimientos (D1) usa `height: "100%"` en su
               virtualizador y necesita que este contenedor tenga una altura
               definida para resolverlo, no solo `flex: 1` en el ancestro.
