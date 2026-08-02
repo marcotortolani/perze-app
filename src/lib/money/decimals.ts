@@ -17,6 +17,7 @@ const CURRENCY_DECIMALS: Record<string, number> = {
   CLP: 0,
   COP: 2,
   JPY: 0,
+  KRW: 0,
   BTC: 8,
   ETH: 8,
   USDT: 2,

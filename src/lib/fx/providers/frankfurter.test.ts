@@ -22,6 +22,16 @@ describe("frankfurter provider", () => {
     expect(provider.supports("EUR", "ARS")).toBe(false);
   });
 
+  it("cubre los 30 códigos reales de /v1/currencies, no el recorte de 14 anterior", () => {
+    const provider = createFrankfurterProvider(fakeFetch({}));
+    for (const code of ["GBP", "TRY", "KRW", "PLN", "ILS", "SGD"]) {
+      expect(provider.supports("EUR", code)).toBe(true);
+    }
+    // LatAm/crypto siguen fuera — eso lo cubre dolarapi o el override manual.
+    expect(provider.supports("EUR", "ARS")).toBe(false);
+    expect(provider.supports("EUR", "UYU")).toBe(false);
+  });
+
   /**
    * B5 — `encodeURIComponent` explícito en la URL: este provider no debe
    * confiar en que el caller ya filtró `base`/`quote` con `supports()`.

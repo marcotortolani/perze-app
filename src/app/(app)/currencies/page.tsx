@@ -5,19 +5,21 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, Sheet, Skeleton, StatusBadge } from "@/design-system";
+import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatRateShort, parseRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateShort, invertRate, parseRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
+import { FRANKFURTER_CURRENCIES } from "@/lib/fx/providers/frankfurter";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
 const PENDING_RESOLUTION: FxResolution = { source: "pending", rate: null, provider: null, quoteKind: null, asOf: null, isStale: false };
+const CUSTOM_CODE_PATTERN = /^[A-Z0-9]{2,10}$/;
 
 /**
  * E6 — monedas y tipos de cambio por par. No existe para el perfil SIMPLE
@@ -34,7 +36,12 @@ export default function CurrenciesPage() {
   const [manualRate, setManualRate] = useState<ScaledRate>(rateFromInteger(1));
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [addingCurrency, setAddingCurrency] = useState(false);
+  const [customCode, setCustomCode] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  /** El rate de una moneda recién agregada, resuelto apenas se elige — antes de que entre a `currencies`/`ratesQuery`. */
+  const [addedResolution, setAddedResolution] = useState<FxResolution | null>(null);
+  /** `false` = "1 {editingPair} = ? {baseCurrency}" (lo que se guarda). `true` = mismo par, tipeado al revés — conveniencia de entrada, se invierte antes de guardar. */
+  const [inverted, setInverted] = useState(false);
   const decimalSeparator = decimalSeparatorForLocale(locale);
 
   const baseCurrency = household?.baseCurrency ?? "UYU";
@@ -65,41 +72,74 @@ export default function CurrenciesPage() {
     enabled: !!household && currencies.length > 0,
   });
 
-  const addableCurrencies = useMemo(
-    () => CURRENCIES.filter((c) => c.code !== baseCurrency && !currencies.includes(c.code)),
-    [currencies, baseCurrency]
-  );
+  // Catálogo fijo (7) ∪ cobertura real de Frankfurter (30, ver el
+  // comentario de `SUPPORTED` en el provider) — deduplicado, sin la base
+  // ni lo que ya está trackeado. El texto libre de abajo cubre lo que
+  // ninguno de los dos lista (ARS/UYU no están en Frankfurter, crypto en
+  // ninguno de los dos).
+  const addableCurrencies = useMemo(() => {
+    const byCode = new Map<string, string>();
+    for (const c of CURRENCIES) byCode.set(c.code, c.name);
+    for (const c of FRANKFURTER_CURRENCIES) if (!byCode.has(c.code)) byCode.set(c.code, c.name);
+    byCode.delete(baseCurrency);
+    for (const code of currencies) byCode.delete(code);
+    return [...byCode.entries()].map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [currencies, baseCurrency]);
+
+  const customCodeValid = CUSTOM_CODE_PATTERN.test(customCode) && customCode !== baseCurrency && !currencies.includes(customCode);
 
   if (!household) return <Skeleton height={300} />;
 
+  const resetEditorState = () => {
+    setKeypadDigits(null);
+    setAddedResolution(null);
+    setInverted(false);
+  };
+
   const openEditor = (currency: string, rate: ScaledRate) => {
+    resetEditorState();
     setEditingPair(currency);
     setManualRate(rate);
-    setKeypadDigits(null);
+  };
+
+  /** "Agregar una moneda": a diferencia de `openEditor`, esta todavía no está en `currencies`/`ratesQuery` — se resuelve el rate acá mismo para no arrancar siempre en 1:1 cuando sí hay cotización disponible. */
+  const handlePickNewCurrency = async (code: string) => {
+    setAddingCurrency(false);
+    setCustomCode("");
+    resetEditorState();
+    setEditingPair(code);
+    setManualRate(rateFromInteger(1));
+    if (!household) return;
+    const resolution = await fxRepo.resolve({ householdId: household.id, base: code, quote: baseCurrency, date: todayIso() });
+    setAddedResolution(resolution);
+    if (resolution.rate) setManualRate(resolution.rate);
   };
 
   const openKeypad = () => {
     // Arranca el teclado desde el rate actual, a 2 decimales — misma
-    // precisión que muestra el número grande de FxEditor.
-    const [wholePart, decPart] = formatRateShort(manualRate, 2).split(".");
+    // precisión que muestra el número grande de FxEditor. Si está
+    // invertido, el número que se ve/tipea es el invertido también.
+    const displayed = inverted ? invertRate(manualRate) : manualRate;
+    const [wholePart, decPart] = formatRateShort(displayed, 2).split(".");
     setKeypadDigits(`${wholePart}${decimalSeparator}${decPart}`);
   };
 
   const commitKeypad = () => {
     if (keypadDigits !== null) {
       const parsed = parseKeypadRate(keypadDigits, decimalSeparator);
-      if (parsed !== null) setManualRate(parsed);
+      if (parsed !== null) setManualRate(inverted ? invertRate(parsed) : parsed);
     }
     setKeypadDigits(null);
   };
 
   const closeEditor = () => {
     setEditingPair(null);
-    setKeypadDigits(null);
     setAddingCurrency(false);
+    setCustomCode("");
+    resetEditorState();
   };
 
-  const editingResolution: FxResolution = editingPair ? (ratesQuery.data?.get(editingPair) ?? PENDING_RESOLUTION) : PENDING_RESOLUTION;
+  const editingResolution: FxResolution = editingPair ? (ratesQuery.data?.get(editingPair) ?? addedResolution ?? PENDING_RESOLUTION) : PENDING_RESOLUTION;
 
   const handleSaveOverride = async () => {
     if (!editingPair) return;
@@ -130,6 +170,26 @@ export default function CurrenciesPage() {
   };
 
   const sheetTitle = editingPair ? `${editingPair} → ${baseCurrency}` : addingCurrency ? t("currenciesPage.addCurrencyTitle") : "";
+
+  // Términos de edición, ya resueltos según `inverted` — de acá para abajo
+  // todo lee `displayFrom`/`displayTo`/`displayRate`, nunca `editingPair`/
+  // `baseCurrency`/`manualRate` directo, así que invertir es un solo lugar.
+  const displayFrom = inverted ? baseCurrency : (editingPair ?? "");
+  const displayTo = inverted ? (editingPair ?? "") : baseCurrency;
+  const displayRate = inverted ? invertRate(manualRate) : manualRate;
+  const displaySuggested = editingResolution.rate ? (inverted ? invertRate(editingResolution.rate) : editingResolution.rate) : undefined;
+
+  const directionToggle = editingPair ? (
+    <SegmentedControl
+      options={[
+        { id: "normal", label: `1 ${editingPair} = ${baseCurrency}` },
+        { id: "inverted", label: `1 ${baseCurrency} = ${editingPair}` },
+      ]}
+      value={inverted ? "inverted" : "normal"}
+      onChange={(id) => setInverted(id === "inverted")}
+      size="sm"
+    />
+  ) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 16, paddingBottom: 24 }}>
@@ -190,37 +250,42 @@ export default function CurrenciesPage() {
         <ListRow icon="plus" label={t("currenciesPage.addCurrency")} variant="action" onClick={() => setAddingCurrency(true)} />
       ) : null}
 
-      <Sheet open={addingCurrency} title={sheetTitle} onClose={closeEditor} height={420}>
-        {addableCurrencies.length === 0 ? (
-          <p className="t-body" style={{ color: "var(--text-secondary)", margin: 0 }}>{t("currenciesPage.addCurrencyEmpty")}</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {addableCurrencies.map((c) => (
-              <ListRow
-                key={c.code}
-                label={c.name}
-                meta={c.code}
-                variant="navigation"
-                onClick={() => {
-                  setAddingCurrency(false);
-                  openEditor(c.code, rateFromInteger(1));
-                }}
-              />
-            ))}
+      <Sheet open={addingCurrency} title={sheetTitle} onClose={closeEditor} height={520}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div>
+            <Input
+              label={t("currenciesPage.customCodeLabel")}
+              placeholder={t("currenciesPage.customCodePlaceholder")}
+              value={customCode}
+              onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10))}
+            />
+            <Button variant="secondary" style={{ marginTop: 8 }} disabled={!customCodeValid} onClick={() => handlePickNewCurrency(customCode)}>
+              {t("currenciesPage.customCodeAdd", { code: customCode || "…" })}
+            </Button>
           </div>
-        )}
+          <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", maxHeight: 300 }}>
+            {addableCurrencies.length === 0 ? (
+              <p className="t-body" style={{ color: "var(--text-secondary)", margin: 0 }}>{t("currenciesPage.addCurrencyEmpty")}</p>
+            ) : (
+              addableCurrencies.map((c) => (
+                <ListRow key={c.code} label={c.name} meta={c.code} variant="navigation" onClick={() => handlePickNewCurrency(c.code)} />
+              ))
+            )}
+          </div>
+        </div>
       </Sheet>
 
-      <Sheet open={editingPair !== null} title={sheetTitle} onClose={closeEditor} height={keypadDigits !== null ? 480 : 360}>
+      <Sheet open={editingPair !== null} title={sheetTitle} onClose={closeEditor} height={keypadDigits !== null ? 520 : 420}>
         {editingPair ? (
           keypadDigits !== null ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {directionToggle}
               <div style={{ textAlign: "center" }}>
                 <span className="t-caption" style={{ color: "var(--text-muted)" }}>
-                  {t("currenciesPage.howManyWorth", { base: baseCurrency, quote: editingPair })}
+                  {t("currenciesPage.howManyWorth", { base: displayTo, quote: displayFrom })}
                 </span>
                 <div style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-hero-size)", lineHeight: "var(--text-hero-line)", fontWeight: 600, marginTop: 4 }}>
-                  {CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency}{" "}
+                  {CURRENCY_SYMBOLS[displayTo] ?? displayTo}{" "}
                   {keypadDigits === "" ? "0" : keypadDigits}
                 </div>
               </div>
@@ -236,24 +301,28 @@ export default function CurrenciesPage() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {directionToggle}
               {editingResolution.rate === null ? (
                 <Input
-                  label={t("currenciesPage.howManyWorth", { base: baseCurrency, quote: editingPair })}
+                  label={t("currenciesPage.howManyWorth", { base: displayTo, quote: displayFrom })}
                   placeholder={t("currenciesPage.ratePlaceholder")}
                   onChange={(e) => {
                     const parsed = Number(e.target.value.replace(",", "."));
-                    if (!Number.isNaN(parsed) && parsed > 0) setManualRate(parseRate(parsed.toFixed(12)));
+                    if (!Number.isNaN(parsed) && parsed > 0) {
+                      const rate = parseRate(parsed.toFixed(12));
+                      setManualRate(inverted ? invertRate(rate) : rate);
+                    }
                   }}
                 />
               ) : null}
               <FxEditor
-                from={editingPair}
-                to={baseCurrency}
-                rate={manualRate}
-                suggested={editingResolution.rate ?? undefined}
+                from={displayFrom}
+                to={displayTo}
+                rate={displayRate}
+                suggested={displaySuggested}
                 source={editingResolution.source === "manual" ? t("currenciesPage.manualOverride") : (editingResolution.provider ?? t("currenciesPage.noProvider"))}
                 stale={editingResolution.isStale}
-                onChange={setManualRate}
+                onChange={(next) => setManualRate(inverted ? invertRate(next) : next)}
                 onOpenKeypad={openKeypad}
               />
               <Button variant="primary" onClick={handleSaveOverride}>

@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.11] — 2026-08-02
+
+### Agregado — `/currencies`: código libre, catálogo real de Frankfurter y dirección invertible
+
+- **Catálogo de "agregar moneda" ampliado**: antes solo se podía elegir entre las 7 monedas
+  del picker de cuentas. Ahora suma las 30 que realmente cubre el proveedor `frankfurter`
+  (antes su `SUPPORTED` estaba recortado a 14 de esas 30 sin motivo — dolarapi sí tiene un
+  recorte deliberado a Argentina, este no lo era). Al elegir una, se intenta resolver un rate
+  sugerido al toque (en vez de arrancar siempre en 1:1) si el proveedor cubre el par
+- **Código de moneda libre**: además del catálogo, un campo de texto acepta cualquier código
+  (2-10 letras/números, mismo patrón que ya valida `/api/fx`) para lo que ningún catálogo
+  lista — cripto, USDT, etc. — igual que ya funcionaba el override manual sin esto
+- **Dirección de tasa invertible**: un segmentado deja elegir si tipear "1 USD = ? ARS" o
+  "1 ARS = ? USD", lo que sea más cómodo — se invierte antes de guardar, el par almacenado
+  nunca cambia de sentido
+- Migración `20260802040000_seed_frankfurter_currencies.sql`: sube el catálogo global
+  `currencies` (Patrón C) a la cobertura real de Frankfurter — sin esto, `/api/fx` rechazaba
+  con `MONEDA_DESCONOCIDA` cualquier código fuera de los 7 sembrados originalmente, sin
+  importar que el proveedor sí tuviera el par
+
 ## [0.9.10] — 2026-08-02
 
 ### Cambiado — reorganización de "Más": Perfil agrupa identidad, Sync se fusiona, Datos y backup se fusiona

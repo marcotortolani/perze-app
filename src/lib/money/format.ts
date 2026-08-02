@@ -13,6 +13,35 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   BTC: "₿",
   USDT: "USDT",
   USDC: "USDC",
+  // Mismos códigos y símbolos que siembra
+  // `supabase/migrations/20260802040000_seed_frankfurter_currencies.sql` —
+  // cobertura real del proveedor `frankfurter` (BCE), no un recorte propio.
+  AUD: "AU$",
+  CAD: "CA$",
+  CHF: "CHF",
+  CNY: "CN¥",
+  CZK: "Kč",
+  DKK: "kr",
+  GBP: "£",
+  HKD: "HK$",
+  HUF: "Ft",
+  IDR: "Rp",
+  ILS: "₪",
+  INR: "₹",
+  ISK: "kr",
+  JPY: "¥",
+  KRW: "₩",
+  MYR: "RM",
+  NOK: "kr",
+  NZD: "NZ$",
+  PHP: "₱",
+  PLN: "zł",
+  RON: "lei",
+  SEK: "kr",
+  SGD: "SG$",
+  THB: "฿",
+  TRY: "₺",
+  ZAR: "R",
 };
 
 function decimalSeparator(locale: NumberLocale): string {
