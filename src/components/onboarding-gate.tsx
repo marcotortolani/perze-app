@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { isDemoModeActive } from "@/lib/demo/demo-mode";
 import { REGISTERED_COOKIE_NAME, isRegisteredCookieValue } from "@/lib/auth/registered-cookie";
+import { useDbOwnerStore } from "@/stores/db-owner-store";
 
 // `/pending` — B1: faltaba acá, así que un usuario sin aprobar y sin
 // household local (nunca llegó a completar el onboarding) rebotaba
@@ -34,12 +37,23 @@ function readRegisteredCookie(): boolean {
  * Excepción: modo demo (§0) — sin sesión a propósito, nunca debe rebotar.
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const { data: household, isLoading } = useCurrentHousehold();
   const userId = useCurrentUserId();
+  const dbSettled = useDbOwnerStore((s) => s.settled);
   const exempt = EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
-  const blocked = !isLoading && (household === null || userId === null) && !isDemoModeActive();
+
+  // AC-18 — nada de decidir (ni de renderizar la app) hasta que la sesión
+  // esté resuelta Y la base Dexie activa sea la de esta sesión: antes, en
+  // un reload con sesión viva, la query de household resolvía `null`
+  // contra la base anónima (DbOwnerSync todavía no había cambiado) y esto
+  // mandaba a `/onboarding` — un flash de la pantalla de alta en cada
+  // recarga, con vuelta a la app recién después. `undefined` de `userId`
+  // sigue siendo "auth cargando", nunca dispara nada.
+  const ready = dbSettled && !isLoading && userId !== undefined;
+  const blocked = ready && (household === null || userId === null) && !isDemoModeActive();
 
   useEffect(() => {
     if (exempt || !blocked) return;
@@ -54,6 +68,14 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     router.replace(userId === null ? (readRegisteredCookie() ? "/login" : "/onboarding") : "/onboarding");
   }, [exempt, blocked, userId, router]);
 
-  if (!exempt && blocked) return null;
+  // Validando sesión/base (o redirigiendo): pantalla de carga con el ZMark
+  // animado — nunca el flash del onboarding ni un blanco sin explicación.
+  if (!exempt && (!ready || blocked)) {
+    return (
+      <div style={{ minHeight: "100svh", display: "grid", placeItems: "center", background: "var(--page)" }}>
+        <ZMark size={16} gap={5} animated variant="sweep" aria-label={t("app.name")} />
+      </div>
+    );
+  }
   return <>{children}</>;
 }

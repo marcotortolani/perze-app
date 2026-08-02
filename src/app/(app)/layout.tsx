@@ -10,7 +10,6 @@ import { usePendingMutations } from "@/lib/offline";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
-import { SAW_WELCOME_KEY } from "@/lib/onboarding/welcome-flag";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
 import { contentWidthFor } from "@/lib/nav/content-width";
@@ -91,15 +90,14 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   );
   const activeDesktopId = useMemo(() => activeNavId(pathname, desktopNav), [pathname, desktopNav]);
 
-  // Sin household todavía: A1 (welcome) solo en la primera apertura sin
-  // sesión; después, directo a A2. `(app)/layout.tsx` es el único punto de
-  // entrada de todo el shell, así que acá es donde corresponde el gate.
-  useEffect(() => {
-    if (householdLoading || household !== null) return;
-    const sawWelcome = typeof window !== "undefined" && window.localStorage.getItem(SAW_WELCOME_KEY);
-    router.replace(sawWelcome ? "/onboarding" : "/onboarding/welcome");
-  }, [household, householdLoading, router]);
-
+  // AC-6 (`docs/auditoria-acceso.md`) — acá había un segundo redirect sobre
+  // `household === null` que duplicaba al de `OnboardingGate` y decidía
+  // welcome-vs-A2. Desde AC-18 el gate retiene el render hasta resolver
+  // sesión y base, así que este efecto era código muerto (el shell solo
+  // monta con household real) — y la decisión de A1 se movió a
+  // `/onboarding/page.tsx`, el único lugar al que el gate y el proxy
+  // realmente mandan. Queda solo la barrera de render por si el household
+  // desaparece en caliente (borrado local, sign-out en otra pestaña).
   if (!householdLoading && household === null) return null;
 
   const fourthTabRoute: Record<string, { path: string; item: TabItem }> = {

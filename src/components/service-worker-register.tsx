@@ -16,11 +16,57 @@ import { useTranslations } from "next-intl";
  * estaba esperando al montar) y ofrece un toast persistente en vez de
  * romper la sesión en curso con un cambio de versión silencioso.
  */
+/**
+ * AC-16 (`docs/auditoria-acceso.md`) — un SW con precache viejo después de
+ * un deploy sirve HTML que referencia chunks que ya no existen: la app
+ * queda clavada (o loopea recargas) hasta que alguien limpia el service
+ * worker a mano. Visto en producción el 2026-08-02. La marca vive en
+ * sessionStorage con timestamp: UNA recuperación por ventana de 5 minutos
+ * — si la recarga no arregló nada, no se insiste (eso sería recrear el
+ * loop que se intenta evitar).
+ */
+const CHUNK_RECOVERY_KEY = "perze:chunkRecovery";
+const CHUNK_RECOVERY_WINDOW_MS = 5 * 60_000;
+
+function looksLikeChunkError(message: string): boolean {
+  return /loading chunk|chunkloaderror|failed to fetch dynamically imported module|importing a module script failed/i.test(message);
+}
+
+async function recoverFromStaleCache(): Promise<void> {
+  const last = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) ?? 0);
+  if (Date.now() - last < CHUNK_RECOVERY_WINDOW_MS) return;
+  window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+
+  // Purga el precache viejo y fuerza al SW a buscar la versión nueva antes
+  // de la única recarga. Best-effort en cada paso: lo importante es llegar
+  // al reload con el caché limpio.
+  if (typeof caches !== "undefined") {
+    const keys = await caches.keys().catch(() => []);
+    await Promise.all(keys.map((key) => caches.delete(key).catch(() => false)));
+  }
+  const registration = await navigator.serviceWorker.getRegistration().catch(() => undefined);
+  await registration?.update().catch(() => {});
+  registration?.waiting?.postMessage("SKIP_WAITING");
+  window.location.reload();
+}
+
 export function ServiceWorkerRegister() {
   const t = useTranslations();
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    // AC-16 — chunks que fallan al cargar = precache desactualizado.
+    const onError = (event: ErrorEvent) => {
+      if (looksLikeChunkError(event.message ?? "")) void recoverFromStaleCache();
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason as { name?: string; message?: string } | undefined;
+      const text = `${reason?.name ?? ""} ${reason?.message ?? ""}`;
+      if (looksLikeChunkError(text)) void recoverFromStaleCache();
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
 
     let reloaded = false;
     const onControllerChange = () => {
@@ -65,6 +111,8 @@ export function ServiceWorkerRegister() {
 
     return () => {
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
     };
   }, [t]);
 

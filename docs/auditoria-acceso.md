@@ -41,9 +41,9 @@ rates por `parseRate`, nunca un `number` para plata).
 | 9 | **Invitado** acepta invitación en dispositivo sin datos | `accept_invite` solo escribía `meta.currentHouseholdId` → rebotaba a onboarding y podía duplicar household | `/join` hidrata el household aceptado y entra a la app |
 | 10 | Usuario **pending** (sin aprobación del operador) | `/pending` correcto, pero con PIN activo la pantalla quedaba detrás del candado | `/pending` (y login/forgot/reset) exentas del PIN |
 | 11 | Demo → registro real | Wipe del demo + flujo de alta | Igual (v0.6.1) |
-| 12 | Dos cuentas distintas en el **mismo navegador** (base legacy) | La salvaguarda de migración nunca namespacea → riesgo de ver datos ajenos | **Pendiente** (AC-5) — mitigado porque `signOut` borra la base; el residual es el cambio de sesión sin sign-out |
+| 12 | Dos cuentas distintas en el **mismo navegador** (base legacy) | La salvaguarda de migración nunca namespacea → riesgo de ver datos ajenos | Corregido en v0.8.3 (AC-5): la base legacy solo queda activa para su dueño |
 | 13 | Sesión válida + datos del sitio borrados a mano | Como el caso 6 | Como el caso 6 → restore |
-| 14 | Deploy nuevo con PWA instalada (SW con caché vieja) | Posible loop de recarga hasta limpiar el SW | **Pendiente** (AC-16) — operativo, no de flujo; mitigación de SW aparte |
+| 14 | Deploy nuevo con PWA instalada (SW con caché vieja) | Posible loop de recarga hasta limpiar el SW | Corregido en v0.8.3 (AC-16): recuperación automática ante chunks rotos |
 
 ## Hallazgos
 
@@ -87,37 +87,45 @@ rates por `parseRate`, nunca un `number` para plata).
   de SELECT ya no filtra `deleted_at`, a propósito). Un household borrado
   disparaba el freno para siempre. **Corregido**: `.is("deleted_at", null)`.
 
-### Pendientes (documentados, no resueltos en esta pasada)
+### Pendientes de la pasada v0.8.0 (estado actualizado en v0.8.3)
 
-- **AC-5 — Salvaguarda legacy pegajosa** (`db-owner-sync.tsx`): si la base
-  anónima `perze` tiene un household no-demo, ese navegador no namespacea nunca,
-  para ningún usuario. Riesgo: una segunda cuenta en el mismo navegador ve los
-  datos de la primera si hubo cambio de sesión sin pasar por `signOut` (que sí
-  borra la base). Tocarlo exige decidir qué pasa con los datos legacy reales —
-  fuera del alcance de esta pasada.
-- **AC-6 — Dos efectos de redirect independientes** sobre `household === null`:
-  `OnboardingGate` y `(app)/layout.tsx` (este último decide además
-  welcome-vs-A2). Convergen en el mismo destino final, pero son dos fuentes de
-  verdad para la misma decisión. Unificarlos es refactor de shell, no urgente.
+- **AC-5 — Salvaguarda legacy pegajosa** (`db-owner-sync.tsx`). **Corregido
+  (acotado, v0.8.3)**: la salvaguarda solo mantiene la base legacy `perze` si
+  TODOS sus households son de la sesión actual (`createdBy === userId`); un
+  household legacy de otro usuario ya no se muestra — la sesión nueva abre su
+  propia base y lo legacy queda intacto en `perze` para su dueño. Nota: datos
+  pre-auth con `createdBy` placeholder (que nunca podrían sincronizar) también
+  quedan ocultos por esta regla — la privacidad gana.
+- **AC-6 — Dos efectos de redirect independientes.** **Corregido (v0.8.3)**:
+  el redirect de `(app)/layout.tsx` era código muerto desde AC-18 (el gate
+  retiene el render hasta resolver sesión y base) y se eliminó — y con él se
+  descubrió que **A1 (welcome) había quedado huérfana**: la decisión
+  welcome-vs-A2 vivía en ese efecto muerto. Ahora la toma `/onboarding` al
+  montar sin sesión (`hasSeenWelcome()`), el único lugar al que proxy y gate
+  realmente mandan.
 - **AC-12 — Preferencias de UI solo locales.** Cuarto tab, scope, tema,
   intensidad de motion, modo privacidad, tooltips vistos y PIN viven en
   localStorage del dispositivo. `profiles.settings` y `households.settings`
   existen en Postgres y nada los usa. Un dispositivo nuevo arranca con defaults
   — aceptable para preferencias de dispositivo (PIN, motion), discutible para
   cuarto tab y scope. Sincronizarlos vía `profiles.settings` es trabajo aparte.
+  **Sigue pendiente** (decisión: diferido, pulido no urgente).
 - **AC-13 — Tablas remote-only no necesitan hidratación** (splits, shares,
   settlements, deudas, inversiones, statements, notificaciones): sus repos leen
   Supabase directo y funcionan en cualquier dispositivo apenas el household
   resuelve. Verificado, sin acción.
-- **AC-14 — La hidratación es de una sola vez, no continua.** Cambios hechos en
-  el dispositivo A *después* de que B hidrató no llegan a B (no hay realtime ni
-  pull incremental; no existe índice sobre `updated_at` para un cursor). El
-  multi-dispositivo *simultáneo* sigue siendo trabajo futuro; esta pasada
-  resuelve el acceso y la restauración inicial.
-- **AC-16 — SW con caché vieja tras deploy** puede loopear recargas hasta
-  limpiar el service worker (visto en producción el 2026-08-02). Mitigación
-  (detección de chunk faltante → update forzado) es trabajo aparte del flujo de
-  acceso.
+- **AC-14 — La hidratación es de una sola vez, no continua.** El
+  multi-dispositivo *simultáneo* sigue siendo trabajo futuro. **Diseño cerrado**
+  en `docs/plan-sync-incremental.md` (v0.8.3): pull incremental por
+  `updated_at` solo para `transactions` (única tabla sin cota), refresh
+  completo para las tablas chicas (`tags`/`payees` no tienen `updated_at`),
+  watermark en `meta` con solape de 5 s, merge que nunca pisa filas con
+  entradas pendientes en el outbox, realtime como fase opcional.
+- **AC-16 — SW con caché vieja tras deploy.** **Corregido (v0.8.3)**:
+  `ServiceWorkerRegister` detecta el fallo de carga de chunks (error +
+  unhandledrejection), purga CacheStorage, fuerza `registration.update()` y
+  recarga UNA vez por ventana de 5 minutos (guard en sessionStorage — sin la
+  ventana, la recuperación recrearía el loop que evita).
 
 ## Adenda post-deploy (v0.8.1): por qué "no había nada que restaurar"
 
@@ -145,6 +153,19 @@ funcionó fue la **subida**. Dos hallazgos nuevos:
 - Consecuencia operativa: los dispositivos con datos viejos tienen la cola en
   `dead`. La pantalla de diagnóstico (Más → Sincronización) suma **"Reintentar
   todas"** para resucitarla de un tap después de deployar el fix.
+
+## Adenda v0.8.2: flash de `/onboarding` en cada reload con sesión viva
+
+- **AC-18 — el gate decidía contra la base Dexie equivocada.** En un reload con
+  sesión activa, `useCurrentHousehold` resolvía contra la base **anónima**
+  (`perze`) antes de que `DbOwnerSync` cambiara a `perze-<uid>`: el `null`
+  falso se leía como "sin household" y la app mostraba `/onboarding` un
+  instante antes de volver. **Corregido**: `DbOwnerSync` publica `settled`
+  (`stores/db-owner-store.ts`) recién cuando la base activa es la correcta y
+  el refetch de la invalidación terminó (`await queryClient.invalidateQueries()`
+  — si no, el gate leería el `null` viejo por otra puerta). Hasta entonces,
+  `OnboardingGate` muestra una pantalla de carga con el `ZMark` animado en
+  las rutas no exentas — nunca el flash del onboarding ni un blanco.
 
 ## Decisiones de la hidratación (para quien la toque después)
 

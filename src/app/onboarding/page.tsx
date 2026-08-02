@@ -16,6 +16,7 @@ import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 import { markRegistered } from "@/lib/auth/registered-cookie";
+import { hasSeenWelcome } from "@/lib/onboarding/welcome-flag";
 import { env } from "@/env";
 
 /**
@@ -94,7 +95,15 @@ export default function OnboardingAuthPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
+      if (cancelled) return;
+      if (!user) {
+        // AC-6 — A1 (welcome) solo en la primera apertura de este navegador,
+        // sin sesión y sin venir de un link del mail (ahí el aviso/flujo de
+        // A2 manda). La decisión vivía en el layout del shell, donde quedó
+        // como código muerto desde que el gate retiene el render (AC-18).
+        if (!fromLink && !searchError && !hasSeenWelcome()) router.replace("/onboarding/welcome");
+        return;
+      }
 
       const access = await profilesRepo.getOwnAccess(user.id);
       if (cancelled) return;

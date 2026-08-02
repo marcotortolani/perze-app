@@ -6,6 +6,57 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.8.3] — 2026-08-02
+
+Cierre de los pendientes accionables de la auditoría de acceso (`docs/auditoria-acceso.md`):
+AC-5, AC-6 y AC-16 corregidos; AC-14 queda con diseño cerrado en
+`docs/plan-sync-incremental.md` para una sesión dedicada. AC-12 (preferencias de UI
+sincronizadas) sigue diferido a propósito.
+
+### Corregido — la base legacy ya no se muestra a otra cuenta (AC-5)
+
+- La salvaguarda de migración de `DbOwnerSync` mantenía la base anónima `perze` activa con
+  CUALQUIER household no-demo: una segunda cuenta en el mismo navegador (cambio de sesión sin
+  `signOut`) veía los datos de la primera. Ahora solo aplica si TODOS los households legacy son
+  de la sesión actual (`createdBy === userId`); si no, la sesión abre su propia base y lo
+  legacy queda intacto en `perze` para su dueño — no se muestra ni se borra
+
+### Corregido — redirect muerto del shell y A1 (welcome) huérfana (AC-6)
+
+- El redirect de `(app)/layout.tsx` sobre `household === null` era código muerto desde AC-18
+  (el gate retiene el render hasta resolver sesión y base) — y escondía un bug: la decisión
+  welcome-vs-A2 vivía ahí, así que **ningún camino llevaba al splash de bienvenida**. Se
+  eliminó el efecto y la decisión ahora la toma `/onboarding` al montar sin sesión
+  (`hasSeenWelcome()`), el único lugar al que proxy y gate realmente mandan
+
+### Corregido — recuperación automática del SW con caché vieja (AC-16)
+
+- Un deploy nuevo con PWA instalada podía dejar pestañas clavadas (o en loop de recarga): el
+  precache viejo servía HTML que referencia chunks que ya no existen. `ServiceWorkerRegister`
+  ahora detecta el fallo de carga de chunks, purga CacheStorage, fuerza la actualización del
+  service worker y recarga UNA vez por ventana de 5 minutos — el guard en sessionStorage evita
+  recrear el loop que corrige
+
+### Documentado — plan de sincronización incremental (AC-14)
+
+- `docs/plan-sync-incremental.md`: pull incremental por `updated_at` solo para `transactions`,
+  refresh completo de las tablas chicas, watermark con solape en `meta`, merge que nunca pisa
+  filas con entradas pendientes en el outbox, realtime como fase opcional. Listo para
+  implementarse en una sesión dedicada
+
+## [0.8.2] — 2026-08-02
+
+### Corregido — flash de `/onboarding` en cada reload con sesión viva (AC-18)
+
+- **Causa raíz**: en un reload, `useCurrentHousehold` resolvía contra la base Dexie **anónima**
+  antes de que `DbOwnerSync` cambiara a `perze-<uid>` — el `null` falso se leía como "sin
+  household" y la app mostraba la pantalla de alta un instante antes de volver
+- `DbOwnerSync` publica ahora `settled` (`stores/db-owner-store.ts`) recién cuando la base
+  activa es la correcta **y** el refetch de la invalidación terminó (se espera
+  `invalidateQueries()` — si no, el gate leería el `null` viejo por otra puerta)
+- Mientras se valida sesión/base, `OnboardingGate` muestra una pantalla de carga con el `ZMark`
+  animado en las rutas no exentas — nunca el flash del onboarding ni un blanco sin explicación
+
 ## [0.8.1] — 2026-08-02
 
 Probando v0.8.0 en producción, la restauración devolvió "nada que restaurar" — y la base remota

@@ -6,6 +6,7 @@ import { useCurrentUserId } from "@/hooks/use-current-user";
 import { getActiveDbName, getDb, switchToUserDb } from "@/lib/db/client";
 import { clearDemoCookie } from "@/lib/demo/demo-mode";
 import { DEMO_USER_ID } from "@/lib/demo-user";
+import { useDbOwnerStore } from "@/stores/db-owner-store";
 
 /**
  * B4 — namespacea la base Dexie por usuario (`perze-${userId}`) apenas hay
@@ -36,9 +37,21 @@ import { DEMO_USER_ID } from "@/lib/demo-user";
 export function DbOwnerSync() {
   const userId = useCurrentUserId();
   const queryClient = useQueryClient();
+  const setSettled = useDbOwnerStore((s) => s.setSettled);
 
   useEffect(() => {
-    if (!userId) return;
+    // AC-18 — `settled` le dice a `OnboardingGate` que la base activa ya es
+    // la correcta para esta sesión: hasta entonces, una query de household
+    // contra la base anónima devuelve un `null` falso y el gate mostraba
+    // `/onboarding` en cada reload con sesión viva.
+    if (userId === undefined) return; // auth todavía resolviendo — sin veredicto
+    if (userId === null) {
+      // Sin sesión (o demo): la base anónima ES la correcta.
+      setSettled(true);
+      return;
+    }
+
+    setSettled(false);
     let cancelled = false;
 
     (async () => {
@@ -53,24 +66,35 @@ export function DbOwnerSync() {
           clearDemoCookie();
           await getDb().delete();
           if (cancelled) return;
-        } else if (households.length > 0) {
-          return; // ver nota de migración arriba
+        } else if (households.length > 0 && households.every((h) => h.createdBy === userId)) {
+          // AC-5 acotada: la salvaguarda solo aplica si los datos legacy son
+          // DE ESTA sesión. Antes se quedaba en `perze` con cualquier
+          // household no-demo — una segunda cuenta en el mismo navegador
+          // (cambio de sesión sin `signOut`) veía los datos de la primera.
+          setSettled(true); // ver nota de migración arriba — la base legacy queda activa a propósito
+          return;
         }
+        // Household legacy de OTRO usuario: no se muestra ni se borra — queda
+        // en `perze` intacto para su dueño; esta sesión abre su propia base.
       }
       switchToUserDb(userId);
       // AC-4 (`docs/auditoria-acceso.md`) — cambiar de base Dexie invalida
       // TODO lo cacheado contra la base anterior: con `staleTime: Infinity`,
       // un household resuelto contra la base anónima seguía sirviéndose
       // después del cambio a `perze-<uid>` como si fuera del usuario.
+      // Se ESPERA el refetch (AC-18): si `settled` se marcara antes, el
+      // gate leería todavía el `null` viejo de la base anónima y el flash
+      // de `/onboarding` volvería por otra puerta.
       if (getActiveDbName() !== before) {
-        void queryClient.invalidateQueries();
+        await queryClient.invalidateQueries();
       }
+      if (!cancelled) setSettled(true);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [userId, queryClient]);
+  }, [userId, queryClient, setSettled]);
 
   return null;
 }
