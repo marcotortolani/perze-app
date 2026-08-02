@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.8.4] — 2026-08-02
+
+### Corregido — "Nueva cuenta" no abría nada (E3)
+
+- Desde `/accounts`, tocar "Nueva cuenta" cambiaba la URL a `/accounts/new` pero la pantalla
+  no cambiaba: el interceptor de detalle `accounts/@detail/(.)[id]` se quedaba con la
+  navegación blanda y trataba `"new"` como si fuera un id de cuenta. Se agregó la
+  interceptora `@modal/(.)accounts/new` (mismo patrón que `/add`) y una guarda en
+  `@detail/new` para que el interceptor de `[id]` deje de reclamarlo — el formulario (E3.1/E3.2,
+  ya programado) ahora abre como modal sobre la lista, con back nativo
+- `/accounts/new` por navegación dura (deep link) ya no queda en blanco mientras resuelve
+  sesión, ni para siempre si no hay sesión: muestra skeleton mientras carga y redirige a
+  `/login` cuando no hay usuario
+
+### Corregido — la cifra de "Patrimonio neto" se salía de la pantalla
+
+- Con un monto de varios millones, la cifra héroe del home (`hero-xl`, 64px, mono) medía más
+  que el ancho del teléfono y se recortaba por los dos lados. El home usaba `hero-xl` +
+  `tabular` en contra de lo que ya mandaba la spec (`CON-28`: un patrimonio es cifra
+  "protagonista pero ya resuelta" → `hero` 40 sans, no la cifra en construcción del keypad)
+- `Amount` suma una prop `fit`: mide el contenedor con `ResizeObserver` y encoge
+  `font-size`/`line-height` (nunca `transform`, para no perder nitidez) hasta un piso del 55%
+  cuando el número no entra. Aplicada al patrimonio del home y de `/accounts`, y al resto de
+  las cifras héroe de detalle (cuenta, deuda, meta, recurrente, transacción, split)
+
 ## [0.8.3] — 2026-08-02
 
 Cierre de los pendientes accionables de la auditoría de acceso (`docs/auditoria-acceso.md`):

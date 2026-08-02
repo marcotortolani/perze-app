@@ -193,7 +193,7 @@ export default function HomePage() {
           )}
         </div>
         {netWorth.data ? (
-          <CountUp value={netWorth.data.netWorth.amount} currency={baseCurrency} size="hero-xl" showSign={false} polarity="neutral" tabular privacy={privacy} />
+          <CountUp value={netWorth.data.netWorth.amount} currency={baseCurrency} size="hero" fit showSign={false} polarity="neutral" privacy={privacy} />
         ) : (
           <Skeleton width={180} height={44} />
         )}

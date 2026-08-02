@@ -69,7 +69,7 @@ export default function RecurringRuleDetailPage({ params }: { params: Promise<{ 
       <AppHeader title={rule.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <div style={{ textAlign: "center" }}>
-          <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular />
+          <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
         </div>
         <div className="t-caption" style={{ color: "var(--text-muted)", textAlign: "center" }}>{t(rule.kind === "expense" ? "capture.kind.expense" : "capture.kind.income")}</div>
         <Input label={t("recurringPage.name")} value={displayName} onChange={(e) => setName(e.target.value)} />

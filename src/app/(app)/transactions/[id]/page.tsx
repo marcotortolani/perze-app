@@ -120,7 +120,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       <IconButton icon="chevron-left" ariaLabel={t("transactions.detail.back")} onClick={() => router.push("/transactions")} style={{ alignSelf: "flex-start", margin: -11 }} />
 
       <div style={{ textAlign: "center" }}>
-        <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" polarity={polarity} tabular mutedDecimals />
+        <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />
         {transaction.amountBase !== null && transaction.currencyCode !== household.baseCurrency ? (
           <div style={{ marginTop: 6 }}>
             <Amount value={money(transaction.kind === "expense" ? -transaction.amountBase : transaction.amountBase, household.baseCurrency)} size="body" polarity={polarity} tabular />

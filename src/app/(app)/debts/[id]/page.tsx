@@ -37,7 +37,7 @@ export default function DebtDetailPage({ params }: { params: Promise<{ id: strin
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
         <div style={{ textAlign: "center" }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t(DEBT_KIND_MESSAGE_KEY[debt.kind])}</div>
-          <Amount value={money(remainingTotal, debt.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular style={{ marginTop: 6 }} />
+          <Amount value={money(remainingTotal, debt.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular style={{ marginTop: 6 }} />
           <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 4 }}>{t("debtDetailPage.remaining")}</div>
         </div>
 

@@ -98,7 +98,7 @@ export default function SplitTransactionPage({ params }: { params: Promise<{ id:
       </div>
 
       <div style={{ textAlign: "center" }}>
-        <Amount value={money(transaction.amount, transaction.currencyCode)} size="hero" showSign={false} tabular />
+        <Amount value={money(transaction.amount, transaction.currencyCode)} size="hero" fit showSign={false} tabular />
       </div>
 
       <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("splitPage.equal")}</div>

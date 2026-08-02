@@ -116,7 +116,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             : ""}
         </span>
         <div style={{ marginTop: 4 }}>
-          <Amount value={money(account.currentBalance, account.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular />
+          <Amount value={money(account.currentBalance, account.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
         </div>
       </div>
 

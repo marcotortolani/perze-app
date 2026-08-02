@@ -105,7 +105,7 @@ export default function AccountsPage() {
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.netWorth")}</span>
         {netWorth.data ? (
           <div style={{ marginTop: 4 }}>
-            <Amount value={netWorth.data.netWorth} size="hero" showSign={false} polarity="neutral" tabular />
+            <Amount value={netWorth.data.netWorth} size="hero" fit showSign={false} polarity="neutral" />
           </div>
         ) : (
           <Skeleton width={140} height={32} style={{ margin: "4px auto 0" }} />

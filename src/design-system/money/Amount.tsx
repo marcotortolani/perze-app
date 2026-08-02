@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useLocale } from "next-intl";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
@@ -30,6 +30,25 @@ const SIZES: Record<string, CSSProperties> = {
   label: { fontSize: "var(--text-label-size)", lineHeight: "var(--text-label-line)", fontWeight: 500 },
 };
 
+/** Piso de `fit`: por debajo de 55% del tamaño nominal la cifra deja de leerse como héroe. */
+export const FIT_FLOOR = 0.55;
+const FIT_EPSILON = 0.01;
+
+/**
+ * Escala de fuente para que el texto entre en `containerWidth`, dado el
+ * ancho medido a la escala anterior (`naturalWidthAtScale1` ya viene
+ * normalizado a escala 1 — ver el call site). Pura para poder testearla
+ * sin DOM. Nunca sube de 1 (no agranda una cifra chica) y nunca baja de
+ * `FIT_FLOOR`. Devuelve `previousScale` sin cambios si la diferencia es
+ * menor al epsilon, para no oscilar entre renders.
+ */
+export function fitScale(containerWidth: number, naturalWidthAtScale1: number, previousScale: number): number {
+  if (containerWidth <= 0 || naturalWidthAtScale1 <= 0) return previousScale;
+  const next = Math.min(1, containerWidth / naturalWidthAtScale1);
+  const clamped = Math.max(FIT_FLOOR, next);
+  return Math.abs(clamped - previousScale) < FIT_EPSILON ? previousScale : clamped;
+}
+
 export interface AmountProps {
   /** Money — bigint en unidades mínimas. Nunca un `number`: ver `docs/00-producto.md` § 2.3. */
   value: Money;
@@ -49,6 +68,15 @@ export interface AmountProps {
   /** Atenúa la parte decimal — se usa en la cifra héroe del keypad. */
   mutedDecimals?: boolean | undefined;
   privacy?: boolean | undefined;
+  /**
+   * Encoge el `font-size` hasta `FIT_FLOOR` (55%) cuando el contenedor no
+   * alcanza — un patrimonio de varios millones no cabe en 40px en un
+   * teléfono angosto. Default `false`: por fuera de las cifras héroe de
+   * ancho de pantalla, el `nowrap` de siempre es lo correcto. El
+   * contenedor tiene que darle un ancho definido (`width: 100%` de un
+   * padre con `max-width`), no uno intrínseco.
+   */
+  fit?: boolean | undefined;
   style?: CSSProperties | undefined;
 }
 
@@ -66,10 +94,14 @@ export function Amount({
   tabular = false,
   mutedDecimals = false,
   privacy = false,
+  fit = false,
   style,
   ...rest
 }: AmountProps) {
   const locale = useLocale() as Locale;
+  const outerRef = useRef<HTMLSpanElement>(null);
+  const innerRef = useRef<HTMLSpanElement>(null);
+  const [scale, setScale] = useState(1);
   const negative = value.amount < 0n;
   const pol = polarity ?? (!showSign ? "neutral" : negative ? "negative" : value.amount > 0n ? "positive" : "neutral");
   const color =
@@ -86,19 +118,42 @@ export function Amount({
   const arrow = showArrow && value.amount !== 0n ? (negative ? "↓ " : "↑ ") : "";
   const symbol = CURRENCY_SYMBOLS[value.currency.toUpperCase()] ?? value.currency;
 
-  return (
+  useLayoutEffect(() => {
+    if (!fit) return;
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    const measure = () => {
+      const containerWidth = outer.clientWidth;
+      // El ancho renderizado es proporcional al font-size aplicado, así que
+      // dividir por la escala actual recupera el ancho "natural" (100%) sin
+      // necesitar un nodo de medición oculto ni un flash a tamaño completo.
+      const naturalWidth = inner.scrollWidth / scale;
+      setScale((prev) => fitScale(containerWidth, naturalWidth, prev));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(outer);
+    return () => observer.disconnect();
+  }, [fit, scale, intFormatted, fracPart, symbol]);
+
+  const inner = (
     <span
+      ref={innerRef}
       style={{
         fontFamily: tabular ? "var(--font-mono)" : "var(--font-sans)",
         fontVariantNumeric: tabular ? "tabular-nums" : "proportional-nums",
         color,
         whiteSpace: "nowrap",
         ...SIZES[size],
+        ...(fit ? { fontSize: `calc(${SIZES[size]!.fontSize} * ${scale})`, lineHeight: `calc(${SIZES[size]!.lineHeight} * ${scale})` } : null),
         filter: privacy ? "blur(8px)" : "none",
         userSelect: privacy ? "none" : "auto",
-        ...style,
+        ...(fit ? null : style),
       }}
-      {...rest}
+      {...(fit ? {} : rest)}
     >
       {arrow}
       {sign}
@@ -106,6 +161,14 @@ export function Amount({
       {decimals > 0 ? (
         <span style={{ color: mutedDecimals ? "var(--text-muted)" : "inherit" }}>{`${decimalSeparatorForLocale(locale)}${fracPart}`}</span>
       ) : null}
+    </span>
+  );
+
+  if (!fit) return inner;
+
+  return (
+    <span ref={outerRef} style={{ display: "block", width: "100%", minWidth: 0, overflow: "hidden", textAlign: "inherit", ...style }} {...rest}>
+      {inner}
     </span>
   );
 }

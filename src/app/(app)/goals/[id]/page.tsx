@@ -54,7 +54,7 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
       <AppHeader title={goal.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24, display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ textAlign: "center" }}>
-          <Amount value={money(saved, goal.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular />
+          <Amount value={money(saved, goal.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
           <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
             {t("goalsPage.of")} <Amount value={money(goal.targetAmount, goal.currencyCode)} size="label" showSign={false} polarity="neutral" tabular />
           </div>

@@ -1,4 +1,4 @@
-export { Amount, type AmountProps } from "./Amount";
+export { Amount, type AmountProps, fitScale, FIT_FLOOR } from "./Amount";
 export { AmountScrubber, type AmountScrubberProps } from "./AmountScrubber";
 export { CurrencyChip, type CurrencyChipProps } from "./CurrencyChip";
 export { FxEditor, type FxEditorProps } from "./FxEditor";
