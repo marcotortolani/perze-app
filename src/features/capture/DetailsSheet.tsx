@@ -1,10 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AccountCarousel, DateStrip, Input, Sheet, Switch } from "@/design-system";
+import { AccountCarousel, Chip, DateStrip, Input, ListRow, Sheet, Switch } from "@/design-system";
 import { todayIso as todayIsoLocal } from "@/lib/dates/today";
-import type { AccountRow } from "@/lib/db/schema";
+import type { AccountRow, TagRow } from "@/lib/db/schema";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
+import { findExistingTagByName } from "./create-tag";
 
 export interface DetailsSheetProps {
   open: boolean;
@@ -12,6 +14,11 @@ export interface DetailsSheetProps {
   draft: CaptureDraft;
   accounts: AccountRow[];
   onSetField: <K extends keyof CaptureDraft>(key: K, value: CaptureDraft[K]) => void;
+  /** Ítem 7 — todas las etiquetas del household, para la grilla completa detrás de "Otras". */
+  tags: TagRow[];
+  /** Top-5 por uso real (`useFrequentTags`, calculado en el caller igual que las categorías). */
+  frequentTags: TagRow[];
+  onCreateTag: (name: string) => Promise<TagRow>;
 }
 
 /**
@@ -41,17 +48,93 @@ function dayLabel(iso: string, todayIso: string, labels: { today: string; yester
   return undefined;
 }
 
-/** C3 — detalles colapsados: cuenta, fecha, comercio, nota. Todo con default, ninguna fila obligatoria. */
-export function DetailsSheet({ open, onClose, draft, accounts, onSetField }: DetailsSheetProps) {
+/**
+ * Etiquetas del movimiento — multi-select (`draft.tagIds`, a diferencia de
+ * la categoría que es una sola), así que tocar una NUNCA cierra nada: solo
+ * la prende/apaga. La fila normal muestra las 5 más usadas + "Otras"; esa
+ * última reemplaza el contenido del sheet por una grilla con TODAS las
+ * etiquetas (mismo patrón que `CategoryStep`, sin el long-press porque acá
+ * no hay jerarquía) más una para crear una nueva.
+ */
+function TagsField({ tags, frequentTags, selectedIds, onToggle, onCreate }: { tags: TagRow[]; frequentTags: TagRow[]; selectedIds: string[]; onToggle: (id: string) => void; onCreate: (name: string) => Promise<TagRow> }) {
+  const t = useTranslations();
+  const [allOpen, setAllOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [creating, setCreating] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const selected = new Set(selectedIds);
+  const exactMatch = query.trim() !== "" && findExistingTagByName(query, tags) !== undefined;
+
+  const handleCreate = async () => {
+    const name = query.trim();
+    if (!name || creating) return;
+    setCreating(true);
+    try {
+      const created = await onCreate(name);
+      onToggle(created.id);
+      setQuery("");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (allOpen) {
+    return (
+      <div>
+        <ListRow icon="chevron-left" label={t("capture.details_sheet.tagsBack")} chevron={false} onClick={() => setAllOpen(false)} style={{ marginTop: -4, marginBottom: 8 }} />
+        <div ref={searchWrapperRef}>
+          <Input placeholder={t("capture.details_sheet.tagsSearchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} maxLength={40} style={{ marginBottom: 12 }} />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {tags.map((tag) => (
+            <Chip key={tag.id} icon="tag" selected={selected.has(tag.id)} onClick={() => onToggle(tag.id)}>
+              {tag.name}
+            </Chip>
+          ))}
+        </div>
+        {query.trim() !== "" && !exactMatch ? (
+          <ListRow icon="plus" variant="action" label={t("capture.category.createNew", { name: query.trim() })} disabled={creating} onClick={handleCreate} style={{ marginTop: 8 }} />
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
+        {t("capture.details_sheet.tags")}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {frequentTags.map((tag) => (
+          <Chip key={tag.id} icon="tag" selected={selected.has(tag.id)} onClick={() => onToggle(tag.id)}>
+            {tag.name}
+          </Chip>
+        ))}
+        <Chip icon="more" onClick={() => setAllOpen(true)}>
+          {t("capture.details_sheet.tagsOther")}
+        </Chip>
+      </div>
+    </div>
+  );
+}
+
+/** C3 — detalles colapsados: etiquetas, cuenta, fecha, comercio, nota. Todo con default, ninguna fila obligatoria. */
+export function DetailsSheet({ open, onClose, draft, accounts, onSetField, tags, frequentTags, onCreateTag }: DetailsSheetProps) {
   const t = useTranslations();
   const todayIso = todayIsoLocal(); // D10 — día calendario local, no UTC
   const dateValue = draft.occurredAt.slice(0, 10);
   const dayLabels = { today: t("capture.details_sheet.today"), yesterday: t("capture.details_sheet.yesterday") };
   const days = isoDaysAround(todayIso).map((date) => ({ date, label: dayLabel(date, todayIso, dayLabels) }));
 
+  const toggleTag = (id: string) => {
+    const current = draft.tagIds;
+    onSetField("tagIds", current.includes(id) ? current.filter((t2) => t2 !== id) : [...current, id]);
+  };
+
   return (
     <Sheet open={open} title={t("capture.details_sheet.title")} onClose={onClose} height={480}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", overflowX: "hidden", minWidth: 0, maxHeight: 380 }}>
+        <TagsField tags={tags} frequentTags={frequentTags} selectedIds={draft.tagIds} onToggle={toggleTag} onCreate={onCreateTag} />
         <div>
           <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
             {t("capture.details_sheet.account")}

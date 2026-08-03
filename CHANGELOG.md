@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.28] — 2026-08-02
+
+### Agregado — etiquetar movimientos, de punta a punta
+
+- **No había forma de ponerle una etiqueta a un movimiento.** El campo existía en el
+  borrador de captura (`CaptureDraft.tagIds`) desde hace tiempo, pero no se leía ni se
+  escribía en ningún lado — ni la UI, ni el guardado, ni la sincronización: la tabla
+  `transaction_tags` tenía RLS lista desde el schema original pero cero camino de escritura
+  desde el cliente.
+- Primero en "Detalles" (antes de cuenta): las 5 etiquetas más usadas + "Otras", que
+  despliega una grilla con todas y una opción para crear una nueva — misma lógica que
+  categorías, pero multi-select (tocar prende/apaga, nunca cierra el sheet).
+- Nuevo `transactionTagsRepo` (reemplaza el set completo de una vez, vía outbox) — la única
+  tabla con clave compuesta en vez de `id`, así que `sync-worker.ts` suma un caso especial
+  para el borrado (`transaction_id`+`tag_id` en vez de `.eq("id", ...)`). `save-transaction.ts`
+  y `update-transaction.ts` ahora escriben las etiquetas del borrador al guardar/editar.
+- Nuevo `rankTagsByUsage` (mismo patrón que las categorías) y los hooks para rankear y
+  precargar etiquetas existentes al editar un movimiento.
+
 ## [0.9.27] — 2026-08-02
 
 ### Agregado — picker de categorías rediseñado: grilla completa, long-press para subcategorías

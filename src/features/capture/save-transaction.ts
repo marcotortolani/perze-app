@@ -6,6 +6,7 @@ import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { transactionsRepo, type NewTransactionInput } from "@/lib/repos/transactions-repo";
+import { transactionTagsRepo } from "@/lib/repos/transaction-tags-repo";
 import { categorizationRulesRepo } from "@/lib/repos/categorization-rules-repo";
 import { evaluateCategorizationRules } from "@/lib/analytics/categorization-rules";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
@@ -168,7 +169,7 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
       }
     }
 
-    return transactionsRepo.create({
+    const tx = await transactionsRepo.create({
       ...base,
       kind: "transfer",
       accountId: account.id,
@@ -179,9 +180,11 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
       counterFxRate,
       ...fx,
     });
+    if (draft.tagIds.length > 0) await transactionTagsRepo.setForTransaction(tx.id, draft.tagIds);
+    return tx;
   }
 
-  return transactionsRepo.create({
+  const tx = await transactionsRepo.create({
     ...base,
     kind: draft.kind,
     accountId: account.id,
@@ -192,4 +195,6 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
     counterFxRate: null,
     ...fx,
   });
+  if (draft.tagIds.length > 0) await transactionTagsRepo.setForTransaction(tx.id, draft.tagIds);
+  return tx;
 }

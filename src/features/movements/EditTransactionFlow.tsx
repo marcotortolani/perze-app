@@ -15,12 +15,16 @@ import { useFrequentCategories } from "@/features/capture/use-frequent-categorie
 import { buildNewCategoryInput } from "@/features/capture/create-category";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useInvalidateCategories } from "@/hooks/use-categories";
+import { useInvalidateTags, useTags } from "@/hooks/use-tags";
+import { useInvalidateTransactionTags, useTagIdsForTransaction } from "@/hooks/use-transaction-tags";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
+import { tagsRepo } from "@/lib/repos/tags-repo";
 import { formatAmount } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import type { AccountRow, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
+import { useFrequentTags } from "@/features/capture/use-frequent-tags";
 import { updateTransactionFromDraft } from "./update-transaction";
 
 export interface EditTransactionFlowProps {
@@ -46,8 +50,13 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const reset = useCaptureDraftStore((s) => s.reset);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household.id);
   const invalidateCategories = useInvalidateCategories(household.id);
+  const invalidateTags = useInvalidateTags(household.id);
+  const invalidateTransactionTags = useInvalidateTransactionTags();
   const userId = useCurrentUserId();
   const { data: transactions } = useTransactions(household.id);
+  const { data: tags = [] } = useTags(household.id);
+  const { data: existingTagIds } = useTagIdsForTransaction(transaction.id);
+  const frequentTags = useFrequentTags(tags, (transactions ?? []).map((tx) => tx.id));
 
   const [step, setStep] = useState<"amount" | "category">("amount");
   const [sheet, setSheet] = useState<"none" | "account" | "counterAccount" | "details">("none");
@@ -71,6 +80,12 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
     return created;
   };
 
+  const handleCreateTag = async (name: string) => {
+    const created = await tagsRepo.create(household.id, name);
+    invalidateTags();
+    return created;
+  };
+
   useEffect(() => {
     reset();
     setField("kind", transaction.kind === "adjustment" ? "expense" : transaction.kind);
@@ -83,6 +98,14 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
     setField("note", transaction.note ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaction.id]);
+
+  // Aparte del efecto de arriba: `existingTagIds` llega de una query async
+  // (`transactionTagsRepo`, sin datos embebidos en `TransactionRow`), así
+  // que puede no estar lista todavía en el primer render de ese efecto.
+  useEffect(() => {
+    if (existingTagIds) setField("tagIds", existingTagIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction.id, existingTagIds]);
 
   const account = accounts.find((a) => a.id === draft.accountId);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
@@ -101,6 +124,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
 
     await updateTransactionFromDraft({ transactionId: transaction.id, draft: latestDraft, household, account: latestAccount, counterAccount: latestCounterAccount, existing: transaction, numberLocale: numberLocaleForUiLocale(locale) });
     invalidateTransactions();
+    invalidateTransactionTags();
     toast(t("movements.editFlow.updated"));
   };
 
@@ -188,7 +212,16 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
         onSelect={(a) => setField("counterAccountId", a.id)}
         onClose={() => setSheet("none")}
       />
-      <DetailsSheet open={sheet === "details"} onClose={() => setSheet("none")} draft={draft} accounts={accounts} onSetField={setField} />
+      <DetailsSheet
+        open={sheet === "details"}
+        onClose={() => setSheet("none")}
+        draft={draft}
+        accounts={accounts}
+        onSetField={setField}
+        tags={tags}
+        frequentTags={frequentTags}
+        onCreateTag={handleCreateTag}
+      />
     </ScreenShell>
   );
 }

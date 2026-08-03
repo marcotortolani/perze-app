@@ -169,6 +169,24 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
     }),
   },
 
+  /**
+   * Sin `id` propio — PK compuesta `(transaction_id, tag_id)`, igual que
+   * el Dexie `transactionTags: "[transactionId+tagId], ..."`. Nunca hay un
+   * op `"update"` para esta tabla (la fila no tiene campos propios que
+   * cambiar, solo existe o no existe) y el `"delete"` necesita un caso
+   * especial en `syncOne` — `.eq("id", entry.entityId)` no tiene sentido
+   * acá. `entityId` se arma como `"${transactionId}:${tagId}"`
+   * (`transaction-tags-repo.ts`).
+   */
+  transaction_tags: {
+    supabaseTable: "transaction_tags",
+    deletedAtColumn: "",
+    toRow: (p) => ({
+      transaction_id: p.transactionId,
+      tag_id: p.tagId,
+    }),
+  },
+
   payees: {
     supabaseTable: "payees",
     deletedAtColumn: "",

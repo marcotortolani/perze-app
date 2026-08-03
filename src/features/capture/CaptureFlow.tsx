@@ -11,8 +11,11 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateTags, useTags } from "@/hooks/use-tags";
+import { useInvalidateTransactionTags } from "@/hooks/use-transaction-tags";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
+import { tagsRepo } from "@/lib/repos/tags-repo";
 import type { AccountRow } from "@/lib/db/schema";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
@@ -25,6 +28,7 @@ import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
 import { saveDraftAsTransaction } from "./save-transaction";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
+import { useFrequentTags } from "./use-frequent-tags";
 
 type Step = "amount" | "category";
 type SheetKind = "none" | "account" | "counterAccount" | "details" | "voice";
@@ -50,8 +54,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
+  const { data: tags = [] } = useTags(household?.id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const invalidateCategories = useInvalidateCategories(household?.id);
+  const invalidateTags = useInvalidateTags(household?.id);
+  const invalidateTransactionTags = useInvalidateTransactionTags();
+  const frequentTags = useFrequentTags(tags, (transactions ?? []).map((tx) => tx.id));
   // Capturado una vez al montar, no en cada render: `useFrequentCategories`
   // compara por `now.getTime()`, así que un `Date` estable evita
   // recalcular el ranking en cada tecla del keypad.
@@ -102,6 +110,13 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     return created;
   };
 
+  const handleCreateTag = async (name: string) => {
+    if (!household) throw new Error("sin household");
+    const created = await tagsRepo.create(household.id, name);
+    invalidateTags();
+    return created;
+  };
+
   const handleAmountKey = (key: string) => {
     if (key === "clear") clearAmount();
     else if (key === "backspace") backspaceAmount();
@@ -137,6 +152,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       numberLocale: numberLocaleForUiLocale(locale),
     });
     invalidateTransactions();
+    if (latestDraft.tagIds.length > 0) invalidateTransactionTags();
     // B14 — habilita los 60s de edición sin PIN sobre este movimiento puntual.
     recordSave(tx.id);
 
@@ -276,7 +292,16 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         onSelect={(a) => setField("counterAccountId", a.id)}
         onClose={() => setSheet("none")}
       />
-      <DetailsSheet open={sheet === "details"} onClose={() => setSheet("none")} draft={draft} accounts={accounts} onSetField={setField} />
+      <DetailsSheet
+        open={sheet === "details"}
+        onClose={() => setSheet("none")}
+        draft={draft}
+        accounts={accounts}
+        onSetField={setField}
+        tags={tags}
+        frequentTags={frequentTags}
+        onCreateTag={handleCreateTag}
+      />
       <VoiceCaptureSheet
         key={sheet === "voice" ? "voice-open" : "voice-closed"}
         open={sheet === "voice"}

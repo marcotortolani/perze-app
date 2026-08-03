@@ -5,6 +5,7 @@ import type { NumberLocale } from "@/lib/money/parse";
 import { convert, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
+import { transactionTagsRepo } from "@/lib/repos/transaction-tags-repo";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 
 export interface UpdateDraftParams {
@@ -137,5 +138,7 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
     patch.counterFxRate = null;
   }
 
-  return transactionsRepo.update(transactionId, patch);
+  const tx = await transactionsRepo.update(transactionId, patch);
+  await transactionTagsRepo.setForTransaction(transactionId, draft.tagIds);
+  return tx;
 }

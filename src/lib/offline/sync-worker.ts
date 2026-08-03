@@ -91,6 +91,14 @@ async function syncOne(
   const payload = entry.payload as Record<string, unknown>;
 
   if (entry.op === "delete") {
+    if (entry.table === "transaction_tags") {
+      // Única tabla con PK compuesta en vez de `id` — `entityId` viene
+      // como `"transactionId:tagId"` (`transaction-tags-repo.ts`).
+      const [transactionId, tagId] = entry.entityId.split(":");
+      const { error } = await supabase.from(config.supabaseTable).delete().eq("transaction_id", transactionId!).eq("tag_id", tagId!);
+      if (error) throw error;
+      return;
+    }
     if (config.deletedAtColumn) {
       // DELETE nunca se expone por RLS — el borrado real es un UPDATE.
       const { error } = await supabase

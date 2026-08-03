@@ -238,7 +238,12 @@
    "notePlaceholder": "Opcional",
    "burstMode": "Continuar lançando (modo rajada)",
    "today": "Hoje",
-   "yesterday": "Ontem"
+   "yesterday": "Ontem",
+   "tags": "Etiquetas",
+   "tagsOther": "Outras",
+   "tagsAddNew": "Adicionar etiqueta",
+   "tagsBack": "Voltar",
+   "tagsSearchPlaceholder": "Buscar ou criar etiqueta…"
   },
   "voice_sheet": {
    "title": "Captura por voz",

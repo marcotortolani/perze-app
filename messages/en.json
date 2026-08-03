@@ -238,7 +238,12 @@
    "notePlaceholder": "Optional",
    "burstMode": "Keep adding (burst mode)",
    "today": "Today",
-   "yesterday": "Yesterday"
+   "yesterday": "Yesterday",
+   "tags": "Tags",
+   "tagsOther": "Others",
+   "tagsAddNew": "Add tag",
+   "tagsBack": "Back",
+   "tagsSearchPlaceholder": "Search or create a tag…"
   },
   "voice_sheet": {
    "title": "Voice capture",
