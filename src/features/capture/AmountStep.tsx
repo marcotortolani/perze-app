@@ -59,9 +59,17 @@ export function amountToExpression(rawAmount: bigint, currency: string, locale: 
   const divisor = 10n ** BigInt(decimals);
   const abs = negative ? -rawAmount : rawAmount;
   const intPart = abs / divisor;
-  const fracPart = decimals > 0 ? (abs % divisor).toString().padStart(decimals, "0") : "";
+  // Sin ceros colgando: "25,00" quedaba tal cual en `amountExpression`, y
+  // tipear otro dígito lo CONCATENABA ("25,000") en vez de extender la
+  // parte entera — `parseAmountString` trunca la fracción a los decimales
+  // de la moneda, así que ese dígito de más no llegaba a ningún lado y el
+  // resultado parecía congelado en 25 para siempre. Sin fracción sobrante,
+  // el próximo dígito extiende la parte entera como se espera ("25" + "0"
+  // → "250"), igual que si se hubiera tipeado desde cero.
+  const fracPartRaw = decimals > 0 ? (abs % divisor).toString().padStart(decimals, "0") : "";
+  const fracPart = fracPartRaw.replace(/0+$/, "");
   const separator = decimalSeparatorForLocale(locale);
-  return `${negative ? "-" : ""}${intPart}${decimals > 0 ? `${separator}${fracPart}` : ""}`;
+  return `${negative ? "-" : ""}${intPart}${fracPart ? `${separator}${fracPart}` : ""}`;
 }
 
 /** C1 — el paso que abre el FAB. El primer frame es interactivo: se puede escribir en el keypad al toque. */
@@ -232,6 +240,7 @@ export function AmountStep({
               label="="
               ariaLabel={t("ds.keypad.equals")}
               fullWidth
+              height="var(--primary-button-height)"
               onPress={() => {
                 // Resuelve la cuenta armada y reemplaza la expresión entera
                 // por el resultado plano — de ahí en más se sigue editando

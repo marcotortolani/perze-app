@@ -180,7 +180,7 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ### KeypadKey
 - **Existe para:** ser la tecla de los dos keypads.
-- **Props:** `label: ReactNode` · `ariaLabel?: string` · `onPress: () => void` · `onLongPress?: () => void` · `size?: number` (tamaño de fuente, default 32) · `fullWidth?: boolean` (default `false`; la tecla "=" de `Keypad` la usa para ocupar toda su fila — sin esto el `<button>` no hereda el ancho del `<div>` que lo envuelve).
+- **Props:** `label: ReactNode` · `ariaLabel?: string` · `onPress: () => void` · `onLongPress?: () => void` · `size?: number` (tamaño de fuente, default 32) · `fullWidth?: boolean` (default `false`; la tecla "=" de `Keypad` la usa para ocupar toda su fila — sin esto el `<button>` no hereda el ancho del `<div>` que lo envuelve) · `height?: string` (default `var(--keypad-key-height)`; `AmountStep` la pisa a `var(--primary-button-height)` cuando "=" comparte fila con el botón de Siguiente/Guardar, para que las alturas calcen).
 - **Estados:** normal · presionada · con long-press.
 - **Tokens:** `--keypad-key-height --radius-keypad-key --surface-2 --press-scale --duration-micro --ease-spring-snappy`.
 - **A11y:** `button` real con `aria-label` (obligatorio cuando el label es un ícono). Alto 64, mínimo 44 de ancho.

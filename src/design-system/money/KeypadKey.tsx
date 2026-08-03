@@ -13,6 +13,8 @@ export interface KeypadKeyProps {
   onLongPress?: (() => void) | undefined;
   /** La tecla "=" ocupa toda la fila (`Keypad`, `gridColumn: 1 / -1`) — sin esto el botón queda del ancho de su contenido en vez de estirarse. */
   fullWidth?: boolean | undefined;
+  /** Default `var(--keypad-key-height)` (64px). `AmountStep` la baja a `--primary-button-height` (56px) cuando "=" comparte fila con el botón de Siguiente/Guardar, para que las dos alturas calcen. */
+  height?: string | undefined;
   /**
    * D14/auditoría: sin esto, un dígito se anuncia bien solo porque es su
    * propio texto visible, pero `backspace` (ícono sin texto) quedaba
@@ -32,7 +34,7 @@ export interface KeypadKeyProps {
  * `aria-live` opuestos, modelos de error distintos) — no unificar más allá
  * de esta tecla.
  */
-export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress, ariaLabel, fullWidth = false }: KeypadKeyProps) {
+export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, onPress, onLongPress, ariaLabel, fullWidth = false, height = "var(--keypad-key-height)" }: KeypadKeyProps) {
   const [pressed, setPressed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -56,7 +58,7 @@ export function KeypadKey({ label, muted = false, fontSize = 32, iconSize = 24, 
       onClick={() => onPress(label)}
       style={{
         width: fullWidth ? "100%" : undefined,
-        height: "var(--keypad-key-height)",
+        height,
         borderRadius: "var(--radius-keypad-key)",
         border: 0,
         background: pressed ? "var(--primary-fill)" : muted ? "var(--surface-2)" : "var(--surface-3)",

@@ -982,7 +982,8 @@
   "ratePlaceholder": "Ex: 40",
   "saveOverride": "Salvar ajuste",
   "keypadCancel": "Cancelar",
-  "keypadDone": "Concluído"
+  "keypadDone": "Concluído",
+  "flipDisplayDirection": "Inverter a direção exibida"
  },
  "pinKeypad": {
   "progress": "{current} de {total} dígitos"

@@ -1,4 +1,18 @@
 import type { CategoryRow, TransactionRow } from "@/lib/db/schema";
+import { normalize } from "@/lib/search/rank";
+
+/**
+ * Identidad de "misma categoría para el usuario", más allá del `id` —
+ * households con datos de antes del fix de `apply-category-template.ts`
+ * (que dedupeaba al reconciliar plantillas) pueden tener dos filas vivas
+ * con el mismo `i18nKey` ("Supermercado" x2, distinto id cada una) que
+ * acumulan uso por separado; sin esto las dos entraban al top-N. Una
+ * plantilla identifica por `i18nKey` (estable); una categoría propia no
+ * tiene `i18nKey`, así que cae al nombre normalizado.
+ */
+function categoryIdentityKey(category: CategoryRow): string {
+  return category.i18nKey ?? `name:${normalize(category.name)}`;
+}
 
 export interface CategoryUsage {
   categoryId: string;
@@ -54,21 +68,28 @@ export function rankCategoriesByUsage(
   const sameKind = categories.filter((c) => c.kind === opts.kind);
   const byId = new Map(sameKind.map((c) => [c.id, c]));
   const ranked: CategoryRow[] = [];
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenIdentities = new Set<string>();
 
   for (const u of usage) {
     const category = byId.get(u.categoryId);
-    if (!category || seen.has(category.id)) continue;
+    if (!category || seenIds.has(category.id)) continue;
+    const identity = categoryIdentityKey(category);
+    if (seenIdentities.has(identity)) continue;
     ranked.push(category);
-    seen.add(category.id);
+    seenIds.add(category.id);
+    seenIdentities.add(identity);
     if (ranked.length >= opts.limit) return ranked;
   }
 
   const bySortOrder = [...sameKind].sort((a, b) => a.sortOrder - b.sortOrder);
   for (const category of bySortOrder) {
-    if (seen.has(category.id)) continue;
+    if (seenIds.has(category.id)) continue;
+    const identity = categoryIdentityKey(category);
+    if (seenIdentities.has(identity)) continue;
     ranked.push(category);
-    seen.add(category.id);
+    seenIds.add(category.id);
+    seenIdentities.add(identity);
     if (ranked.length >= opts.limit) break;
   }
   return ranked;

@@ -17,9 +17,20 @@ import { usePwaStore } from "@/stores/pwa-store";
 import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
 import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref } from "@/stores/format-preferences-store";
+import { setLocale } from "@/i18n/actions";
+import { routing } from "@/i18n/routing";
+import { applyThemePreference } from "@/lib/theme/apply-theme";
+import { useThemePreference } from "@/lib/theme/use-theme-preference";
+import type { ThemePreference } from "@/lib/theme/constants";
 
 const DECIMAL_SEPARATOR_OPTIONS: DecimalSeparatorPref[] = ["locale", "comma", "period"];
 const DATE_FORMAT_OPTIONS: DateFormatPref[] = ["locale", "dmy", "mdy", "ymd"];
+const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
+const LANGUAGE_MESSAGE_KEY = {
+  es: "morePage.languageNames.es",
+  en: "morePage.languageNames.en",
+  pt: "morePage.languageNames.pt",
+} as const;
 
 function decimalSeparatorExample(pref: DecimalSeparatorPref, localeChar: string): string {
   const sep = pref === "locale" ? localeChar : pref === "comma" ? "," : ".";
@@ -48,6 +59,12 @@ export default function SettingsPage() {
   const [decimalSheetOpen, setDecimalSheetOpen] = useState(false);
   const [dateFormatSheetOpen, setDateFormatSheetOpen] = useState(false);
   const localeDecimalSeparator = numberLocaleForUiLocale(locale) === "en-US" ? "." : ",";
+  const storedThemePreference = useThemePreference();
+  const [themeOverride, setThemeOverride] = useState<ThemePreference | null>(null);
+  const themePreference = themeOverride ?? storedThemePreference;
+  const [themeSheetOpen, setThemeSheetOpen] = useState(false);
+  const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
+  const [localePending, setLocalePending] = useState(false);
   const { data: household } = useCurrentHousehold();
   const invalidateHousehold = useInvalidateHousehold();
   const { data: members } = useHouseholdMembers(household?.id);
@@ -112,6 +129,26 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSelectLocale = (next: Locale) => {
+    if (next === locale) {
+      setLanguageSheetOpen(false);
+      return;
+    }
+    setLocalePending(true);
+    void (async () => {
+      await setLocale(next);
+      setLanguageSheetOpen(false);
+      router.refresh();
+      setLocalePending(false);
+    })();
+  };
+
+  const handleSelectTheme = (pref: ThemePreference) => {
+    applyThemePreference(pref);
+    setThemeOverride(pref);
+    setThemeSheetOpen(false);
+  };
+
   const handleInstall = async () => {
     if (deferredPrompt) {
       if (installing) return;
@@ -133,6 +170,21 @@ export default function SettingsPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <AppHeader title={t("morePage.settings")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
+        <ListRow
+          icon="globe"
+          label={t("morePage.language")}
+          value={t(LANGUAGE_MESSAGE_KEY[locale])}
+          variant="value"
+          disabled={localePending}
+          onClick={() => setLanguageSheetOpen(true)}
+        />
+        <ListRow
+          icon="eye"
+          label={t("profilePage.theme")}
+          value={t(`profilePage.themeOptions.${themePreference}`)}
+          variant="value"
+          onClick={() => setThemeSheetOpen(true)}
+        />
         <ListRow
           icon="wallet"
           label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
@@ -183,6 +235,35 @@ export default function SettingsPage() {
           onClick={() => setDateFormatSheetOpen(true)}
         />
       </div>
+
+      <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)} height={280}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {routing.locales.map((candidate) => (
+            <ListRow
+              key={candidate}
+              label={t(LANGUAGE_MESSAGE_KEY[candidate])}
+              variant="value"
+              value={candidate === locale ? "✓" : undefined}
+              disabled={localePending}
+              onClick={() => handleSelectLocale(candidate)}
+            />
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={themeSheetOpen} title={t("profilePage.themeSheetTitle")} onClose={() => setThemeSheetOpen(false)} height={280}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {THEME_OPTIONS.map((option) => (
+            <ListRow
+              key={option}
+              label={t(`profilePage.themeOptions.${option}`)}
+              variant="value"
+              value={option === themePreference ? "✓" : undefined}
+              onClick={() => handleSelectTheme(option)}
+            />
+          ))}
+        </div>
+      </Sheet>
 
       <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)} height={280}>
         <div style={{ display: "flex", flexDirection: "column" }}>

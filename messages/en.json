@@ -982,7 +982,8 @@
   "ratePlaceholder": "e.g. 40",
   "saveOverride": "Save override",
   "keypadCancel": "Cancel",
-  "keypadDone": "Done"
+  "keypadDone": "Done",
+  "flipDisplayDirection": "Flip displayed direction"
  },
  "pinKeypad": {
   "progress": "{current} of {total} digits"

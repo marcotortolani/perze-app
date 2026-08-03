@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.25] — 2026-08-02
+
+### Corregido/Agregado — idioma y tema en Ajustes, keypad de captura y monedas
+
+- **Idioma y tema vuelven a Ajustes** — Perfil ahora es solo datos de la persona (nombre,
+  email, fecha de nacimiento, país); esas dos preferencias de la app viven donde el resto de
+  las preferencias.
+- El botón "=" del keypad de captura quedaba 8px más alto que "Siguiente" (`--keypad-key-height`
+  64px vs `--primary-button-height` 56px, compartiendo fila desde la versión anterior) — `KeypadKey`
+  suma una prop `height` para que este uso puntual calce con el botón de al lado.
+- **Después de resolver una cuenta con "=", seguir tipeando no hacía nada.** `amountToExpression`
+  devolvía el resultado con la fracción completa rellenada ("25,00"), y como `appendToAmount`
+  solo concatena texto, el siguiente dígito se perdía dentro de una fracción que
+  `parseAmountString` ya trunca al tamaño fijo de la moneda — tipear "0" nunca cambiaba el
+  monto mostrado. Ahora los ceros finales se recortan ("25,00" → "25"), así que seguir
+  tipeando extiende la parte entera como se espera.
+- **"Supermercado" seguía duplicado en las 5 más usadas** — el fix de la sesión anterior
+  evitaba duplicados nuevos, pero households con datos de antes de ese fix podían tener dos
+  filas vivas con el mismo `i18nKey`. `rankCategoriesByUsage` ahora dedupea también por
+  identidad (`i18nKey` o nombre normalizado si no hay), no solo por `id`.
+- El widget "usuarios por país" del panel de operador no tenía padding horizontal y mostraba
+  el código de país en vez del nombre completo.
+- **Monedas y tipos de cambio: se puede elegir la dirección de cada fila de la lista**, no
+  solo dentro del editor — un botón chico al lado de cada par la invierte solo para mostrar
+  (nunca toca lo guardado, que sigue siendo siempre la dirección canónica).
+
 ## [0.9.24] — 2026-08-02
 
 ### Agregado/Corregido — "=" comparte fila con Siguiente, resolver FX pendiente y tab bar de cuentas

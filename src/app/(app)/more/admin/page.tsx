@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppHeader, Button, EmptyState, ListRow, Skeleton, StatTile } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
+import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { useOwnAccess } from "@/hooks/use-own-access";
 import { formatNumericDate, type Locale } from "@/i18n/formatting";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
@@ -138,9 +139,15 @@ export default function AdminPage() {
                 {countryEntries.length === 0 ? (
                   <EmptyState message={t("adminPage.noCountryData")} />
                 ) : (
-                  <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)" }}>
+                  <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: "0 16px" }}>
                     {countryEntries.map(([country, count]) => (
-                      <ListRow key={country} label={country} value={String(count)} variant="value" chevron={false} />
+                      <ListRow
+                        key={country}
+                        label={country in COUNTRY_MESSAGE_KEY ? t(COUNTRY_MESSAGE_KEY[country as keyof typeof COUNTRY_MESSAGE_KEY]) : country}
+                        value={String(count)}
+                        variant="value"
+                        chevron={false}
+                      />
                     ))}
                   </div>
                 )}

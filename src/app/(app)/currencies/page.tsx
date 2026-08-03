@@ -34,6 +34,14 @@ export default function CurrenciesPage() {
   const { data: accounts = [] } = useAccounts(household?.id);
   const [editingPair, setEditingPair] = useState<string | null>(null);
   /**
+   * Qué dirección se muestra CADA fila de la lista — puramente de vista,
+   * no toca lo guardado (que sigue siendo siempre `editingPair →
+   * baseCurrency`, canónico). "1 USD = 1525,25 ARS" se lee mejor que
+   * "1 ARS = 0,00065 USD" para un par así; antes solo se podía elegir la
+   * dirección DENTRO del editor, nunca en la lista.
+   */
+  const [invertedDisplay, setInvertedDisplay] = useState<Record<string, boolean>>({});
+  /**
    * El rate tal cual se está mostrando/editando AHORA — en la dirección que
    * indica `inverted`, no siempre en la canónica (`editingPair → baseCurrency`).
    * Antes se guardaba siempre canónico y se invertía para mostrar cada vez
@@ -252,21 +260,32 @@ export default function CurrenciesPage() {
               </button>
             );
           }
+          const showInverted = invertedDisplay[currency] ?? false;
+          const displayRate = showInverted ? invertRate(resolution.rate) : resolution.rate;
+          const displayPair = showInverted ? `${baseCurrency} → ${currency}` : `${currency} → ${baseCurrency}`;
           return (
-            <button
-              key={currency}
-              type="button"
-              onClick={() => openEditor(currency, resolution.rate!)}
-              style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
-            >
-              <RateRow
-                pair={`${currency} → ${baseCurrency}`}
-                source={resolution.source === "manual" ? t("currenciesPage.manualOverride") : resolution.provider ?? t("currenciesPage.noProvider")}
-                ageLabel={resolution.isStale ? t("currenciesPage.asOf", { date: resolution.asOf ?? "" }) : t("currenciesPage.today")}
-                rate={resolution.rate}
-                stale={resolution.isStale}
+            <div key={currency} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button
+                type="button"
+                onClick={() => openEditor(currency, resolution.rate!)}
+                style={{ display: "block", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
+              >
+                <RateRow
+                  pair={displayPair}
+                  source={resolution.source === "manual" ? t("currenciesPage.manualOverride") : resolution.provider ?? t("currenciesPage.noProvider")}
+                  ageLabel={resolution.isStale ? t("currenciesPage.asOf", { date: resolution.asOf ?? "" }) : t("currenciesPage.today")}
+                  rate={displayRate}
+                  stale={resolution.isStale}
+                />
+              </button>
+              <IconButton
+                icon="refresh"
+                ariaLabel={t("currenciesPage.flipDisplayDirection")}
+                onClick={() => setInvertedDisplay((prev) => ({ ...prev, [currency]: !showInverted }))}
+                size={36}
+                iconSize={16}
               />
-            </button>
+            </div>
           );
         })
       )}

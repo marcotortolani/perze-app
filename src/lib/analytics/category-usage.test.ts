@@ -8,7 +8,7 @@ function tx(categoryId: string, kind: "expense" | "income", occurredAt: string):
   return { categoryId, kind, occurredAt };
 }
 
-function category(id: string, sortOrder: number, kind: "expense" | "income" = "expense"): CategoryRow {
+function category(id: string, sortOrder: number, kind: "expense" | "income" = "expense", extra: Partial<CategoryRow> = {}): CategoryRow {
   return {
     id,
     householdId: "hh-1",
@@ -29,6 +29,7 @@ function category(id: string, sortOrder: number, kind: "expense" | "income" = "e
     updatedAt: "2026-01-01T00:00:00.000Z",
     deletedAt: null,
     clientRev: 1,
+    ...extra,
   };
 }
 
@@ -74,6 +75,29 @@ describe("rankCategoriesByUsage", () => {
     const usage = countCategoryUsage([tx("food", "expense", "2026-07-01")], { kind: "expense" });
     const ranked = rankCategoriesByUsage(categories, usage, { kind: "expense", limit: 4 });
     expect(new Set(ranked.map((c) => c.id)).size).toBe(4);
+  });
+
+  it("dos filas con el mismo i18nKey (duplicado de plantilla de antes del fix de reconciliación) no ocupan dos lugares del top", () => {
+    const dup = [
+      category("groceries-1", 0, "expense", { i18nKey: "groceries", name: "Supermercado" }),
+      category("groceries-2", 1, "expense", { i18nKey: "groceries", name: "Supermercado" }),
+      category("transport", 2),
+    ];
+    const usage = countCategoryUsage(
+      [tx("groceries-1", "expense", "2026-07-01"), tx("groceries-2", "expense", "2026-07-02"), tx("transport", "expense", "2026-07-01")],
+      { kind: "expense" }
+    );
+    const ranked = rankCategoriesByUsage(dup, usage, { kind: "expense", limit: 3 });
+    const groceriesCount = ranked.filter((c) => c.i18nKey === "groceries").length;
+    expect(groceriesCount).toBe(1);
+    expect(ranked.map((c) => c.id)).toContain("transport");
+  });
+
+  it("dos categorías propias con el mismo nombre (sin i18nKey) tampoco se duplican", () => {
+    const dup = [category("food-1", 0, "expense", { name: "Comida" }), category("food-2", 1, "expense", { name: "comida" }), category("transport", 2)];
+    const usage = countCategoryUsage([tx("food-1", "expense", "2026-07-01"), tx("food-2", "expense", "2026-07-02")], { kind: "expense" });
+    const ranked = rankCategoriesByUsage(dup, usage, { kind: "expense", limit: 3 });
+    expect(ranked.filter((c) => c.name.toLowerCase() === "comida")).toHaveLength(1);
   });
 });
 
