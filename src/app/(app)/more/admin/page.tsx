@@ -68,6 +68,10 @@ export default function AdminPage() {
   };
 
   const countryEntries = Object.entries(metrics?.byCountry ?? {}).sort(([, a], [, b]) => b - a);
+  // Orden fijo, no por conteo — a diferencia de país, un rango etario tiene
+  // un orden natural que hay que respetar en vez de reordenar por tamaño.
+  const AGE_RANGE_ORDER = ["<25", "25-34", "35-44", "45-54", "55-64", "65+", "desconocido"];
+  const ageRangeEntries = AGE_RANGE_ORDER.map((range) => [range, metrics?.byAgeRange?.[range] ?? 0] as const).filter(([, count]) => count > 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -144,6 +148,27 @@ export default function AdminPage() {
                       <ListRow
                         key={country}
                         label={country in COUNTRY_MESSAGE_KEY ? t(COUNTRY_MESSAGE_KEY[country as keyof typeof COUNTRY_MESSAGE_KEY]) : country}
+                        value={String(count)}
+                        variant="value"
+                        chevron={false}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>
+                  {t("adminPage.byAgeRangeTitle")}
+                </div>
+                {ageRangeEntries.length === 0 ? (
+                  <EmptyState message={t("adminPage.noAgeData")} />
+                ) : (
+                  <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: "0 16px" }}>
+                    {ageRangeEntries.map(([range, count]) => (
+                      <ListRow
+                        key={range}
+                        label={range === "desconocido" ? t("adminPage.ageUnknown") : range}
                         value={String(count)}
                         variant="value"
                         chevron={false}

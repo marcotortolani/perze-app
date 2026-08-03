@@ -2,8 +2,21 @@ import { decimalsFor } from "./decimals";
 import type { Money } from "./money";
 import type { NumberLocale } from "./parse";
 
+/**
+ * ISO 4217 define el código de 3 letras y los decimales de cada moneda —
+ * NO define símbolos: eso es una convención aparte (CLDR/uso real), y la
+ * mayoría de las ~180 monedas del estándar no tienen uno propio y
+ * reconocible. Esta tabla es una curaduría deliberada de las que sí lo
+ * tienen — el resto cae al propio código ISO en `formatAmount`/
+ * `formatAmountCompact` (`CURRENCY_SYMBOLS[code] ?? code`), que **es** la
+ * forma correcta de mostrar una moneda sin símbolo, no un placeholder.
+ * Ver `docs/00-producto.md`/`more/about` para la nota completa.
+ */
 export const CURRENCY_SYMBOLS: Record<string, string> = {
-  UYU: "$",
+  // "$U" es el símbolo tradicional para distinguir el peso uruguayo de
+  // cualquier otro peso/dólar — antes caía al "$" genérico, indistinguible
+  // del real de cualquier otro país en la misma lista (p. ej. junto a ARS).
+  UYU: "$U",
   ARS: "AR$",
   USD: "US$",
   EUR: "€",
@@ -11,6 +24,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   CLP: "CLP$",
   MXN: "MX$",
   BTC: "₿",
+  ETH: "Ξ",
   USDT: "USDT",
   USDC: "USDC",
   // Mismos códigos y símbolos que siembra
@@ -42,6 +56,24 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   THB: "฿",
   TRY: "₺",
   ZAR: "R",
+  // Resto de Latinoamérica — mercados vecinos de UY/AR, quedaban cayendo
+  // al código ISO sin necesidad (sí tienen símbolo real y reconocido).
+  PEN: "S/",
+  BOB: "Bs",
+  VES: "Bs.S",
+  COP: "COL$",
+  PYG: "₲",
+  GTQ: "Q",
+  DOP: "RD$",
+  // Otras monedas con símbolo real y de uso frecuente fuera de la cobertura
+  // Frankfurter/BCE.
+  RUB: "₽",
+  UAH: "₴",
+  VND: "₫",
+  PKR: "₨",
+  EGP: "E£",
+  NGN: "₦",
+  BDT: "৳",
 };
 
 function decimalSeparator(locale: NumberLocale): string {

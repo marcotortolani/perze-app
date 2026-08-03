@@ -22,6 +22,16 @@ const CURRENCY_DECIMALS: Record<string, number> = {
   ETH: 8,
   USDT: 2,
   USDC: 2,
+  // ISO 4217 § minor unit — las siete monedas con 3 decimales en vez de 2.
+  // Sin esto redondeaban mal por el default de abajo (silencioso: nunca
+  // tira error, solo trunca el tercer decimal).
+  BHD: 3,
+  IQD: 3,
+  JOD: 3,
+  KWD: 3,
+  LYD: 3,
+  OMR: 3,
+  TND: 3,
 };
 
 const DEFAULT_FIAT_DECIMALS = 2;

@@ -34,6 +34,9 @@ export interface SidebarProps {
   active?: string | undefined;
   onChange?: ((id: string) => void) | undefined;
   onAdd?: (() => void) | undefined;
+  /** Último ítem del panel, después de "Más" — mismo flujo de confirmación que `/more`. */
+  onSignOut?: (() => void) | undefined;
+  signOutLabel?: string | undefined;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }
@@ -95,7 +98,7 @@ function NavButton({ icon, label, on, href, onClick }: { icon: IconName; label: 
  * independiente del contenido — el `<aside>` no scrollea, así que nunca se
  * va con la página.
  */
-export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, className, style }: SidebarProps) {
+export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onSignOut, signOutLabel, className, style }: SidebarProps) {
   const t = useTranslations();
   const navTabs = tabs.filter((tab) => !tab.fab);
 
@@ -103,6 +106,7 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, cla
     <aside
       className={className}
       style={{
+        position: "relative",
         width: "var(--sidebar-width)",
         flexShrink: 0,
         flexDirection: "column",
@@ -177,7 +181,31 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, cla
             ))}
           </div>
         )}
+        {onSignOut ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: "auto", paddingTop: 8 }}>
+            <button type="button" onClick={onSignOut} style={{ ...navButtonStyle, background: "transparent" }}>
+              <Icon name="sign-out" size={20} strokeWidth={1.5} color="var(--text-secondary)" />
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 500, color: "var(--text-secondary)" }}>{signOutLabel}</span>
+            </button>
+          </div>
+        ) : null}
       </nav>
+
+      {/* Difumina el borde inferior del scroller propio del `<nav>` en vez
+          de dejar una franja sólida pegada al final — puramente decorativo
+          (`pointerEvents: none`), nunca tapa un click real. */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 32,
+          background: "linear-gradient(to bottom, transparent 0%, var(--page) 100%)",
+          pointerEvents: "none",
+        }}
+      />
     </aside>
   );
 }

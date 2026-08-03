@@ -9,9 +9,10 @@ export interface NotificationPreferences {
   weeklySummary: boolean;
   recurringReminders: boolean;
   insights: boolean;
+  cardStatementDue: boolean;
 }
 
-const DEFAULTS = { budgetAlerts: true, weeklySummary: true, recurringReminders: true, insights: true };
+const DEFAULTS = { budgetAlerts: true, weeklySummary: true, recurringReminders: true, insights: true, cardStatementDue: true };
 
 /**
  * K12 — preferencias de notificación, una fila por miembro (RLS: solo la
@@ -23,7 +24,7 @@ export const notificationPreferencesRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("notification_preferences")
-      .select("id, household_id, profile_id, budget_alerts, weekly_summary, recurring_reminders, insights")
+      .select("id, household_id, profile_id, budget_alerts, weekly_summary, recurring_reminders, insights, card_statement_due")
       .eq("household_id", householdId)
       .eq("profile_id", profileId)
       .maybeSingle();
@@ -37,6 +38,7 @@ export const notificationPreferencesRepo = {
       weeklySummary: data.weekly_summary,
       recurringReminders: data.recurring_reminders,
       insights: data.insights,
+      cardStatementDue: data.card_statement_due,
     };
   },
 
@@ -50,6 +52,7 @@ export const notificationPreferencesRepo = {
       weekly_summary: prefs.weeklySummary,
       recurring_reminders: prefs.recurringReminders,
       insights: prefs.insights,
+      card_statement_due: prefs.cardStatementDue,
     };
     const { error } = await supabase.from("notification_preferences").upsert(row as never, { onConflict: "household_id,profile_id" });
     if (error) throw error;

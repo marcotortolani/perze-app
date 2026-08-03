@@ -25,8 +25,28 @@ export default function TransactionsLayout({ children, detail }: { children: Rea
       {/* `paddingRight`: sin esto la barra de scroll de esta columna queda
           pegada contra el borde del contenido (a diferencia de la lista de
           la izquierda, que hereda el `padding-inline` de `<main>` — esta
-          columna no tiene ningún padding propio del lado derecho). */}
-      <div style={{ minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", borderLeft: "1px solid var(--border)", paddingLeft: 32, paddingRight: 12 }}>{detail}</div>
+          columna no tiene ningún padding propio del lado derecho).
+          `minWidth: 0` + `overflowX: hidden`: mismo fix que
+          `accounts/layout.tsx` — sin `minWidth: 0` el ítem de grid vale
+          `min-width: auto` y el contenido (una cifra larga, un chart)
+          podía forzarlo más ancho que `minmax(340px,420px)`, y
+          `overflow-y: auto` sin `overflow-x` explícito activa
+          `overflow-x: auto` implícito por la propia regla de `overflow`. */}
+      <div
+        style={{
+          minWidth: 0,
+          maxWidth: 420,
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehavior: "contain",
+          borderLeft: "1px solid var(--border)",
+          paddingLeft: 32,
+          paddingRight: 12,
+        }}
+      >
+        {detail}
+      </div>
     </div>
   );
 }

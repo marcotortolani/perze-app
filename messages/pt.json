@@ -328,6 +328,7 @@
    "statementDay": "Dia de fechamento",
    "dayPlaceholder": "1-31",
    "dueDay": "Dia de vencimento",
+   "creditLimit": "Limite do cartão (opcional)",
    "interestRate": "Taxa anual (%)",
    "interestRatePlaceholder": "Ex: 45.5",
    "termMonths": "Prazo (meses)",
@@ -456,6 +457,7 @@
    "edit": "Editar",
    "reconcile": "Conciliar",
    "transfer": "Transferir",
+   "payCard": "Pagar cartão",
    "archive": "Arquivar",
    "archived": "Conta arquivada",
    "transactionsTitle": "Movimentações desta conta",
@@ -666,6 +668,9 @@
   "rejectedCount": "Rejeitados",
   "byCountryTitle": "Por país",
   "noCountryData": "Ainda não há usuários aprovados com país escolhido.",
+  "byAgeRangeTitle": "Por faixa etária",
+  "noAgeData": "Ainda não há usuários aprovados com data de nascimento cadastrada.",
+  "ageUnknown": "Sem dado",
   "activitySectionTitle": "Atividade",
   "activeToday": "Ativos hoje",
   "active7d": "Ativos em 7 dias",
@@ -733,6 +738,10 @@
    "insights": {
     "label": "Insights",
     "description": "Coisas que percebemos sobre seu dinheiro"
+   },
+   "cardStatementDue": {
+    "label": "Vencimento do cartão",
+    "description": "Quando a fatura está prestes a vencer"
    }
   }
  },
@@ -791,6 +800,7 @@
   "emailHint": "É seu dado de identificação — não pode ser alterado.",
   "birthDate": "Data de nascimento",
   "birthDateHint": "Opcional, usado só para estatística.",
+  "ageHint": "{age} anos · dado usado só para estatística.",
   "country": "País",
   "countryUnset": "Não definido",
   "countrySheetTitle": "Escolha seu país",
@@ -837,6 +847,10 @@
   "dataStorageBody": "Seus movimentos, contas e orçamentos vivem primeiro no seu telefone (IndexedDB) e sincronizam com o seu próprio projeto Supabase quando há conexão. Nunca são compartilhados com terceiros nem usados para treinar nada. Se você hospedar o PERZE, esse servidor é você.",
   "operatorVisibility": "Quem pode ver o quê",
   "operatorVisibilityMeta": "O que quem administra esta instalação pode ver",
+  "currencyStandard": "Códigos de moeda",
+  "currencyStandardMeta": "Por que USD, ARS, UYU e não símbolos inventados",
+  "currencyStandardBody1": "Os códigos de moeda do app seguem a norma ISO 4217 (USD, ARS, UYU, etc.) — o identificador internacional de três letras, o mesmo usado por bancos e casas de câmbio.",
+  "currencyStandardBody2": "O símbolo ($, €, US$) NÃO faz parte dessa norma: é uma convenção à parte, e a maioria das moedas do mundo não tem um símbolo próprio e reconhecido. Onde existe um símbolo real, mostramos (US$, AR$, $U para o peso uruguaio); onde não existe, mostramos o código ISO, que é a forma correta de identificá-la sem ambiguidade.",
   "madeWith": "Feito com",
   "madeWithBody": "Geist Sans e Geist Mono, ícones Phosphor, e cotações do BROU. Licença MIT — o código é seu para ler, modificar e rodar onde quiser."
  },
@@ -858,9 +872,13 @@
   "netWorthUsdPending": "Cotação em USD indisponível hoje — mostrando em {currency}.",
   "convertedTotal": "Total convertido",
   "accountsCount": "{count} contas",
+  "creditCards": "Cartões de crédito",
+  "creditCardCycleMeta": "Gasto acumulado do ciclo",
   "spentThisPeriod": "Gasto neste período",
   "incomeThisPeriod": "Recebido neste período",
   "needsFxInsight": "Você tem {count, plural, one {# movimentação} other {# movimentações}} sem taxa de câmbio resolvida.",
+  "birthdayBanner": "Feliz aniversário! Hoje você completa {age} anos.",
+  "birthdayBannerDismiss": "Fechar",
   "budgetExceededInsight": "Você passou do orçamento de {category} — está em {percent}%.",
   "budgetWarningInsight": "Você está em {percent}% do orçamento de {category}.",
   "seeBudgets": "Ver orçamentos",
@@ -1270,7 +1288,11 @@
   "archived": "Recorrente arquivada.",
   "archive": "Arquivar",
   "committedPerMonth": "Comprometido por mês",
-  "viewCalendar": "Ver o mês no calendário"
+  "viewCalendar": "Ver o mês no calendário",
+  "filterAllAccounts": "Todas as contas",
+  "filterAllCurrencies": "Todas as moedas",
+  "emptyFiltered": "Nenhuma recorrente corresponde a esse filtro.",
+  "viewRecurring": "Ver gastos recorrentes associados"
  },
  "recurringCalendarPage": {
   "title": "Calendário de recorrentes",
@@ -1311,7 +1333,18 @@
   "recentConsumptions": "Últimos gastos",
   "convertToInstallments": "Converter uma compra em parcelas",
   "noConsumptions": "Não há gastos neste ciclo para converter.",
-  "payCard": "Pagar o cartão"
+  "payCard": "Pagar o cartão",
+  "currencyBreakdown": "Gastos por moeda",
+  "reconciliation": "Conciliação do pagamento",
+  "reconciliationSaved": "Você pagou {amount} a menos que o valor nominal da fatura",
+  "reconciliationExtra": "Você pagou {amount} a mais que o valor nominal da fatura",
+  "reconciliationExact": "Você pagou exatamente o valor da fatura",
+  "settlePickAccount": "Pagar de qual conta",
+  "settleAmountTitle": "Pagar de {name}",
+  "settleDueHint": "A pagar: {amount}. Você pode pagar o total ou um valor parcial.",
+  "confirmSettle": "Confirmar pagamento",
+  "settled": "Cartão liquidado",
+  "settleError": "Não conseguimos registrar o pagamento. Tente de novo."
  },
  "cardInstallmentsPage": {
   "title": "Parcelas e projeção",

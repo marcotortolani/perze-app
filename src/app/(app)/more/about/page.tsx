@@ -12,6 +12,7 @@ export default function AboutPage() {
   const router = useRouter();
   const [dataSheetOpen, setDataSheetOpen] = useState(false);
   const [privacySheetOpen, setPrivacySheetOpen] = useState(false);
+  const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -29,6 +30,7 @@ export default function AboutPage() {
           <ListRow label={t("aboutPage.license")} meta="MIT" right={<StatusBadge status="good">{t("aboutPage.licenseBadge")}</StatusBadge>} chevron={false} />
           <ListRow label={t("aboutPage.dataStorage")} meta={t("aboutPage.dataStorageMeta")} onClick={() => setDataSheetOpen(true)} />
           <ListRow label={t("aboutPage.operatorVisibility")} meta={t("aboutPage.operatorVisibilityMeta")} onClick={() => setPrivacySheetOpen(true)} />
+          <ListRow label={t("aboutPage.currencyStandard")} meta={t("aboutPage.currencyStandardMeta")} onClick={() => setCurrencySheetOpen(true)} />
         </div>
 
         <div style={{ padding: "18px 4px 0" }}>
@@ -47,6 +49,13 @@ export default function AboutPage() {
           <p style={{ margin: 0 }}>{t("privacyNotice.sees")}</p>
           <p style={{ margin: 0 }}>{t("privacyNotice.neverSees")}</p>
           <p style={{ margin: 0 }}>{t("privacyNotice.noThirdParty")}</p>
+        </div>
+      </Sheet>
+
+      <Sheet open={currencySheetOpen} title={t("aboutPage.currencyStandard")} onClose={() => setCurrencySheetOpen(false)} height={360}>
+        <div className="t-body" style={{ color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ margin: 0 }}>{t("aboutPage.currencyStandardBody1")}</p>
+          <p style={{ margin: 0 }}>{t("aboutPage.currencyStandardBody2")}</p>
         </div>
       </Sheet>
     </div>

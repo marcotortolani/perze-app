@@ -26,7 +26,7 @@ import { z } from "npm:zod@4";
 
 const requestSchema = z.object({
   householdId: z.uuid(),
-  kind: z.enum(["budget_alerts", "weekly_summary", "recurring_reminders", "insights"]),
+  kind: z.enum(["budget_alerts", "weekly_summary", "recurring_reminders", "insights", "card_statement_due"]),
   title: z.string().min(1).max(200),
   body: z.string().min(1).max(500),
   // E2 — solo ruta relativa: nunca una URL absoluta a otro origen (phishing
@@ -43,6 +43,7 @@ const PREFERENCE_COLUMN: Record<z.infer<typeof requestSchema>["kind"], string> =
   weekly_summary: "weekly_summary",
   recurring_reminders: "recurring_reminders",
   insights: "insights",
+  card_statement_due: "card_statement_due",
 };
 
 /** E10 — nunca se devuelve `error.message` de Postgres al invocador (nombres de tabla, constraints). Log interno, respuesta opaca. */

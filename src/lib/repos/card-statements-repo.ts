@@ -13,6 +13,7 @@ export interface CardStatement {
   currencyCode: string;
   paidAmount: bigint;
   status: "open" | "closed" | "paid" | "overdue";
+  settlementTransactionId: string | null;
 }
 
 /**
@@ -26,7 +27,7 @@ export const cardStatementsRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("card_statements")
-      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status")
+      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
       .eq("account_id", accountId)
       .order("period_start", { ascending: false });
     if (error) throw error;
@@ -37,7 +38,7 @@ export const cardStatementsRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("card_statements")
-      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status")
+      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
       .eq("account_id", accountId)
       .in("status", ["open", "closed", "overdue"])
       .order("period_start", { ascending: false })
@@ -61,16 +62,43 @@ export const cardStatementsRepo = {
       currency_code: input.currencyCode,
       paid_amount: input.paidAmount.toString(),
       status: input.status,
+      settlement_transaction_id: input.settlementTransactionId,
     };
     const { error } = await supabase.from("card_statements").insert(row as never);
     if (error) throw error;
     return { ...input, id: row.id };
   },
 
-  async markPaid(id: string, paidAmount: bigint): Promise<void> {
+  /**
+   * Liquidación real (no reemplazo): `additionalPaid` es lo aplicado en ESTA
+   * transferencia, en la moneda de la tarjeta (`tx.counterAmount` cuando la
+   * cuenta de origen tiene otra moneda) — se sabe cuánto costó realmente,
+   * no cuánto decía el resumen. `paid_amount` acumula pagos parciales;
+   * `status` pasa a `paid` solo cuando cubre el `statement_balance` nominal.
+   */
+  async markPaid(id: string, additionalPaid: bigint, transactionId: string): Promise<CardStatement> {
     const supabase = createClient();
-    const { error } = await supabase.from("card_statements").update({ status: "paid", paid_amount: paidAmount.toString() } as never).eq("id", id);
+    const { data: current, error: fetchError } = await supabase
+      .from("card_statements")
+      .select("statement_balance::text, paid_amount::text")
+      .eq("id", id)
+      .single();
+    if (fetchError) throw fetchError;
+    const row = current as unknown as { statement_balance: string; paid_amount: string };
+    const newPaid = BigInt(row.paid_amount) + additionalPaid;
+    const status = newPaid >= BigInt(row.statement_balance) ? "paid" : "closed";
+    const { error } = await supabase
+      .from("card_statements")
+      .update({ paid_amount: newPaid.toString(), status, settlement_transaction_id: transactionId } as never)
+      .eq("id", id);
     if (error) throw error;
+    const updated = await supabase
+      .from("card_statements")
+      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
+      .eq("id", id)
+      .single();
+    if (updated.error) throw updated.error;
+    return fromRow(updated.data);
   },
 };
 
@@ -86,6 +114,7 @@ interface CardStatementRow {
   currency_code: string;
   paid_amount: string;
   status: string;
+  settlement_transaction_id: string | null;
 }
 
 function fromRow(row: CardStatementRow): CardStatement {
@@ -101,5 +130,6 @@ function fromRow(row: CardStatementRow): CardStatement {
     currencyCode: row.currency_code,
     paidAmount: BigInt(row.paid_amount),
     status: row.status as CardStatement["status"],
+    settlementTransactionId: row.settlement_transaction_id,
   };
 }

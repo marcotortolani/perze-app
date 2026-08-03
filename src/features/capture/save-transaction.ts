@@ -179,10 +179,17 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
     let counterAmount = amount.amount;
     let counterFxRate = null as bigint | null;
     if (counterAccount.currencyCode !== currency) {
-      const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
-      if (resolution.rate !== null) {
-        counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
-        counterFxRate = resolution.rate;
+      if (draft.counterFxRateOverride !== null) {
+        // El usuario ajustó el rate a mano (`FxEditor`, slider ±5% sobre la
+        // sugerencia) — se usa tal cual, sin volver a resolver contra `fxRepo`.
+        counterAmount = convert(amount, counterAccount.currencyCode, draft.counterFxRateOverride).amount;
+        counterFxRate = draft.counterFxRateOverride;
+      } else {
+        const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
+        if (resolution.rate !== null) {
+          counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
+          counterFxRate = resolution.rate;
+        }
       }
     }
 

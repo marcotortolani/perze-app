@@ -4,15 +4,15 @@ import { formatAmount, formatAmountCompact } from "./format";
 
 describe("formatAmount — es-UY", () => {
   it("positivo con signo", () => {
-    expect(formatAmount(money(125000n, "UYU"))).toBe("+$ 1.250,00");
+    expect(formatAmount(money(125000n, "UYU"))).toBe("+$U 1.250,00");
   });
 
   it("negativo", () => {
-    expect(formatAmount(money(-125050n, "UYU"))).toBe("−$ 1.250,50");
+    expect(formatAmount(money(-125050n, "UYU"))).toBe("−$U 1.250,50");
   });
 
   it("sin signo (saldos)", () => {
-    expect(formatAmount(money(125000n, "UYU"), { showSign: false })).toBe("$ 1.250,00");
+    expect(formatAmount(money(125000n, "UYU"), { showSign: false })).toBe("$U 1.250,00");
   });
 
   it("moneda sin decimales", () => {
@@ -30,10 +30,10 @@ describe("formatAmount — en-US", () => {
 
 describe("formatAmountCompact", () => {
   it("por debajo del umbral usa el formato completo", () => {
-    expect(formatAmountCompact(money(12500n, "UYU"), { showSign: false })).toBe("$ 125,00");
+    expect(formatAmountCompact(money(12500n, "UYU"), { showSign: false })).toBe("$U 125,00");
   });
 
   it("millones", () => {
-    expect(formatAmountCompact(money(1_250_000_00n, "UYU"), { showSign: false })).toBe("$ 1,2 M");
+    expect(formatAmountCompact(money(1_250_000_00n, "UYU"), { showSign: false })).toBe("$U 1,2 M");
   });
 });

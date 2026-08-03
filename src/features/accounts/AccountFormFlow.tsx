@@ -7,6 +7,8 @@ import { Button, Chip, Icon, IconButton, Input, Keypad, OptionCard, SegmentedCon
 import { ScreenShell } from "@/components/screen-shell";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { formatAmountCompact } from "@/lib/money/format";
+import { money } from "@/lib/money/money";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { COUNTRIES, CURRENCIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
@@ -65,6 +67,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [visibility, setVisibility] = useState<Visibility>(existing?.visibility === "private" ? "private" : "household");
   const [statementDay, setStatementDay] = useState(existing?.statementDay?.toString() ?? "");
   const [dueDay, setDueDay] = useState(existing?.dueDay?.toString() ?? "");
+  const [creditLimitExpr, setCreditLimitExpr] = useState("");
   const [interestRate, setInterestRate] = useState(existing?.interestRate ?? "");
   const [termMonths, setTermMonths] = useState(existing?.termMonths?.toString() ?? "");
   const [step, setStep] = useState<"kind" | "details">(existing ? "details" : "kind");
@@ -77,13 +80,17 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
     setSaving(true);
     try {
       const openingBalance = existing ? existing.openingBalance : evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
+      const creditLimit =
+        kind === "credit_card" && creditLimitExpr.trim() !== ""
+          ? evaluateKeypadExpression(creditLimitExpr, currencyCode, numberLocaleForUiLocale(locale)).amount
+          : (existing?.creditLimit ?? null);
       const patch = {
         name: name.trim(),
         kind,
         countryCode,
         currencyCode,
         color,
-        creditLimit: null,
+        creditLimit: kind === "credit_card" ? creditLimit : null,
         statementDay: kind === "credit_card" ? Number(statementDay) : null,
         dueDay: kind === "credit_card" ? Number(dueDay) : null,
         interestRate: kind === "loan" ? interestRate : null,
@@ -237,10 +244,19 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           ) : null}
 
           {kind === "credit_card" ? (
-            <div style={{ display: "flex", gap: 12 }}>
-              <Input label={t("accounts.form.statementDay")} value={statementDay} onChange={(e) => setStatementDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
-              <Input label={t("accounts.form.dueDay")} value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
-            </div>
+            <>
+              <div style={{ display: "flex", gap: 12 }}>
+                <Input label={t("accounts.form.statementDay")} value={statementDay} onChange={(e) => setStatementDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
+                <Input label={t("accounts.form.dueDay")} value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
+              </div>
+              <div>
+                <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.creditLimit")}</p>
+                <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 24, marginBottom: 8 }}>
+                  {currencyCode} {creditLimitExpr || (existing?.creditLimit ? formatAmountCompact(money(existing.creditLimit, currencyCode), { showSign: false }) : "0")}
+                </div>
+                <Keypad onKey={(k) => setCreditLimitExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setCreditLimitExpr("")} />
+              </div>
+            </>
           ) : null}
 
           {kind === "loan" ? (

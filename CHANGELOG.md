@@ -6,6 +6,66 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.10.0] — 2026-08-03
+
+### Agregado — tarjetas de crédito, pago por transferencia y cumpleaños
+
+- **Liquidación real de resumen de tarjeta.** "Pagar tarjeta" ya no enruta genérico a
+  `/add`: precarga el módulo de transferencia con la tarjeta como destino y el monto a pagar,
+  deja la cuenta de origen sin elegir a propósito, y si el origen termina en otra moneda
+  muestra la tasa de cambio ajustable (`FxEditor`, mismo componente y misma dirección de
+  lectura que Ajustes/Monedas: "1 USD = X", nunca "1 ARS = 0,00066 USD"). Al confirmar,
+  `cardStatementsRepo.markPaid` acumula el pago (soporta parcial) y cascadea a
+  `debtsRepo.markInstallmentPaid` sobre las cuotas del período liquidado — antes esas dos
+  funciones existían pero nadie las llamaba.
+- **Reconciliación del "dólar tarjeta".** Si la tarjeta se paga desde una cuenta de otra
+  moneda, la transferencia convierte con la cotización normal (no la marcada del resumen
+  bancario) — la diferencia entre el nominal y lo efectivamente aplicado se muestra sola, sin
+  que la app calcule ningún impuesto. La pantalla de ciclo de la tarjeta suma un desglose de
+  consumos por moneda.
+- **Recordatorio de vencimiento.** Nuevo tipo de notificación `card_statement_due` (aviso 3
+  días antes de vencer, con el mismo mecanismo de opt-in/de-dup que `budget_alerts` y
+  `recurring_reminders`), y `creditLimit` ahora editable al crear/editar una tarjeta.
+- **Sección propia para tarjetas en el home**, separada del carrusel de cuentas de liquidez —
+  una tarjeta no es plata disponible, es gasto acumulado pendiente de pagar.
+- **Cumpleaños.** La fecha de nacimiento (opcional, solo estadística) ahora muestra la edad
+  calculada en el perfil, alimenta un desglose por rango etario en el panel de operador, y
+  dispara un banner no bloqueante y descartable en el home el día del cumpleaños.
+
+### Corregido — carrusel de cuentas, transferencias, recurrentes, símbolos de moneda
+
+- **El carrusel de cuentas del home quedaba recortado e inutilizable en mobile** — `<main>`
+  activaba `overflow-x: auto` implícito (regla de CSS: `overflow-y` sin `overflow-x`
+  explícito) que le ganaba el gesto táctil al scroll propio del carrusel. En desktop, sin
+  touch ni scrollbar visible, tampoco había forma de moverlo con mouse — ahora la rueda
+  vertical hace scroll horizontal cuando el contenido desborda.
+- **Transferencias entre monedas distintas no mostraban ni dejaban ajustar el tipo de
+  cambio** — se resolvía en silencio contra `fxRepo`. Ahora `AmountStep` muestra `FxEditor`
+  siempre que las dos cuentas de una transferencia tengan monedas distintas, con override
+  manual persistido en el movimiento.
+- **Un origen de transferencia podía quedar elegido sin que el usuario lo tocara** —
+  `CaptureFlow` caía a `accounts[0]` por default; ahora ese fallback no aplica a
+  transferencias, así que "Guardar" queda deshabilitado hasta elegir las dos cuentas.
+- **Recurrentes: la moneda del monto ignoraba la cuenta elegida** y usaba siempre la moneda
+  base del household — el propio `currency_code` guardado en la regla también estaba mal, no
+  solo la vista. El detalle ahora muestra cuenta + moneda (antes solo el nombre). `/recurring`
+  suma filtros por cuenta y moneda, y el detalle de cualquier cuenta (o la pantalla dedicada
+  de tarjeta) enlaza a sus recurrentes asociadas.
+- **`/recurring` esperaba el historial completo de movimientos** para renderizar incluso las
+  reglas ya resueltas — se acotó al mes en curso, más rápido y sin motivo para pedir más.
+- **Símbolos de moneda: el peso uruguayo no tenía uno propio**, usaba el "$" genérico
+  indistinguible de cualquier otro peso en la misma lista — ahora es "$U". Se sumaron más
+  símbolos reales y los siete decimales de 3 cifras de ISO 4217 (BHD, IQD, JOD, KWD, LYD, OMR,
+  TND) que faltaban en la tabla. Nueva nota en Acerca de explicando que ISO 4217 define
+  códigos, no símbolos.
+- **Scroll horizontal no pedido en el panel de detalle de escritorio** (`/accounts` y
+  `/transactions`, columna derecha) — mismo origen que el bug del carrusel: `overflow-y: auto`
+  sin `overflow-x` explícito. Ahora esa columna tiene `min-width`/`max-width` fijos y
+  `overflow-x: hidden`.
+- Franja blanca en el borde inferior del sidebar y de `/accounts` en desktop, reemplazada por
+  un degradé de desvanecido. Ícono de comercio para payees (antes billetera). "Cerrar sesión"
+  al final del sidebar de escritorio.
+
 ## [0.9.31] — 2026-08-03
 
 ### Corregido — categoría seleccionada visible, etiquetas en home, patrimonio neto y cuentas del home

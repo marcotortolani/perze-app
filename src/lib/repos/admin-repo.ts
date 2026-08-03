@@ -17,6 +17,7 @@ export interface AdminMetrics {
   approved: number;
   rejected: number;
   byCountry: Record<string, number>;
+  byAgeRange: Record<string, number>;
   activeToday: number;
   active7d: number;
   active30d: number;
@@ -57,6 +58,7 @@ export const adminRepo = {
       approved: Number(m.approved ?? 0),
       rejected: Number(m.rejected ?? 0),
       byCountry: (m.byCountry ?? {}) as Record<string, number>,
+      byAgeRange: (m.byAgeRange ?? {}) as Record<string, number>,
       activeToday: Number(m.activeToday ?? 0),
       active7d: Number(m.active7d ?? 0),
       active30d: Number(m.active30d ?? 0),

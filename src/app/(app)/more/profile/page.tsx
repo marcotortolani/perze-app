@@ -9,6 +9,7 @@ import { AppHeader, Button, Input, ListRow, Sheet, Skeleton } from "@/design-sys
 import { useCurrentUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
+import { ageFromBirthDate } from "@/lib/analytics/age";
 
 /**
  * K2 — perfil: solo datos de la persona (nombre, email, fecha de
@@ -84,7 +85,7 @@ export default function ProfilePage() {
           type="date"
           value={currentBirthDate}
           onChange={(e) => setBirthDate(e.target.value)}
-          hint={t("profilePage.birthDateHint")}
+          hint={currentBirthDate ? t("profilePage.ageHint", { age: ageFromBirthDate(currentBirthDate) }) : t("profilePage.birthDateHint")}
         />
         <Button disabled={!displayName.trim() || saving || !dirty} onClick={handleSave}>
           {t("common.save")}

@@ -177,6 +177,8 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
           frequent={frequentCategories}
           account={account}
           counterAccount={counterAccount}
+          householdId={household.id}
+          onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
           onKindChange={setKind}
           onAmountKey={(key) => (key === "clear" ? clearAmount() : key === "backspace" ? backspaceAmount() : appendToAmount(key === "," ? "," : key))}
           onAmountChange={(expression) => setField("amountExpression", expression)}
@@ -186,6 +188,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
             const from = draft.accountId;
             setField("accountId", draft.counterAccountId);
             setField("counterAccountId", from);
+            setField("counterFxRateOverride", null);
           }}
           onQuickCategory={(category) => setField("categoryId", category.id)}
           onOpenCategoryPicker={() => setStep("category")}

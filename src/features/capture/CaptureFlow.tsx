@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { IconButton } from "@/design-system";
@@ -50,6 +51,7 @@ export interface CaptureFlowProps {
 export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
@@ -88,6 +90,28 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const recordSave = useCaptureRecencyStore((s) => s.recordSave);
   const reset = useCaptureDraftStore((s) => s.reset);
 
+  // Precarga desde query params (p. ej. "Pagar tarjeta" desde el detalle
+  // de una cuenta) — llega DESPUÉS del reset-on-mount de arriba, porque un
+  // `useEffect` corre tras el commit, nunca antes: escribir el prefill vía
+  // el store antes de navegar acá se perdía siempre, porque el reset de
+  // línea 79 corre último dentro del mismo montaje. Una sola vez (mismo
+  // patrón que `appliedShareTarget` en `/add`), y nunca toca `accountId` —
+  // el origen de una transferencia precargada se deja sin elegir a propósito.
+  const appliedPrefill = useRef(false);
+  useEffect(() => {
+    if (appliedPrefill.current) return;
+    appliedPrefill.current = true;
+    const prefillKind = searchParams.get("prefillKind");
+    const prefillCounterAccountId = searchParams.get("prefillCounterAccountId");
+    const prefillAmountExpression = searchParams.get("prefillAmountExpression");
+    const prefillCurrency = searchParams.get("prefillCurrency");
+    if (!prefillKind && !prefillCounterAccountId && !prefillAmountExpression) return;
+    if (prefillKind === "transfer") setKind("transfer");
+    if (prefillCounterAccountId) setField("counterAccountId", prefillCounterAccountId);
+    if (prefillAmountExpression) setField("amountExpression", prefillAmountExpression);
+    if (prefillCurrency) setField("currency", prefillCurrency);
+  }, [searchParams, setKind, setField]);
+
   const [step, setStep] = useState<Step>("amount");
   const [sheet, setSheet] = useState<SheetKind>("none");
 
@@ -95,7 +119,12 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // categoría". Se resuelve derivado, nunca escribiendo al store durante
   // el render: si el usuario no eligió ninguna, `doSave` cae a esta misma
   // cuenta por default sin necesidad de persistirla antes de guardar.
-  const account = accounts.find((a) => a.id === draft.accountId) ?? accounts[0];
+  // En una transferencia NO se aplica este fallback: elegir el origen es
+  // una decisión real de plata (de qué cuenta sale), nunca un default
+  // silencioso — antes `accounts[0]` quedaba de "origen" sin que el
+  // usuario lo hubiera tocado, incluso en flujos precargados como
+  // "pagar tarjeta" donde el pedido es justamente dejarlo sin elegir.
+  const account = accounts.find((a) => a.id === draft.accountId) ?? (draft.kind === "transfer" ? undefined : accounts[0]);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
 
   const categoryKind = draft.kind === "income" ? "income" : "expense";
@@ -253,6 +282,8 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
           frequent={frequentCategories}
           account={account}
           counterAccount={counterAccount}
+          householdId={household.id}
+          onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
           onKindChange={setKind}
           onAmountKey={handleAmountKey}
           onAmountChange={(expression) => setField("amountExpression", expression)}
@@ -262,6 +293,10 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
             const from = draft.accountId;
             setField("accountId", draft.counterAccountId);
             setField("counterAccountId", from);
+            // Invertir el par también invierte a qué lado corresponde el
+            // rate — más simple y seguro pedirlo de nuevo que arrastrar un
+            // ajuste manual que ya no aplica al par nuevo.
+            setField("counterFxRateOverride", null);
           }}
           onQuickCategory={async (category) => {
             setField("categoryId", category.id);
@@ -294,12 +329,29 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         </>
       )}
 
-      <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
+      <AccountPickerSheet
+        open={sheet === "account"}
+        title={t("capture.accountPicker.sourceTitle")}
+        accounts={accounts}
+        onSelect={(a) => {
+          setField("accountId", a.id);
+          setField("counterFxRateOverride", null);
+          // Un origen recién elegido en una transferencia precargada (p. ej.
+          // "pagar tarjeta") vuelve a interpretar el monto en SU moneda, no
+          // en la que traía el prefill — evita una doble conversión que
+          // nadie ve (captura→origen silenciosa más origen→destino ajustable).
+          if (draft.kind === "transfer") setField("currency", "");
+        }}
+        onClose={() => setSheet("none")}
+      />
       <AccountPickerSheet
         open={sheet === "counterAccount"}
         title={t("capture.accountPicker.destinationTitle")}
         accounts={accounts.filter((a: AccountRow) => a.id !== draft.accountId)}
-        onSelect={(a) => setField("counterAccountId", a.id)}
+        onSelect={(a) => {
+          setField("counterAccountId", a.id);
+          setField("counterFxRateOverride", null);
+        }}
         onClose={() => setSheet("none")}
       />
       <DetailsSheet

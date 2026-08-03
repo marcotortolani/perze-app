@@ -4,15 +4,17 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
-import { AmountScrubber, Chip, Icon, Keypad, KeypadKey, SegmentedControl } from "@/design-system";
+import { AmountScrubber, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
+import { invertRate } from "@/lib/fx/rate";
 import { formatAmount } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 export interface AmountStepProps {
@@ -22,6 +24,9 @@ export interface AmountStepProps {
   frequent: CategoryRow[];
   account: AccountRow | undefined;
   counterAccount: AccountRow | undefined;
+  /** Solo para resolver el rate sugerido de `FxEditor` en una transferencia entre monedas distintas. */
+  householdId: string | undefined;
+  onCounterFxRateChange: (rate: bigint) => void;
   onKindChange: (kind: CaptureKind) => void;
   onAmountKey: (key: string) => void;
   /** Reemplaza `amountExpression` entero con un monto absoluto — lo produce el drag del `AmountScrubber`, no una tecla más. */
@@ -79,6 +84,8 @@ export function AmountStep({
   frequent,
   account,
   counterAccount,
+  householdId,
+  onCounterFxRateChange,
   onKindChange,
   onAmountKey,
   onAmountChange,
@@ -128,6 +135,22 @@ export function AmountStep({
 
   const isTransfer = draft.kind === "transfer";
   const hasAccounts = accounts.length > 0;
+  // Dos cuentas de distinta moneda en una transferencia (p. ej. pagar una
+  // tarjeta en ARS desde una cuenta en USD) necesitan el mismo rate que
+  // cualquier otra conversión — mostrado y ajustable, no resuelto en
+  // silencio como pasaba hasta ahora en este paso.
+  const crossCurrencyTransfer = isTransfer && !!account && !!counterAccount && account.currencyCode !== counterAccount.currencyCode;
+  const suggestedRate = useSuggestedFxRate(householdId, account?.currencyCode, counterAccount?.currencyCode);
+  // El rate interno siempre es "unidades de destino por 1 de origen"
+  // (`convert(monto_en_origen, destino, rate)`) — para un par USD/ARS eso
+  // da "1 ARS = 0,00066 USD", ilegible. `docs/02-design-system.md`/
+  // `/currencies` ya resolvieron esto para el resto de la app: mostrar
+  // siempre "1 USD = X" cuando USD participa (moneda ancla del Cono Sur,
+  // `CLAUDE.md`), invirtiendo solo para MOSTRAR/EDITAR — nunca lo que se
+  // guarda, que sigue siendo el rate interno de siempre.
+  const rateNumeratorIsSource = !(account && counterAccount && counterAccount.currencyCode === "USD" && account.currencyCode !== "USD");
+  const toInternalRate = (displayRate: bigint) => (rateNumeratorIsSource ? displayRate : invertRate(displayRate));
+  const toDisplayRate = (internalRate: bigint) => (rateNumeratorIsSource ? internalRate : invertRate(internalRate));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
@@ -174,7 +197,19 @@ export function AmountStep({
             <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{counterAccount ? counterAccount.name : t("capture.chooseAccount")}</div>
           </button>
         </div>
-      ) : (
+      ) : null}
+
+      {crossCurrencyTransfer && suggestedRate.data?.rate !== undefined && suggestedRate.data.rate !== null ? (
+        <FxEditor
+          from={rateNumeratorIsSource ? account!.currencyCode : counterAccount!.currencyCode}
+          to={rateNumeratorIsSource ? counterAccount!.currencyCode : account!.currencyCode}
+          rate={toDisplayRate(draft.counterFxRateOverride ?? suggestedRate.data.rate)}
+          suggested={toDisplayRate(suggestedRate.data.rate)}
+          onChange={(displayRate) => onCounterFxRateChange(toInternalRate(displayRate))}
+        />
+      ) : null}
+
+      {!isTransfer ? (
         <button
           type="button"
           onClick={onOpenAccountPicker}
@@ -182,7 +217,7 @@ export function AmountStep({
         >
           {account ? `${account.name} · ${currency}` : t("capture.chooseAccount")}
         </button>
-      )}
+      ) : null}
 
       {!isTransfer ? (
         // Ítem 11: 5 chips + "Otros" tienen que entrar en 2 filas en un

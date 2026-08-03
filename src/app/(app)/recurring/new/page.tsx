@@ -44,10 +44,10 @@ export default function NewRecurringRulePage() {
   const canSave = name.trim() !== "" && expr.trim() !== "" && !!accountId;
 
   const handleSave = async () => {
-    if (!canSave || saving) return;
+    if (!canSave || saving || !account) return;
     setSaving(true);
     try {
-      const amount = evaluateKeypadExpression(expr, household.baseCurrency, numberLocaleForUiLocale(locale));
+      const amount = evaluateKeypadExpression(expr, account.currencyCode, numberLocaleForUiLocale(locale));
       await recurringRulesRepo.create({
         householdId: household.id,
         name: name.trim(),
@@ -55,7 +55,7 @@ export default function NewRecurringRulePage() {
         categoryId,
         accountId: accountId!,
         expectedAmount: amount.amount,
-        currencyCode: household.baseCurrency,
+        currencyCode: account.currencyCode,
         dayOfMonth: day,
         createdBy: userId,
       });
@@ -84,7 +84,7 @@ export default function NewRecurringRulePage() {
 
         <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("goalsPage.account")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
+          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
         </button>
 
         <button type="button" onClick={() => setSheet("category")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
@@ -93,7 +93,7 @@ export default function NewRecurringRulePage() {
         </button>
 
         <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
-          {household.baseCurrency} {expr || "0"}
+          {account?.currencyCode ?? household.baseCurrency} {expr || "0"}
         </div>
 
         <div style={{ marginTop: "auto" }}>

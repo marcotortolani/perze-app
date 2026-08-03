@@ -11,8 +11,8 @@ import { useInvalidateNotificationPreferences, useNotificationPreferences } from
 import { notificationPreferencesRepo, type NotificationPreferences } from "@/lib/repos/notification-preferences-repo";
 import { getCurrentPushSubscription, PushUnsupportedError, subscribeToPush, unsubscribeFromPush } from "@/lib/push/subscribe";
 
-type ToggleKey = "budgetAlerts" | "weeklySummary" | "recurringReminders" | "insights";
-const TOGGLES: ToggleKey[] = ["budgetAlerts", "weeklySummary", "recurringReminders", "insights"];
+type ToggleKey = "budgetAlerts" | "weeklySummary" | "recurringReminders" | "insights" | "cardStatementDue";
+const TOGGLES: ToggleKey[] = ["budgetAlerts", "weeklySummary", "recurringReminders", "insights", "cardStatementDue"];
 
 /** K12 — notificaciones: push por dispositivo + preferencias por tipo. Sin promesa de engagement: apagado por defecto, el usuario prende lo que quiere. */
 export default function NotificationsPage() {

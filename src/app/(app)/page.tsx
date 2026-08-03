@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   AccountCarousel,
+  AccountRow,
   Banner,
   EmptyState,
   ErrorState,
@@ -17,13 +18,19 @@ import {
   TransactionRow,
   fitScale,
 } from "@/design-system";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkline } from "@/design-system/charts";
 import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
 import { CountUp } from "@/components/motion";
 import { HomeSkeleton } from "@/components/home-skeleton";
+import { BirthdayBanner } from "@/components/birthday-banner";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
+import { useBirthdayBannerStore } from "@/stores/birthday-banner-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useCurrentUserId } from "@/hooks/use-current-user";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
+import { ageFromBirthDate, isBirthdayToday } from "@/lib/analytics/age";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
@@ -41,8 +48,9 @@ import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } fro
 import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
+import { accountColorVar } from "@/lib/reference/account-colors";
 import { useCategoryLabel } from "@/hooks/use-category-label";
-import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
+import type { AccountRow as AccountRowData, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
 function startOfPeriod(now: Date, startDay: number): Date {
   const start = new Date(now.getFullYear(), now.getMonth(), startDay);
@@ -103,6 +111,10 @@ export default function HomePage() {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
+  const userId = useCurrentUserId();
+  const { data: profile } = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
+  const dismissedYear = useBirthdayBannerStore((s) => s.dismissedYear);
+  const dismissBirthdayBanner = useBirthdayBannerStore((s) => s.dismiss);
   const accountsQuery = useAccounts(household?.id);
   const { data: accounts, isLoading: accountsLoading } = accountsQuery;
   const { data: categories = [] } = useCategories(household?.id);
@@ -161,7 +173,7 @@ export default function HomePage() {
   const [insightDismissed, setInsightDismissed] = useState(false);
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const accountById = useMemo(() => new Map((accounts ?? []).map((a: AccountRow) => [a.id, a])), [accounts]);
+  const accountById = useMemo(() => new Map((accounts ?? []).map((a: AccountRowData) => [a.id, a])), [accounts]);
 
   if (!household || accountsLoading || txLoading) return <HomeSkeleton />;
 
@@ -221,7 +233,14 @@ export default function HomePage() {
   const topCategoryEntry = [...spendByCategory.entries()].sort((a, b) => (b[1] > a[1] ? 1 : -1))[0];
   const topCategory = topCategoryEntry ? categoryById.get(topCategoryEntry[0]) : undefined;
 
-  const accountSummaries = allAccounts.map((a) => ({
+  // Las tarjetas de crédito no son liquidez: no tenés esa plata disponible,
+  // vas acumulando un gasto pendiente de pagar. Van a su propia sección más
+  // abajo, no al carrusel de cuentas — mezclarlas ahí las hacía leerse como
+  // si fueran saldo disponible.
+  const liquidityAccounts = allAccounts.filter((a) => a.kind !== "credit_card");
+  const creditCardAccounts = allAccounts.filter((a) => a.kind === "credit_card");
+
+  const accountSummaries = liquidityAccounts.map((a) => ({
     id: a.id,
     institution: a.name,
     name: t(ACCOUNT_KIND_MESSAGE_KEY[a.kind]),
@@ -240,8 +259,12 @@ export default function HomePage() {
 
   const recentTransactions = allTransactions.slice(0, 5);
 
+  const showBirthdayBanner = !!profile?.birthDate && isBirthdayToday(profile.birthDate, now) && dismissedYear !== now.getFullYear();
+  const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
+      {showBirthdayBanner ? <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} /> : null}
       {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
       {conflicts.length > 0 ? (
         <Banner
@@ -307,6 +330,26 @@ export default function HomePage() {
           real, así que ahí sí cae al listado general; el resto va directo
           al detalle de ESA cuenta, no a la lista completa. */}
       <AccountCarousel accounts={accountSummaries} privacy={privacy} onSelect={(id) => router.push(id === "__total" ? "/accounts" : `/accounts/${id}`)} />
+
+      {creditCardAccounts.length > 0 ? (
+        <section>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("home.creditCards")}</div>
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+            {creditCardAccounts.map((a) => (
+              <AccountRow
+                key={a.id}
+                name={a.name}
+                meta={t("home.creditCardCycleMeta")}
+                balance={money(-a.currentBalance, a.currencyCode)}
+                icon="credit-card"
+                iconBackground={accountColorVar(a.color)}
+                privacy={privacy}
+                onClick={() => router.push(`/accounts/${a.id}/card`)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section style={{ display: "flex", gap: 24 }}>
         <button

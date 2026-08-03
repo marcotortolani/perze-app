@@ -551,6 +551,26 @@ debt_schedule (
   principal_amount bigint, interest_amount bigint,
   paid_at timestamptz NULL, transaction_id uuid NULL
 )
+
+-- E4 — resúmenes de tarjeta de crédito. Hija de accounts (Patrón B), sin
+-- sync offline (bajo volumen, igual que payees/tags). `paid_amount` se
+-- acumula con cada liquidación parcial; `status` pasa a 'paid' recién
+-- cuando `paid_amount >= statement_balance`. `settlement_transaction_id`
+-- apunta a la transferencia real que liquidó el resumen (mismo patrón que
+-- `debt_schedule.transaction_id`) — de esa transferencia sale la
+-- reconciliación: si se paga desde una cuenta en otra moneda, el monto
+-- aplicado en la moneda de la tarjeta puede diferir del `statement_balance`
+-- nominal (caso "dólar tarjeta" en Argentina). La app nunca calcula ese
+-- impuesto/recargo: solo expone la diferencia entre lo nominal y lo
+-- efectivamente aplicado.
+card_statements (
+  id uuid PK, account_id uuid,
+  period_start date, period_end date, closing_date date, due_date date,
+  statement_balance bigint, minimum_payment bigint NULL, currency_code text,
+  paid_amount bigint default 0,
+  status text CHECK (status IN ('open','closed','paid','overdue')),
+  settlement_transaction_id uuid NULL
+)
 ```
 
 ### 2.8 Inversiones (módulo opcional)

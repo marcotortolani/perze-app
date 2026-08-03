@@ -432,6 +432,7 @@ export type Database = {
           paid_amount: number
           period_end: string
           period_start: string
+          settlement_transaction_id: string | null
           statement_balance: number
           status: string
           updated_at: string
@@ -447,6 +448,7 @@ export type Database = {
           paid_amount?: number
           period_end: string
           period_start: string
+          settlement_transaction_id?: string | null
           statement_balance: number
           status?: string
           updated_at?: string
@@ -462,6 +464,7 @@ export type Database = {
           paid_amount?: number
           period_end?: string
           period_start?: string
+          settlement_transaction_id?: string | null
           statement_balance?: number
           status?: string
           updated_at?: string
@@ -480,6 +483,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "card_statements_settlement_transaction_id_fkey"
+            columns: ["settlement_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1490,6 +1500,7 @@ export type Database = {
       notification_preferences: {
         Row: {
           budget_alerts: boolean
+          card_statement_due: boolean
           created_at: string
           household_id: string
           id: string
@@ -1501,6 +1512,7 @@ export type Database = {
         }
         Insert: {
           budget_alerts?: boolean
+          card_statement_due?: boolean
           created_at?: string
           household_id: string
           id: string
@@ -1512,6 +1524,7 @@ export type Database = {
         }
         Update: {
           budget_alerts?: boolean
+          card_statement_due?: boolean
           created_at?: string
           household_id?: string
           id?: string

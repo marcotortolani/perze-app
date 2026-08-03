@@ -679,6 +679,14 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Sin esto, `overflow-y: auto` solo activa `overflow-x: auto` implícito
+     por la propia regla de `overflow` (spec) — y ESE scroller horizontal
+     ganaba el gesto táctil sobre el de `AccountCarousel` (su hijo, con su
+     propio `overflow-x: auto` para el snap de cuentas), dejando el
+     carrusel recortado e inutilizable en mobile. El único scroll
+     horizontal de esta pantalla tiene que ser el del carrusel, nunca el
+     de `<main>`. */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   padding-inline: var(--screen-padding);
 }

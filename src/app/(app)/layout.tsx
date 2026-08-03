@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Sidebar, TabBar, type TabItem, type SidebarNavGroup } from "@/design-system";
+import { AppHeader, Sheet, Sidebar, TabBar, type TabItem, type SidebarNavGroup } from "@/design-system";
+import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
 import { usePendingMutations } from "@/lib/offline";
@@ -63,6 +64,25 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const showScope = (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm">("none");
+  const [unsyncedCount, setUnsyncedCount] = useState(0);
+
+  // Mismo flujo que `/more`: si hay cambios sin sincronizar se avisa antes
+  // de cerrar sesión, si no hay nada que perder se cierra directo.
+  const handleSignOutRequest = async () => {
+    const count = await countUnsyncedChanges();
+    if (count > 0) {
+      setUnsyncedCount(count);
+      setSignOutSheet("confirm");
+      return;
+    }
+    await signOut();
+    router.replace("/onboarding");
+  };
+  const doSignOut = async () => {
+    await signOut();
+    router.replace("/onboarding");
+  };
 
   // Deep link `/?search=1` — usado por el redirect de `/search` (viejo
   // punto de entrada, e2e y shortcuts de PWA lo siguen apuntando ahí) y
@@ -176,6 +196,8 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         active={activeDesktopId ?? undefined}
         onNavigate={(route) => router.push(route)}
         onAdd={() => router.push("/add")}
+        onSignOut={handleSignOutRequest}
+        signOutLabel={t("morePage.signOut")}
         className="hidden lg:flex"
       />
       <div className="app-shell-column">
@@ -218,6 +240,28 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
       </div>
       {modal}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      <Sheet open={signOutSheet === "confirm"} title={t("morePage.signOutConfirmTitle")} onClose={() => setSignOutSheet("none")} height={260}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+            {t("morePage.signOutUnsyncedWarning", { count: unsyncedCount })}
+          </p>
+          <button
+            type="button"
+            onClick={doSignOut}
+            style={{ background: "var(--critical)", color: "var(--primary-on-fill)", border: 0, borderRadius: "var(--radius-button)", height: 56, cursor: "pointer", fontSize: 17, fontWeight: 600 }}
+          >
+            {t("morePage.signOutConfirmAction")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSignOutSheet("none")}
+            style={{ background: "none", border: 0, cursor: "pointer", fontSize: 15, color: "var(--text-secondary)", padding: 8 }}
+          >
+            {t("common.cancel")}
+          </button>
+        </div>
+      </Sheet>
     </div>
   );
 }

@@ -10,6 +10,12 @@ export interface CaptureDraft {
   accountId: string | null;
   /** Solo `transfer`. */
   counterAccountId: string | null;
+  /**
+   * Solo `transfer` entre monedas distintas — override manual del rate
+   * sugerido (`fxRepo.resolve`), ajustable con el slider ±5% de `FxEditor`.
+   * `null` mientras no se toque: se resuelve el rate del día como siempre.
+   */
+  counterFxRateOverride: bigint | null;
   categoryId: string | null;
   /** ISO datetime. */
   occurredAt: string;
@@ -40,6 +46,7 @@ function emptyDraft(): CaptureDraft {
     currency: "",
     accountId: null,
     counterAccountId: null,
+    counterFxRateOverride: null,
     categoryId: null,
     occurredAt: new Date().toISOString(),
     payeeName: "",

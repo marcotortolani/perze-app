@@ -15,9 +15,12 @@ import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useLatestCardStatement } from "@/hooks/use-card-statements";
+import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { computeTransactionEffects } from "@/lib/repos/balance-effects";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { money, toMajorUnitsUnsafe } from "@/lib/money/money";
+import { amountToExpression } from "@/features/capture/AmountStep";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -43,6 +46,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions = [] } = useTransactions(household?.id, { accountId: id });
   const invalidateAccounts = useInvalidateAccounts(household?.id);
+  const { data: latestStatement } = useLatestCardStatement(id);
+  const { data: recurringRules = [] } = useRecurringRules(household?.id);
+  const accountRecurringCount = recurringRules.filter((r) => r.accountId === id).length;
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
@@ -104,6 +110,27 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     toast(t("accountsPage.detail.archived"));
   };
 
+  // "Pagar tarjeta" en vez de "Transferir": técnicamente es la misma
+  // transferencia, pero nadie dice "transferir a la tarjeta" — precarga el
+  // módulo de `/add` con la tarjeta como destino y el monto a pagar, y deja
+  // la cuenta de origen sin elegir a propósito (es la decisión real que
+  // falta tomar). Si el origen termina en otra moneda, `AmountStep` ya
+  // muestra el `FxEditor` ajustable para esa conversión.
+  const handlePayCard = () => {
+    // Query params, no el store: `CaptureFlow` resetea el draft entero en
+    // cada montaje (garantiza que "+" siempre arranca en blanco) — cargar
+    // el prefill ACÁ, antes de navegar, se perdía siempre porque ese reset
+    // corre después. `CaptureFlow` lo aplica en un efecto propio, una vez.
+    const dueAmount = latestStatement ? latestStatement.statementBalance - latestStatement.paidAmount : 0n;
+    const params = new URLSearchParams({
+      prefillKind: "transfer",
+      prefillCounterAccountId: account.id,
+      prefillAmountExpression: amountToExpression(dueAmount > 0n ? dueAmount : 0n, account.currencyCode, locale),
+      prefillCurrency: account.currencyCode,
+    });
+    router.push(`/add?${params.toString()}`);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
       <IconButton icon="chevron-left" ariaLabel={t("accountsPage.detail.back")} onClick={() => router.push("/accounts")} style={{ alignSelf: "flex-start", margin: -11 }} />
@@ -160,7 +187,14 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <ListRow icon="edit" label={t("accountsPage.detail.edit")} onClick={() => router.push(`/accounts/${account.id}/edit`)} />
         <ListRow icon="target" label={t("accountsPage.detail.reconcile")} onClick={() => router.push(`/accounts/${account.id}/reconcile`)} />
-        <ListRow icon="refresh" label={t("accountsPage.detail.transfer")} onClick={() => router.push("/add")} />
+        {accountRecurringCount > 0 ? (
+          <ListRow icon="refresh" label={t("recurringPage.viewRecurring")} value={String(accountRecurringCount)} variant="value" onClick={() => router.push(`/recurring?accountId=${account.id}`)} />
+        ) : null}
+        {isCreditCard ? (
+          <ListRow icon="credit-card" label={t("accountsPage.detail.payCard")} onClick={handlePayCard} />
+        ) : (
+          <ListRow icon="refresh" label={t("accountsPage.detail.transfer")} onClick={() => router.push("/add")} />
+        )}
         <ListRow icon="trash" label={t("accountsPage.detail.archive")} destructive onClick={handleArchive} />
       </div>
 

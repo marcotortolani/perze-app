@@ -328,6 +328,7 @@
    "statementDay": "Statement day",
    "dayPlaceholder": "1-31",
    "dueDay": "Due day",
+   "creditLimit": "Card limit (optional)",
    "interestRate": "Annual rate (%)",
    "interestRatePlaceholder": "e.g. 45.5",
    "termMonths": "Term (months)",
@@ -456,6 +457,7 @@
    "edit": "Edit",
    "reconcile": "Reconcile",
    "transfer": "Transfer",
+   "payCard": "Pay card",
    "archive": "Archive",
    "archived": "Account archived",
    "transactionsTitle": "Transactions in this account",
@@ -666,6 +668,9 @@
   "rejectedCount": "Rejected",
   "byCountryTitle": "By country",
   "noCountryData": "No approved users with a chosen country yet.",
+  "byAgeRangeTitle": "By age range",
+  "noAgeData": "No approved users with a birth date logged yet.",
+  "ageUnknown": "Unknown",
   "activitySectionTitle": "Activity",
   "activeToday": "Active today",
   "active7d": "Active in 7 days",
@@ -733,6 +738,10 @@
    "insights": {
     "label": "Insights",
     "description": "Things we noticed about your money"
+   },
+   "cardStatementDue": {
+    "label": "Card due date",
+    "description": "When your statement is about to come due"
    }
   }
  },
@@ -791,6 +800,7 @@
   "emailHint": "This is your identifying data — it can't be changed.",
   "birthDate": "Date of birth",
   "birthDateHint": "Optional, used only for statistics.",
+  "ageHint": "{age} years old · used only for statistics.",
   "country": "Country",
   "countryUnset": "Not set",
   "countrySheetTitle": "Choose your country",
@@ -837,6 +847,10 @@
   "dataStorageBody": "Your transactions, accounts, and budgets live first on your phone (IndexedDB) and sync with your own Supabase project when you're online. Nothing is ever shared with third parties or used to train anything. If you self-host PERZE, that server is you.",
   "operatorVisibility": "Who can see what",
   "operatorVisibilityMeta": "What whoever runs this install can see",
+  "currencyStandard": "Currency codes",
+  "currencyStandardMeta": "Why USD, ARS, UYU and not made-up symbols",
+  "currencyStandardBody1": "The app's currency codes follow the ISO 4217 standard (USD, ARS, UYU, etc.) — the international three-letter identifier banks and exchange houses use.",
+  "currencyStandardBody2": "The symbol ($, €, US$) is NOT part of that standard — it's a separate convention, and most of the world's currencies don't have a distinct, recognized one. Where a real symbol exists we show it (US$, AR$, $U for the Uruguayan peso); where it doesn't, we show the ISO code, which is the correct way to identify it without ambiguity.",
   "madeWith": "Made with",
   "madeWithBody": "Geist Sans and Geist Mono, Phosphor icons, and exchange rates from BROU. MIT licensed — the code is yours to read, change, and run anywhere."
  },
@@ -858,9 +872,13 @@
   "netWorthUsdPending": "USD rate not available today — showing in {currency}.",
   "convertedTotal": "Converted total",
   "accountsCount": "{count} accounts",
+  "creditCards": "Credit cards",
+  "creditCardCycleMeta": "Accumulated spend this cycle",
   "spentThisPeriod": "Spent this period",
   "incomeThisPeriod": "Income this period",
   "needsFxInsight": "You have {count, plural, one {# transaction} other {# transactions}} without a resolved exchange rate.",
+  "birthdayBanner": "Happy birthday! You're turning {age} today.",
+  "birthdayBannerDismiss": "Dismiss",
   "budgetExceededInsight": "You went over the {category} budget — you're at {percent}%.",
   "budgetWarningInsight": "You're at {percent}% of the {category} budget.",
   "seeBudgets": "See budgets",
@@ -1270,7 +1288,11 @@
   "archived": "Recurring charge archived.",
   "archive": "Archive",
   "committedPerMonth": "Committed per month",
-  "viewCalendar": "View the month in a calendar"
+  "viewCalendar": "View the month in a calendar",
+  "filterAllAccounts": "All accounts",
+  "filterAllCurrencies": "All currencies",
+  "emptyFiltered": "No recurring charge matches this filter.",
+  "viewRecurring": "View associated recurring charges"
  },
  "recurringCalendarPage": {
   "title": "Recurring calendar",
@@ -1311,7 +1333,18 @@
   "recentConsumptions": "Recent spending",
   "convertToInstallments": "Convert a purchase to installments",
   "noConsumptions": "No purchases this cycle to convert.",
-  "payCard": "Pay the card"
+  "payCard": "Pay the card",
+  "currencyBreakdown": "Spending by currency",
+  "reconciliation": "Payment reconciliation",
+  "reconciliationSaved": "You paid {amount} less than the nominal statement",
+  "reconciliationExtra": "You paid {amount} more than the nominal statement",
+  "reconciliationExact": "You paid exactly the statement amount",
+  "settlePickAccount": "Pay from which account",
+  "settleAmountTitle": "Pay from {name}",
+  "settleDueHint": "Due: {amount}. You can pay in full or partially.",
+  "confirmSettle": "Confirm payment",
+  "settled": "Card settled",
+  "settleError": "We couldn't register the payment. Try again."
  },
  "cardInstallmentsPage": {
   "title": "Installments and projection",

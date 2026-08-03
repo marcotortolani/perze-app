@@ -78,7 +78,7 @@ export default function TagsAndPayeesPage() {
         <section>
           <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 4 }}>{t("tagsPayeesPage.payees")}</div>
           {payees.map((payee) => (
-            <ListRow key={payee.id} icon="wallet" label={payee.name} onClick={() => setEditing({ kind: "payee", id: payee.id, name: payee.name })} />
+            <ListRow key={payee.id} icon="storefront" label={payee.name} onClick={() => setEditing({ kind: "payee", id: payee.id, name: payee.name })} />
           ))}
           <ListRow icon="plus" label={t("tagsPayeesPage.addPayee")} variant="action" onClick={() => setEditing({ kind: "payee", id: null, name: "" })} />
         </section>

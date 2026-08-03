@@ -43,6 +43,21 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
   return (
     <div
       ref={ref}
+      // Sin mouse/trackpad horizontal, un usuario de desktop con más
+      // cuentas de las que entran no tenía forma de ver el resto: la
+      // rueda vertical del mouse no mueve un `overflow-x: auto` solo, y el
+      // scrollbar está oculto a propósito (`scrollbarWidth: none`, es el
+      // look de un carrusel con snap, no el de una lista con scrollbar).
+      // Traduce la rueda vertical a horizontal SOLO cuando el gesto viene
+      // predominantemente en vertical (un trackpad que ya manda `deltaX`
+      // sigue scrolleando nativo, sin este handler pisándolo).
+      onWheel={(e) => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        const el = ref.current;
+        if (!el || el.scrollWidth <= el.clientWidth) return;
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }}
       style={{
         display: "flex",
         gap: 12,

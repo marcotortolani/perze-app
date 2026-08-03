@@ -123,10 +123,15 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
     let counterAmount = amount.amount;
     let counterFxRate: bigint | null = null;
     if (counterAccount.currencyCode !== currency) {
-      const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
-      if (resolution.rate !== null) {
-        counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
-        counterFxRate = resolution.rate;
+      if (draft.counterFxRateOverride !== null) {
+        counterAmount = convert(amount, counterAccount.currencyCode, draft.counterFxRateOverride).amount;
+        counterFxRate = draft.counterFxRateOverride;
+      } else {
+        const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
+        if (resolution.rate !== null) {
+          counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
+          counterFxRate = resolution.rate;
+        }
       }
     }
     patch.counterAmount = counterAmount;

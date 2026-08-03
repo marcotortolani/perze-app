@@ -101,7 +101,7 @@ export default function AccountsPage() {
     );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ flexShrink: 0, textAlign: "center", paddingTop: 16 }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.netWorth")}</span>
         {netWorth.data ? (
@@ -167,6 +167,13 @@ export default function AccountsPage() {
           </div>
         ) : null}
       </div>
+
+      {/* Difumina el borde inferior del scroller — decorativo, no bloquea clicks. */}
+      <div
+        aria-hidden
+        className="hidden lg:block"
+        style={{ position: "absolute", left: 0, right: 8, bottom: 0, height: 32, background: "linear-gradient(to bottom, transparent 0%, var(--page) 100%)", pointerEvents: "none" }}
+      />
     </div>
   );
 }
