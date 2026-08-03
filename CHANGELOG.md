@@ -6,6 +6,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.26] — 2026-08-02
+
+### Agregado/Corregido — deslizar para cerrar en toda hoja modal, y scroll horizontal en Detalles
+
+- **Toda hoja (`Sheet`) se puede cerrar deslizando hacia abajo**, no solo tocando afuera —
+  el gesto se capta en una franja de 44px sobre la agarradera/título, no en el contenido, así
+  que no compite con el scroll de una lista larga adentro. Se cierra pasado 120px de arrastre
+  o con velocidad alta hacia abajo; si no llega, vuelve a su lugar con spring.
+- **La hoja de "Detalles" de la captura tenía scroll horizontal en todo el módulo** — el
+  panel del sheet no acotaba `overflow-x`, así que un hijo de ancho fijo (el carrousel de
+  cuentas) podía abrir scroll lateral en el sheet ENTERO en vez de quedar contenido en su
+  propio carrousel. `Overlay` pasa a `overflowX: "hidden"` en la variante `sheet` — el
+  carrousel de cuentas y la tira de fechas, que sí necesitan desplazarse lateral, ya declaran
+  su propio `overflowX` contenido y siguen funcionando igual.
+
 ## [0.9.25] — 2026-08-02
 
 ### Corregido/Agregado — idioma y tema en Ajustes, keypad de captura y monedas

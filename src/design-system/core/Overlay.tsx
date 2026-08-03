@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useDrag } from "@use-gesture/react";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { normalizeSize } from "./size";
+
+/** Arrastrar más allá de esto (o soltar con velocidad) cierra el sheet. */
+const DRAG_CLOSE_THRESHOLD = 120;
+const DRAG_CLOSE_VELOCITY = 0.5;
 
 export interface OverlayProps {
   open: boolean;
@@ -44,12 +49,45 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
   // pesado corre una sola vez por apertura, esto se actualiza en cada
   // render sin re-disparar nada.
   const onCloseRef = useRef(onClose);
+
+  // Slide hacia abajo para cerrar — antes solo se podía tocar afuera del
+  // panel. El gesto se capta en una franja angosta arriba (agarradera +
+  // título de `Sheet`), no en el panel entero: si abarcara todo el
+  // contenido, un swipe para scrollear una lista larga competiría con el
+  // cierre. `dragY` mueve el panel entero (no solo esta franja) para que
+  // se sienta como arrastrar la hoja, no un elemento suelto adentro.
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const bindDrag = useDrag(
+    ({ down, movement: [, my], velocity: [, vy], direction: [, dy], last }) => {
+      const clamped = Math.max(0, my);
+      if (!last) {
+        setDragging(down);
+        setDragY(clamped);
+        return;
+      }
+      setDragging(false);
+      if (clamped > DRAG_CLOSE_THRESHOLD || (vy > DRAG_CLOSE_VELOCITY && dy > 0)) {
+        onCloseRef.current();
+      }
+      setDragY(0);
+    },
+    { axis: "y", filterTaps: true }
+  );
   useEffect(() => {
     onCloseRef.current = onClose;
   });
 
   useEffect(() => {
     if (!open) return;
+    // `if (!open) return null` más abajo no desmonta el componente, así
+    // que `dragY` sobreviviría de una apertura a la siguiente sin esto —
+    // reabrir mostraría el panel ya corrido hacia abajo. Sincronización
+    // genuina con el ciclo de vida "recién se abrió", no derivable del
+    // render (el drag es un gesto, no una prop).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDragY(0);
+    setDragging(false);
     previouslyFocused.current = document.activeElement;
     const panel = panelRef.current;
     // Nunca el primer `<input>` de texto: enfocarlo de entrada levanta el
@@ -139,7 +177,16 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
                 // dejar espacio vacío si el contenido es corto, este tope
                 // no resuelve eso, solo el techo.
                 maxHeight: "80dvh",
-                overflow: "auto",
+                // Nunca X: un hijo de ancho fijo (un carrousel de cuentas,
+                // una grilla angosta) no debería poder abrir scroll
+                // horizontal en el sheet ENTERO — el contenido que
+                // legítimamente necesita desplazarse lateral (una tira de
+                // fechas, el carrousel) ya declara su propio `overflowX`
+                // contenido; acá solo hace falta Y.
+                overflowY: "auto",
+                overflowX: "hidden",
+                transform: dragY ? `translateY(${dragY}px)` : undefined,
+                transition: dragging ? "none" : "transform var(--duration-fast) var(--ease-spring-snappy)",
                 ...style,
               }
             : isDesktop
@@ -147,6 +194,13 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
               : { width: "100%", maxHeight: "85dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
         }
       >
+        {isSheet ? (
+          // Franja de arrastre — solo la agarradera + el título de `Sheet`,
+          // no el contenido: si cubriera todo, un swipe para scrollear una
+          // lista larga adentro del sheet competiría con el gesto de
+          // cerrar. 44px como cualquier target de toque del sistema.
+          <div {...bindDrag()} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 44, touchAction: "none", cursor: "grab" }} />
+        ) : null}
         {children}
       </div>
     </div>,

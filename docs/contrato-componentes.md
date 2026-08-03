@@ -232,6 +232,7 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 - **Bloques:** D2, F0, G0d, I1b, J7, K4.
 - **Nota:** `container="parent"` es el default porque el sheet tiene que poder vivir dentro de un frame de 390×844 (documentación, previews, desktop de dos columnas). El `position: fixed` anterior lo hacía inservible ahí.
 - **Nota:** el panel nunca pasa el 80% del alto útil (`max-height: 80dvh` en `Overlay`), sea cual sea el `height` que se le pase — con `height="auto"` (preferible para contenido nuevo) crece con su contenido hasta ese tope y recién ahí scrollea; un `height` fijo sigue pudiendo dejar aire de más si el contenido es corto, el tope no resuelve eso.
+- **Nota:** se cierra deslizando hacia abajo desde la agarradera/título (44px de alto arriba del panel), además de tocar el scrim o Escape — el gesto se capta ahí y no en el contenido para no competir con el scroll de una lista larga adentro del sheet. Umbral: 120px arrastrados o velocidad alta hacia abajo; si no llega, vuelve a su lugar con spring.
 
 ### ScopeSwitcher — **eliminado**
 - El bloque B lo resolvió con `SegmentedControl emphasis="brand"` dentro de `AppHeader`.

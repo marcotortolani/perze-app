@@ -51,7 +51,7 @@ export function DetailsSheet({ open, onClose, draft, accounts, onSetField }: Det
 
   return (
     <Sheet open={open} title={t("capture.details_sheet.title")} onClose={onClose} height={480}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", maxHeight: 380 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", overflowX: "hidden", minWidth: 0, maxHeight: 380 }}>
         <div>
           <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
             {t("capture.details_sheet.account")}
