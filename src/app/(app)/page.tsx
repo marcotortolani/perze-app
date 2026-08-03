@@ -26,6 +26,8 @@ import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
+import { useTags } from "@/hooks/use-tags";
+import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { useNetWorthInCurrency } from "@/hooks/use-net-worth-in-currency";
@@ -104,8 +106,20 @@ export default function HomePage() {
   const accountsQuery = useAccounts(household?.id);
   const { data: accounts, isLoading: accountsLoading } = accountsQuery;
   const { data: categories = [] } = useCategories(household?.id);
+  const { data: tags = [] } = useTags(household?.id);
   const transactionsQuery = useTransactions(household?.id);
   const { data: transactions, isLoading: txLoading } = transactionsQuery;
+  const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
+  const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags]);
+  const tagNamesByTx = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const link of transactionTagLinks ?? []) {
+      const name = tagById.get(link.tagId)?.name;
+      if (!name) continue;
+      map.set(link.transactionId, [...(map.get(link.transactionId) ?? []), name]);
+    }
+    return map;
+  }, [transactionTagLinks, tagById]);
   const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
   const netWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.displayCurrency);
   const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
@@ -289,7 +303,10 @@ export default function HomePage() {
         ) : null}
       </section>
 
-      <AccountCarousel accounts={accountSummaries} privacy={privacy} onSelect={() => router.push("/accounts")} />
+      {/* `"__total"` es la card sintética del convertido — no es una cuenta
+          real, así que ahí sí cae al listado general; el resto va directo
+          al detalle de ESA cuenta, no a la lista completa. */}
+      <AccountCarousel accounts={accountSummaries} privacy={privacy} onSelect={(id) => router.push(id === "__total" ? "/accounts" : `/accounts/${id}`)} />
 
       <section style={{ display: "flex", gap: 24 }}>
         <button
@@ -355,7 +372,12 @@ export default function HomePage() {
           {recentTransactions.map((tx: TransactionRecord) => {
             const account = accountById.get(tx.accountId);
             const category = tx.categoryId ? categoryById.get(tx.categoryId) : undefined;
-            const meta = [account?.name, category ? categoryLabel(category) : (tx.kind === "transfer" ? t("home.transfer") : undefined)].filter(Boolean).join(" · ");
+            // Mismo criterio que `/transactions`: el ícono + el título ya
+            // muestran la categoría, repetirla acá es redundante — si el
+            // movimiento tiene etiquetas, se muestran ELLAS en su lugar.
+            const tagNames = tagNamesByTx.get(tx.id) ?? [];
+            const categoryOrTransfer = tx.kind === "transfer" ? t("home.transfer") : category ? categoryLabel(category) : undefined;
+            const meta = [account?.name, tagNames.length > 0 ? tagNames.join(", ") : categoryOrTransfer].filter(Boolean).join(" · ");
             const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" ? "neutral" : "negative";
             const secondary = tx.currencyCode !== baseCurrency && tx.amountBase !== null ? formatAmountCompact(money(tx.amountBase, baseCurrency), { showSign: false }) : undefined;
             return (
@@ -369,7 +391,7 @@ export default function HomePage() {
                 polarity={polarity}
                 privacy={privacy}
                 syncIssue={tx.syncState === "ok" ? undefined : tx.syncState}
-                onClick={() => router.push("/transactions")}
+                onClick={() => router.push(`/transactions/${tx.id}`)}
               />
             );
           })}

@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.31] — 2026-08-03
+
+### Corregido — categoría seleccionada visible, etiquetas en home, patrimonio neto y cuentas del home
+
+- **La categoría elegida en `/add` no se distinguía de las demás** — a diferencia de las
+  etiquetas (violeta cuando están activas), los chips de categoría nunca marcaban cuál
+  estaba seleccionada. Ahora sí.
+- **Los últimos movimientos del home tenían el mismo problema que ya se había arreglado en
+  `/transactions`**: la segunda línea repetía la categoría en vez de mostrar la etiqueta
+  cuando el movimiento tenía una. De paso, tocar un movimiento del home llevaba al listado
+  general en vez de al detalle de ESE movimiento — mismo bug, mismo lugar, se corrigió junto.
+- **"Patrimonio neto" se desbordaba a dos líneas en Análisis.** El bloque pasa de 50/50 a
+  60/40 con "tasa de ahorro" (la cifra de patrimonio es la que más se estira: moneda + miles;
+  la otra es casi siempre corta, "12,3%"), y `StatTile` suma una prop `fit` — mismo mecanismo
+  que `Amount` (encoge el `font-size` en vez de pasar a una segunda línea), para cuando ni el
+  60% alcanza.
+- **Las cards de cuenta del home llevaban al listado general de Cuentas**, no al detalle de
+  la cuenta tocada — `AccountCarousel.onSelect` recibe el id pero no se estaba usando.
+
 ## [0.9.30] — 2026-08-03
 
 ### Agregado/Corregido — etiquetas visibles en movimientos, ancho de filtros, scroll en desktop, sync y monto en cero

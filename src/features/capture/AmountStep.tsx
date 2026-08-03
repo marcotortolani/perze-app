@@ -191,7 +191,7 @@ export function AmountStep({
         // `title` lleva el nombre completo: el truncado es solo visual.
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
           {frequent.map((c) => (
-            <Chip key={c.id} icon={c.icon as IconName} maxWidth={104} title={categoryLabel(c)} onClick={() => onQuickCategory(c)}>
+            <Chip key={c.id} icon={c.icon as IconName} maxWidth={104} title={categoryLabel(c)} selected={c.id === draft.categoryId} onClick={() => onQuickCategory(c)}>
               {categoryLabel(c)}
             </Chip>
           ))}

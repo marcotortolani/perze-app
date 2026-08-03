@@ -108,12 +108,21 @@ export default function AnalyticsPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingBottom: 24 }}>
       {needsFxCount > 0 ? <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
 
+      {/* 60/40, no 50/50: "patrimonio neto" es la cifra que más se estira
+          (moneda + miles), "tasa de ahorro"/"gasto diario" son casi
+          siempre cortas ("12,3%"). `fit` en las dos igual, por si un monto
+          particularmente largo no entra ni con el 60%. */}
       <div style={{ display: "flex", gap: 16 }}>
-        <StatTile label={t("analyticsPage.netWorth")} value={formatAmountCompact(netWorth.data?.netWorth ?? money(0n, household.baseCurrency), { showSign: false })} style={{ flex: 1 }} />
+        <StatTile
+          label={t("analyticsPage.netWorth")}
+          value={formatAmountCompact(netWorth.data?.netWorth ?? money(0n, household.baseCurrency), { showSign: false })}
+          fit
+          style={{ flex: 3, minWidth: 0 }}
+        />
         {periodSummary ? (
-          <StatTile label={t("analyticsPage.savingsRate")} value={periodSummary.savingsRatePct !== null ? `${periodSummary.savingsRatePct.toFixed(1)}%` : "—"} style={{ flex: 1 }} />
+          <StatTile label={t("analyticsPage.savingsRate")} value={periodSummary.savingsRatePct !== null ? `${periodSummary.savingsRatePct.toFixed(1)}%` : "—"} fit style={{ flex: 2, minWidth: 0 }} />
         ) : (
-          <StatTile label={t("analyticsPage.dailySpend")} value={formatAmountCompact(money(dailyAvg, household.baseCurrency), { showSign: false })} style={{ flex: 1 }} />
+          <StatTile label={t("analyticsPage.dailySpend")} value={formatAmountCompact(money(dailyAvg, household.baseCurrency), { showSign: false })} fit style={{ flex: 2, minWidth: 0 }} />
         )}
       </div>
 
