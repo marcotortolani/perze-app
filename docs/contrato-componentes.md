@@ -155,8 +155,8 @@ usado de la app, y el keypad de captura es la pieza donde el producto se gana o 
 
 ### CategoryBubble
 - **Existe para:** el target de categoría de 64px en la captura y los filtros — ícono neutro y label debajo.
-- **Props:** `icon?: IconName` (default "cart") · `label: string` · `selected?: boolean` · `onClick?: () => void`.
-- **Estados:** sin seleccionar (`--surface-2`) · seleccionada (`--selection-surface` + anillo + `scale(1.04)`) · presionada.
+- **Props:** `icon?: IconName` (default "cart") · `label: string` · `selected?: boolean` · `onClick?: () => void` · `onLongPress?: () => void` (~500ms; `CategoryStep` lo usa para desplegar subcategorías — si dispara, suprime el `onClick` del mismo gesto, nunca los dos) · `hasChildren?: boolean` (punto violeta en la esquina, indica que hay un `onLongPress` con algo detrás).
+- **Estados:** sin seleccionar (`--surface-2`) · seleccionada (`--selection-surface` + anillo + `scale(1.04)`) · presionada · con indicador de subcategorías.
 - **Tokens:** `--selection-surface --selection-ring --surface-2 --text-primary --text-secondary --press-scale --duration-fast --ease-spring-snappy`.
 - **A11y:** es un `button` real; el ícono es puramente decorativo porque el `label` ya describe la categoría en texto — no lleva `aria-label` propio ni duplica el texto.
 - **Bloques:** C1, C2.

@@ -194,7 +194,7 @@
    "transfer": "Transfer"
   },
   "category": {
-   "other": "Other",
+   "other": "Others",
    "frequent": "Most used",
    "sheetTitle": "Choose a category",
    "searchPlaceholder": "Search category…",
@@ -205,7 +205,9 @@
    "editTitle": "Edit category",
    "editName": "Name",
    "editIcon": "Icon",
-   "selectGeneral": "Use \"{name}\" in general"
+   "selectGeneral": "Use \"{name}\" in general",
+   "addNew": "Add category",
+   "backToCategories": "Back"
   },
   "chooseAccount": "Choose account",
   "from": "FROM",

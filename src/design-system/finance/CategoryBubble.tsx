@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "../core/Icon";
 
@@ -10,19 +10,50 @@ export interface CategoryBubbleProps {
   /** Seleccionado = superficie 3 con un anillo animado — nunca relleno de marca: elegir una categoría es elegir una opción, no identidad de datos. */
   selected?: boolean | undefined;
   onClick?: (() => void) | undefined;
+  /** Mantener presionado ~500ms — el picker de categorías lo usa para desplegar subcategorías sin gastar un tap extra. Si dispara, el `onClick` de ese mismo gesto se suprime (nunca los dos a la vez). */
+  onLongPress?: (() => void) | undefined;
+  /** Punto violeta en la esquina — indica que hay subcategorías detrás de un long-press, antes de que el usuario tenga que descubrirlo por accidente. */
+  hasChildren?: boolean | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** Target de categoría de 64px con ícono neutro y label debajo — la selección se resuelve por superficie. */
-export function CategoryBubble({ icon = "cart", label, selected = false, onClick, style }: CategoryBubbleProps) {
+export function CategoryBubble({ icon = "cart", label, selected = false, onClick, onLongPress, hasChildren = false, style }: CategoryBubbleProps) {
   const [pressed, setPressed] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const longPressFired = useRef(false);
+
+  const down = () => {
+    setPressed(true);
+    if (onLongPress) {
+      timer.current = setTimeout(() => {
+        longPressFired.current = true;
+        if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(8);
+        onLongPress();
+      }, 500);
+    }
+  };
+  const up = () => {
+    setPressed(false);
+    clearTimeout(timer.current);
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
-      onPointerDown={() => setPressed(true)}
-      onPointerUp={() => setPressed(false)}
-      onPointerLeave={() => setPressed(false)}
+      onClick={() => {
+        // El long-press de este mismo gesto ya disparó `onLongPress` — el
+        // `click` nativo llega igual al soltar el dedo, y sin esto
+        // seleccionaría la categoría Y la desplegaría a la vez.
+        if (longPressFired.current) {
+          longPressFired.current = false;
+          return;
+        }
+        onClick?.();
+      }}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerLeave={up}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -39,6 +70,7 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
     >
       <span
         style={{
+          position: "relative",
           width: 64,
           height: 64,
           borderRadius: 999,
@@ -53,6 +85,15 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
         }}
       >
         <Icon name={icon} size={26} color={selected ? "var(--text-primary)" : "var(--text-secondary)"} />
+        {hasChildren ? (
+          // Indica que hay subcategorías detrás de un long-press — sin
+          // esto, mantener presionado es una interacción invisible que
+          // nadie descubre por su cuenta.
+          <span
+            aria-hidden="true"
+            style={{ position: "absolute", top: 2, right: 2, width: 10, height: 10, borderRadius: 999, background: "var(--primary-ink)", border: "2px solid var(--page)" }}
+          />
+        ) : null}
       </span>
       <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 500, color: selected ? "var(--text-primary)" : "var(--text-secondary)" }}>
         {label}

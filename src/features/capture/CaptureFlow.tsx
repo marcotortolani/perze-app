@@ -14,7 +14,6 @@ import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import type { AccountRow } from "@/lib/db/schema";
-import type { IconName } from "@/design-system/core/Icon";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -101,11 +100,6 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     );
     invalidateCategories();
     return created;
-  };
-
-  const handleEditCategory = async (id: string, patch: { name: string; icon: IconName }) => {
-    await categoriesRepo.update(id, patch);
-    invalidateCategories();
   };
 
   const handleAmountKey = (key: string) => {
@@ -269,7 +263,6 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
             selectedId={draft.categoryId}
             onSelect={(c) => setField("categoryId", c.id)}
             onCreate={handleCreateCategory}
-            onEdit={handleEditCategory}
           />
           <div style={{ marginTop: "auto" }}>{nextOrSaveButton}</div>
         </>

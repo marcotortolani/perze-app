@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.27] — 2026-08-02
+
+### Agregado — picker de categorías rediseñado: grilla completa, long-press para subcategorías
+
+- **"Otro" pasa a "Otras" (plural — refiere a otras categorías) y ya no abre un buscador
+  primero.** Ahora muestra una grilla con TODAS las categorías del `kind` actual más una
+  burbuja para crear una nueva; el buscador sigue disponible arriba, sin autofocus, para
+  cuando hay muchas.
+- **Tap corto siempre selecciona la categoría general, mantener presionado ~500ms despliega
+  las subcategorías** en una vista aparte (con volver) donde se puede confirmar la general o
+  elegir una hija — antes tocar un padre con hijas expandía en el lugar y nunca lo
+  seleccionaba directo. Las categorías con subcategorías llevan un punto violeta que indica
+  que el long-press tiene algo detrás. `CategoryBubble` suma `onLongPress`/`hasChildren`.
+- La burbuja "Agregar categoría" enfoca el buscador para escribir el nombre — ahí sí es
+  intencional que aparezca el teclado, a diferencia de abrir el sheet.
+- La edición de nombre/ícono que vivía en este picker se sacó: ya existe en Ajustes →
+  Categorías (agregado la sesión anterior), que ve el household completo en vez de acotarse
+  al `kind` de la captura en curso — un solo lugar para editar, no dos.
+
 ## [0.9.26] — 2026-08-02
 
 ### Agregado/Corregido — deslizar para cerrar en toda hoja modal, y scroll horizontal en Detalles
