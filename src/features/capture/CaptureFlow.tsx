@@ -25,7 +25,7 @@ import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
 import { DetailsSheet } from "./DetailsSheet";
 import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
-import { saveDraftAsTransaction } from "./save-transaction";
+import { hasNonZeroAmount, saveDraftAsTransaction } from "./save-transaction";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
 import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
@@ -126,7 +126,9 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
 
   const canSave = () => {
     if (!household || !account || !userId) return false;
-    if (draft.amountExpression.trim() === "") return false;
+    // Elegir la categoría primero y dejar el monto en 0 no debería poder
+    // guardar — un movimiento en $0 no significa nada.
+    if (!hasNonZeroAmount(draft.amountExpression, draft.currency || account.currencyCode, numberLocaleForUiLocale(locale))) return false;
     if (draft.kind === "transfer") return !!counterAccount;
     return !!draft.categoryId;
   };
@@ -263,6 +265,14 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
           }}
           onQuickCategory={async (category) => {
             setField("categoryId", category.id);
+            // Atajo rápido: si ya hay un monto tipeado, un chip de
+            // categoría guarda directo (ahorra el paso de tocar
+            // "Guardar"). Si el monto todavía está en 0 — categoría
+            // elegida ANTES de tipear el monto — no hay nada que guardar
+            // todavía: la categoría queda marcada y el botón de abajo
+            // pasa a "Guardar" (ya no "Siguiente", `canSave()` lo
+            // habilita recién cuando el monto deje de ser cero.
+            if (!hasNonZeroAmount(draft.amountExpression, draft.currency || account?.currencyCode || "UYU", numberLocaleForUiLocale(locale))) return;
             await doSave();
             handleAfterSaveComplete();
           }}

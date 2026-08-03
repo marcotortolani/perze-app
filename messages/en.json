@@ -284,7 +284,8 @@
     "last7": "Last 7 days",
     "last30": "Last 30 days"
    },
-   "kindAll": "All"
+   "kindAll": "All",
+   "tags": "Tags"
   },
   "editFlow": {
    "title": "Edit transaction",
@@ -410,7 +411,8 @@
     "api": "Day's exchange rate",
     "inherited": "Last known rate",
     "pending": "Unresolved"
-   }
+   },
+   "tags": "Tags"
   },
   "calendar": {
    "back": "Back",

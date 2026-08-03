@@ -20,6 +20,22 @@ class SyncConflictError extends Error {
 }
 
 /**
+ * `error instanceof Error` daba falso para lo que de verdad se tira acá:
+ * un `PostgrestError` de Supabase (`{ message, code, details, hint }`) es
+ * un objeto plano, no una subclase de `Error` — caía siempre a
+ * `String(error)`, que para un objeto da literalmente "[object Object]"
+ * en vez del mensaje real, y eso es lo que terminaba guardado en
+ * `lastError` y mostrado en Ajustes → Estado de sincronización.
+ */
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error && typeof (error as { message: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+  return String(error);
+}
+
+/**
  * Drena el outbox contra Supabase — BASE-05. No puede empujar nada
  * hasta que exista una sesión autenticada real (C7): toda policy de
  * INSERT/UPDATE exige `created_by = auth.uid()` y membresía del household,
@@ -59,7 +75,7 @@ export async function drainOutbox(supabase: SupabaseClient): Promise<DrainResult
         conflictCount++;
         continue;
       }
-      await outbox.markFailed(entry.id!, error instanceof Error ? error.message : String(error));
+      await outbox.markFailed(entry.id!, errorMessage(error));
       failedCount++;
     }
   }

@@ -27,6 +27,7 @@ import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import type { AccountRow, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { useFrequentTags } from "@/features/capture/use-frequent-tags";
 import { updateTransactionFromDraft } from "./update-transaction";
+import { hasNonZeroAmount } from "@/features/capture/save-transaction";
 
 export interface EditTransactionFlowProps {
   transaction: TransactionRow;
@@ -112,7 +113,8 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
 
   const canSave = () => {
-    if (!account || draft.amountExpression.trim() === "") return false;
+    if (!account) return false;
+    if (!hasNonZeroAmount(draft.amountExpression, draft.currency || account.currencyCode, numberLocaleForUiLocale(locale))) return false;
     if (draft.kind === "transfer") return !!counterAccount;
     return !!draft.categoryId;
   };

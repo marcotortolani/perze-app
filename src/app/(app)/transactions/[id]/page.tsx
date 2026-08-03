@@ -10,6 +10,8 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
+import { useTags } from "@/hooks/use-tags";
+import { useTagIdsForTransaction } from "@/hooks/use-transaction-tags";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
@@ -36,6 +38,8 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: payees = [] } = usePayees(household?.id);
+  const { data: tags = [] } = useTags(household?.id);
+  const { data: tagIds = [] } = useTagIdsForTransaction(id);
   const { data: transaction, isLoading } = useTransaction(id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
 
@@ -56,6 +60,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const counterAccount = transaction.counterAccountId ? accounts.find((a) => a.id === transaction.counterAccountId) : undefined;
   const category = transaction.categoryId ? categories.find((c) => c.id === transaction.categoryId) : undefined;
   const payee = transaction.payeeId ? payees.find((p) => p.id === transaction.payeeId) : undefined;
+  const tagNames = tagIds.map((tagId) => tags.find((tag) => tag.id === tagId)?.name).filter((name): name is string => !!name);
   const polarity = transaction.kind === "income" ? "positive" : transaction.kind === "transfer" ? "neutral" : "negative";
   const signedAmount = transaction.kind === "expense" ? -transaction.amount : transaction.amount;
 
@@ -151,6 +156,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           variant="value"
         />
         <ListRow icon="calendar" label={new Date(transaction.occurredAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })} meta={t("transactions.detail.date")} variant="value" />
+        {tagNames.length > 0 ? <ListRow icon="tag" label={tagNames.join(", ")} meta={t("transactions.detail.tags")} variant="value" /> : null}
         {payee ? <ListRow icon="tag" label={payee.name} meta={t("transactions.detail.payee")} variant="value" /> : null}
         {transaction.note ? <ListRow icon="edit" label={transaction.note} meta={t("transactions.detail.note")} variant="value" /> : null}
       </div>

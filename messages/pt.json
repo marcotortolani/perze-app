@@ -284,7 +284,8 @@
     "last7": "Últimos 7 dias",
     "last30": "Últimos 30 dias"
    },
-   "kindAll": "Tudo"
+   "kindAll": "Tudo",
+   "tags": "Etiquetas"
   },
   "editFlow": {
    "title": "Editar movimentação",
@@ -410,7 +411,8 @@
     "api": "Cotação do dia",
     "inherited": "Última cotação conhecida",
     "pending": "Não resolvida"
-   }
+   },
+   "tags": "Etiquetas"
   },
   "calendar": {
    "back": "Voltar",

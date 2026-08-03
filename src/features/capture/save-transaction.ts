@@ -27,6 +27,23 @@ export interface SaveDraftParams {
 }
 
 /**
+ * Elegir la categoría (o cuenta) antes de tipear el monto no debería poder
+ * guardar un movimiento en $0 — antes `canSave()` solo miraba que
+ * `amountExpression` no estuviera vacío, así que "0" (o una expresión que
+ * evalúa a cero) pasaba igual. Se usa tanto para habilitar el botón como
+ * para decidir si un chip de categoría rápida guarda directo o solo
+ * precarga la categoría (`CaptureFlow`).
+ */
+export function hasNonZeroAmount(expression: string, currency: string, numberLocale: NumberLocale = "es-UY"): boolean {
+  if (expression.trim() === "") return false;
+  try {
+    return evaluateKeypadExpression(expression, currency, numberLocale).amount !== 0n;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Traduce el borrador de captura a un movimiento real: resuelve el monto
  * (keypad), la conversión a la moneda base del household (`lib/fx`), y —
  * para transferencias — el lado de entrada. Guardar no puede fallar: si

@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.30] — 2026-08-03
+
+### Agregado/Corregido — etiquetas visibles en movimientos, ancho de filtros, scroll en desktop, sync y monto en cero
+
+- **Etiquetas visibles donde faltaban.** En la lista de movimientos, la segunda línea ("Cuenta
+  · Categoría") repetía la categoría que el ícono y el título ya muestran — ahora, si el
+  movimiento tiene etiquetas, se ven ELLAS ahí en vez de la categoría de nuevo. El detalle de
+  un movimiento suma una fila de Etiquetas (antes no aparecían en ningún lado). Y los Filtros
+  suman una sección de Etiquetas debajo de Categorías, con el mismo filtrado real.
+- **El sheet de "Filtros" ocupaba el 100% del ancho en desktop** — a partir de `lg` pasa a
+  90% con un techo de 1500px, como cualquier sheet ancho debería comportarse en un monitor.
+- **Las barras de scroll quedaban pegadas al texto en desktop** — en la lista de movimientos,
+  la de cuentas, y sobre todo en la tercera columna del split-view (el panel de detalle no
+  tenía ningún padding del lado derecho) se agregó separación real.
+- **"[object Object]" en Ajustes → Estado de sincronización.** `error instanceof Error` daba
+  falso para un `PostgrestError` de Supabase (un objeto plano, no una subclase de `Error`),
+  así que caía a `String(error)` — que para un objeto da literalmente eso. Ahora se extrae
+  `.message` de cualquier error con esa forma, no solo de instancias reales de `Error`.
+- **Elegir la categoría antes de tipear el monto guardaba un movimiento en $0.** `canSave()`
+  solo miraba que la expresión no estuviera vacía, nunca que el monto evaluado fuera
+  distinto de cero. Ahora lo exige — y el chip de categoría rápida en el monto (que antes
+  guardaba directo sin importar el monto) solo guarda directo si YA hay un monto tipeado;
+  si no, deja la categoría marcada y espera a que se tipee el monto, ahorrando el paso
+  extra solo cuando el orden (monto → categoría) lo permite.
+
 ## [0.9.29] — 2026-08-02
 
 ### Agregado/Corregido — borrar categorías, animación de sheets, un paso menos y duplicados en ingresos

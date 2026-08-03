@@ -6,7 +6,29 @@ import { fxRepo } from "@/lib/repos/fx-repo";
 import { rateFromInteger } from "@/lib/fx/rate";
 import type { HouseholdRow } from "@/lib/db/schema";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
-import { saveDraftAsTransaction } from "./save-transaction";
+import { hasNonZeroAmount, saveDraftAsTransaction } from "./save-transaction";
+
+describe("hasNonZeroAmount — elegir categoría antes de tipear el monto no debería poder guardar en $0", () => {
+  it("expresión vacía no es un monto válido", () => {
+    expect(hasNonZeroAmount("", "UYU")).toBe(false);
+  });
+
+  it("'0' explícito tampoco lo es", () => {
+    expect(hasNonZeroAmount("0", "UYU")).toBe(false);
+  });
+
+  it("una cuenta que evalúa a cero (\"5-5\") tampoco", () => {
+    expect(hasNonZeroAmount("5-5", "UYU")).toBe(false);
+  });
+
+  it("un monto real sí", () => {
+    expect(hasNonZeroAmount("1250", "UYU")).toBe(true);
+  });
+
+  it("una expresión inválida no revienta, cae a `false`", () => {
+    expect(hasNonZeroAmount("++", "UYU")).toBe(false);
+  });
+});
 
 const HOUSEHOLD_UYU: HouseholdRow = {
   id: "hh-1",

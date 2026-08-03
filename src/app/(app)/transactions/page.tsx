@@ -12,6 +12,8 @@ import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
+import { useTags } from "@/hooks/use-tags";
+import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
@@ -40,9 +42,17 @@ function periodStartFor(preset: MovementsFilters["datePreset"], now: Date): { fr
   }
 }
 
-function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string): string {
+/**
+ * `merchant` (arriba, en `<TransactionRow>`) ya muestra el nombre de la
+ * categoría cuando no hay comercio cargado — repetirla acá abajo es
+ * redundante. Con etiquetas, esta línea las muestra a ELLAS en vez de la
+ * categoría (que el ícono + el título ya cubren); sin etiquetas, sigue
+ * mostrando la categoría como siempre.
+ */
+function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[]): string {
   if (tx.kind === "transfer") return account ? `${account.name} · ${transferLabel}` : transferLabel;
-  return [account?.name, categoryLabel].filter(Boolean).join(" · ");
+  const secondary = tagNames.length > 0 ? tagNames.join(", ") : categoryLabel;
+  return [account?.name, secondary].filter(Boolean).join(" · ");
 }
 
 /** D1/D2/D6/D7 — lista de movimientos. Bloque D, Fase 7. */
@@ -55,8 +65,26 @@ export default function MovementsPage() {
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
+  const { data: tags = [] } = useTags(household?.id);
   const transactionsQuery = useTransactions(household?.id);
   const { data: transactions, isLoading: txLoading } = transactionsQuery;
+  const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
+  const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags]);
+  const tagIdsByTx = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const link of transactionTagLinks ?? []) {
+      map.set(link.transactionId, [...(map.get(link.transactionId) ?? []), link.tagId]);
+    }
+    return map;
+  }, [transactionTagLinks]);
+  const tagNamesByTx = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [transactionId, tagIds] of tagIdsByTx) {
+      const names = tagIds.map((tagId) => tagById.get(tagId)?.name).filter((name): name is string => !!name);
+      if (names.length > 0) map.set(transactionId, names);
+    }
+    return map;
+  }, [tagIdsByTx, tagById]);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const errorState = useQueryErrorState(transactionsQuery, { what: t("transactions.list.errorWhat") });
   const pending = usePendingMutations();
@@ -100,11 +128,15 @@ export default function MovementsPage() {
       if (filters.kind !== "all" && t.kind !== filters.kind) return false;
       if (filters.accountIds.length > 0 && !filters.accountIds.includes(t.accountId)) return false;
       if (filters.categoryIds.length > 0 && (!t.categoryId || !filters.categoryIds.includes(t.categoryId))) return false;
+      if (filters.tagIds.length > 0) {
+        const txTagIds = tagIdsByTx.get(t.id) ?? [];
+        if (!filters.tagIds.some((id) => txTagIds.includes(id))) return false;
+      }
       if (filters.onlyPending && t.fxRate !== null) return false;
       if (payeeIdParam && t.payeeId !== payeeIdParam) return false;
       return true;
     });
-  }, [transactions, from, to, filters, payeeIdParam]);
+  }, [transactions, from, to, filters, payeeIdParam, tagIdsByTx]);
 
   // Ingresos/Gastos/Balance son el resumen del PERÍODO, no de lo que se ve
   // en la lista — solo respetan el rango de fecha (mismo concepto que
@@ -284,7 +316,9 @@ export default function MovementsPage() {
         <div
           ref={parentRef}
           className="pb-[calc(var(--block-gap)+18px)] lg:pb-0"
-          style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative" }}
+          // `paddingRight`: separa el texto/monto de la barra de scroll,
+          // que si no queda pegada contra el borde del contenido en desktop.
+          style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative", paddingRight: 8 }}
         >
           <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -336,7 +370,8 @@ export default function MovementsPage() {
                               item.tx,
                               accountById.get(item.tx.accountId),
                               item.tx.categoryId ? (categoryById.has(item.tx.categoryId) ? categoryLabel(categoryById.get(item.tx.categoryId)!) : undefined) : undefined,
-                              t("transactions.list.transfer")
+                              t("transactions.list.transfer"),
+                              tagNamesByTx.get(item.tx.id) ?? []
                             )}
                             value={money(item.tx.kind === "expense" ? -item.tx.amount : item.tx.amount, item.tx.currencyCode)}
                             secondary={
@@ -382,6 +417,7 @@ export default function MovementsPage() {
         onChange={setFilters}
         accounts={accounts}
         categories={categories}
+        tags={tags}
         resultCount={filtered.length}
       />
     </div>

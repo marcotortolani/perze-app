@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button, Chip, Sheet, Switch } from "@/design-system";
-import type { AccountRow, CategoryRow } from "@/lib/db/schema";
+import type { AccountRow, CategoryRow, TagRow } from "@/lib/db/schema";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 
 export type DatePreset = "all" | "this-month" | "last-month" | "last-7" | "last-30";
@@ -13,11 +13,12 @@ export interface MovementsFilters {
   kind: KindFilter;
   accountIds: string[];
   categoryIds: string[];
+  tagIds: string[];
   onlyPending: boolean;
 }
 
 export function defaultMovementsFilters(): MovementsFilters {
-  return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], onlyPending: false };
+  return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], tagIds: [], onlyPending: false };
 }
 
 export function countActiveFilters(f: MovementsFilters): number {
@@ -26,6 +27,7 @@ export function countActiveFilters(f: MovementsFilters): number {
   if (f.kind !== "all") n += 1;
   if (f.accountIds.length > 0) n += 1;
   if (f.categoryIds.length > 0) n += 1;
+  if (f.tagIds.length > 0) n += 1;
   if (f.onlyPending) n += 1;
   return n;
 }
@@ -37,6 +39,7 @@ export interface MovementsFiltersSheetProps {
   onChange: (filters: MovementsFilters) => void;
   accounts: AccountRow[];
   categories: CategoryRow[];
+  tags: TagRow[];
   resultCount: number;
 }
 
@@ -46,12 +49,14 @@ function toggle<T>(list: T[], value: T): T[] {
 
 /**
  * D2 — recorte deliberado: quedan afuera el rango de monto (doble slider),
- * países, miembros, tags y "con adjunto" — ninguno tiene datos reales para
+ * países, miembros y "con adjunto" — ninguno tiene datos reales para
  * ejercitar todavía en esta versión (household de un solo miembro, sin
- * adjuntos). Fecha, cuentas, categorías, tipo y pendientes sí, porque son
- * los que separan casos reales en el seed de demo.
+ * adjuntos). Fecha, cuentas, categorías, etiquetas, tipo y pendientes sí,
+ * porque son los que separan casos reales en el seed de demo. Etiquetas se
+ * dibuja debajo de categorías, y solo si el household ya tiene alguna —
+ * sin eso, la sección quedaría siempre vacía.
  */
-export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, resultCount }: MovementsFiltersSheetProps) {
+export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, tags, resultCount }: MovementsFiltersSheetProps) {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
 
@@ -124,6 +129,21 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
             ))}
           </div>
         </div>
+
+        {tags.length > 0 ? (
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
+              {t("movements.filters.tags")}
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {tags.map((tag) => (
+                <Chip key={tag.id} icon="tag" selected={filters.tagIds.includes(tag.id)} onClick={() => onChange({ ...filters, tagIds: toggle(filters.tagIds, tag.id) })}>
+                  {tag.name}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{t("movements.filters.onlyPending")}</span>

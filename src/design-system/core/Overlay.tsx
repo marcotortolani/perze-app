@@ -241,7 +241,11 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
           isSheet
             ? {
                 position: "relative",
-                width: "100%",
+                // A partir de `lg` (1024px, mismo corte que el sidebar) un
+                // sheet a `width:100%` se estira a todo el ancho de un
+                // monitor — 90% con un techo de 1500px, no el 100% literal.
+                width: isDesktop ? "90%" : "100%",
+                maxWidth: isDesktop ? 1500 : undefined,
                 background: "var(--surface-2)",
                 borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0",
                 boxShadow: "var(--shadow-sheet)",

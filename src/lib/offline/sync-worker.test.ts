@@ -13,15 +13,23 @@ import { drainOutbox } from "./sync-worker";
  * enrutamiento por tabla, la traducción camelCase→snake_case, y que un
  * error en una fila no frena las demás.
  */
-function fakeSupabase(opts: { failTables?: Set<string>; duplicateTables?: Set<string>; serverRowsById?: Record<string, Record<string, unknown>> } = {}) {
+function fakeSupabase(
+  opts: { failTables?: Set<string>; postgrestErrorTables?: Set<string>; duplicateTables?: Set<string>; serverRowsById?: Record<string, Record<string, unknown>> } = {}
+) {
   const calls: Array<{ table: string; method: string; args: unknown[] }> = [];
   const shouldFail = (table: string) => opts.failTables?.has(table) ?? false;
+  // Un `PostgrestError` real es un objeto plano (`{ message, code, ... }`),
+  // NUNCA una subclase de `Error` — a diferencia de `new Error(...)`, que
+  // el resto de este archivo usa para simular fallas. Esta es la forma que
+  // de verdad expuso el bug de "[object Object]" en `lastError`.
+  const shouldFailPostgrest = (table: string) => opts.postgrestErrorTables?.has(table) ?? false;
 
   const from = vi.fn((table: string) => ({
     insert: vi.fn(async (row: unknown) => {
       calls.push({ table, method: "insert", args: [row] });
       // 23505 = duplicate key — el reintento de un insert ya sincronizado (AC-17).
       if (opts.duplicateTables?.has(table)) return { error: { code: "23505", message: `duplicate key para ${table}` } };
+      if (shouldFailPostgrest(table)) return { error: { code: "42501", message: `permiso denegado para ${table}` } };
       return shouldFail(table) ? { error: new Error(`insert falló para ${table}`) } : { error: null };
     }),
     upsert: vi.fn(async (row: unknown) => {
@@ -198,6 +206,23 @@ describe("drainOutbox — BASE-05", () => {
     expect(stillQueued?.status).toBe("failed");
     expect(stillQueued?.attempts).toBe(1);
     expect(stillQueued?.lastError).toContain("accounts");
+  });
+
+  it("un error de Supabase (PostgrestError, objeto plano — no una instancia de Error) guarda el mensaje real, nunca '[object Object]'", async () => {
+    await outbox.enqueue({
+      table: "tags",
+      op: "insert",
+      entityId: "tag-1",
+      payload: { id: "tag-1", householdId: "hh-1", name: "viaje", color: null },
+      clientRev: 1,
+    });
+
+    const { client } = fakeSupabase({ postgrestErrorTables: new Set(["tags"]) });
+    await drainOutbox(client);
+
+    const [stillQueued] = await outbox.listAll();
+    expect(stillQueued?.lastError).toBe("permiso denegado para tags");
+    expect(stillQueued?.lastError).not.toContain("object Object");
   });
 
   it("households y household_members (C7 — creación de household real) se traducen bien", async () => {
