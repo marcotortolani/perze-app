@@ -10,8 +10,36 @@ import { normalize } from "@/lib/search/rank";
  * plantilla identifica por `i18nKey` (estable); una categoría propia no
  * tiene `i18nKey`, así que cae al nombre normalizado.
  */
-function categoryIdentityKey(category: CategoryRow): string {
+export function categoryIdentityKey(category: CategoryRow): string {
   return category.i18nKey ?? `name:${normalize(category.name)}`;
+}
+
+/**
+ * La grilla completa del picker ("elegí una categoría") no pasaba por
+ * `rankCategoriesByUsage` — ese fix solo dedupeaba el top-5 de más
+ * usadas, así que un household con filas duplicadas de antes del fix de
+ * `apply-category-template.ts` seguía viendo "Sueldo" u "Otros ingresos"
+ * dos veces ahí. Se queda la fila con más uso real (mismo criterio que el
+ * ranking); a igualdad de uso, la primera en el orden recibido. El orden
+ * del array de entrada se preserva — esto filtra, no reordena.
+ */
+export function dedupeCategoriesByIdentity(categories: CategoryRow[], transactions: Pick<TransactionRow, "categoryId">[]): CategoryRow[] {
+  const usageCounts = new Map<string, number>();
+  for (const tx of transactions) {
+    if (!tx.categoryId) continue;
+    usageCounts.set(tx.categoryId, (usageCounts.get(tx.categoryId) ?? 0) + 1);
+  }
+
+  const survivorByIdentity = new Map<string, CategoryRow>();
+  for (const category of categories) {
+    const identity = categoryIdentityKey(category);
+    const current = survivorByIdentity.get(identity);
+    if (!current || (usageCounts.get(category.id) ?? 0) > (usageCounts.get(current.id) ?? 0)) {
+      survivorByIdentity.set(identity, category);
+    }
+  }
+
+  return categories.filter((category) => survivorByIdentity.get(categoryIdentityKey(category)) === category);
 }
 
 export interface CategoryUsage {

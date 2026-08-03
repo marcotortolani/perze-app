@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AccountCarousel, Chip, DateStrip, Input, ListRow, Sheet, Switch } from "@/design-system";
 import { todayIso as todayIsoLocal } from "@/lib/dates/today";
@@ -51,19 +51,36 @@ function dayLabel(iso: string, todayIso: string, labels: { today: string; yester
 /**
  * Etiquetas del movimiento — multi-select (`draft.tagIds`, a diferencia de
  * la categoría que es una sola), así que tocar una NUNCA cierra nada: solo
- * la prende/apaga. La fila normal muestra las 5 más usadas + "Otras"; esa
- * última reemplaza el contenido del sheet por una grilla con TODAS las
- * etiquetas (mismo patrón que `CategoryStep`, sin el long-press porque acá
- * no hay jerarquía) más una para crear una nueva.
+ * la prende/apaga. La fila normal muestra las 5 más usadas + un chip
+ * final que cambia de sentido según haya algo más detrás:
+ * - Con más de 5 etiquetas en total, dice "Otras" — hay algo real para
+ *   descubrir — y abre la grilla completa (mismo patrón que `CategoryStep`,
+ *   sin el long-press porque acá no hay jerarquía).
+ * - Con 5 o menos, `frequentTags` YA muestra todas — "Otras" sería
+ *   mentira, no hay nada más — así que dice "Crear etiqueta" y va directo
+ *   a esa grilla (la misma) con el buscador enfocado, porque ahí la única
+ *   acción que tiene sentido es escribir un nombre nuevo.
  */
 function TagsField({ tags, frequentTags, selectedIds, onToggle, onCreate }: { tags: TagRow[]; frequentTags: TagRow[]; selectedIds: string[]; onToggle: (id: string) => void; onCreate: (name: string) => Promise<TagRow> }) {
   const t = useTranslations();
   const [allOpen, setAllOpen] = useState(false);
+  const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const selected = new Set(selectedIds);
   const exactMatch = query.trim() !== "" && findExistingTagByName(query, tags) !== undefined;
+  const hasMore = tags.length > frequentTags.length;
+
+  useEffect(() => {
+    if (allOpen && focusSearchOnOpen) {
+      searchWrapperRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+      // Consume la bandera — sincronización genuina con "ya enfoqué",
+      // no derivable del render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFocusSearchOnOpen(false);
+    }
+  }, [allOpen, focusSearchOnOpen]);
 
   const handleCreate = async () => {
     const name = query.trim();
@@ -110,8 +127,14 @@ function TagsField({ tags, frequentTags, selectedIds, onToggle, onCreate }: { ta
             {tag.name}
           </Chip>
         ))}
-        <Chip icon="more" onClick={() => setAllOpen(true)}>
-          {t("capture.details_sheet.tagsOther")}
+        <Chip
+          icon={hasMore ? "more" : "plus"}
+          onClick={() => {
+            setAllOpen(true);
+            if (!hasMore) setFocusSearchOnOpen(true);
+          }}
+        >
+          {hasMore ? t("capture.details_sheet.tagsOther") : t("capture.details_sheet.tagsAddNew")}
         </Chip>
       </div>
     </div>

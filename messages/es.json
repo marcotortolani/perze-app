@@ -1009,7 +1009,9 @@
   "saved": "Categorías actualizadas",
   "yourCategoriesTitle": "Tus categorías",
   "yourCategoriesEmpty": "Todavía no creaste ninguna categoría propia — se crean desde \"Otro\" al cargar un gasto.",
-  "templateSectionTitle": "Plantilla"
+  "templateSectionTitle": "Plantilla",
+  "deleteCategory": "Borrar categoría",
+  "categoryDeleted": "\"{name}\" archivada"
  },
  "settingsPage": {
   "yourCurrency": "Tu moneda",

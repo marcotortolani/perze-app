@@ -1009,7 +1009,9 @@
   "saved": "Categorias atualizadas",
   "yourCategoriesTitle": "Suas categorias",
   "yourCategoriesEmpty": "Você ainda não criou nenhuma categoria própria — crie uma em \"Outro\" ao registrar um gasto.",
-  "templateSectionTitle": "Modelo"
+  "templateSectionTitle": "Modelo",
+  "deleteCategory": "Excluir categoria",
+  "categoryDeleted": "\"{name}\" arquivada"
  },
  "settingsPage": {
   "yourCurrency": "Sua moeda",

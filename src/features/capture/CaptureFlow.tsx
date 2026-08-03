@@ -28,6 +28,7 @@ import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
 import { saveDraftAsTransaction } from "./save-transaction";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
+import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
 import { useFrequentTags } from "./use-frequent-tags";
 
 type Step = "amount" | "category";
@@ -98,7 +99,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
 
   const categoryKind = draft.kind === "income" ? "income" : "expense";
-  const sameKindCategories = categories.filter((c) => c.kind === categoryKind);
+  const sameKindCategories = dedupeCategoriesByIdentity(categories.filter((c) => c.kind === categoryKind), transactions ?? []);
   const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
 
   const handleCreateCategory = async (name: string) => {
@@ -275,7 +276,6 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         <>
           <CategoryStep
             categories={sameKindCategories}
-            frequent={frequentCategories}
             selectedId={draft.categoryId}
             onSelect={(c) => setField("categoryId", c.id)}
             onCreate={handleCreateCategory}

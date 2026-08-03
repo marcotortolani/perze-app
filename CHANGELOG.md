@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.9.29] — 2026-08-02
+
+### Agregado/Corregido — borrar categorías, animación de sheets, un paso menos y duplicados en ingresos
+
+- **Ajustes → Categorías suma un botón de borrar** (solo en las propias, nunca en las de
+  sistema) — antes solo se podía editar nombre/ícono, no sacarla. Archiva, no borra (una
+  categoría con movimientos históricos sigue existiendo para ellos); toast con "Deshacer" en
+  vez de un diálogo de confirmación, porque hoy no hay otra forma de restaurarla desde la UI.
+- **Toda hoja modal ahora entra y sale con una animación real** — antes `Overlay` desmontaba
+  en el mismo frame en que se cerraba, sin nada que animar. Ahora "cerrado" es una fase más
+  del ciclo de vida: al cerrar, el panel se sigue viendo un instante deslizándose/desvaneciéndose
+  hacia afuera antes de salir del DOM de verdad. El cierre por arrastre (la sesión anterior)
+  se integra con esto: si el gesto llega al umbral, el panel sigue el mismo recorrido en vez
+  de saltar a 0 y recién ahí empezar a irse.
+- **"Otras" en categorías pedía un paso de más** — tocar el chip de `AmountStep` mostraba de
+  nuevo las 5 más usadas + "Otras" (la propia grilla que `CategoryStep` armaba antes de
+  llegar a la grilla completa), redundante con lo que ya se había visto. Ahora entra directo
+  a "Elegí una categoría" con el buscador y la grilla completa.
+- **"Otras"/"Crear etiqueta" en Detalles** distingue si hay algo más detrás de las 5 más
+  usadas: con más de 5 etiquetas en total dice "Otras" y abre la grilla completa; con 5 o
+  menos (donde ya se ve todo) dice "Crear etiqueta" y va directo ahí con el buscador enfocado.
+- **"Sueldo" y "Otros ingresos" seguían duplicados en la grilla completa** — el fix de la
+  sesión anterior dedupeaba el top-5 de más usadas, pero la grilla con TODAS las categorías
+  la seguía mostrando dos veces. Nuevo `dedupeCategoriesByIdentity`, aplicado antes de pasarle
+  la lista a `CategoryStep` — sobrevive la fila con más uso real.
+
 ## [0.9.28] — 2026-08-02
 
 ### Agregado — etiquetar movimientos, de punta a punta

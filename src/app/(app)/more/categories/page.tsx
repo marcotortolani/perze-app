@@ -92,7 +92,15 @@ export default function CategoryTemplatePage() {
  * alguien esperaría encontrarlo — no había ninguna forma de hacerlo. Mismo
  * `EditCategorySheet`, mismo `categoriesRepo.update`, un caller más.
  */
-function YourCategoriesSection({ categories, onEdit }: { categories: CategoryRow[]; onEdit: (id: string, patch: { name: string; icon: IconName }) => Promise<void> }) {
+function YourCategoriesSection({
+  categories,
+  onEdit,
+  onDelete,
+}: {
+  categories: CategoryRow[];
+  onEdit: (id: string, patch: { name: string; icon: IconName }) => Promise<void>;
+  onDelete: (category: CategoryRow) => void;
+}) {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
   const [editing, setEditing] = useState<CategoryRow | null>(null);
@@ -115,8 +123,11 @@ function YourCategoriesSection({ categories, onEdit }: { categories: CategoryRow
             label={categoryLabel(c)}
             chevron={false}
             right={
-              <span onClick={(e) => e.stopPropagation()}>
+              // Frena la burbuja hacia la fila — `ListRow` con `right` ya
+              // renderiza un `div`, no anida controles interactivos.
+              <span onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 4 }}>
                 <IconButton icon="edit" ariaLabel={t("capture.category.edit")} size={36} iconSize={16} onClick={() => setEditing(c)} />
+                <IconButton icon="trash" ariaLabel={t("categoryTemplate.deleteCategory")} size={36} iconSize={16} color="var(--critical)" onClick={() => onDelete(c)} />
               </span>
             }
           />
@@ -149,6 +160,7 @@ function CategoryTemplateForm({
   onBack: () => void;
 }) {
   const t = useTranslations();
+  const categoryLabel = useCategoryLabel();
   const invalidateCategories = useInvalidateCategories(household.id);
   const invalidateHousehold = useInvalidateHousehold();
   const [choice, setChoice] = useState<CategoryTemplateChoice>(() => templateChoiceFrom(household.settings));
@@ -159,6 +171,30 @@ function CategoryTemplateForm({
   const handleEditCategory = async (id: string, patch: { name: string; icon: IconName }) => {
     await categoriesRepo.update(id, patch);
     invalidateCategories();
+  };
+
+  /**
+   * Archiva, nunca borra (CLAUDE.md § "apagar oculta, nunca borra") — la
+   * fila sigue existiendo para cualquier movimiento histórico que ya la
+   * tenga asignada, solo desaparece de los pickers. Reversible con
+   * "Deshacer" en vez de un diálogo de confirmación: no hay otra forma de
+   * restaurarla desde la UI hoy, así que el toast ES el camino de vuelta.
+   */
+  const handleDeleteCategory = (category: CategoryRow) => {
+    const label = categoryLabel(category);
+    void categoriesRepo.archive(category.id).then(() => {
+      invalidateCategories();
+    });
+    toast(t("categoryTemplate.categoryDeleted", { name: label }), {
+      action: {
+        label: t("common.undo"),
+        onClick: () => {
+          void categoriesRepo.update(category.id, { archivedAt: null }).then(() => {
+            invalidateCategories();
+          });
+        },
+      },
+    });
   };
 
   const handleSave = async () => {
@@ -176,7 +212,7 @@ function CategoryTemplateForm({
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <AppHeader title={t("categoryTemplate.title")} showScope={false} onBack={onBack} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
-        <YourCategoriesSection categories={categories} onEdit={handleEditCategory} />
+        <YourCategoriesSection categories={categories} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />
         <div style={{ height: 10 }} />
         <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
           {t("categoryTemplate.templateSectionTitle")}

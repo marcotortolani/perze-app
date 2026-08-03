@@ -1009,7 +1009,9 @@
   "saved": "Categories updated",
   "yourCategoriesTitle": "Your categories",
   "yourCategoriesEmpty": "You haven't created any category yet — create one from \"Other\" while capturing an expense.",
-  "templateSectionTitle": "Template"
+  "templateSectionTitle": "Template",
+  "deleteCategory": "Delete category",
+  "categoryDeleted": "\"{name}\" archived"
  },
  "settingsPage": {
   "yourCurrency": "Your currency",

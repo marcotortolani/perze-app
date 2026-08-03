@@ -12,6 +12,7 @@ import { AmountStep } from "@/features/capture/AmountStep";
 import { CategoryStep } from "@/features/capture/CategoryStep";
 import { DetailsSheet } from "@/features/capture/DetailsSheet";
 import { useFrequentCategories } from "@/features/capture/use-frequent-categories";
+import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
 import { buildNewCategoryInput } from "@/features/capture/create-category";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useInvalidateCategories } from "@/hooks/use-categories";
@@ -67,7 +68,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const isStale = transaction.currencyCode !== household.baseCurrency && openedAtMs - new Date(transaction.occurredAt).getTime() > STALE_DAYS * 86_400_000;
 
   const categoryKind = draft.kind === "income" ? "income" : "expense";
-  const sameKindCategories = categories.filter((c) => c.kind === categoryKind);
+  const sameKindCategories = dedupeCategoriesByIdentity(categories.filter((c) => c.kind === categoryKind), transactions ?? []);
   const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
 
   const handleCreateCategory = async (name: string) => {
@@ -195,7 +196,6 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
         <>
           <CategoryStep
             categories={sameKindCategories}
-            frequent={frequentCategories}
             selectedId={draft.categoryId}
             onSelect={(c) => setField("categoryId", c.id)}
             onCreate={handleCreateCategory}

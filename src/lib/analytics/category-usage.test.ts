@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countCategoryUsage, rankCategoriesByUsage, rankRecentCategoriesByUsage } from "./category-usage";
+import { countCategoryUsage, dedupeCategoriesByIdentity, rankCategoriesByUsage, rankRecentCategoriesByUsage } from "./category-usage";
 import type { CategoryRow, TransactionRow } from "@/lib/db/schema";
 
 type Tx = Pick<TransactionRow, "categoryId" | "kind" | "occurredAt">;
@@ -98,6 +98,30 @@ describe("rankCategoriesByUsage", () => {
     const usage = countCategoryUsage([tx("food-1", "expense", "2026-07-01"), tx("food-2", "expense", "2026-07-02")], { kind: "expense" });
     const ranked = rankCategoriesByUsage(dup, usage, { kind: "expense", limit: 3 });
     expect(ranked.filter((c) => c.name.toLowerCase() === "comida")).toHaveLength(1);
+  });
+});
+
+describe("dedupeCategoriesByIdentity — la grilla completa del picker, no solo el top-5", () => {
+  it("dos filas con el mismo i18nKey quedan en una sola, preservando el orden del array de entrada", () => {
+    const dup = [
+      category("salary-1", 0, "income", { i18nKey: "salary", name: "Sueldo" }),
+      category("other-income", 1, "income", { i18nKey: "otherIncome", name: "Otros ingresos" }),
+      category("salary-2", 2, "income", { i18nKey: "salary", name: "Sueldo" }),
+    ];
+    const deduped = dedupeCategoriesByIdentity(dup, []);
+    expect(deduped.map((c) => c.id)).toEqual(["salary-1", "other-income"]);
+  });
+
+  it("a igual identidad, sobrevive la que tiene más uso real", () => {
+    const dup = [category("salary-1", 0, "income", { i18nKey: "salary" }), category("salary-2", 1, "income", { i18nKey: "salary" })];
+    const transactions = [tx("salary-2", "income", "2026-07-01"), tx("salary-2", "income", "2026-07-02")];
+    const deduped = dedupeCategoriesByIdentity(dup, transactions);
+    expect(deduped.map((c) => c.id)).toEqual(["salary-2"]);
+  });
+
+  it("sin duplicados, no cambia nada", () => {
+    const categories = [category("a", 0), category("b", 1)];
+    expect(dedupeCategoriesByIdentity(categories, [])).toEqual(categories);
   });
 });
 

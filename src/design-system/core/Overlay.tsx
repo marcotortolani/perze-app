@@ -4,11 +4,17 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from "react-dom";
 import { useDrag } from "@use-gesture/react";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { useMotionIntensity } from "@/components/motion/use-motion-intensity";
 import { normalizeSize } from "./size";
 
 /** Arrastrar más allá de esto (o soltar con velocidad) cierra el sheet. */
 const DRAG_CLOSE_THRESHOLD = 120;
 const DRAG_CLOSE_VELOCITY = 0.5;
+
+/** `--duration-base` (240ms) — ni tan brusco como `--fast` ni tan largo como `--slow`, para una hoja que recorre toda su altura. 0 con intensidad "mínima", mismo criterio que `MorphButton`. */
+const TRANSITION_MS = 240;
+
+type Phase = "closed" | "entering" | "open" | "leaving";
 
 export interface OverlayProps {
   open: boolean;
@@ -39,6 +45,21 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
   const isDesktop = useIsDesktop();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
+  const intensity = useMotionIntensity();
+  const animated = intensity !== "minimal";
+  const duration = animated ? TRANSITION_MS : 0;
+
+  // Antes esto desmontaba (`if (!open) return null`) en el mismo frame en
+  // que `open` pasaba a `false` — sin animación de salida posible, porque
+  // no había nada que animar cuando React ya sacó el nodo del DOM. Ahora
+  // "cerrado" es un estado más (`phase`), no lo mismo que `!open`: al
+  // pasar a `false`, el panel sigue montado un instante en "leaving"
+  // (transform hacia afuera) y recién se saca del DOM cuando termina la
+  // transición. Simétrico para abrir: monta en "entering" (transform de
+  // partida, sin transición) y al frame siguiente pasa a "open" (destino,
+  // con transición) — dos pintados distintos son lo que el navegador
+  // necesita para animar entre ellos.
+  const [phase, setPhase] = useState<Phase>(open ? "open" : "closed");
   // La mayoría de los callers pasan `onClose` como un closure inline (o
   // `Sheet` lo envuelve en `?? (() => {})`), así que es una referencia
   // nueva en cada render. Si el efecto de abajo dependiera de `onClose`
@@ -67,10 +88,17 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
         return;
       }
       setDragging(false);
-      if (clamped > DRAG_CLOSE_THRESHOLD || (vy > DRAG_CLOSE_VELOCITY && dy > 0)) {
+      const shouldClose = clamped > DRAG_CLOSE_THRESHOLD || (vy > DRAG_CLOSE_VELOCITY && dy > 0);
+      if (shouldClose) {
+        // `dragY` queda tal cual (no se resetea a 0 acá): `onClose` dispara
+        // la fase "leaving" más abajo, que anima el panel hasta afuera de
+        // la pantalla — arrancando desde donde el arrastre lo dejó, para
+        // que el gesto termine en un solo movimiento continuo en vez de
+        // saltar a 0 y recién ahí empezar a irse.
         onCloseRef.current();
+      } else {
+        setDragY(0);
       }
-      setDragY(0);
     },
     { axis: "y", filterTaps: true }
   );
@@ -78,10 +106,39 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
     onCloseRef.current = onClose;
   });
 
+  // Dispara la secuencia de entrada/salida — nunca en el primer render
+  // (si `open` ya arranca en `true`, el `useState` de `phase` de arriba ya
+  // lo resolvió bien: aparece asentado, no hace falta animar una apertura
+  // que el usuario no vio empezar).
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (open) {
+      // Sincronización genuina con el prop `open`, no derivable del
+      // render — es justo la transición closed→open la que hay que
+      // animar, y eso solo se sabe DESPUÉS de que `open` cambió.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPhase("entering");
+      const raf = requestAnimationFrame(() => setPhase("open"));
+      return () => cancelAnimationFrame(raf);
+    }
+    setPhase((prev) => (prev === "closed" ? "closed" : "leaving"));
+  }, [open]);
+
+  // "leaving" es transitorio: pasado `duration`, recién ahí se desmonta de
+  // verdad (el `return null` de más abajo depende de `phase`, no de `open`).
+  useEffect(() => {
+    if (phase !== "leaving") return;
+    const timeout = setTimeout(() => setPhase("closed"), duration);
+    return () => clearTimeout(timeout);
+  }, [phase, duration]);
+
   useEffect(() => {
     if (!open) return;
-    // `if (!open) return null` más abajo no desmonta el componente, así
-    // que `dragY` sobreviviría de una apertura a la siguiente sin esto —
+    // `dragY` sobreviviría de una apertura a la siguiente sin esto —
     // reabrir mostraría el panel ya corrido hacia abajo. Sincronización
     // genuina con el ciclo de vida "recién se abrió", no derivable del
     // render (el drag es un gesto, no una prop).
@@ -131,9 +188,28 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
     };
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (phase === "closed" || typeof document === "undefined") return null;
 
   const isSheet = variant === "sheet";
+  const visible = phase === "open";
+  // Sin transición en el primer pintado de "entering": ese frame tiene que
+  // asentarse en el estado de partida sin animar hacia él, para que recién
+  // el paso a "open" (el siguiente frame) sea lo que el navegador anima.
+  const backdropTransition = phase === "entering" ? "none" : `opacity ${duration}ms var(--ease-spring-snappy)`;
+
+  // Entrar/salir desliza desde/hacia abajo (100% del propio alto — no un
+  // px fijo, así funciona igual sea cual sea `height`). Mientras se
+  // arrastra, el transform lo maneja el gesto solo (sin transición); fuera
+  // de eso, se combina con el offset de fase — ver la nota en `bindDrag`
+  // sobre por qué un cierre por arrastre no resetea `dragY` a 0 antes.
+  const sheetPhaseOffset = visible ? "0%" : "100%";
+  const sheetTransform = dragging ? `translateY(${dragY}px)` : `translateY(calc(${sheetPhaseOffset} + ${dragY}px))`;
+  const sheetTransition = dragging || phase === "entering" ? "none" : `transform ${duration}ms var(--ease-spring-snappy)`;
+
+  // El diálogo centrado no desliza (no tiene agarradera ni sentido de
+  // "hacia abajo") — funde y escala levemente, mismo `duration`.
+  const dialogTransform = visible ? "scale(1)" : "scale(0.96)";
+  const dialogTransition = phase === "entering" ? "none" : `transform ${duration}ms var(--ease-spring-snappy), opacity ${duration}ms var(--ease-spring-snappy)`;
 
   return createPortal(
     <div
@@ -144,6 +220,8 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
         inset: 0,
         zIndex: 200,
         background: "var(--scrim)",
+        opacity: visible ? 1 : 0,
+        transition: backdropTransition,
         display: "flex",
         justifyContent: "center",
         alignItems: isSheet ? "flex-end" : isDesktop ? "flex-start" : "flex-end",
@@ -185,13 +263,38 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
                 // contenido; acá solo hace falta Y.
                 overflowY: "auto",
                 overflowX: "hidden",
-                transform: dragY ? `translateY(${dragY}px)` : undefined,
-                transition: dragging ? "none" : "transform var(--duration-fast) var(--ease-spring-snappy)",
+                transform: sheetTransform,
+                transition: sheetTransition,
                 ...style,
               }
             : isDesktop
-              ? { width: 640, maxWidth: "92vw", maxHeight: "70dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet)", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
-              : { width: "100%", maxHeight: "85dvh", background: "var(--surface-1)", borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0", boxShadow: "var(--shadow-sheet)", overflow: "hidden", display: "flex", flexDirection: "column" }
+              ? {
+                  width: 640,
+                  maxWidth: "92vw",
+                  maxHeight: "70dvh",
+                  background: "var(--surface-1)",
+                  borderRadius: "var(--radius-sheet)",
+                  boxShadow: "var(--shadow-sheet)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: visible ? 1 : 0,
+                  transform: dialogTransform,
+                  transition: dialogTransition,
+                }
+              : {
+                  width: "100%",
+                  maxHeight: "85dvh",
+                  background: "var(--surface-1)",
+                  borderRadius: "var(--radius-sheet) var(--radius-sheet) 0 0",
+                  boxShadow: "var(--shadow-sheet)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: visible ? 1 : 0,
+                  transform: dialogTransform,
+                  transition: dialogTransition,
+                }
         }
       >
         {isSheet ? (

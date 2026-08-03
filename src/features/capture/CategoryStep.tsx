@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CategoryBubble, Input, ListRow, Sheet } from "@/design-system";
+import { CategoryBubble, Input, ListRow } from "@/design-system";
 import type { CategoryRow } from "@/lib/db/schema";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -10,10 +10,8 @@ import { normalize } from "@/lib/search/rank";
 import { findExistingCategoryByName } from "./create-category";
 
 export interface CategoryStepProps {
-  /** Todas las categorías del `kind` actual — la lista completa que aparece detrás de "Otras". */
+  /** Todas las categorías del `kind` actual. */
   categories: CategoryRow[];
-  /** Top 5 por uso real (`useFrequentCategories`) — lo que se ve por defecto. */
-  frequent: CategoryRow[];
   selectedId: string | null;
   onSelect: (category: CategoryRow) => void;
   onCreate: (name: string) => Promise<CategoryRow>;
@@ -21,24 +19,24 @@ export interface CategoryStepProps {
 }
 
 /**
- * C2 — fallback del camino feliz. Grilla 3×2 de 6 burbujas: las 5 más
- * usadas + "Otras" (mismo patrón de burbuja sintética que
- * `budgets/new/page.tsx` usa para "todo el hogar"). "Otras" abre un sheet
- * con la grilla de TODAS las categorías del `kind` — no una lista de
- * búsqueda por default — más una burbuja final para crear una nueva.
+ * C2 — el paso completo de categoría, mostrado cuando el usuario ya pidió
+ * ver más que los 5 chips rápidos de `AmountStep` (tocó "Otras" ahí, o
+ * llegó acá con "Siguiente" sin elegir ninguna). Antes esto arrancaba con
+ * SU PROPIA fila de 5 más usadas + "Otras" — redundante con lo que
+ * `AmountStep` ya mostró, y recién al tocar esa segunda "Otras" aparecía
+ * la grilla completa. Un paso de más: acá se entra directo a la grilla
+ * con TODAS las categorías del `kind` — no una lista de búsqueda por
+ * default — más una burbuja final para crear una nueva.
  *
  * Interacción por categoría con subcategorías (p. ej. "Salud" →
  * Farmacia/Consultas, con un punto violeta que lo indica en la burbuja):
  * un tap corto SIEMPRE selecciona la categoría general, tal como está —
  * mantener presionado ~500ms despliega sus hijas en una vista aparte,
  * donde se puede confirmar igual la general o afinar a una específica.
- * Ya no hay un estado "expandido en el lugar": es una vista separada
- * (con volver), más simple de manejar en una grilla que en una lista.
  */
-export function CategoryStep({ categories, frequent, selectedId, onSelect, onCreate }: CategoryStepProps) {
+export function CategoryStep({ categories, selectedId, onSelect, onCreate }: CategoryStepProps) {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
-  const [otherOpen, setOtherOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [expandedParent, setExpandedParent] = useState<CategoryRow | null>(null);
@@ -58,15 +56,12 @@ export function CategoryStep({ categories, frequent, selectedId, onSelect, onCre
   }, [categories]);
   const exactMatch = query.trim() !== "" && findExistingCategoryByName(query, categories, categories[0]?.kind ?? "expense", categoryLabel) !== undefined;
 
-  const closeOther = () => {
-    setOtherOpen(false);
-    setQuery("");
-    setExpandedParent(null);
-  };
-
   const handleSelect = (category: CategoryRow) => {
     onSelect(category);
-    closeOther();
+    // Elegir desde la vista de subcategorías vuelve a la grilla principal
+    // — la selección ya quedó marcada ahí, y es donde está el botón de
+    // Guardar/Siguiente.
+    setExpandedParent(null);
   };
 
   const handleCreate = async () => {
@@ -76,7 +71,7 @@ export function CategoryStep({ categories, frequent, selectedId, onSelect, onCre
     try {
       const created = await onCreate(name);
       onSelect(created);
-      closeOther();
+      setQuery("");
     } finally {
       setCreating(false);
     }
@@ -84,88 +79,70 @@ export function CategoryStep({ categories, frequent, selectedId, onSelect, onCre
 
   const expandedChildren = expandedParent ? (childrenOf.get(expandedParent.id) ?? []) : [];
 
-  return (
-    <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, paddingTop: 8 }}>
-        {frequent.map((c) => (
-          <CategoryBubble key={c.id} icon={c.icon as IconName} label={categoryLabel(c)} selected={c.id === selectedId} onClick={() => onSelect(c)} />
-        ))}
-        <CategoryBubble icon="more" label={t("capture.category.other")} selected={false} onClick={() => setOtherOpen(true)} />
-      </div>
-
-      <Sheet
-        open={otherOpen}
-        title={expandedParent ? categoryLabel(expandedParent) : t("capture.category.sheetTitle")}
-        onClose={closeOther}
-        height="70%"
-      >
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, gap: 16 }}>
-          {expandedParent ? (
-            <>
-              <ListRow icon="chevron-left" label={t("capture.category.backToCategories")} chevron={false} onClick={() => setExpandedParent(null)} style={{ marginTop: -4 }} />
-              <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-                  <CategoryBubble
-                    icon={expandedParent.icon as IconName}
-                    label={t("capture.category.selectGeneral", { name: categoryLabel(expandedParent) })}
-                    selected={expandedParent.id === selectedId}
-                    onClick={() => handleSelect(expandedParent)}
-                  />
-                  {expandedChildren.map((child) => (
-                    <CategoryBubble key={child.id} icon={child.icon as IconName} label={categoryLabel(child)} selected={child.id === selectedId} onClick={() => handleSelect(child)} />
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Sin `autoFocus`: la mayoría de las veces la categoría se
-                  elige tocando la grilla, no escribiendo — levantar el
-                  teclado apenas se abre "Otras" tapa media grilla. La
-                  burbuja "Agregar categoría" sí enfoca esto a propósito:
-                  ahí el usuario ya pidió escribir un nombre. */}
-              <div ref={searchWrapperRef}>
-                <Input placeholder={t("capture.category.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} maxLength={60} />
-              </div>
-              <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-                {filtered.length === 0 && !searching ? (
-                  <p className="t-body" style={{ color: "var(--text-muted)", textAlign: "center", marginTop: 24 }}>
-                    {t("capture.category.noResults")}
-                  </p>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-                    {(searching ? filtered : roots).map((c) => {
-                      const kids = searching ? [] : (childrenOf.get(c.id) ?? []);
-                      const hasKids = kids.length > 0;
-                      return (
-                        <CategoryBubble
-                          key={c.id}
-                          icon={c.icon as IconName}
-                          label={categoryLabel(c)}
-                          selected={c.id === selectedId}
-                          hasChildren={hasKids}
-                          onLongPress={hasKids ? () => setExpandedParent(c) : undefined}
-                          onClick={() => handleSelect(c)}
-                        />
-                      );
-                    })}
-                    {!searching ? (
-                      <CategoryBubble
-                        icon="plus"
-                        label={t("capture.category.addNew")}
-                        onClick={() => searchWrapperRef.current?.querySelector<HTMLInputElement>("input")?.focus()}
-                      />
-                    ) : null}
-                  </div>
-                )}
-                {query.trim() !== "" && !exactMatch ? (
-                  <ListRow icon="plus" variant="action" label={t("capture.category.createNew", { name: query.trim() })} disabled={creating} onClick={handleCreate} style={{ marginTop: 12 }} />
-                ) : null}
-              </div>
-            </>
-          )}
+  if (expandedParent) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 16, paddingTop: 8 }}>
+        <ListRow icon="chevron-left" label={t("capture.category.backToCategories")} chevron={false} onClick={() => setExpandedParent(null)} style={{ marginTop: -4 }} />
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+            <CategoryBubble
+              icon={expandedParent.icon as IconName}
+              label={t("capture.category.selectGeneral", { name: categoryLabel(expandedParent) })}
+              selected={expandedParent.id === selectedId}
+              onClick={() => handleSelect(expandedParent)}
+            />
+            {expandedChildren.map((child) => (
+              <CategoryBubble key={child.id} icon={child.icon as IconName} label={categoryLabel(child)} selected={child.id === selectedId} onClick={() => handleSelect(child)} />
+            ))}
+          </div>
         </div>
-      </Sheet>
-    </>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 16, paddingTop: 8 }}>
+      <h2 style={{ margin: 0, fontFamily: "var(--font-sans)", fontSize: "var(--text-title-size)", lineHeight: "var(--text-title-line)", fontWeight: 600 }}>
+        {t("capture.category.sheetTitle")}
+      </h2>
+      {/* Sin `autoFocus`: la mayoría de las veces la categoría se elige
+          tocando la grilla, no escribiendo. La burbuja "Agregar categoría"
+          sí enfoca esto a propósito: ahí el usuario ya pidió escribir un
+          nombre. */}
+      <div ref={searchWrapperRef}>
+        <Input placeholder={t("capture.category.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} maxLength={60} />
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        {filtered.length === 0 && !searching ? (
+          <p className="t-body" style={{ color: "var(--text-muted)", textAlign: "center", marginTop: 24 }}>
+            {t("capture.category.noResults")}
+          </p>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+            {(searching ? filtered : roots).map((c) => {
+              const kids = searching ? [] : (childrenOf.get(c.id) ?? []);
+              const hasKids = kids.length > 0;
+              return (
+                <CategoryBubble
+                  key={c.id}
+                  icon={c.icon as IconName}
+                  label={categoryLabel(c)}
+                  selected={c.id === selectedId}
+                  hasChildren={hasKids}
+                  onLongPress={hasKids ? () => setExpandedParent(c) : undefined}
+                  onClick={() => handleSelect(c)}
+                />
+              );
+            })}
+            {!searching ? (
+              <CategoryBubble icon="plus" label={t("capture.category.addNew")} onClick={() => searchWrapperRef.current?.querySelector<HTMLInputElement>("input")?.focus()} />
+            ) : null}
+          </div>
+        )}
+        {query.trim() !== "" && !exactMatch ? (
+          <ListRow icon="plus" variant="action" label={t("capture.category.createNew", { name: query.trim() })} disabled={creating} onClick={handleCreate} style={{ marginTop: 12 }} />
+        ) : null}
+      </div>
+    </div>
   );
 }
