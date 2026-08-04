@@ -24,6 +24,7 @@ import { add, money, subtract, zero } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { usePendingMutations } from "@/lib/offline";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
+import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
@@ -93,6 +94,7 @@ export function MovementsListContent() {
     return map;
   }, [tagIdsByTx, tagById]);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
+  const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
   const errorState = useQueryErrorState(transactionsQuery, { what: t("transactions.list.errorWhat") });
   const pending = usePendingMutations();
 
@@ -204,14 +206,7 @@ export function MovementsListContent() {
     overscan: 8,
   });
 
-  const handleDelete = async (tx: TransactionRecord) => {
-    await transactionsRepo.softDelete(tx.id);
-    invalidateTransactions();
-    toast(t("transactions.list.deleted"), {
-      duration: 5000,
-      action: { label: t("transactions.list.undo"), onClick: async () => { await transactionsRepo.restore(tx.id); invalidateTransactions(); } },
-    });
-  };
+  const handleDelete = (tx: TransactionRecord) => deleteTransaction(tx.id);
 
   const toggleSelected = (id: string) => {
     setSelection((s) => {
@@ -379,6 +374,8 @@ export function MovementsListContent() {
                       onSwipeLeftCommit={() => handleDelete(item.tx)}
                       onSwipeRightCommit={() => router.push(`/transactions/${item.tx.id}/edit`)}
                       onLongPress={() => setSelection(new Set([item.tx.id]))}
+                      confirmLabel={t("transactions.list.confirmDelete")}
+                      confirmActionLabel={t("transactions.list.confirmDeleteAction")}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {selection ? (

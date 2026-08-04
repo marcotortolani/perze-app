@@ -384,6 +384,8 @@
    "movement": "Movimiento",
    "deleted": "Movimiento borrado",
    "undo": "Deshacer",
+   "confirmDelete": "¿Borrar movimiento?",
+   "confirmDeleteAction": "Borrar",
    "deletedBulk": "{count, plural, one {# movimiento borrado} other {# movimientos borrados}}",
    "deleteCount": "Borrar {count}",
    "categorize": "Categorizar",

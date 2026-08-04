@@ -384,6 +384,8 @@
    "movement": "Movimentação",
    "deleted": "Movimentação excluída",
    "undo": "Desfazer",
+   "confirmDelete": "Excluir movimentação?",
+   "confirmDeleteAction": "Excluir",
    "deletedBulk": "{count, plural, one {# movimentação excluída} other {# movimentações excluídas}}",
    "deleteCount": "Excluir {count}",
    "categorize": "Categorizar",

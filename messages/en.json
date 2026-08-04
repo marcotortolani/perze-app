@@ -384,6 +384,8 @@
    "movement": "Transaction",
    "deleted": "Transaction deleted",
    "undo": "Undo",
+   "confirmDelete": "Delete transaction?",
+   "confirmDeleteAction": "Delete",
    "deletedBulk": "{count, plural, one {# transaction deleted} other {# transactions deleted}}",
    "deleteCount": "Delete {count}",
    "categorize": "Categorize",

@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.14.0] — 2026-08-04
+
+### Corregido — el swipe izquierda ya no borra en el acto
+
+- `SwipeableRow` (`/transactions` y ahora también el home) pasaba directo de "soltar el
+  swipe" a `softDelete`, sin paso intermedio — un gesto de una mano bastaba para borrar un
+  movimiento. Ahora el swipe izquierda pasado el umbral convierte la fila en una
+  confirmación destructiva (tacho + "¿Borrar movimiento?" + botón "Borrar"), del mismo alto
+  que la fila normal para no desincronizar el virtualizador de `/transactions`. Recién al
+  tocar "Borrar" corre el `softDelete` de siempre, con el mismo toast de "Deshacer".
+- La confirmación se cancela con swipe inverso hacia la derecha, tap fuera de la fila,
+  scroll, o sola a los 4 segundos — nunca queda pegada esperando un tap explícito de "no".
+
+### Agregado — swipe para editar/borrar en "Últimos movimientos" del home
+
+- Los mismos gestos de `/transactions` (swipe derecha edita, swipe izquierda confirma y
+  borra) ahora también están disponibles en la lista de últimos movimientos del dashboard,
+  que es donde más se busca corregir o borrar algo recién cargado. Sin long-press ni
+  multi-selección — eso sigue siendo exclusivo de `/transactions`.
+- Se extrajo `useDeleteTransactionWithUndo()` (`src/features/movements/use-delete-transaction.ts`)
+  del `softDelete` + toast "Deshacer" que estaba copiado en la lista y el detalle, para que
+  el home lo reuse sin triplicarlo de nuevo.
+
+---
+
 ## [0.13.0] — 2026-08-04
 
 ### Agregado — "Pago de tarjeta" trazable, vinculado al resumen del ciclo

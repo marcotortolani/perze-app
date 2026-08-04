@@ -55,6 +55,8 @@ import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { accountColorVar } from "@/lib/reference/account-colors";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { SwipeableRow } from "@/features/movements/SwipeableRow";
+import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import type { AccountRow as AccountRowData, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
 function startOfPeriod(now: Date, startDay: number): Date {
@@ -118,6 +120,7 @@ export default function HomePage() {
   usePageHeader({ title: t("nav.home") });
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
+  const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
   const userId = useCurrentUserId();
   const { data: profile } = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
   const dismissedYear = useBirthdayBannerStore((s) => s.dismissedYear);
@@ -500,28 +503,35 @@ export default function HomePage() {
             const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" || reconciliation ? "neutral" : "negative";
             const secondary = tx.currencyCode !== baseCurrency && tx.amountBase !== null ? formatAmountCompact(money(tx.amountBase, baseCurrency), { showSign: false }) : undefined;
             return (
-              <TransactionRow
+              <SwipeableRow
                 key={tx.id}
-                icon={(category?.icon as IconName) ?? (reconciliation ? "target" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
-                merchant={
-                  category
-                    ? categoryLabel(category)
-                    : reconciliation
-                      ? t("home.reconciliation")
-                      : cardPayment
-                        ? t("home.cardPayment")
-                        : tx.kind === "transfer"
-                          ? t("home.transfer")
-                          : t("home.movement")
-                }
-                meta={meta || undefined}
-                value={money(tx.kind === "expense" ? -tx.amount : tx.amount, tx.currencyCode)}
-                secondary={secondary}
-                polarity={polarity}
-                privacy={privacy}
-                syncIssue={tx.syncState === "ok" ? undefined : tx.syncState}
-                onClick={() => router.push(`/transactions/${tx.id}`)}
-              />
+                onSwipeRightCommit={() => router.push(`/transactions/${tx.id}/edit`)}
+                onSwipeLeftCommit={() => deleteTransaction(tx.id)}
+                confirmLabel={t("transactions.list.confirmDelete")}
+                confirmActionLabel={t("transactions.list.confirmDeleteAction")}
+              >
+                <TransactionRow
+                  icon={(category?.icon as IconName) ?? (reconciliation ? "target" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                  merchant={
+                    category
+                      ? categoryLabel(category)
+                      : reconciliation
+                        ? t("home.reconciliation")
+                        : cardPayment
+                          ? t("home.cardPayment")
+                          : tx.kind === "transfer"
+                            ? t("home.transfer")
+                            : t("home.movement")
+                  }
+                  meta={meta || undefined}
+                  value={money(tx.kind === "expense" ? -tx.amount : tx.amount, tx.currencyCode)}
+                  secondary={secondary}
+                  polarity={polarity}
+                  privacy={privacy}
+                  syncIssue={tx.syncState === "ok" ? undefined : tx.syncState}
+                  onClick={() => router.push(`/transactions/${tx.id}`)}
+                />
+              </SwipeableRow>
             );
           })}
         </div>

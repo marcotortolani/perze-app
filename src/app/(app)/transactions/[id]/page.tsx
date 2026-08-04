@@ -17,6 +17,7 @@ import { useCategoryLabel } from "@/hooks/use-category-label";
 import { isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
+import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/dates/today";
 import { formatRateTrimmed, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
@@ -47,6 +48,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const { data: tagIds = [] } = useTagIdsForTransaction(id);
   const { data: transaction, isLoading } = useTransaction(id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
+  const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
   const decimalSeparator = decimalSeparatorForLocale(locale);
 
   // Resolver FX de ESTE movimiento puntual — mismo patrón que
@@ -94,19 +96,8 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const signedAmount = transaction.kind === "expense" ? -transaction.amount : transaction.amount;
 
   const handleDelete = async () => {
-    await transactionsRepo.softDelete(transaction.id);
-    invalidateTransactions();
+    await deleteTransaction(transaction.id);
     router.push("/transactions");
-    toast(t("transactions.list.deleted"), {
-      duration: 5000,
-      action: {
-        label: t("transactions.list.undo"),
-        onClick: async () => {
-          await transactionsRepo.restore(transaction.id);
-          invalidateTransactions();
-        },
-      },
-    });
   };
 
   const handleDuplicate = async () => {
@@ -263,7 +254,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
         <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
-        <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => toast(t("transactions.detail.recurringComingSoon"))} />
+        <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
         <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
         <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
       </div>

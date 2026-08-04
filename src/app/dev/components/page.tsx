@@ -51,6 +51,7 @@ import {
 import { BarChart, LineChart, SeriesLegend, Sparkline } from "@/design-system/charts";
 import { ContextualTooltip, LockScreen } from "@/design-system/systems";
 import { CountUp, MorphButton, Pressable, StaggerList } from "@/components/motion";
+import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { money } from "@/lib/money/money";
 import { rateFromInteger } from "@/lib/fx/rate";
 
@@ -297,6 +298,14 @@ export default function ComponentsPage() {
           <StatTile label="Tasa de ahorro" value="24%" delta="↑ 4,2%" deltaPolarity="positive" deltaNote="vs. junio" />
         </Row>
         <TransactionRow icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value={money(-428_000n, "UYU")} onClick={() => {}} />
+        <div style={{ maxWidth: 400 }}>
+          <p className="t-label" style={{ color: "var(--text-secondary)" }}>
+            SwipeableRow — deslizar a la izquierda pasa a confirmación destructiva; a la derecha, edita directo
+          </p>
+          <SwipeableRow onSwipeLeftCommit={() => {}} onSwipeRightCommit={() => {}} confirmLabel="¿Borrar movimiento?" confirmActionLabel="Borrar">
+            <TransactionRow icon="cart" merchant="Tienda Inglesa" meta="Itaú Caja de Ahorro · Supermercado" value={money(-428_000n, "UYU")} onClick={() => {}} />
+          </SwipeableRow>
+        </div>
         <div style={{ maxWidth: 320 }}>
           <p className="t-label" style={{ color: "var(--text-secondary)" }}>
             SplitBar
