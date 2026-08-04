@@ -211,38 +211,49 @@ function CategoryTemplateForm({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
-        <YourCategoriesSection categories={categories} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />
-        <div style={{ height: 10 }} />
-        <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
-          {t("categoryTemplate.templateSectionTitle")}
-        </p>
-        <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-          {t("categoryTemplate.subtitle")}
-        </p>
-        <div style={{ height: 6 }} />
-        <OptionCard
-          title={t("categoryTemplate.basicTitle")}
-          description={t("categoryTemplate.basicCount", { count: countTemplateItems(BASIC_CATEGORY_TEMPLATE) })}
-          selected={choice === "basic"}
-          onClick={() => setChoice("basic")}
-        />
-        {choice === "basic" ? <CategoryTemplatePreview items={BASIC_CATEGORY_TEMPLATE} /> : null}
-        <OptionCard
-          title={t("categoryTemplate.completeTitle")}
-          description={`${t("categoryTemplate.completeCount", { count: countTemplateItems(COMPLETE_CATEGORY_TEMPLATE) })} — ${t("categoryTemplate.completeDescription")}`}
-          selected={choice === "complete"}
-          onClick={() => setChoice("complete")}
-        />
-        {choice === "complete" ? <CategoryTemplatePreview items={COMPLETE_CATEGORY_TEMPLATE} /> : null}
-        <OptionCard
-          title={t("categoryTemplate.scratchTitle")}
-          description={t("categoryTemplate.scratchDescription")}
-          selected={choice === "scratch"}
-          onClick={() => setChoice("scratch")}
-        />
+      {/* `lg`+: "Tus categorías" a la izquierda, la plantilla a la derecha —
+          son dos secciones de contenido real, no una sola estirada a los
+          1200px del layout. El scroller sigue siendo uno solo, envolviendo
+          las dos columnas. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingTop: 16, gap: 24 }}>
+        <div>
+          <YourCategoriesSection categories={categories} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-secondary)" }}>
+            {t("categoryTemplate.templateSectionTitle")}
+          </p>
+          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+            {t("categoryTemplate.subtitle")}
+          </p>
+          <div style={{ height: 6 }} />
+          <OptionCard
+            title={t("categoryTemplate.basicTitle")}
+            description={t("categoryTemplate.basicCount", { count: countTemplateItems(BASIC_CATEGORY_TEMPLATE) })}
+            selected={choice === "basic"}
+            onClick={() => setChoice("basic")}
+          />
+          {choice === "basic" ? <CategoryTemplatePreview items={BASIC_CATEGORY_TEMPLATE} /> : null}
+          <OptionCard
+            title={t("categoryTemplate.completeTitle")}
+            description={`${t("categoryTemplate.completeCount", { count: countTemplateItems(COMPLETE_CATEGORY_TEMPLATE) })} — ${t("categoryTemplate.completeDescription")}`}
+            selected={choice === "complete"}
+            onClick={() => setChoice("complete")}
+          />
+          {choice === "complete" ? <CategoryTemplatePreview items={COMPLETE_CATEGORY_TEMPLATE} /> : null}
+          <OptionCard
+            title={t("categoryTemplate.scratchTitle")}
+            description={t("categoryTemplate.scratchDescription")}
+            selected={choice === "scratch"}
+            onClick={() => setChoice("scratch")}
+          />
+        </div>
       </div>
-      <div style={{ paddingTop: 16, paddingBottom: 24 }}>
+      {/* "Guardar" solo confirma la elección de plantilla (las ediciones de
+          "Tus categorías" ya se guardan solas, por fila) — se alinea con el
+          ancho de esa columna, no con las dos. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ paddingTop: 16, paddingBottom: 24 }}>
+        <div className="hidden lg:block" />
         <Button onClick={handleSave} disabled={saving}>
           {t("categoryTemplate.save")}
         </Button>

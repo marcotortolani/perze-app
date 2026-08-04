@@ -6,6 +6,51 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.11.3] — 2026-08-04
+
+### Agregado — ancho consistente en desktop, rediseño de listas/formularios y `ZMark` animado
+
+- **El header ya no cambia de ancho según la ruta.** Antes solo `/`, `/transactions` y
+  `/accounts` usaban el ancho ancho (1200px) del layout; el resto de la app (`/analytics`,
+  `/more` y casi todas las subpáginas) caía a un ancho angosto (560px) por una lista corta de
+  rutas "wide" en `contentWidthFor()` — el header, que comparte el mismo `maxWidth` que el
+  contenido, quedaba visiblemente más chico ahí. Se retira esa lista: el layout usa siempre
+  el ancho ancho, y cada página decide su propio ancho de lectura por dentro cuando le hace
+  falta uno más angosto (formularios cortos), en vez de heredarlo del layout. Se borra
+  `src/lib/nav/content-width.ts` y su test, que quedaron sin uso.
+- **`/analytics`**: las dos secciones ("Ya se puede ver" / "Todavía no") pasan de una columna
+  de cards de ancho completo a un grid de 2 columnas en desktop, cada card completamente
+  clickeable (antes solo el ancho del texto respondía al toque).
+- **`/recurring`**: el calendario de vencimientos (antes solo accesible navegando a
+  `/recurring/calendar`) se extrajo a un componente compartido y ahora vive al lado de la
+  lista en desktop — el botón "Ver el mes en calendario" desaparece ahí (sigue en mobile) y
+  se puede navegar el mes sin perder la lista de la izquierda.
+- **`/more/categories`** y **`/more/tags`**: pasan a 2 columnas reales en desktop (categorías
+  propias / plantilla; tags / comercios) en vez de una sola lista larga.
+- **`/more/settings`** y **`/more`**: se agrupan en 2 columnas por afinidad (regional/moneda
+  vs. app/apariencia en Ajustes; Dinero+Personas vs. Sistema en Más) para que entren sin
+  scroll de sobra en desktop.
+- **`ZMark`, nuevo `variant="flip"`.** Mismo componente y recorrido de siempre (la Z de 3×3
+  bloques), pero cada celda "voltea" sobre su eje vertical (`scaleX` a cero y de vuelta,
+  cambiando de color en el medio) en vez de solo cambiar de color — un giro lateral tipo
+  tablero de aeropuerto, no un parpadeo. Respeta el ajuste de intensidad de movimiento
+  (completa/reducida/mínima) igual que el resto del componente. Rellena la columna vacía de
+  `/more/profile` y de siete formularios cortos (deudas, metas, recurrente, invitar
+  familiar, regla nueva, trade e instrumento nuevos) que antes quedaban centrados con aire
+  libre a los dos lados o con una columna sin nada del lado derecho.
+- **`/more/profile`**: los campos (nombre, email, fecha de nacimiento, país) vuelven a una
+  sola columna a la izquierda — son pocos y entran sin scroll — con el `ZMark` a la derecha.
+
+### Corregido — `/more/about`
+
+- **Se quitaron las filas "Código fuente" y "Licencia"** (y la mención de licencia MIT en el
+  texto de créditos) de la pantalla "Acerca de".
+- **Cita nueva al pie**, anclada al fondo del área de contenido de la pantalla (no del
+  viewport — sigue el flujo normal, nunca se superpone ni queda fija), traducida a los tres
+  idiomas.
+
+---
+
 ## [0.11.2] — 2026-08-03
 
 ### Corregido — navegación de detalle en mobile (PWA), tarjetas desde el home y modo privacidad

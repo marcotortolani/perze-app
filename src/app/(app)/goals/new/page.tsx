@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Input, Keypad, ListRow, Sheet, usePageHeader } from "@/design-system";
+import { Button, Input, Keypad, ListRow, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -71,32 +71,41 @@ export default function NewGoalPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
-        <Input label={t("goalsPage.name")} placeholder={t("goalsPage.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
+      {/* `lg`+: el formulario queda a la izquierda tal cual estaba — la
+          columna del grid ya da un ancho parecido a `--content-max-width` —
+          y la derecha pasa a llevar el `ZMark` en vez de quedar vacía. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
+          <Input label={t("goalsPage.name")} placeholder={t("goalsPage.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
 
-        {expr.trim() === "" && cushion > 0n ? (
-          <ListRow
-            icon="target"
-            label={t("goalsPage.useCushion", { amount: formatAmountCompact(cushionMoney, { showSign: false }) })}
-            variant="action"
-            onClick={useCushion}
-          />
-        ) : null}
+          {expr.trim() === "" && cushion > 0n ? (
+            <ListRow
+              icon="target"
+              label={t("goalsPage.useCushion", { amount: formatAmountCompact(cushionMoney, { showSign: false }) })}
+              variant="action"
+              onClick={useCushion}
+            />
+          ) : null}
 
-        <button type="button" onClick={() => setAccountSheetOpen(true)} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("goalsPage.account")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
-        </button>
+          <button type="button" onClick={() => setAccountSheetOpen(true)} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("goalsPage.account")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
+          </button>
 
-        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
-          {household.baseCurrency} {expr || "0"}
+          <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
+            {household.baseCurrency} {expr || "0"}
+          </div>
+
+          <div style={{ marginTop: "auto" }}>
+            <Keypad onKey={(k) => setExpr((s) => (k === "clear" ? "" : k === "backspace" ? s.slice(0, -1) : s + (k === "," ? "," : k)))} onClear={() => setExpr("")} />
+            <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: 16 }}>
+              {t("common.save")}
+            </Button>
+          </div>
         </div>
 
-        <div style={{ marginTop: "auto" }}>
-          <Keypad onKey={(k) => setExpr((s) => (k === "clear" ? "" : k === "backspace" ? s.slice(0, -1) : s + (k === "," ? "," : k)))} onClear={() => setExpr("")} />
-          <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: 16 }}>
-            {t("common.save")}
-          </Button>
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
         </div>
       </div>
 

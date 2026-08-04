@@ -10,6 +10,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { computeMonthlyCommitted } from "@/lib/analytics/recurring-schedule";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
+import { RecurringMonthCalendar } from "./RecurringMonthCalendar";
 
 /** G2 — recurrentes: la plantilla y si ya se cargó el mes en curso. Separado de `page.tsx` — ver el comentario en `budgets/BudgetsPageContent.tsx`. */
 export default function RecurringPageContent() {
@@ -66,9 +67,15 @@ export default function RecurringPageContent() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
+    // `lg`+: la lista queda a la izquierda, el calendario del mes aparece
+    // al lado en vez de tener que navegar — "Ver el mes en calendario" pasa
+    // a `lg:hidden` porque en desktop el calendario ya está a la vista.
+    <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, paddingTop: 8, paddingBottom: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <StatTile label={t("recurringPage.committedPerMonth")} value={formatAmountCompact(money(committed, household.baseCurrency), { showSign: false })} style={{ marginBottom: 12 }} />
-        <ListRow icon="calendar" label={t("recurringPage.viewCalendar")} onClick={() => router.push("/recurring/calendar")} />
+        <div className="lg:hidden">
+          <ListRow icon="calendar" label={t("recurringPage.viewCalendar")} onClick={() => router.push("/recurring/calendar")} />
+        </div>
         <ListRow icon="plus" label={t("recurringPage.newRule")} variant="action" onClick={() => router.push("/recurring/new")} />
 
         {accountsWithRules.length > 1 ? (
@@ -100,22 +107,27 @@ export default function RecurringPageContent() {
         {filteredRules.length === 0 ? <EmptyState message={t("recurringPage.emptyFiltered")} /> : null}
 
         {filteredRules.map((rule) => (
-        <ListRow
-          key={rule.id}
-          label={rule.name}
-          meta={t("recurringPage.dayOfMonth", { day: rule.dayOfMonth })}
-          variant="value"
-          onClick={() => router.push(`/recurring/${rule.id}`)}
-          value={
-            <div style={{ textAlign: "right" }}>
-              <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
-              <div style={{ fontSize: 12, color: chargedThisMonth.has(rule.id) ? "var(--good)" : "var(--text-muted)", marginTop: 2 }}>
-                {chargedThisMonth.has(rule.id) ? t("recurringPage.chargedThisMonth") : t("recurringPage.notYetChargedThisMonth")}
+          <ListRow
+            key={rule.id}
+            label={rule.name}
+            meta={t("recurringPage.dayOfMonth", { day: rule.dayOfMonth })}
+            variant="value"
+            onClick={() => router.push(`/recurring/${rule.id}`)}
+            value={
+              <div style={{ textAlign: "right" }}>
+                <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
+                <div style={{ fontSize: 12, color: chargedThisMonth.has(rule.id) ? "var(--good)" : "var(--text-muted)", marginTop: 2 }}>
+                  {chargedThisMonth.has(rule.id) ? t("recurringPage.chargedThisMonth") : t("recurringPage.notYetChargedThisMonth")}
+                </div>
               </div>
-            </div>
-          }
-        />
-      ))}
+            }
+          />
+        ))}
       </div>
+
+      <div className="hidden lg:block">
+        <RecurringMonthCalendar />
+      </div>
+    </div>
   );
 }

@@ -841,10 +841,6 @@
   "title": "Acerca de",
   "name": "PERZE",
   "versionLine": "Versión {version} · se pronuncia PER-se",
-  "sourceCode": "Código fuente",
-  "sourceCodeMeta": "Se puede leer, copiar y correr en tu servidor",
-  "license": "Licencia",
-  "licenseBadge": "MIT",
   "dataStorage": "Qué datos guardamos",
   "dataStorageMeta": "Y cuáles nunca salen de tu teléfono",
   "dataStorageBody": "Tus movimientos, cuentas y presupuestos viven primero en tu teléfono (IndexedDB) y se sincronizan con tu propio proyecto de Supabase cuando hay conexión. Nunca se comparten con terceros ni se usan para entrenar nada. Si autohospedás PERZE, ese servidor sos vos.",
@@ -855,7 +851,9 @@
   "currencyStandardBody1": "Los códigos de moneda de la app siguen la norma ISO 4217 (USD, ARS, UYU, etc.) — es el identificador internacional de tres letras, el mismo que usan los bancos y las casas de cambio.",
   "currencyStandardBody2": "El símbolo ($, €, US$) NO es parte de esa norma: es una convención aparte, y la mayoría de las monedas del mundo no tienen uno propio y reconocido. Donde existe un símbolo real lo mostramos (US$, AR$, $U para el peso uruguayo); donde no, mostramos el código ISO, que es la forma correcta de identificarla sin ambigüedad.",
   "madeWith": "Hecho con",
-  "madeWithBody": "Geist Sans y Geist Mono, íconos de Phosphor, y cotizaciones del BROU. Licencia MIT — el código es tuyo para leer, modificar y correr donde quieras."
+  "madeWithBody": "Geist Sans y Geist Mono, íconos de Phosphor, y cotizaciones del BROU.",
+  "quote": "Lo único que interfiere con mi aprendizaje es mi educación.",
+  "quoteAuthor": "— Albert Einstein"
  },
  "privacyNotice": {
   "title": "Quién puede ver qué",

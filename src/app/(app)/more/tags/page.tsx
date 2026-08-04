@@ -66,7 +66,9 @@ export default function TagsAndPayeesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
+      {/* `lg`+: tags a la izquierda, comercios a la derecha — dos listas
+          independientes en vez de una sola columna estirada. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ paddingTop: 12, gap: 20, paddingBottom: 24 }}>
         <section>
           <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 4 }}>{t("tagsPayeesPage.tags")}</div>
           {tags.map((tag) => (

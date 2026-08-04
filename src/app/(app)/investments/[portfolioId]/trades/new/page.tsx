@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
+import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -92,29 +92,38 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
-        <SegmentedControl
-          options={KINDS.map((k) => ({ id: k, label: t(k === "buy" ? "newTradePage.buy" : "newTradePage.sell") }))}
-          value={kind}
-          onChange={(k) => setKind(k as TradeKind)}
-        />
+      {/* `lg`+: el formulario queda a la izquierda tal cual estaba — la
+          columna del grid ya da un ancho parecido a `--content-max-width` —
+          y la derecha pasa a llevar el `ZMark` en vez de quedar vacía. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
+          <SegmentedControl
+            options={KINDS.map((k) => ({ id: k, label: t(k === "buy" ? "newTradePage.buy" : "newTradePage.sell") }))}
+            value={kind}
+            onChange={(k) => setKind(k as TradeKind)}
+          />
 
-        <button type="button" onClick={() => setSheet("instrument")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.instrument")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{instrument ? `${instrument.symbol} — ${instrument.name}` : t("newTradePage.chooseInstrument")}</div>
-        </button>
+          <button type="button" onClick={() => setSheet("instrument")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.instrument")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{instrument ? `${instrument.symbol} — ${instrument.name}` : t("newTradePage.chooseInstrument")}</div>
+          </button>
 
-        <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
-        </button>
+          <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
+          </button>
 
-        <Input label={t("newTradePage.quantity")} placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/[^0-9.,]/g, ""))} />
-        <Input label={t("newTradePage.unitPrice")} placeholder="150,00" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ""))} />
+          <Input label={t("newTradePage.quantity")} placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/[^0-9.,]/g, ""))} />
+          <Input label={t("newTradePage.unitPrice")} placeholder="150,00" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ""))} />
 
-        <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
-          {t("common.save")}
-        </Button>
+          <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
+            {t("common.save")}
+          </Button>
+        </div>
+
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
+        </div>
       </div>
 
       <Sheet open={sheet === "instrument"} title={t("newTradePage.instrument")} onClose={() => setSheet("none")}>

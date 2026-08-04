@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
+import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -104,27 +104,37 @@ export default function NewDebtPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
-        <SegmentedControl options={KINDS.map((k) => ({ id: k, label: t(DEBT_KIND_MESSAGE_KEY[k]) }))} value={kind} onChange={(id) => setKind(id as DebtKind)} />
-        <Input label={t("debtsPage.name")} placeholder={t("debtsPage.namePlaceholder")} value={name} onChange={(e) => setNameOverride(e.target.value)} />
-        {kind === "installment_plan" ? (
-          <Input label={t("debtsPage.installmentCount")} placeholder="12" value={installments} onChange={(e) => setInstallments(e.target.value.replace(/\D/g, ""))} />
-        ) : null}
+      {/* `lg`+: el formulario (pocos campos, sin scroll) queda a la
+          izquierda tal cual estaba — la columna del grid ya da un ancho
+          parecido a `--content-max-width`, no hace falta un techo aparte —
+          y la derecha pasa a llevar el `ZMark` en vez de quedar vacía. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
+          <SegmentedControl options={KINDS.map((k) => ({ id: k, label: t(DEBT_KIND_MESSAGE_KEY[k]) }))} value={kind} onChange={(id) => setKind(id as DebtKind)} />
+          <Input label={t("debtsPage.name")} placeholder={t("debtsPage.namePlaceholder")} value={name} onChange={(e) => setNameOverride(e.target.value)} />
+          {kind === "installment_plan" ? (
+            <Input label={t("debtsPage.installmentCount")} placeholder="12" value={installments} onChange={(e) => setInstallments(e.target.value.replace(/\D/g, ""))} />
+          ) : null}
 
-        <button type="button" onClick={() => setAccountSheetOpen(true)} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("debtsPage.linkedAccount")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
-        </button>
+          <button type="button" onClick={() => setAccountSheetOpen(true)} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("debtsPage.linkedAccount")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
+          </button>
 
-        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
-          {household.baseCurrency} {expr || "0"}
+          <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
+            {household.baseCurrency} {expr || "0"}
+          </div>
+
+          <div style={{ marginTop: "auto" }}>
+            <Keypad onKey={(k) => setExprOverride((s) => { const cur = s ?? expr; return k === "clear" ? "" : k === "backspace" ? cur.slice(0, -1) : cur + (k === "," ? "," : k); })} onClear={() => setExprOverride("")} />
+            <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: 16 }}>
+              {t("common.save")}
+            </Button>
+          </div>
         </div>
 
-        <div style={{ marginTop: "auto" }}>
-          <Keypad onKey={(k) => setExprOverride((s) => { const cur = s ?? expr; return k === "clear" ? "" : k === "backspace" ? cur.slice(0, -1) : cur + (k === "," ? "," : k); })} onClear={() => setExprOverride("")} />
-          <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: 16 }}>
-            {t("common.save")}
-          </Button>
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
         </div>
       </div>
 

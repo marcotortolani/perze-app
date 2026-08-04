@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ListRow, Sheet, StatusBadge, usePageHeader } from "@/design-system";
+import { ListRow, Sheet, usePageHeader } from "@/design-system";
 import { APP_VERSION } from "@/lib/version";
 
 /** K13 — acerca de. Licencia MIT ya decidida (`CLAUDE.md` § "Las tres últimas decisiones"), no "se está definiendo" como en el diseño original. */
@@ -26,8 +26,6 @@ export default function AboutPage() {
         </div>
 
         <div style={{ paddingTop: 28 }}>
-          <ListRow label={t("aboutPage.sourceCode")} meta={t("aboutPage.sourceCodeMeta")} chevron={false} />
-          <ListRow label={t("aboutPage.license")} meta="MIT" right={<StatusBadge status="good">{t("aboutPage.licenseBadge")}</StatusBadge>} chevron={false} />
           <ListRow label={t("aboutPage.dataStorage")} meta={t("aboutPage.dataStorageMeta")} onClick={() => setDataSheetOpen(true)} />
           <ListRow label={t("aboutPage.operatorVisibility")} meta={t("aboutPage.operatorVisibilityMeta")} onClick={() => setPrivacySheetOpen(true)} />
           <ListRow label={t("aboutPage.currencyStandard")} meta={t("aboutPage.currencyStandardMeta")} onClick={() => setCurrencySheetOpen(true)} />
@@ -37,6 +35,28 @@ export default function AboutPage() {
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("aboutPage.madeWith")}</div>
           <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 6 }}>{t("aboutPage.madeWithBody")}</p>
         </div>
+      </div>
+
+      {/* Detalle al pie de la pantalla, no del viewport: `marginTop: "auto"`
+          empuja este bloque contra el fondo del flex column de altura
+          100% de esta pantalla cuando sobra espacio (lo normal, es poco
+          contenido) — nunca `position: fixed`/`bottom: 0`, que lo pegaría
+          al borde real de la ventana por encima de cualquier otra cosa.
+          Si el contenido de arriba llega a no entrar en una pantalla muy
+          baja, este bloque simplemente sigue el flujo normal y se scrollea
+          con el resto, en vez de solaparse. Sin `ListRow` ni `Card` — una
+          cita no es un dato de la app. Borde izquierdo fino (mismo patrón
+          que ya usa `CategoryTemplatePreview` para citar contenido
+          subordinado), cursiva reservada a esta única línea de cuerpo de
+          texto — nunca en un título — y el nombre en tinta muted, no de
+          marca: es una firma, no una acción. */}
+      <div style={{ marginTop: "auto", paddingLeft: 16, paddingBottom: 24, borderLeft: "2px solid var(--border)" }}>
+        <p style={{ margin: 0, fontFamily: "var(--font-sans)", fontSize: 15, fontStyle: "italic", lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          {t("aboutPage.quote")}
+        </p>
+        <p className="t-caption" style={{ margin: "10px 0 0", color: "var(--text-muted)" }}>
+          {t("aboutPage.quoteAuthor")}
+        </p>
       </div>
 
       <Sheet open={dataSheetOpen} title={t("aboutPage.dataStorage")} onClose={() => setDataSheetOpen(false)} height={360}>

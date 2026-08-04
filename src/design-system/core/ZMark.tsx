@@ -8,8 +8,11 @@ export interface ZMarkProps {
   gap?: number | undefined;
   /** Loader del splash: mismo dibujo, en secuencia. Estática en estados vacíos. */
   animated?: boolean | undefined;
-  /** `pulse`: opacidad con stagger (loader). `sweep`: un bloque violeta recorre la Z. */
-  variant?: "pulse" | "sweep" | undefined;
+  /** `pulse`: opacidad con stagger (loader). `sweep`: un bloque violeta recorre la Z
+   *  cambiando de color. `flip`: mismo recorrido, pero cada celda "voltea" sobre su eje
+   *  vertical (`scaleX` a 0 y de vuelta) en el instante del cambio de color — relleno
+   *  decorativo para columnas vacías, no un loader. */
+  variant?: "pulse" | "sweep" | "flip" | undefined;
   "aria-label"?: string | undefined;
   style?: CSSProperties | undefined;
 }
@@ -19,6 +22,11 @@ const CELLS = [1, 1, 1, 0, 1, 0, 1, 1, 1];
 const STAGGER_MS = 120;
 const SWEEP_SLOT_MS = 400;
 const SWEEP_CYCLE_MS = SWEEP_SLOT_MS * 7;
+// Más lento que `sweep`: el volteo necesita más tiempo real por celda para
+// leerse como un giro, no un parpadeo — mismo `ease-in-out` que el resto de
+// las transiciones con spring del sistema, en vez de `linear`.
+const FLIP_SLOT_MS = 650;
+const FLIP_CYCLE_MS = FLIP_SLOT_MS * 7;
 
 export function ZMark({
   size = 20,
@@ -54,7 +62,9 @@ export function ZMark({
           filled && effectiveAnimated && !grouped
             ? variant === "sweep"
               ? `zsweep ${SWEEP_CYCLE_MS}ms linear ${order * SWEEP_SLOT_MS}ms infinite`
-              : `zpulse 1.4s ease-in-out ${order * STAGGER_MS}ms infinite`
+              : variant === "flip"
+                ? `zflip ${FLIP_CYCLE_MS}ms ease-in-out ${order * FLIP_SLOT_MS}ms infinite`
+                : `zpulse 1.4s ease-in-out ${order * STAGGER_MS}ms infinite`
             : undefined;
         return (
           <span

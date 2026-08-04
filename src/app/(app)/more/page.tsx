@@ -74,64 +74,73 @@ export default function MorePage() {
         className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
         style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingRight: 8 }}
       >
-      <section>
-        <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
-        <Card padding="4px 16px">
-          <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} />
-          {modules.includes("budgets") ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
-          {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => router.push("/goals")} /> : null}
-          {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}
-          {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => router.push("/debts")} /> : null}
-          {modules.includes("investments") ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
-          <ListRow icon="tag" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
-          <ListRow icon="tag" label={t("morePage.tagsAndPayees")} onClick={() => router.push("/more/tags")} />
-          <ListRow icon="refresh" label={t("morePage.rules")} onClick={() => router.push("/more/rules")} />
-        </Card>
-      </section>
+      {/* `lg`+: DINERO + PERSONAS a la izquierda; SISTEMA, admin y cerrar
+          sesión a la derecha, en vez de una sola columna larga que fuerza
+          scroll de sobra. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <section>
+            <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
+            <Card padding="4px 16px">
+              <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} />
+              {modules.includes("budgets") ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
+              {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => router.push("/goals")} /> : null}
+              {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}
+              {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => router.push("/debts")} /> : null}
+              {modules.includes("investments") ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
+              <ListRow icon="tag" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
+              <ListRow icon="tag" label={t("morePage.tagsAndPayees")} onClick={() => router.push("/more/tags")} />
+              <ListRow icon="refresh" label={t("morePage.rules")} onClick={() => router.push("/more/rules")} />
+            </Card>
+          </section>
 
-      {modules.includes("family") ? (
-        <section>
-          <div style={CAPTION_STYLE}>{t("morePage.people")}</div>
+          {modules.includes("family") ? (
+            <section>
+              <div style={CAPTION_STYLE}>{t("morePage.people")}</div>
+              <Card padding="4px 16px">
+                <ListRow icon="users" label={t("morePage.family")} onClick={() => router.push("/family")} />
+              </Card>
+            </section>
+          ) : null}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <section>
+            <div style={CAPTION_STYLE}>{t("morePage.system")}</div>
+            <Card padding="4px 16px">
+              <ListRow icon="user" label={t("morePage.profile")} onClick={() => router.push("/more/profile")} />
+              <ListRow icon="lock" label={t("morePage.security")} onClick={() => router.push("/more/security")} />
+              <ListRow icon="alert" label={t("notificationsPage.title")} onClick={() => router.push("/more/notifications")} />
+              <ListRow
+                icon="refresh"
+                label={t("syncDiagnosticsPage.title")}
+                chevron
+                value={conflicts.length > 0 ? <StatusBadge status="critical">{t("conflictsPage.badgeCount", { count: conflicts.length })}</StatusBadge> : undefined}
+                onClick={() => router.push("/more/sync")}
+              />
+              <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
+              <ListRow icon="install" label={t("morePage.dataAndBackup")} onClick={() => router.push("/more/data")} />
+              <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
+            </Card>
+          </section>
+
+          {ownAccess?.isAppAdmin ? (
+            <section>
+              <Card padding="4px 16px">
+                <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} />
+              </Card>
+            </section>
+          ) : null}
+
           <Card padding="4px 16px">
-            <ListRow icon="users" label={t("morePage.family")} onClick={() => router.push("/family")} />
+            {demoActive ? (
+              <ListRow icon="sign-out" label={t("morePage.exitDemo")} onClick={handleExitDemo} />
+            ) : (
+              <ListRow icon="sign-out" label={t("morePage.signOut")} onClick={handleSignOutRequest} />
+            )}
           </Card>
-        </section>
-      ) : null}
-
-      <section>
-        <div style={CAPTION_STYLE}>{t("morePage.system")}</div>
-        <Card padding="4px 16px">
-          <ListRow icon="user" label={t("morePage.profile")} onClick={() => router.push("/more/profile")} />
-          <ListRow icon="lock" label={t("morePage.security")} onClick={() => router.push("/more/security")} />
-          <ListRow icon="alert" label={t("notificationsPage.title")} onClick={() => router.push("/more/notifications")} />
-          <ListRow
-            icon="refresh"
-            label={t("syncDiagnosticsPage.title")}
-            chevron
-            value={conflicts.length > 0 ? <StatusBadge status="critical">{t("conflictsPage.badgeCount", { count: conflicts.length })}</StatusBadge> : undefined}
-            onClick={() => router.push("/more/sync")}
-          />
-          <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
-          <ListRow icon="install" label={t("morePage.dataAndBackup")} onClick={() => router.push("/more/data")} />
-          <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
-        </Card>
-      </section>
-
-      {ownAccess?.isAppAdmin ? (
-        <section>
-          <Card padding="4px 16px">
-            <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} />
-          </Card>
-        </section>
-      ) : null}
-
-      <Card padding="4px 16px">
-        {demoActive ? (
-          <ListRow icon="sign-out" label={t("morePage.exitDemo")} onClick={handleExitDemo} />
-        ) : (
-          <ListRow icon="sign-out" label={t("morePage.signOut")} onClick={handleSignOutRequest} />
-        )}
-      </Card>
+        </div>
+      </div>
 
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>
         {t("morePage.version", { version: APP_VERSION })}

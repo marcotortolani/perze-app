@@ -207,94 +207,105 @@ export default function SettingsPage() {
       <div
         ref={scrollerRef}
         className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12, paddingRight: 8, display: "flex", flexDirection: "column", gap: 4 }}
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12, paddingRight: 8 }}
       >
-        <ListRow
-          icon="globe"
-          label={t("morePage.language")}
-          value={t(LANGUAGE_MESSAGE_KEY[locale])}
-          variant="value"
-          disabled={localePending}
-          onClick={() => setLanguageSheetOpen(true)}
-        />
-        <ListRow
-          icon="eye"
-          label={t("profilePage.theme")}
-          value={t(`profilePage.themeOptions.${themePreference}`)}
-          variant="value"
-          onClick={() => setThemeSheetOpen(true)}
-        />
-        <ListRow
-          icon="wallet"
-          label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
-          value={household.baseCurrency}
-          variant="value"
-          onClick={() => setBaseCurrencySheetOpen(true)}
-        />
-        {hasTransactions ? (
-          <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
-        ) : null}
-        {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
-        <ListRow
-          icon="chart"
-          label={t("settingsPage.fourthTab")}
-          value={t(FOURTH_TAB_MESSAGE_KEY[fourthTab])}
-          variant="value"
-          onClick={() => setTabSheetOpen(true)}
-        />
-        <ListRow
-          icon="calendar"
-          label={t("settingsPage.closeDay")}
-          value={String(household.periodStartDay)}
-          variant="value"
-          disabled={!isOwnerOrAdmin}
-          onClick={() => isOwnerOrAdmin && setCloseDaySheetOpen(true)}
-        />
-        {!isOwnerOrAdmin ? (
-          <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
-        ) : null}
-        <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
-        {installState?.standalone ? (
-          <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
-        ) : installState ? (
-          <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
-        ) : null}
-        <ListRow
-          icon="globe"
-          label={t("settingsPage.decimalSeparator")}
-          value={decimalSeparatorExample(decimalSeparatorPref, localeDecimalSeparator)}
-          variant="value"
-          onClick={() => setDecimalSheetOpen(true)}
-        />
-        <ListRow
-          icon="calendar"
-          label={t("settingsPage.dateFormat")}
-          value={formatNumericDate(locale, new Date(), dateFormatPref)}
-          variant="value"
-          onClick={() => setDateFormatSheetOpen(true)}
-        />
-        <ListRow
-          icon="list"
-          label={t("settingsPage.backdrop")}
-          right={<Switch id="backdrop-switch" checked={backdropPreference.enabled} onChange={handleToggleBackdrop} />}
-        />
-        <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.backdropHint")}</p>
-        {backdropPreference.enabled ? (
-          <>
+        {/* `lg`+: se agrupa por afinidad real en vez de una sola lista
+            plana de 12 filas — regional/moneda a la izquierda, app y
+            apariencia a la derecha. Cada fila se queda con su nota/caption
+            condicional pegada abajo, como ya estaba. */}
+        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <ListRow
-              label={t("settingsPage.backdropDensity")}
-              value={t(`settingsPage.backdropDensityOptions.${backdropPreference.density}`)}
+              icon="globe"
+              label={t("morePage.language")}
+              value={t(LANGUAGE_MESSAGE_KEY[locale])}
               variant="value"
-              onClick={() => setBackdropDensitySheetOpen(true)}
+              disabled={localePending}
+              onClick={() => setLanguageSheetOpen(true)}
             />
             <ListRow
-              label={t("settingsPage.backdropIntensity")}
-              value={t(`settingsPage.backdropIntensityOptions.${backdropPreference.intensity}`)}
+              icon="wallet"
+              label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
+              value={household.baseCurrency}
               variant="value"
-              onClick={() => setBackdropIntensitySheetOpen(true)}
+              onClick={() => setBaseCurrencySheetOpen(true)}
             />
-          </>
-        ) : null}
+            {hasTransactions ? (
+              <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
+            ) : null}
+            {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
+            <ListRow
+              icon="globe"
+              label={t("settingsPage.decimalSeparator")}
+              value={decimalSeparatorExample(decimalSeparatorPref, localeDecimalSeparator)}
+              variant="value"
+              onClick={() => setDecimalSheetOpen(true)}
+            />
+            <ListRow
+              icon="calendar"
+              label={t("settingsPage.dateFormat")}
+              value={formatNumericDate(locale, new Date(), dateFormatPref)}
+              variant="value"
+              onClick={() => setDateFormatSheetOpen(true)}
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <ListRow
+              icon="eye"
+              label={t("profilePage.theme")}
+              value={t(`profilePage.themeOptions.${themePreference}`)}
+              variant="value"
+              onClick={() => setThemeSheetOpen(true)}
+            />
+            <ListRow
+              icon="chart"
+              label={t("settingsPage.fourthTab")}
+              value={t(FOURTH_TAB_MESSAGE_KEY[fourthTab])}
+              variant="value"
+              onClick={() => setTabSheetOpen(true)}
+            />
+            <ListRow
+              icon="calendar"
+              label={t("settingsPage.closeDay")}
+              value={String(household.periodStartDay)}
+              variant="value"
+              disabled={!isOwnerOrAdmin}
+              onClick={() => isOwnerOrAdmin && setCloseDaySheetOpen(true)}
+            />
+            {!isOwnerOrAdmin ? (
+              <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
+            ) : null}
+            <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
+            {installState?.standalone ? (
+              <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
+            ) : installState ? (
+              <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
+            ) : null}
+            <ListRow
+              icon="list"
+              label={t("settingsPage.backdrop")}
+              right={<Switch id="backdrop-switch" checked={backdropPreference.enabled} onChange={handleToggleBackdrop} />}
+            />
+            <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.backdropHint")}</p>
+            {backdropPreference.enabled ? (
+              <>
+                <ListRow
+                  label={t("settingsPage.backdropDensity")}
+                  value={t(`settingsPage.backdropDensityOptions.${backdropPreference.density}`)}
+                  variant="value"
+                  onClick={() => setBackdropDensitySheetOpen(true)}
+                />
+                <ListRow
+                  label={t("settingsPage.backdropIntensity")}
+                  value={t(`settingsPage.backdropIntensityOptions.${backdropPreference.intensity}`)}
+                  variant="value"
+                  onClick={() => setBackdropIntensitySheetOpen(true)}
+                />
+              </>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)}>

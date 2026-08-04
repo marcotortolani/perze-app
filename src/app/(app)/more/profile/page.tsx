@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -77,29 +77,41 @@ export default function ProfilePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 }}>
-        <Input label={t("profilePage.displayName")} value={displayName} onChange={(e) => setName(e.target.value)} />
-        <Input label={t("profilePage.email")} value={email ?? ""} readOnly hint={t("profilePage.emailHint")} />
-        <Input
-          label={t("profilePage.birthDate")}
-          type="date"
-          value={currentBirthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          hint={currentBirthDate ? t("profilePage.ageHint", { age: ageFromBirthDate(currentBirthDate) }) : t("profilePage.birthDateHint")}
-        />
-        <Button disabled={!displayName.trim() || saving || !dirty} onClick={handleSave}>
-          {t("common.save")}
-        </Button>
-
-        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-          <ListRow
-            icon="flag"
-            label={t("profilePage.country")}
-            value={country ? t(COUNTRY_MESSAGE_KEY[country.code as keyof typeof COUNTRY_MESSAGE_KEY]) : t("profilePage.countryUnset")}
-            variant="value"
-            disabled={countryPending}
-            onClick={() => setCountrySheetOpen(true)}
+      {/* Son pocos campos y entran sin scroll — van todos juntos a la
+          izquierda en vez de partirse en dos columnas de contenido real (eso
+          dejaba la derecha con nada más que "País"). La columna derecha pasa
+          a ser una marca, no contenido — el `ZMark` animado. La clase de
+          grid va en el `className`, nunca junto a un `display` inline — un
+          inline `style` siempre le gana a cualquier clase. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ paddingTop: 16, gap: 24, paddingBottom: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Input label={t("profilePage.displayName")} value={displayName} onChange={(e) => setName(e.target.value)} />
+          <Input label={t("profilePage.email")} value={email ?? ""} readOnly hint={t("profilePage.emailHint")} />
+          <Input
+            label={t("profilePage.birthDate")}
+            type="date"
+            value={currentBirthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            hint={currentBirthDate ? t("profilePage.ageHint", { age: ageFromBirthDate(currentBirthDate) }) : t("profilePage.birthDateHint")}
           />
+          <Button disabled={!displayName.trim() || saving || !dirty} onClick={handleSave}>
+            {t("common.save")}
+          </Button>
+
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+            <ListRow
+              icon="flag"
+              label={t("profilePage.country")}
+              value={country ? t(COUNTRY_MESSAGE_KEY[country.code as keyof typeof COUNTRY_MESSAGE_KEY]) : t("profilePage.countryUnset")}
+              variant="value"
+              disabled={countryPending}
+              onClick={() => setCountrySheetOpen(true)}
+            />
+          </div>
+        </div>
+
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
         </div>
       </div>
 

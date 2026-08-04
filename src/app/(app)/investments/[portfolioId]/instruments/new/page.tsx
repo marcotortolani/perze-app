@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Input, ListRow, Sheet, usePageHeader } from "@/design-system";
+import { Button, Input, ListRow, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInvalidateInstruments } from "@/hooks/use-investments";
@@ -65,32 +65,41 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
-        <Input label={t("newInstrumentPage.symbol")} placeholder="AAPL" value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} />
-        <Input label={t("newInstrumentPage.name")} placeholder="Apple Inc." value={name} onChange={(e) => setName(e.target.value)} />
+      {/* `lg`+: el formulario queda a la izquierda tal cual estaba — la
+          columna del grid ya da un ancho parecido a `--content-max-width` —
+          y la derecha pasa a llevar el `ZMark` en vez de quedar vacía. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
+          <Input label={t("newInstrumentPage.symbol")} placeholder="AAPL" value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} />
+          <Input label={t("newInstrumentPage.name")} placeholder="Apple Inc." value={name} onChange={(e) => setName(e.target.value)} />
 
-        <button type="button" onClick={() => setSheetOpen("assetClass")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.assetClass")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{selectedAssetClass?.name ?? t("newInstrumentPage.chooseAssetClass")}</div>
-        </button>
+          <button type="button" onClick={() => setSheetOpen("assetClass")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.assetClass")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{selectedAssetClass?.name ?? t("newInstrumentPage.chooseAssetClass")}</div>
+          </button>
 
-        <button type="button" onClick={() => setSheetOpen("currency")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.currency")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{currencyCode}</div>
-        </button>
+          <button type="button" onClick={() => setSheetOpen("currency")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.currency")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{currencyCode}</div>
+          </button>
 
-        {isFixedIncome ? (
-          <>
-            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.fixedIncomeSection")}</div>
-            <Input label={t("newInstrumentPage.maturityDate")} placeholder="2030-12-31" value={maturityDate} onChange={(e) => setMaturityDate(e.target.value)} />
-            <Input label={t("newInstrumentPage.couponRate")} placeholder="8,5" value={couponRate} onChange={(e) => setCouponRate(e.target.value)} />
-            <Input label={t("newInstrumentPage.couponFrequency")} placeholder="2" value={couponFrequency} onChange={(e) => setCouponFrequency(e.target.value.replace(/\D/g, ""))} />
-          </>
-        ) : null}
+          {isFixedIncome ? (
+            <>
+              <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.fixedIncomeSection")}</div>
+              <Input label={t("newInstrumentPage.maturityDate")} placeholder="2030-12-31" value={maturityDate} onChange={(e) => setMaturityDate(e.target.value)} />
+              <Input label={t("newInstrumentPage.couponRate")} placeholder="8,5" value={couponRate} onChange={(e) => setCouponRate(e.target.value)} />
+              <Input label={t("newInstrumentPage.couponFrequency")} placeholder="2" value={couponFrequency} onChange={(e) => setCouponFrequency(e.target.value.replace(/\D/g, ""))} />
+            </>
+          ) : null}
 
-        <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
-          {t("common.save")}
-        </Button>
+          <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
+            {t("common.save")}
+          </Button>
+        </div>
+
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
+        </div>
       </div>
 
       <Sheet open={sheetOpen === "assetClass"} title={t("newInstrumentPage.assetClass")} onClose={() => setSheetOpen("none")}>

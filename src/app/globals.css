@@ -427,11 +427,13 @@ html[data-backdrop-intensity="vivid"] {
    * Responsive — el diseño de origen es mobile-first (390px). Un solo corte
    * de navegación, 1024px (`lg:` de Tailwind, `DESKTOP_BREAKPOINT` en
    * `use-is-desktop.ts`): hasta ahí, TabBar inferior; desde ahí, `Sidebar`
-   * fijo. `--content-max-width` es el ancho de lectura para pantallas de
-   * una sola columna; `--content-max-width-wide` lo usan las rutas con
-   * layout de lista + detalle (`/transactions`, `/accounts`), que necesitan
-   * más aire — ver `contentWidthFor()` en `src/lib/nav/content-width.ts`.
-   * Ver `docs/02-design-system.md` § 8 y `src/design-system/nav/Sidebar.tsx`.
+   * fijo. `--content-max-width-wide` es el ancho único de header + `<main>`
+   * en TODA la app (`(app)/layout.tsx`) — nunca varía por ruta. Una página
+   * puntual que necesite un ancho de lectura más angosto (un formulario, el
+   * story-player de Wrapped) pone su propio techo interno con
+   * `--content-max-width` (560px), pero eso es decisión del contenido, no
+   * del layout. Ver `docs/02-design-system.md` § 8 y
+   * `src/design-system/nav/Sidebar.tsx`.
    */
   --content-max-width: 560px;
   --content-max-width-wide: 1200px;
@@ -820,9 +822,9 @@ html[data-backdrop-intensity="vivid"] {
  * En mobile sigue siendo el carrusel horizontal de siempre (con drag/snap
  * — hay espacio de sobra en el selector de cuenta de `DetailsSheet` para
  * que eso siga intacto, `account-grid-lg` NUNCA se le aplica ahí). En
- * desktop hay ancho real disponible (home pasó a
- * `--content-max-width-wide`, ver `content-width.ts`), así que en vez de
- * un slider que solo se mueve arrastrando, se acomoda en grid — todas las
+ * desktop hay ancho real disponible (`--content-max-width-wide`, el ancho
+ * único de toda la app — ver `(app)/layout.tsx`), así que en vez de un
+ * slider que solo se mueve arrastrando, se acomoda en grid — todas las
  * cuentas visibles a la vez, sin gesto que aprender.
  *
  * 12 columnas, no un grid parejo de cuadrados: `spanFor()` en
@@ -939,6 +941,37 @@ html[data-backdrop-intensity="vivid"] {
   }
   14.3%,
   100% {
+    background: var(--zmark-ink);
+  }
+}
+
+/* ZMark flip: mismo timing que `zsweep` (delay de 400ms por celda, ciclo de
+   2.8s), pero en vez de solo cambiar de color la celda "voltea" — se angosta
+   a `scaleX(0)` (de perfil, invisible un instante), el color cambia justo
+   ahí, y se vuelve a abrir. Decorativo (relleno de columnas vacías), nunca
+   un loader — por eso no hace falta la excepción de "transición de
+   interfaz" de `docs/02-design-system.md` § 5.1, es el mismo carve-out que
+   ya tiene `zsweep`. */
+@keyframes zflip {
+  0%,
+  3% {
+    transform: scaleX(1);
+    background: var(--zmark-ink);
+  }
+  7% {
+    transform: scaleX(0);
+    background: var(--zmark-ink);
+  }
+  7.01% {
+    background: var(--primary-ink);
+  }
+  10% {
+    transform: scaleX(1);
+    background: var(--primary-ink);
+  }
+  14.3%,
+  100% {
+    transform: scaleX(1);
     background: var(--zmark-ink);
   }
 }

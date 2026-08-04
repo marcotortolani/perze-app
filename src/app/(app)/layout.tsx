@@ -14,7 +14,6 @@ import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
-import { contentWidthFor } from "@/lib/nav/content-width";
 
 // `startsWith` en vez de igualdad exacta: antes cualquier subruta
 // (`/transactions/abc`, `/more/settings`) resolvía a `""` y el tab bar
@@ -191,7 +190,16 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
     else if (id === fourth.item.id) router.push(fourth.path);
   };
 
-  const maxWidth = `var(${contentWidthFor(pathname) === "wide" ? "--content-max-width-wide" : "--content-max-width"})`;
+  // Ancho único para header + contenido, en TODA la app — antes dependía de
+  // `contentWidthFor(pathname)` (una lista corta de rutas "wide"), lo que
+  // dejaba el header angosto en `/analytics`, `/more` y casi todo lo demás
+  // mientras `/`, `/transactions` y `/accounts` quedaban anchas: la misma
+  // pantalla se veía distinta según la ruta, sin ningún criterio de
+  // producto detrás. El ancho de LECTURA de una página puntual (un
+  // formulario, el story-player de Wrapped) es un problema del contenido
+  // de esa página, no del layout — cada una pone su propio techo angosto
+  // por dentro (`var(--content-max-width)`) cuando le hace falta uno.
+  const maxWidth = "var(--content-max-width-wide)";
 
   return (
     <div className="app-shell page-backdrop">
@@ -206,12 +214,13 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         className="hidden lg:flex"
       />
       <div className="app-shell-column">
-        {/* Único header de toda la app: siempre presente, mismo ancho que
-            el contenido de la ruta activa (`maxWidth`, igual criterio que
-            `<main>` de abajo — nunca un ancho distinto al que ya usa esa
-            misma ruta). `title`/`onBack`/`backLabel`/`right` vienen de lo
-            que la página activa haya registrado vía `usePageHeader`; el
-            resto (scope, búsqueda, sync) lo resuelve el layout siempre. */}
+        {/* Único header de toda la app: siempre presente, mismo `maxWidth`
+            fijo que `<main>` de abajo, en cualquier ruta — el ancho de
+            lectura de una página puntual es cosa de esa página (ver
+            `maxWidth` más arriba), nunca del header. `title`/`onBack`/
+            `backLabel`/`right` vienen de lo que la página activa haya
+            registrado vía `usePageHeader`; el resto (scope, búsqueda,
+            sync) lo resuelve el layout siempre. */}
         <div className="mx-auto w-full" style={{ maxWidth }}>
           <AppHeader
             title={pageHeader?.title}

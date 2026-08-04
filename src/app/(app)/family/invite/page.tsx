@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Input, usePageHeader } from "@/design-system";
+import { Button, Input, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateInvites } from "@/hooks/use-invites";
 import { invitesRepo } from "@/lib/repos/invites-repo";
@@ -49,24 +49,33 @@ export default function InviteFamilyMemberPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 20 }}>
-        {code ? (
-          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 16 }}>
-            <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>{t("familyPage.shareCode")}</p>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 40, letterSpacing: "0.08em", color: "var(--text-primary)" }}>{code}</div>
-            <Button variant="secondary" fullWidth={false} onClick={handleCopy} style={{ alignSelf: "center" }}>
-              {t("familyPage.copyCode")}
-            </Button>
-          </div>
-        ) : (
-          <>
-            <Input label={t("familyPage.emailOptional")} placeholder="ana@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <p className="t-body" style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{t("familyPage.emailOptionalHint")}</p>
-            <Button disabled={creating} onClick={handleCreate} style={{ marginTop: "auto" }}>
-              {t("familyPage.generateCode")}
-            </Button>
-          </>
-        )}
+      {/* `lg`+: el formulario queda a la izquierda tal cual estaba — la
+          columna del grid ya da un ancho parecido a `--content-max-width` —
+          y la derecha pasa a llevar el `ZMark` en vez de quedar vacía. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 20 }}>
+          {code ? (
+            <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 16 }}>
+              <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>{t("familyPage.shareCode")}</p>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 40, letterSpacing: "0.08em", color: "var(--text-primary)" }}>{code}</div>
+              <Button variant="secondary" fullWidth={false} onClick={handleCopy} style={{ alignSelf: "center" }}>
+                {t("familyPage.copyCode")}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Input label={t("familyPage.emailOptional")} placeholder="ana@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <p className="t-body" style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{t("familyPage.emailOptionalHint")}</p>
+              <Button disabled={creating} onClick={handleCreate} style={{ marginTop: "auto" }}>
+                {t("familyPage.generateCode")}
+              </Button>
+            </>
+          )}
+        </div>
+
+        <div className="hidden lg:flex" style={{ alignItems: "center", justifyContent: "center" }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
+        </div>
       </div>
     </div>
   );

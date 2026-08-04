@@ -136,10 +136,22 @@ export default function AnalyticsPage() {
       {AVAILABLE.length > 0 ? (
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("analyticsPage.availableNow")}</div>
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* `lg:grid-cols-2`: en desktop hay ancho de sobra para dos cards
+              por fila en vez de una columna estirada a los 1200px del
+              layout — la clase va acá, nunca junto a un `display` inline
+              en el mismo elemento (un inline `style` siempre gana). Cada
+              `Card` pasa a `flex column + height:100%` y el botón interno
+              a `flex:1` para que la fila entera sea clickeable, no solo el
+              ancho del texto — con alto parejo de grid, antes solo el
+              ancho del botón respondía al click. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ marginTop: 10, gap: 10 }}>
             {AVAILABLE.map((item) => (
-              <Card key={item.key} padding={16} style={{ cursor: "pointer" }}>
-                <button type="button" onClick={() => router.push(item.route)} style={{ all: "unset", cursor: "pointer", display: "block", width: "100%" }}>
+              <Card key={item.key} padding={16} style={{ cursor: "pointer", display: "flex" }}>
+                <button
+                  type="button"
+                  onClick={() => router.push(item.route)}
+                  style={{ all: "unset", cursor: "pointer", display: "block", flex: 1, minWidth: 0 }}
+                >
                   <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{item.title}</div>
                   <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>{item.subtitle}</div>
                 </button>
@@ -152,7 +164,7 @@ export default function AnalyticsPage() {
       {NOT_YET.length > 0 ? (
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("analyticsPage.notYet")}</div>
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ marginTop: 10, gap: 10 }}>
             {NOT_YET.map((item) => (
               <Card key={item.key} padding={16}>
                 <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{item.title}</div>

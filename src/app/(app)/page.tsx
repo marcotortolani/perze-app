@@ -302,8 +302,8 @@ export default function HomePage() {
       {/* Desktop ancho (`xl`, 1280px — `SPLIT_BREAKPOINT`, la misma que ya
           usan `/accounts` y `/transactions` para su split de lista+detalle
           por el mismo motivo): dos columnas para aprovechar el ancho de
-          `--content-max-width-wide` (home ahora está en `WIDE_ROUTES`, ver
-          `content-width.ts`) en vez de una sola columna de lectura angosta.
+          `--content-max-width-wide` (el ancho único de toda la app — ver
+          `(app)/layout.tsx`) en vez de una sola columna de lectura angosta.
           NO `lg` (1024px): ahí el sidebar ya ocupa su espacio, y partir en
           2 columnas AL MISMO TIEMPO dejaba el bento de cuentas apretado en
           media página real (~350-400px) — muy poco para que sus cards no
