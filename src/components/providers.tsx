@@ -11,6 +11,7 @@ import { PinGate } from "@/components/pin-gate";
 import { PwaInstallListener } from "@/components/pwa-install-listener";
 import { useSyncLoop } from "@/lib/offline/use-sync-loop";
 import { useRealtimeSync } from "@/lib/offline/use-realtime-sync";
+import { RecurringMaterializerGate } from "@/lib/recurring/RecurringMaterializerGate";
 
 /**
  * Todo el estado de dominio (cuentas, movimientos, household…) vive en Dexie
@@ -70,6 +71,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <PwaInstallListener />
       <DbOwnerSync />
       <SyncLoop />
+      <RecurringMaterializerGate />
       <PinGate>
         <OnboardingGate>{children}</OnboardingGate>
       </PinGate>

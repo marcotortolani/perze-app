@@ -70,6 +70,12 @@ export const transactionsRepo = {
     return rows.filter((t) => t.deletedAt === null && t.fxRate === null);
   },
 
+  /** G2 — historial de una regla recurrente, ordenado por fecha (incluye soft-deleted, `recurring-history.ts` los filtra). */
+  async listByRecurringId(recurringId: string): Promise<TransactionRow[]> {
+    const rows = await getDb().transactions.where("recurringId").equals(recurringId).toArray();
+    return rows.sort((a, b) => (a.occurredAt < b.occurredAt ? -1 : 1));
+  },
+
   async create(input: NewTransactionInput): Promise<TransactionRow> {
     const db = getDb();
     const now = nowIso();
@@ -127,6 +133,31 @@ export const transactionsRepo = {
         await bumpBalance(accountId, delta);
       }
       await enqueueTransaction("update", updated);
+    });
+  },
+
+  /**
+   * Recurrentes v3 — cuando el motor cliente materializa offline y el cron
+   * ya insertó la misma ocurrencia server-side, el outbox recibe un 23505
+   * sobre `transactions_recurring_occurrence_uniq` (`sync-worker.ts`). La
+   * fila optimista local perdió la carrera: se revierte su efecto de saldo
+   * y se borra de Dexie sin pasar por el outbox — la fila real llega sola
+   * en el próximo pull. A diferencia de `softDelete`, esto no es
+   * reversible ni encola nada: la fila nunca llegó a existir en el
+   * servidor con este id.
+   */
+  async discardLocal(id: string): Promise<void> {
+    const db = getDb();
+    await db.transaction("rw", db.transactions, db.accounts, async () => {
+      const existing = await db.transactions.get(id);
+      if (!existing) return;
+      if (existing.deletedAt === null) {
+        const reversed = reverseEffects(computeTransactionEffects(existing));
+        for (const [accountId, delta] of mergeEffectsByAccount(reversed)) {
+          await bumpBalance(accountId, delta);
+        }
+      }
+      await db.transactions.delete(id);
     });
   },
 

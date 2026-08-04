@@ -2,9 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OutboxEntryRow } from "../db/schema";
 import { getDb } from "../db/client";
 import { newId, nowIso } from "../repos/ids";
+import { transactionsRepo } from "../repos/transactions-repo";
 import { outbox } from "./outbox";
 import { SYNC_TABLES } from "./sync-config";
 import { detectRevisionConflict } from "./conflict-detection";
+
+/** Nombre del índice único de idempotencia de recurrentes (20260805000000_recurring_v3.sql). */
+const RECURRING_OCCURRENCE_CONSTRAINT = "transactions_recurring_occurrence_uniq";
 
 export interface DrainResult {
   synced: number;
@@ -162,6 +166,16 @@ async function syncOne(
     // "ya sincronizada por un intento anterior interrumpido" — el payload
     // de un op insert no cambia entre reintentos, así que es un éxito.
     const { error } = await supabase.from(config.supabaseTable).insert(row);
+    if (error && error.code === "23505" && entry.table === "transactions" && error.message.includes(RECURRING_OCCURRENCE_CONSTRAINT)) {
+      // Recurrentes v3 — esto NO es "ya sincronizada por un intento
+      // anterior" (esa es la rama de abajo, `id` duplicado): es una
+      // carrera real entre el motor cliente y el cron, ambos
+      // materializando la misma ocurrencia con ids distintos. Esta fila
+      // local perdió — se descarta sin reintentar, la del servidor llega
+      // en el próximo pull.
+      await transactionsRepo.discardLocal(entry.entityId);
+      return;
+    }
     if (error && error.code !== "23505") throw error;
     return;
   }

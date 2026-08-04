@@ -19,12 +19,12 @@ INSERT INTO public.accounts (id, household_id, owner_id, name, kind, currency_co
 VALUES (tests.get('a_account_id'), tests.get('a_household_id'), tests.get('a_profile_id'), 'Cuenta de A', 'checking', 'ARS', tests.get('a_profile_id'));
 
 SELECT tests.stash('b_rule_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, day_of_month, created_by)
-VALUES (tests.get('b_rule_id'), tests.get('b_household_id'), 'Netflix de B', 'expense', tests.get('b_account_id'), 500000, 'ARS', 5, tests.get('b_profile_id'));
+INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, anchor_date, day_of_month, created_by)
+VALUES (tests.get('b_rule_id'), tests.get('b_household_id'), 'Netflix de B', 'expense', tests.get('b_account_id'), 500000, 'ARS', current_date, 5, tests.get('b_profile_id'));
 
 SELECT tests.stash('a_rule_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, day_of_month, created_by)
-VALUES (tests.get('a_rule_id'), tests.get('a_household_id'), 'Netflix de A', 'expense', tests.get('a_account_id'), 500000, 'ARS', 5, tests.get('a_profile_id'));
+INSERT INTO public.recurring_rules (id, household_id, name, kind, account_id, expected_amount, currency_code, anchor_date, day_of_month, created_by)
+VALUES (tests.get('a_rule_id'), tests.get('a_household_id'), 'Netflix de A', 'expense', tests.get('a_account_id'), 500000, 'ARS', current_date, 5, tests.get('a_profile_id'));
 
 SELECT tests.stash('a_debt_id', gen_random_uuid());
 INSERT INTO public.debts (id, household_id, kind, name, principal, currency_code, start_date, direction, created_by)

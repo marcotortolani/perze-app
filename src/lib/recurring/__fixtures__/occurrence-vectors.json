@@ -1,0 +1,72 @@
+[
+  {
+    "name": "monthly-day31-clamp",
+    "frequency": "monthly",
+    "anchorDate": "2026-01-31",
+    "dayOfMonth": 31,
+    "endDate": null,
+    "from": "2026-01-01",
+    "to": "2026-04-30",
+    "expected": ["2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30"]
+  },
+  {
+    "name": "yearly-feb29-leap",
+    "frequency": "yearly",
+    "anchorDate": "2028-02-29",
+    "dayOfMonth": 29,
+    "endDate": null,
+    "from": "2028-01-01",
+    "to": "2031-12-31",
+    "expected": ["2028-02-29", "2029-02-28", "2030-02-28", "2031-02-28"]
+  },
+  {
+    "name": "biweekly-cross-year",
+    "frequency": "biweekly",
+    "anchorDate": "2025-12-25",
+    "dayOfMonth": null,
+    "endDate": null,
+    "from": "2026-01-01",
+    "to": "2026-01-31",
+    "expected": ["2026-01-08", "2026-01-22"]
+  },
+  {
+    "name": "weekly-dst-cross-madrid",
+    "frequency": "weekly",
+    "anchorDate": "2026-10-01",
+    "dayOfMonth": null,
+    "endDate": null,
+    "from": "2026-10-15",
+    "to": "2026-11-05",
+    "expected": ["2026-10-15", "2026-10-22", "2026-10-29", "2026-11-05"]
+  },
+  {
+    "name": "anchor-in-future",
+    "frequency": "monthly",
+    "anchorDate": "2027-01-01",
+    "dayOfMonth": 1,
+    "endDate": null,
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "expected": []
+  },
+  {
+    "name": "from-after-to",
+    "frequency": "monthly",
+    "anchorDate": "2026-01-01",
+    "dayOfMonth": 1,
+    "endDate": null,
+    "from": "2026-06-01",
+    "to": "2026-01-01",
+    "expected": []
+  },
+  {
+    "name": "end-date-truncation",
+    "frequency": "monthly",
+    "anchorDate": "2026-01-15",
+    "dayOfMonth": 15,
+    "endDate": "2026-03-15",
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "expected": ["2026-01-15", "2026-02-15", "2026-03-15"]
+  }
+]

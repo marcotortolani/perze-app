@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Amount, Icon, ListRow, Skeleton } from "@/design-system";
 import { MonthCalendar } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
+import { occurredAtFor, occurrencesBetween } from "@/lib/recurring/occurrences";
 import { money } from "@/lib/money/money";
+import { formatMonthYearHeading, formatNumericDate, type Locale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -19,9 +22,15 @@ function pad(n: number): string {
  * desktop (`RecurringPageContent.tsx`) sin duplicar la lógica del mes.
  * No trae `usePageHeader` — eso queda en cada caller (la ruta `/calendar`
  * para mobile, ninguno para la columna embebida).
+ *
+ * Multi-frecuencia (v3): las marcas salen de `occurrencesBetween` sobre el
+ * mes visible, no de `dayOfMonth` — una regla semanal antes mostraba una
+ * sola marca al mes, ahora muestra las cuatro o cinco que corresponden.
  */
 export function RecurringMonthCalendar() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: rules } = useRecurringRules(household?.id);
@@ -31,28 +40,31 @@ export function RecurringMonthCalendar() {
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const marks = useMemo(() => {
-    if (!rules) return [];
+  const occurrencesByDate = useMemo(() => {
+    const map = new Map<string, string[]>(); // date -> ruleIds
+    if (!rules) return map;
     const [yStr, mStr] = month.split("-");
     const y = Number(yStr);
     const m = Number(mStr);
-    const daysInMonth = new Date(y, m, 0).getDate();
-    const countByDate = new Map<string, number>();
+    const monthStart = `${y}-${pad(m)}-01`;
+    const monthEnd = `${y}-${pad(m)}-${new Date(y, m, 0).getDate()}`;
     for (const rule of rules) {
-      const day = Math.min(rule.dayOfMonth, daysInMonth);
-      const iso = `${y}-${pad(m)}-${pad(day)}`;
-      countByDate.set(iso, (countByDate.get(iso) ?? 0) + 1);
+      if (rule.archivedAt !== null) continue;
+      for (const date of occurrencesBetween(rule, monthStart, monthEnd)) {
+        map.set(date, [...(map.get(date) ?? []), rule.id]);
+      }
     }
-    return [...countByDate.entries()].map(([date, count]) => ({ date, level: Math.min(7, count * 2) }));
+    return map;
   }, [rules, month]);
+
+  const marks = useMemo(() => [...occurrencesByDate.entries()].map(([date, ruleIds]) => ({ date, level: Math.min(7, ruleIds.length * 2) })), [occurrencesByDate]);
 
   if (!household || !rules) return <Skeleton height={360} style={{ marginTop: 16 }} />;
 
-  const [yStr, mStr] = month.split("-");
-  const daysInMonth = new Date(Number(yStr), Number(mStr), 0).getDate();
-  const rulesOnSelectedDate = selectedDate ? rules.filter((r) => Math.min(r.dayOfMonth, daysInMonth) === Number(selectedDate.slice(-2))) : [];
+  const rulesOnSelectedDate = selectedDate ? (occurrencesByDate.get(selectedDate) ?? []).map((id) => rules.find((r) => r.id === id)).filter((r) => r !== undefined) : [];
 
   const shiftMonth = (delta: number) => {
+    const [yStr, mStr] = month.split("-");
     const y = Number(yStr);
     const m = Number(mStr) - 1 + delta;
     const next = new Date(y, m, 1);
@@ -60,27 +72,30 @@ export function RecurringMonthCalendar() {
     setSelectedDate(null);
   };
 
+  const [monthY, monthM] = month.split("-").map(Number);
+  const monthHeading = formatMonthYearHeading(locale, new Date(monthY!, monthM! - 1, 1));
+
   return (
-    <div style={{ paddingTop: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <button type="button" onClick={() => shiftMonth(-1)} aria-label={t("recurringCalendarPage.prevMonth")} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: 0, cursor: "pointer" }}>
+    <div className="pt-4">
+      <div className="mb-3 flex items-center justify-between">
+        <button type="button" onClick={() => shiftMonth(-1)} aria-label={t("recurringCalendarPage.prevMonth")} className="flex h-11 w-11 items-center justify-center border-0 bg-transparent cursor-pointer">
           <Icon name="chevron-left" size={20} />
         </button>
-        <div style={{ fontSize: 16, fontWeight: 600 }}>{month}</div>
-        <button type="button" onClick={() => shiftMonth(1)} aria-label={t("recurringCalendarPage.nextMonth")} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: 0, cursor: "pointer" }}>
+        <div className="text-[16px] font-semibold">{monthHeading}</div>
+        <button type="button" onClick={() => shiftMonth(1)} aria-label={t("recurringCalendarPage.nextMonth")} className="flex h-11 w-11 items-center justify-center border-0 bg-transparent cursor-pointer">
           <Icon name="chevron" size={20} />
         </button>
       </div>
       <MonthCalendar month={month} marks={marks} value={selectedDate ?? undefined} onSelect={setSelectedDate} />
 
       {selectedDate ? (
-        <div style={{ marginTop: 20 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{selectedDate}</div>
+        <div className="mt-5">
+          <div className="t-caption text-text-muted">{formatNumericDate(locale, new Date(occurredAtFor(selectedDate)), dateFormat)}</div>
           {rulesOnSelectedDate.length === 0 ? (
-            <p className="t-body" style={{ color: "var(--text-secondary)" }}>{t("recurringCalendarPage.noneThatDay")}</p>
+            <p className="t-body text-text-secondary">{t("recurringCalendarPage.noneThatDay")}</p>
           ) : (
             rulesOnSelectedDate.map((rule) => (
-              <ListRow key={rule.id} label={rule.name} onClick={() => router.push(`/recurring/${rule.id}`)} value={<Amount value={money(rule.expectedAmount, rule.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />} />
+              <ListRow key={rule!.id} label={rule!.name} onClick={() => router.push(`/recurring/${rule!.id}`)} value={<Amount value={money(rule!.expectedAmount, rule!.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />} />
             ))
           )}
         </div>

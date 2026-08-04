@@ -1899,49 +1899,67 @@ export type Database = {
       recurring_rules: {
         Row: {
           account_id: string
+          anchor_date: string
           archived_at: string | null
+          auto_post: boolean
           category_id: string | null
           client_rev: number
           created_at: string
           created_by: string
           currency_code: string
-          day_of_month: number
+          day_of_month: number | null
+          detected: boolean
+          end_date: string | null
           expected_amount: number
+          frequency: string
           household_id: string
           id: string
           kind: string
+          last_materialized_on: string | null
           name: string
           updated_at: string
         }
         Insert: {
           account_id: string
+          anchor_date: string
           archived_at?: string | null
+          auto_post?: boolean
           category_id?: string | null
           client_rev?: number
           created_at?: string
           created_by: string
           currency_code: string
-          day_of_month: number
+          day_of_month?: number | null
+          detected?: boolean
+          end_date?: string | null
           expected_amount: number
+          frequency?: string
           household_id: string
           id: string
           kind: string
+          last_materialized_on?: string | null
           name: string
           updated_at?: string
         }
         Update: {
           account_id?: string
+          anchor_date?: string
           archived_at?: string | null
+          auto_post?: boolean
           category_id?: string | null
           client_rev?: number
           created_at?: string
           created_by?: string
           currency_code?: string
-          day_of_month?: number
+          day_of_month?: number | null
+          detected?: boolean
+          end_date?: string | null
           expected_amount?: number
+          frequency?: string
           household_id?: string
           id?: string
           kind?: string
+          last_materialized_on?: string | null
           name?: string
           updated_at?: string
         }
@@ -2823,6 +2841,16 @@ export type Database = {
       recompute_account_balance: {
         Args: { p_account_id: string }
         Returns: undefined
+      }
+      recurring_occurrences_between: {
+        Args: {
+          p_anchor: string
+          p_day_of_month: number
+          p_frequency: string
+          p_from: string
+          p_to: string
+        }
+        Returns: string[]
       }
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
     }

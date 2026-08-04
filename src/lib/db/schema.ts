@@ -419,6 +419,8 @@ export interface GoalRow {
   clientRev: number;
 }
 
+export type RecurringFrequency = "weekly" | "biweekly" | "monthly" | "yearly";
+
 export interface RecurringRuleRow {
   id: string;
   householdId: string;
@@ -428,7 +430,14 @@ export interface RecurringRuleRow {
   accountId: string;
   expectedAmount: bigint;
   currencyCode: string;
-  dayOfMonth: number;
+  frequency: RecurringFrequency;
+  /** YYYY-MM-DD — fase del timeline (ver `src/lib/recurring/occurrences.ts`). */
+  anchorDate: string;
+  /** Solo mensual/anual; `null` en semanal/quincenal. */
+  dayOfMonth: number | null;
+  /** Switch "Auto-registro" — default `true`. En `false`, la regla nunca se materializa sola: el usuario la carga con "Cargar ahora". */
+  autoPost: boolean;
+  endDate: string | null;
   archivedAt: string | null;
   createdBy: string;
   createdAt: string;

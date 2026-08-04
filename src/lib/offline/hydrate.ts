@@ -467,7 +467,11 @@ export interface RawRecurringRule {
   account_id: string;
   expected_amount: string;
   currency_code: string;
-  day_of_month: number;
+  frequency: string;
+  anchor_date: string;
+  day_of_month: number | null;
+  auto_post: boolean;
+  end_date: string | null;
   archived_at: string | null;
   created_by: string;
   created_at: string;
@@ -485,7 +489,11 @@ export function recurringRuleFromRow(row: RawRecurringRule): RecurringRuleRow {
     accountId: row.account_id,
     expectedAmount: bigOf(row.expected_amount),
     currencyCode: row.currency_code,
+    frequency: row.frequency as RecurringRuleRow["frequency"],
+    anchorDate: row.anchor_date,
     dayOfMonth: row.day_of_month,
+    autoPost: row.auto_post,
+    endDate: row.end_date,
     archivedAt: row.archived_at,
     createdBy: row.created_by,
     createdAt: row.created_at,

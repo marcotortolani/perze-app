@@ -6,6 +6,97 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.15.0] — 2026-08-04
+
+### Agregado — recurrentes v3: auto-registro por regla, catch-up y multi-frecuencia
+
+- **La idempotencia deja de ser "¿ya se cargó este período?" y pasa a ser
+  `(recurring_id, fecha_de_ocurrencia)`** — de ahí caen, de un solo mecanismo, el catch-up, las
+  cuatro frecuencias y la ausencia de duplicados. Antes `materialize_recurring_transactions()`
+  solo corría si hoy era exactamente el día objetivo de la regla: si el `pg_cron` no corría ese
+  día —y el proyecto es plan gratuito, que se pausa a la semana sin actividad— el movimiento se
+  perdía para siempre. Migración `20260805000000_recurring_v3.sql`: columnas `frequency`,
+  `anchor_date`, `auto_post`, `last_materialized_on`, `end_date`, `detected`; índice único
+  `transactions_recurring_occurrence_uniq` sobre `(recurring_id, occurred_at::date UTC)`, sin
+  filtro `deleted_at IS NULL` a propósito (una ocurrencia deshecha con "Deshacer" no se recrea);
+  función SQL `recurring_occurrences_between()` espejo exacto de `src/lib/recurring/occurrences.ts`.
+  De paso corrige un `WITH CHECK` tautológico en la política RLS de `UPDATE` de `recurring_rules`
+  que permitía mover una regla a otro household.
+- **Switch "Auto-registro" por regla, default ON.** Apagado, la regla nunca se materializa sola
+  y aparece en una sección "Pendientes de cargar" con "Cargar ahora". Motor cliente
+  (`src/lib/recurring/materialize.ts` + `use-recurring-materializer.ts`) corre en paralelo al
+  cron server-side —necesario porque el proyecto gratuito se pausa, y porque un miembro del
+  household sin ser el dueño de la regla no debería depender de que otro abra la app—, con la
+  misma clave de idempotencia contra Dexie. Colisión entre los dos (`23505` sobre el índice
+  único) manejada en `sync-worker.ts`: la fila local que perdió la carrera se descarta sin
+  reintentar (`transactionsRepo.discardLocal`).
+- **Cuatro frecuencias**: semanal · quincenal · mensual · anual, con selector de mes para la
+  anual (antes solo pedía el día, y una regla anual sin mes no tiene sentido). Editar la
+  frecuencia o el día reancla la regla a hoy — nunca hacia atrás, las ocurrencias ya
+  materializadas no se tocan.
+- **Editar el monto afecta solo el futuro.** El historial de montos se deriva de las
+  transacciones ya generadas (`src/lib/analytics/recurring-history.ts`), no de una columna
+  aparte — si se corrige un movimiento puntual, el gráfico lo refleja; si la regla sube de
+  precio, las ocurrencias pasadas quedan intactas. Detecta aumentos ≥10% y calcula el impacto
+  anual, no el delta mensual.
+- **`computeMonthlyCommitted()` corregido**: sumaba `expectedAmount` de reglas en monedas
+  distintas como si fueran la misma. Ahora convierte cada regla a la moneda base, normaliza por
+  frecuencia y declara cuántas quedaron sin cotización (`NeedsFxBanner`, conteo nunca monto) en
+  vez de mostrar un número sin significado.
+- **La pantalla de lista deja de decir "Todavía no se cargó este mes"** — un texto que no existe
+  en ningún documento de diseño y que además usaba mes calendario en vez del período del
+  household. Ahora dice cuándo es el próximo cobro ("Próximo: Netflix mañana, US$ 3.100 de Itaú
+  Crédito") y lista los próximos 30 días con fechas nombradas.
+- Nuevas rutas `recurring/[id]/edit` (edición separada del detalle) y wiring de "Convertir en
+  recurrente" desde el detalle de un movimiento (antes era un stub que solo mostraba un toast).
+
+### Corregido — fechas de recurrentes mostradas un día antes en husos negativos
+
+- Las ocurrencias se construían a medianoche UTC; en Uruguay/Argentina (UTC-3) eso se interpreta
+  como las 21:00 del día anterior al formatearse en hora local, así que "1 de septiembre"
+  aparecía como "31 de agosto". Corregido a mediodía UTC en todos los puntos que sintetizan una
+  fecha-sin-hora, igual criterio que ya usa `occurred_at` de una transacción real.
+- Dos usos de `new Date().toISOString().slice(0, 10)` (el bug ya documentado como D10 en
+  `CLAUDE.md`, reintroducido acá) reemplazados por `todayIso()`.
+- "Próximas ocurrencias" y la tabla de historial de montos mostraban ISO crudo (`2026-09-01`) en
+  vez del formato elegido en Ajustes — ahora pasan por `formatNumericDate()` +
+  `useDateFormatPreference()`. Nueva regla en `CLAUDE.md`: toda fecha/hora/decimal se muestra
+  con el formato de Ajustes, nunca hardcodeado, y toda fecha-sin-hora sintética se construye a
+  mediodía UTC.
+
+### Corregido — teclado de monto y navegación en crear/editar recurrente
+
+- El teclado del monto (dentro de un `Sheet` en la edición) se estiraba a ~90% del ancho del
+  overlay en desktop. Ahora el `Sheet` entero queda capado a `--content-max-width` (560px, el
+  mismo token que usa `/add`) — pasado como `style` al `Sheet`, no solo a su contenido interno.
+- Tecla "=" con el mismo comportamiento que `/add`: comparte fila con "Guardar", 1:3 en reposo,
+  2:2 mientras hay un operador pendiente, animado con `motion` — reproduce
+  `AmountStep.tsx:322-349` en vez del prop `equals` de `Keypad` (estático, sin usar en el resto
+  de la app).
+- **Estado de borrador que sobrevivía a "volver atrás".** Con `cacheComponents: true` (Next
+  16.2.6), `router.back()` no desmonta la pantalla — la deja oculta (`Activity`, modo hidden) con
+  su `useState` intacto, así que un monto editado sin guardar reaparecía intacto al volver a
+  entrar a la misma ruta. Fix: la *cleanup* de un `useEffect` de dependencias vacías, que corre
+  exactamente cuando `Activity` oculta el árbol, resetea el borrador. Aplicado en
+  `recurring/new` y `recurring/[id]/edit`.
+- **Guardar dejaba "Editar" atrapado en el historial.** Al confirmar, ambas pantallas hacían
+  `router.push()` hacia el detalle/lista en vez de `router.replace()` — el historial quedaba
+  `[lista, detalle, editar, detalle]`, así que "volver" desde el detalle post-guardado caía en
+  el formulario de edición abandonado en vez de saltar a la lista. Mismo patrón encontrado en
+  otras ~14 pantallas de la app (`accounts`, `goals`, `budgets`, `debts`, `transactions`,
+  `investments`, `more/rules`) — pendiente de una pasada aparte.
+
+### Cambiado — Tailwind por defecto en las pantallas de recurrentes
+
+- `RecurringPageContent.tsx`, `RecurringMonthCalendar.tsx`, `recurring/new` y
+  `recurring/[id]/edit` convertidos de `style={{}}` a clases de Tailwind para layout estructural
+  y tokens ya mapeados en `@theme inline` (`bg-surface-2`, `text-text-muted`, `rounded-card`,
+  etc.). Nueva regla en `CLAUDE.md`: Tailwind por defecto hacia adelante, `style={{}}` reservado
+  para props de componentes del design system (no aceptan `className`), valores dinámicos y
+  custom properties — no dispara una migración retroactiva del resto de la app.
+
+---
+
 ## [0.14.0] — 2026-08-04
 
 ### Corregido — el swipe izquierda ya no borra en el acto

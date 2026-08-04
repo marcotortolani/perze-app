@@ -3,7 +3,7 @@
 -- código de esta app) sino que cada función hace lo que dice, corrida a mano.
 BEGIN;
 SELECT tests.reset_log();
-SELECT tests.log(plan(8));
+SELECT tests.log(plan(9));
 
 SELECT tests.clear_authentication();
 SELECT tests.setup_household('ce', 'cron-household-a');
@@ -28,47 +28,55 @@ SELECT tests.log(is(
   'clamped_date respeta el día pedido cuando sí entra en el mes'
 ));
 
--- E9a — materializador: crea el movimiento de una regla cuyo día es hoy...
+-- E9a v3 — catch-up: una regla mensual anclada hace 2 meses materializa las
+-- ocurrencias que se perdieron (nunca antes del ancla), no solo la de hoy.
 SELECT tests.stash('ce_rule_today_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, kind, category_id, account_id, expected_amount, currency_code, day_of_month, created_by)
-VALUES (tests.get('ce_rule_today_id'), tests.get('ce_household_id'), 'Alquiler', 'expense', tests.get('ce_category_id'), tests.get('ce_account_id'), 500000, 'ARS', extract(day FROM current_date)::int, tests.get('ce_profile_id'));
+INSERT INTO public.recurring_rules (id, household_id, name, kind, category_id, account_id, expected_amount, currency_code, frequency, anchor_date, day_of_month, auto_post, created_by)
+VALUES (
+  tests.get('ce_rule_today_id'), tests.get('ce_household_id'), 'Alquiler', 'expense', tests.get('ce_category_id'), tests.get('ce_account_id'), 500000, 'ARS',
+  'monthly', current_date - interval '2 months', extract(day FROM current_date)::int, true, tests.get('ce_profile_id')
+);
 
--- ...y NO el de una regla cuyo día no es hoy (a menos que hoy sea el
--- último día del mes Y la regla pida un día más allá — caso poco probable
--- en la corrida real del test, así que se fuerza un día que hoy no es.
+-- ...y NO el de una regla con `auto_post = false`, aunque su ancla ya esté vencida.
 SELECT tests.stash('ce_rule_other_day_id', gen_random_uuid());
-INSERT INTO public.recurring_rules (id, household_id, name, kind, category_id, account_id, expected_amount, currency_code, day_of_month, created_by)
+INSERT INTO public.recurring_rules (id, household_id, name, kind, category_id, account_id, expected_amount, currency_code, frequency, anchor_date, day_of_month, auto_post, created_by)
 VALUES (
   tests.get('ce_rule_other_day_id'), tests.get('ce_household_id'), 'Gimnasio', 'expense', tests.get('ce_category_id'), tests.get('ce_account_id'), 90000, 'ARS',
-  (CASE WHEN extract(day FROM current_date)::int = 1 THEN 2 ELSE 1 END), tests.get('ce_profile_id')
+  'monthly', current_date - interval '1 month', extract(day FROM current_date)::int, false, tests.get('ce_profile_id')
 );
 
 SELECT public.materialize_recurring_transactions();
 
 SELECT tests.log(is(
   (SELECT count(*)::int FROM public.transactions WHERE recurring_id = tests.get('ce_rule_today_id') AND source = 'recurring'),
+  3,
+  'materialize_recurring_transactions hace catch-up: ancla + 2 meses perdidos = 3 movimientos'
+));
+SELECT tests.log(is(
+  (SELECT count(*)::int FROM public.transactions WHERE recurring_id = tests.get('ce_rule_today_id') AND (occurred_at AT TIME ZONE 'UTC')::date = (current_date - interval '2 months')::date),
   1,
-  'materialize_recurring_transactions crea el movimiento de la regla cuyo día es hoy'
+  'una de las ocurrencias de catch-up cae exactamente en la fecha del ancla, no en hoy'
 ));
 SELECT tests.log(is(
   (SELECT count(*)::int FROM public.transactions WHERE recurring_id = tests.get('ce_rule_other_day_id')),
   0,
-  'materialize_recurring_transactions NO crea el de una regla cuyo día no es hoy'
+  'materialize_recurring_transactions NO crea nada de una regla con auto_post en false'
 ));
 
 -- Mismo día de la cuenta (ARS) que la base del household (ARS) — identity,
 -- nunca 'pending' ni un rate inventado.
 SELECT tests.log(is(
-  (SELECT fx_source FROM public.transactions WHERE recurring_id = tests.get('ce_rule_today_id')),
+  (SELECT fx_source FROM public.transactions WHERE recurring_id = tests.get('ce_rule_today_id') AND (occurred_at AT TIME ZONE 'UTC')::date = current_date),
   'identity',
   'la moneda de la regla coincide con la base del household — fx_source identity, no pending'
 ));
 
--- Corrida dos veces el mismo día: no duplica (idempotente).
+-- Corrida dos veces: no duplica (idempotente) — la clave es
+-- (recurring_id, fecha), no "ya corrió hoy".
 SELECT public.materialize_recurring_transactions();
 SELECT tests.log(is(
   (SELECT count(*)::int FROM public.transactions WHERE recurring_id = tests.get('ce_rule_today_id')),
-  1,
+  3,
   'materialize_recurring_transactions es idempotente — correrla dos veces no duplica'
 ));
 

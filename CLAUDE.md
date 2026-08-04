@@ -126,6 +126,10 @@ La cadena de resolución tiene exactamente cuatro pasos y no hay un quinto: over
 
 **Ningún componente formatea plata a mano.** Solo `<Amount>`. La precisión decimal se **deriva** del par de monedas o del instrumento — 8 decimales para bitcoin, 0 para pesos — nunca se asume.
 
+**Toda fecha, hora o número decimal se muestra con el formato que vive en Ajustes → Formato, nunca hardcodeado.** `useDateFormatPreference()` + `formatNumericDate()` para fechas, `decimalSeparatorForLocale()` para el separador — nunca un `Intl.DateTimeFormat` o un `.toFixed()` sueltos que decidan el formato por su cuenta. La razón es doble: si el usuario cambia el ajuste, **todas** las pantallas que muestran ese dato tienen que reflejarlo solas, sin ir pantalla por pantalla; y un `${y}-${m}-${d}` armado a mano en JSX es exactamente el bug que ya pasó una vez (recurrentes mostrando ISO crudo en vez del formato elegido). Las fechas "narrativas" (nombre de mes/día — `formatDateShort`/`formatDateLong`, la mayoría de la app) son la excepción declarada: esa elección de diseño no depende del ajuste numérico, pero tampoco se hardcodea un string de fecha — sigue saliendo de `Intl` vía locale.
+
+**Huso horario: se guarda en UTC, se muestra en el huso del dispositivo, nunca en un huso guardado como preferencia.** `transactions.occurred_at` y toda fecha-hora son `timestamptz` UTC de punta a punta. La conversión al huso del usuario pasa siempre por `Intl`/`Date` sin `timeZone` explícito — eso lee el reloj del sistema operativo en el momento de renderizar, así que si el usuario viaja y cambia de país, ve la hora correcta sin tener que tocar un ajuste (guardar el huso como preferencia sería pedirle un paso extra que casi nadie hace, y muestra la hora vieja hasta que lo hace). Consecuencia para cualquier fecha-sin-hora que se sintetice en el cliente (un "día calendario" que no vino de una columna `timestamptz`, como una ocurrencia futura de un recurrente): se construye a **mediodía UTC**, nunca a medianoche — medianoche UTC cae en el día anterior en cualquier huso negativo (Uruguay, Argentina: UTC-3) apenas se formatea en hora local, que es exactamente el bug que hizo que "1 de septiembre" se mostrara como "31 de agosto". Mismo criterio para "hoy": `todayIso()` (`src/lib/dates/today.ts`, D10), nunca `new Date().toISOString().slice(0, 10)` — ese slice toma el día en UTC y adelanta la fecha entre las 21:00 y las 00:00 locales en cualquier huso negativo.
+
 **Cero strings hardcodeadas.** Todo por `next-intl`, en ES/EN/PT.
 
 ---
@@ -179,6 +183,20 @@ Y una invariante que ningún componente puede verificar solo: **el presupuesto d
 - No existe `next lint` — usamos ESLint directo (`pnpm lint`)
 - **Tailwind v4:** `darkMode: 'class'` ya no existe en config JS. El modo oscuro se declara en CSS con `@custom-variant dark (&:where(.dark, .dark *));`
 - **`@theme` emite un solo bloque `:root` y no soporta variantes claro/oscuro.** El patrón correcto es valores crudos en `:root` más overrides en `.dark`, expuestos con `@theme inline`
+
+**Tailwind por defecto, `style={{}}` solo para lo que Tailwind no resuelve.** Los tokens de
+diseño ya están expuestos como utilities vía `@theme inline` en `globals.css` (`bg-surface-2`,
+`text-text-muted`, `rounded-card`, `rounded-chip`, `rounded-input`, etc. — la escala de espaciado
+de Tailwind v4 es de 0.25rem, así que `gap-4`/`p-4`/`px-3.5` calzan exacto con los `--space-*` y
+paddings de 16/16/14px que se venían escribiendo a mano). Para código nuevo o que se esté
+tocando: `display/flexDirection/gap/padding/margin/alignItems/justifyContent` fijos y colores de
+token sobre un nodo DOM plano van por `className`. `style={{}}` queda para tres casos, y solo
+esos: la prop `style` de un componente del design system (`Button`, `Input`, `ListRow`, etc. —
+**no aceptan `className`**, no hay otra vía), un valor dinámico/calculado en runtime (`flex:
+condición ? 2 : 1`, una animación de `motion`), o una custom property que se está *asignando*.
+Las clases `t-caption`/`t-body`/`t-label`/etc. (tipografía con token) no compiten con esto, son
+el mecanismo correcto y siguen igual. **Esto no dispara una migración retroactiva** del
+`style={{}}` que ya existe en el resto de la app — aplica hacia adelante.
 
 ---
 

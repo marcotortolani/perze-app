@@ -27,7 +27,7 @@ export const GOALS_COLUMNS =
   "id, household_id, name, icon, color, target_amount::text, currency_code, target_date, account_id, archived_at, created_by, created_at, updated_at, client_rev";
 
 export const RECURRING_RULES_COLUMNS =
-  "id, household_id, name, kind, category_id, account_id, expected_amount::text, currency_code, day_of_month, archived_at, created_by, created_at, updated_at, client_rev";
+  "id, household_id, name, kind, category_id, account_id, expected_amount::text, currency_code, frequency, anchor_date, day_of_month, auto_post, end_date, archived_at, created_by, created_at, updated_at, client_rev";
 
 export const RULES_COLUMNS =
   "id, household_id, name, priority, match, actions, is_active, hit_count, created_by, created_at, updated_at, deleted_at, client_rev";

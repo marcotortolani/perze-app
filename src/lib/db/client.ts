@@ -217,6 +217,17 @@ export class PerzeDatabase extends Dexie {
             row.nextAttemptAt = null;
           });
       });
+
+    /**
+     * Recurrentes v3 — `materialize.ts` necesita `db.transactions.where("recurringId")`
+     * para la idempotencia del motor cliente (misma clave que el índice
+     * único de Postgres, `recurring_id` + fecha). Solo agrega el índice;
+     * no hay transform de datos.
+     */
+    this.version(9).stores({
+      transactions:
+        "id, householdId, accountId, categoryId, payeeId, [householdId+occurredAt], deletedAt, occurredAt, recurringId",
+    });
   }
 }
 

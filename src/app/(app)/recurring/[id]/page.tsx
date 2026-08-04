@@ -1,114 +1,385 @@
-"use client";
+'use client'
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import { Amount, Button, EmptyState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
-import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useAccounts } from "@/hooks/use-accounts";
-import { useCategories } from "@/hooks/use-categories";
-import { useCategoryLabel } from "@/hooks/use-category-label";
-import { useInvalidateRecurringRules, useRecurringRules } from "@/hooks/use-recurring-rules";
-import { recurringRulesRepo } from "@/lib/repos/recurring-rules-repo";
-import { money } from "@/lib/money/money";
+import { use, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { useLocale, useTranslations } from 'next-intl'
+import {
+  Amount,
+  Button,
+  Chip,
+  EmptyState,
+  ListRow,
+  Skeleton,
+  StatusBadge,
+  Switch,
+  usePageHeader,
+  ZMark,
+} from '@/design-system'
+import { useCurrentHousehold } from '@/hooks/use-current-household'
+import { useCurrentUserId } from '@/hooks/use-current-user'
+import { useAccounts } from '@/hooks/use-accounts'
+import { useCategories } from '@/hooks/use-categories'
+import { useCategoryLabel } from '@/hooks/use-category-label'
+import {
+  useInvalidateRecurringRules,
+  useRecurringRules,
+} from '@/hooks/use-recurring-rules'
+import { useInvalidateTransactions } from '@/hooks/use-transactions'
+import { useRecurringRuleHistory } from '@/hooks/use-recurring-rule-history'
+import { recurringRulesRepo } from '@/lib/repos/recurring-rules-repo'
+import { money } from '@/lib/money/money'
+import { formatAmountCompact } from '@/lib/money/format'
+import {
+  amountSeries,
+  detectPriceIncrease,
+  RECURRING_HISTORY_MIN_POINTS,
+} from '@/lib/analytics/recurring-history'
+import {
+  nextOccurrenceAfter,
+  occurredAtFor,
+  occurrencesBetween,
+} from '@/lib/recurring/occurrences'
+import { chargeRecurringNow } from '@/lib/recurring/materialize'
+import { todayIso } from '@/lib/repos/ids'
+import {
+  formatDateShort,
+  formatNumericDate,
+  type Locale,
+} from '@/i18n/formatting'
+import { useDateFormatPreference } from '@/stores/format-preferences-store'
 
-/** G3 — detalle y edición de una regla recurrente existente (la creación es G2, en `recurring/new`). */
-export default function RecurringRuleDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const t = useTranslations();
-  const router = useRouter();
-  const categoryLabel = useCategoryLabel();
-  const { data: household } = useCurrentHousehold();
-  const { data: rules } = useRecurringRules(household?.id);
-  const { data: accounts = [] } = useAccounts(household?.id);
-  const { data: categories = [] } = useCategories(household?.id);
-  const invalidateRules = useInvalidateRecurringRules(household?.id);
+// C15/auditoría: importar `BarChart` directo de su archivo, no del barrel.
+const BarChart = dynamic(
+  () => import('@/design-system/charts/BarChart').then((m) => m.BarChart),
+  { ssr: false },
+)
 
-  const [name, setName] = useState<string | null>(null);
-  const [dayOfMonth, setDayOfMonth] = useState<string | null>(null);
-  const [accountIdOverride, setAccountIdOverride] = useState<string | null>(null);
-  const [categoryIdOverride, setCategoryIdOverride] = useState<string | null | undefined>(undefined);
-  const [sheet, setSheet] = useState<"none" | "account" | "category">("none");
-  const [saving, setSaving] = useState(false);
-  const rule = rules?.find((r) => r.id === id);
-  usePageHeader({ ...(rule ? { title: rule.name } : {}), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+/** G2 — detalle de una regla recurrente: próximas ocurrencias, historial de montos, auto-registro. La edición vive en `[id]/edit`. */
+export default function RecurringRuleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = use(params)
+  const t = useTranslations()
+  const locale = useLocale() as Locale
+  const dateFormat = useDateFormatPreference()
+  const router = useRouter()
+  const categoryLabel = useCategoryLabel()
+  const { data: household } = useCurrentHousehold()
+  const userId = useCurrentUserId()
+  const { data: rules } = useRecurringRules(household?.id)
+  const { data: accounts = [] } = useAccounts(household?.id)
+  const { data: categories = [] } = useCategories(household?.id)
+  const { data: history } = useRecurringRuleHistory(id)
+  const invalidateRules = useInvalidateRecurringRules(household?.id)
+  const invalidateTransactions = useInvalidateTransactions(household?.id)
 
-  if (!household || !rules) return <Skeleton height={260} style={{ marginTop: 16 }} />;
+  const [showTable, setShowTable] = useState(false)
+  const [charging, setCharging] = useState(false)
+  const rule = rules?.find((r) => r.id === id)
+  usePageHeader({
+    ...(rule ? { title: rule.name } : {}),
+    onBack: () => router.back(),
+    backLabel: t('ds.appHeader.back'),
+  })
 
-  if (!rule) return <EmptyState message={t("recurringPage.notFound")} actionLabel={t("recurringPage.back")} onAction={() => router.push("/recurring")} />;
+  if (!household || !rules || !userId)
+    return <Skeleton height={260} style={{ marginTop: 16 }} />
+  if (!rule)
+    return (
+      <EmptyState
+        message={t('recurringPage.notFound')}
+        actionLabel={t('recurringPage.back')}
+        onAction={() => router.push('/recurring')}
+      />
+    )
 
-  const displayName = name ?? rule.name;
-  const displayDay = dayOfMonth ?? String(rule.dayOfMonth);
-  const accountId = accountIdOverride ?? rule.accountId;
-  const categoryId = categoryIdOverride === undefined ? rule.categoryId : categoryIdOverride;
-  const account = accounts.find((a) => a.id === accountId);
-  const category = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
-  const day = Math.min(31, Math.max(1, Number(displayDay) || 1));
+  const account = accounts.find((a) => a.id === rule.accountId)
+  const category = rule.categoryId
+    ? categories.find((c) => c.id === rule.categoryId)
+    : undefined
 
-  const handleSave = async () => {
-    if (!displayName.trim() || saving) return;
-    setSaving(true);
+  const series = amountSeries(history ?? [])
+  const increase = detectPriceIncrease(series, rule.frequency)
+  const today = todayIso()
+  const firstUpcoming = nextOccurrenceAfter(rule, today)
+  const upcoming = firstUpcoming
+    ? occurrencesBetween(rule, firstUpcoming, addYears(firstUpcoming, 2)).slice(
+        0,
+        3,
+      )
+    : []
+  const dueOccurrences = occurrencesBetween(
+    rule,
+    rule.anchorDate,
+    today,
+  ).filter((d) => !series.some((p) => p.date === d))
+  const isDue = !rule.autoPost && dueOccurrences.length > 0
+
+  // Ajustes → Formato: toda fecha se muestra con `dateFormat`, nunca ISO
+  // crudo — si el usuario lo cambia después, esta pantalla se ajusta sola.
+  const displayDate = (dateOnly: string) =>
+    formatNumericDate(locale, new Date(occurredAtFor(dateOnly)), dateFormat)
+
+  const summary =
+    rule.frequency === 'monthly' || rule.frequency === 'yearly'
+      ? t(`recurringPage.frequency.${rule.frequency}`) +
+        (rule.dayOfMonth
+          ? ` · ${t('recurringPage.dayOfMonth', { day: rule.dayOfMonth })}`
+          : '')
+      : t(`recurringPage.frequency.${rule.frequency}`)
+
+  const toggleAutoPost = async (checked: boolean) => {
+    await recurringRulesRepo.update(rule.id, { autoPost: checked })
+    invalidateRules()
+  }
+
+  const handleChargeNow = async () => {
+    if (charging || dueOccurrences.length === 0) return
+    setCharging(true)
     try {
-      await recurringRulesRepo.update(rule.id, { name: displayName.trim(), dayOfMonth: day, accountId, categoryId: categoryId ?? null });
-      invalidateRules();
-      toast(t("recurringPage.updated"));
+      await chargeRecurringNow(household, userId, rule, dueOccurrences[0]!)
+      invalidateTransactions()
+      toast(t('recurringPage.autoPosted', { name: rule.name }))
     } finally {
-      setSaving(false);
+      setCharging(false)
     }
-  };
+  }
 
   const handleArchive = async () => {
-    await recurringRulesRepo.archive(rule.id);
-    invalidateRules();
-    toast(t("recurringPage.archived"));
-    router.push("/recurring");
-  };
+    await recurringRulesRepo.archive(rule.id)
+    invalidateRules()
+    toast(t('recurringPage.archived'))
+    router.push('/recurring')
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
-        <div style={{ textAlign: "center" }}>
-          <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
+    // `lg`+: dos columnas, igual que `new/page.tsx` y `RecurringPageContent.tsx`
+    // — el ancho del shell es único en toda la app (`--content-max-width-wide`),
+    // así que sin este grid el formulario/botones se estiran a 1200px.
+    <div
+      className="grid grid-cols-1 lg:grid-cols-6"
+      style={{ gap: 24, height: '100%' }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: 16,
+          gap: 16,
+        }}
+        className="lg:col-span-4 xl:col-span-3"
+      >
+        <div
+          className="t-caption"
+          style={{ color: 'var(--text-muted)', textAlign: 'center' }}
+        >
+          {summary}
         </div>
-        <div className="t-caption" style={{ color: "var(--text-muted)", textAlign: "center" }}>{t(rule.kind === "expense" ? "capture.kind.expense" : "capture.kind.income")}</div>
-        <Input label={t("recurringPage.name")} value={displayName} onChange={(e) => setName(e.target.value)} />
-        <Input label={t("recurringPage.day")} placeholder="1-31" value={displayDay} onChange={(e) => setDayOfMonth(e.target.value.replace(/\D/g, ""))} />
+        <div style={{ textAlign: 'center' }}>
+          <Amount
+            value={money(rule.expectedAmount, rule.currencyCode)}
+            size="hero"
+            fit
+            showSign={false}
+            polarity="neutral"
+            tabular
+          />
+        </div>
 
-        <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("goalsPage.account")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
+        {increase ? (
+          <StatusBadge status="serious" icon="trend">
+            {t('recurringPage.priceIncrease', { pct: increase.pct })} ·{' '}
+            {t('recurringPage.priceIncreaseDetail', {
+              amount: formatAmountCompact(
+                money(increase.from, rule.currencyCode),
+                { showSign: false },
+              ),
+            })}
+          </StatusBadge>
+        ) : null}
+
+        {series.length >= RECURRING_HISTORY_MIN_POINTS ? (
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <div className="t-caption" style={{ color: 'var(--text-muted)' }}>
+                {t('recurringPage.amountHistory')}
+              </div>
+              <Chip
+                selected={showTable}
+                onClick={() => setShowTable((s) => !s)}
+              >
+                {t('recurringPage.amountHistoryTable')}
+              </Chip>
+            </div>
+            {showTable ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {series.map((p) => (
+                  <div
+                    key={p.date}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: 13,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    <span>{displayDate(p.date)}</span>
+                    <Amount
+                      value={money(p.amount, rule.currencyCode)}
+                      size="body"
+                      showSign={false}
+                      polarity="neutral"
+                      tabular
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <BarChart
+                data={series.slice(-6).map((p) => ({
+                  label: formatDateShort(
+                    locale,
+                    new Date(occurredAtFor(p.date)),
+                  ),
+                  value: Number(p.amount),
+                  display: formatAmountCompact(
+                    money(p.amount, rule.currencyCode),
+                    { showSign: false },
+                  ),
+                }))}
+                color={
+                  rule.kind === 'expense'
+                    ? 'var(--warning-ink, var(--data-4))'
+                    : 'var(--data-1)'
+                }
+              />
+            )}
+          </div>
+        ) : (
+          <p
+            className="t-body"
+            style={{ color: 'var(--text-secondary)', textAlign: 'center' }}
+          >
+            {t('recurringPage.amountHistoryEmpty')}
+          </p>
+        )}
+
+        {upcoming.length > 0 ? (
+          <ListRow
+            label={t('recurringPage.nextOccurrences')}
+            meta={upcoming.map(displayDate).join(', ')}
+            variant="value"
+          />
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => router.push(`/accounts/${account?.id}`)}
+          style={{
+            background: 'var(--surface-2)',
+            border: 0,
+            borderRadius: 'var(--radius-card)',
+            padding: 14,
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+        >
+          <div className="t-caption" style={{ color: 'var(--text-muted)' }}>
+            {t('goalsPage.account')}
+          </div>
+          <div
+            style={{ marginTop: 2, color: 'var(--text-primary)', fontSize: 15 }}
+          >
+            {account ? `${account.name} · ${account.currencyCode}` : '—'}
+            {category ? ` · ${categoryLabel(category)}` : ''}
+          </div>
         </button>
 
-        <button type="button" onClick={() => setSheet("category")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("budgetsPage.category")}</div>
-          <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{category ? categoryLabel(category) : t("recurringPage.noCategory")}</div>
-        </button>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            padding: '12px 4px',
+          }}
+        >
+          <div style={{ flex: '1 1 auto' }}>
+            <div style={{ fontSize: 15, color: 'var(--text-primary)' }}>
+              {t('recurringPage.autoPost')}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              {t('recurringPage.autoPostHint')}
+            </div>
+          </div>
+          <Switch
+            checked={rule.autoPost}
+            onChange={toggleAutoPost}
+            id={`recurring-${rule.id}-autopost`}
+          />
+        </div>
 
-        <div style={{ marginTop: "auto", paddingBottom: 24, display: "flex", flexDirection: "column", gap: 8 }}>
-          <Button disabled={!displayName.trim() || saving} onClick={handleSave}>
-            {t("common.save")}
+        {isDue ? (
+          <Button disabled={charging} onClick={handleChargeNow}>
+            {t('recurringPage.chargeNow')}
           </Button>
-          <Button variant="danger" onClick={handleArchive}>
-            {t("recurringPage.archive")}
+        ) : null}
+
+        {/* Fila en `md` (angosto pero de a una columna) y en `xl` (la
+            columna izquierda del grid `lg:grid-cols-2` ya tiene ancho de
+            sobra); columna en mobile y en `lg` (esa misma columna angosta
+            todavía, apretada contra la segunda columna del grid). */}
+        <div
+          className=" flex flex-col md:flex-row lg:flex-col xl:flex-row"
+          style={{ marginTop: 'auto', paddingBottom: 24, gap: 8 }}
+        >
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            onClick={() => router.push(`/recurring/${rule.id}/edit`)}
+            style={{ flex: '1 1 auto' }}
+          >
+            {t('recurringPage.editFrequencyOrAmount')}
+          </Button>
+          <Button
+            variant="danger"
+            fullWidth={false}
+            onClick={handleArchive}
+            style={{ flex: '1 1 auto' }}
+          >
+            {t('recurringPage.archive')}
           </Button>
         </div>
       </div>
 
-      <Sheet open={sheet === "account"} title={t("goalsPage.chooseAccount")} onClose={() => setSheet("none")}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {accounts.map((a) => (
-            <ListRow key={a.id} label={a.name} meta={a.currencyCode} onClick={() => { setAccountIdOverride(a.id); setSheet("none"); }} />
-          ))}
-        </div>
-      </Sheet>
-      <Sheet open={sheet === "category"} title={t("budgetsPage.category")} onClose={() => setSheet("none")}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {categories.filter((c) => c.kind === rule.kind).map((c) => (
-            <ListRow key={c.id} label={categoryLabel(c)} onClick={() => { setCategoryIdOverride(c.id); setSheet("none"); }} />
-          ))}
-        </div>
-      </Sheet>
+      <div
+        className="hidden xl:flex lg:col-span-2 xl:col-span-3"
+        style={{ alignItems: 'center', justifyContent: 'center' }}
+      >
+        <ZMark
+          variant="flip"
+          animated
+          size={28}
+          gap={8}
+          aria-label={t('app.name')}
+        />
+      </div>
     </div>
-  );
+  )
+}
+
+function addYears(iso: string, years: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${y! + years}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }

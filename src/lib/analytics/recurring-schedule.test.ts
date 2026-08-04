@@ -1,57 +1,55 @@
 import { describe, expect, it } from "vitest";
-import { computeMonthlyCommitted, computeUpcomingCharges, nextOccurrence } from "./recurring-schedule";
+import { computeUpcomingCharges, nextOccurrence, type RecurringRuleInput } from "./recurring-schedule";
+
+function rule(overrides: Partial<RecurringRuleInput>): RecurringRuleInput {
+  return {
+    id: "a",
+    kind: "expense",
+    expectedAmount: 100n,
+    currencyCode: "ARS",
+    frequency: "monthly",
+    anchorDate: "2026-01-01",
+    dayOfMonth: 1,
+    endDate: null,
+    ...overrides,
+  };
+}
 
 describe("nextOccurrence", () => {
-  it("returns this month's date when the day hasn't passed yet", () => {
-    const now = new Date(2026, 6, 10); // July 10
-    expect(nextOccurrence(15, now)).toEqual(new Date(2026, 6, 15));
+  it("devuelve la próxima ocurrencia estricta después de una fecha", () => {
+    expect(nextOccurrence(rule({ anchorDate: "2026-07-01", dayOfMonth: 15 }), "2026-07-10")).toBe("2026-07-15");
   });
 
-  it("rolls over to next month when the day already passed", () => {
-    const now = new Date(2026, 6, 20);
-    expect(nextOccurrence(15, now)).toEqual(new Date(2026, 7, 15));
-  });
-
-  it("returns today when the day is today", () => {
-    const now = new Date(2026, 6, 15);
-    expect(nextOccurrence(15, now)).toEqual(new Date(2026, 6, 15));
-  });
-
-  it("clamps day 31 to the last day of a shorter month", () => {
-    const now = new Date(2026, 1, 20); // Feb 20 2026 (28 days)
-    expect(nextOccurrence(31, now)).toEqual(new Date(2026, 1, 28));
-  });
-
-  it("rolls to the full day 31 of the next month once the clamped day has passed", () => {
-    const now = new Date(2026, 2, 1); // March 1 — Feb's clamped occurrence (Feb 28) already happened
-    expect(nextOccurrence(31, now)).toEqual(new Date(2026, 2, 31));
+  it("null cuando la regla ya terminó", () => {
+    expect(nextOccurrence(rule({ anchorDate: "2026-07-01", dayOfMonth: 1, endDate: "2026-07-01" }), "2026-07-01")).toBeNull();
   });
 });
 
 describe("computeUpcomingCharges", () => {
-  it("includes charges within the horizon, sorted by date", () => {
+  it("incluye los vencimientos dentro del horizonte, ordenados por fecha", () => {
     const now = new Date(2026, 6, 10);
     const rules = [
-      { id: "a", kind: "expense" as const, expectedAmount: 100n, dayOfMonth: 25 },
-      { id: "b", kind: "expense" as const, expectedAmount: 100n, dayOfMonth: 12 },
+      rule({ id: "a", anchorDate: "2026-01-25", dayOfMonth: 25 }),
+      rule({ id: "b", anchorDate: "2026-01-12", dayOfMonth: 12 }),
     ];
     const result = computeUpcomingCharges(rules, now, 30);
     expect(result.map((c) => c.ruleId)).toEqual(["b", "a"]);
   });
 
-  it("excludes charges beyond the horizon", () => {
+  it("excluye los vencimientos más allá del horizonte", () => {
     const now = new Date(2026, 6, 1);
-    const rules = [{ id: "a", kind: "expense" as const, expectedAmount: 100n, dayOfMonth: 28 }];
+    const rules = [rule({ id: "a", anchorDate: "2026-01-28", dayOfMonth: 28 })];
     expect(computeUpcomingCharges(rules, now, 7)).toEqual([]);
+  });
+
+  it("una regla semanal aparece dentro del horizonte aunque el ancla sea vieja", () => {
+    const now = new Date(2026, 6, 10);
+    const rules = [rule({ id: "a", frequency: "weekly", anchorDate: "2026-01-01", dayOfMonth: null })];
+    const result = computeUpcomingCharges(rules, now, 7);
+    expect(result).toHaveLength(1);
   });
 });
 
-describe("computeMonthlyCommitted", () => {
-  it("sums only expense rules", () => {
-    const rules = [
-      { id: "a", kind: "expense" as const, expectedAmount: 100n, dayOfMonth: 1 },
-      { id: "b", kind: "income" as const, expectedAmount: 5000n, dayOfMonth: 1 },
-    ];
-    expect(computeMonthlyCommitted(rules)).toBe(100n);
-  });
-});
+// `computeMonthlyCommitted` es async (necesita resolver FX) — se prueba en
+// `recurring-schedule-committed.test.ts`, no acá, para no arrastrar mocks
+// de Dexie/fx a este archivo de fechas puras.
