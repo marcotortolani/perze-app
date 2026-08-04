@@ -199,7 +199,6 @@ export default function HomePage() {
   }
 
   const baseCurrency = household.baseCurrency;
-  const currencies = new Set(allAccounts.map((a) => a.currencyCode));
   const now = new Date();
 
   // Sparkline del héroe: flujo neto (ingreso − gasto) acumulado de los
@@ -253,25 +252,15 @@ export default function HomePage() {
     balance: money(a.currentBalance, a.currencyCode),
     country: a.countryCode ?? undefined,
   }));
-  const totalSummary =
-    currencies.size > 1
-      ? {
-          id: "__total",
-          institution: t("home.convertedTotal"),
-          name: t("home.accountsCount", { count: allAccounts.length }),
-          balance: netWorth.data?.netWorth ?? zero(baseCurrency),
-          country: undefined,
-        }
-      : undefined;
-
-  // Bento en desktop (`AccountCarousel gridOnDesktop`): la card destacada
-  // ocupa 2 columnas — el total convertido si hay más de una moneda en
-  // uso, si no la primera cuenta. El resto se ordena por moneda: cifras
-  // en la misma moneda (comparables entre sí) quedan agrupadas, en vez de
-  // un orden arbitrario que las mezcla al azar.
-  const sortedLiquiditySummaries = [...liquiditySummaries].sort((a, b) => a.balance.currency.localeCompare(b.balance.currency));
-  const accountSummaries = totalSummary ? [totalSummary, ...sortedLiquiditySummaries] : sortedLiquiditySummaries;
-  const featuredAccountId = accountSummaries[0]?.id;
+  // Bento en desktop (`AccountCarousel gridOnDesktop`): sin card de total —
+  // "Total convertido" mostraba el mismo número que el patrimonio neto del
+  // héroe, arriba de esto, y repetir la misma cifra dos veces en la
+  // pantalla es ruido, no información. El resto se ordena por moneda:
+  // cifras en la misma moneda (comparables entre sí) quedan agrupadas, en
+  // vez de un orden arbitrario que las mezcla al azar. Cuál card queda
+  // destacada lo decide el layout del bento (`bentoLayout()` en
+  // `AccountCarousel`), no esta página.
+  const accountSummaries = [...liquiditySummaries].sort((a, b) => a.balance.currency.localeCompare(b.balance.currency));
 
   const recentTransactions = allTransactions.slice(0, 5);
 
@@ -367,9 +356,6 @@ export default function HomePage() {
         ) : null}
       </section>
 
-      {/* `"__total"` es la card sintética del convertido — no es una cuenta
-          real, así que ahí sí cae al listado general; el resto va directo
-          al detalle de ESA cuenta, no a la lista completa. */}
       {/* `flexShrink: 0`: sin esto colapsaba a 0px de alto. `overflowX: "auto"`
           en el propio carrusel hace que el navegador coaccione
           `overflow-y` a `auto` también (misma regla CSSOM que ya rompía
@@ -383,9 +369,8 @@ export default function HomePage() {
       <AccountCarousel
         accounts={accountSummaries}
         privacy={privacy}
-        onSelect={(id) => router.push(id === "__total" ? "/accounts" : `/accounts/${id}`)}
+        onSelect={(id) => router.push(`/accounts/${id}`)}
         gridOnDesktop
-        featuredId={featuredAccountId}
         style={{ flexShrink: 0 }}
       />
 

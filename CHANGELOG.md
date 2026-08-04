@@ -6,6 +6,36 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.12.1] — 2026-08-04
+
+### Corregido — bento del dashboard: sin card redundante, sin columnas alineadas
+
+- **Se elimina la card "Total convertido"** del bento de cuentas del home. Su saldo era
+  literalmente el mismo número que ya se muestra como patrimonio neto en el héroe de la
+  pantalla — repetir la misma cifra dos veces violaba el presupuesto de ruido (una sola cifra
+  héroe por pantalla) sin aportar nada. El bento pasa a mostrar solo cuentas reales; la card
+  destacada la decide el layout, no una card sintética con un id `"__total"`.
+- **El ancho de cada card ya no sale de cuánto mide el saldo formateado.** El algoritmo
+  anterior (`computeBaseSpans` + `packBentoRows`) normalizaba el largo del monto contra el
+  rango de la pantalla y repartía el sobrante en la card de mayor peso — con 6 cuentas eso
+  daba filas de `[7,5] / [8,4] / [8,4]`: dos columnas con anchos que saltaban de 4 a 8
+  columnas sin significado, y agregar una cuenta con un saldo distinto reacomodaba toda la
+  grilla. Se reemplaza por `bentoLayout(n)`: una forma ELEGIDA por cantidad de cuentas (fila 1
+  ancla con `[7,5]` o `[6,3,3]`, el resto en filas de 3 y de 2 asimétricas, nunca `[4,4,4]`
+  parejo). El contenido pasa a solo ORDENAR las cuentas dentro de esa forma —el saldo más
+  largo va al slot más ancho de su fila—, nunca a decidir el ancho del slot.
+- **Ninguna fila del bento comparte un límite de columna con la fila de arriba.** Dos cards
+  apiladas del mismo ancho en la misma posición se leen como columnas de una tabla, no como
+  bento. `pickRow()` elige, entre las variantes de cada forma de fila, la que no repite
+  ningún límite de columna con la fila inmediata anterior — verificado con un test que corre
+  las 24 primeras cantidades de cuentas.
+- Nuevo test unitario `AccountCarousel.test.ts` sobre `bentoLayout` (145 aserciones): suma
+  exacta de 12 columnas por fila, ninguna cuenta perdida ni duplicada, ninguna fila de una
+  sola card salvo con una cuenta, ningún span menor a 3, y sin límites de columna compartidos
+  entre filas vecinas.
+
+---
+
 ## [0.12.0] — 2026-08-04
 
 ### Agregado — borrar todos los datos del household

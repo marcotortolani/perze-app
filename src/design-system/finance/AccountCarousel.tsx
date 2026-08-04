@@ -35,181 +35,151 @@ export interface AccountCarouselProps {
    * carrusel de siempre. Ver `.account-grid-lg` en `globals.css`.
    */
   gridOnDesktop?: boolean | undefined;
-  /**
-   * Solo con `gridOnDesktop` — la card de este id es la destacada: 5 de las
-   * 12 columnas del grid (ver `computeBaseSpans()` más abajo) y el monto en
-   * tamaño `title`. Se ignora en mobile (el carrusel no tiene noción de
-   * "columna").
-   */
-  featuredId?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
-const MIN_SPAN = 3;
-const MAX_SPAN = 5;
-// 2 columnas más que `MAX_SPAN` (el techo del resto de las cards) — sin
-// esto, con montos parecidos entre "Total convertido" y la cuenta más
-// grande, terminaban coincidiendo en ancho y la destacada dejaba de leerse
-// como tal.
-const FEATURED_SPAN = MAX_SPAN + 2;
-const GRID_COLUMNS = 12;
-const MAX_ABSOLUTE_SPAN = 8;
-
 /**
- * Span "base" de cada card del grid de escritorio, uno por cuenta en el
- * mismo orden que `accounts` — decidido por CUÁNTO contenido tiene que
- * mostrar (el largo del monto formateado), no por decoración.
- * `formatAmountCompact` es el mismo formateador canónico que ya usa
- * `<Amount>`, reusado acá solo para medir el largo del string (nunca para
- * mostrarlo).
+ * Filas de 3 cards, cada una una permutación de {3,4,5} — asimétricas a
+ * propósito (`[4,4,4]` repetido es justo el look de tabla plana que se
+ * busca evitar). Filas de 2, `[5,7]`/`[7,5]`.
  *
- * Relativo al RANGO real de esta pantalla, no un corte de caracteres fijo:
- * un umbral absoluto es ciego a si en esta pantalla particular todos los
- * montos son parecidos, todos largos, o hay de todo — con pocas cuentas o
- * con montos atípicos (moneda con muchos dígitos, por ejemplo) un corte fijo
- * se queda corto o sobra según el caso. Acá el más corto de ESTA pantalla
- * siempre cae en el piso (`MIN_SPAN`) y el más largo en el techo
- * (`MAX_SPAN`), con el resto interpolado linealmente entre los dos — así se
- * adapta solo tanto si hay 2 cuentas como si hay 20. La destacada ("Total
- * convertido" o la primera cuenta si no hay total) queda afuera de esta
- * normalización: siempre vale `FEATURED_SPAN`, es el ancla fija de la
- * pantalla y nunca compite por espacio con el resto.
+ * Elegir CUÁL variante usar en cada fila no es libre: dos filas vecinas
+ * que compartan un límite de columna dibujan una línea recta vertical
+ * entre ellas — dos cards apiladas de mismo ancho en la misma posición se
+ * leen como una columna de tabla, no como bento. `rowBreakpoints()` +
+ * `pickRow()` más abajo garantizan que ninguna fila comparta un límite
+ * con la fila inmediatamente anterior.
  */
-function computeBaseSpans(accounts: AccountSummary[], featuredId: string | undefined): number[] {
-  const weights = accounts.map((a) => formatAmountCompact(a.balance, { showSign: false }).length);
-  const nonFeaturedWeights = accounts.map((a, i) => (a.id === featuredId ? null : weights[i]!)).filter((w): w is number => w !== null);
-  const minW = nonFeaturedWeights.length ? Math.min(...nonFeaturedWeights) : 0;
-  const maxW = nonFeaturedWeights.length ? Math.max(...nonFeaturedWeights) : 0;
-  return accounts.map((a, i) => {
-    if (a.id === featuredId) return FEATURED_SPAN;
-    // Todos los montos miden lo mismo de largo: no hay ninguna señal de
-    // contenido que las diferencie, se quedan todas en el piso — el reparto
-    // de sobrante de más abajo es quien termina de darles forma según con
-    // quién les toque compartir fila.
-    if (maxW === minW) return MIN_SPAN;
-    const t = (weights[i]! - minW) / (maxW - minW);
-    return Math.round(MIN_SPAN + t * (MAX_SPAN - MIN_SPAN));
-  });
+const THREE_ROW_POOL: readonly number[][] = [
+  [5, 4, 3],
+  [3, 4, 5],
+  [4, 5, 3],
+  [3, 5, 4],
+  [5, 3, 4],
+  [4, 3, 5],
+];
+const TWO_ROW_POOL: readonly number[][] = [
+  [5, 7],
+  [7, 5],
+];
+
+/** Límites internos de una fila (sumas parciales, sin contar 0 ni 12: esos son el borde del grid, no un límite entre cards). */
+function rowBreakpoints(row: number[]): number[] {
+  const bps: number[] = [];
+  let acc = 0;
+  for (let i = 0; i < row.length - 1; i++) {
+    acc += row[i]!;
+    bps.push(acc);
+  }
+  return bps;
 }
 
 /**
- * Reparte los spans "base" de `computeBaseSpans` en filas que suman EXACTO
- * 12 — sin esto, `grid-template-columns: repeat(12, ...)` con anchos fijos
- * por card dejaba huecos muertos al final de una fila cuando lo que
- * quedaba no llenaba las 12 columnas justo. Empaquetado goloso: acumula
- * hasta que la próxima card se pasaría de 12, cierra la fila ahí, y
- * reparte lo que sobró. `featuredIndex` (la card destacada) nunca participa
- * del reparto — es un ancla visual fija, su span final es siempre igual al
- * base, caiga en la fila que caiga (única excepción: si queda SOLA en una
- * fila, ver `distributeRemainder`).
+ * Primera fila del `pool`, empezando en `startIdx` (para variar cuál se
+ * usa primero entre llamados) y rotando, que NO comparta ningún límite de
+ * columna con `prevBreakpoints` — la fila anterior. Con pools de 2 y 6
+ * filas y como mucho 2 límites por fila, siempre hay al menos una opción
+ * libre (cada valor de límite aparece en, a lo sumo, la mitad del pool);
+ * el `return` final es una salvaguarda que no debería alcanzarse nunca.
  */
-function countNonFeatured(baseSpans: number[], start: number, end: number, featuredIndex: number): number {
-  let count = 0;
-  for (let i = start; i < end; i++) if (i !== featuredIndex) count++;
-  return count;
-}
-
-function packBentoRows(baseSpans: number[], featuredIndex: number): number[] {
-  // Primero se deciden los LÍMITES de cada fila (empaquetado goloso: cierra
-  // apenas la próxima card se pasaría de 12) y recién después se reparte el
-  // sobrante — separarlo en dos pasadas permite corregir el límite de una
-  // fila (ver el rebalanceo de abajo) antes de repartir nada.
-  const rowBoundaries: number[] = [0];
-  let rowSum = 0;
-  for (let i = 0; i < baseSpans.length; i++) {
-    const span = baseSpans[i]!;
-    if (rowSum + span > GRID_COLUMNS && rowSum > 0) {
-      rowBoundaries.push(i);
-      rowSum = 0;
-    }
-    rowSum += span;
+function pickRow(pool: readonly number[][], startIdx: number, prevBreakpoints: Set<number>): number[] {
+  for (let k = 0; k < pool.length; k++) {
+    const candidate = pool[(startIdx + k) % pool.length]!;
+    if (!rowBreakpoints(candidate).some((bp) => prevBreakpoints.has(bp))) return candidate;
   }
-  rowBoundaries.push(baseSpans.length);
-
-  // Si la ÚLTIMA fila queda con una sola card no-destacada (el empaquetado
-  // goloso la dejó sola porque la fila anterior ya había cerrado en 12),
-  // esa card terminaba estirada a las 12 columnas enteras sin importar
-  // cuánto contenido tuviera — una card de saldo corto se veía gigante y
-  // vacía. Se la "pide prestada" a la fila anterior: se mueve el último
-  // ítem de esa fila a esta, así quedan al menos 2 cards para repartirse el
-  // sobrante entre sí (la de más contenido absorbe más, como siempre).
-  if (rowBoundaries.length > 2) {
-    const lastStart = rowBoundaries[rowBoundaries.length - 2]!;
-    const lastEnd = rowBoundaries[rowBoundaries.length - 1]!;
-    const prevStart = rowBoundaries[rowBoundaries.length - 3]!;
-    const lastNonFeatured = countNonFeatured(baseSpans, lastStart, lastEnd, featuredIndex);
-    const prevNonFeatured = countNonFeatured(baseSpans, prevStart, lastStart, featuredIndex);
-    const prevHasFeatured = featuredIndex >= prevStart && featuredIndex < lastStart;
-    // Robar el último ítem de la fila anterior es seguro incluso si la deja
-    // con cero cards propias, siempre que esa fila conserve la destacada —
-    // "solo la destacada" ya es un caso soportado (absorbe el sobrante
-    // entero). Sin la destacada, robar el único ítem la dejaría vacía.
-    const donorWouldBeEmpty = prevNonFeatured <= 1 && !prevHasFeatured;
-    if (lastNonFeatured === 1 && prevNonFeatured >= 1 && !donorWouldBeEmpty) {
-      rowBoundaries[rowBoundaries.length - 2] = lastStart - 1;
-    }
-  }
-
-  const finalSpans = [...baseSpans];
-  for (let r = 0; r < rowBoundaries.length - 1; r++) {
-    const start = rowBoundaries[r]!;
-    const end = rowBoundaries[r + 1]!;
-    let rowBaseSum = 0;
-    for (let i = start; i < end; i++) rowBaseSum += baseSpans[i]!;
-    distributeRemainder(finalSpans, baseSpans, start, end, GRID_COLUMNS - rowBaseSum, featuredIndex);
-  }
-  return finalSpans;
+  return pool[startIdx % pool.length]!;
 }
 
 /**
- * Reparto del sobrante de una fila, CONCENTRADO en la card de mayor peso —
- * no proporcional. Antes esto repartía proporcional al span base de cada
- * una: mejor que el bug original (que se lo daba a la más chica primero),
- * pero todavía le daba a una card de saldo corto ("US$ 0,00") una porción
- * real del sobrante solo para que la fila cerrara en 12 — quedaba más ancha
- * de lo que su contenido justifica. Acá el sobrante va, de a una columna,
- * a la card de mayor peso BASE que todavía no llegó a un tope razonable
- * (nunca más del doble de su propio tamaño natural, nunca más de
- * `MAX_ABSOLUTE_SPAN`); al llegar a su tope, sigue la siguiente más grande.
- * Si el pool entero llega a tope y todavía sobra (caso raro, muchas cuentas
- * de contenido parecido), se ignoran los topes — nunca puede quedar un
- * sobrante sin repartir, eso es exactamente el hueco vacío que se busca
- * evitar. Empate de peso: se reparte por turnos entre las que empatan (la
- * que menos creció hasta ahora en esta fila recibe la próxima columna), en
- * vez de que la primera en el orden se lleve siempre todo.
+ * Reparte el resto de `n - c1` cards (`c1` = tamaño de la primera fila) en
+ * filas de 3 y de 2 que sumen exacto 12 (las columnas del grid) cada una,
+ * MAXIMIZANDO las filas de 3 — son las que dan el look bento; una fila de
+ * 2 sola se lee más parecida a una tabla. `r === 1` no tiene split válido
+ * (ninguna combinación de filas de 3/2 deja exactamente 1 card sobrante):
+ * se descarta probando el otro tamaño de primera fila.
  */
-function distributeRemainder(finalSpans: number[], baseSpans: number[], start: number, end: number, remainder: number, featuredIndex: number): void {
-  if (remainder <= 0 || end <= start) return;
-  const pool: number[] = [];
-  for (let i = start; i < end; i++) if (i !== featuredIndex) pool.push(i);
-  if (pool.length === 0) {
-    // La única card de esta fila es la destacada: no hay a quién más darle
-    // el sobrante. Única excepción a "la destacada nunca cambia de tamaño"
-    // — evita dejar un hueco vacío cuando comparte fila con nadie.
-    finalSpans[featuredIndex] = (finalSpans[featuredIndex] ?? baseSpans[featuredIndex]!) + remainder;
-    return;
+function splitRest(r: number): { threes: number; twos: number } | null {
+  if (r === 0) return { threes: 0, twos: 0 };
+  if (r % 3 === 0) return { threes: r / 3, twos: 0 };
+  if (r % 3 === 2) return { threes: (r - 2) / 3, twos: 1 };
+  if (r < 4) return null; // r === 1: sin split válido
+  return { threes: (r - 4) / 3, twos: 2 };
+}
+
+/**
+ * Forma del grid de escritorio, una por cantidad de cuentas — anchos de
+ * columna ELEGIDOS, no calculados a partir de cuánto mide cada saldo (eso
+ * es trabajo de `assignBentoSlots()` más abajo, y solo decide QUIÉN va en
+ * cada slot, nunca el ancho del slot). La primera fila lleva 2 o 3 cards y
+ * es la que ancla la pantalla (`[7,5]` o `[6,3,3]`); el resto se reparte en
+ * filas de 3 y de 2 vía `splitRest()`, maximizando las de 3, y cada fila
+ * se elige con `pickRow()` para que nunca comparta un límite de columna
+ * con la fila anterior. Con empate en cantidad de filas de 3, gana la
+ * primera fila de 2 cards — dos anchos (7 y 5) en vez de tres leen mejor
+ * como ancla.
+ */
+export function bentoLayout(n: number): number[][] {
+  if (n <= 0) return [];
+  if (n === 1) return [[12]];
+  if (n === 2) return [[7, 5]];
+  if (n === 3) return [[6, 3, 3]];
+
+  const candidates = (
+    [
+      { c1: 2 as const, split: splitRest(n - 2) },
+      { c1: 3 as const, split: splitRest(n - 3) },
+    ] as const
+  ).filter((c): c is { c1: 2 | 3; split: { threes: number; twos: number } } => c.split !== null);
+
+  const best = candidates.reduce((a, b) => (b.split.threes > a.split.threes ? b : a));
+
+  const rows: number[][] = [best.c1 === 2 ? [7, 5] : [6, 3, 3]];
+  for (let i = 0; i < best.split.threes; i++) {
+    const prev = new Set(rowBreakpoints(rows[rows.length - 1]!));
+    rows.push(pickRow(THREE_ROW_POOL, i, prev));
   }
-  let left = remainder;
-  let ignoreCaps = false;
-  while (left > 0) {
-    let bestIdx = -1;
-    for (const i of pool) {
-      const cap = ignoreCaps ? Infinity : Math.min(MAX_ABSOLUTE_SPAN, baseSpans[i]! * 2);
-      if (finalSpans[i]! >= cap) continue;
-      const better =
-        bestIdx === -1 ||
-        baseSpans[i]! > baseSpans[bestIdx]! ||
-        (baseSpans[i] === baseSpans[bestIdx] && finalSpans[i]! < finalSpans[bestIdx]!);
-      if (better) bestIdx = i;
-    }
-    if (bestIdx === -1) {
-      if (ignoreCaps) break; // salvaguarda: no debería pasar con pool.length > 0
-      ignoreCaps = true;
-      continue;
-    }
-    finalSpans[bestIdx]!++;
-    left--;
+  for (let i = 0; i < best.split.twos; i++) {
+    const prev = new Set(rowBreakpoints(rows[rows.length - 1]!));
+    rows.push(pickRow(TWO_ROW_POOL, i, prev));
   }
+  return rows;
+}
+
+/**
+ * Ubica cada cuenta en un slot de `bentoLayout(accounts.length)` — el
+ * contenido ORDENA, ya no mide: el saldo más largo (mismo `weight` que
+ * antes, `formatAmountCompact(...).length`, el formateador canónico de
+ * `<Amount>` reusado solo para medir) va al slot más ancho DE SU FILA, no
+ * al slot más ancho de toda la pantalla. Así el slot angosto de una fila
+ * de 3 siempre recibe el saldo más corto que le tocó compartir fila, y la
+ * forma de la grilla (elegida en `bentoLayout`, no acá) nunca la deforma
+ * un saldo puntual. La cuenta que cae en el slot más ancho de la fila 1
+ * es, por construcción, la de mayor peso global: es la destacada.
+ */
+function assignBentoSlots(accounts: AccountSummary[]): { gridAccounts: AccountSummary[]; gridSpans: number[] } {
+  const sorted = [...accounts].sort(
+    (a, b) => formatAmountCompact(b.balance, { showSign: false }).length - formatAmountCompact(a.balance, { showSign: false }).length,
+  );
+  const rows = bentoLayout(sorted.length);
+
+  const gridAccounts: AccountSummary[] = [];
+  const gridSpans: number[] = [];
+  let pointer = 0;
+  for (const rowSpans of rows) {
+    const rowAccounts = sorted.slice(pointer, pointer + rowSpans.length);
+    pointer += rowSpans.length;
+    // Slots de la fila ordenados de más ancho a más angosto — la cuenta
+    // más pesada de la fila (rowAccounts[0], ya viene ordenada desc) va al
+    // primero de esa lista, la segunda más pesada al segundo, etc.
+    const slotsByWidthDesc = rowSpans.map((_, idx) => idx).sort((a, b) => rowSpans[b]! - rowSpans[a]!);
+    const rowResult: AccountSummary[] = new Array(rowSpans.length);
+    slotsByWidthDesc.forEach((slotIdx, rank) => {
+      rowResult[slotIdx] = rowAccounts[rank]!;
+    });
+    gridAccounts.push(...rowResult);
+    gridSpans.push(...rowSpans);
+  }
+  return { gridAccounts, gridSpans };
 }
 
 /**
@@ -217,7 +187,7 @@ function distributeRemainder(finalSpans: number[], baseSpans: number[], start: n
  * país. La cuenta activa se resuelve por superficie (surface-2), nunca
  * por relleno de marca.
  */
-export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = false, gridOnDesktop = false, featuredId, style }: AccountCarouselProps) {
+export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = false, gridOnDesktop = false, style }: AccountCarouselProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (ref.current) ref.current.scrollLeft = 0;
@@ -226,22 +196,19 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
   // Orden y ancho final SOLO para el grid de escritorio — el carrusel de
   // mobile respeta el orden que ya trae `accounts` (ahí el orden importa
   // para el swipe), y no tiene noción de "columna". El home es un resumen,
-  // no una lista donde el orden porte significado — se ordena de más ancha
-  // a más angosta puramente por estética (una cascada de tamaño decreciente
-  // se lee intencional, un zigzag al azar no), y `packBentoRows` convierte
-  // esos anchos "base" en los anchos finales que hacen que cada fila sume
-  // exacto 12 columnas — nunca queda un hueco vacío al final de una fila.
+  // no una lista donde el orden porte significado: `assignBentoSlots`
+  // decide tanto la forma de la grilla (`bentoLayout`) como quién va en
+  // cada slot de esa forma.
   const { gridAccounts, gridSpans } = useMemo(() => {
     if (!gridOnDesktop) return { gridAccounts: accounts, gridSpans: [] as number[] };
-    const baseSpansByAccount = computeBaseSpans(accounts, featuredId);
-    const paired = accounts.map((a, i) => ({ a, base: baseSpansByAccount[i]! })).sort((x, y) => y.base - x.base);
-    const sorted = paired.map((p) => p.a);
-    const baseSpans = paired.map((p) => p.base);
-    const featuredIndex = sorted.findIndex((a) => a.id === featuredId);
-    const spans = packBentoRows(baseSpans, featuredIndex);
-    return { gridAccounts: sorted, gridSpans: spans };
-  }, [accounts, gridOnDesktop, featuredId]);
+    return assignBentoSlots(accounts);
+  }, [accounts, gridOnDesktop]);
   const renderedAccounts = gridOnDesktop ? gridAccounts : accounts;
+  // La destacada es siempre la primera del grid armado arriba — el slot
+  // más ancho de la fila 1, que por construcción recibe la cuenta de
+  // mayor peso. En mobile no hay noción de "destacada": el carrusel
+  // muestra todas igual.
+  const featuredId = gridOnDesktop ? gridAccounts[0]?.id : undefined;
 
   // Click-and-drag con mouse (desktop): sin esto, un usuario sin trackpad ni
   // scroll horizontal solo podía mover el carrusel con Shift+rueda — nada
@@ -329,13 +296,13 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
           <button
             key={a.id}
             type="button"
-            className={`account-carousel-card${featured ? " account-carousel-card--featured" : ""}`}
+            className="account-carousel-card"
             onClick={() => onSelect?.(a.id)}
             style={{
               scrollSnapAlign: "start",
               flex: "0 0 auto",
-              // El span final ya viene ajustado por `packBentoRows` para
-              // que cada fila sume exacto 12 — nunca es simplemente 3/4/5.
+              // El span sale de `bentoLayout()` — nunca es simplemente
+              // 3/4/5, es la forma elegida de la fila que le tocó.
               gridColumn: gridOnDesktop ? `span ${gridSpans[i]}` : undefined,
               textAlign: "left",
               cursor: "pointer",

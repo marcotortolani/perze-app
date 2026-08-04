@@ -827,17 +827,20 @@ html[data-backdrop-intensity="vivid"] {
  * slider que solo se mueve arrastrando, se acomoda en grid — todas las
  * cuentas visibles a la vez, sin gesto que aprender.
  *
- * 12 columnas, no un grid parejo de cuadrados: `spanFor()` en
- * `AccountCarousel.tsx` decide un ancho base (3/4/5) por CUÁNTO contenido
- * tiene que mostrar cada card (largo del monto formateado, nunca al azar),
- * la destacada (el total convertido, o la primera cuenta si no hay)
- * siempre parte de 5, y `packBentoRows()` ajusta esos anchos base para que
- * cada fila sume EXACTO 12 — nunca queda un hueco vacío al final de una
- * fila (antes, con `auto-fill`/`dense`, si el resto de una fila no sumaba
- * justo 12 quedaba espacio muerto sin cubrir). El ancho final de cada card
- * llega por `grid-column` inline, calculado en JS — por eso no hay clases
- * `--span-N` fijas acá: el ancho real varía según cuántas cards entran en
- * cada fila, no es un valor fijo por card.
+ * 12 columnas, no un grid parejo de cuadrados: `bentoLayout()` en
+ * `AccountCarousel.tsx` decide la FORMA de la grilla (filas de 2 o de 3,
+ * con anchos elegidos a mano, nunca `[4,4,4]` parejo) según cuántas
+ * cuentas hay, sin que ningún ancho salga de cuánto mide un saldo — eso
+ * hacía que la grilla se deformara con cada cambio de saldo. Dos filas
+ * vecinas nunca comparten un límite de columna (si lo hicieran, dos cards
+ * apiladas del mismo ancho en la misma posición dibujan una línea recta
+ * vertical y la grilla se lee como columnas de tabla, no como bento).
+ * `assignBentoSlots()` es quien decide QUIÉN cae en cada slot ya elegido —
+ * el saldo más largo va al slot más ancho de su fila, y la cuenta que cae
+ * en el slot más ancho de la fila 1 es la destacada. El ancho final de
+ * cada card llega por `grid-column` inline, calculado en JS — por eso no
+ * hay clases `--span-N` fijas acá: el ancho real varía según la forma
+ * elegida para esta cantidad de cuentas, no es un valor fijo por card.
  *
  * `width: auto` en los botones: sin esto, el `width: 208` fijo (para el
  * ancho de cada card DENTRO del carrusel) impedía que las columnas del
