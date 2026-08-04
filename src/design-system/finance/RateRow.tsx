@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useLocale } from "next-intl";
 import { StatusBadge } from "../core/StatusBadge";
-import { formatRateTrimmed, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
 export interface RateRowProps {
@@ -24,7 +24,7 @@ export interface RateRowProps {
  */
 export function RateRow({ pair, source, ageLabel, rate, stale = false, style }: RateRowProps) {
   const locale = useLocale() as Locale;
-  const [intPart, fracPart = ""] = formatRateTrimmed(rate).split(".");
+  const [intPart, fracPart = ""] = formatRateTrimmed(roundRateForDisplay(rate)).split(".");
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "11px 0", ...style }}>
       <div>

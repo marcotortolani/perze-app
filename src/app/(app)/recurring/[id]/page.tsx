@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Button, EmptyState, Input, ListRow, Sheet, Skeleton } from "@/design-system";
+import { Amount, Button, EmptyState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
@@ -31,10 +31,11 @@ export default function RecurringRuleDetailPage({ params }: { params: Promise<{ 
   const [categoryIdOverride, setCategoryIdOverride] = useState<string | null | undefined>(undefined);
   const [sheet, setSheet] = useState<"none" | "account" | "category">("none");
   const [saving, setSaving] = useState(false);
+  const rule = rules?.find((r) => r.id === id);
+  usePageHeader({ ...(rule ? { title: rule.name } : {}), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !rules) return <Skeleton height={260} style={{ marginTop: 16 }} />;
 
-  const rule = rules.find((r) => r.id === id);
   if (!rule) return <EmptyState message={t("recurringPage.notFound")} actionLabel={t("recurringPage.back")} onAction={() => router.push("/recurring")} />;
 
   const displayName = name ?? rule.name;
@@ -66,7 +67,6 @@ export default function RecurringRuleDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={rule.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <div style={{ textAlign: "center" }}>
           <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />

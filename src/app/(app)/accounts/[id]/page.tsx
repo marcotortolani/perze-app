@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, AppHeader, EmptyState, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, EmptyState, ListRow, ProgressBar, Skeleton, TransactionRow, usePageHeader } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const LineChart = dynamic(() => import("@/design-system/charts/LineChart").then((m) => m.LineChart), { ssr: false });
@@ -49,6 +49,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const { data: latestStatement } = useLatestCardStatement(id);
   const { data: recurringRules = [] } = useRecurringRules(household?.id);
   const accountRecurringCount = recurringRules.filter((r) => r.accountId === id).length;
+  usePageHeader({ onBack: () => router.push("/accounts"), backLabel: t("accountsPage.detail.back"), ...(account ? { title: account.name } : {}) });
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
@@ -88,24 +89,11 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     return points;
   }, [account, transactions, locale]);
 
-  // Subpágina de detalle de cuenta: header propio con "volver", el shell no dibuja el suyo acá.
-  const backHeader = <AppHeader showScope={false} onBack={() => router.push("/accounts")} backLabel={t("accountsPage.detail.back")} />;
-
   if (isLoading || !household) {
-    return (
-      <>
-        {backHeader}
-        <Skeleton height={300} />
-      </>
-    );
+    return <Skeleton height={300} />;
   }
   if (!account) {
-    return (
-      <>
-        {backHeader}
-        <EmptyState message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />
-      </>
-    );
+    return <EmptyState message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />;
   }
 
   const isCreditCard = account.kind === "credit_card";
@@ -155,9 +143,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <>
-      <AppHeader title={account.name} showScope={false} onBack={() => router.push("/accounts")} backLabel={t("accountsPage.detail.back")} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ textAlign: "center" }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>
           {account.name} · {t(ACCOUNT_KIND_MESSAGE_KEY[account.kind])}
@@ -178,7 +164,13 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         <button
           type="button"
           onClick={() => router.push(`/accounts/${account.id}/card`)}
-          style={{ all: "unset", cursor: "pointer", display: "block", width: "100%", background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16 }}
+          // `all: "unset"` resetea TODO, `box-sizing` incluido — sin el
+          // `boxSizing: "border-box"` de acá, el navegador vuelve al
+          // default (`content-box`), y con `width: 100%` + `padding: 16`
+          // el botón termina 32px más ancho que su contenedor real. Mismo
+          // patrón que el reset global de `globals.css`, pero `all: unset`
+          // lo pisa localmente si no se lo repone.
+          style={{ all: "unset", boxSizing: "border-box", cursor: "pointer", display: "block", width: "100%", background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16 }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span className="t-label" style={{ color: "var(--text-secondary)" }}>{t("accountsPage.detail.cycleSummary")}</span>
@@ -244,7 +236,6 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           })
         )}
       </div>
-      </div>
-    </>
+    </div>
   );
 }

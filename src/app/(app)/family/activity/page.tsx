@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, EmptyState, ListRow, Skeleton } from "@/design-system";
+import { EmptyState, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -24,6 +24,7 @@ export default function ActivityPage() {
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const { data: accounts } = useAccounts(household?.id);
   const { data: categories } = useCategories(household?.id);
+  usePageHeader({ title: t("activityPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const historyQuery = useQuery({
     queryKey: ["visibility-grant-history", household?.id],
@@ -43,7 +44,6 @@ export default function ActivityPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("activityPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 2 }}>
         {history.length === 0 ? (
           <EmptyState message={t("activityPage.empty")} />

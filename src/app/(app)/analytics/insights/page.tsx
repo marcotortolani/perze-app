@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Card, EmptyState, Skeleton } from "@/design-system";
+import { Card, EmptyState, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
@@ -20,6 +20,7 @@ export default function InsightsPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("insightsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const { data: budgets } = useBudgets(household?.id);
@@ -54,7 +55,6 @@ export default function InsightsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("insightsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {!hasAny ? <EmptyState message={t("insightsPage.empty")} /> : null}
         {insights.streak >= 2 ? (

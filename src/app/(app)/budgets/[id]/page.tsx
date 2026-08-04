@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Button, BudgetRing, EmptyState, NeedsFxBanner, Skeleton } from "@/design-system";
+import { Amount, Button, BudgetRing, EmptyState, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets, useInvalidateBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
@@ -31,12 +31,13 @@ export default function BudgetDetailPage({ params }: { params: Promise<{ id: str
   const { data: transactions } = useTransactions(household?.id);
   const invalidateBudgets = useInvalidateBudgets(household?.id);
 
+  const budget = budgets?.find((b) => b.id === id);
+  const category = budget?.categoryId ? categories?.find((c) => c.id === budget.categoryId) : undefined;
+  usePageHeader({ onBack: () => router.back(), backLabel: t("ds.appHeader.back"), ...(budget ? { title: category ? categoryLabel(category) : budget.name } : {}) });
+
   if (!household || !budgets || !categories || !transactions) return <Skeleton height={300} style={{ marginTop: 16 }} />;
 
-  const budget = budgets.find((b) => b.id === id);
   if (!budget) return <EmptyState message={t("budgetsPage.notFound")} actionLabel={t("budgetsPage.back")} onAction={() => router.push("/budgets")} />;
-
-  const category = budget.categoryId ? categories.find((c) => c.id === budget.categoryId) : undefined;
   const { start, end } = currentPeriodBounds(household.periodStartDay || 1, new Date());
   const progress = computeBudgetProgress(budget, transactions, start, end);
   const remaining = budget.amountLimit - progress.spent;
@@ -50,7 +51,6 @@ export default function BudgetDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={category ? categoryLabel(category) : budget.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
         {progress.excludedCount > 0 ? (
           <NeedsFxBanner count={progress.excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ width: "100%", margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} />

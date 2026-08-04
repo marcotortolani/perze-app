@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input, ListRow, Sheet, Skeleton } from "@/design-system";
+import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidatePayees, usePayees } from "@/hooks/use-payees";
 import { useInvalidateTags, useTags } from "@/hooks/use-tags";
@@ -24,6 +24,7 @@ export default function TagsAndPayeesPage() {
   const invalidatePayees = useInvalidatePayees(household?.id);
   const [editing, setEditing] = useState<EditingItem | null>(null);
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("tagsPayeesPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !tags || !payees) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
@@ -65,7 +66,6 @@ export default function TagsAndPayeesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("tagsPayeesPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
         <section>
           <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 4 }}>{t("tagsPayeesPage.tags")}</div>

@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input, ListRow, Sheet } from "@/design-system";
+import { Button, Input, ListRow, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInvalidateInstruments } from "@/hooks/use-investments";
@@ -22,6 +22,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
   const { data: household } = useCurrentHousehold();
   const { data: assetClasses = [] } = useAssetClasses();
   const invalidateInstruments = useInvalidateInstruments(household?.id);
+  usePageHeader({ title: t("investmentsPage.newInstrument"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [symbol, setSymbol] = useState("");
   const [name, setName] = useState("");
@@ -64,7 +65,6 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("investmentsPage.newInstrument")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <Input label={t("newInstrumentPage.symbol")} placeholder="AAPL" value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} />
         <Input label={t("newInstrumentPage.name")} placeholder="Apple Inc." value={name} onChange={(e) => setName(e.target.value)} />

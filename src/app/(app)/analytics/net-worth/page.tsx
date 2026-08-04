@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Skeleton, StatTile } from "@/design-system";
+import { Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { Sparkline } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -22,6 +22,7 @@ const DAYS = 30;
 export default function NetWorthAnalyticsPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("netWorthAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: accounts } = useAccounts(household?.id);
   const { data: transactions } = useTransactions(household?.id);
@@ -47,7 +48,6 @@ export default function NetWorthAnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("netWorthAnalyticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile label={t("netWorthAnalyticsPage.current")} value={formatAmountCompact(netWorth.data?.netWorth ?? money(0n, baseCurrency), { showSign: false })} />
         <div>

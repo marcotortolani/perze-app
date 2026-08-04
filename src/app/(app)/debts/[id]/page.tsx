@@ -3,7 +3,7 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, AppHeader, EmptyState, ListRow, ProgressBar, Skeleton, StatTile } from "@/design-system";
+import { Amount, EmptyState, ListRow, ProgressBar, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useDebt, useDebtSchedule } from "@/hooks/use-debts";
 import { formatDateShort } from "@/i18n/formatting";
 import type { Locale } from "@/i18n/formatting";
@@ -19,6 +19,7 @@ export default function DebtDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const { data: debt, isLoading: debtLoading } = useDebt(id);
   const { data: schedule, isLoading: scheduleLoading } = useDebtSchedule(id);
+  usePageHeader({ ...(debt ? { title: debt.name } : {}), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (debtLoading || scheduleLoading) return <Skeleton height={300} style={{ marginTop: 16 }} />;
   if (!debt) return <EmptyState message={t("debtDetailPage.notFound")} actionLabel={t("recurringPage.back")} onAction={() => router.push("/debts")} />;
@@ -33,7 +34,6 @@ export default function DebtDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={debt.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
         <div style={{ textAlign: "center" }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t(DEBT_KIND_MESSAGE_KEY[debt.kind])}</div>

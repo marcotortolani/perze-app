@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input, ListRow, SegmentedControl, Sheet } from "@/design-system";
+import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useCategories } from "@/hooks/use-categories";
@@ -29,6 +29,7 @@ export default function NewCategorizationRulePage() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("categorizationRulesPage.newRule"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !userId) return null;
 
@@ -58,7 +59,6 @@ export default function NewCategorizationRulePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("categorizationRulesPage.newRule")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <Input label={t("categorizationRulesPage.name")} placeholder={t("categorizationRulesPage.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
 

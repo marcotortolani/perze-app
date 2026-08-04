@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, AppHeader, Button, EmptyState, ProgressBar, Skeleton } from "@/design-system";
+import { Amount, Button, EmptyState, ProgressBar, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useGoals, useInvalidateGoals } from "@/hooks/use-goals";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -28,10 +28,11 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
   const { data: accounts } = useAccounts(household?.id);
   const { data: transactions } = useTransactions(household?.id);
   const invalidateGoals = useInvalidateGoals(household?.id);
+  const goal = household && goals ? goals.find((g) => g.id === id) : undefined;
+  usePageHeader({ ...(goal ? { title: goal.name } : {}), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !goals || !accounts || !transactions) return <Skeleton height={260} style={{ marginTop: 16 }} />;
 
-  const goal = goals.find((g) => g.id === id);
   if (!goal) return <EmptyState message={t("goalsPage.notFound")} actionLabel={t("goalsPage.back")} onAction={() => router.push("/goals")} />;
 
   const account = goal.accountId ? accounts.find((a) => a.id === goal.accountId) : undefined;
@@ -51,7 +52,6 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={goal.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24, display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ textAlign: "center" }}>
           <Amount value={money(saved, goal.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />

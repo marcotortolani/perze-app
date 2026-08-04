@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, AppHeader, EmptyState, ListRow, Skeleton, StatusBadge } from "@/design-system";
+import { Amount, EmptyState, ListRow, Skeleton, StatusBadge, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -47,26 +47,20 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   // detrás del slot @detail, así que un push blando no desmonta el
   // interceptor — no pasa nada visible, pero la entrada se apila en el
   // historial y el gesto de volver después necesita dos swipes.
-  const header = <AppHeader showScope={false} onBack={() => router.back()} backLabel={t("transactions.detail.back")} />;
+  usePageHeader({ onBack: () => router.back(), backLabel: t("transactions.detail.back") });
 
   if (isLoading || !household) {
     return (
-      <>
-        {header}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 24 }}>
-          <Skeleton height={48} />
-          <Skeleton height={200} />
-        </div>
-      </>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 24 }}>
+        <Skeleton height={48} />
+        <Skeleton height={200} />
+      </div>
     );
   }
 
   if (!transaction) {
     return (
-      <>
-        {header}
-        <EmptyState message={t("transactions.detail.notFound")} actionLabel={t("transactions.detail.backToList")} onAction={() => router.push("/transactions")} />
-      </>
+      <EmptyState message={t("transactions.detail.notFound")} actionLabel={t("transactions.detail.backToList")} onAction={() => router.push("/transactions")} />
     );
   }
 
@@ -135,8 +129,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <>
-      {header}
       <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ textAlign: "center" }}>
         <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />
@@ -205,6 +197,5 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
       </div>
       </div>
-    </>
   );
 }

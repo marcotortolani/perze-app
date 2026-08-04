@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Sheet, Sidebar, TabBar, type TabItem, type SidebarNavGroup } from "@/design-system";
+import { AppHeader, PageHeaderContext, Sheet, Sidebar, TabBar, type PageHeaderConfig, type TabItem, type SidebarNavGroup } from "@/design-system";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
@@ -66,6 +66,11 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const [searchOpen, setSearchOpen] = useState(false);
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
+  // Única fuente del header: cada página registra su config acá vía
+  // `usePageHeader` (ver `page-header-context.tsx`) en vez de renderizar su
+  // propio `<AppHeader>` — el layout es el único lugar donde el componente
+  // se instancia.
+  const [pageHeader, setPageHeader] = useState<PageHeaderConfig | null>(null);
 
   // Mismo flujo que `/more`: si hay cambios sin sincronizar se avisa antes
   // de cerrar sesión, si no hay nada que perder se cierra directo.
@@ -154,7 +159,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   };
   const fourth = fourthTabRoute[fourthTab] ?? fourthTabRoute.analytics!;
   const tabs: TabItem[] = [
-    { id: "home", label: t("nav.homeShort"), icon: "home", href: "/" },
+    { id: "home", label: t("nav.homeShort"), icon: "squares-four", href: "/" },
     { id: "movements", label: t("nav.movementsShort"), icon: "list", href: "/transactions" },
     { id: "add", label: "", icon: "plus", fab: true, href: "/add" },
     fourth.item,
@@ -188,13 +193,6 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
 
   const maxWidth = `var(${contentWidthFor(pathname) === "wide" ? "--content-max-width-wide" : "--content-max-width"})`;
 
-  // El shell dibuja SU header (logo/scope/búsqueda/sync) solo en la raíz de
-  // cada tab — toda otra ruta de `(app)/` ya trae el suyo propio, con botón
-  // "volver" (`<AppHeader onBack>`). Antes se dibujaban los dos apilados:
-  // el del shell siempre, más el de la subpágina encima, cada uno con su
-  // propio punto de sync duplicado.
-  const isRootRoute = pathname === "/" || pathname === "/transactions" || pathname === fourth.path || pathname === "/more";
-
   return (
     <div className="app-shell page-backdrop">
       <Sidebar
@@ -208,21 +206,29 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         className="hidden lg:flex"
       />
       <div className="app-shell-column">
-        {isRootRoute ? (
-          <div className="mx-auto w-full" style={{ maxWidth }}>
-            <AppHeader
-              showScope={showScope}
-              scope={scopeLabel}
-              onScopeChange={handleScopeChange}
-              scopeOptions={scopeOptions}
-              onSearch={() => setSearchOpen(true)}
-              searchExpanded={searchOpen}
-              searchLabel={t("ds.appHeader.search")}
-              syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
-              pending={pending ?? 0}
-            />
-          </div>
-        ) : null}
+        {/* Único header de toda la app: siempre presente, mismo ancho que
+            el contenido de la ruta activa (`maxWidth`, igual criterio que
+            `<main>` de abajo — nunca un ancho distinto al que ya usa esa
+            misma ruta). `title`/`onBack`/`backLabel`/`right` vienen de lo
+            que la página activa haya registrado vía `usePageHeader`; el
+            resto (scope, búsqueda, sync) lo resuelve el layout siempre. */}
+        <div className="mx-auto w-full" style={{ maxWidth }}>
+          <AppHeader
+            title={pageHeader?.title}
+            onBack={pageHeader?.onBack}
+            backLabel={pageHeader?.backLabel}
+            right={pageHeader?.right}
+            showScope={showScope}
+            scope={scopeLabel}
+            onScopeChange={handleScopeChange}
+            scopeOptions={scopeOptions}
+            onSearch={() => setSearchOpen(true)}
+            searchExpanded={searchOpen}
+            searchLabel={t("ds.appHeader.search")}
+            syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
+            pending={pending ?? 0}
+          />
+        </div>
         {/* `/transactions` y `/accounts` llevan su propio scroller interno
             que llena exacto esta caja (`height: 100%`) y por eso nunca
             scrollean A TRAVÉS de este padding — queda como una banda fija
@@ -240,7 +246,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
               todo el viewport (`inset: 0` contra el initial containing
               block) — no lo cambiamos acá para no correr esa regresión. */}
           <div className="mx-auto w-full" style={{ maxWidth, height: "100%" }}>
-            {children}
+            <PageHeaderContext.Provider value={setPageHeader}>{children}</PageHeaderContext.Provider>
           </div>
         </main>
         <div className="lg:hidden" style={{ flexShrink: 0 }}>

@@ -1,19 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
-import { AmountScrubber, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl } from "@/design-system";
+import { AmountScrubber, Button, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl, Sheet } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
-import { convert, invertRate } from "@/lib/fx/rate";
-import { formatAmount, formatAmountCompact } from "@/lib/money/format";
+import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
+import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
+import { CURRENCY_SYMBOLS, formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
-import { resolveAmountCurrency } from "./save-transaction";
+import { computeTransferDebitAmount, resolveAmountCurrency } from "./save-transaction";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -103,7 +104,12 @@ export function AmountStep({
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const numberLocale = numberLocaleForUiLocale(locale);
+  const decimalSeparator = decimalSeparatorForLocale(locale);
   const categoryLabel = useCategoryLabel();
+  // Edición del tipo de cambio por teclado — el ícono de lápiz de `FxEditor`
+  // no hacía nada acá (a diferencia de `/currencies`, que sí tiene este
+  // mismo patrón completo). `null` = cerrado.
+  const [rateKeypadDigits, setRateKeypadDigits] = useState<string | null>(null);
   const KIND_OPTIONS = [
     { id: "expense", label: t("capture.kind.expense") },
     { id: "income", label: t("capture.kind.income") },
@@ -158,14 +164,29 @@ export function AmountStep({
   const rateNumeratorIsSource = !(account && counterAccount && counterAccount.currencyCode === "USD" && account.currencyCode !== "USD");
   const toInternalRate = (displayRate: bigint) => (rateNumeratorIsSource ? displayRate : invertRate(displayRate));
   const toDisplayRate = (internalRate: bigint) => (rateNumeratorIsSource ? internalRate : invertRate(internalRate));
-  const effectiveRate = draft.counterFxRateOverride ?? suggestedRate.data?.rate ?? null;
-  // Con el monto anclado al destino, lo que el usuario necesita ver es
-  // cuánto sale REALMENTE de la cuenta de origen — `evaluated` ya está en
-  // la moneda de destino (ver `currency` de arriba), así que se invierte
-  // el mismo rate que el `FxEditor` está mostrando/editando para llegar
-  // al monto de origen. Es una vista previa de solo lectura: lo que se
-  // guarda se recalcula igual al confirmar (`save-transaction.ts`).
-  const pinnedSourcePreview = pinnedToCounter && crossCurrencyTransfer && effectiveRate !== null ? convert(evaluated, account!.currencyCode, invertRate(effectiveRate)) : null;
+  // Cuánto sale REALMENTE de la cuenta de origen — mismo cálculo que usa
+  // `CaptureFlow` para el gate de saldo insuficiente (`computeTransferDebitAmount`,
+  // en `save-transaction.ts`), para que la vista previa y la validación
+  // nunca diverjan. Vista previa de solo lectura: lo que se guarda se
+  // recalcula igual al confirmar.
+  const transferDebit = computeTransferDebitAmount(draft, account, counterAccount, suggestedRate.data?.rate ?? null, numberLocale);
+  const pinnedSourcePreview = pinnedToCounter && crossCurrencyTransfer && transferDebit !== null ? money(transferDebit, account!.currencyCode) : null;
+  const insufficientFunds = isTransfer && !!account && transferDebit !== null && transferDebit > account.currentBalance;
+
+  // Mismo patrón que `/currencies`: arranca el teclado desde el rate que
+  // ya se está mostrando (no el interno), sin ceros finales.
+  const openRateKeypad = () => {
+    const current: ScaledRate = toDisplayRate(draft.counterFxRateOverride ?? suggestedRate.data?.rate ?? rateFromInteger(1));
+    const [wholePart, decPart] = formatRateTrimmed(current).split(".");
+    setRateKeypadDigits(decPart ? `${wholePart}${decimalSeparator}${decPart}` : wholePart!);
+  };
+  const commitRateKeypad = () => {
+    if (rateKeypadDigits !== null) {
+      const parsed = parseKeypadRate(rateKeypadDigits, decimalSeparator);
+      if (parsed !== null) onCounterFxRateChange(toInternalRate(roundRateForDisplay(parsed)));
+    }
+    setRateKeypadDigits(null);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
@@ -221,12 +242,19 @@ export function AmountStep({
           rate={toDisplayRate(draft.counterFxRateOverride ?? suggestedRate.data.rate)}
           suggested={toDisplayRate(suggestedRate.data.rate)}
           onChange={(displayRate) => onCounterFxRateChange(toInternalRate(displayRate))}
+          onOpenKeypad={openRateKeypad}
         />
       ) : null}
 
       {pinnedSourcePreview ? (
         <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
           {t("capture.transferPinnedPreview", { amount: formatAmountCompact(pinnedSourcePreview, { showSign: false }), account: account!.name })}
+        </p>
+      ) : null}
+
+      {insufficientFunds ? (
+        <p className="t-caption" style={{ textAlign: "center", color: "var(--critical)", margin: 0 }}>
+          {t("capture.insufficientFunds", { account: account!.name })}
         </p>
       ) : null}
 
@@ -311,6 +339,26 @@ export function AmountStep({
           </motion.div>
         </div>
       </div>
+
+      <Sheet open={rateKeypadDigits !== null} title={t("capture.editRate")} onClose={() => setRateKeypadDigits(null)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-hero-size)", lineHeight: "var(--text-hero-line)", fontWeight: 600, marginTop: 4 }}>
+              {CURRENCY_SYMBOLS[(rateNumeratorIsSource ? counterAccount?.currencyCode : account?.currencyCode) ?? ""] ?? ""}{" "}
+              {rateKeypadDigits === "" ? "0" : rateKeypadDigits}
+            </div>
+          </div>
+          <Keypad operators={false} onKey={(key) => setRateKeypadDigits((d) => appendKeypadRateDigit(d ?? "", key, decimalSeparator))} onClear={() => setRateKeypadDigits("")} />
+          <div style={{ display: "flex", gap: 12 }}>
+            <Button variant="secondary" onClick={() => setRateKeypadDigits(null)}>
+              {t("currenciesPage.keypadCancel")}
+            </Button>
+            <Button variant="primary" onClick={commitRateKeypad} disabled={rateKeypadDigits === null || parseKeypadRate(rateKeypadDigits, decimalSeparator) === null}>
+              {t("currenciesPage.keypadDone")}
+            </Button>
+          </div>
+        </div>
+      </Sheet>
     </div>
   );
 }

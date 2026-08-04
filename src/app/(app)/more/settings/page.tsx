@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, ListRow, Sheet, Skeleton, Switch } from "@/design-system";
+import { ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -92,6 +92,7 @@ export default function SettingsPage() {
   const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
   const [installSheetOpen, setInstallSheetOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
+  usePageHeader({ title: t("morePage.settings"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- lee `navigator`/`matchMedia`, no existe en SSR.
@@ -203,7 +204,6 @@ export default function SettingsPage() {
     // el mismo fade de `/accounts` — hay que sumarla a `OWN_SCROLLER_ROUTES`
     // en `(app)/layout.tsx`.
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%" } as CSSProperties}>
-      <AppHeader title={t("morePage.settings")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div
         ref={scrollerRef}
         className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"

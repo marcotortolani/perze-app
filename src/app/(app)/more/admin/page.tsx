@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AppHeader, Button, EmptyState, ListRow, Skeleton, StatTile } from "@/design-system";
+import { Button, EmptyState, ListRow, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { useOwnAccess } from "@/hooks/use-own-access";
@@ -30,6 +30,7 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
   const [acting, setActing] = useState<string | null>(null);
   const ownAccess = useOwnAccess();
+  usePageHeader({ title: t("adminPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   // Defensa en profundidad: la entrada en Más ya se oculta a un no-operador
   // (`morePage`), y las tres RPC de abajo rechazan igual del lado servidor
@@ -75,7 +76,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("adminPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 28, paddingBottom: 24 }}>
         <section>
           <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>

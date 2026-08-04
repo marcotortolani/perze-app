@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Skeleton } from "@/design-system";
+import { Skeleton, usePageHeader } from "@/design-system";
 import { CalendarHeatmap } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -14,6 +14,7 @@ const DAYS = 90;
 export default function CalendarHeatmapPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("calendarAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
 
@@ -37,7 +38,6 @@ export default function CalendarHeatmapPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("calendarAnalyticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24 }}>
         <CalendarHeatmap days={days} rows="year" />
       </div>

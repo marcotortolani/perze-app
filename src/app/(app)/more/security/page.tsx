@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Icon, Input, PinKeypad, Sheet, Switch } from "@/design-system";
+import { Button, Icon, Input, PinKeypad, Sheet, Switch, usePageHeader } from "@/design-system";
 import { usePinStore } from "@/stores/pin-store";
 import { setOwnPassword, translateAuthError } from "@/features/auth/password-auth";
 import { PASSWORD_PATTERN } from "@/features/auth/password-rules";
@@ -36,6 +36,7 @@ export default function SecurityPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState(false);
   const [enrollingBiometric, setEnrollingBiometric] = useState(false);
+  usePageHeader({ title: t("securityPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   useEffect(() => {
     void isBiometricAvailable().then(setBiometricSupported);
@@ -130,7 +131,6 @@ export default function SecurityPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("securityPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 20 }}>
         {step === "idle" ? (
           <>

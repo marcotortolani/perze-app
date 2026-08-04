@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, EmptyState, Input, ListRow, PriceStatus, Sheet, Skeleton } from "@/design-system";
+import { Button, EmptyState, Input, ListRow, PriceStatus, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
@@ -34,13 +34,13 @@ export default function PricesStatusPage() {
   const [editing, setEditing] = useState<{ instrumentId: string; symbol: string; currencyCode: string } | null>(null);
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("pricesStatusPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !portfolios || !trades || !instruments || pricesQuery.isLoading) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   if (instrumentIds.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("pricesStatusPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("pricesStatusPage.empty")} />
       </div>
     );
@@ -64,7 +64,6 @@ export default function PricesStatusPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("pricesStatusPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {[...positions.keys()].map((instrumentId) => {
           const instrument = instrumentById.get(instrumentId);

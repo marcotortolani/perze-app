@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, Skeleton } from "@/design-system";
+import { EmptyState, Skeleton, usePageHeader } from "@/design-system";
 import { RankingBar } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { usePayees } from "@/hooks/use-payees";
@@ -18,6 +18,7 @@ const TOP_N = 8;
 export default function MerchantsAnalyticsPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("merchantsAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: payees } = usePayees(household?.id);
   const { data: transactions } = useTransactions(household?.id);
@@ -43,7 +44,6 @@ export default function MerchantsAnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("merchantsAnalyticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24 }}>
         {items.length === 0 ? (
           <EmptyState message={t("merchantsAnalyticsPage.empty")} />

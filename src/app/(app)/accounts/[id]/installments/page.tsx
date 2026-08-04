@@ -4,7 +4,7 @@ import { use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, ListRow, Skeleton } from "@/design-system";
+import { EmptyState, ListRow, Skeleton, usePageHeader } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const BarChart = dynamic(() => import("@/design-system/charts/BarChart").then((m) => m.BarChart), { ssr: false });
@@ -27,6 +27,7 @@ export default function CardInstallmentsPage({ params }: { params: Promise<{ id:
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("cardInstallmentsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: account, isLoading: accountLoading } = useAccount(id);
   const { data: debtsForAccount, isLoading: plansLoading } = useDebtsByAccount(id);
   const plans = useMemo(() => (debtsForAccount ?? []).filter((d) => d.kind === "installment_plan"), [debtsForAccount]);
@@ -50,7 +51,6 @@ export default function CardInstallmentsPage({ params }: { params: Promise<{ id:
   if (projection.plans.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("cardInstallmentsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("cardInstallmentsPage.empty")} />
       </div>
     );
@@ -64,7 +64,6 @@ export default function CardInstallmentsPage({ params }: { params: Promise<{ id:
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("cardInstallmentsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 24, paddingBottom: 24 }}>
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("cardInstallmentsPage.committed")}</div>

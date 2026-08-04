@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, IconButton, ListRow, OptionCard, Skeleton } from "@/design-system";
+import { Button, IconButton, ListRow, OptionCard, Skeleton, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -165,6 +165,7 @@ function CategoryTemplateForm({
   const invalidateHousehold = useInvalidateHousehold();
   const [choice, setChoice] = useState<CategoryTemplateChoice>(() => templateChoiceFrom(household.settings));
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("categoryTemplate.title"), onBack, backLabel: t("ds.appHeader.back") });
 
   const usedCategoryIds = useMemo(() => new Set(transactions.map((tx) => tx.categoryId).filter((id): id is string => id !== null)), [transactions]);
 
@@ -210,7 +211,6 @@ function CategoryTemplateForm({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <AppHeader title={t("categoryTemplate.title")} showScope={false} onBack={onBack} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", paddingTop: 16, gap: 10 }}>
         <YourCategoriesSection categories={categories} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />
         <div style={{ height: 10 }} />

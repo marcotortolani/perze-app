@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, NeedsFxBanner, Skeleton } from "@/design-system";
+import { EmptyState, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const Sankey = dynamic(() => import("@/design-system/charts/Sankey").then((m) => m.Sankey), { ssr: false });
@@ -20,6 +20,7 @@ import { computeMoneyFlow } from "@/lib/analytics/money-flow";
 export default function MoneyFlowPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("moneyFlowPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: categories } = useCategories(household?.id);
   const { data: accounts } = useAccounts(household?.id);
@@ -55,7 +56,6 @@ export default function MoneyFlowPage() {
   if (closedPeriods < 1) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("moneyFlowPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("moneyFlowPage.needsClosedPeriod", { days: daysUntilPeriodCloses(household.periodStartDay || 1, new Date()) })} />
       </div>
     );
@@ -64,7 +64,6 @@ export default function MoneyFlowPage() {
   if (!flow || flow.links.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("moneyFlowPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("moneyFlowPage.empty")} />
       </div>
     );
@@ -72,7 +71,6 @@ export default function MoneyFlowPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("moneyFlowPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <NeedsFxBanner count={flow.excludedCount} />
       <div style={{ paddingTop: 24 }}>
         <Sankey nodes={flow.nodes} links={flow.links} height={Math.max(320, flow.nodes.length * 32)} />

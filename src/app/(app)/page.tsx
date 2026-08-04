@@ -18,6 +18,7 @@ import {
   StatTile,
   TransactionRow,
   fitScale,
+  usePageHeader,
 } from "@/design-system";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkline } from "@/design-system/charts";
@@ -112,6 +113,7 @@ export default function HomePage() {
   const router = useRouter();
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const t = useTranslations();
+  usePageHeader({ title: t("nav.home") });
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();

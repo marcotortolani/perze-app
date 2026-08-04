@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Button, EmptyState, NeedsFxBanner, Sheet, Skeleton } from "@/design-system";
+import { Amount, Button, EmptyState, NeedsFxBanner, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
@@ -27,6 +27,7 @@ export default function SettleUpPage() {
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const [settling, setSettling] = useState<{ memberId: string; amount: bigint } | null>(null);
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("settlePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const sharesQuery = useQuery({
     queryKey: ["unsettled-shares", household?.id],
@@ -81,7 +82,6 @@ export default function SettleUpPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("settlePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
         {excludedCount > 0 ? <NeedsFxBanner count={excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 6px", borderRadius: 0 }} /> : null}
         {balances.length === 0 ? (

@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.11.1] — 2026-08-03
+
+### Agregado — header único por página y "Nueva cuenta" como card discontinua
+
+- **Un solo header por pantalla, siempre.** Antes el shell dibujaba su propio `AppHeader`
+  únicamente en la raíz de cada tab y cada subpágina traía el suyo por separado; ahora hay
+  un único `AppHeader` que vive en `(app)/layout.tsx` y cada página le pasa su título/volver/
+  slot extra a través de un contexto nuevo (`usePageHeader`, `page-header-context.tsx`) en vez
+  de instanciar el componente ella misma. Elimina la duplicación de punto de sync y hace que
+  el ancho del header nunca se desalinee del contenido de la ruta activa.
+- **Ícono del tab "Home" pasa de casa a grilla** (`squares-four`) en tab bar, sidebar y menú
+  desktop — refleja mejor el resumen tipo dashboard que muestra esa pantalla.
+- **"Nueva cuenta" en `/accounts` es ahora una card con trazo discontinuo violeta**, mismo
+  ancho que las cards de cuenta vecinas, al final del listado (mobile y desktop) en vez de al
+  principio — el trazo se dibuja a mano con SVG porque `border-style: dashed` no permite
+  elegir el largo del guion.
+- **El panel de detalle de `/accounts` en desktop es un 20% más ancho** (420px → 504px de
+  tope), y recargar directo una URL de detalle (`/accounts/<id>`, `/transactions/<id>`) ya no
+  rompe el split view: antes el detalle aparecía en la columna equivocada en desktop y
+  duplicado (detalle + placeholder) en mobile, porque las rutas interceptoras de Next.js solo
+  activan en navegación blanda, nunca en un hard reload — ambos layouts ahora detectan ese
+  caso por la URL y arman el split a mano.
+
+### Corregido — precisión del tipo de cambio, saldo insuficiente y detalle de cuenta
+
+- **El tipo de cambio ya no muestra ruido de 12 decimales** ("0,00065563", "1.507,42499...")
+  en `/add` ni en `/currencies`: se redondea a 2 decimales cuando el valor es ≥ 1 y a 6 cuando
+  es menor, en cada punto donde se muestra o se guarda un valor editado a mano — incluye el
+  slider y el texto de `FxEditor`, la lista de `/currencies` y su toggle de inversión.
+- **El override manual de `/currencies` ahora guarda exactamente el valor tipeado** ("1525,25"
+  quedaba guardado como "1525,249998960923" por la falta del mismo redondeo).
+- **El ícono de lápiz del tipo de cambio en `/add` ahora abre el teclado numérico** para
+  editarlo a mano — antes no hacía nada porque `FxEditor` se llamaba sin `onOpenKeypad`.
+- **Transferencias: no se puede elegir la misma cuenta como origen y destino**, ni al revés.
+- **"Saldo insuficiente" en una transferencia bloquea "Guardar"** y muestra el aviso, en vez
+  de permitir que una cuenta quede en negativo.
+- **Overflow del bloque "Resumen del ciclo"** en el detalle de una tarjeta de crédito: `all:
+  "unset"` resetea `box-sizing` a `content-box`, así que `width: 100%` + `padding` lo dejaba
+  32 px más ancho que su contenedor — se repone `box-sizing: border-box` en el mismo `style`.
+
+---
+
 ## [0.11.0] — 2026-08-03
 
 ### Agregado — bento grid de cuentas, fondo de puntos y "pagar tarjeta" ancla al destino

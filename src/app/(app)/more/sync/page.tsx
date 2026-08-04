@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, EmptyState, StatusBadge } from "@/design-system";
+import { Button, EmptyState, StatusBadge, usePageHeader } from "@/design-system";
 import { getDb } from "@/lib/db/client";
 import { outbox } from "@/lib/offline/outbox";
 import type { OutboxEntryRow, OutboxStatus } from "@/lib/db/schema";
@@ -54,6 +54,7 @@ export default function SyncPage() {
   const [resolving, setResolving] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
   const [retryingAll, setRetryingAll] = useState(false);
+  usePageHeader({ title: t("syncDiagnosticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
   const labelFor = (id: string | null) => (id && categoryById.has(id) ? categoryLabel(categoryById.get(id)!) : t("conflictsPage.noCategory"));
@@ -101,7 +102,6 @@ export default function SyncPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("syncDiagnosticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
         {conflicts.length > 0 ? (
           <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>

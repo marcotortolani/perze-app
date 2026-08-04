@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, EmptyState, NeedsFxBanner, Skeleton, StatTile } from "@/design-system";
+import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
@@ -28,6 +28,7 @@ export default function WeeklySummaryPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("weeklySummaryPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const { data: categories } = useCategories(household?.id);
@@ -48,7 +49,6 @@ export default function WeeklySummaryPage() {
   if (summary.total === 0n && summary.excludedCount === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("weeklySummaryPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("weeklySummaryPage.empty")} actionLabel={t("weeklySummaryPage.emptyAction")} onAction={() => router.push("/add")} />
       </div>
     );
@@ -64,7 +64,6 @@ export default function WeeklySummaryPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("weeklySummaryPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <NeedsFxBanner count={summary.excludedCount} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile

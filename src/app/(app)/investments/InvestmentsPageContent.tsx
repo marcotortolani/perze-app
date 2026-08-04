@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton } from "@/design-system";
+import { Amount, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -21,6 +21,7 @@ import { portfoliosRepo } from "@/lib/repos/portfolios-repo";
  */
 export default function InvestmentsPageContent() {
   const t = useTranslations();
+  usePageHeader({ title: t("nav.investments") });
   const router = useRouter();
   const userId = useCurrentUserId();
   const { data: household } = useCurrentHousehold();

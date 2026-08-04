@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, EmptyState, ListRow, Skeleton } from "@/design-system";
+import { EmptyState, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInstruments, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
@@ -47,13 +47,13 @@ export default function FutureIncomePage() {
       .filter((p): p is NonNullable<typeof p> => p !== null);
     return computeFutureIncome(fixedIncomePositions, new Date(), MONTHS_AHEAD);
   }, [trades, instruments]);
+  usePageHeader({ title: t("futureIncomePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !portfolios || !trades || !instruments) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   if (!portfolio || events.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("futureIncomePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("futureIncomePage.empty")} />
       </div>
     );
@@ -61,7 +61,6 @@ export default function FutureIncomePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("futureIncomePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {events.map((event, i) => (
           <ListRow

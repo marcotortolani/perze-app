@@ -11,8 +11,8 @@
   "updateNow": "Update"
  },
  "nav": {
-  "home": "Home",
-  "homeShort": "Home",
+  "home": "Dashboard",
+  "homeShort": "Dashboard",
   "movements": "Transactions",
   "movementsShort": "Txns",
   "add": "Add",
@@ -214,6 +214,8 @@
   "to": "TO",
   "invert": "Swap",
   "transferPinnedPreview": "{amount} will be deducted from {account}",
+  "insufficientFunds": "Insufficient funds in {account}",
+  "editRate": "Edit exchange rate",
   "voice": "Voice",
   "photo": "Photo",
   "details": "Details",
@@ -979,7 +981,7 @@
   "noNote": "No note",
   "actions": {
    "add": "Log an expense",
-   "home": "Home",
+   "home": "Dashboard",
    "movements": "Movements",
    "accounts": "Accounts",
    "analytics": "Analytics",

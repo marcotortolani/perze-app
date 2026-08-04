@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input } from "@/design-system";
+import { Button, Input, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateInvites } from "@/hooks/use-invites";
 import { invitesRepo } from "@/lib/repos/invites-repo";
@@ -21,6 +21,7 @@ export default function InviteFamilyMemberPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const invalidateInvites = useInvalidateInvites(household?.id);
+  usePageHeader({ title: t("familyPage.invite"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [email, setEmail] = useState("");
   const [creating, setCreating] = useState(false);
@@ -48,7 +49,6 @@ export default function InviteFamilyMemberPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("familyPage.invite")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 20 }}>
         {code ? (
           <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 16 }}>

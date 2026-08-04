@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Icon, ListRow, Skeleton } from "@/design-system";
+import { Amount, Icon, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { MonthCalendar } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
@@ -24,6 +24,7 @@ export default function RecurringCalendarPage() {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  usePageHeader({ title: t("recurringCalendarPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const marks = useMemo(() => {
     if (!rules) return [];
@@ -56,7 +57,6 @@ export default function RecurringCalendarPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("recurringCalendarPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <button type="button" onClick={() => shiftMonth(-1)} aria-label={t("recurringCalendarPage.prevMonth")} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: 0, cursor: "pointer" }}>

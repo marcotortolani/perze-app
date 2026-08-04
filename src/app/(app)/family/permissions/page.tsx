@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, ListRow, Sheet, Skeleton, Switch } from "@/design-system";
+import { ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
@@ -36,6 +36,7 @@ export default function PermissionsPage() {
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
   const invalidateCategories = useInvalidateCategories(household?.id);
+  usePageHeader({ title: t("permissionsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [editing, setEditing] = useState<Subject | null>(null);
   const [grants, setGrants] = useState<VisibilityGrant[]>([]);
@@ -97,7 +98,6 @@ export default function PermissionsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("permissionsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 4 }}>
         <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("permissionsPage.accounts")}</div>
         {accounts.filter((a) => a.archivedAt === null).map((a) => (

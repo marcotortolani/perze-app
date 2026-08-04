@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Skeleton, StatTile } from "@/design-system";
+import { Skeleton, StatTile, usePageHeader } from "@/design-system";
 
 // C15/auditoría: importar `BarChart` directo de su archivo (no del barrel
 // `@/design-system`, que re-exporta los 13 componentes de charts juntos)
@@ -23,6 +23,7 @@ export default function TrendsPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("trendsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
 
@@ -45,7 +46,6 @@ export default function TrendsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("trendsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile
           label={t("trendsPage.thisWeek")}

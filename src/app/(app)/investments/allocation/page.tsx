@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, Skeleton, SplitBar } from "@/design-system";
+import { EmptyState, Skeleton, SplitBar, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
@@ -20,6 +20,7 @@ export default function AllocationPage() {
   const { data: instruments } = useInstruments(household?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
+  usePageHeader({ title: t("allocationPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !portfolios || !assetClasses || !instruments) return <Skeleton height={200} style={{ marginTop: 16 }} />;
   if (!portfolio || !trades || pricesQuery.isLoading) return <Skeleton height={200} style={{ marginTop: 16 }} />;
@@ -48,7 +49,6 @@ export default function AllocationPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("allocationPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24 }}>
         <SplitBar parts={parts} height={28} showValues />
       </div>

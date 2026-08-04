@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, DragRow, Input, ListRow, Sheet, Skeleton } from "@/design-system";
+import { Button, DragRow, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInvalidateAssetClasses } from "@/hooks/use-investments";
 import { instrumentsRepo, type AssetClass } from "@/lib/repos/instruments-repo";
@@ -20,6 +20,7 @@ export default function AssetClassesPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("assetClassesPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !assetClasses) return <Skeleton height={320} style={{ marginTop: 16 }} />;
 
@@ -81,7 +82,6 @@ export default function AssetClassesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("assetClassesPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {sorted.map((assetClass, index) => (
           <DragRow key={assetClass.id} id={assetClass.id} index={index} onReorder={handleReorder} dragLabel={t("assetClassesPage.reorder", { name: assetClass.name })}>

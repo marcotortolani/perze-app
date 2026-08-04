@@ -26,7 +26,8 @@ import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
 import { DetailsSheet } from "./DetailsSheet";
 import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
-import { hasNonZeroAmount, resolveAmountCurrency, saveDraftAsTransaction } from "./save-transaction";
+import { computeTransferDebitAmount, hasNonZeroAmount, resolveAmountCurrency, saveDraftAsTransaction } from "./save-transaction";
+import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
 import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
@@ -128,6 +129,11 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // "pagar tarjeta" donde el pedido es justamente dejarlo sin elegir.
   const account = accounts.find((a) => a.id === draft.accountId) ?? (draft.kind === "transfer" ? undefined : accounts[0]);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
+  // Mismo hook que usa `AmountStep` para el `FxEditor` — mismo `queryKey`,
+  // TanStack Query lo cachea entre los dos, no duplica el pedido de red.
+  // Se necesita acá para el gate de saldo insuficiente, independiente de
+  // que `AmountStep` lo use para su propia vista previa.
+  const suggestedRate = useSuggestedFxRate(household?.id, account?.currencyCode, counterAccount?.currencyCode);
 
   const categoryKind = draft.kind === "income" ? "income" : "expense";
   const sameKindCategories = dedupeCategoriesByIdentity(categories.filter((c) => c.kind === categoryKind), transactions ?? []);
@@ -160,7 +166,16 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     // Elegir la categoría primero y dejar el monto en 0 no debería poder
     // guardar — un movimiento en $0 no significa nada.
     if (!hasNonZeroAmount(draft.amountExpression, resolveAmountCurrency(draft, account, counterAccount), numberLocaleForUiLocale(locale))) return false;
-    if (draft.kind === "transfer") return !!counterAccount;
+    if (draft.kind === "transfer") {
+      if (!counterAccount) return false;
+      // Saldo insuficiente: no se permite dejar una cuenta en negativo por
+      // una transferencia a otra cuenta propia — a diferencia de un gasto
+      // (donde gastar de más es una realidad legítima), acá mover plata que
+      // no está es casi siempre un error de carga.
+      const debit = computeTransferDebitAmount(draft, account, counterAccount, suggestedRate.data?.rate ?? null, numberLocaleForUiLocale(locale));
+      if (debit !== null && debit > account.currentBalance) return false;
+      return true;
+    }
     return !!draft.categoryId;
   };
 
@@ -338,7 +353,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       <AccountPickerSheet
         open={sheet === "account"}
         title={t("capture.accountPicker.sourceTitle")}
-        accounts={accounts}
+        accounts={accounts.filter((a: AccountRow) => a.id !== draft.counterAccountId)}
         onSelect={(a) => {
           setField("accountId", a.id);
           setField("counterFxRateOverride", null);

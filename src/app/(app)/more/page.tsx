@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Card, ListRow, Sheet, StatusBadge } from "@/design-system";
+import { Card, ListRow, Sheet, StatusBadge, usePageHeader } from "@/design-system";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
@@ -27,6 +27,7 @@ const CAPTION_STYLE = {
 /** Índice de secciones (B7) — Bloque B, Fase 6. Los módulos apagados no aparecen. */
 export default function MorePage() {
   const t = useTranslations();
+  usePageHeader({ title: t("nav.more") });
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();

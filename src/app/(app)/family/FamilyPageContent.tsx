@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, Icon, ListRow, Skeleton } from "@/design-system";
+import { EmptyState, Icon, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
@@ -28,17 +28,10 @@ export default function FamilyPageContent() {
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
   const { data: invites } = useInvites(household?.id);
-
-  // Subpágina de `/more`: header propio con "volver", el shell no dibuja el suyo acá.
-  const header = <AppHeader title={t("morePage.family")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />;
+  usePageHeader({ title: t("morePage.family"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !members || !invites) {
-    return (
-      <>
-        {header}
-        <Skeleton height={200} style={{ marginTop: 16 }} />
-      </>
-    );
+    return <Skeleton height={200} style={{ marginTop: 16 }} />;
   }
 
   const pendingInvites = invites.filter((i) => i.acceptedBy === null && i.revokedAt === null);
@@ -65,17 +58,10 @@ export default function FamilyPageContent() {
   };
 
   if (members.length <= 1 && pendingInvites.length === 0) {
-    return (
-      <>
-        {header}
-        <EmptyState message={t("familyPage.empty")} actionLabel={t("familyPage.invite")} onAction={() => router.push("/family/invite")} />
-      </>
-    );
+    return <EmptyState message={t("familyPage.empty")} actionLabel={t("familyPage.invite")} onAction={() => router.push("/family/invite")} />;
   }
 
   return (
-    <>
-      {header}
       <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
         <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
         <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
@@ -116,6 +102,5 @@ export default function FamilyPageContent() {
         </>
       ) : null}
       </div>
-    </>
   );
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, Switch } from "@/design-system";
+import { Button, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
@@ -24,6 +24,7 @@ export default function ExportReportsPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("exportReportsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const { data: categories } = useCategories(household?.id);
@@ -84,7 +85,6 @@ export default function ExportReportsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("exportReportsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("exportReportsPage.period")}</div>

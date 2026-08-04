@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge } from "@/design-system";
+import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatRateTrimmed, invertRate, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
@@ -107,6 +107,40 @@ export default function CurrenciesPage() {
 
   const customCodeValid = CUSTOM_CODE_PATTERN.test(customCode) && customCode !== baseCurrency && !currencies.includes(customCode);
 
+  const handleRefresh = async () => {
+    if (!household || currencies.length === 0 || refreshing) return;
+    setRefreshing(true);
+    try {
+      const results = await Promise.all(
+        currencies.map((currency) => fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: todayIso(), forceRefresh: true }))
+      );
+      await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
+      const updated = results.filter((r) => r.source === "api").length;
+      toast(updated > 0 ? t("currenciesPage.refreshDone", { count: updated }) : t("currenciesPage.refreshNothingNew"));
+    } catch {
+      toast(t("currenciesPage.refreshOffline"));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  usePageHeader({
+    title: t("settingsPage.fxSources"),
+    onBack: () => router.push("/accounts"),
+    backLabel: t("currenciesPage.back"),
+    right: (
+      <button
+        type="button"
+        onClick={handleRefresh}
+        disabled={refreshing || currencies.length === 0}
+        style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: 0, cursor: refreshing ? "default" : "pointer", color: "var(--primary-ink)", fontSize: 13, opacity: refreshing || currencies.length === 0 ? 0.5 : 1 }}
+      >
+        <Icon name="refresh" size={16} color="var(--primary-ink)" />
+        {refreshing ? t("currenciesPage.refreshing") : t("currenciesPage.refresh")}
+      </button>
+    ),
+  });
+
   if (!household) return <Skeleton height={300} />;
 
   const resetEditorState = () => {
@@ -118,7 +152,7 @@ export default function CurrenciesPage() {
   const openEditor = (currency: string, rate: ScaledRate) => {
     resetEditorState();
     setEditingPair(currency);
-    setManualRate(rate);
+    setManualRate(roundRateForDisplay(rate));
   };
 
   /** "Agregar una moneda": a diferencia de `openEditor`, esta todavía no está en `currencies`/`ratesQuery` — se resuelve el rate acá mismo para no arrancar siempre en 1:1 cuando sí hay cotización disponible. */
@@ -131,7 +165,7 @@ export default function CurrenciesPage() {
     if (!household) return;
     const resolution = await fxRepo.resolve({ householdId: household.id, base: code, quote: baseCurrency, date: todayIso() });
     setAddedResolution(resolution);
-    if (resolution.rate) setManualRate(resolution.rate);
+    if (resolution.rate) setManualRate(roundRateForDisplay(resolution.rate));
   };
 
   const openKeypad = () => {
@@ -148,7 +182,7 @@ export default function CurrenciesPage() {
   const commitKeypad = () => {
     if (keypadDigits !== null) {
       const parsed = parseKeypadRate(keypadDigits, decimalSeparator);
-      if (parsed !== null) setManualRate(parsed);
+      if (parsed !== null) setManualRate(roundRateForDisplay(parsed));
     }
     setKeypadDigits(null);
   };
@@ -177,23 +211,6 @@ export default function CurrenciesPage() {
     toast(t("currenciesPage.overrideSaved", { pair: `${editingPair} → ${baseCurrency}` }));
   };
 
-  const handleRefresh = async () => {
-    if (currencies.length === 0 || refreshing) return;
-    setRefreshing(true);
-    try {
-      const results = await Promise.all(
-        currencies.map((currency) => fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: todayIso(), forceRefresh: true }))
-      );
-      await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
-      const updated = results.filter((r) => r.source === "api").length;
-      toast(updated > 0 ? t("currenciesPage.refreshDone", { count: updated }) : t("currenciesPage.refreshNothingNew"));
-    } catch {
-      toast(t("currenciesPage.refreshOffline"));
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   const sheetTitle = editingPair ? `${editingPair} → ${baseCurrency}` : addingCurrency ? t("currenciesPage.addCurrencyTitle") : "";
 
   // Términos de edición, ya resueltos según `inverted` — de acá para abajo
@@ -217,7 +234,7 @@ export default function CurrenciesPage() {
       value={inverted ? "inverted" : "normal"}
       onChange={(id) => {
         const next = id === "inverted";
-        if (next !== inverted) setManualRate(invertRate(manualRate));
+        if (next !== inverted) setManualRate(roundRateForDisplay(invertRate(manualRate)));
         setInverted(next);
       }}
       size="sm"
@@ -226,24 +243,6 @@ export default function CurrenciesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 24 }}>
-      <AppHeader
-        title={t("settingsPage.fxSources")}
-        showScope={false}
-        onBack={() => router.push("/accounts")}
-        backLabel={t("currenciesPage.back")}
-        right={
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing || currencies.length === 0}
-            style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: 0, cursor: refreshing ? "default" : "pointer", color: "var(--primary-ink)", fontSize: 13, opacity: refreshing || currencies.length === 0 ? 0.5 : 1 }}
-          >
-            <Icon name="refresh" size={16} color="var(--primary-ink)" />
-            {refreshing ? t("currenciesPage.refreshing") : t("currenciesPage.refresh")}
-          </button>
-        }
-      />
-
       {currencies.length === 0 ? (
         <EmptyState message={t("currenciesPage.empty")} actionLabel={t("currenciesPage.addCurrency")} onAction={() => setAddingCurrency(true)} />
       ) : ratesQuery.isLoading ? (
@@ -266,7 +265,7 @@ export default function CurrenciesPage() {
             );
           }
           const showInverted = invertedDisplay[currency] ?? false;
-          const displayRate = showInverted ? invertRate(resolution.rate) : resolution.rate;
+          const displayRate = roundRateForDisplay(showInverted ? invertRate(resolution.rate) : resolution.rate);
           const displayPair = showInverted ? `${baseCurrency} → ${currency}` : `${currency} → ${baseCurrency}`;
           return (
             <div key={currency} style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -360,7 +359,7 @@ export default function CurrenciesPage() {
                   placeholder={t("currenciesPage.ratePlaceholder")}
                   onChange={(e) => {
                     const rate = parseTypedRate(e.target.value);
-                    if (rate !== null) setManualRate(rate);
+                    if (rate !== null) setManualRate(roundRateForDisplay(rate));
                   }}
                 />
               ) : null}

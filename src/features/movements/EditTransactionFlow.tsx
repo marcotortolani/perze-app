@@ -209,7 +209,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
         </>
       )}
 
-      <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
+      <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts.filter((a) => a.id !== draft.counterAccountId)} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
       <AccountPickerSheet
         open={sheet === "counterAccount"}
         title={t("capture.accountPicker.destinationTitle")}

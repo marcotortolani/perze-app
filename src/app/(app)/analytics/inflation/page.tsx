@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, Skeleton, StatTile } from "@/design-system";
+import { EmptyState, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
 import { usePriceIndex } from "@/hooks/use-price-index";
@@ -23,6 +23,7 @@ function periodKey(date: Date): string {
 export default function InflationPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("inflationPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const priceIndexQuery = usePriceIndex(household?.baseCurrency);
@@ -41,7 +42,6 @@ export default function InflationPage() {
   if (historyMonths < MIN_MONTHS || !summary) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("inflationPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("inflationPage.needsHistory", { months: Math.max(0, MIN_MONTHS - historyMonths) })} />
       </div>
     );
@@ -54,7 +54,6 @@ export default function InflationPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("inflationPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ display: "flex", gap: 16 }}>
           <StatTile label={t("inflationPage.nominal")} value={formatAmountCompact(money(summary.expenseTotal, household.baseCurrency), { showSign: false })} style={{ flex: 1 }} />

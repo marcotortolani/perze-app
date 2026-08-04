@@ -4,7 +4,7 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, AppHeader, Button, Chip, EmptyState, Keypad, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, Button, Chip, EmptyState, Keypad, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow, usePageHeader } from "@/design-system";
 import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
 import type { IconName } from "@/design-system/core/Icon";
 import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
@@ -42,6 +42,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
   const { data: account, isLoading: accountLoading } = useAccount(id);
+  usePageHeader({ onBack: () => router.back(), backLabel: t("ds.appHeader.back"), ...(account ? { title: account.name } : {}) });
   const { data: transactions } = useTransactions(household?.id, { accountId: id });
   const { data: categories = [] } = useCategories(household?.id);
   const { data: latestStatement, isLoading: statementLoading } = useLatestCardStatement(id);
@@ -153,7 +154,6 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={account.name} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 24, paddingBottom: 24 }}>
         <div>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>

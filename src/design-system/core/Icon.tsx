@@ -52,6 +52,7 @@ import {
   ReceiptIcon,
   ShoppingCartIcon,
   SignOutIcon,
+  SquaresFourIcon,
   StorefrontIcon,
   TagIcon,
   TargetIcon,
@@ -145,6 +146,7 @@ const ICONS = {
   "trending-up": TrendUpIcon,
   // B4 — logout (más/ajustes), agregado con el fix de sesión.
   "sign-out": SignOutIcon,
+  "squares-four": SquaresFourIcon,
   storefront: StorefrontIcon,
 } satisfies Record<string, PhosphorIcon>;
 

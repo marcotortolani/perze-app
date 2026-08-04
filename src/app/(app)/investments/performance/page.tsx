@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, NeedsFxBanner, Skeleton, StatTile } from "@/design-system";
+import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
@@ -32,13 +32,13 @@ export default function PerformancePage() {
     }
     return computePortfolioReturn(trades, currentValue, new Date());
   }, [trades, pricesQuery.data]);
+  usePageHeader({ title: t("performancePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !portfolios) return <Skeleton height={240} style={{ marginTop: 16 }} />;
 
   if (!portfolio) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("performancePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("performancePage.empty")} />
       </div>
     );
@@ -49,7 +49,6 @@ export default function PerformancePage() {
   if (trades.length === 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("performancePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("performancePage.empty")} />
       </div>
     );
@@ -61,7 +60,6 @@ export default function PerformancePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("performancePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <NeedsFxBanner count={result.excludedCount} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         {!hasEnoughHistory ? (

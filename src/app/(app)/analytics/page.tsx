@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Card, EmptyState, ErrorState, NeedsFxBanner, Skeleton, StatTile } from "@/design-system";
+import { Card, EmptyState, ErrorState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -24,6 +24,7 @@ const MIN_INFLATION_MULTI_CURRENCY_MONTHS = 2;
  */
 export default function AnalyticsPage() {
   const t = useTranslations();
+  usePageHeader({ title: t("nav.analysis") });
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const accountsQuery = useAccounts(household?.id);

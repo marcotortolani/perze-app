@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { AppHeader, NeedsFxBanner, Skeleton, StatTile } from "@/design-system";
+import { NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { SeriesLegend } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -18,6 +18,7 @@ import type { Money } from "@/lib/money/money";
 export default function CurrencyExposurePage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("currencyExposurePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: accounts } = useAccounts(household?.id);
   const baseCurrency = household?.baseCurrency;
@@ -50,7 +51,6 @@ export default function CurrencyExposurePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("currencyExposurePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <NeedsFxBanner count={excludedAccountCount} onResolve={() => router.push("/currencies")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile label={t("currencyExposurePage.total")} value={formatAmountCompact(totalBase, { showSign: false })} />

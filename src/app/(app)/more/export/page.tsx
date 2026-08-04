@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Skeleton } from "@/design-system";
+import { Button, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { buildHouseholdExport, countHouseholdExport, stringifyHouseholdExport, type HouseholdExportCounts } from "@/lib/export/export-household";
 import { todayIso } from "@/lib/dates/today";
@@ -22,6 +22,7 @@ export default function ExportPage() {
     enabled: !!household,
   });
   const [exporting, setExporting] = useState(false);
+  usePageHeader({ title: t("exportPage.headerTitle"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !countsQuery.data) return <Skeleton height={300} style={{ marginTop: 16 }} />;
   const counts = countsQuery.data;
@@ -45,7 +46,6 @@ export default function ExportPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("exportPage.headerTitle")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 10 }}>
         <div style={{ fontFamily: "var(--font-sans)", fontSize: 22, lineHeight: "28px", fontWeight: 600, letterSpacing: "-.01em", color: "var(--text-primary)" }}>
           {t("exportPage.title")}

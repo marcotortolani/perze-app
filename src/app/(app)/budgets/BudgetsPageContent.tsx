@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, BudgetRing, Card, EmptyState, ListRow, NeedsFxBanner, SkeletonRow } from "@/design-system";
+import { Amount, BudgetRing, Card, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
@@ -15,6 +15,7 @@ import { money } from "@/lib/money/money";
 /** F1 — presupuestos: progreso de cada uno en el período en curso. Separado de `page.tsx` para que `<ModuleGate>` pueda diferirlo con `next/dynamic` (C15/C16) — sin esto, los hooks de datos de acá corrían aunque el módulo estuviera apagado. */
 export default function BudgetsPageContent() {
   const t = useTranslations();
+  usePageHeader({ title: t("nav.budgets") });
   const router = useRouter();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Sheet, Skeleton, Switch } from "@/design-system";
+import { Button, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -23,6 +23,7 @@ export default function ModulesPage() {
   const { data: transactions } = useTransactions(household?.id);
   const { data: members } = useHouseholdMembers(household?.id);
   const [confirmModule, setConfirmModule] = useState<EnabledModule | null>(null);
+  usePageHeader({ title: t("morePage.modules"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const usage = useMemo(() => {
     const recurringCount = new Set((transactions ?? []).map((tx) => tx.recurringId).filter(Boolean)).size;
@@ -74,7 +75,6 @@ export default function ModulesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("morePage.modules")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 12, gap: 4 }}>
         <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
           {t("modulesPage.subtitle")}

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, EmptyState, FxEditor, GroupCard, Keypad, Sheet, Skeleton } from "@/design-system";
+import { Button, EmptyState, FxEditor, GroupCard, Keypad, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { fxRepo } from "@/lib/repos/fx-repo";
@@ -22,6 +22,7 @@ export default function ResolveFxPage() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const router = useRouter();
+  usePageHeader({ title: t("accountsPage.list.resolvePendingFx"), onBack: () => router.push("/accounts"), backLabel: t("accountsPage.resolveFx.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions = [], isLoading } = useTransactions(household?.id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
@@ -91,7 +92,6 @@ export default function ResolveFxPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 }}>
-      <AppHeader title={t("accountsPage.list.resolvePendingFx")} showScope={false} onBack={() => router.push("/accounts")} backLabel={t("accountsPage.resolveFx.back")} />
       <p className="t-body" style={{ color: "var(--text-secondary)" }}>
         {t("accountsPage.resolveFx.explanation")}
       </p>

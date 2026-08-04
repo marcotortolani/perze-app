@@ -62,6 +62,48 @@ export function resolveAmountCurrency(
 }
 
 /**
+ * Cuánto sale REALMENTE de `account` para una transferencia — en su propia
+ * moneda, listo para comparar contra `account.currentBalance` (saldo
+ * insuficiente) o mostrar como vista previa. Replica, sin tocar el
+ * servidor, la misma cuenta que hace `saveDraftAsTransaction` para
+ * `amount`: sin pin, el monto tipeado YA está en la moneda de origen; con
+ * pin al destino, hay que invertir el rate (sugerido o el override) para
+ * volver del monto de destino al de origen. `null` cuando falta un dato
+ * imprescindible (cuentas sin elegir, o cross-currency sin rate resuelto
+ * todavía) — nunca se inventa un número para no bloquear ni aprobar guardar
+ * por error.
+ */
+export function computeTransferDebitAmount(
+  draft: Pick<CaptureDraft, "kind" | "amountExpression" | "amountPinnedTo" | "currency" | "counterFxRateOverride">,
+  account: AccountRow | undefined,
+  counterAccount: AccountRow | undefined,
+  suggestedRate: bigint | null,
+  numberLocale: NumberLocale
+): bigint | null {
+  if (draft.kind !== "transfer" || !account) return null;
+  const pinnedToCounter = draft.amountPinnedTo === "counterAccount" && !!counterAccount;
+
+  if (!pinnedToCounter) {
+    try {
+      return evaluateKeypadExpression(draft.amountExpression || "0", resolveAmountCurrency(draft, account, counterAccount), numberLocale).amount;
+    } catch {
+      return null;
+    }
+  }
+
+  if (!counterAccount) return null;
+  try {
+    const counterAmountMoney = evaluateKeypadExpression(draft.amountExpression || "0", counterAccount.currencyCode, numberLocale);
+    if (account.currencyCode === counterAccount.currencyCode) return counterAmountMoney.amount;
+    const rate = draft.counterFxRateOverride ?? suggestedRate;
+    if (rate === null) return null;
+    return convert(counterAmountMoney, account.currencyCode, invertRate(rate)).amount;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Traduce el borrador de captura a un movimiento real: resuelve el monto
  * (keypad), la conversión a la moneda base del household (`lib/fx`), y —
  * para transferencias — el lado de entrada. Guardar no puede fallar: si

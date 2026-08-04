@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Skeleton, Switch } from "@/design-system";
+import { Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useInvalidateNotificationPreferences, useNotificationPreferences } from "@/hooks/use-notification-preferences";
@@ -24,6 +24,7 @@ export default function NotificationsPage() {
   const invalidate = useInvalidateNotificationPreferences(household?.id, userId ?? undefined);
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
+  usePageHeader({ title: t("notificationsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   useEffect(() => {
     getCurrentPushSubscription().then((sub) => setPushEnabled(sub !== null));
@@ -56,7 +57,6 @@ export default function NotificationsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("notificationsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 60 }}>
           <div style={{ flex: 1 }}>

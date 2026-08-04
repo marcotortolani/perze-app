@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, Input, Keypad, ListRow, SegmentedControl, Sheet } from "@/design-system";
+import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -40,6 +40,7 @@ export default function NewDebtPage() {
   const { data: categories = [] } = useCategories(household?.id);
   const { data: sourceTransaction } = useTransaction(fromTransactionId);
   const invalidateDebts = useInvalidateDebts(household?.id);
+  usePageHeader({ title: t("debtsPage.newDebt"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [kind, setKind] = useState<DebtKind>("installment_plan");
   const [nameOverride, setNameOverride] = useState<string | null>(null);
@@ -103,7 +104,6 @@ export default function NewDebtPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("debtsPage.newDebt")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <SegmentedControl options={KINDS.map((k) => ({ id: k, label: t(DEBT_KIND_MESSAGE_KEY[k]) }))} value={kind} onChange={(id) => setKind(id as DebtKind)} />
         <Input label={t("debtsPage.name")} placeholder={t("debtsPage.namePlaceholder")} value={name} onChange={(e) => setNameOverride(e.target.value)} />

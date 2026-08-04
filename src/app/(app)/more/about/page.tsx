@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, ListRow, Sheet, StatusBadge } from "@/design-system";
+import { ListRow, Sheet, StatusBadge, usePageHeader } from "@/design-system";
 import { APP_VERSION } from "@/lib/version";
 
 /** K13 — acerca de. Licencia MIT ya decidida (`CLAUDE.md` § "Las tres últimas decisiones"), no "se está definiendo" como en el diseño original. */
@@ -13,10 +13,10 @@ export default function AboutPage() {
   const [dataSheetOpen, setDataSheetOpen] = useState(false);
   const [privacySheetOpen, setPrivacySheetOpen] = useState(false);
   const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
+  usePageHeader({ title: t("aboutPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("aboutPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24, paddingBottom: 24 }}>
         <div style={{ fontFamily: "var(--font-sans)", fontSize: 40, lineHeight: "44px", fontWeight: 600, letterSpacing: "-.02em", color: "var(--text-primary)" }}>
           {t("aboutPage.name")}

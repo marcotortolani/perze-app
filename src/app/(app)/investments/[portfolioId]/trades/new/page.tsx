@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input, ListRow, SegmentedControl, Sheet } from "@/design-system";
+import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -27,6 +27,7 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const { data: instruments = [] } = useInstruments(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
   const invalidateTrades = useInvalidateTrades(portfolioId);
+  usePageHeader({ title: t("investmentsPage.recordTrade"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [kind, setKind] = useState<TradeKind>("buy");
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
@@ -91,7 +92,6 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("investmentsPage.recordTrade")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <SegmentedControl
           options={KINDS.map((k) => ({ id: k, label: t(k === "buy" ? "newTradePage.buy" : "newTradePage.sell") }))}

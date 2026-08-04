@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, ColumnMappingRow, CsvPreviewTable, EmptyState, ListRow, Sheet, Skeleton, StatusBadge } from "@/design-system";
+import { Button, ColumnMappingRow, CsvPreviewTable, EmptyState, ListRow, Sheet, Skeleton, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
@@ -47,6 +47,12 @@ export default function ImportCsvPage() {
 
   const account = accounts.find((a) => a.id === accountId);
   const importedRows: ImportedRow[] = useMemo(() => applyColumnMapping(dataRows, mapping), [dataRows, mapping]);
+
+  usePageHeader({
+    title: t("importCsvPage.title"),
+    onBack: () => (step === "done" ? router.push("/transactions") : router.back()),
+    backLabel: t("ds.appHeader.back"),
+  });
 
   if (!household || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
@@ -110,7 +116,6 @@ export default function ImportCsvPage() {
   if (step === "done") {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <AppHeader title={t("importCsvPage.title")} showScope={false} onBack={() => router.push("/transactions")} backLabel={t("ds.appHeader.back")} />
         <EmptyState message={t("importCsvPage.done")} actionLabel={t("importCsvPage.viewTransactions")} onAction={() => router.push("/transactions")} />
       </div>
     );
@@ -118,7 +123,6 @@ export default function ImportCsvPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("importCsvPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24, flex: 1 }}>
         {step === "file" ? (
           <>

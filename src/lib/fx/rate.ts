@@ -64,6 +64,24 @@ export function rateFromInteger(n: number): ScaledRate {
   return BigInt(n) * RATE_SCALE;
 }
 
+/**
+ * Redondeo consciente de magnitud, PARA HUMANOS: 2 decimales si el rate
+ * vale 1 o más (nadie cotiza ARS/USD a más de 2 decimales — es la
+ * convención real de cualquier casa de cambio), 6 si vale menos de 1 (una
+ * tasa invertida chica como "0,000656" necesita más lugares para no
+ * colapsar a "0,00"). Invertir un rate cuyo recíproco no termina en
+ * decimal es matemáticamente inevitable que no sea "redondo" — sin esto,
+ * la app mostraba los 12 decimales crudos de `fx_rate` en vez de lo que un
+ * humano realmente escribiría. Nunca toca lo que usa `convert()` para la
+ * plata real — eso sigue siendo el rate completo, sin redondear; esto es
+ * solo para lo que se MUESTRA/EDITA.
+ */
+export function roundRateForDisplay(rate: ScaledRate): ScaledRate {
+  const decimals = (rate < 0n ? -rate : rate) >= RATE_SCALE ? 2 : 6;
+  const divisor = 10n ** BigInt(RATE_DECIMALS - decimals);
+  return roundHalfEven(rate, divisor) * divisor;
+}
+
 /** `1 / rate`, útil cuando un proveedor cotiza el par en la dirección opuesta. */
 export function invertRate(rate: ScaledRate): ScaledRate {
   if (rate === 0n) throw new Error("No se puede invertir un rate en cero");

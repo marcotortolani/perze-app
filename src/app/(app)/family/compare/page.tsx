@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, ComparisonBars, EmptyState, Skeleton } from "@/design-system";
+import { ComparisonBars, EmptyState, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
@@ -34,6 +34,7 @@ export default function ComparePage() {
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const { data: categories } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
+  usePageHeader({ title: t("comparePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const sharesQuery = useQuery({
     queryKey: ["unsettled-shares", household?.id],
@@ -79,7 +80,6 @@ export default function ComparePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("comparePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24 }}>
         {categoriesData.length === 0 ? (
           <EmptyState message={t("comparePage.empty")} />

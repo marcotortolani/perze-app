@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { AppHeader, Skeleton } from "@/design-system";
+import { Skeleton, usePageHeader } from "@/design-system";
 import { SeriesLegend } from "@/design-system/charts";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
@@ -21,6 +21,7 @@ import { money } from "@/lib/money/money";
 export default function CategoriesAnalyticsPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("categoriesAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
   const { data: categories } = useCategories(household?.id);
@@ -60,7 +61,6 @@ export default function CategoriesAnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("categoriesAnalyticsPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
         <Donut slices={slices} dimension={formatAmountCompact(money(grandTotal, baseCurrency), { showSign: false })} />
         <SeriesLegend

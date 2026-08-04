@@ -11,8 +11,8 @@
   "updateNow": "Atualizar"
  },
  "nav": {
-  "home": "Início",
-  "homeShort": "Início",
+  "home": "Dashboard",
+  "homeShort": "Dashboard",
   "movements": "Movimentações",
   "movementsShort": "Moviment.",
   "add": "Adicionar",
@@ -214,6 +214,8 @@
   "to": "PARA",
   "invert": "Inverter",
   "transferPinnedPreview": "Serão descontados {amount} de {account}",
+  "insufficientFunds": "Saldo insuficiente em {account}",
+  "editRate": "Editar taxa de câmbio",
   "voice": "Voz",
   "photo": "Foto",
   "details": "Detalhes",
@@ -979,7 +981,7 @@
   "noNote": "Sem nota",
   "actions": {
    "add": "Registrar um gasto",
-   "home": "Início",
+   "home": "Dashboard",
    "movements": "Movimentos",
    "accounts": "Contas",
    "analytics": "Análises",

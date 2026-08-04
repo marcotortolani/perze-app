@@ -110,7 +110,7 @@ export function TabBar({ tabs, active, onChange, style }: TabBarProps) {
   const items: TabItem[] =
     tabs ??
     [
-      { id: "home", label: t("nav.home"), icon: "home" },
+      { id: "home", label: t("nav.home"), icon: "squares-four" },
       { id: "movements", label: t("nav.movementsShort"), icon: "list" },
       { id: "add", label: "", icon: "plus", fab: true },
       { id: "analytics", label: t("nav.analysis"), icon: "chart" },

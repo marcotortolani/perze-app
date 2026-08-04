@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Banner, Button, EmptyState, ErrorState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow } from "@/design-system";
+import { Banner, Button, EmptyState, ErrorState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow, usePageHeader } from "@/design-system";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import type { Locale } from "@/i18n/formatting";
@@ -57,9 +57,10 @@ function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categ
   return [account?.name, secondary].filter(Boolean).join(" · ");
 }
 
-/** D1/D2/D6/D7 — lista de movimientos. Bloque D, Fase 7. */
-export default function MovementsPage() {
+/** D1/D2/D6/D7 — lista de movimientos. Bloque D, Fase 7. Export nombrado, no solo default: `layout.tsx` la reusa para el hard-reload de `/transactions/[id]` (ver la nota ahí). */
+export function MovementsListContent() {
   const t = useTranslations();
+  usePageHeader({ title: t("nav.movements") });
   const locale = useLocale() as Locale;
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
@@ -445,4 +446,8 @@ export default function MovementsPage() {
       />
     </div>
   );
+}
+
+export default function MovementsPage() {
+  return <MovementsListContent />;
 }

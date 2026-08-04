@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatusBadge } from "@/design-system";
+import { Amount, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -28,42 +28,30 @@ export default function DebtsPageContent() {
   const { data: transactions } = useTransactions(household?.id);
   const { data: debts } = useDebts(household?.id);
 
-  // Subpágina de `/more` (no es raíz de ningún tab): trae su propio header
-  // con "volver" — el shell (`(app)/layout.tsx`) no dibuja el suyo acá.
-  const header = <AppHeader title={t("morePage.debts")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />;
+  usePageHeader({ title: t("morePage.debts"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !accounts || !transactions || !debts) {
     return (
-      <>
-        {header}
-        <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-          <SkeletonRow />
-          <SkeletonRow />
-        </div>
-      </>
+      <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+        <SkeletonRow />
+        <SkeletonRow />
+      </div>
     );
   }
 
   const debtAccounts = accounts.filter((a) => DEBT_ACCOUNT_KINDS.has(a.kind) && a.archivedAt === null && a.currentBalance < 0n);
 
   if (debtAccounts.length === 0 && debts.length === 0) {
-    return (
-      <>
-        {header}
-        <EmptyState message={t("debtsPage.empty")} actionLabel={t("debtsPage.newDebt")} onAction={() => router.push("/debts/new")} />
-      </>
-    );
+    return <EmptyState message={t("debtsPage.empty")} actionLabel={t("debtsPage.newDebt")} onAction={() => router.push("/debts/new")} />;
   }
 
   const needsFxCount = transactions.filter((tx) => tx.installmentGroupId !== null && tx.amountBase === null).length;
 
   return (
-    <>
-      {header}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 8, paddingBottom: 24 }}>
-        {needsFxCount > 0 ? <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 8px", borderRadius: 0 }} /> : null}
-        <ListRow icon="plus" label={t("debtsPage.newDebt")} variant="action" onClick={() => router.push("/debts/new")} />
-        {debts.map((debt) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 8, paddingBottom: 24 }}>
+      {needsFxCount > 0 ? <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 8px", borderRadius: 0 }} /> : null}
+      <ListRow icon="plus" label={t("debtsPage.newDebt")} variant="action" onClick={() => router.push("/debts/new")} />
+      {debts.map((debt) => (
         <ListRow
           key={debt.id}
           label={debt.name}
@@ -97,7 +85,6 @@ export default function DebtsPageContent() {
           />
         );
       })}
-      </div>
-    </>
+    </div>
   );
 }

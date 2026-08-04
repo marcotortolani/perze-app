@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, AppHeader, Chip, EmptyState, ListRow, SkeletonRow, StatTile } from "@/design-system";
+import { Amount, Chip, EmptyState, ListRow, SkeletonRow, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
@@ -30,28 +30,20 @@ export default function RecurringPageContent() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const { data: transactions } = useTransactions(household?.id, { from: monthStart });
 
-  // Subpágina de `/more`: header propio con "volver", el shell no dibuja el suyo acá.
-  const header = <AppHeader title={t("morePage.recurring")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />;
+  // Subpágina de `/more`: header propio con "volver", registrado vía `usePageHeader`.
+  usePageHeader({ title: t("morePage.recurring"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !rules || !transactions) {
     return (
-      <>
-        {header}
-        <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-          <SkeletonRow />
-          <SkeletonRow />
-        </div>
-      </>
+      <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+        <SkeletonRow />
+        <SkeletonRow />
+      </div>
     );
   }
 
   if (rules.length === 0) {
-    return (
-      <>
-        {header}
-        <EmptyState message={t("recurringPage.empty")} actionLabel={t("recurringPage.emptyAction")} onAction={() => router.push("/recurring/new")} />
-      </>
-    );
+    return <EmptyState message={t("recurringPage.empty")} actionLabel={t("recurringPage.emptyAction")} onAction={() => router.push("/recurring/new")} />;
   }
 
   const chargedThisMonth = new Set(
@@ -74,9 +66,7 @@ export default function RecurringPageContent() {
   };
 
   return (
-    <>
-      {header}
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
         <StatTile label={t("recurringPage.committedPerMonth")} value={formatAmountCompact(money(committed, household.baseCurrency), { showSign: false })} style={{ marginBottom: 12 }} />
         <ListRow icon="calendar" label={t("recurringPage.viewCalendar")} onClick={() => router.push("/recurring/calendar")} />
         <ListRow icon="plus" label={t("recurringPage.newRule")} variant="action" onClick={() => router.push("/recurring/new")} />
@@ -127,6 +117,5 @@ export default function RecurringPageContent() {
         />
       ))}
       </div>
-    </>
   );
 }

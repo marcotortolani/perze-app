@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, Input, Keypad, ListRow, SegmentedControl, Sheet } from "@/design-system";
+import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -35,6 +35,7 @@ export default function NewRecurringRulePage() {
   const [expr, setExpr] = useState("");
   const [sheet, setSheet] = useState<"none" | "account" | "category">("none");
   const [saving, setSaving] = useState(false);
+  usePageHeader({ title: t("recurringPage.newRule"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !userId) return null;
 
@@ -69,7 +70,6 @@ export default function NewRecurringRulePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("recurringPage.newRule")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <SegmentedControl
           options={[

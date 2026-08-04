@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, Input, Keypad, ListRow, Sheet } from "@/design-system";
+import { Button, Input, Keypad, ListRow, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -28,6 +28,7 @@ export default function NewGoalPage() {
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: transactions = [] } = useTransactions(household?.id);
   const invalidateGoals = useInvalidateGoals(household?.id);
+  usePageHeader({ title: t("goalsPage.newGoal"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [name, setName] = useState("");
   const [expr, setExpr] = useState("");
@@ -70,7 +71,6 @@ export default function NewGoalPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("goalsPage.newGoal")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
         <Input label={t("goalsPage.name")} placeholder={t("goalsPage.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} />
 

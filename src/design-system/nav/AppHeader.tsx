@@ -1,11 +1,14 @@
+"use client";
+
 import type { CSSProperties, ReactNode } from "react";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { Icon } from "../core/Icon";
 import { Logo } from "../core/Logo";
 import { SegmentedControl } from "../core/SegmentedControl";
 import { SyncDot } from "./SyncDot";
 
 export interface AppHeaderProps {
-  /** Título de pantalla; se omite en el dashboard, donde el scope switcher es el título. */
+  /** Título de pantalla; no se dibuja si el scope switcher está visible (ese es el título ahí). */
   title?: string | undefined;
   scope?: string | undefined;
   onScopeChange?: ((scope: string) => void) | undefined;
@@ -27,11 +30,20 @@ export interface AppHeaderProps {
 }
 
 /**
- * Header de 56px: [scope switcher] — [título] — [buscar] [SyncDot]. Sin
- * borde, sin sombra. El scope switcher es `SegmentedControl` con
+ * Header de 56px: [scope switcher / logo] — [título] — [buscar] [SyncDot].
+ * Sin borde, sin sombra. El scope switcher es `SegmentedControl` con
  * `emphasis="brand"` directo (el scope es identidad de datos, el único
  * caso que gasta relleno de marca) — no un componente `ScopeSwitcher`
  * aparte, que quedó como alias trivial y se dio de baja.
+ *
+ * El wordmark (`Logo`) solo aparece en una situación puntual: pantalla
+ * raíz de tab (sin `onBack`), sin scope switcher activo, y en mobile — ahí
+ * no hay Sidebar que lleve la marca, así que el título de la pestaña (que
+ * la TabBar activa ya repite abajo) se reemplaza por PERZE en vez de
+ * duplicar esa información. En desktop la misma pantalla muestra su
+ * título real (el Sidebar ya tiene el logo); en cualquier pantalla
+ * empujada (`onBack` presente) siempre se ve el título real, en cualquier
+ * ancho — el logo nunca aparece ahí.
  */
 export function AppHeader({
   title,
@@ -49,6 +61,10 @@ export function AppHeader({
   right,
   style,
 }: AppHeaderProps) {
+  const isDesktop = useIsDesktop();
+  const showScopeSwitcher = showScope && !onBack && !!scopeOptions;
+  const showLogo = !onBack && !showScopeSwitcher && !isDesktop;
+
   return (
     <header style={{ height: "var(--header-height)", display: "flex", alignItems: "center", gap: 12, padding: "0 var(--screen-padding)", background: "var(--page)", ...style }}>
       {onBack ? (
@@ -61,18 +77,13 @@ export function AppHeader({
           <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
         </button>
       ) : null}
-      {showScope && !onBack && scopeOptions ? (
-        <SegmentedControl options={scopeOptions} value={scope} onChange={onScopeChange} size="sm" emphasis="brand" />
-      ) : !showScope && !onBack && !title ? (
-        // El segmentado Personal/Compartido/Todo se oculta con un solo
-        // miembro en el household (nada que discriminar) y dejaba este
-        // espacio vacío — el logo lo ocupa en su lugar, en vez de nada.
-        <Logo />
-      ) : null}
+      {showScopeSwitcher ? <SegmentedControl options={scopeOptions} value={scope} onChange={onScopeChange} size="sm" emphasis="brand" /> : showLogo ? <Logo /> : null}
       {/* D11/auditoría: había CERO `<h1>` en `src/app/(app)` — el título de pantalla
           era un `<div>`, así que un lector de pantalla no tenía forma de saltar
-          directo al encabezado de la página ni de anunciar la jerarquía. */}
-      {title ? <h1 style={{ margin: 0, fontFamily: "var(--font-sans)", fontSize: 17, fontWeight: 600, letterSpacing: "-.01em", color: "var(--text-primary)" }}>{title}</h1> : null}
+          directo al encabezado de la página ni de anunciar la jerarquía. Se omite
+          si el scope switcher o el logo ya están visibles: un solo elemento
+          identifica la pantalla en ese slot, nunca dos apilados. */}
+      {title && !showScopeSwitcher && !showLogo ? <h1 style={{ margin: 0, fontFamily: "var(--font-sans)", fontSize: 17, fontWeight: 600, letterSpacing: "-.01em", color: "var(--text-primary)" }}>{title}</h1> : null}
       <div style={{ flex: 1 }} />
       {right}
       {onSearch ? (

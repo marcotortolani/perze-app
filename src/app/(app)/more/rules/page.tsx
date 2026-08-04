@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, EmptyState, ListRow, Skeleton, Switch } from "@/design-system";
+import { EmptyState, ListRow, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCategorizationRules, useInvalidateCategorizationRules } from "@/hooks/use-categorization-rules";
 import { useCategories } from "@/hooks/use-categories";
@@ -18,6 +18,7 @@ export default function CategorizationRulesPage() {
   const { data: categories = [] } = useCategories(household?.id);
   const categoryLabel = useCategoryLabel();
   const invalidate = useInvalidateCategorizationRules(household?.id);
+  usePageHeader({ title: t("categorizationRulesPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !rules) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
@@ -30,7 +31,6 @@ export default function CategorizationRulesPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("categorizationRulesPage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {rules.length === 0 ? (
           <EmptyState message={t("categorizationRulesPage.empty")} actionLabel={t("categorizationRulesPage.newRule")} onAction={() => router.push("/more/rules/new")} />

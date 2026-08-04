@@ -27,7 +27,7 @@ export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[]
     {
       id: "primary",
       items: [
-        { id: "home", route: "/", icon: "home", labelKey: "nav.home" },
+        { id: "home", route: "/", icon: "squares-four", labelKey: "nav.home" },
         { id: "movements", route: "/transactions", icon: "list", labelKey: "nav.movements" },
         { id: "analytics", route: "/analytics", icon: "chart", labelKey: "nav.analysis" },
         { id: "accounts", route: "/accounts", icon: "wallet", labelKey: "nav.accounts" },

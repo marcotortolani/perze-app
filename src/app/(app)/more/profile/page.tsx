@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { AppHeader, Button, Input, ListRow, Sheet, Skeleton } from "@/design-system";
+import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [countrySheetOpen, setCountrySheetOpen] = useState(false);
   const [countryPending, setCountryPending] = useState(false);
+  usePageHeader({ title: t("profilePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (profileQuery.isLoading || !userId) return <Skeleton height={400} style={{ marginTop: 16 }} />;
 
@@ -76,7 +77,6 @@ export default function ProfilePage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("profilePage.title")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 }}>
         <Input label={t("profilePage.displayName")} value={displayName} onChange={(e) => setName(e.target.value)} />
         <Input label={t("profilePage.email")} value={email ?? ""} readOnly hint={t("profilePage.emailHint")} />

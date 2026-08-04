@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, Card, ListRow } from "@/design-system";
+import { Card, ListRow, usePageHeader } from "@/design-system";
 
 /**
  * Hub "Datos y backup" — antes dos filas sueltas en el índice de Más
@@ -13,10 +13,10 @@ import { AppHeader, Card, ListRow } from "@/design-system";
 export default function DataAndBackupPage() {
   const t = useTranslations();
   const router = useRouter();
+  usePageHeader({ title: t("morePage.dataAndBackup"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <AppHeader title={t("morePage.dataAndBackup")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
       <div style={{ paddingTop: 12 }}>
         <Card padding="4px 16px">
           <ListRow icon="install" label={t("exportPage.headerTitle")} meta={t("dataPage.exportMeta")} onClick={() => router.push("/more/export")} />
