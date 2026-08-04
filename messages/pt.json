@@ -817,7 +817,39 @@
  },
  "dataPage": {
   "exportMeta": "Backup completo em JSON",
-  "importMeta": "Traga movimentos de um CSV"
+  "importMeta": "Traga movimentos de um CSV",
+  "dangerZoneTitle": "Zona de risco",
+  "purge": {
+   "rowLabel": "Apagar todos os meus dados",
+   "confirmTitle": "Isso apaga tudo, para sempre",
+   "confirmBody": "Tudo o que você carregou neste household é apagado definitivamente — nunca sua conta, email ou sessão. Não há como desfazer:",
+   "itemAccounts": "{count, plural, =0 {Nenhuma conta} one {1 conta} other {# contas}}",
+   "itemTransactions": "{count, plural, =0 {Nenhum movimento} one {1 movimento} other {# movimentos}}",
+   "itemCategories": "{count, plural, =0 {Nenhuma categoria} one {1 categoria} other {# categorias}}",
+   "itemTags": "{count, plural, =0 {Nenhuma tag} one {1 tag} other {# tags}}",
+   "itemBudgetsGoals": "{count, plural, =0 {Sem orçamentos nem metas} one {1 orçamento ou meta} other {# orçamentos e metas}}",
+   "itemRecurringDebts": "{count, plural, =0 {Sem recorrentes nem dívidas} one {1 recorrente ou dívida} other {# recorrentes e dívidas}}",
+   "itemInvestments": "{count, plural, =0 {Sem carteiras de investimento} one {1 carteira de investimento} other {# carteiras de investimento}}",
+   "othersWarning": "{count, plural, one {Há mais um membro neste household — ele também perde todos os dados.} other {Há mais # membros neste household — eles também perdem todos os dados.}}",
+   "confirmAction": "Apagar tudo definitivamente",
+   "runningTitle": "Apagando...",
+   "stepProgress": "Passo {current} de {total}",
+   "successTitle": "Pronto",
+   "successBody": "Todos os dados foram apagados com sucesso. Sua conta continua ativa, pronta para começar do zero.",
+   "successAction": "Ir para o início",
+   "errorTitle": "Algo deu errado",
+   "errorBody": "O passo \"{step}\" não pôde ser concluído. O que já foi apagado continua apagado — você pode tentar de novo a partir daqui.",
+   "retryAction": "Tentar de novo",
+   "steps": {
+    "transactions": "Apagando movimentos...",
+    "investments": "Apagando investimentos...",
+    "recurringDebts": "Apagando recorrentes e dívidas...",
+    "budgetsGoals": "Apagando orçamentos e metas...",
+    "accounts": "Apagando contas...",
+    "categoriesRules": "Apagando categorias, tags e regras...",
+    "fxPrefs": "Apagando cotações e preferências..."
+   }
+  }
  },
  "exportPage": {
   "headerTitle": "Exportar e backup",

@@ -2779,6 +2779,7 @@ export type Database = {
       household_created_by_caller: { Args: { h: string }; Returns: boolean }
       is_app_admin: { Args: never; Returns: boolean }
       is_household_admin: { Args: { h: string }; Returns: boolean }
+      is_household_owner: { Args: { h: string }; Returns: boolean }
       materialize_recurring_transactions: { Args: never; Returns: undefined }
       mirror_accounts: {
         Args: { p_household_id: string; p_target_member: string }
@@ -2804,6 +2805,10 @@ export type Database = {
       }
       prune_push_subscriptions: { Args: never; Returns: undefined }
       purge_audit_log: { Args: never; Returns: undefined }
+      purge_household_step: {
+        Args: { p_household_id: string; p_step: string }
+        Returns: number
+      }
       recompute_account_balance: {
         Args: { p_account_id: string }
         Returns: undefined

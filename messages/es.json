@@ -817,7 +817,39 @@
  },
  "dataPage": {
   "exportMeta": "Backup completo en JSON",
-  "importMeta": "Traé movimientos desde un CSV"
+  "importMeta": "Traé movimientos desde un CSV",
+  "dangerZoneTitle": "Zona de riesgo",
+  "purge": {
+   "rowLabel": "Borrar todos mis datos",
+   "confirmTitle": "Esto borra todo, para siempre",
+   "confirmBody": "Se borra definitivamente todo lo que cargaste en este household — nunca tu cuenta, tu email ni tu sesión. No hay forma de deshacerlo:",
+   "itemAccounts": "{count, plural, =0 {Ninguna cuenta} one {1 cuenta} other {# cuentas}}",
+   "itemTransactions": "{count, plural, =0 {Ningún movimiento} one {1 movimiento} other {# movimientos}}",
+   "itemCategories": "{count, plural, =0 {Ninguna categoría} one {1 categoría} other {# categorías}}",
+   "itemTags": "{count, plural, =0 {Ningún tag} one {1 tag} other {# tags}}",
+   "itemBudgetsGoals": "{count, plural, =0 {Sin presupuestos ni metas} one {1 presupuesto o meta} other {# presupuestos y metas}}",
+   "itemRecurringDebts": "{count, plural, =0 {Sin recurrentes ni deudas} one {1 recurrente o deuda} other {# recurrentes y deudas}}",
+   "itemInvestments": "{count, plural, =0 {Sin portfolios de inversión} one {1 portfolio de inversión} other {# portfolios de inversión}}",
+   "othersWarning": "{count, plural, one {Hay otro miembro más en este household — también pierde todos sus datos.} other {Hay # miembros más en este household — también pierden todos sus datos.}}",
+   "confirmAction": "Borrar todo definitivamente",
+   "runningTitle": "Borrando...",
+   "stepProgress": "Paso {current} de {total}",
+   "successTitle": "Listo",
+   "successBody": "Todos los datos se borraron correctamente. Tu cuenta sigue activa, lista para empezar de cero.",
+   "successAction": "Ir al inicio",
+   "errorTitle": "Algo salió mal",
+   "errorBody": "No se pudo completar el paso \"{step}\". Lo que ya se borró queda borrado — podés reintentar desde acá.",
+   "retryAction": "Reintentar",
+   "steps": {
+    "transactions": "Borrando movimientos...",
+    "investments": "Borrando inversiones...",
+    "recurringDebts": "Borrando recurrentes y deudas...",
+    "budgetsGoals": "Borrando presupuestos y metas...",
+    "accounts": "Borrando cuentas...",
+    "categoriesRules": "Borrando categorías, tags y reglas...",
+    "fxPrefs": "Borrando cotizaciones y preferencias..."
+   }
+  }
  },
  "exportPage": {
   "headerTitle": "Exportar y backup",

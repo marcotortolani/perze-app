@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.12.0] — 2026-08-04
+
+### Agregado — borrar todos los datos del household
+
+- **`/more/data` suma una zona de riesgo: "Borrar todos mis datos".** Solo visible para el
+  `owner` del household (chequeo contra Supabase, no contra el caché local — un miembro
+  agregado desde otro dispositivo puede no estar todavía en Dexie). Un sheet de confirmación
+  enumera lo que se va a perder con conteos reales (cuentas, movimientos, categorías, tags,
+  presupuestos/metas, recurrentes/deudas, inversiones) y, si el household es compartido,
+  agrega cuántos miembros más pierden sus datos también. Al confirmar, una barra de progreso
+  real avanza en 7 pasos — cada uno un round-trip genuino al servidor, no un timer simulado —
+  y termina en un mensaje de éxito o, si algún paso falla, un error que nombra qué paso fue y
+  permite reintentar desde ahí (los pasos son idempotentes, nunca hace falta reiniciar).
+- **Hallazgo que cambió el diseño**: en las 44 tablas del esquema no existe ni una sola
+  política RLS de `DELETE` — el proyecto es soft-delete en todas partes por diseño (`UPDATE
+  ... SET deleted_at`, nunca un borrado real desde el cliente). Un borrado "para siempre" de
+  verdad necesitó una excepción consciente: una función Postgres nueva `SECURITY DEFINER`
+  (`is_household_owner`, `purge_household_step`) que valida el permiso ella misma y ejecuta
+  el `DELETE` real, en el orden correcto de FKs (ninguna tabla de household tiene `ON DELETE
+  CASCADE`, así que el orden entre los 7 pasos se resolvió a mano contra el esquema real).
+  Con su test de RLS correspondiente: un member no puede ejecutarla, un owner ajeno tampoco,
+  y solo se borran filas del household indicado — verificado con un household de control que
+  sobrevive intacto.
+- **Qué NO se borra**: `households`/`household_members`/`household_invites`/`profiles`
+  (estructura y datos de registro — el household queda vacío, no se borra, para no forzar un
+  re-onboarding) y `audit_log` (append-only, nunca se purga).
+
+---
+
 ## [0.11.3] — 2026-08-04
 
 ### Agregado — ancho consistente en desktop, rediseño de listas/formularios y `ZMark` animado

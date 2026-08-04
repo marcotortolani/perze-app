@@ -817,7 +817,39 @@
  },
  "dataPage": {
   "exportMeta": "Full JSON backup",
-  "importMeta": "Bring in transactions from a CSV"
+  "importMeta": "Bring in transactions from a CSV",
+  "dangerZoneTitle": "Danger zone",
+  "purge": {
+   "rowLabel": "Delete all my data",
+   "confirmTitle": "This deletes everything, forever",
+   "confirmBody": "Everything you loaded into this household gets permanently deleted — never your account, email, or session. There's no way to undo this:",
+   "itemAccounts": "{count, plural, =0 {No accounts} one {1 account} other {# accounts}}",
+   "itemTransactions": "{count, plural, =0 {No transactions} one {1 transaction} other {# transactions}}",
+   "itemCategories": "{count, plural, =0 {No categories} one {1 category} other {# categories}}",
+   "itemTags": "{count, plural, =0 {No tags} one {1 tag} other {# tags}}",
+   "itemBudgetsGoals": "{count, plural, =0 {No budgets or goals} one {1 budget or goal} other {# budgets and goals}}",
+   "itemRecurringDebts": "{count, plural, =0 {No recurring rules or debts} one {1 recurring rule or debt} other {# recurring rules and debts}}",
+   "itemInvestments": "{count, plural, =0 {No investment portfolios} one {1 investment portfolio} other {# investment portfolios}}",
+   "othersWarning": "{count, plural, one {There's one more member in this household — they also lose all their data.} other {There are # more members in this household — they also lose all their data.}}",
+   "confirmAction": "Delete everything permanently",
+   "runningTitle": "Deleting...",
+   "stepProgress": "Step {current} of {total}",
+   "successTitle": "Done",
+   "successBody": "All data was deleted successfully. Your account is still active, ready for a fresh start.",
+   "successAction": "Go to home",
+   "errorTitle": "Something went wrong",
+   "errorBody": "The \"{step}\" step couldn't complete. What was already deleted stays deleted — you can retry from here.",
+   "retryAction": "Retry",
+   "steps": {
+    "transactions": "Deleting transactions...",
+    "investments": "Deleting investments...",
+    "recurringDebts": "Deleting recurring rules and debts...",
+    "budgetsGoals": "Deleting budgets and goals...",
+    "accounts": "Deleting accounts...",
+    "categoriesRules": "Deleting categories, tags, and rules...",
+    "fxPrefs": "Deleting exchange rates and preferences..."
+   }
+  }
  },
  "exportPage": {
   "headerTitle": "Export and backup",
