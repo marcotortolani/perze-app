@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
@@ -64,15 +64,26 @@ function SplitGrid({ left, right, overflowing, detailScrollerRef }: { left: Reac
  * mismo arreglo que `accounts/layout.tsx` (ver esa nota completa). Un
  * hard-reload no pasa por la ruta interceptora: `children` termina siendo
  * el DETALLE (no la lista) y `@detail` cae a su placeholder vacío. Se
- * detecta por `pathname` y se arma la lista a mano con
- * `MovementsListContent`, ignorando el slot `detail` en ese caso.
+ * detecta comparando `pathname` con el pathname del PRIMER render de este
+ * layout (no con el actual): una navegación interceptada (tocar un
+ * movimiento con la lista ya montada) también deja `pathname` en
+ * `/transactions/<id>`, pero no remonta el layout — comparar solo contra
+ * `pathname` actual hacía que ese caso tomara la misma rama que un
+ * hard-reload real, devolviendo `children` (la lista) y descartando el
+ * slot `detail` (el `Modal` con el detalle): en mobile, tocar un
+ * movimiento no abría nada. El layout SÍ se remonta en un hard-reload, en
+ * un link externo o al entrar desde otra sección (`/` → `/transactions/<id>`),
+ * así que ahí el pathname inicial y el actual coinciden y se arma la lista
+ * a mano con `MovementsListContent`, ignorando el slot `detail`.
  */
 export default function TransactionsLayout({ children, detail }: { children: ReactNode; detail: ReactNode }) {
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   const pathname = usePathname();
   const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
 
-  const hardNavId = pathname.match(DETAIL_ID_PATTERN)?.[1];
+  const [initialPathname] = useState(pathname);
+  const initialDetailId = initialPathname.match(DETAIL_ID_PATTERN)?.[1];
+  const hardNavId = initialDetailId && pathname === initialPathname ? initialDetailId : undefined;
 
   if (hardNavId) {
     if (!isSplit) return <>{children}</>;

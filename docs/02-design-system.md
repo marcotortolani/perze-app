@@ -349,7 +349,7 @@ Nada de la funcionalidad depende de una animación.
 | `<BudgetRing>` | Anillo de progreso; sobre-consumo con arco superpuesto en critical + ícono. |
 | `<SplitBar>` | Barra dividida arrastrable para repartir entre miembros o categorías. |
 | `<SyncDot>` | 6px en el header. Tres estados, canónicos: **sincronizado** = texto muted (no verde: "todo bien" es el caso normal y no merece color) · **sincronizando** = `warning` pulsante · **offline con pendientes** = `warning` fijo + contador. El error de sync no vive acá: es un banner con `critical`. |
-| `<PrivacyBlur>` | Envuelve montos; con modo privacidad aplica `blur(8px)` y bloquea selección. |
+| `<PrivacyBlur>` | Envuelve texto/cifras que no pasan por `<Amount privacy>`; con modo privacidad los cubre con una píldora con blur + degradé del mismo ancho/alto exacto (sin salto de layout) y bloquea selección. |
 | `<InsightCard>` | Ícono de estado, una línea de texto, sparkline opcional, una acción. Descartable con swipe. |
 | `<ScopeSwitcher>` | Pill segmentado: Personal / Compartido / Todo. |
 | `<StatTile>` | KPI: label en caption, cifra en hero, delta con signo y flecha. Sin borde, sin ícono. |

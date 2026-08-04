@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.11.2] — 2026-08-03
+
+### Corregido — navegación de detalle en mobile (PWA), tarjetas desde el home y modo privacidad
+
+- **Tocar un movimiento o una cuenta en mobile no abría el detalle.** `transactions/layout.tsx`
+  y `accounts/layout.tsx` distinguían un hard-reload de una navegación interceptada mirando
+  solo el `pathname` actual, pero ambos casos cambian la URL de la misma forma — una
+  navegación blanda (tocar un ítem con la lista ya montada) tomaba la misma rama que un
+  hard-reload y descartaba el slot `detail` (el `Modal` con el detalle real). Ahora se compara
+  contra el `pathname` del primer render del layout, que solo coincide en el hard-reload real.
+- **El detalle interceptado, cuando sí abría, quedaba sin header ni forma de volver** salvo el
+  gesto de swipe — el `AppHeader` único del shell queda tapado debajo del overlay del `Modal`.
+  `Modal` ahora se monta con `createPortal` (inmune a cualquier ancestro con `transform`/
+  `filter`/`contain` que lo recortara) y trae su propio botón de volver en modo `contained`.
+- **Al scrollear en la PWA instalada, se movía toda la pantalla, incluido el tab bar** —
+  rebote de documento propio de iOS standalone. Se corta con `overscroll-behavior: none` y
+  bloqueando el scroll del documento en las rutas con el shell de `(app)/`.
+- **Tocar una tarjeta de crédito desde el home** ya no manda a `/accounts/[id]/card` (una
+  pantalla sin las acciones del resto de las cuentas) sino a `/accounts/[id]`, igual que
+  `/accounts` y `/debts` — "Pagar tarjeta" y "Resumen del ciclo" siguen accesibles desde ahí.
+- **Modo privacidad, rediseñado:** ya no blureaba los glifos reales (`filter: blur(8px)` sobre
+  texto se recorta contra cualquier ancestro con `overflow: hidden`, dejando manchones
+  cortados) — ahora el monto real sigue en el DOM con `visibility: hidden` (define la caja,
+  cero salto de layout al prender/apagar) cubierto por una píldora con blur + degradé del
+  mismo ancho/alto exacto. La primera versión de este cambio todavía se veía prolija en
+  cifras chicas pero con bordes cortados en la hero de patrimonio neto y el bento de cuentas:
+  ahí la píldora vivía adentro de la misma caja con `overflow: hidden` que usa `fit` para
+  medirse, así que su propio blur no tenía sangría. Se resuelve envolviendo esa caja en otra
+  sin recorte, del mismo tamaño. De paso quedan cubiertos dos montos que el modo privacidad
+  no alcanzaba: el delta "vs. semana pasada" del home, "gastado"/"ingresado este período", y
+  el monto convertido a la moneda base que se muestra bajo el monto original en cada
+  movimiento de la lista.
+
+---
+
 ## [0.11.1] — 2026-08-03
 
 ### Agregado — header único por página y "Nueva cuenta" como card discontinua

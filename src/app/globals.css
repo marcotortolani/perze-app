@@ -638,6 +638,24 @@ html[data-backdrop-intensity="vivid"] {
   body {
     margin: 0;
     padding: 0;
+    /* PWA en standalone (iOS "black-translucent"): sin esto, el gesto de
+       scroll dentro de `.app-shell-main` también rebota el documento
+       entero — arrastra el header y el tab bar, que son hermanos en
+       flujo del scroller, no contenido suyo. `.app-shell` ya scrollea su
+       propio contenido con `overflow-y: auto`, así que el documento en sí
+       no tiene nada legítimo que scrollear. */
+    overscroll-behavior: none;
+  }
+  /* Acotado a rutas con el shell de `(app)/` (`:has(.app-shell)`): ahí el
+     documento nunca debe scrollear — `.app-shell` ya tiene su
+     `height: 100dvh; overflow: hidden` y su propio scroller interno. Las
+     pantallas full-screen fuera de ese grupo (onboarding, `/add`,
+     `ScreenShell`) siguen usando el scroll nativo del documento como
+     siempre. */
+  html:has(.app-shell),
+  body:has(.app-shell) {
+    height: 100%;
+    overflow: hidden;
   }
   body {
     background: var(--page);

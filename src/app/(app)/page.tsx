@@ -12,6 +12,7 @@ import {
   ErrorState,
   Icon,
   InsightCard,
+  PrivacyBlur,
   SectionGroup,
   SegmentedControl,
   Skeleton,
@@ -351,9 +352,11 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("home.netWorthUsdPending", { currency: baseCurrency })}</span>
         ) : null}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 500, color: deltaPolarity === "positive" ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
-            {deltaArrow} {formatAmountCompact(abs(subtract(last7Net, prev7Net)), { showSign: false })}
-          </span>
+          <PrivacyBlur active={privacy}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: deltaPolarity === "positive" ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
+              {deltaArrow} {formatAmountCompact(abs(subtract(last7Net, prev7Net)), { showSign: false })}
+            </span>
+          </PrivacyBlur>
           <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t("home.vsLastWeek")}</span>
         </div>
         <Sparkline values={heroTrend} width={140} height={32} color={deltaPolarity === "positive" ? "var(--data-1)" : "var(--money-negative-emphasis)"} />
@@ -399,7 +402,7 @@ export default function HomePage() {
                 icon="credit-card"
                 iconBackground={accountColorVar(a.color)}
                 privacy={privacy}
-                onClick={() => router.push(`/accounts/${a.id}/card`)}
+                onClick={() => router.push(`/accounts/${a.id}`)}
               />
             ))}
           </div>
@@ -421,7 +424,11 @@ export default function HomePage() {
         >
           <StatTile
             label={t("home.spentThisPeriod")}
-            value={<FitStatValue text={formatAmountCompact(wantsUsd && expenseThisPeriodUsd.data ? expenseThisPeriodUsd.data : expenseThisPeriod, { showSign: false })} />}
+            value={
+              <PrivacyBlur active={privacy} style={{ display: "block", width: "100%" }}>
+                <FitStatValue text={formatAmountCompact(wantsUsd && expenseThisPeriodUsd.data ? expenseThisPeriodUsd.data : expenseThisPeriod, { showSign: false })} />
+              </PrivacyBlur>
+            }
           />
         </button>
         <button
@@ -431,7 +438,11 @@ export default function HomePage() {
         >
           <StatTile
             label={t("home.incomeThisPeriod")}
-            value={<FitStatValue text={formatAmountCompact(wantsUsd && incomeThisPeriodUsd.data ? incomeThisPeriodUsd.data : incomeThisPeriod, { showSign: false })} />}
+            value={
+              <PrivacyBlur active={privacy} style={{ display: "block", width: "100%" }}>
+                <FitStatValue text={formatAmountCompact(wantsUsd && incomeThisPeriodUsd.data ? incomeThisPeriodUsd.data : incomeThisPeriod, { showSign: false })} />
+              </PrivacyBlur>
+            }
           />
         </button>
       </section>

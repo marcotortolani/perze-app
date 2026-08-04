@@ -5,6 +5,7 @@ import type { CSSProperties, ElementType } from "react";
 import { useTranslations } from "next-intl";
 import { Icon, type IconName } from "../core/Icon";
 import { Amount } from "../money/Amount";
+import { PrivacyBlur } from "../money/PrivacyBlur";
 import type { Money } from "@/lib/money/money";
 
 export interface TransactionRowProps {
@@ -131,9 +132,11 @@ export function TransactionRow({
       <span style={{ textAlign: "right", flexShrink: 0 }}>
         <Amount value={value} size="body" polarity={polarity} tabular privacy={privacy} style={{ display: "block" }} />
         {secondary ? (
-          <span style={{ display: "block", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 12, color: "var(--text-muted)", marginTop: 1 }}>
-            {secondary}
-          </span>
+          <PrivacyBlur active={privacy} style={{ display: "block" }}>
+            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 12, color: "var(--text-muted)", marginTop: 1 }}>
+              {secondary}
+            </span>
+          </PrivacyBlur>
         ) : null}
       </span>
     </Tag>

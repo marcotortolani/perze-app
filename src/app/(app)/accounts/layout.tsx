@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
@@ -61,17 +61,31 @@ function SplitGrid({ left, right, overflowing, detailScrollerRef }: { left: Reac
  * DETALLE, no la lista) y `@detail` cae a su `default.tsx` (el
  * placeholder "Elegí una cuenta..."). Sin este caso especial, en desktop
  * el detalle terminaba ocupando la columna de la lista con el placeholder
- * vacío al lado, y en mobile aparecían los dos apilados a la vez. Se
- * detecta por `pathname` (ningún slot puede saberlo por sí solo) y se arma
- * la lista a mano con `AccountsListContent`, ignorando el slot `detail`
- * (que en este caso no tiene nada útil).
+ * vacío al lado, y en mobile aparecían los dos apilados a la vez.
+ *
+ * No alcanza con mirar el `pathname` actual: una navegación interceptada
+ * (tocar una cuenta con la lista ya montada) TAMBIÉN dispara la ruta hacia
+ * `/accounts/<id>`, pero acá sí pasa por la interceptora — el slot
+ * `detail` trae el `Modal` con el detalle real. Comparar solo contra
+ * `pathname` tomaba esa misma rama que el hard-reload, devolviendo
+ * `children` (la lista, sin cambios) y descartando `detail`: en mobile,
+ * tocar una cuenta no abría nada. La distinción real es si el layout se
+ * REMONTÓ con la URL de detalle ya puesta (hard-reload, link externo,
+ * entrar desde otra sección) o si estaba montado antes y la URL cambió
+ * por una interceptación — se detecta comparando `pathname` contra el
+ * pathname del primer render (`initialPathname`, vía `useRef`), que solo
+ * coincide en el primer caso. Con eso se arma la lista a mano con
+ * `AccountsListContent`, ignorando el slot `detail` (que en ese caso no
+ * tiene nada útil).
  */
 export default function AccountsLayout({ children, detail }: { children: ReactNode; detail: ReactNode }) {
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   const pathname = usePathname();
   const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
 
-  const hardNavId = pathname.match(DETAIL_ID_PATTERN)?.[1];
+  const [initialPathname] = useState(pathname);
+  const initialDetailId = initialPathname.match(DETAIL_ID_PATTERN)?.[1];
+  const hardNavId = initialDetailId && pathname === initialPathname ? initialDetailId : undefined;
 
   if (hardNavId) {
     // Mobile: mostrar el placeholder de `@detail` apilado debajo del

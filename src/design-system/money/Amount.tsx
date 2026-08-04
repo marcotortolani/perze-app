@@ -67,6 +67,7 @@ export interface AmountProps {
   tabular?: boolean | undefined;
   /** Atenúa la parte decimal — se usa en la cifra héroe del keypad. */
   mutedDecimals?: boolean | undefined;
+  /** Modo privacidad: cubre la cifra con un blur — mismo tamaño exacto que el contenido real, sin saltos de layout (ver nota junto al render). */
   privacy?: boolean | undefined;
   /**
    * Encoge el `font-size` hasta `FIT_FLOOR` (55%) cuando el contenedor no
@@ -86,6 +87,18 @@ export interface AmountProps {
  * El ÚNICO lugar donde se formatea plata en JSX: signo, símbolo, decimales
  * por moneda, color por polaridad, modo privacidad. Para texto plano (sin
  * JSX) usar `formatAmount`/`formatAmountCompact` de `lib/money`.
+ *
+ * Modo privacidad (`privacy`): la cifra real se sigue renderizando —
+ * define el tamaño de la caja, así que no hay salto de layout al prender o
+ * apagar el modo— pero con `visibility: hidden` (invisible y afuera del
+ * árbol de accesibilidad, sin ocupar espacio distinto al que ya ocupaba).
+ * Encima, una píldora con blur y degradé del mismo alto/ancho la cubre.
+ * Antes esto era un `filter: blur(8px)` directo sobre los glifos: el blur
+ * necesita sangría para verse prolijo y cualquier ancestro con
+ * `overflow: hidden` (casi cualquier tarjeta) se la recortaba, dejando
+ * manchones cortados. Acá el blur se aplica sobre una forma sólida propia
+ * (la píldora), nunca sobre el texto real, así que no depende de sangría
+ * ni de qué contenedor la envuelve.
  */
 export function Amount({
   value,
@@ -142,6 +155,12 @@ export function Amount({
     return () => observer.disconnect();
   }, [fit, fitFloor, scale, intFormatted, fracPart, symbol]);
 
+  // Wrapper de privacidad: aplica `style`/`rest` acá cuando este termina
+  // siendo el nodo más externo (`!fit && privacy`) — nunca duplicado en
+  // `inner`, para no repetir `id`/`aria-*`/handlers en dos nodos del DOM.
+  const innerStyle = fit || privacy ? null : style;
+  const innerRest = fit || privacy ? {} : rest;
+
   const inner = (
     <span
       ref={innerRef}
@@ -157,11 +176,15 @@ export function Amount({
         ...(fit ? { display: "inline-block" } : null),
         ...SIZES[size],
         ...(fit ? { fontSize: `calc(${SIZES[size]!.fontSize} * ${scale})`, lineHeight: `calc(${SIZES[size]!.lineHeight} * ${scale})` } : null),
-        filter: privacy ? "blur(8px)" : "none",
-        userSelect: privacy ? "none" : "auto",
-        ...(fit ? null : style),
+        // El contenido real sigue en el DOM con su tamaño real — define la
+        // caja, así que el layout nunca salta al prender/apagar privacidad
+        // — solo se vuelve invisible e inalcanzable (`visibility: hidden`
+        // saca el nodo del árbol de accesibilidad, a diferencia de un
+        // `opacity: 0`, que lo deja anunciable).
+        ...(privacy ? { visibility: "hidden", userSelect: "none" } : null),
+        ...innerStyle,
       }}
-      {...(fit ? {} : rest)}
+      {...innerRest}
     >
       {arrow}
       {sign}
@@ -172,11 +195,56 @@ export function Amount({
     </span>
   );
 
-  if (!fit) return inner;
+  // Píldora con blur + degradé que cubre el contenido real (`inset: 0` del
+  // contenedor `position: relative` que la envuelve) — nunca `filter:
+  // blur()` sobre los glifos: acá el blur cae sobre una forma sólida
+  // propia, así que no necesita sangría ni depende de que el contenedor no
+  // recorte, a diferencia de blurear texto directamente.
+  const privacyOverlay = privacy ? (
+    <span
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        borderRadius: "var(--radius-chip)",
+        filter: "blur(3px)",
+        background: "linear-gradient(135deg, color-mix(in srgb, var(--text-muted) 55%, transparent) 0%, color-mix(in srgb, var(--text-muted) 22%, transparent) 100%)",
+      }}
+    />
+  ) : null;
+
+  if (!fit) {
+    if (!privacy) return inner;
+    return (
+      <span style={{ position: "relative", display: "inline-block", ...style }} {...rest}>
+        {inner}
+        {privacyOverlay}
+      </span>
+    );
+  }
+
+  // `overflow: hidden` acá es real — sujeta el desborde momentáneo mientras
+  // `ResizeObserver` todavía no calculó `scale` — pero la píldora de
+  // privacidad NO puede vivir adentro de esa misma caja: al medir
+  // exactamente el mismo tamaño (`inset: 0`), su propio blur no tenía
+  // sangría hacia ningún lado y el recorte le comía el borde entero,
+  // dejando un corte recto en vez de un halo prolijo (patrimonio neto,
+  // bento de cuentas). Con privacidad activa, esta caja se envuelve en OTRA
+  // (sin `overflow`) del mismo tamaño (`width: 100%`, cero salto) y la
+  // píldora se dibuja como su hermana, no su hija — recién ahí el blur
+  // tiene aire para difuminarse igual que en los montos que no usan `fit`.
+  const measured = (
+    <span ref={outerRef} style={{ display: "block", width: "100%", minWidth: 0, overflow: "hidden", textAlign: "inherit", ...(privacy ? null : style) }} {...(privacy ? {} : rest)}>
+      {inner}
+    </span>
+  );
+
+  if (!privacy) return measured;
 
   return (
-    <span ref={outerRef} style={{ display: "block", width: "100%", minWidth: 0, overflow: "hidden", textAlign: "inherit", ...style }} {...rest}>
-      {inner}
+    <span style={{ position: "relative", display: "block", width: "100%", ...style }} {...rest}>
+      {measured}
+      {privacyOverlay}
     </span>
   );
 }
