@@ -30,7 +30,7 @@ function tabForPathname(pathname: string): string {
 }
 
 /** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
-const OWN_SCROLLER_ROUTES = new Set(["/transactions", "/accounts"]);
+const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/accounts", "/more", "/more/settings"]);
 
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
@@ -188,8 +188,15 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
 
   const maxWidth = `var(${contentWidthFor(pathname) === "wide" ? "--content-max-width-wide" : "--content-max-width"})`;
 
+  // El shell dibuja SU header (logo/scope/búsqueda/sync) solo en la raíz de
+  // cada tab — toda otra ruta de `(app)/` ya trae el suyo propio, con botón
+  // "volver" (`<AppHeader onBack>`). Antes se dibujaban los dos apilados:
+  // el del shell siempre, más el de la subpágina encima, cada uno con su
+  // propio punto de sync duplicado.
+  const isRootRoute = pathname === "/" || pathname === "/transactions" || pathname === fourth.path || pathname === "/more";
+
   return (
-    <div className="app-shell">
+    <div className="app-shell page-backdrop">
       <Sidebar
         tabs={tabs}
         groups={navGroups}
@@ -201,19 +208,21 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         className="hidden lg:flex"
       />
       <div className="app-shell-column">
-        <div className="mx-auto w-full" style={{ maxWidth }}>
-          <AppHeader
-            showScope={showScope}
-            scope={scopeLabel}
-            onScopeChange={handleScopeChange}
-            scopeOptions={scopeOptions}
-            onSearch={() => setSearchOpen(true)}
-            searchExpanded={searchOpen}
-            searchLabel={t("ds.appHeader.search")}
-            syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
-            pending={pending ?? 0}
-          />
-        </div>
+        {isRootRoute ? (
+          <div className="mx-auto w-full" style={{ maxWidth }}>
+            <AppHeader
+              showScope={showScope}
+              scope={scopeLabel}
+              onScopeChange={handleScopeChange}
+              scopeOptions={scopeOptions}
+              onSearch={() => setSearchOpen(true)}
+              searchExpanded={searchOpen}
+              searchLabel={t("ds.appHeader.search")}
+              syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
+              pending={pending ?? 0}
+            />
+          </div>
+        ) : null}
         {/* `/transactions` y `/accounts` llevan su propio scroller interno
             que llena exacto esta caja (`height: 100%`) y por eso nunca
             scrollean A TRAVÉS de este padding — queda como una banda fija

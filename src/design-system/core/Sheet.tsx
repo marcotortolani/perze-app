@@ -27,11 +27,15 @@ export function Sheet({ open = true, title, children, onClose, height = "auto", 
   const titleId = useId();
   return (
     <Overlay open={open} onClose={onClose ?? (() => {})} variant="sheet" height={height} style={style} labelledBy={title ? titleId : undefined}>
-      <div style={{ width: 36, height: 4, borderRadius: 999, background: "var(--border)", margin: "0 auto 14px" }} />
+      {/* Agarradera + título: fuera del área que scrollea, ver el comentario
+          de `overflow` en `Overlay` — quedan fijos arriba sea cual sea el
+          contenido de abajo. */}
+      <div style={{ flexShrink: 0, width: 36, height: 4, borderRadius: 999, background: "var(--border)", margin: "0 auto 14px" }} />
       {title ? (
         <h2
           id={titleId}
           style={{
+            flexShrink: 0,
             margin: "0 0 16px",
             fontFamily: "var(--font-sans)",
             fontSize: "var(--text-title-size)",
@@ -43,7 +47,13 @@ export function Sheet({ open = true, title, children, onClose, height = "auto", 
           {title}
         </h2>
       ) : null}
-      {children}
+      {/* Único contenedor que scrollea. `minHeight: 0` es necesario para que
+          un hijo flex en columna respete `overflowY: auto` en vez de
+          desbordar al padre (mismo motivo que `.app-shell-column`, ver
+          `globals.css`). Nunca overflow-X: un hijo de ancho fijo (una
+          grilla angosta) no debería abrir scroll horizontal acá — lo que
+          legítimamente lo necesita ya declara su propio `overflowX`. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>{children}</div>
     </Overlay>
   );
 }

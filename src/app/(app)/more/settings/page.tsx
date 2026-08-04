@@ -1,10 +1,12 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, ListRow, Sheet, Skeleton } from "@/design-system";
+import { AppHeader, ListRow, Sheet, Skeleton, Switch } from "@/design-system";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
@@ -22,6 +24,9 @@ import { routing } from "@/i18n/routing";
 import { applyThemePreference } from "@/lib/theme/apply-theme";
 import { useThemePreference } from "@/lib/theme/use-theme-preference";
 import type { ThemePreference } from "@/lib/theme/constants";
+import { applyBackdropPreference } from "@/lib/backdrop/apply-backdrop";
+import { useBackdropPreference } from "@/lib/backdrop/use-backdrop-preference";
+import { BACKDROP_DENSITIES, BACKDROP_INTENSITIES } from "@/lib/backdrop/constants";
 
 const DECIMAL_SEPARATOR_OPTIONS: DecimalSeparatorPref[] = ["locale", "comma", "period"];
 const DATE_FORMAT_OPTIONS: DateFormatPref[] = ["locale", "dmy", "mdy", "ymd"];
@@ -49,6 +54,7 @@ const CLOSE_DAYS = Array.from({ length: 28 }, (_, i) => i + 1);
 /** K3 — preferencias: cuarto slot del tab bar, día de cierre por household, moneda del hogar. */
 export default function SettingsPage() {
   const t = useTranslations();
+  const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const locale = useLocale() as Locale;
   const router = useRouter();
   const userId = useCurrentUserId();
@@ -63,6 +69,11 @@ export default function SettingsPage() {
   const [themeOverride, setThemeOverride] = useState<ThemePreference | null>(null);
   const themePreference = themeOverride ?? storedThemePreference;
   const [themeSheetOpen, setThemeSheetOpen] = useState(false);
+  const storedBackdropPreference = useBackdropPreference();
+  const [backdropOverride, setBackdropOverride] = useState<typeof storedBackdropPreference | null>(null);
+  const backdropPreference = backdropOverride ?? storedBackdropPreference;
+  const [backdropDensitySheetOpen, setBackdropDensitySheetOpen] = useState(false);
+  const [backdropIntensitySheetOpen, setBackdropIntensitySheetOpen] = useState(false);
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
   const [localePending, setLocalePending] = useState(false);
   const { data: household } = useCurrentHousehold();
@@ -149,6 +160,26 @@ export default function SettingsPage() {
     setThemeSheetOpen(false);
   };
 
+  const handleToggleBackdrop = (enabled: boolean) => {
+    const next = { ...backdropPreference, enabled };
+    applyBackdropPreference(next);
+    setBackdropOverride(next);
+  };
+
+  const handleSelectBackdropDensity = (density: (typeof BACKDROP_DENSITIES)[number]) => {
+    const next = { ...backdropPreference, density };
+    applyBackdropPreference(next);
+    setBackdropOverride(next);
+    setBackdropDensitySheetOpen(false);
+  };
+
+  const handleSelectBackdropIntensity = (intensity: (typeof BACKDROP_INTENSITIES)[number]) => {
+    const next = { ...backdropPreference, intensity };
+    applyBackdropPreference(next);
+    setBackdropOverride(next);
+    setBackdropIntensitySheetOpen(false);
+  };
+
   const handleInstall = async () => {
     if (deferredPrompt) {
       if (installing) return;
@@ -167,9 +198,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    // `scroll-fade-bottom`: esta pantalla ahora maneja su propio scroll
+    // (antes dependía del `<main>` compartido del shell) para poder tener
+    // el mismo fade de `/accounts` — hay que sumarla a `OWN_SCROLLER_ROUTES`
+    // en `(app)/layout.tsx`.
+    <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%" } as CSSProperties}>
       <AppHeader title={t("morePage.settings")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />
-      <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
+      <div
+        ref={scrollerRef}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12, paddingRight: 8, display: "flex", flexDirection: "column", gap: 4 }}
+      >
         <ListRow
           icon="globe"
           label={t("morePage.language")}
@@ -234,9 +273,31 @@ export default function SettingsPage() {
           variant="value"
           onClick={() => setDateFormatSheetOpen(true)}
         />
+        <ListRow
+          icon="list"
+          label={t("settingsPage.backdrop")}
+          right={<Switch id="backdrop-switch" checked={backdropPreference.enabled} onChange={handleToggleBackdrop} />}
+        />
+        <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.backdropHint")}</p>
+        {backdropPreference.enabled ? (
+          <>
+            <ListRow
+              label={t("settingsPage.backdropDensity")}
+              value={t(`settingsPage.backdropDensityOptions.${backdropPreference.density}`)}
+              variant="value"
+              onClick={() => setBackdropDensitySheetOpen(true)}
+            />
+            <ListRow
+              label={t("settingsPage.backdropIntensity")}
+              value={t(`settingsPage.backdropIntensityOptions.${backdropPreference.intensity}`)}
+              variant="value"
+              onClick={() => setBackdropIntensitySheetOpen(true)}
+            />
+          </>
+        ) : null}
       </div>
 
-      <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)} height={280}>
+      <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {routing.locales.map((candidate) => (
             <ListRow
@@ -251,7 +312,7 @@ export default function SettingsPage() {
         </div>
       </Sheet>
 
-      <Sheet open={themeSheetOpen} title={t("profilePage.themeSheetTitle")} onClose={() => setThemeSheetOpen(false)} height={280}>
+      <Sheet open={themeSheetOpen} title={t("profilePage.themeSheetTitle")} onClose={() => setThemeSheetOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {THEME_OPTIONS.map((option) => (
             <ListRow
@@ -265,7 +326,35 @@ export default function SettingsPage() {
         </div>
       </Sheet>
 
-      <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)} height={280}>
+      <Sheet open={backdropDensitySheetOpen} title={t("settingsPage.backdropDensity")} onClose={() => setBackdropDensitySheetOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {BACKDROP_DENSITIES.map((option) => (
+            <ListRow
+              key={option}
+              label={t(`settingsPage.backdropDensityOptions.${option}`)}
+              variant="value"
+              value={option === backdropPreference.density ? "✓" : undefined}
+              onClick={() => handleSelectBackdropDensity(option)}
+            />
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={backdropIntensitySheetOpen} title={t("settingsPage.backdropIntensity")} onClose={() => setBackdropIntensitySheetOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {BACKDROP_INTENSITIES.map((option) => (
+            <ListRow
+              key={option}
+              label={t(`settingsPage.backdropIntensityOptions.${option}`)}
+              variant="value"
+              value={option === backdropPreference.intensity ? "✓" : undefined}
+              onClick={() => handleSelectBackdropIntensity(option)}
+            />
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {tabOptions.map((option) => (
             <ListRow
@@ -300,7 +389,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={closeDaySheetOpen} title={t("settingsPage.closeDay")} onClose={() => setCloseDaySheetOpen(false)} height={420}>
-        <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", maxHeight: 380 }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.closeDayHint")}</p>
           {CLOSE_DAYS.map((day) => (
             <ListRow
@@ -315,13 +404,13 @@ export default function SettingsPage() {
         </div>
       </Sheet>
 
-      <Sheet open={installSheetOpen} title={t("settingsPage.install")} onClose={() => setInstallSheetOpen(false)} height={280}>
+      <Sheet open={installSheetOpen} title={t("settingsPage.install")} onClose={() => setInstallSheetOpen(false)}>
         <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
           {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
         </p>
       </Sheet>
 
-      <Sheet open={decimalSheetOpen} title={t("settingsPage.decimalSeparator")} onClose={() => setDecimalSheetOpen(false)} height={320}>
+      <Sheet open={decimalSheetOpen} title={t("settingsPage.decimalSeparator")} onClose={() => setDecimalSheetOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.decimalSeparatorHint")}</p>
           {DECIMAL_SEPARATOR_OPTIONS.map((pref) => (
@@ -340,7 +429,7 @@ export default function SettingsPage() {
         </div>
       </Sheet>
 
-      <Sheet open={dateFormatSheetOpen} title={t("settingsPage.dateFormat")} onClose={() => setDateFormatSheetOpen(false)} height={360}>
+      <Sheet open={dateFormatSheetOpen} title={t("settingsPage.dateFormat")} onClose={() => setDateFormatSheetOpen(false)}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.dateFormatHint")}</p>
           {DATE_FORMAT_OPTIONS.map((pref) => (

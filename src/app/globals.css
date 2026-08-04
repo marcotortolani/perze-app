@@ -133,6 +133,48 @@
   --selection-ring-light: #c9c9c4;
 }
 
+/*
+ * Fondo de puntos (retícula enmascarada) — excepción acotada a § 1.8 de
+ * `docs/02-design-system.md` ("cero degradados decorativos"): es opt-in,
+ * apagada por default, y estos son los ÚNICOS pasos por eje que
+ * `src/lib/backdrop/` puede escribir — no hay forma de pedir un valor fuera
+ * de este rango porque los números viven acá, no en lo que se persiste.
+ * `--dot-ink` deriva de `--border` a propósito: invierte solo entre claro y
+ * oscuro sin una sola regla `.light` (a diferencia del `dark:` de
+ * Aceternity, que solo alterna entre dos colores fijos).
+ */
+:root {
+  --dot-gap: 16px;
+  --dot-size: 1px;
+  --dot-ink: color-mix(in srgb, var(--border) 55%, transparent);
+}
+html[data-backdrop-density="loose"] {
+  --dot-gap: 24px;
+}
+html[data-backdrop-density="tight"] {
+  --dot-gap: 12px;
+}
+html[data-backdrop-intensity="subtle"] {
+  --dot-ink: color-mix(in srgb, var(--border) 35%, transparent);
+}
+html[data-backdrop-intensity="strong"] {
+  --dot-ink: color-mix(in srgb, var(--border) 80%, transparent);
+}
+html[data-backdrop-intensity="vivid"] {
+  --dot-ink: var(--border);
+}
+@media (min-width: 1024px) {
+  :root {
+    --dot-gap: 20px;
+  }
+  html[data-backdrop-density="loose"] {
+    --dot-gap: 28px;
+  }
+  html[data-backdrop-density="tight"] {
+    --dot-gap: 16px;
+  }
+}
+
 /* ---- tokens/colors.css — alias semánticos por modo ---- */
 :root {
   color-scheme: dark;
@@ -644,6 +686,170 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/*
+ * Fondo de puntos de página — se aplica al contenedor del shell
+ * (`.app-shell`, `(app)/layout.tsx`) y a `ScreenShell` (pantallas full-screen
+ * fuera de `(app)/`). NUNCA a header/tab bar/sidebar/modal/sheet: esos ya
+ * pintan `background: var(--page)` opaco, así que la capa `fixed` queda
+ * tapada por ellos sin necesidad de excluirlos uno por uno.
+ *
+ * `isolation: isolate` crea un stacking context propio: sin esto, un hijo
+ * `position: fixed; z-index: -1` pintaría por ENCIMA de hermanos flex sin
+ * `position` (como `Sidebar`, que no fija `z-index`) en vez de por debajo —
+ * el bug clásico de "z-index negativo no sirve para nada". Con `isolate`,
+ * el `::before` queda anclado bajo TODO el contenido de este contenedor.
+ *
+ * `position: fixed` (no `absolute`): ancla la retícula al viewport, no al
+ * scroll de `<main>` — así el fade de los bordes se mantiene fijo mientras
+ * el contenido scrollea, en vez de desplazarse con él.
+ */
+@utility page-backdrop {
+  isolation: isolate;
+  position: relative;
+
+  html[data-backdrop="on"] &::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(circle, var(--dot-ink) var(--dot-size), transparent var(--dot-size));
+    background-size: var(--dot-gap) var(--dot-gap);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 45%, #000 35%, transparent 100%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 45%, #000 35%, transparent 100%);
+  }
+
+  /* Nunca decorativa en alto contraste forzado ni en impresión — mismo
+     criterio que la textura de charts en `docs/02-design-system.md` § 7. */
+  @media (forced-colors: active), print {
+    html[data-backdrop="on"] &::before {
+      display: none;
+    }
+  }
+}
+
+/*
+ * Fade inferior de scroll (desktop) — difumina el borde de un contenedor
+ * que scrollea, para que el corte contra el tab bar/sidebar/borde del
+ * panel no se sienta abrupto. Se aplica al contenedor NO-scrolleable que
+ * envuelve al scroller como hermano de un pseudo-elemento, nunca al
+ * scroller mismo: si el scroller ya necesita su propio `position:relative`
+ * (p. ej. el virtualizador de `/transactions`), esta utility va en un
+ * wrapper nuevo alrededor.
+ *
+ * `--scroll-fade-inset-right`: los casos que reservan una franja para la
+ * propia barra de scroll (`paddingRight` del scroller) pasan el mismo
+ * valor acá, para que el fade no la tape.
+ *
+ * Solo desktop (`lg`, 1024px — mismo corte que los `hidden lg:block/flex`
+ * que ya usaban los dos consumidores originales de este patrón).
+ *
+ * Regla que va de la mano en cada consumidor: el aire de "no cortar el
+ * último ítem" vive DENTRO del scroller (su propio `paddingBottom`), nunca
+ * en este contenedor — un padding acá desperdicia el alto del fade sobre
+ * superficie sólida en vez de sobre contenido real.
+ */
+@utility scroll-fade-bottom {
+  position: relative;
+
+  /*
+   * `[data-scroll-overflow="true"]`: un `::after` de CSS no puede saber
+   * por sí solo si el scroller hermano tiene contenido real para
+   * desbordar — sin este gate, el degradado (y la sugerencia visual de
+   * "hay más para scrollear") aparecía siempre, incluso con contenido
+   * corto que entraba entero (p. ej. `/more/settings` con pocas filas).
+   * `useScrollOverflow` (`src/hooks/use-scroll-overflow.ts`) es quien
+   * escribe este atributo, comparando `scrollHeight` contra `clientHeight`
+   * en vivo.
+   */
+  &[data-scroll-overflow="true"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: var(--scroll-fade-inset-right, 0px);
+    bottom: 0;
+    height: 32px;
+    background: linear-gradient(to bottom, transparent 0%, var(--page) 100%);
+    pointer-events: none;
+  }
+
+  @media (max-width: 1023px) {
+    &[data-scroll-overflow="true"]::after {
+      display: none;
+    }
+  }
+}
+
+/*
+ * Base de `AccountCarousel` — `display`/`overflow-x` viven acá, NUNCA en
+ * el `style` inline del componente: un inline style de React gana siempre
+ * sobre cualquier clase, media query o no, así que el override de abajo
+ * no podría pisarlos en desktop si quedaran inline (pasó de verdad: el
+ * grid nunca se activaba porque `display:"flex"` inline lo tapaba).
+ *
+ * El override de `.account-grid-lg` vive ANIDADO acá adentro (selector
+ * compuesto `.account-carousel-track.account-grid-lg`, no una segunda
+ * `@utility` independiente) a propósito: dos utilities separadas con un
+ * solo nombre de clase cada una tienen la MISMA especificidad — quién gana
+ * el empate queda librado al orden en que Tailwind las emite en la hoja
+ * final, que no es el orden en que se escriben acá (pasó de verdad: el
+ * grid quedaba definido en la hoja pero `display:flex` seguía ganando).
+ * Un selector de dos clases tiene más especificidad que uno de una sola, así
+ * que este anidado gana siempre, sin depender del orden de emisión.
+ *
+ * En mobile sigue siendo el carrusel horizontal de siempre (con drag/snap
+ * — hay espacio de sobra en el selector de cuenta de `DetailsSheet` para
+ * que eso siga intacto, `account-grid-lg` NUNCA se le aplica ahí). En
+ * desktop hay ancho real disponible (home pasó a
+ * `--content-max-width-wide`, ver `content-width.ts`), así que en vez de
+ * un slider que solo se mueve arrastrando, se acomoda en grid — todas las
+ * cuentas visibles a la vez, sin gesto que aprender.
+ *
+ * 12 columnas, no un grid parejo de cuadrados: `spanFor()` en
+ * `AccountCarousel.tsx` decide un ancho base (3/4/5) por CUÁNTO contenido
+ * tiene que mostrar cada card (largo del monto formateado, nunca al azar),
+ * la destacada (el total convertido, o la primera cuenta si no hay)
+ * siempre parte de 5, y `packBentoRows()` ajusta esos anchos base para que
+ * cada fila sume EXACTO 12 — nunca queda un hueco vacío al final de una
+ * fila (antes, con `auto-fill`/`dense`, si el resto de una fila no sumaba
+ * justo 12 quedaba espacio muerto sin cubrir). El ancho final de cada card
+ * llega por `grid-column` inline, calculado en JS — por eso no hay clases
+ * `--span-N` fijas acá: el ancho real varía según cuántas cards entran en
+ * cada fila, no es un valor fijo por card.
+ *
+ * `width: auto` en los botones: sin esto, el `width: 208` fijo (para el
+ * ancho de cada card DENTRO del carrusel) impedía que las columnas del
+ * grid se repartieran el ancho disponible.
+ */
+@utility account-carousel-track {
+  display: flex;
+  overflow-x: auto;
+
+  &.account-grid-lg {
+    @media (min-width: 1024px) {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
+
+      & > .account-carousel-card {
+        width: auto;
+      }
+    }
+  }
+}
+
+/*
+ * `width` acá y no inline en el componente: un `style` de React siempre le
+ * gana a cualquier selector de clase por especificidad, sin importar el
+ * media query — si el 208px fijo quedara inline, `.account-grid-lg` de
+ * arriba nunca podría pisarlo para que las cards del grid se repartan el
+ * ancho disponible.
+ */
+@utility account-carousel-card {
+  width: 208px;
 }
 
 /*

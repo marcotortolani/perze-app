@@ -28,7 +28,7 @@ export function AccountPickerSheet({ open, title, accounts, onSelect, onClose }:
 
   return (
     <Sheet open={open} title={title} onClose={onClose} height={420}>
-      <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", maxHeight: 340 }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
         {accounts.map((a) => (
           <AccountRow
             key={a.id}

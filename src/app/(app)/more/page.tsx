@@ -1,9 +1,11 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Card, ListRow, Sheet, StatusBadge } from "@/design-system";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { useOwnAccess } from "@/hooks/use-own-access";
@@ -25,6 +27,7 @@ const CAPTION_STYLE = {
 /** Índice de secciones (B7) — Bloque B, Fase 6. Los módulos apagados no aparecen. */
 export default function MorePage() {
   const t = useTranslations();
+  const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { conflicts } = useConflicts(household?.id);
@@ -60,7 +63,16 @@ export default function MorePage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingBottom: 24 }}>
+    // `scroll-fade-bottom`: esta pantalla pasa a manejar su propio scroll
+    // (antes dependía del `<main>` compartido del shell) para tener el
+    // mismo fade de `/accounts` — sumada a `OWN_SCROLLER_ROUTES` en
+    // `(app)/layout.tsx`.
+    <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
+      <div
+        ref={scrollerRef}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingRight: 8 }}
+      >
       <section>
         <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
         <Card padding="4px 16px">
@@ -123,6 +135,7 @@ export default function MorePage() {
       <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>
         {t("morePage.version", { version: APP_VERSION })}
       </p>
+      </div>
 
       <Sheet open={signOutSheet === "confirm"} title={t("morePage.signOutConfirmTitle")} onClose={() => setSignOutSheet("none")} height={260}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

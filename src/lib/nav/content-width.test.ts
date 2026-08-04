@@ -12,8 +12,11 @@ describe("contentWidthFor", () => {
     expect(contentWidthFor("/accounts/new")).toBe("wide");
   });
 
+  it("es wide en / (home, layout de 2 columnas en desktop)", () => {
+    expect(contentWidthFor("/")).toBe("wide");
+  });
+
   it("es narrow en cualquier otra ruta", () => {
-    expect(contentWidthFor("/")).toBe("narrow");
     expect(contentWidthFor("/analytics")).toBe("narrow");
     expect(contentWidthFor("/more/categories")).toBe("narrow");
   });

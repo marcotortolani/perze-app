@@ -15,6 +15,13 @@
 6. **Nada que requiera precisión.** Ningún target menor a 44×44. El primario mide 56–64px de alto, ancho completo, en los últimos 200px de la pantalla.
 7. **Reversible, no confirmable.** Se ejecuta y se ofrece deshacer.
 8. **El "juicy" viene del movimiento, no del ornamento.** Springs bien calibrados, transiciones de elemento compartido y háptica. Cero sombras dramáticas, cero degradados decorativos, cero glassmorphism gratuito.
+   Única excepción, acotada a propósito: el **fondo de puntos** (`page-backdrop` en
+   `globals.css`, `src/lib/backdrop/`) es una textura de fondo global, neutra y recesiva —
+   nunca un degradado de marca. Es **opt-in y apagada por default** en Ajustes; el usuario
+   solo puede elegir entre tres pasos de separación y cuatro de intensidad, ambos acotados por
+   diseño en `globals.css` para que ningún valor quede fuera del estándar visual. No aparece
+   en encabezado, tab bar, sidebar, modales ni sheets. Esta excepción **no habilita** ningún
+   otro ornamento decorativo.
 
 ### Presupuesto de ruido visual (regla dura, verificable)
 

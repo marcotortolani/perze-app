@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { EmptyState, Icon, ListRow, Skeleton } from "@/design-system";
+import { AppHeader, EmptyState, Icon, ListRow, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
@@ -29,7 +29,17 @@ export default function FamilyPageContent() {
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
   const { data: invites } = useInvites(household?.id);
 
-  if (!household || !members || !invites) return <Skeleton height={200} style={{ marginTop: 16 }} />;
+  // Subpágina de `/more`: header propio con "volver", el shell no dibuja el suyo acá.
+  const header = <AppHeader title={t("morePage.family")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />;
+
+  if (!household || !members || !invites) {
+    return (
+      <>
+        {header}
+        <Skeleton height={200} style={{ marginTop: 16 }} />
+      </>
+    );
+  }
 
   const pendingInvites = invites.filter((i) => i.acceptedBy === null && i.revokedAt === null);
   const myRole = members.find((m) => m.profileId === userId)?.role;
@@ -55,18 +65,25 @@ export default function FamilyPageContent() {
   };
 
   if (members.length <= 1 && pendingInvites.length === 0) {
-    return <EmptyState message={t("familyPage.empty")} actionLabel={t("familyPage.invite")} onAction={() => router.push("/family/invite")} />;
+    return (
+      <>
+        {header}
+        <EmptyState message={t("familyPage.empty")} actionLabel={t("familyPage.invite")} onAction={() => router.push("/family/invite")} />
+      </>
+    );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
-      <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
-      <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
-      <ListRow icon="handshake" label={t("settlePage.title")} onClick={() => router.push("/family/settle")} />
-      <ListRow icon="chart" label={t("comparePage.title")} onClick={() => router.push("/family/compare")} />
-      <ListRow icon="list" label={t("activityPage.title")} onClick={() => router.push("/family/activity")} />
-      <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 12 }}>{t("familyPage.members")}</div>
-      {members.map((m) => (
+    <>
+      {header}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
+        <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
+        <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
+        <ListRow icon="handshake" label={t("settlePage.title")} onClick={() => router.push("/family/settle")} />
+        <ListRow icon="chart" label={t("comparePage.title")} onClick={() => router.push("/family/compare")} />
+        <ListRow icon="list" label={t("activityPage.title")} onClick={() => router.push("/family/activity")} />
+        <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 12 }}>{t("familyPage.members")}</div>
+        {members.map((m) => (
         <ListRow
           key={m.profileId}
           icon="users"
@@ -98,6 +115,7 @@ export default function FamilyPageContent() {
           ))}
         </>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

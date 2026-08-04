@@ -6,6 +6,59 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.11.0] — 2026-08-03
+
+### Agregado — bento grid de cuentas, fondo de puntos y "pagar tarjeta" ancla al destino
+
+- **Resumen de cuentas del home, en desktop: bento grid de 12 columnas en vez de un carrusel
+  de una fila.** El ancho de cada card se deriva del largo real del monto que muestra
+  (dataset-relativo: se recalcula contra el mínimo/máximo presentes en pantalla, no un corte
+  fijo de caracteres) — la cuenta con el saldo más largo se ve más grande, la más corta más
+  chica, sin huecos vacíos y sin que ninguna fila deje de sumar sus 12 columnas exactas.
+  "Total convertido" queda fija como ancla visual (2 columnas más ancha que el resto).
+  Verificado con un conjunto de escenarios sintéticos (1, 2, 3, 10, 12 y 20 cuentas, montos
+  parecidos y muy distintos) para confirmar que el reparto se sostiene ante cualquier cantidad
+  de cuentas. En mobile sigue siendo el carrusel horizontal de siempre, ahora con drag real de
+  mouse en desktop (antes solo funcionaba con mayús + rueda).
+- **En desktop, el home pasa a 2 columnas** (patrimonio/cuentas/tarjetas a la izquierda,
+  gastado-ingresado/insight/movimientos a la derecha) a partir de 1280px — no 1024px, para no
+  apretar el bento grid contra la sidebar en anchos intermedios.
+- **Fondo de puntos enmascarado, opt-in y apagado por defecto** (`Ajustes → Apariencia`):
+  retícula sutil que se desvanece hacia los bordes del viewport, con densidad e intensidad
+  ajustables en 3 niveles cada una (incluida una intensidad "vívida" adicional). Nunca se ve en
+  header, tab bar, sidebar, modales ni sheets — solo en el área de contenido.
+- **Degradado de scroll inferior generalizado.** El mismo fade suave que ya tenía `/accounts`
+  se aplica ahora también al Sidebar de escritorio (antes cortaba el contenido de forma recta y
+  abrupta) y a `/transactions`, con aire real después del último ítem en los tres casos.
+- **"Pagar tarjeta" ancla el monto al destino, no al origen.** El monto tipeado en el flujo de
+  pago de tarjeta ahora se interpreta siempre en la moneda de la tarjeta (el dato fijo es
+  "cuánto hay que cubrir"), incluso mientras la cuenta de origen todavía no está elegida; una
+  vista previa de solo lectura muestra cuánto sale realmente de esa cuenta una vez elegida.
+
+### Corregido — scroll horizontal del home, cumpleaños, calendario y headers de subpáginas
+
+- **Scroll horizontal indebido en el home en mobile.** El scroller propio de la página definía
+  `overflow-y: auto` sin `overflow-x` explícito — por la coacción de CSS que ya rompió el mismo
+  patrón antes en este proyecto, el navegador terminaba habilitando `overflow-x: auto` también,
+  dejando toda la pantalla arrastrable de costado en vez de solo el carrusel de cuentas. Se
+  corrigió en el home y, preventivamente, en `/accounts`, `/transactions` y `/more`.
+  - **Sidebar recortado de forma abrupta al final** (en vez de un fade suave): el
+    `padding-bottom` de aire vivía en el contenedor no-scrolleable en lugar de dentro del
+    `<nav>` que scrollea — el degradado gastaba la mayor parte de su alto sobre superficie
+    sólida y le quedaba muy poco margen sobre contenido real.
+- **El banner de cumpleaños nunca coincidía con "hoy" para usuarios en husos horarios
+  negativos** (Uruguay, Argentina): `new Date("YYYY-MM-DD")` parsea como medianoche UTC, y en
+  UTC-3 eso cae en el día anterior en horario local. Se parsean los componentes de fecha a
+  mano, como fecha local.
+- **Formato de fecha del calendario de movimientos** mostraba "Septiembre De 2026" (con el
+  conector capitalizado por error) — ahora "Septiembre 2026", sin conector.
+- **Falta el `AppHeader` propio en los estados de carga y vacío** de las subpáginas de `/more`
+  (deudas, grupo familiar, metas, recurrentes): antes solo aparecía con datos cargados, dejando
+  esos estados sin forma de volver atrás.
+- **AccountCarousel no permitía click-and-drag con mouse en desktop** (solo mayús + rueda) y,
+  en una iteración intermedia del bento grid, dejó de navegar al hacer click — ambos corregidos
+  vía Pointer Events con umbral de 8px para distinguir click de arrastre.
+
 ## [0.10.0] — 2026-08-03
 
 ### Agregado — tarjetas de crédito, pago por transferencia y cumpleaños

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, Card, EmptyState, ListRow, ProgressBar, SkeletonRow } from "@/design-system";
+import { Amount, AppHeader, Card, EmptyState, ListRow, ProgressBar, SkeletonRow } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useGoals } from "@/hooks/use-goals";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -16,26 +16,39 @@ export default function GoalsPageContent() {
   const { data: goals } = useGoals(household?.id);
   const { data: accounts } = useAccounts(household?.id);
 
+  // Subpágina de `/more`: header propio con "volver", el shell no dibuja el suyo acá.
+  const header = <AppHeader title={t("morePage.goals")} showScope={false} onBack={() => router.back()} backLabel={t("ds.appHeader.back")} />;
+
   if (!household || !goals || !accounts) {
     return (
-      <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-        <SkeletonRow />
-        <SkeletonRow />
-      </div>
+      <>
+        {header}
+        <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
+      </>
     );
   }
 
   if (goals.length === 0) {
-    return <EmptyState message={t("goalsPage.empty")} actionLabel={t("goalsPage.emptyAction")} onAction={() => router.push("/goals/new")} />;
+    return (
+      <>
+        {header}
+        <EmptyState message={t("goalsPage.empty")} actionLabel={t("goalsPage.emptyAction")} onAction={() => router.push("/goals/new")} />
+      </>
+    );
   }
 
   const accountById = new Map(accounts.map((a) => [a.id, a]));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 8, paddingBottom: 24 }}>
-      <ListRow icon="plus" label={t("goalsPage.newGoal")} variant="action" onClick={() => router.push("/goals/new")} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {goals.map((goal) => {
+    <>
+      {header}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 8, paddingBottom: 24 }}>
+        <ListRow icon="plus" label={t("goalsPage.newGoal")} variant="action" onClick={() => router.push("/goals/new")} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {goals.map((goal) => {
           const account = goal.accountId ? accountById.get(goal.accountId) : undefined;
           const saved = account ? account.currentBalance : 0n;
           const progress = goal.targetAmount > 0n ? Math.min(1, Number(saved) / Number(goal.targetAmount)) : 0;
@@ -54,7 +67,8 @@ export default function GoalsPageContent() {
             </Card>
           );
         })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

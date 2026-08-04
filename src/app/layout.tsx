@@ -6,6 +6,7 @@ import { GeistMono } from "geist/font/mono";
 import { IntlBoundary } from "@/components/intl-boundary";
 import { Providers } from "@/components/providers";
 import { getLangInitScript, getThemeInitScript } from "@/lib/theme/init-script";
+import { getBackdropInitScript } from "@/lib/backdrop/init-script";
 import { APP_VERSION } from "@/lib/version";
 import { env } from "@/env";
 import { LOCALE_COOKIE } from "@/i18n/request";
@@ -109,6 +110,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         {/* D1: corrige `<html lang>` antes del primer paint — ver `getLangInitScript`. */}
         <script dangerouslySetInnerHTML={{ __html: getLangInitScript(LOCALE_COOKIE, routing.locales, routing.defaultLocale) }} />
+        {/* Fondo de puntos (opt-in, apagado por default): sin esto, encenderlo en
+            Ajustes recién se vería recién en la próxima carga dura. */}
+        <script dangerouslySetInnerHTML={{ __html: getBackdropInitScript() }} />
         <Suspense fallback={null}>
           <IntlBoundary>
             <Providers>{children}</Providers>

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Icon, type IconName } from "../core/Icon";
 import { Logo } from "../core/Logo";
 import type { TabItem } from "./TabBar";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 
 export interface SidebarNavItem {
   id: string;
@@ -52,14 +53,31 @@ const navButtonStyle: CSSProperties = {
   cursor: "pointer",
   textAlign: "left",
   width: "100%",
+  // `minWidth: 0`: un hijo flex vale `min-width: auto` por default, que
+  // ignora `text-overflow` en el `<span>` de abajo y lo empuja a wrappear
+  // en dos líneas en vez de truncar — pasaba con labels largos ("Estado de
+  // sincronización", "Reglas de autocategorización") en los `--sidebar-width`
+  // angostos (248px).
+  minWidth: 0,
   textDecoration: "none",
 };
 
 function NavButtonContent({ icon, label, on }: { icon: IconName; label: string; on: boolean }) {
   return (
     <>
-      <Icon name={icon} size={20} strokeWidth={on ? 1.9 : 1.5} color={on ? "var(--primary-ink)" : "var(--text-secondary)"} />
-      <span style={{ fontFamily: "var(--font-sans)", fontSize: 15, fontWeight: 500, color: on ? "var(--text-primary)" : "var(--text-secondary)" }}>
+      <Icon name={icon} size={20} strokeWidth={on ? 1.9 : 1.5} color={on ? "var(--primary-ink)" : "var(--text-secondary)"} style={{ flexShrink: 0 }} />
+      <span
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 15,
+          fontWeight: 500,
+          color: on ? "var(--text-primary)" : "var(--text-secondary)",
+          minWidth: 0,
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
         {label}
       </span>
     </>
@@ -101,10 +119,20 @@ function NavButton({ icon, label, on, href, onClick }: { icon: IconName; label: 
 export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onSignOut, signOutLabel, className, style }: SidebarProps) {
   const t = useTranslations();
   const navTabs = tabs.filter((tab) => !tab.fab);
+  const { ref: navRef, overflowing } = useScrollOverflow<HTMLElement>();
 
   return (
     <aside
-      className={className}
+      // `scroll-fade-bottom`: mismo fade que `/accounts` (`globals.css`) sobre
+      // el borde inferior del `<nav>` que scrollea. Tiene que ir en ESTE
+      // contenedor (no-scrolleable) y no en `<nav>` — el pseudo-elemento se
+      // ancla al `bottom:0` de acá, y por eso el padding-bottom que antes
+      // vivía en este mismo `<aside>` se movió adentro de `<nav>` (ver más
+      // abajo): si quedara acá, el fade gastaría la mayor parte de sus 32px
+      // sobre el padding sólido en vez de sobre el contenido real — el corte
+      // abrupto que se reportó.
+      className={`scroll-fade-bottom ${className ?? ""}`.trim()}
+      data-scroll-overflow={overflowing}
       style={{
         position: "relative",
         width: "var(--sidebar-width)",
@@ -112,8 +140,12 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onS
         flexDirection: "column",
         height: "100%",
         minHeight: 0,
+        // Fondo opaco propio: sin esto, con el fondo de puntos (opt-in) encendido
+        // en el `.app-shell` que lo contiene, la retícula se filtraría por acá —
+        // el único hermano del shell sin `background: var(--page)` ya puesto.
+        background: "var(--page)",
         borderRight: "1px solid var(--border)",
-        padding: "24px 0",
+        padding: "24px 0 0",
         ...style,
       }}
     >
@@ -147,8 +179,13 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onS
       </div>
 
       <nav
+        ref={navRef}
         aria-label={t("ds.sidebar.navLabel")}
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, padding: "0 16px" }}
+        // `paddingBottom: 32` acá (no en `<aside>`): es el aire que evita que
+        // el último ítem (o el botón de cerrar sesión) quede pegado contra
+        // el borde real del scroller — el mismo que consume el fade de
+        // `scroll-fade-bottom` de arriba.
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, padding: "0 16px 32px" }}
       >
         {groups ? (
           groups.map((group) => (
@@ -190,22 +227,6 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onS
           </div>
         ) : null}
       </nav>
-
-      {/* Difumina el borde inferior del scroller propio del `<nav>` en vez
-          de dejar una franja sólida pegada al final — puramente decorativo
-          (`pointerEvents: none`), nunca tapa un click real. */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 32,
-          background: "linear-gradient(to bottom, transparent 0%, var(--page) 100%)",
-          pointerEvents: "none",
-        }}
-      />
     </aside>
   );
 }

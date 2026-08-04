@@ -213,6 +213,7 @@
   "from": "FROM",
   "to": "TO",
   "invert": "Swap",
+  "transferPinnedPreview": "{amount} will be deducted from {account}",
   "voice": "Voice",
   "photo": "Photo",
   "details": "Details",
@@ -1069,6 +1070,21 @@
    "dmy": "Day/month/year",
    "mdy": "Month/day/year",
    "ymd": "Year-month-day"
+  },
+  "backdrop": "Dotted background",
+  "backdropHint": "A subtle dot texture behind the content, fading out near the edges of the screen. It never appears in headers, menus, or sheets.",
+  "backdropDensity": "Dot spacing",
+  "backdropDensityOptions": {
+   "loose": "Wide",
+   "normal": "Normal",
+   "tight": "Tight"
+  },
+  "backdropIntensity": "Intensity",
+  "backdropIntensityOptions": {
+   "subtle": "Subtle",
+   "normal": "Normal",
+   "strong": "Strong",
+   "vivid": "Vivid"
   }
  },
  "modulesPage": {

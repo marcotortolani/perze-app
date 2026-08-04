@@ -16,6 +16,15 @@ export interface CaptureDraft {
    * `null` mientras no se toque: se resuelve el rate del día como siempre.
    */
   counterFxRateOverride: bigint | null;
+  /**
+   * Solo `transfer`. A qué cuenta corresponde la moneda del monto tipeado
+   * — `"account"` (origen) es el comportamiento de siempre: se tipea en la
+   * moneda de origen y el destino se deriva. `"counterAccount"` (destino)
+   * es el caso "pagar tarjeta": el monto es un dato fijo del lado del
+   * destino (lo que hay que cubrir) y lo que se deriva es cuánto sale del
+   * origen, que todavía puede no estar elegido.
+   */
+  amountPinnedTo: "account" | "counterAccount";
   categoryId: string | null;
   /** ISO datetime. */
   occurredAt: string;
@@ -47,6 +56,7 @@ function emptyDraft(): CaptureDraft {
     accountId: null,
     counterAccountId: null,
     counterFxRateOverride: null,
+    amountPinnedTo: "account",
     categoryId: null,
     occurredAt: new Date().toISOString(),
     payeeName: "",

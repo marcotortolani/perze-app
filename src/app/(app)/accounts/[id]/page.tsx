@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, EmptyState, IconButton, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, AppHeader, EmptyState, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const LineChart = dynamic(() => import("@/design-system/charts/LineChart").then((m) => m.LineChart), { ssr: false });
@@ -88,8 +88,25 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     return points;
   }, [account, transactions, locale]);
 
-  if (isLoading || !household) return <Skeleton height={300} />;
-  if (!account) return <EmptyState message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />;
+  // Subpágina de detalle de cuenta: header propio con "volver", el shell no dibuja el suyo acá.
+  const backHeader = <AppHeader showScope={false} onBack={() => router.push("/accounts")} backLabel={t("accountsPage.detail.back")} />;
+
+  if (isLoading || !household) {
+    return (
+      <>
+        {backHeader}
+        <Skeleton height={300} />
+      </>
+    );
+  }
+  if (!account) {
+    return (
+      <>
+        {backHeader}
+        <EmptyState message={t("accountsPage.detail.notFound")} actionLabel={t("accountsPage.detail.backToList")} onAction={() => router.push("/accounts")} />
+      </>
+    );
+  }
 
   const isCreditCard = account.kind === "credit_card";
   const cycleTransactions = isCreditCard
@@ -121,20 +138,26 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     // cada montaje (garantiza que "+" siempre arranca en blanco) — cargar
     // el prefill ACÁ, antes de navegar, se perdía siempre porque ese reset
     // corre después. `CaptureFlow` lo aplica en un efecto propio, una vez.
-    const dueAmount = latestStatement ? latestStatement.statementBalance - latestStatement.paidAmount : 0n;
+    // Sin resumen cargado todavía (`card_statements` es carga manual por
+    // ciclo) no hay `latestStatement` — cae al saldo real de la tarjeta,
+    // que YA es la deuda acumulada, en vez de a 0.
+    const dueAmount = latestStatement ? latestStatement.statementBalance - latestStatement.paidAmount : -account.currentBalance;
     const params = new URLSearchParams({
       prefillKind: "transfer",
       prefillCounterAccountId: account.id,
       prefillAmountExpression: amountToExpression(dueAmount > 0n ? dueAmount : 0n, account.currencyCode, locale),
       prefillCurrency: account.currencyCode,
+      // El monto es fijo del lado de la tarjeta (destino) — se descubre
+      // cuánto sale del origen recién cuando se elige, nunca al revés.
+      prefillAmountPinnedTo: "counterAccount",
     });
     router.push(`/add?${params.toString()}`);
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
-      <IconButton icon="chevron-left" ariaLabel={t("accountsPage.detail.back")} onClick={() => router.push("/accounts")} style={{ alignSelf: "flex-start", margin: -11 }} />
-
+    <>
+      <AppHeader title={account.name} showScope={false} onBack={() => router.push("/accounts")} backLabel={t("accountsPage.detail.back")} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ textAlign: "center" }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>
           {account.name} · {t(ACCOUNT_KIND_MESSAGE_KEY[account.kind])}
@@ -221,6 +244,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           })
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

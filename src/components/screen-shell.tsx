@@ -14,10 +14,15 @@ export interface ScreenShellProps {
  * mismo patrón de columna centrada de `--content-max-width` que el shell
  * de la app, para que se vean bien en tablet/desktop sin estirarse
  * edge-to-edge. En mobile es indistinguible del comportamiento anterior.
+ *
+ * `page-backdrop` (opt-in, apagado por default — ver `docs/02-design-system.md`
+ * § 1.8) replica acá el mismo tratamiento que `.app-shell`, para que estas
+ * pantallas full-screen no queden con el fondo plano mientras el resto de
+ * la app tiene puntos.
  */
 export function ScreenShell({ children, style, background = "var(--page)", onClick }: ScreenShellProps) {
   return (
-    <div style={{ minHeight: "100svh", paddingTop: "var(--safe-top)", background, display: "flex", justifyContent: "center" }} onClick={onClick}>
+    <div className="page-backdrop" style={{ minHeight: "100svh", paddingTop: "var(--safe-top)", background, display: "flex", justifyContent: "center" }} onClick={onClick}>
       {/* `position: relative` — para que un `<Sheet>` (`position: absolute;
           inset: 0`) hijo quede acotado a esta columna en vez de taparle
           todo el viewport en desktop. */}

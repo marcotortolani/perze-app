@@ -78,7 +78,12 @@ export function SwipeableRow({ children, onSwipeLeftCommit, onSwipeRightCommit, 
           transform: `translateX(${dx}px)`,
           transition: dragging ? "none" : "transform var(--duration-fast) var(--ease-spring-snappy)",
           touchAction: "pan-y",
-          background: "var(--page)",
+          // Opaco solo mientras se desliza (para tapar los íconos de
+          // borrar/editar de abajo) — en reposo (`dx === 0`) transparente,
+          // igual que `DragRow` (`/accounts`) con `active`. Antes era
+          // `var(--page)` incondicional: pintaba un rectángulo sólido
+          // detrás de CADA fila todo el tiempo, no solo durante el gesto.
+          background: dragging || dx !== 0 ? "var(--page)" : "transparent",
         }}
       >
         {children}

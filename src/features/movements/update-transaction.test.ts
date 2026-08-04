@@ -32,6 +32,7 @@ function baseDraft(overrides: Partial<CaptureDraft> = {}): CaptureDraft {
     accountId: null,
     counterAccountId: null,
     counterFxRateOverride: null,
+    amountPinnedTo: "account",
     categoryId: "cat-1",
     occurredAt: "2026-07-27T12:00:00.000Z",
     payeeName: "",

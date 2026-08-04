@@ -1,8 +1,8 @@
 import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
-import { money } from "@/lib/money/money";
+import { money, type Money } from "@/lib/money/money";
 import type { NumberLocale } from "@/lib/money/parse";
-import { convert, rateFromInteger } from "@/lib/fx/rate";
+import { convert, invertRate, rateFromInteger } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { transactionsRepo, type NewTransactionInput } from "@/lib/repos/transactions-repo";
@@ -44,6 +44,24 @@ export function hasNonZeroAmount(expression: string, currency: string, numberLoc
 }
 
 /**
+ * Qué moneda interpreta el monto tipeado — normalmente la de `account`
+ * (origen), salvo `amountPinnedTo === "counterAccount"` (p. ej. "pagar
+ * tarjeta"): ahí el monto es un dato fijo del lado del destino. Un solo
+ * lugar para esta regla: `AmountStep` y `CaptureFlow` (`canSave`,
+ * `onQuickCategory`) la necesitan por separado y no puede quedar
+ * triplicada — divergerían apenas alguien tocara una sin la otra.
+ */
+export function resolveAmountCurrency(
+  draft: Pick<CaptureDraft, "currency" | "kind" | "amountPinnedTo">,
+  account: Pick<AccountRow, "currencyCode"> | undefined,
+  counterAccount: Pick<AccountRow, "currencyCode"> | undefined,
+  fallback = "UYU"
+): string {
+  const pinnedToCounter = draft.kind === "transfer" && draft.amountPinnedTo === "counterAccount";
+  return draft.currency || (pinnedToCounter ? counterAccount?.currencyCode : account?.currencyCode) || fallback;
+}
+
+/**
  * Traduce el borrador de captura a un movimiento real: resuelve el monto
  * (keypad), la conversión a la moneda base del household (`lib/fx`), y —
  * para transferencias — el lado de entrada. Guardar no puede fallar: si
@@ -52,49 +70,80 @@ export function hasNonZeroAmount(expression: string, currency: string, numberLoc
  */
 export async function saveDraftAsTransaction({ draft, household, userId, account, counterAccount, numberLocale = "es-UY" }: SaveDraftParams): Promise<TransactionRow> {
   const date = draft.occurredAt.slice(0, 10);
+  // "Pagar tarjeta" y flujos parecidos: el monto tipeado es un dato fijo
+  // del lado del DESTINO (`counterAccount`), no del origen — se resuelve
+  // aparte, más abajo, y nunca pasa por la conversión de "moneda
+  // capturada" de acá (esa es para el caso normal, monto anclado al origen).
+  const pinnedToCounter = draft.kind === "transfer" && draft.amountPinnedTo === "counterAccount" && !!counterAccount;
 
-  // Primera conversión (CLAUDE.md § dinero, "SON DOS CONVERSIONES, NO UNA"):
-  // lo que el usuario tipeó puede estar en otra moneda que la de la cuenta
-  // — `amount`/`currencyCode` SIEMPRE terminan en la moneda de la cuenta,
-  // nunca en la capturada. Esa conversión ocurre acá, en la captura.
-  const capturedCurrency = draft.currency || account.currencyCode;
-  const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency, numberLocale);
-
-  let amount = capturedAmount;
+  let amount: Money;
   let original: Pick<NewTransactionInput, "originalAmount" | "originalCurrency" | "originalRate"> = {
     originalAmount: null,
     originalCurrency: null,
     originalRate: null,
   };
+  // Cuando el monto está anclado al destino, esta pareja ya queda resuelta
+  // acá — la rama de transferencia más abajo la usa tal cual en vez de
+  // derivarla de `amount` (que es al revés de lo normal en este caso).
+  let pinnedCounterAmount: bigint | null = null;
+  let pinnedCounterFxRate: bigint | null = null;
 
-  if (capturedCurrency !== account.currencyCode) {
-    const captureResolution = await fxRepo.resolve({
-      householdId: household.id,
-      base: capturedCurrency,
-      quote: account.currencyCode,
-      date,
-    });
-    if (captureResolution.rate !== null) {
-      amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
-      original = {
-        originalAmount: capturedAmount.amount,
-        originalCurrency: capturedCurrency,
-        originalRate: captureResolution.rate,
-      };
+  if (pinnedToCounter) {
+    const counterAmountMoney = evaluateKeypadExpression(draft.amountExpression || "0", counterAccount!.currencyCode, numberLocale);
+    pinnedCounterAmount = counterAmountMoney.amount;
+    if (account.currencyCode === counterAccount!.currencyCode) {
+      amount = money(counterAmountMoney.amount, account.currencyCode);
     } else {
-      // A3 — sin cotización para la conversión de captura: nunca se
-      // reinterpreta el número tipeado como si ya estuviera en la moneda
-      // de la cuenta (100 USD tipeados no se guardan como 100 ARS).
-      // `amount` queda en 0 — placeholder no-corruptor, sin inventar un
-      // rate — y lo tipeado se preserva en `original_*` con
-      // `originalRate: null`; `needs_capture_fx` (columna generada en
-      // Postgres) marca el movimiento para resolución posterior.
-      amount = money(0n, account.currencyCode);
-      original = {
-        originalAmount: capturedAmount.amount,
-        originalCurrency: capturedCurrency,
-        originalRate: null,
-      };
+      const rate =
+        draft.counterFxRateOverride ??
+        (await fxRepo.resolve({ householdId: household.id, base: account.currencyCode, quote: counterAccount!.currencyCode, date })).rate;
+      if (rate !== null) {
+        pinnedCounterFxRate = rate;
+        amount = convert(counterAmountMoney, account.currencyCode, invertRate(rate));
+      } else {
+        // Mismo criterio que el A3 de abajo: sin rate, nunca se inventa un
+        // 1 — el lado de origen queda en 0 hasta que haya cotización.
+        amount = money(0n, account.currencyCode);
+      }
+    }
+  } else {
+    // Primera conversión (CLAUDE.md § dinero, "SON DOS CONVERSIONES, NO UNA"):
+    // lo que el usuario tipeó puede estar en otra moneda que la de la cuenta
+    // — `amount`/`currencyCode` SIEMPRE terminan en la moneda de la cuenta,
+    // nunca en la capturada. Esa conversión ocurre acá, en la captura.
+    const capturedCurrency = draft.currency || account.currencyCode;
+    const capturedAmount = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency, numberLocale);
+    amount = capturedAmount;
+
+    if (capturedCurrency !== account.currencyCode) {
+      const captureResolution = await fxRepo.resolve({
+        householdId: household.id,
+        base: capturedCurrency,
+        quote: account.currencyCode,
+        date,
+      });
+      if (captureResolution.rate !== null) {
+        amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
+        original = {
+          originalAmount: capturedAmount.amount,
+          originalCurrency: capturedCurrency,
+          originalRate: captureResolution.rate,
+        };
+      } else {
+        // A3 — sin cotización para la conversión de captura: nunca se
+        // reinterpreta el número tipeado como si ya estuviera en la moneda
+        // de la cuenta (100 USD tipeados no se guardan como 100 ARS).
+        // `amount` queda en 0 — placeholder no-corruptor, sin inventar un
+        // rate — y lo tipeado se preserva en `original_*` con
+        // `originalRate: null`; `needs_capture_fx` (columna generada en
+        // Postgres) marca el movimiento para resolución posterior.
+        amount = money(0n, account.currencyCode);
+        original = {
+          originalAmount: capturedAmount.amount,
+          originalCurrency: capturedCurrency,
+          originalRate: null,
+        };
+      }
     }
   }
 
@@ -176,19 +225,27 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
   if (draft.kind === "transfer") {
     if (!counterAccount) throw new Error("Una transferencia necesita cuenta de destino");
 
-    let counterAmount = amount.amount;
-    let counterFxRate = null as bigint | null;
-    if (counterAccount.currencyCode !== currency) {
-      if (draft.counterFxRateOverride !== null) {
-        // El usuario ajustó el rate a mano (`FxEditor`, slider ±5% sobre la
-        // sugerencia) — se usa tal cual, sin volver a resolver contra `fxRepo`.
-        counterAmount = convert(amount, counterAccount.currencyCode, draft.counterFxRateOverride).amount;
-        counterFxRate = draft.counterFxRateOverride;
-      } else {
-        const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
-        if (resolution.rate !== null) {
-          counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
-          counterFxRate = resolution.rate;
+    let counterAmount: bigint;
+    let counterFxRate: bigint | null;
+    if (pinnedToCounter) {
+      // Ya se resolvió arriba, junto con `amount` — acá no hay nada que derivar.
+      counterAmount = pinnedCounterAmount!;
+      counterFxRate = pinnedCounterFxRate;
+    } else {
+      counterAmount = amount.amount;
+      counterFxRate = null;
+      if (counterAccount.currencyCode !== currency) {
+        if (draft.counterFxRateOverride !== null) {
+          // El usuario ajustó el rate a mano (`FxEditor`, slider ±5% sobre la
+          // sugerencia) — se usa tal cual, sin volver a resolver contra `fxRepo`.
+          counterAmount = convert(amount, counterAccount.currencyCode, draft.counterFxRateOverride).amount;
+          counterFxRate = draft.counterFxRateOverride;
+        } else {
+          const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: counterAccount.currencyCode, date });
+          if (resolution.rate !== null) {
+            counterAmount = convert(amount, counterAccount.currencyCode, resolution.rate).amount;
+            counterFxRate = resolution.rate;
+          }
         }
       }
     }

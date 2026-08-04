@@ -10,7 +10,7 @@
  */
 export type ContentWidth = "narrow" | "wide";
 
-const WIDE_ROUTES = ["/transactions", "/accounts"];
+const WIDE_ROUTES = ["/", "/transactions", "/accounts"];
 
 export function contentWidthFor(pathname: string): ContentWidth {
   return WIDE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ? "wide" : "narrow";

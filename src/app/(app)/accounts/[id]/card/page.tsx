@@ -4,7 +4,7 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { AppHeader, Button, Chip, EmptyState, Keypad, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, AppHeader, Button, Chip, EmptyState, Keypad, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow } from "@/design-system";
 import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
 import type { IconName } from "@/design-system/core/Icon";
 import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
@@ -110,6 +110,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
         accountId: settleSourceAccount.id,
         counterAccountId: account.id,
         counterFxRateOverride: null,
+        amountPinnedTo: "account" as const,
         categoryId: null,
         occurredAt: new Date().toISOString(),
         payeeName: "",
@@ -159,9 +160,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
             {dueDate ? t("cardCyclePage.dueOn", { date: formatDateShort(locale, dueDate) }) : t("cardCyclePage.dueUnknown")}
           </div>
           <div style={{ marginTop: 6 }}>
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 44, fontWeight: 600, letterSpacing: "-.02em" }}>
-              {formatAmountCompact(money(dueAmount > 0n ? dueAmount : 0n, account.currencyCode), { showSign: false })}
-            </span>
+            <Amount value={money(dueAmount > 0n ? dueAmount : 0n, account.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
           </div>
           {closingDate ? (
             <div style={{ marginTop: 6, fontSize: 13, color: "var(--text-secondary)" }}>

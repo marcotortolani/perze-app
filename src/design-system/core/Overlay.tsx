@@ -259,14 +259,17 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
                 // dejar espacio vacío si el contenido es corto, este tope
                 // no resuelve eso, solo el techo.
                 maxHeight: "80dvh",
-                // Nunca X: un hijo de ancho fijo (un carrousel de cuentas,
-                // una grilla angosta) no debería poder abrir scroll
-                // horizontal en el sheet ENTERO — el contenido que
-                // legítimamente necesita desplazarse lateral (una tira de
-                // fechas, el carrousel) ya declara su propio `overflowX`
-                // contenido; acá solo hace falta Y.
-                overflowY: "auto",
-                overflowX: "hidden",
+                // `display:flex` en columna + `overflow:hidden` acá (no
+                // `overflowY:auto`): la agarradera y el título de `Sheet`
+                // quedan fuera de esta caja, en flujo normal, y solo el
+                // contenedor de `children` que arma `Sheet` (con su propio
+                // `flex:1; overflowY:auto`) scrollea. Antes el scroll vivía
+                // acá mismo, así que la agarradera y el título — primeros
+                // hijos del mismo contenedor — se iban con el resto del
+                // contenido en vez de quedar fijos arriba.
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
                 transform: sheetTransform,
                 transition: sheetTransition,
                 ...style,

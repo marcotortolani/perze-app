@@ -77,7 +77,13 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
 
   return (
     <Sheet open={open} title={t("movements.filters.title")} onClose={onClose} height={620}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", maxHeight: 460 }}>
+      {/* `height: "100%"` llena exacto el contenedor de scroll que ya pone
+          `Sheet` — así el único scroll real queda en el hijo de abajo
+          (`flex: 1; overflowY: auto`), y los botones (`flexShrink: 0`)
+          quedan siempre visibles como footer, sin un segundo scrollbar
+          anidado compitiendo con el de `Sheet`. */}
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1, minHeight: 0, overflowY: "auto" }}>
         <div>
           <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
             {t("movements.filters.period")}
@@ -145,19 +151,20 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
           </div>
         ) : null}
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{t("movements.filters.onlyPending")}</span>
-          <Switch checked={filters.onlyPending} onChange={(checked) => onChange({ ...filters, onlyPending: checked })} id="only-pending-switch" />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{t("movements.filters.onlyPending")}</span>
+            <Switch checked={filters.onlyPending} onChange={(checked) => onChange({ ...filters, onlyPending: checked })} id="only-pending-switch" />
+          </div>
         </div>
-      </div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-        <Button variant="secondary" onClick={() => onChange(defaultMovementsFilters())} style={{ flex: 1 }}>
-          {t("movements.filters.clearAll")}
-        </Button>
-        <Button onClick={onClose} style={{ flex: 2 }}>
-          {t("movements.filters.seeResults", { count: resultCount })}
-        </Button>
+        <div style={{ display: "flex", gap: 12, marginTop: 20, flexShrink: 0 }}>
+          <Button variant="secondary" onClick={() => onChange(defaultMovementsFilters())} style={{ flex: 1 }}>
+            {t("movements.filters.clearAll")}
+          </Button>
+          <Button onClick={onClose} style={{ flex: 2 }}>
+            {t("movements.filters.seeResults", { count: resultCount })}
+          </Button>
+        </div>
       </div>
     </Sheet>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 
 /**
  * D1/D2 en dos columnas de escritorio (`docs/02-design-system.md` §
@@ -16,6 +17,7 @@ import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
  */
 export default function TransactionsLayout({ children, detail }: { children: ReactNode; detail: ReactNode }) {
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
+  const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
 
   if (!isSplit) return <>{children}{detail}</>;
 
@@ -32,20 +34,27 @@ export default function TransactionsLayout({ children, detail }: { children: Rea
           podía forzarlo más ancho que `minmax(340px,420px)`, y
           `overflow-y: auto` sin `overflow-x` explícito activa
           `overflow-x: auto` implícito por la propia regla de `overflow`. */}
-      <div
-        style={{
-          minWidth: 0,
-          maxWidth: 420,
-          minHeight: 0,
-          overflowY: "auto",
-          overflowX: "hidden",
-          overscrollBehavior: "contain",
-          borderLeft: "1px solid var(--border)",
-          paddingLeft: 32,
-          paddingRight: 12,
-        }}
-      >
-        {detail}
+      {/* `scroll-fade-bottom` en un wrapper propio — mismo patrón que
+          `accounts/layout.tsx`. `paddingBottom: 32` adentro del scroller:
+          aire real al final para el fade. */}
+      <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "12px", minWidth: 0, maxWidth: 420, minHeight: 0 } as CSSProperties}>
+        <div
+          ref={detailScrollerRef}
+          style={{
+            minWidth: 0,
+            height: "100%",
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            overscrollBehavior: "contain",
+            borderLeft: "1px solid var(--border)",
+            paddingLeft: 32,
+            paddingRight: 12,
+            paddingBottom: 32,
+          }}
+        >
+          {detail}
+        </div>
       </div>
     </div>
   );

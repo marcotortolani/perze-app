@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, Button, EmptyState, IconButton, Keypad, Skeleton } from "@/design-system";
+import { Amount, AppHeader, Button, EmptyState, Keypad, Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
@@ -29,8 +29,25 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const [expr, setExpr] = useState("");
   const [saving, setSaving] = useState(false);
 
-  if (isLoading || !household || !userId) return <Skeleton height={300} />;
-  if (!account) return <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />;
+  // Subpágina de detalle de cuenta: header propio con "volver", el shell no dibuja el suyo acá.
+  const header = <AppHeader title={t("accountsPage.detail.reconcile")} showScope={false} onBack={() => router.back()} backLabel={t("accountsPage.reconcile.back")} />;
+
+  if (isLoading || !household || !userId) {
+    return (
+      <>
+        {header}
+        <Skeleton height={300} />
+      </>
+    );
+  }
+  if (!account) {
+    return (
+      <>
+        {header}
+        <EmptyState message={t("accountsPage.reconcile.notFound")} actionLabel={t("accountsPage.reconcile.back")} onAction={() => router.push("/accounts")} />
+      </>
+    );
+  }
 
   const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode, numberLocaleForUiLocale(locale));
   const currentBalance = money(account.currentBalance, account.currencyCode);
@@ -88,9 +105,9 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 16, paddingBottom: 24, minHeight: "100%" }}>
-      <IconButton icon="chevron-left" ariaLabel={t("accountsPage.reconcile.back")} onClick={() => router.back()} style={{ alignSelf: "flex-start", margin: -11 }} />
-
+    <>
+      {header}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 16, paddingBottom: 24, minHeight: "100%" }}>
       <div style={{ textAlign: "center" }}>
         <span className="t-label" style={{ color: "var(--text-secondary)" }}>{t("accountsPage.reconcile.prompt", { account: account.name })}</span>
         <div style={{ marginTop: 8, fontFamily: "var(--font-mono)", fontSize: 32 }}>
@@ -115,6 +132,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
           {hasDiff ? t("accountsPage.reconcile.createAdjustment") : t("accountsPage.reconcile.noDifference")}
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -12,7 +12,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
-import { formatWeekdayNarrow, type Locale } from "@/i18n/formatting";
+import { formatMonthYearHeading, formatWeekdayNarrow, type Locale } from "@/i18n/formatting";
 
 function monthGrid(year: number, month: number): (string | null)[] {
   const first = new Date(year, month, 1);
@@ -72,8 +72,8 @@ export default function MovementsCalendarPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 16, paddingBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <IconButton icon="chevron-left" ariaLabel={t("transactions.calendar.back")} onClick={() => router.push("/transactions")} style={{ margin: -11 }} />
-        <span className="t-body" style={{ fontWeight: 600, textTransform: "capitalize" }}>
-          {new Date(year, month, 1).toLocaleDateString(locale, { month: "long", year: "numeric" })}
+        <span className="t-body" style={{ fontWeight: 600 }}>
+          {formatMonthYearHeading(locale, new Date(year, month, 1))}
         </span>
         <div style={{ display: "flex", gap: 4 }}>
           <button

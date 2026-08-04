@@ -7,12 +7,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { AmountScrubber, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
-import { invertRate } from "@/lib/fx/rate";
-import { formatAmount } from "@/lib/money/format";
+import { convert, invertRate } from "@/lib/fx/rate";
+import { formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
+import { resolveAmountCurrency } from "./save-transaction";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -108,7 +109,14 @@ export function AmountStep({
     { id: "income", label: t("capture.kind.income") },
     { id: "transfer", label: t("capture.kind.transfer") },
   ];
-  const currency = draft.currency || account?.currencyCode || "UYU";
+  const isTransfer = draft.kind === "transfer";
+  // "Pagar tarjeta" y flujos parecidos: el monto tipeado es un dato fijo
+  // del lado del DESTINO (lo que hay que cubrir), no del origen — que
+  // puede todavía no estar elegido. Sin esto, mientras no hay origen el
+  // monto se mostraba en la moneda de una cuenta arbitraria (el fallback
+  // de `CaptureFlow`), nunca en la de la tarjeta.
+  const pinnedToCounter = isTransfer && draft.amountPinnedTo === "counterAccount";
+  const currency = resolveAmountCurrency(draft, account, counterAccount);
   const expression = draft.amountExpression || "0";
   // Mientras haya un operador tipeado, el héroe se queda congelado en el
   // monto ANTES de ese operador — antes se reevaluaba en cada tecla y
@@ -133,7 +141,6 @@ export function AmountStep({
   }, [expression, currency, numberLocale]);
   const pendingPreview = pending ? formatKeypadExpressionPreview(expression) : null;
 
-  const isTransfer = draft.kind === "transfer";
   const hasAccounts = accounts.length > 0;
   // Dos cuentas de distinta moneda en una transferencia (p. ej. pagar una
   // tarjeta en ARS desde una cuenta en USD) necesitan el mismo rate que
@@ -151,6 +158,14 @@ export function AmountStep({
   const rateNumeratorIsSource = !(account && counterAccount && counterAccount.currencyCode === "USD" && account.currencyCode !== "USD");
   const toInternalRate = (displayRate: bigint) => (rateNumeratorIsSource ? displayRate : invertRate(displayRate));
   const toDisplayRate = (internalRate: bigint) => (rateNumeratorIsSource ? internalRate : invertRate(internalRate));
+  const effectiveRate = draft.counterFxRateOverride ?? suggestedRate.data?.rate ?? null;
+  // Con el monto anclado al destino, lo que el usuario necesita ver es
+  // cuánto sale REALMENTE de la cuenta de origen — `evaluated` ya está en
+  // la moneda de destino (ver `currency` de arriba), así que se invierte
+  // el mismo rate que el `FxEditor` está mostrando/editando para llegar
+  // al monto de origen. Es una vista previa de solo lectura: lo que se
+  // guarda se recalcula igual al confirmar (`save-transaction.ts`).
+  const pinnedSourcePreview = pinnedToCounter && crossCurrencyTransfer && effectiveRate !== null ? convert(evaluated, account!.currencyCode, invertRate(effectiveRate)) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
@@ -207,6 +222,12 @@ export function AmountStep({
           suggested={toDisplayRate(suggestedRate.data.rate)}
           onChange={(displayRate) => onCounterFxRateChange(toInternalRate(displayRate))}
         />
+      ) : null}
+
+      {pinnedSourcePreview ? (
+        <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
+          {t("capture.transferPinnedPreview", { amount: formatAmountCompact(pinnedSourcePreview, { showSign: false }), account: account!.name })}
+        </p>
       ) : null}
 
       {!isTransfer ? (

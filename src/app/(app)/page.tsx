@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -23,6 +24,7 @@ import { Sparkline } from "@/design-system/charts";
 import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
 import { CountUp } from "@/components/motion";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { BirthdayBanner } from "@/components/birthday-banner";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
@@ -108,6 +110,7 @@ function FitStatValue({ text }: { text: string }) {
 /** Home real — Bloque B, Fase 6: hero de patrimonio, cuentas, estado del mes, insight, últimos movimientos. */
 export default function HomePage() {
   const router = useRouter();
+  const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
@@ -240,22 +243,32 @@ export default function HomePage() {
   const liquidityAccounts = allAccounts.filter((a) => a.kind !== "credit_card");
   const creditCardAccounts = allAccounts.filter((a) => a.kind === "credit_card");
 
-  const accountSummaries = liquidityAccounts.map((a) => ({
+  const liquiditySummaries = liquidityAccounts.map((a) => ({
     id: a.id,
     institution: a.name,
     name: t(ACCOUNT_KIND_MESSAGE_KEY[a.kind]),
     balance: money(a.currentBalance, a.currencyCode),
     country: a.countryCode ?? undefined,
   }));
-  if (currencies.size > 1) {
-    accountSummaries.push({
-      id: "__total",
-      institution: t("home.convertedTotal"),
-      name: t("home.accountsCount", { count: allAccounts.length }),
-      balance: netWorth.data?.netWorth ?? zero(baseCurrency),
-      country: undefined,
-    });
-  }
+  const totalSummary =
+    currencies.size > 1
+      ? {
+          id: "__total",
+          institution: t("home.convertedTotal"),
+          name: t("home.accountsCount", { count: allAccounts.length }),
+          balance: netWorth.data?.netWorth ?? zero(baseCurrency),
+          country: undefined,
+        }
+      : undefined;
+
+  // Bento en desktop (`AccountCarousel gridOnDesktop`): la card destacada
+  // ocupa 2 columnas — el total convertido si hay más de una moneda en
+  // uso, si no la primera cuenta. El resto se ordena por moneda: cifras
+  // en la misma moneda (comparables entre sí) quedan agrupadas, en vez de
+  // un orden arbitrario que las mezcla al azar.
+  const sortedLiquiditySummaries = [...liquiditySummaries].sort((a, b) => a.balance.currency.localeCompare(b.balance.currency));
+  const accountSummaries = totalSummary ? [totalSummary, ...sortedLiquiditySummaries] : sortedLiquiditySummaries;
+  const featuredAccountId = accountSummaries[0]?.id;
 
   const recentTransactions = allTransactions.slice(0, 5);
 
@@ -263,7 +276,15 @@ export default function HomePage() {
   const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
+    // `scroll-fade-bottom`: mismo tratamiento que `/accounts` — home maneja
+    // su propio scroll (sumada a `OWN_SCROLLER_ROUTES` en `(app)/layout.tsx`)
+    // para tener el mismo fade y aire real al final de "Movimientos recientes".
+    <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
+      <div
+        ref={scrollerRef}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 8, paddingRight: 8 }}
+      >
       {showBirthdayBanner ? <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} /> : null}
       {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
       {conflicts.length > 0 ? (
@@ -275,6 +296,21 @@ export default function HomePage() {
         />
       ) : null}
 
+      {/* Desktop ancho (`xl`, 1280px — `SPLIT_BREAKPOINT`, la misma que ya
+          usan `/accounts` y `/transactions` para su split de lista+detalle
+          por el mismo motivo): dos columnas para aprovechar el ancho de
+          `--content-max-width-wide` (home ahora está en `WIDE_ROUTES`, ver
+          `content-width.ts`) en vez de una sola columna de lectura angosta.
+          NO `lg` (1024px): ahí el sidebar ya ocupa su espacio, y partir en
+          2 columnas AL MISMO TIEMPO dejaba el bento de cuentas apretado en
+          media página real (~350-400px) — muy poco para que sus cards no
+          desborden. Entre 1024 y 1279px el home queda en 1 sola columna con
+          todo el ancho de contenido disponible; recién a 1280px se parte.
+          En mobile (`grid-cols-1`) es el mismo orden vertical de siempre: el
+          grid de una sola columna ignora los `gridColumn` de más abajo. */}
+      <div className="grid grid-cols-1 xl:grid-cols-2" style={{ gap: 28, marginTop: showBirthdayBanner || (pending && pending > 0) || conflicts.length > 0 ? 28 : 0 }}>
+      {/* Columna izquierda: patrimonio, cuentas, tarjetas, gastado/ingresado — el resumen financiero. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
       <section style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="t-caption" style={{ color: "var(--text-muted)", letterSpacing: ".08em", textTransform: "uppercase" }}>
@@ -329,7 +365,24 @@ export default function HomePage() {
       {/* `"__total"` es la card sintética del convertido — no es una cuenta
           real, así que ahí sí cae al listado general; el resto va directo
           al detalle de ESA cuenta, no a la lista completa. */}
-      <AccountCarousel accounts={accountSummaries} privacy={privacy} onSelect={(id) => router.push(id === "__total" ? "/accounts" : `/accounts/${id}`)} />
+      {/* `flexShrink: 0`: sin esto colapsaba a 0px de alto. `overflowX: "auto"`
+          en el propio carrusel hace que el navegador coaccione
+          `overflow-y` a `auto` también (misma regla CSSOM que ya rompía
+          scroll horizontal en `accounts/layout.tsx`/`transactions/layout.tsx`,
+          acá al revés) — como hijo de este flex-column con `height:100%`,
+          eso le da un `min-height` automático de 0 (la regla de flexbox
+          para ítems que son su propio contenedor de scroll), así que
+          absorbía solo TODA la presión de achique cuando el contenido no
+          entra entero, mientras sus hermanos (sin overflow propio, min-height
+          content-based) no cedían nada. */}
+      <AccountCarousel
+        accounts={accountSummaries}
+        privacy={privacy}
+        onSelect={(id) => router.push(id === "__total" ? "/accounts" : `/accounts/${id}`)}
+        gridOnDesktop
+        featuredId={featuredAccountId}
+        style={{ flexShrink: 0 }}
+      />
 
       {creditCardAccounts.length > 0 ? (
         <section>
@@ -351,6 +404,13 @@ export default function HomePage() {
         </section>
       ) : null}
 
+      </div>
+
+      {/* Columna derecha: gastado/ingresado, el insight del período y la
+          actividad reciente. Gastado/ingresado se movió acá (no queda en la
+          izquierda, junto al grid de cuentas) porque ahí competía por ancho
+          con el grid en vez de tener su propia fila cómoda. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
       <section style={{ display: "flex", gap: 24 }}>
         <button
           type="button"
@@ -440,6 +500,9 @@ export default function HomePage() {
           })}
         </div>
       </SectionGroup>
+      </div>
+      </div>
+      </div>
     </div>
   );
 }

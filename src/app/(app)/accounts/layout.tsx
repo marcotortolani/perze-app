@@ -1,11 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 
 /** E1/E2 en dos columnas de escritorio — mismo patrón que `transactions/layout.tsx`, ver esa nota. */
 export default function AccountsLayout({ children, detail }: { children: ReactNode; detail: ReactNode }) {
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
+  const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
 
   if (!isSplit) return <>{children}{detail}</>;
 
@@ -20,20 +22,30 @@ export default function AccountsLayout({ children, detail }: { children: ReactNo
           implícito por regla de CSSOM (spec de `overflow`), de ahí el
           scroll horizontal. `overflowX: hidden` lo cierra del todo: el
           contenido de esta columna siempre tiene que entrar en su ancho. */}
-      <div
-        style={{
-          minWidth: 0,
-          maxWidth: 420,
-          minHeight: 0,
-          overflowY: "auto",
-          overflowX: "hidden",
-          overscrollBehavior: "contain",
-          borderLeft: "1px solid var(--border)",
-          paddingLeft: 32,
-          paddingRight: 12,
-        }}
-      >
-        {detail}
+      {/* `scroll-fade-bottom` en un wrapper propio (no en el scroller): el
+          scroller de abajo ya tiene `overflowY:auto` sin `position:relative`
+          propio, pero el patrón se mantiene igual que en accounts/page.tsx —
+          el fade necesita un contenedor no-scrolleable como containing
+          block. `paddingBottom: 32` adentro del scroller: aire real al
+          final para el fade, mismo criterio que el resto. */}
+      <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "12px", minWidth: 0, maxWidth: 420, minHeight: 0 } as CSSProperties}>
+        <div
+          ref={detailScrollerRef}
+          style={{
+            minWidth: 0,
+            height: "100%",
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            overscrollBehavior: "contain",
+            borderLeft: "1px solid var(--border)",
+            paddingLeft: 32,
+            paddingRight: 12,
+            paddingBottom: 32,
+          }}
+        >
+          {detail}
+        </div>
       </div>
     </div>
   );

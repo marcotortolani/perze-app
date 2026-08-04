@@ -61,6 +61,20 @@ export function formatMonthYear(locale: Locale, date: Date): string {
 }
 
 /**
+ * Mes + año para encabezados de navegación ("Septiembre 2026"), sin el
+ * conector narrativo de `formatMonthYear` ("septiembre de 2026" — correcto
+ * en una oración, pero no en un título). `text-transform: capitalize` de
+ * CSS capitaliza cada palabra del string, incluida la preposición "de" —
+ * por eso la mayúscula de la primera letra se hace acá, a mano, sobre el
+ * nombre del mes solo.
+ */
+export function formatMonthYearHeading(locale: Locale, date: Date): string {
+  const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
+  const capitalized = month.charAt(0).toUpperCase() + month.slice(1);
+  return `${capitalized} ${date.getFullYear()}`;
+}
+
+/**
  * Fecha puramente numérica (día/mes/año), para las pocas pantallas que
  * hoy muestran una — el resto de la app usa fechas "narrativas" (nombre
  * de mes/día, `formatDateShort`/`formatDateLong` arriba) a propósito, y

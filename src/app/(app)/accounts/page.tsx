@@ -1,9 +1,11 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Amount, Card, DragRow, EmptyState, ErrorState, Icon, ListRow, Skeleton, SkeletonRow, StatusBadge } from "@/design-system";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useNetWorth } from "@/hooks/use-net-worth";
@@ -32,6 +34,7 @@ const LIABILITY_KINDS = new Set(["credit_card", "loan"]);
 export default function AccountsPage() {
   const t = useTranslations();
   const router = useRouter();
+  const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const isDesktop = useIsDesktop();
   const { data: household } = useCurrentHousehold();
   const accountsQuery = useAccounts(household?.id);
@@ -101,7 +104,11 @@ export default function AccountsPage() {
     );
 
   return (
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <div
+      className="scroll-fade-bottom"
+      data-scroll-overflow={overflowing}
+      style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 } as CSSProperties}
+    >
       <div style={{ flexShrink: 0, textAlign: "center", paddingTop: 16 }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.netWorth")}</span>
         {netWorth.data ? (
@@ -122,9 +129,13 @@ export default function AccountsPage() {
       </div>
 
       <div
-        className="pb-[calc(var(--block-gap)+18px)] lg:pb-0"
-        // `paddingRight`: separa las tarjetas de la barra de scroll en desktop.
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24, paddingRight: 8 }}
+        ref={scrollerRef}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+        // `paddingRight`: separa las tarjetas de la barra de scroll en
+        // desktop. `lg:pb-8` (32px, no 0): aire real al final de la lista,
+        // consumido por el fade de `scroll-fade-bottom` de arriba en vez de
+        // que el fade tape directamente el último ítem.
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24, paddingRight: 8 }}
       >
         <ListRow icon="plus" label={t("accountsPage.list.newAccount")} variant="action" onClick={() => router.push("/accounts/new")} />
         {!simple ? <ListRow icon="bank" label={t("accountsPage.list.currenciesAndRates")} onClick={() => router.push("/currencies")} /> : null}
@@ -167,13 +178,6 @@ export default function AccountsPage() {
           </div>
         ) : null}
       </div>
-
-      {/* Difumina el borde inferior del scroller — decorativo, no bloquea clicks. */}
-      <div
-        aria-hidden
-        className="hidden lg:block"
-        style={{ position: "absolute", left: 0, right: 8, bottom: 0, height: 32, background: "linear-gradient(to bottom, transparent 0%, var(--page) 100%)", pointerEvents: "none" }}
-      />
     </div>
   );
 }

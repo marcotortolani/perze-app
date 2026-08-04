@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge } from "@/design-system";
+import { AppHeader, Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
@@ -225,19 +225,24 @@ export default function CurrenciesPage() {
   ) : null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 16, paddingBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <IconButton icon="chevron-left" ariaLabel={t("currenciesPage.back")} onClick={() => router.push("/accounts")} style={{ margin: -11 }} />
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={refreshing || currencies.length === 0}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: 0, cursor: refreshing ? "default" : "pointer", color: "var(--primary-ink)", fontSize: 13, opacity: refreshing || currencies.length === 0 ? 0.5 : 1 }}
-        >
-          <Icon name="refresh" size={16} color="var(--primary-ink)" />
-          {refreshing ? t("currenciesPage.refreshing") : t("currenciesPage.refresh")}
-        </button>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 24 }}>
+      <AppHeader
+        title={t("settingsPage.fxSources")}
+        showScope={false}
+        onBack={() => router.push("/accounts")}
+        backLabel={t("currenciesPage.back")}
+        right={
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing || currencies.length === 0}
+            style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: 0, cursor: refreshing ? "default" : "pointer", color: "var(--primary-ink)", fontSize: 13, opacity: refreshing || currencies.length === 0 ? 0.5 : 1 }}
+          >
+            <Icon name="refresh" size={16} color="var(--primary-ink)" />
+            {refreshing ? t("currenciesPage.refreshing") : t("currenciesPage.refresh")}
+          </button>
+        }
+      />
 
       {currencies.length === 0 ? (
         <EmptyState message={t("currenciesPage.empty")} actionLabel={t("currenciesPage.addCurrency")} onAction={() => setAddingCurrency(true)} />

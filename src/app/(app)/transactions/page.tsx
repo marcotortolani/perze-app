@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Banner, Button, EmptyState, ErrorState, Icon, Skeleton, SkeletonRow, StatusBadge, TransactionRow } from "@/design-system";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import type { Locale } from "@/i18n/formatting";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -61,6 +63,7 @@ export default function MovementsPage() {
   const locale = useLocale() as Locale;
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
+  const { ref: fadeScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
@@ -313,15 +316,34 @@ export default function MovementsPage() {
       {items.length === 0 ? (
         <EmptyState message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
       ) : (
-        <div
-          ref={parentRef}
-          className="pb-[calc(var(--block-gap)+18px)] lg:pb-0"
-          // `paddingRight`: separa el texto/monto de la barra de scroll,
-          // que si no queda pegada contra el borde del contenido en desktop.
-          style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", position: "relative", paddingRight: 8 }}
-        >
-          <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
+        // Wrapper propio para el fade: el scroller de abajo ya usa su
+        // `position:relative` para el virtualizador (anclar las filas
+        // absolutas), así que `scroll-fade-bottom` no puede ir ahí — necesita
+        // un contenedor no-scrolleable distinto. No puede ir en el root de la
+        // página tampoco: la barra de selección múltiple y el sheet de
+        // filtros son hermanos posteriores fuera de este `ternary`, y el fade
+        // no debe taparlos.
+        <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", flex: 1, minHeight: 0 } as CSSProperties}>
+          <div
+            // Un solo nodo, dos consumidores: el virtualizador necesita
+            // `parentRef` para medir el scroll; `useScrollOverflow` necesita
+            // el mismo nodo para comparar `scrollHeight`/`clientHeight`. Un
+            // `ref` de React solo acepta un valor, así que un callback ref
+            // asigna `parentRef.current` y además reenvía el nodo al
+            // callback ref que devuelve el hook.
+            ref={(node) => {
+              parentRef.current = node;
+              fadeScrollerRef(node);
+            }}
+            className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+            // `paddingRight`: separa el texto/monto de la barra de scroll,
+            // que si no queda pegada contra el borde del contenido en
+            // desktop. `lg:pb-8` (32px, no 0): aire real al final de la
+            // lista para el fade de arriba, igual que en `/accounts`.
+            style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", position: "relative", paddingRight: 8 }}
+          >
+            <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+              {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = items[virtualRow.index];
               if (!item) return null;
               return (
@@ -390,6 +412,7 @@ export default function MovementsPage() {
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       )}

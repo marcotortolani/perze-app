@@ -69,6 +69,22 @@ function Row({ children }: { children: React.ReactNode }) {
 
 const DEMO_MONEY = money(125_000n, "UYU");
 
+// Mismos tres pasos por eje que `BACKDROP_DENSITIES`/`BACKDROP_INTENSITIES`
+// (`src/lib/backdrop/constants.ts`) y los mismos valores que sus overrides
+// en `globals.css` — acá hardcodeados para no depender del toggle global
+// `data-backdrop` al calibrar.
+const BACKDROP_DENSITY_DEMOS = [
+  { key: "loose", gap: "24px", label: "Amplia" },
+  { key: "normal", gap: "16px", label: "Normal" },
+  { key: "tight", gap: "12px", label: "Compacta" },
+] as const;
+const BACKDROP_INTENSITY_DEMOS = [
+  { key: "subtle", mix: "35%", label: "Sutil" },
+  { key: "normal", mix: "55%", label: "Normal" },
+  { key: "strong", mix: "80%", label: "Marcada" },
+  { key: "vivid", mix: "100%", label: "Intensa" },
+] as const;
+
 export default function ComponentsPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
@@ -352,6 +368,38 @@ export default function ComponentsPage() {
         />
         <Sparkline values={[10, 14, 9, 18, 22, 19, 25]} />
         <SeriesLegend series={[{ label: "Supermercado", value: "42%" }, { label: "Restaurantes", value: "28%" }]} />
+      </Section>
+
+      <Section title="Fondo de puntos (opt-in — Ajustes)">
+        <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+          Los 12 combos de densidad × intensidad que el usuario puede elegir en Ajustes. Cada
+          celda replica la fórmula de <code>page-backdrop</code> (`globals.css`) de forma
+          aislada, para calibrar sin depender del toggle global.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          {BACKDROP_DENSITY_DEMOS.map((density) =>
+            BACKDROP_INTENSITY_DEMOS.map((intensity) => (
+              <div key={`${density.key}-${intensity.key}`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div
+                  style={{
+                    position: "relative",
+                    height: 100,
+                    borderRadius: "var(--radius-card)",
+                    overflow: "hidden",
+                    background: "var(--surface-1)",
+                    backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--border) ${intensity.mix}, transparent) 1px, transparent 1px)`,
+                    backgroundSize: `${density.gap} ${density.gap}`,
+                    WebkitMaskImage: "radial-gradient(ellipse 90% 70% at 50% 45%, #000 35%, transparent 100%)",
+                    maskImage: "radial-gradient(ellipse 90% 70% at 50% 45%, #000 35%, transparent 100%)",
+                  }}
+                />
+                <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+                  {density.label} · {intensity.label}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </Section>
 
       <Section title="Sistemas (Bloque L)">

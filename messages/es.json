@@ -213,6 +213,7 @@
   "from": "DESDE",
   "to": "HACIA",
   "invert": "Invertir",
+  "transferPinnedPreview": "Se descuentan {amount} de {account}",
   "voice": "Voz",
   "photo": "Foto",
   "details": "Detalles",
@@ -1069,6 +1070,21 @@
    "dmy": "Día/mes/año",
    "mdy": "Mes/día/año",
    "ymd": "Año-mes-día"
+  },
+  "backdrop": "Fondo de puntos",
+  "backdropHint": "Una textura sutil de puntos detrás del contenido, con menos presencia cerca de los bordes de la pantalla. No aparece en encabezados, menús ni ventanas.",
+  "backdropDensity": "Separación de los puntos",
+  "backdropDensityOptions": {
+   "loose": "Amplia",
+   "normal": "Normal",
+   "tight": "Compacta"
+  },
+  "backdropIntensity": "Intensidad",
+  "backdropIntensityOptions": {
+   "subtle": "Sutil",
+   "normal": "Normal",
+   "strong": "Marcada",
+   "vivid": "Intensa"
   }
  },
  "modulesPage": {
