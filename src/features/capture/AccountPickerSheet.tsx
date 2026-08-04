@@ -27,7 +27,12 @@ export function AccountPickerSheet({ open, title, accounts, onSelect, onClose }:
   const pinUnlocked = usePinUnlocked();
 
   return (
-    <Sheet open={open} title={title} onClose={onClose} height={420}>
+    // 8 filas de 56px sin scroll (`ListRow` es de altura fija) — antes
+    // `420` apenas entraban 5. `Overlay` sigue capando a `80dvh`, así que
+    // en un teléfono muy bajo (iPhone SE) igual aparece scroll; es el
+    // límite físico de pantalla, no algo que se pueda subir más sin tapar
+    // toda la pantalla.
+    <Sheet open={open} title={title} onClose={onClose} height={560}>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {accounts.map((a) => (
           <AccountRow

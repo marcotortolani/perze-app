@@ -11,6 +11,55 @@ import { categorizationRulesRepo } from "@/lib/repos/categorization-rules-repo";
 import { evaluateCategorizationRules } from "@/lib/analytics/categorization-rules";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 
+export interface ResolvedFx {
+  fxRate: bigint | null;
+  fxSource: NewTransactionInput["fxSource"];
+  fxProvider: string | null;
+  fxQuoteKind: string | null;
+  fxResolvedAt: string | null;
+  amountBase: bigint | null;
+}
+
+/**
+ * Resuelve `fxRate`/`fxSource`/`amountBase` para un monto ya en
+ * `currency` (la moneda de la cuenta) contra la moneda base del household
+ * — misma cadena que usa cualquier captura normal (override → cotización
+ * del día → última conocida → `pending`, nunca `rate = 1` inventado).
+ *
+ * Antes de esto, `/accounts/[id]/reconcile` y el ajuste de reconciliación
+ * de `payCard()` decidían esto a mano con un ternario binario
+ * (`currency === baseCurrency ? "identity" : "pending"`) — nunca
+ * intentaban resolver de verdad, así que un ajuste en una moneda con
+ * cotización perfectamente disponible (override cargado, tasa del día)
+ * quedaba `pending` igual, obligando a resolverlo a mano después aunque
+ * el dato ya estuviera ahí. Se extrae acá para que las dos pantallas usen
+ * la misma resolución real que ya usa `saveDraftAsTransaction`.
+ */
+export async function resolveFxForAccountCurrency(household: HouseholdRow, currency: string, amount: Money, date: string): Promise<ResolvedFx> {
+  if (currency === household.baseCurrency) {
+    // Identidad de moneda no es lo mismo que "sin resolver" — acá va 1
+    // explícito, igual que hace `resolveFxRate` para `base === quote`.
+    return {
+      fxRate: rateFromInteger(1),
+      fxSource: "identity",
+      fxProvider: null,
+      fxQuoteKind: null,
+      fxResolvedAt: todayIso(),
+      amountBase: amount.amount,
+    };
+  }
+
+  const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: household.baseCurrency, date });
+  return {
+    fxRate: resolution.rate,
+    fxSource: resolution.source,
+    fxProvider: resolution.provider,
+    fxQuoteKind: resolution.quoteKind,
+    fxResolvedAt: resolution.rate !== null ? new Date().toISOString() : null,
+    amountBase: resolution.rate !== null ? convert(amount, household.baseCurrency, resolution.rate).amount : null,
+  };
+}
+
 export interface SaveDraftParams {
   draft: CaptureDraft;
   household: HouseholdRow;
@@ -98,6 +147,27 @@ export function computeTransferDebitAmount(
     const rate = draft.counterFxRateOverride ?? suggestedRate;
     if (rate === null) return null;
     return convert(counterAmountMoney, account.currencyCode, invertRate(rate)).amount;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cuánto sale de `account` para un gasto — en su propia moneda, listo para
+ * comparar contra `account.currentBalance` (saldo insuficiente). Mismo
+ * criterio que la rama no-pineada de `computeTransferDebitAmount`: el
+ * monto tipeado ya está en la moneda de captura, sin FX entre cuentas
+ * (un gasto no tiene cuenta de destino). `null` si la expresión no
+ * evalúa — nunca se inventa un número para no bloquear ni aprobar por error.
+ */
+export function computeExpenseDebitAmount(
+  draft: Pick<CaptureDraft, "kind" | "amountExpression" | "currency" | "amountPinnedTo">,
+  account: AccountRow | undefined,
+  numberLocale: NumberLocale
+): bigint | null {
+  if (draft.kind !== "expense" || !account) return null;
+  try {
+    return evaluateKeypadExpression(draft.amountExpression || "0", resolveAmountCurrency(draft, account, undefined), numberLocale).amount;
   } catch {
     return null;
   }
@@ -231,38 +301,7 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
     source: "manual",
   };
 
-  let fx: Pick<NewTransactionInput, "fxRate" | "fxSource" | "fxProvider" | "fxQuoteKind" | "fxResolvedAt" | "amountBase"> = {
-    fxRate: null,
-    fxSource: "identity",
-    fxProvider: null,
-    fxQuoteKind: null,
-    fxResolvedAt: null,
-    amountBase: null,
-  };
-
-  if (currency === household.baseCurrency) {
-    // `fxRate: null` es la señal de `needs_fx` (`docs/01-arquitectura-datos.md`
-    // § 2.5) — identidad de moneda no es lo mismo que "sin resolver", así que
-    // acá va 1 explícito, igual que hace `resolveFxRate` para `base === quote`.
-    fx = {
-      fxRate: rateFromInteger(1),
-      fxSource: "identity",
-      fxProvider: null,
-      fxQuoteKind: null,
-      fxResolvedAt: todayIso(),
-      amountBase: amount.amount,
-    };
-  } else {
-    const resolution = await fxRepo.resolve({ householdId: household.id, base: currency, quote: household.baseCurrency, date });
-    fx = {
-      fxRate: resolution.rate,
-      fxSource: resolution.source,
-      fxProvider: resolution.provider,
-      fxQuoteKind: resolution.quoteKind,
-      fxResolvedAt: resolution.rate !== null ? new Date().toISOString() : null,
-      amountBase: resolution.rate !== null ? convert(amount, household.baseCurrency, resolution.rate).amount : null,
-    };
-  }
+  const fx = await resolveFxForAccountCurrency(household, currency, amount, date);
 
   if (draft.kind === "transfer") {
     if (!counterAccount) throw new Error("Una transferencia necesita cuenta de destino");

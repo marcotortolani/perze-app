@@ -41,6 +41,11 @@ export default function MirrorModePage({ params }: { params: Promise<{ memberId:
   const target = members.find((m) => m.profileId === memberId);
   const accounts = accountsQuery.data ?? [];
   const transactions = transactionsQuery.data ?? [];
+  // Set de tarjetas de las cuentas ESPEJADAS, nunca de las propias del que
+  // mira — mismo criterio que el resto de esta pantalla, nunca amplía lo
+  // que el modo espejo puede ver. Sin `useMemo`: correr después de un
+  // `return` temprano rompe las reglas de hooks, y el cálculo es barato.
+  const mirrorCardIds = new Set(accounts.filter((a) => a.kind === "credit_card").map((a) => a.id));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -65,14 +70,19 @@ export default function MirrorModePage({ params }: { params: Promise<{ memberId:
           {transactions.length === 0 ? (
             <EmptyState message={t("familyPage.mirrorNoTransactions")} />
           ) : (
-            transactions.slice(0, 30).map((tx) => (
-              <TransactionRow
-                key={tx.id}
-                merchant={tx.note ?? t("transactions.list.movement")}
-                value={money(tx.kind === "expense" ? -BigInt(tx.amount) : BigInt(tx.amount), tx.currencyCode)}
-                polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" ? "neutral" : "negative"}
-              />
-            ))
+            transactions.slice(0, 30).map((tx) => {
+              const cardPayment = tx.kind === "transfer" && tx.counterAccountId !== null && mirrorCardIds.has(tx.counterAccountId);
+              const reconciliation = tx.kind === "adjustment";
+              return (
+                <TransactionRow
+                  key={tx.id}
+                  icon={reconciliation ? "target" : cardPayment ? "credit-card" : undefined}
+                  merchant={tx.note ?? (reconciliation ? t("transactions.list.reconciliation") : cardPayment ? t("transactions.list.cardPayment") : t("transactions.list.movement"))}
+                  value={money(tx.kind === "expense" ? -BigInt(tx.amount) : BigInt(tx.amount), tx.currencyCode)}
+                  polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" || reconciliation ? "neutral" : "negative"}
+                />
+              );
+            })
           )}
         </div>
       </div>

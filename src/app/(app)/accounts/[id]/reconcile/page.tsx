@@ -11,7 +11,7 @@ import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money, subtract } from "@/lib/money/money";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
-import { todayIso } from "@/lib/repos/ids";
+import { resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
@@ -47,6 +47,14 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
     if (!hasDiff || saving) return;
     setSaving(true);
     try {
+      // Un ajuste de conciliación no es una compra en otra moneda — es una
+      // corrección del saldo, en la moneda de la cuenta, de punta a punta.
+      // Igual necesita `amount_base` para entrar en agregados en la moneda
+      // base del household, así que pasa por la MISMA cadena de resolución
+      // (override → cotización del día → última conocida → `pending`) que
+      // cualquier captura normal — nunca "identity o pending" a mano: eso
+      // dejaba `pending` un ajuste aunque ya hubiera cotización disponible.
+      const fx = await resolveFxForAccountCurrency(household, account.currencyCode, diff, new Date().toISOString().slice(0, 10));
       await transactionsRepo.create({
         householdId: household.id,
         createdBy: userId,
@@ -59,12 +67,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
         originalAmount: null,
         originalCurrency: null,
         originalRate: null,
-        fxRate: account.currencyCode === household.baseCurrency ? null : null,
-        fxSource: account.currencyCode === household.baseCurrency ? "identity" : "pending",
-        fxProvider: null,
-        fxQuoteKind: null,
-        fxResolvedAt: account.currencyCode === household.baseCurrency ? todayIso() : null,
-        amountBase: account.currencyCode === household.baseCurrency ? diff.amount : null,
+        ...fx,
         counterAmount: null,
         counterCurrencyCode: null,
         counterFxRate: null,

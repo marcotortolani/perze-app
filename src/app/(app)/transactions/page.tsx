@@ -12,6 +12,7 @@ import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import type { Locale } from "@/i18n/formatting";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
@@ -51,8 +52,9 @@ function periodStartFor(preset: MovementsFilters["datePreset"], now: Date): { fr
  * categoría (que el ícono + el título ya cubren); sin etiquetas, sigue
  * mostrando la categoría como siempre.
  */
-function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[]): string {
+function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[], reconciliationLabel: string): string {
   if (tx.kind === "transfer") return account ? `${account.name} · ${transferLabel}` : transferLabel;
+  if (tx.kind === "adjustment") return account ? `${account.name} · ${reconciliationLabel}` : reconciliationLabel;
   const secondary = tagNames.length > 0 ? tagNames.join(", ") : categoryLabel;
   return [account?.name, secondary].filter(Boolean).join(" · ");
 }
@@ -67,6 +69,7 @@ export function MovementsListContent() {
   const { ref: fadeScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
+  const isCardPayment = useIsCardPayment(household?.id);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: tags = [] } = useTags(household?.id);
@@ -108,15 +111,22 @@ export function MovementsListContent() {
   const kindParam = searchParams.get("kind");
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
+  // Home ("Tenés N movimientos sin tipo de cambio resuelto") linkea acá
+  // con `?pending=1` — reusa `filters.onlyPending`, que ya filtra por
+  // `fxRate === null` (el nombre del campo es viejo, de antes de que
+  // `onlyPending` significara "needs_fx" y no "sync pendiente" — no se
+  // renombra en este cambio para no tocar de más).
+  const pendingFxParam = searchParams.get("pending");
   useEffect(() => {
-    if (!categoryIdParam && !kindParam) return;
+    if (!categoryIdParam && !kindParam && !pendingFxParam) return;
     setFilters((f) => {
       const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
-      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" ? kindParam : f.kind;
-      if (nextCategoryIds === f.categoryIds && nextKind === f.kind) return f;
-      return { ...f, categoryIds: nextCategoryIds, kind: nextKind };
+      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
+      const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
+      if (nextCategoryIds === f.categoryIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
+      return { ...f, categoryIds: nextCategoryIds, kind: nextKind, onlyPending: nextOnlyPending };
     });
-  }, [categoryIdParam, kindParam]);
+  }, [categoryIdParam, kindParam, pendingFxParam]);
 
   const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -381,20 +391,25 @@ export function MovementsListContent() {
                         ) : null}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <TransactionRow
-                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "transfer" ? "refresh" : "cart")}
+                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "adjustment" ? "target" : isCardPayment(item.tx) ? "credit-card" : item.tx.kind === "transfer" ? "refresh" : "cart")}
                             merchant={
                               (item.tx.categoryId ? categoryById.get(item.tx.categoryId) : undefined)
                                 ? categoryLabel(categoryById.get(item.tx.categoryId!)!)
-                                : item.tx.kind === "transfer"
-                                  ? t("transactions.list.transfer")
-                                  : t("transactions.list.movement")
+                                : item.tx.kind === "adjustment"
+                                  ? t("transactions.list.reconciliation")
+                                  : isCardPayment(item.tx)
+                                    ? t("transactions.list.cardPayment")
+                                    : item.tx.kind === "transfer"
+                                      ? t("transactions.list.transfer")
+                                      : t("transactions.list.movement")
                             }
                             meta={buildMeta(
                               item.tx,
                               accountById.get(item.tx.accountId),
                               item.tx.categoryId ? (categoryById.has(item.tx.categoryId) ? categoryLabel(categoryById.get(item.tx.categoryId)!) : undefined) : undefined,
-                              t("transactions.list.transfer"),
-                              tagNamesByTx.get(item.tx.id) ?? []
+                              isCardPayment(item.tx) ? t("transactions.list.cardPayment") : t("transactions.list.transfer"),
+                              tagNamesByTx.get(item.tx.id) ?? [],
+                              t("transactions.list.reconciliation")
                             )}
                             value={money(item.tx.kind === "expense" ? -item.tx.amount : item.tx.amount, item.tx.currencyCode)}
                             secondary={
@@ -402,7 +417,7 @@ export function MovementsListContent() {
                                 ? formatAmountCompact(money(item.tx.amountBase, baseCurrency), { showSign: false })
                                 : undefined
                             }
-                            polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" ? "neutral" : "negative"}
+                            polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" || item.tx.kind === "adjustment" ? "neutral" : "negative"}
                             syncIssue={item.tx.syncState === "ok" ? undefined : item.tx.syncState}
                             onClick={() => (selection ? toggleSelected(item.tx.id) : router.push(`/transactions/${item.tx.id}`))}
                           />

@@ -2,7 +2,7 @@ import Dexie from "dexie";
 import { getDb } from "../db/client";
 import type { FxRateRow } from "../db/schema";
 import { type FxRateRecord, type FxResolution, resolveFxRate } from "../fx/resolve";
-import { parseRate, type ScaledRate } from "../fx/rate";
+import { invertRate, parseRate, type ScaledRate } from "../fx/rate";
 import { nowIso, todayIso } from "./ids";
 
 const MANUAL_PROVIDER = "manual";
@@ -24,6 +24,14 @@ async function ratesForPair(base: string, quote: string): Promise<FxRateRow[]> {
     .fxRates.where("[base+quote]")
     .equals([base, quote])
     .toArray();
+}
+
+async function getManualOverrideExact(householdId: string, base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
+  const rows = await ratesForPair(base, quote);
+  const manual = rows
+    .filter((r) => r.provider === MANUAL_PROVIDER && r.householdId === householdId)
+    .sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1))[0];
+  return manual ? { rate: manual.rate, quoteKind: manual.quoteKind } : null;
 }
 
 export const fxRepo = {
@@ -59,11 +67,21 @@ export const fxRepo = {
    * escribió gana", ver nota de alcance en `lib/db/client.ts` versión 6.
    */
   async getManualOverride(householdId: string, base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
-    const rows = await ratesForPair(base, quote);
-    const manual = rows
-      .filter((r) => r.provider === MANUAL_PROVIDER && r.householdId === householdId)
-      .sort((a, b) => (a.fetchedAt < b.fetchedAt ? 1 : -1))[0];
-    return manual ? { rate: manual.rate, quoteKind: manual.quoteKind } : null;
+    const direct = await getManualOverrideExact(householdId, base, quote);
+    if (direct) return direct;
+    // `/currencies` guarda el override SIEMPRE en una única dirección
+    // canónica (`moneda → household.baseCurrency`, ver esa página) —
+    // nunca en la dirección que a este caller le toque pedir. "Pagar
+    // tarjeta" con una cuenta de origen en la moneda BASE hacia una
+    // tarjeta en otra moneda pide exactamente el par inverso al
+    // guardado (`base → moneda`, no `moneda → base`) y antes de esto no
+    // lo encontraba — caía silenciosamente a la cotización del día de la
+    // API, mostrando un número que no coincidía con nada configurado en
+    // Ajustes. Buscar también el par invertido, e invertir el rate de
+    // vuelta, hace que un override sirva sin importar qué lado de la
+    // operación lo esté pidiendo.
+    const inverse = await getManualOverrideExact(householdId, quote, base);
+    return inverse ? { rate: invertRate(inverse.rate), quoteKind: inverse.quoteKind } : null;
   },
 
   async setManualOverride(householdId: string, base: string, quote: string, rate: ScaledRate, quoteKind = "custom"): Promise<void> {

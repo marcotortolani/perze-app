@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { money } from "../money/money";
-import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromInteger } from "./rate";
+import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromAmounts, rateFromInteger } from "./rate";
 
 describe("parseRate / formatRate", () => {
   it("ida y vuelta sin pérdida", () => {
@@ -106,5 +106,25 @@ describe("convert — fixed point, sin floats", () => {
     // 0.001 BTC a 50000 USD/BTC = 50 USD
     const result = convert(money(100_000n, "BTC"), "USD", rateFromInteger(50_000));
     expect(result).toEqual(money(5000n, "USD"));
+  });
+});
+
+describe("rateFromAmounts — inverso de convert", () => {
+  it("despeja el mismo rate entero que se usó para convertir", () => {
+    const rate = rateFromInteger(1525);
+    const from = money(10000n, "USD"); // 100.00 USD
+    const to = convert(from, "ARS", rate);
+    expect(rateFromAmounts(from, to)).toBe(rate);
+  });
+
+  it("ajusta por diferencia de decimales, igual que convert", () => {
+    const rate = rateFromInteger(900);
+    const from = money(10000n, "USD"); // 100.00 USD, 2 decimales
+    const to = convert(from, "CLP", rate); // 0 decimales
+    expect(rateFromAmounts(from, to)).toBe(rate);
+  });
+
+  it("null cuando el monto de origen es cero", () => {
+    expect(rateFromAmounts(money(0n, "USD"), money(1000n, "ARS"))).toBeNull();
   });
 });

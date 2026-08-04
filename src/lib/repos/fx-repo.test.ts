@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb, resetDbForTests } from "../db/client";
-import { formatRate, rateFromInteger } from "../fx/rate";
+import { formatRate, invertRate, rateFromInteger } from "../fx/rate";
 import { todayIso } from "./ids";
 import { fxRepo } from "./fx-repo";
 
@@ -70,5 +70,44 @@ describe("fxRepo — overrides manuales scoped por household (A8)", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(resolution.source).toBe("api");
     expect(resolution.rate).toBe(rateFromInteger(1200));
+  });
+
+  describe("getManualOverride — encuentra el par guardado al revés", () => {
+    it("un override guardado como base→quote también sirve para quote→base, invertido", async () => {
+      // `/currencies` guarda SIEMPRE en una única dirección canónica
+      // (`moneda → household.baseCurrency`) — un caller que necesite la
+      // dirección opuesta (p. ej. "pagar tarjeta" con la cuenta de origen
+      // en la moneda base) antes no encontraba nada acá y caía en
+      // silencio a la cotización del día de la API, ignorando el override.
+      await fxRepo.setManualOverride("household-a", "ARS", "USD", rateFromInteger(1000));
+
+      const direct = await fxRepo.getManualOverride("household-a", "ARS", "USD");
+      const inverse = await fxRepo.getManualOverride("household-a", "USD", "ARS");
+
+      expect(direct?.rate).toBe(rateFromInteger(1000));
+      expect(inverse?.rate).toBe(invertRate(rateFromInteger(1000)));
+    });
+
+    it("prefiere el override directo por sobre el invertido cuando existen los dos", async () => {
+      await fxRepo.setManualOverride("household-a", "ARS", "USD", rateFromInteger(1000));
+      await fxRepo.setManualOverride("household-a", "USD", "ARS", rateFromInteger(2000));
+
+      const rate = await fxRepo.getManualOverride("household-a", "USD", "ARS");
+
+      expect(rate?.rate).toBe(rateFromInteger(2000));
+    });
+
+    it("resolve() también encuentra el override invertido, con source 'manual'", async () => {
+      await fxRepo.setManualOverride("household-a", "ARS", "USD", rateFromInteger(1000));
+
+      const resolution = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: "2026-07-27" });
+
+      expect(resolution.source).toBe("manual");
+      expect(resolution.rate).toBe(invertRate(rateFromInteger(1000)));
+    });
+
+    it("null cuando no existe ninguno de los dos", async () => {
+      expect(await fxRepo.getManualOverride("household-a", "USD", "ARS")).toBeNull();
+    });
   });
 });

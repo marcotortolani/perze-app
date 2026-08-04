@@ -6,6 +6,146 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.13.0] — 2026-08-04
+
+### Agregado — "Pago de tarjeta" trazable, vinculado al resumen del ciclo
+
+- **Unifica los dos caminos que existían para pagar una tarjeta** en un solo módulo,
+  `src/features/cards/pay-card.ts`, montado desde un único componente (`PayCardSheet`) en los
+  dos puntos de entrada (`/accounts/[id]` y `/accounts/[id]/card`). Antes uno de los dos
+  caminos guardaba una transferencia genérica sin ningún vínculo a `card_statements`, así que
+  un pago de tarjeta era indistinguible de cualquier otra transferencia en el historial.
+- **Los resúmenes de ciclo (`card_statements`) ahora se abren solos.** Nueva migración con
+  `open_card_statements()` (cron diario a las 02:00, antes del despacho de notificaciones):
+  abre el resumen del ciclo en curso, recalcula su saldo sumando las transacciones del
+  período y cierra los que ya vencieron (`paid`/`closed`/`overdue`) — sin FX, porque
+  `amount`/`currency_code` de una cuenta ya están en su propia moneda. Esto también
+  desbloqueó el recordatorio de vencimiento por push que ya existía en el código pero nunca
+  se disparaba por falta de una fila de resumen contra la cual evaluar `due_date`.
+  `dispatch_due_notifications()` suma un aviso a vencidos, con clave de dedup semanal para no
+  avisar una sola vez y nunca más.
+- **Editor de monto cruzado en `PayCardSheet`**: dos campos (origen ↔ tarjeta) con tasa
+  siempre mostrada anclada a USD, editable con teclado propio, congelando el rate implícito
+  al salir del campo de origen — antes la tasa quedaba pegada a un valor viejo en memoria en
+  vez de volver a tomar la de `/currencies` en cada pago nuevo.
+  `src/lib/fx/rate.ts` suma `rateFromAmounts()` para derivar esa tasa implícita.
+- **Saldo insuficiente bloquea antes, no después.** El selector de cuenta de origen muestra
+  "saldo insuficiente en X" en rojo por cada cuenta que no alcanza (incluida la resolución
+  cruzada de moneda) y el botón de confirmar queda deshabilitado — antes solo se descubría
+  después de abrir la calculadora completa.
+- **Reconciliación al pagar**: si lo pagado no coincide con lo esperado, un paso adicional
+  ofrece "fue un pago parcial" o "con esto queda saldada" (esta última genera el ajuste sobre
+  la cuenta de la tarjeta), nunca un diálogo de confirmación bloqueante.
+- Nuevo `src/lib/analytics/card-cycle.ts` (con test): `isCreditCardAccount`,
+  `cardPaymentSources` (excluye la tarjeta misma, archivadas y cualquier otra tarjeta de
+  crédito como origen), `cardCycle`, `cycleExpenseTotal`, `expectedDueAmount` — antes vivían
+  duplicados o inline solo en `card/page.tsx`.
+
+### Agregado — saldo insuficiente bloquea un gasto en cuentas de liquidez real
+
+- Al cargar un `expense`, si el monto ingresado supera el saldo de la cuenta seleccionada, el
+  monto se marca en rojo ("saldo insuficiente") y el guardado queda bloqueado — incluido el
+  atajo de categoría rápida de un toque, no solo el botón "Guardar" principal.
+- **Nunca bloquea en tarjetas de crédito ni préstamos** (`LIABILITY_ACCOUNT_KINDS`): esas
+  cuentas pueden ir en negativo por diseño, a diferencia de una caja de ahorro, billetera
+  virtual o cuenta de crypto, que representan liquidez real.
+- Nuevo `computeExpenseDebitAmount()` en `save-transaction.ts`, mismo criterio que ya usaba
+  el gate de saldo insuficiente de las transferencias.
+
+### Agregado — `ChartCard` + `DataList`: todo gráfico con su alternativa en tabla
+
+- `docs/contrato-componentes.md` documentaba `ChartCard` (el wrapper obligatorio de todo
+  gráfico, con el toggle "ver como tabla") como `[spec]`, sin código en ningún lado. Se
+  implementa junto con `DataList` (la tabla sin bordes que sirve de alternativa accesible) y
+  se cablea en el gráfico de evolución de `/accounts/[id]`, el primer caso real. Selección por
+  superficie, nunca violeta — ese color queda reservado para la acción primaria de la
+  pantalla.
+
+### Agregado — radar de gastos por categoría en el panel de detalle de `/transactions`
+
+- En desktop, el panel derecho (antes solo "Elegí un movimiento de la lista...") suma, debajo
+  de un separador, un radar de las 5 categorías con más gasto + "Otros" del último período
+  cerrado — mismo cálculo que `/analytics/categories`, excluyendo `needs_fx` en vez de
+  sumarlo como si valiera 0. Si el período cerrado no tiene datos todavía (cuenta nueva),
+  cae al período en curso en vez de dejar el panel vacío, mismo criterio que ya usan los
+  presupuestos para leer mientras el mes corre.
+- Único componente del sistema de gráficos construido sobre una librería (`recharts`) en vez
+  de SVG a mano — evaluado a propósito: los otros 12 primitivos de `charts/` (Sankey, mapa de
+  calor de calendario, waterfall, etc.) no tienen equivalente en `recharts`, así que migrar el
+  resto habría significado mantener dos sistemas en paralelo. El radar es la excepción porque
+  un polígono de N ejes variable no valía la pena reimplementar, y queda completamente
+  repintado con los tokens del sistema (grilla hairline, `--data-1`, tooltip idéntico al de
+  `LineChart`) — nada del look por defecto de `recharts` queda visible. Carga solo en esta
+  pantalla vía import dinámico, no entra al bundle del resto de la app.
+
+### Corregido — `<Amount showSign={false}>` ocultaba el signo negativo, no solo el "+"
+
+- El saldo de una cuenta en descubierto (o una tarjeta con deuda) se mostraba como si fuera
+  positivo en cualquier lugar que pasara `showSign={false}` — que es la mayoría de los saldos
+  de cuenta de la app. `showSign` ahora solo controla si el "+" de un monto positivo se
+  dibuja; el "−" de un monto negativo se muestra siempre. La UI debe mostrar la realidad.
+
+### Corregido — "Pasivos" del home sumaba tarjetas en otra moneda 1:1, sin convertir
+
+- El subtotal de pasivos de `/accounts` sumaba `currentBalance` de cuentas de distinta moneda
+  sin conversión — una tarjeta en ARS con saldo −15.700 se sumaba como si fueran −15.700 USD.
+  `computeNetWorth()` ahora devuelve `assets`/`liabilities` ya convertidos a la moneda base
+  con la misma tasa por cuenta que arma el patrimonio neto, y `/accounts` los consume
+  directo en vez de recalcularlos a mano con un `reduce` propio.
+
+### Corregido — conciliaciones nunca resolvían tipo de cambio de verdad
+
+- `/accounts/[id]/reconcile` y el ajuste de reconciliación al pagar una tarjeta tenían el
+  mismo bug de copiar-pegar: las dos ramas de un ternario fijaban `fxRate: null`, así que una
+  conciliación quedaba `pending` incluso con una cotización perfectamente disponible. Se
+  extrae `resolveFxForAccountCurrency()` en `save-transaction.ts` — la misma resolución real
+  que ya usa cualquier captura normal — y las dos pantallas pasan a usarla.
+- El cartel "no suma al total" de un movimiento sin cotizar era engañoso para una
+  conciliación (si el ajuste es en la moneda de la cuenta, sí suma al patrimonio neto) — se
+  reescribe a "no es gasto ni ingreso del período", y las conciliaciones dejan de contarse en
+  el aviso de "sin resolver" del home: el patrimonio neto y el resto de los agregados nunca
+  leen el `amount_base` propio de una transacción, así que pedirle un tipo de cambio a una
+  conciliación no tenía ningún efecto real.
+
+### Corregido — `fxRepo` no encontraba overrides guardados en el par de moneda inverso
+
+- Un override cargado en `/currencies` como `nonBaseCurrency → baseCurrency` no aparecía al
+  consultarlo en la dirección opuesta (p. ej. desde `PayCardSheet`), y el pago de tarjeta caía
+  a una tasa vieja en memoria en vez de la cargada en ajustes. `getManualOverride()` ahora
+  intenta el par exacto y, si no hay nada, el inverso, invirtiendo la tasa encontrada.
+- `/currencies` invalida también la cache de `fx-suggested-rate` al guardar un override o
+  refrescar — antes quedaba una tasa sugerida vieja cacheada en cualquier otra pantalla que
+  la usara.
+
+### Corregido — gráfico de evolución de tarjeta al revés, pagos de tarjeta ausentes de su propia lista de movimientos, formato de fecha ignorado
+
+- El gráfico de evolución de una cuenta de tarjeta de crédito graficaba el saldo (negativo,
+  bajando al gastar) en vez del consumo acumulado — ahora se invierte el signo solo para
+  tarjetas: sube al gastar, baja al pagar, se va a cero al saldar. Las cuentas de liquidez
+  siguen graficando el saldo tal cual.
+- Un pago de tarjeta solo aparecía en los movimientos de la cuenta de ORIGEN, nunca en los de
+  la tarjeta misma — `useTransactions` se amplía para traer movimientos donde la cuenta es
+  origen o contraparte, y la fila muestra el monto/moneda del lado que corresponde según
+  desde qué cuenta se está mirando.
+- La preferencia "Formato de fecha" de los ajustes no se respetaba en "Movimientos de esta
+  cuenta": se mostraba el string ISO crudo en vez de la fecha formateada.
+
+### Corregido — `mirror_transactions` sin `counter_account_id`
+
+- Una migración posterior había redefinido la función sin devolver esta columna, así que el
+  modo espejo (`/family/mirror/[memberId]`) no podía distinguir un pago de tarjeta de una
+  transferencia común del lado del miembro mirado. Nueva migración que la repone; se retira
+  el cast provisorio del lado de TypeScript en `mirror-repo.ts`.
+
+### Agregado — filtro y renderizado de "Conciliación" en toda la app
+
+- `/transactions` suma "Conciliación" como tipo de filtro. Ícono, texto y color distintos
+  (nunca "Transferencia" genérico) en el home, la lista, el calendario y el detalle de
+  movimiento — más un `Sheet` de resolución de tipo de cambio por movimiento (`FxEditor` +
+  `Keypad`) accesible desde el propio detalle cuando queda sin resolver.
+
+---
+
 ## [0.12.1] — 2026-08-04
 
 ### Corregido — bento del dashboard: sin card redundante, sin columnas alineadas

@@ -14,7 +14,8 @@ import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import type { AccountRow, CategoryRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
-import { computeTransferDebitAmount, resolveAmountCurrency } from "./save-transaction";
+import { computeExpenseDebitAmount, computeTransferDebitAmount, resolveAmountCurrency } from "./save-transaction";
+import { LIABILITY_ACCOUNT_KINDS } from "@/lib/analytics/balances";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -172,6 +173,13 @@ export function AmountStep({
   const transferDebit = computeTransferDebitAmount(draft, account, counterAccount, suggestedRate.data?.rate ?? null, numberLocale);
   const pinnedSourcePreview = pinnedToCounter && crossCurrencyTransfer && transferDebit !== null ? money(transferDebit, account!.currencyCode) : null;
   const insufficientFunds = isTransfer && !!account && transferDebit !== null && transferDebit > account.currentBalance;
+  // Mismo criterio que `CaptureFlow.expenseInsufficientFunds()` — vista
+  // previa de solo lectura, la validación real vuelve a calcularse ahí al
+  // confirmar. Nunca para cuentas de tipo pasivo (tarjeta/préstamo): esas
+  // pueden ir en negativo por diseño.
+  const expenseDebit = draft.kind === "expense" ? computeExpenseDebitAmount(draft, account, numberLocale) : null;
+  const expenseInsufficientFunds =
+    draft.kind === "expense" && !!account && !LIABILITY_ACCOUNT_KINDS.has(account.kind) && expenseDebit !== null && expenseDebit > account.currentBalance;
 
   // Mismo patrón que `/currencies`: arranca el teclado desde el rate que
   // ya se está mostrando (no el interno), sin ceros finales.
@@ -252,7 +260,7 @@ export function AmountStep({
         </p>
       ) : null}
 
-      {insufficientFunds ? (
+      {insufficientFunds || expenseInsufficientFunds ? (
         <p className="t-caption" style={{ textAlign: "center", color: "var(--critical)", margin: 0 }}>
           {t("capture.insufficientFunds", { account: account!.name })}
         </p>

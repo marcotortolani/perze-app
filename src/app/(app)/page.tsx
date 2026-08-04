@@ -47,6 +47,7 @@ import { useConflicts } from "@/hooks/use-conflicts";
 import { usePendingMutations } from "@/lib/offline";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { usePrivacyStore } from "@/stores/privacy-store";
+import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useNetWorthCurrencyStore } from "@/stores/net-worth-currency-store";
 import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
 import type { Money } from "@/lib/money/money";
@@ -172,6 +173,7 @@ export default function HomePage() {
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const privacy = usePrivacyStore((s) => s.privacyMode);
   const togglePrivacy = usePrivacyStore((s) => s.toggle);
+  const isCardPayment = useIsCardPayment(household?.id);
   const pending = usePendingMutations();
   const { conflicts } = useConflicts(household?.id);
   const seenPrivacyTooltip = useContextualTooltipStore((s) => s.hasSeen("home-privacy-toggle"));
@@ -234,7 +236,13 @@ export default function HomePage() {
   const deltaPolarity = compare(last7Net, prev7Net) >= 0 ? "positive" : "negative";
   const deltaArrow = compare(last7Net, prev7Net) >= 0 ? "↑" : "↓";
 
-  const needsFxCount = allTransactions.filter((t) => t.fxRate === null).length;
+  // `adjustment` (conciliación) queda afuera de este conteo: su
+  // `amount_base` no alimenta ningún agregado (el patrimonio neto se
+  // calcula del saldo de la cuenta con su propia conversión de moneda,
+  // independiente de esto — ver `useNetWorth`; los totales de período lo
+  // excluyen igual que a las transferencias). Resolverlo no cambia ningún
+  // número que el usuario vea, así que pedírselo acá es ruido sin motivo.
+  const needsFxCount = allTransactions.filter((t) => t.fxRate === null && t.kind !== "adjustment").length;
   const topCategoryEntry = [...spendByCategory.entries()].sort((a, b) => (b[1] > a[1] ? 1 : -1))[0];
   const topCategory = topCategoryEntry ? categoryById.get(topCategoryEntry[0]) : undefined;
 
@@ -452,7 +460,7 @@ export default function HomePage() {
             icon="alert"
             text={t("home.needsFxInsight", { count: needsFxCount })}
             actionLabel={t("home.seeTransactions")}
-            onAction={() => router.push("/transactions")}
+            onAction={() => router.push("/transactions?pending=1")}
             onDismiss={() => setInsightDismissed(true)}
             dismissLabel={t("ds.insightCard.dismiss")}
           />
@@ -473,19 +481,39 @@ export default function HomePage() {
           {recentTransactions.map((tx: TransactionRecord) => {
             const account = accountById.get(tx.accountId);
             const category = tx.categoryId ? categoryById.get(tx.categoryId) : undefined;
+            const cardPayment = isCardPayment(tx);
+            const reconciliation = tx.kind === "adjustment";
             // Mismo criterio que `/transactions`: el ícono + el título ya
             // muestran la categoría, repetirla acá es redundante — si el
             // movimiento tiene etiquetas, se muestran ELLAS en su lugar.
             const tagNames = tagNamesByTx.get(tx.id) ?? [];
-            const categoryOrTransfer = tx.kind === "transfer" ? t("home.transfer") : category ? categoryLabel(category) : undefined;
+            const categoryOrTransfer = category
+              ? categoryLabel(category)
+              : reconciliation
+                ? t("home.reconciliation")
+                : cardPayment
+                  ? t("home.cardPayment")
+                  : tx.kind === "transfer"
+                    ? t("home.transfer")
+                    : undefined;
             const meta = [account?.name, tagNames.length > 0 ? tagNames.join(", ") : categoryOrTransfer].filter(Boolean).join(" · ");
-            const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" ? "neutral" : "negative";
+            const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" || reconciliation ? "neutral" : "negative";
             const secondary = tx.currencyCode !== baseCurrency && tx.amountBase !== null ? formatAmountCompact(money(tx.amountBase, baseCurrency), { showSign: false }) : undefined;
             return (
               <TransactionRow
                 key={tx.id}
-                icon={(category?.icon as IconName) ?? (tx.kind === "transfer" ? "refresh" : "cart")}
-                merchant={category ? categoryLabel(category) : (tx.kind === "transfer" ? t("home.transfer") : t("home.movement"))}
+                icon={(category?.icon as IconName) ?? (reconciliation ? "target" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                merchant={
+                  category
+                    ? categoryLabel(category)
+                    : reconciliation
+                      ? t("home.reconciliation")
+                      : cardPayment
+                        ? t("home.cardPayment")
+                        : tx.kind === "transfer"
+                          ? t("home.transfer")
+                          : t("home.movement")
+                }
                 meta={meta || undefined}
                 value={money(tx.kind === "expense" ? -tx.amount : tx.amount, tx.currencyCode)}
                 secondary={secondary}

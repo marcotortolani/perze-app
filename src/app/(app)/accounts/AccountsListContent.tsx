@@ -12,7 +12,7 @@ import { useNetWorth } from "@/hooks/use-net-worth";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { useTransactions } from "@/hooks/use-transactions";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
-import { money } from "@/lib/money/money";
+import { money, zero } from "@/lib/money/money";
 import { ACCOUNT_KIND_ICON, ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { accountColorVar } from "@/lib/reference/account-colors";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -27,8 +27,6 @@ async function reorderAccounts(group: AccountRow[], fromIndex: number, toIndex: 
   await Promise.all(next.map((a, i) => (a.sortOrder === i ? Promise.resolve() : accountsRepo.update(a.id, { sortOrder: i }))));
   invalidate();
 }
-
-const LIABILITY_KINDS = new Set(["credit_card", "loan"]);
 
 export interface AccountsListContentProps {
   /** Cuenta cuyo detalle se está viendo — la resalta en la lista. Solo se
@@ -69,8 +67,13 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
   }
   const grouped = [...byCurrency.entries()].sort(([a], [b]) => (a === baseCurrency ? -1 : b === baseCurrency ? 1 : a.localeCompare(b)));
 
-  const assetsTotal = active.filter((a) => a.includeInNetWorth && !LIABILITY_KINDS.has(a.kind)).reduce((s, a) => s + a.currentBalance, 0n);
-  const liabilitiesTotal = active.filter((a) => a.includeInNetWorth && LIABILITY_KINDS.has(a.kind) && a.currentBalance < 0n).reduce((s, a) => s + a.currentBalance, 0n);
+  // `netWorth.data.assets`/`.liabilities` — NUNCA un `reduce` a mano acá:
+  // eso sumaba `currentBalance` de cuentas de monedas distintas tal cual,
+  // sin convertir (una tarjeta en ARS se sumaba 1:1 como si fueran
+  // dólares). `computeNetWorth` ya resuelve la MISMA tasa por cuenta que
+  // usa el total de patrimonio — los subtotales tienen que salir de ahí.
+  const assetsTotal = netWorth.data?.assets ?? zero(baseCurrency);
+  const liabilitiesTotal = netWorth.data?.liabilities ?? zero(baseCurrency);
 
   if (!household || isLoading) {
     return (
@@ -134,10 +137,10 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
         )}
         <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8, fontSize: 13, color: "var(--text-secondary)" }}>
           <span>
-            {t("accountsPage.list.assets")} <Amount value={money(assetsTotal, baseCurrency)} size="label" showSign={false} polarity="neutral" tabular />
+            {t("accountsPage.list.assets")} <Amount value={assetsTotal} size="label" showSign={false} polarity="neutral" tabular />
           </span>
           <span>
-            {t("accountsPage.list.liabilities")} <Amount value={money(liabilitiesTotal, baseCurrency)} size="label" showSign={false} polarity="neutral" tabular />
+            {t("accountsPage.list.liabilities")} <Amount value={liabilitiesTotal} size="label" showSign={false} polarity="neutral" tabular />
           </span>
         </div>
       </div>

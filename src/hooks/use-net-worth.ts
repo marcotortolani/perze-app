@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { computeNetWorth, type NetWorthAccountInput } from "@/lib/analytics/balances";
+import { computeNetWorth, LIABILITY_ACCOUNT_KINDS, type NetWorthAccountInput } from "@/lib/analytics/balances";
 import { convert } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import type { Money } from "@/lib/money/money";
@@ -46,6 +46,7 @@ export function useNetWorth(householdId: string | undefined, baseCurrency: strin
         currentBalance: a.currentBalance,
         currencyCode: a.currencyCode,
         includeInNetWorth: a.includeInNetWorth,
+        isLiability: LIABILITY_ACCOUNT_KINDS.has(a.kind),
       }));
 
       return computeNetWorth({ accounts: inputs, baseCurrency: baseCurrency!, convert: convertToBase });

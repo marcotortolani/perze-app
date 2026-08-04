@@ -123,6 +123,10 @@
    "backspace": "Borrar",
    "decimalSeparator": "Separador decimal",
    "equals": "Igual"
+  },
+  "chartCard": {
+   "chartView": "Ver gráfico",
+   "tableView": "Ver como tabla"
   }
  },
  "reference": {
@@ -375,6 +379,8 @@
    "emptyFiltered": "Ningún movimiento coincide con estos filtros.",
    "clearFilters": "Limpiar filtros",
    "transfer": "Transferencia",
+   "cardPayment": "Pago de tarjeta",
+   "reconciliation": "Conciliación",
    "movement": "Movimiento",
    "deleted": "Movimiento borrado",
    "undo": "Deshacer",
@@ -386,19 +392,25 @@
   },
   "detail": {
    "selectPrompt": "Elegí un movimiento de la lista para ver el detalle acá.",
+   "categoryRadarTitle": "Gastos por categoría · último período",
+   "categoryRadarTitleCurrent": "Gastos por categoría · este período",
    "notFound": "No encontramos ese movimiento.",
    "backToList": "Volver a movimientos",
    "back": "Volver",
-   "notIncludedInTotal": "No suma al total",
+   "notIncludedInTotal": "No es gasto ni ingreso del período",
    "category": "Categoría",
    "noCategory": "Sin categoría",
    "account": "Cuenta",
    "toAccount": "Hacia {account}",
+   "cardStatement": "Resumen de la tarjeta",
    "date": "Fecha",
    "payee": "Comercio",
    "note": "Nota",
    "fxRateUsed": "Tipo de cambio usado",
    "fxUnresolved": "Sin resolver — needs_fx",
+   "resolveFx": "Resolver tipo de cambio",
+   "confirmResolveFx": "Confirmar tipo de cambio",
+   "fxResolved": "Tipo de cambio resuelto",
    "createdOn": "Cargado el {date}",
    "editedOn": " · Editado el {date}",
    "edit": "Editar",
@@ -449,6 +461,9 @@
   "moveDown": "Mover hacia abajo",
   "detail": {
    "selectPrompt": "Elegí una cuenta de la lista para ver el detalle acá.",
+   "evolutionTitle": "Evolución · últimos 90 días",
+   "evolutionDateColumn": "Fecha",
+   "evolutionBalanceColumn": "Saldo",
    "back": "Volver",
    "notFound": "No encontramos esa cuenta.",
    "backToList": "Volver a cuentas",
@@ -917,6 +932,8 @@
   "topCategoryInsight": "Tu categoría con más gasto este período es <b>{category}</b>.",
   "recentTransactions": "Últimos movimientos",
   "transfer": "Transferencia",
+  "cardPayment": "Pago de tarjeta",
+  "reconciliation": "Conciliación",
   "movement": "Movimiento",
   "errorWhat": "No pudimos cargar tu resumen.",
   "privacyTooltip": "Tocá el ojo para difuminar los montos — útil en público."
@@ -1388,9 +1405,19 @@
   "settlePickAccount": "Pagar desde qué cuenta",
   "settleAmountTitle": "Pagar desde {name}",
   "settleDueHint": "A pagar: {amount}. Podés pagar el total o un monto parcial.",
+  "sourceAmount": "Sale de tu cuenta",
+  "cardAmount": "Para pagar",
+  "suggestedRate": "Tasa: {rate}",
   "confirmSettle": "Confirmar pago",
   "settled": "Tarjeta liquidada",
-  "settleError": "No pudimos registrar el pago. Probá de nuevo."
+  "settleError": "No pudimos registrar el pago. Probá de nuevo.",
+  "noPaymentSource": "Necesitás una cuenta que no sea tarjeta para pagar desde ahí — creá una caja de ahorro o efectivo",
+  "createAccount": "Crear una cuenta",
+  "settleExpectedTitle": "El monto no coincide",
+  "settleExpected": "Esperábamos {expected}",
+  "settlePartial": "Fue un pago parcial",
+  "settleSettled": "Con esto queda saldada",
+  "settlementAdjustmentNote": "Ajuste por liquidación de tarjeta"
  },
  "cardInstallmentsPage": {
   "title": "Cuotas y proyección",

@@ -2,10 +2,8 @@
 
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, Button, Chip, EmptyState, Keypad, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow, usePageHeader } from "@/design-system";
-import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
+import { Amount, Button, Chip, EmptyState, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -16,28 +14,20 @@ import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useLatestCardStatement, useInvalidateCardStatements } from "@/hooks/use-card-statements";
 import { useDebtsByAccount, useInvalidateDebts } from "@/hooks/use-debts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
-import { debtsRepo } from "@/lib/repos/debts-repo";
-import { cardStatementsRepo } from "@/lib/repos/card-statements-repo";
-import { saveDraftAsTransaction } from "@/features/capture/save-transaction";
-import { evaluateKeypadExpression } from "@/lib/money/keypad";
+import { PayCardSheet } from "@/features/cards/PayCardSheet";
+import { cardPaymentSources, currentCycleStart, expectedDueAmount } from "@/lib/analytics/card-cycle";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
-import { formatDateShort, numberLocaleForUiLocale } from "@/i18n/formatting";
+import { formatDateShort, formatNumericDate, numberLocaleForUiLocale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import type { Locale } from "@/i18n/formatting";
-import type { AccountRow } from "@/lib/db/schema";
-
-function currentCycleStart(statementDay: number | null, now: Date): Date {
-  if (!statementDay) return new Date(now.getFullYear(), now.getMonth(), 1);
-  const start = new Date(now.getFullYear(), now.getMonth(), statementDay);
-  if (start > now) start.setMonth(start.getMonth() - 1);
-  return start;
-}
 
 /** E4.1 — ciclo actual de una tarjeta: a pagar, cuándo, uso del límite, consumos del ciclo. */
 export default function CardCyclePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const userId = useCurrentUserId();
@@ -47,7 +37,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const { data: categories = [] } = useCategories(household?.id);
   const { data: latestStatement, isLoading: statementLoading } = useLatestCardStatement(id);
   const { data: allAccounts = [] } = useAccounts(household?.id);
-  const { data: debtsForAccount } = useDebtsByAccount(id);
+  const { data: debtsForAccount = [] } = useDebtsByAccount(id);
   const { data: recurringRules = [] } = useRecurringRules(household?.id);
   const accountRecurringCount = recurringRules.filter((r) => r.accountId === id).length;
   const { data: settlementTx } = useTransaction(latestStatement?.settlementTransactionId ?? undefined);
@@ -57,10 +47,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const invalidateStatements = useInvalidateCardStatements(id);
   const invalidateDebts = useInvalidateDebts(household?.id);
   const [convertSheetOpen, setConvertSheetOpen] = useState(false);
-  const [settleAccountSheetOpen, setSettleAccountSheetOpen] = useState(false);
-  const [settleSourceAccount, setSettleSourceAccount] = useState<AccountRow | null>(null);
-  const [settleExpr, setSettleExpr] = useState("");
-  const [settling, setSettling] = useState(false);
+  const [payCardSheetOpen, setPayCardSheetOpen] = useState(false);
 
   const currencyBreakdown = useMemo(() => {
     const totals = new Map<string, bigint>();
@@ -73,7 +60,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
     return totals;
   }, [transactions]);
 
-  if (accountLoading || statementLoading || !household || !transactions) return <Skeleton height={320} style={{ marginTop: 16 }} />;
+  if (accountLoading || statementLoading || !household || !transactions || !userId) return <Skeleton height={320} style={{ marginTop: 16 }} />;
   if (!account || account.kind !== "credit_card") return <EmptyState message={t("cardCyclePage.notFound")} />;
 
   const now = new Date();
@@ -81,13 +68,12 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const cycleTransactions = transactions.filter((tx) => tx.kind === "expense" && new Date(tx.occurredAt) >= cycleStart);
   const cycleTotal = cycleTransactions.reduce((s, tx) => s + tx.amount, 0n);
 
-  const dueAmount = latestStatement ? latestStatement.statementBalance - latestStatement.paidAmount : cycleTotal;
+  const dueAmount = expectedDueAmount(account, latestStatement ?? null);
   const dueDate = latestStatement ? new Date(latestStatement.dueDate) : account.dueDay ? new Date(now.getFullYear(), now.getMonth() + 1, account.dueDay) : null;
   const closingDate = latestStatement ? new Date(latestStatement.closingDate) : account.statementDay ? new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, account.statementDay) : null;
   const daysToClose = closingDate ? Math.max(0, Math.ceil((closingDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : null;
   const usage = account.creditLimit ? Number(-account.currentBalance) / Number(account.creditLimit) : null;
-
-  const settleSourceCandidates = allAccounts.filter((a) => a.id !== account.id && a.archivedAt === null);
+  const eligibleSources = cardPaymentSources(allAccounts, account);
 
   // Reconciliación: si la liquidación se pagó desde una cuenta de otra
   // moneda, `settlementTx.counterAmount` es lo que realmente se aplicó a
@@ -99,58 +85,6 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
     latestStatement && settlementTx && settlementTx.counterAmount !== null
       ? { nominal: latestStatement.statementBalance, applied: settlementTx.counterAmount, delta: latestStatement.statementBalance - settlementTx.counterAmount }
       : null;
-
-  const handleSettle = async () => {
-    if (!settleSourceAccount || !userId || settling) return;
-    setSettling(true);
-    try {
-      const draft = {
-        kind: "transfer" as const,
-        amountExpression: settleExpr || "0",
-        currency: settleSourceAccount.currencyCode,
-        accountId: settleSourceAccount.id,
-        counterAccountId: account.id,
-        counterFxRateOverride: null,
-        amountPinnedTo: "account" as const,
-        categoryId: null,
-        occurredAt: new Date().toISOString(),
-        payeeName: "",
-        note: "",
-        tagIds: [],
-        burstMode: false,
-        burstCount: 0,
-      };
-      const tx = await saveDraftAsTransaction({
-        draft,
-        household,
-        userId,
-        account: settleSourceAccount,
-        counterAccount: account,
-        numberLocale: numberLocaleForUiLocale(locale),
-      });
-      const appliedToCard = tx.counterAmount ?? tx.amount;
-      if (latestStatement) {
-        await cardStatementsRepo.markPaid(latestStatement.id, appliedToCard, tx.id);
-        const plans = (debtsForAccount ?? []).filter((d) => d.kind === "installment_plan");
-        for (const plan of plans) {
-          const schedule = await debtsRepo.listSchedule(plan.id);
-          const dueItems = schedule.filter((item) => !item.paidAt && item.dueDate >= latestStatement.periodStart && item.dueDate <= latestStatement.periodEnd);
-          for (const item of dueItems) await debtsRepo.markInstallmentPaid(item.id, tx.id);
-        }
-        invalidateDebts();
-      }
-      invalidateAfterWrite();
-      invalidateAccounts();
-      invalidateStatements();
-      toast(t("cardCyclePage.settled"));
-      setSettleExpr("");
-      setSettleSourceAccount(null);
-    } catch {
-      toast(t("cardCyclePage.settleError"));
-    } finally {
-      setSettling(false);
-    }
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -222,7 +156,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
                 key={tx.id}
                 icon={(category?.icon as IconName) ?? "cart"}
                 merchant={category ? categoryLabel(category) : t("home.movement")}
-                meta={tx.occurredAt.slice(0, 10)}
+                meta={formatNumericDate(locale, new Date(tx.occurredAt), dateFormat)}
                 value={money(-tx.amount, tx.currencyCode)}
                 polarity="negative"
                 onClick={() => router.push(`/transactions/${tx.id}`)}
@@ -232,7 +166,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
         </div>
 
         <ListRow icon="refresh" label={t("cardCyclePage.convertToInstallments")} onClick={() => setConvertSheetOpen(true)} />
-        <Button disabled={!latestStatement || dueAmount <= 0n} onClick={() => setSettleAccountSheetOpen(true)}>
+        <Button disabled={dueAmount <= 0n || eligibleSources.length === 0} onClick={() => setPayCardSheetOpen(true)}>
           {t("cardCyclePage.payCard")}
         </Button>
       </div>
@@ -248,7 +182,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
                 <ListRow
                   key={tx.id}
                   label={category ? categoryLabel(category) : t("home.movement")}
-                  meta={tx.occurredAt.slice(0, 10)}
+                  meta={formatNumericDate(locale, new Date(tx.occurredAt), dateFormat)}
                   variant="value"
                   value={formatAmountCompact(money(tx.amount, tx.currencyCode), { showSign: false })}
                   onClick={() => router.push(`/debts/new?fromTransaction=${tx.id}`)}
@@ -259,42 +193,24 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
         </div>
       </Sheet>
 
-      <AccountPickerSheet
-        open={settleAccountSheetOpen}
-        title={t("cardCyclePage.settlePickAccount")}
-        accounts={settleSourceCandidates}
-        onSelect={(a) => setSettleSourceAccount(a)}
-        onClose={() => setSettleAccountSheetOpen(false)}
+      <PayCardSheet
+        open={payCardSheetOpen}
+        card={account}
+        accounts={allAccounts}
+        expectedDue={dueAmount}
+        installmentDebts={debtsForAccount}
+        household={household}
+        userId={userId}
+        numberLocale={numberLocaleForUiLocale(locale)}
+        locale={locale}
+        onClose={() => setPayCardSheetOpen(false)}
+        onPaid={() => {
+          invalidateAfterWrite();
+          invalidateAccounts();
+          invalidateStatements();
+          invalidateDebts();
+        }}
       />
-
-      <Sheet open={settleSourceAccount !== null} title={t("cardCyclePage.settleAmountTitle", { name: settleSourceAccount?.name ?? "" })} onClose={() => setSettleSourceAccount(null)}>
-        {settleSourceAccount ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0 }}>
-              {t("cardCyclePage.settleDueHint", { amount: formatAmountCompact(money(dueAmount > 0n ? dueAmount : 0n, account.currencyCode), { showSign: false }) })}
-            </p>
-            <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 28 }}>
-              {settleSourceAccount.currencyCode} {settleExpr || "0"}
-            </div>
-            <Keypad onKey={(k) => setSettleExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setSettleExpr("")} />
-            <Button
-              disabled={settling || !evaluateSettleAmount(settleExpr, settleSourceAccount.currencyCode, numberLocaleForUiLocale(locale))}
-              onClick={handleSettle}
-            >
-              {t("cardCyclePage.confirmSettle")}
-            </Button>
-          </div>
-        ) : null}
-      </Sheet>
     </div>
   );
-}
-
-function evaluateSettleAmount(expr: string, currency: string, numberLocale: ReturnType<typeof numberLocaleForUiLocale>): boolean {
-  if (expr.trim() === "") return false;
-  try {
-    return evaluateKeypadExpression(expr, currency, numberLocale).amount > 0n;
-  } catch {
-    return false;
-  }
 }

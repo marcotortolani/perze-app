@@ -123,6 +123,10 @@
    "backspace": "Apagar",
    "decimalSeparator": "Separador decimal",
    "equals": "Igual"
+  },
+  "chartCard": {
+   "chartView": "Ver gráfico",
+   "tableView": "Ver como tabela"
   }
  },
  "reference": {
@@ -375,6 +379,8 @@
    "emptyFiltered": "Nenhuma movimentação corresponde a esses filtros.",
    "clearFilters": "Limpar filtros",
    "transfer": "Transferência",
+   "cardPayment": "Pagamento de cartão",
+   "reconciliation": "Conciliação",
    "movement": "Movimentação",
    "deleted": "Movimentação excluída",
    "undo": "Desfazer",
@@ -386,19 +392,25 @@
   },
   "detail": {
    "selectPrompt": "Escolha um movimento da lista para ver o detalhe aqui.",
+   "categoryRadarTitle": "Gastos por categoria · último período",
+   "categoryRadarTitleCurrent": "Gastos por categoria · este período",
    "notFound": "Não encontramos essa movimentação.",
    "backToList": "Voltar às movimentações",
    "back": "Voltar",
-   "notIncludedInTotal": "Não soma ao total",
+   "notIncludedInTotal": "Não é gasto nem receita do período",
    "category": "Categoria",
    "noCategory": "Sem categoria",
    "account": "Conta",
    "toAccount": "Para {account}",
+   "cardStatement": "Fatura do cartão",
    "date": "Data",
    "payee": "Estabelecimento",
    "note": "Nota",
    "fxRateUsed": "Taxa de câmbio usada",
    "fxUnresolved": "Não resolvida — needs_fx",
+   "resolveFx": "Resolver taxa de câmbio",
+   "confirmResolveFx": "Confirmar taxa de câmbio",
+   "fxResolved": "Taxa de câmbio resolvida",
    "createdOn": "Lançado em {date}",
    "editedOn": " · Editado em {date}",
    "edit": "Editar",
@@ -449,6 +461,9 @@
   "moveDown": "Mover para baixo",
   "detail": {
    "selectPrompt": "Escolha uma conta da lista para ver o detalhe aqui.",
+   "evolutionTitle": "Evolução · últimos 90 dias",
+   "evolutionDateColumn": "Data",
+   "evolutionBalanceColumn": "Saldo",
    "back": "Voltar",
    "notFound": "Não encontramos essa conta.",
    "backToList": "Voltar às contas",
@@ -917,6 +932,8 @@
   "topCategoryInsight": "Sua categoria com mais gasto neste período é <b>{category}</b>.",
   "recentTransactions": "Últimas movimentações",
   "transfer": "Transferência",
+  "cardPayment": "Pagamento de cartão",
+  "reconciliation": "Conciliação",
   "movement": "Movimentação",
   "errorWhat": "Não conseguimos carregar seu resumo.",
   "privacyTooltip": "Toque no olho para borrar os valores — útil em público."
@@ -1388,9 +1405,19 @@
   "settlePickAccount": "Pagar de qual conta",
   "settleAmountTitle": "Pagar de {name}",
   "settleDueHint": "A pagar: {amount}. Você pode pagar o total ou um valor parcial.",
+  "sourceAmount": "Sai da sua conta",
+  "cardAmount": "Para pagar",
+  "suggestedRate": "Taxa: {rate}",
   "confirmSettle": "Confirmar pagamento",
   "settled": "Cartão liquidado",
-  "settleError": "Não conseguimos registrar o pagamento. Tente de novo."
+  "settleError": "Não conseguimos registrar o pagamento. Tente de novo.",
+  "noPaymentSource": "Você precisa de uma conta que não seja cartão para pagar dali — crie uma poupança ou dinheiro",
+  "createAccount": "Criar uma conta",
+  "settleExpectedTitle": "O valor não confere",
+  "settleExpected": "Esperávamos {expected}",
+  "settlePartial": "Foi um pagamento parcial",
+  "settleSettled": "Com isso fica quitada",
+  "settlementAdjustmentNote": "Ajuste por liquidação de cartão"
  },
  "cardInstallmentsPage": {
   "title": "Parcelas e projeção",

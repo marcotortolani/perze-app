@@ -26,7 +26,8 @@ import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
 import { DetailsSheet } from "./DetailsSheet";
 import { VoiceCaptureSheet } from "./VoiceCaptureSheet";
-import { computeTransferDebitAmount, hasNonZeroAmount, resolveAmountCurrency, saveDraftAsTransaction } from "./save-transaction";
+import { computeExpenseDebitAmount, computeTransferDebitAmount, hasNonZeroAmount, resolveAmountCurrency, saveDraftAsTransaction } from "./save-transaction";
+import { LIABILITY_ACCOUNT_KINDS } from "@/lib/analytics/balances";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
@@ -118,16 +119,25 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const [step, setStep] = useState<Step>("amount");
   const [sheet, setSheet] = useState<SheetKind>("none");
 
-  // Cuenta por defecto — todavía sin heurística de "más usada en esta
-  // categoría". Se resuelve derivado, nunca escribiendo al store durante
-  // el render: si el usuario no eligió ninguna, `doSave` cae a esta misma
-  // cuenta por default sin necesidad de persistirla antes de guardar.
-  // En una transferencia NO se aplica este fallback: elegir el origen es
-  // una decisión real de plata (de qué cuenta sale), nunca un default
+  // Cuenta por defecto: la de el último movimiento cargado, no
+  // `accounts[0]` (un orden sin ningún criterio — ni siquiera el
+  // `sortOrder` que sí respeta la lista de `/accounts`). Quien paga
+  // siempre con el mismo medio no tiene que reelegirlo cada vez.
+  // `transactions` ya viene ordenada por `occurredAt` descendente
+  // (`transactionsRepo.list`), así que el primer elemento es el último
+  // cargado — sin query aparte. Si esa cuenta ya no existe (archivada/
+  // borrada) o todavía no hay ningún movimiento, cae a `accounts[0]`.
+  // Se resuelve derivado, nunca escribiendo al store durante el render: si
+  // el usuario no eligió ninguna, `doSave` cae a esta misma cuenta por
+  // default sin necesidad de persistirla antes de guardar. En una
+  // transferencia NO se aplica este fallback: elegir el origen es una
+  // decisión real de plata (de qué cuenta sale), nunca un default
   // silencioso — antes `accounts[0]` quedaba de "origen" sin que el
   // usuario lo hubiera tocado, incluso en flujos precargados como
   // "pagar tarjeta" donde el pedido es justamente dejarlo sin elegir.
-  const account = accounts.find((a) => a.id === draft.accountId) ?? (draft.kind === "transfer" ? undefined : accounts[0]);
+  const lastUsedAccountId = (transactions ?? [])[0]?.accountId;
+  const defaultAccount = accounts.find((a) => a.id === lastUsedAccountId) ?? accounts[0];
+  const account = accounts.find((a) => a.id === draft.accountId) ?? (draft.kind === "transfer" ? undefined : defaultAccount);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
   // Mismo hook que usa `AmountStep` para el `FxEditor` — mismo `queryKey`,
   // TanStack Query lo cachea entre los dos, no duplica el pedido de red.
@@ -161,6 +171,16 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     else appendToAmount(key === "," ? "," : key);
   };
 
+  // Saldo insuficiente en un gasto: solo bloquea en cuentas de liquidez
+  // real (caja de ahorro, billetera, crypto, etc.) — una tarjeta de
+  // crédito o un préstamo (`LIABILITY_ACCOUNT_KINDS`) puede ir en negativo
+  // por diseño, así que ahí nunca se bloquea.
+  const expenseInsufficientFunds = () => {
+    if (draft.kind !== "expense" || !account || LIABILITY_ACCOUNT_KINDS.has(account.kind)) return false;
+    const debit = computeExpenseDebitAmount(draft, account, numberLocaleForUiLocale(locale));
+    return debit !== null && debit > account.currentBalance;
+  };
+
   const canSave = () => {
     if (!household || !account || !userId) return false;
     // Elegir la categoría primero y dejar el monto en 0 no debería poder
@@ -169,13 +189,14 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     if (draft.kind === "transfer") {
       if (!counterAccount) return false;
       // Saldo insuficiente: no se permite dejar una cuenta en negativo por
-      // una transferencia a otra cuenta propia — a diferencia de un gasto
-      // (donde gastar de más es una realidad legítima), acá mover plata que
-      // no está es casi siempre un error de carga.
+      // una transferencia a otra cuenta propia — mismo criterio que el
+      // gasto de abajo, salvo que acá no hay excepción por tipo de cuenta:
+      // el origen de una transferencia nunca es una tarjeta de crédito.
       const debit = computeTransferDebitAmount(draft, account, counterAccount, suggestedRate.data?.rate ?? null, numberLocaleForUiLocale(locale));
       if (debit !== null && debit > account.currentBalance) return false;
       return true;
     }
+    if (expenseInsufficientFunds()) return false;
     return !!draft.categoryId;
   };
 
@@ -329,6 +350,9 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
             // pasa a "Guardar" (ya no "Siguiente", `canSave()` lo
             // habilita recién cuando el monto deje de ser cero.
             if (!hasNonZeroAmount(draft.amountExpression, resolveAmountCurrency(draft, account, counterAccount), numberLocaleForUiLocale(locale))) return;
+            // Mismo gate que el botón "Guardar" — el atajo rápido no puede
+            // saltearse el bloqueo de saldo insuficiente.
+            if (expenseInsufficientFunds()) return;
             await doSave();
             handleAfterSaveComplete();
           }}

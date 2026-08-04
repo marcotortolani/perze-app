@@ -6,7 +6,7 @@ import type { AccountRow, CategoryRow, TagRow } from "@/lib/db/schema";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 
 export type DatePreset = "all" | "this-month" | "last-month" | "last-7" | "last-30";
-export type KindFilter = "all" | "expense" | "income" | "transfer";
+export type KindFilter = "all" | "expense" | "income" | "transfer" | "adjustment";
 
 export interface MovementsFilters {
   datePreset: DatePreset;
@@ -73,6 +73,7 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
     { id: "expense", label: t("capture.kind.expense") },
     { id: "income", label: t("capture.kind.income") },
     { id: "transfer", label: t("capture.kind.transfer") },
+    { id: "adjustment", label: t("transactions.list.reconciliation") },
   ];
 
   return (

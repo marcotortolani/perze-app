@@ -11,6 +11,7 @@ export interface MirrorAccount {
 export interface MirrorTransaction {
   id: string;
   accountId: string;
+  counterAccountId: string | null;
   amount: string;
   currencyCode: string;
   kind: string;
@@ -48,6 +49,7 @@ export const mirrorRepo = {
       .map((row) => ({
         id: row.id,
         accountId: row.account_id,
+        counterAccountId: row.counter_account_id,
         amount: row.amount,
         currencyCode: row.currency_code,
         kind: row.kind,

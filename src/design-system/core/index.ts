@@ -16,3 +16,4 @@ export { SectionGroup, type SectionGroupProps } from "./SectionGroup";
 export { DismissibleNotice, type DismissibleNoticeProps } from "./DismissibleNotice";
 export { ZMark, type ZMarkProps } from "./ZMark";
 export { Overlay, type OverlayProps } from "./Overlay";
+export { DataList, type DataListProps, type DataListColumn, type DataListRow } from "./DataList";

@@ -89,6 +89,28 @@ export function invertRate(rate: ScaledRate): ScaledRate {
 }
 
 /**
+ * Inverso de `convert()`: dado un monto de origen y el monto de destino
+ * que efectivamente resultó, deriva qué rate los conecta — "cuántas
+ * unidades de `to.currency` equivalen a 1 unidad de `from.currency`". Sirve
+ * para el caso "pagar tarjeta" donde el usuario conoce el monto que le
+ * descontaron en su cuenta (no la cotización que usó el banco) y hay que
+ * despejar la tasa a partir de eso, en vez de al revés. `null` si
+ * `from.amount` es cero — no hay tasa que despejar de una división por 0.
+ */
+export function rateFromAmounts(from: Money, to: Money): ScaledRate | null {
+  if (from.amount === 0n) return null;
+  const decimalsDiff = decimalsFor(to.currency) - decimalsFor(from.currency);
+  let numerator = to.amount * RATE_SCALE;
+  let denominator = from.amount;
+  if (decimalsDiff >= 0) {
+    denominator *= 10n ** BigInt(decimalsDiff);
+  } else {
+    numerator *= 10n ** BigInt(-decimalsDiff);
+  }
+  return roundHalfEven(numerator, denominator);
+}
+
+/**
  * Convierte `amount` (en su moneda) a `toCurrency` usando `rate` = cuántas
  * unidades de `toCurrency` equivalen a 1 unidad de `amount.currency`.
  * Fixed-point puro: nunca pasa por `number`. Ajusta por la diferencia de

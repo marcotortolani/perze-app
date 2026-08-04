@@ -7,6 +7,7 @@ import { Icon, IconButton, Skeleton, TransactionRow } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -32,6 +33,7 @@ export default function MovementsCalendarPage() {
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const isCardPayment = useIsCardPayment(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions, isLoading } = useTransactions(household?.id);
@@ -159,12 +161,22 @@ export default function MovementsCalendarPage() {
               return (
                 <TransactionRow
                   key={tx.id}
-                  icon={(category?.icon as IconName) ?? (tx.kind === "transfer" ? "refresh" : "cart")}
-                  merchant={category ? categoryLabel(category) : tx.kind === "transfer" ? t("transactions.list.transfer") : t("transactions.list.movement")}
+                  icon={(category?.icon as IconName) ?? (tx.kind === "adjustment" ? "target" : isCardPayment(tx) ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                  merchant={
+                    category
+                      ? categoryLabel(category)
+                      : tx.kind === "adjustment"
+                        ? t("transactions.list.reconciliation")
+                        : isCardPayment(tx)
+                          ? t("transactions.list.cardPayment")
+                          : tx.kind === "transfer"
+                            ? t("transactions.list.transfer")
+                            : t("transactions.list.movement")
+                  }
                   meta={accountById.get(tx.accountId)?.name}
                   value={money(tx.kind === "expense" ? -tx.amount : tx.amount, tx.currencyCode)}
                   secondary={tx.currencyCode !== baseCurrency && tx.amountBase !== null ? formatAmountCompact(money(tx.amountBase, baseCurrency), { showSign: false }) : undefined}
-                  polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" ? "neutral" : "negative"}
+                  polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" || tx.kind === "adjustment" ? "neutral" : "negative"}
                   onClick={() => router.push(`/transactions/${tx.id}`)}
                 />
               );

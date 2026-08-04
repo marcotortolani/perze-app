@@ -11,3 +11,5 @@ export { RankingBar, type RankingBarProps, type RankingBarItem } from "./Ranking
 export { BenchmarkBars, type BenchmarkBarsProps, type BenchmarkItem } from "./BenchmarkBars";
 export { StackedBar, type StackedBarProps, type StackedBarGroup, type StackedBarSeries } from "./StackedBar";
 export { DivergingBar, type DivergingBarProps, type DivergingBarDatum } from "./DivergingBar";
+export { ChartCard, type ChartCardProps } from "./ChartCard";
+export { CategoryRadarChart, type CategoryRadarChartProps, type CategoryRadarDatum } from "./CategoryRadarChart";

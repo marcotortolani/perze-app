@@ -2768,6 +2768,15 @@ export type Database = {
         Returns: boolean
       }
       can_write: { Args: { h: string }; Returns: boolean }
+      card_statement_cycle: {
+        Args: { p_due_day: number; p_ref: string; p_statement_day: number }
+        Returns: {
+          closing_date: string
+          due_date: string
+          period_end: string
+          period_start: string
+        }[]
+      }
       clamped_date: {
         Args: { p_day: number; p_month: number; p_year: number }
         Returns: string
@@ -2796,6 +2805,7 @@ export type Database = {
         Returns: {
           account_id: string
           amount: string
+          counter_account_id: string
           currency_code: string
           id: string
           kind: string
@@ -2803,6 +2813,7 @@ export type Database = {
           occurred_at: string
         }[]
       }
+      open_card_statements: { Args: never; Returns: undefined }
       prune_push_subscriptions: { Args: never; Returns: undefined }
       purge_audit_log: { Args: never; Returns: undefined }
       purge_household_step: {

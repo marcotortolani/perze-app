@@ -114,7 +114,17 @@ export default function CurrenciesPage() {
       const results = await Promise.all(
         currencies.map((currency) => fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: todayIso(), forceRefresh: true }))
       );
-      await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
+        // Prefijo, no la key exacta: cualquier pantalla que haya pedido
+        // `useSuggestedFxRate` para CUALQUIER par (no solo `x → baseCurrency`
+        // — un pago de tarjeta pide `origen → tarjeta`, que puede no
+        // involucrar la moneda base) queda con un rate cacheado de antes
+        // de este refresh. `refetchOnMount`/`refetchOnWindowFocus` están en
+        // `false` a propósito en todo el `QueryClient` (`providers.tsx`) —
+        // acá es donde ese contrato exige invalidar explícito.
+        queryClient.invalidateQueries({ queryKey: ["fx-suggested-rate"] }),
+      ]);
       const updated = results.filter((r) => r.source === "api").length;
       toast(updated > 0 ? t("currenciesPage.refreshDone", { count: updated }) : t("currenciesPage.refreshNothingNew"));
     } catch {
@@ -206,6 +216,11 @@ export default function CurrenciesPage() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
       queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] }),
+      // Prefijo — ver la nota en `handleRefresh`: cualquier pantalla que ya
+      // haya pedido `useSuggestedFxRate` para CUALQUIER par (pagar tarjeta
+      // pide `origen → tarjeta`, no necesariamente `x → baseCurrency`)
+      // queda con un rate cacheado de antes de este override.
+      queryClient.invalidateQueries({ queryKey: ["fx-suggested-rate"] }),
     ]);
     closeEditor();
     toast(t("currenciesPage.overrideSaved", { pair: `${editingPair} → ${baseCurrency}` }));

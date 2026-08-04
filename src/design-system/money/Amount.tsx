@@ -60,7 +60,13 @@ export interface AmountProps {
    * Por defecto `neutral` cuando `showSign` es `false`.
    */
   polarity?: "positive" | "negative" | "negative-emphasis" | "neutral" | undefined;
-  /** El glifo +/−, derivado del signo del valor e independiente de `polarity`. */
+  /**
+   * `false` suprime el "+" delante de un valor positivo (saldos, totales:
+   * nadie escribe "+$500" en su cuenta). NUNCA suprime el "−": una cuenta
+   * en descubierto tiene que verse negativa sin importar este flag — un
+   * valor negativo mostrado sin signo no es "más limpio", es un número
+   * falso. Independiente de `polarity`, que es solo la tinta.
+   */
   showSign?: boolean | undefined;
   showArrow?: boolean | undefined;
   /** `tabular-nums` + mono: solo en columnas que tienen que alinear verticalmente. */
@@ -130,7 +136,12 @@ export function Amount({
   const fracPart = decimals > 0 ? (absAmount % divisor).toString().padStart(decimals, "0") : "";
   const intFormatted = new Intl.NumberFormat(numberLocaleForUiLocale(locale)).format(intPart);
 
-  const sign = !showSign || value.amount === 0n ? "" : negative ? "−" : "+";
+  // `negative ? "−"` no depende de `showSign` a propósito — ver el
+  // comentario de la prop. Ocultar el signo negativo de un saldo real
+  // (p. ej. una cuenta que quedó en descubierto) lo hacía mostrarse como
+  // si tuviera ese mismo monto en positivo: no es una cifra "más limpia",
+  // es una cifra falsa.
+  const sign = value.amount === 0n ? "" : negative ? "−" : showSign ? "+" : "";
   const arrow = showArrow && value.amount !== 0n ? (negative ? "↓ " : "↑ ") : "";
   const symbol = CURRENCY_SYMBOLS[value.currency.toUpperCase()] ?? value.currency;
 
