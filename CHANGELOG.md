@@ -6,6 +6,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.26.0] — 2026-08-05
+
+### Arreglado — el heatmap del calendario ignoraba los filtros activos
+
+- Filtrabas por una categoría, la lista se angostaba, y la grilla seguía pintando el gasto **total**
+  de cada día. El color decía "gastaste esto" cuando en realidad decía "gastaste esto en todo": dos
+  lecturas distintas en la misma pantalla, y la que engaña es la que se lee de un vistazo.
+- La causa era de arquitectura, no de cálculo. El estado de filtros vivía dentro de
+  `TransactionsListContent` y el calendario lo dibuja `page.tsx`, que no lo veía. El estado sube al
+  ancestro común, junto con el efecto que siembra los prefiltros del deep link (`?category=`,
+  `?kind=`, `?pending=`); la lista los recibe por prop y sigue derivando lo suyo.
+- El criterio compartido se extrae a **`matchesNonDateFilters`** en vez de duplicarlo: si cada
+  punta lo reimplementara, volveríamos exactamente al bug que esto arregla.
+- La **fecha** queda deliberadamente afuera del predicado. Es el eje que el propio calendario
+  maneja: con el rango aplicado, elegir un día apagaría el resto del mes y la visualización se
+  borraría a sí misma.
+
+### Arreglado — las ~20 pantallas que quedaban rotas en modo demo
+
+- Quinto y siguientes casos del patrón que ya rompió Categorías (v0.22.0) y la captura más el modal
+  de cuenta nueva (v0.23.0): `useCurrentUserId()` resuelve a `null` **para siempre** cuando no hay
+  sesión de Supabase —el modo demo, que nunca crea una—, así que toda pantalla que gatea su render
+  con `if (!userId)` se queda en "Cargando…" y toda escritura nunca dispara.
+- Barrido completo, 21 archivos: familia (las cuatro), ajustes, perfil, importar, datos,
+  notificaciones, home, detalle de cuenta, resumen de tarjeta, recurrentes (las tres), inversiones,
+  repartir y editar un movimiento, y `/accounts/new` full-screen.
+- **Dos no estaban en la lista y son los más silenciosos**: el materializador de recurrentes, que
+  **escribe** y en demo no materializaba ninguna ocurrencia jamás, y `useOwnAccess`, cuya query
+  quedaba deshabilitada.
+- Quedan **dos** consumidores del hook crudo, a propósito, y son los dos donde la diferencia entre
+  "no hay sesión" y "hay una sesión demo" importa de verdad: `onboarding-gate` (con el sustituto
+  nunca mandaría a onboarding) y `db-owner-sync` (namespacea la base Dexie por usuario real y tiene
+  una rama explícita para `null`).
+- **La regla quedó escrita en el docblock de `useEffectiveUserId`**, con esas dos excepciones
+  nombradas: si la pantalla escribe, o necesita saber cuál de los miembros del household sos, va el
+  hook efectivo. Es el lugar donde alguien la va a leer antes de escribir la sexta pantalla rota —
+  que es más valioso que el barrido en sí.
+
+### Cambiado — `pnpm lint` vuelve a ser una señal
+
+- Los 16 errores que lo dejaban en rojo permanente estaban todos en `docs/library/perze-v2.jsx`,
+  `docs/design/support.js` y un `_ds_bundle.js`: el bundle del design system y la biblioteca de
+  origen, versionados como **referencia** para portar a mano. No son código de la app y no se van a
+  arreglar.
+- `eslint.config.mjs` ya ignoraba `perze-design/**` con exactamente ese argumento; `docs/` había
+  quedado afuera por olvido. Un comando que siempre falla no avisa de nada, que es peor que no
+  tenerlo.
+
 ## [0.25.0] — 2026-08-05
 
 ### Arreglado — la escala del heatmap del calendario aplastaba los días chicos
