@@ -24,11 +24,17 @@ import { env } from "@/env";
  * A2 — auth. `CLAUDE.md` § "Orden de A2": con OAuth registrado, Google/Apple
  * son primarios y el email colapsa; sin OAuth, el email es el campo
  * primario y esos botones **no se dibujan** (ausentes, no deshabilitados —
- * un botón muerto sin credenciales se lee como una app rota). Este
- * self-host todavía no tiene apps de Google/Apple registradas en Supabase
- * Auth, así que hoy es la rama sin OAuth. El día que se configuren,
+ * un botón muerto sin credenciales se lee como una app rota).
  * `NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS` (env, no un toggle en código) es lo
- * único que hay que tocar acá.
+ * único que hay que tocar para pasar de una rama a la otra.
+ *
+ * **Esto contradice a propósito la anotación 1 de
+ * `docs/design/bloque-a-onboarding.html`** (línea ~356), que dice que
+ * Google/Apple van "al mismo nivel visual que el link, no escondidos", con
+ * el `Input` de email siempre visible. `CLAUDE.md` es autoridad 1 sobre el
+ * archivo de diseño (autoridad 4) y es categórico: el email colapsa. Si
+ * alguien mira el HTML del diseño y "restaura" el campo siempre visible,
+ * está reabriendo esto — la decisión está en `CLAUDE.md`, no acá.
  */
 const OAUTH_PROVIDERS = (env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS ?? "")
   .split(",")
@@ -43,6 +49,10 @@ export default function OnboardingAuthPage() {
   const email = useEmailField();
   const [seeding, setSeeding] = useState(false);
   const [sending, setSending] = useState(false);
+  // Colapso de A2 (CLAUDE.md § "Orden de A2"): sin OAuth arranca expandido
+  // (es lo único que hay, y coincide con el estado de hoy sin cambios).
+  // Con OAuth arranca colapsado — el disparador "Usar mi email" lo abre.
+  const [emailExpanded, setEmailExpanded] = useState(OAUTH_PROVIDERS.length === 0);
 
   /**
    * El link del mail de verificación termina acá con los tokens en el
@@ -218,7 +228,7 @@ export default function OnboardingAuthPage() {
           </Button>
         ) : null}
 
-        {OAUTH_PROVIDERS.length > 0 ? (
+        {OAUTH_PROVIDERS.length > 0 && emailExpanded ? (
           <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "8px 0" }}>
             <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("onboarding.auth.orWithEmail")}</span>
@@ -226,11 +236,23 @@ export default function OnboardingAuthPage() {
           </div>
         ) : null}
 
-        <Input placeholder={t("onboarding.auth.emailPlaceholder")} {...email.bind} />
+        {emailExpanded ? (
+          <>
+            <Input placeholder={t("onboarding.auth.emailPlaceholder")} autoFocus={OAUTH_PROVIDERS.length > 0} {...email.bind} />
 
-        <Button disabled={!email.valid || sending} icon="mail" onClick={handleMagicLink}>
-          {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
-        </Button>
+            <Button disabled={!email.valid || sending} icon="mail" onClick={handleMagicLink}>
+              {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
+            </Button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEmailExpanded(true)}
+            style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 14, alignSelf: "center", padding: "12px 0" }}
+          >
+            {t("onboarding.auth.useMyEmail")}
+          </button>
+        )}
 
         {/* AC-7 — el camino al login (y desde ahí a "olvidé mi contraseña")
             no existía desde esta pantalla: quien entraba a la app en un

@@ -35,5 +35,9 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    // Google es el estado de producción objetivo (docs/mejora-auth-oauth-y-email.md
+    // § 2): A2 colapsa el email bajo "Usar mi email" con esto encendido.
+    // `onboarding-first-expense.spec.ts` ya asumía este botón.
+    env: { ...process.env, NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: "google" },
   },
 });

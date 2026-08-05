@@ -662,6 +662,7 @@
    "continueWithApple": "Continue with Apple",
    "connectedWith": "Connected with {provider}",
    "orWithEmail": "or with your email",
+   "useMyEmail": "Use my email",
    "emailPlaceholder": "you@email.com",
    "sendLink": "Send sign-in link",
    "sendingLink": "Sending…",

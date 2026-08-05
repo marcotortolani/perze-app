@@ -203,26 +203,27 @@ trabajo para volver a escribirlo si algún día se paga la cuenta.
 
 ## 4. Cambios de código pendientes
 
-Tres, para ejecutar en una pasada futura — no se implementan en este
-documento:
-
-1. **El colapso de A2 no está programado.** La decisión cerrada dice que con
-   OAuth registrado el email colapsa bajo "usar mi email". El código de hoy
-   (`page.tsx:108-119`) siempre muestra el divisor y el `Input` de email
-   visible. No se nota mientras `OAUTH_PROVIDERS` está vacío; el día que se
-   encienda Google, la pantalla queda distinta de la decisión cerrada.
-   Requiere un estado local de "email expandido" y una clave i18n nueva
-   (`onboarding.auth.useMyEmail`) en `messages/{es,en,pt}.json` — cero
-   strings hardcodeadas, como manda `CLAUDE.md`.
-2. **Verificar el retorno en PWA instalada.** `signInWithOAuth` navega el
-   documento entero a Google; en modo standalone, el ida y vuelta hasta
-   `/auth/callback` puede terminar en una pestaña del navegador del sistema
-   en vez de la ventana instalada. Es un caso a **probar**, no a asumir roto
-   ni asumir sano — instalar la PWA y confirmar dónde queda la sesión.
-3. **Confirmar que `?next=` sobrevive el viaje completo.** `safeNextPath`
-   (`src/lib/auth/safe-next-path.ts`) ya valida el destino; falta confirmar
-   en la prueba end-to-end que el parámetro efectivamente llega, que es lo
-   que se rompe si falta el paso 6 de [§ 2](#2-google--configuración).
+1. **El colapso de A2 — hecho.** `src/app/onboarding/page.tsx` ahora tiene
+   un estado local `emailExpanded` (`false` con OAuth registrado, `true`
+   sin él): con Google encendido el email queda detrás de un disparador de
+   texto "Usar mi email" y aparece con foco automático al tocarlo, en vez
+   de convivir siempre visible con los botones de proveedor. Clave i18n
+   nueva `onboarding.auth.useMyEmail` en `messages/{es,en,pt}.json`, y
+   `e2e/onboarding-oauth-collapse.spec.ts` cubre las dos ramas.
+2. **Verificar el retorno en PWA instalada — pendiente, prueba manual.**
+   `signInWithOAuth` navega el documento entero a Google; en modo
+   standalone, el ida y vuelta hasta `/auth/callback` puede terminar en una
+   pestaña del navegador del sistema en vez de la ventana instalada.
+   Requiere Google ya configurado en el proyecto remoto ([§ 0](#0-estado-actual)
+   de este documento) — no se puede probar solo con código.
+3. **Confirmar que `?next=` sobrevive el viaje completo — pendiente,
+   prueba manual.** `safeNextPath` (`src/lib/auth/safe-next-path.ts`) ya
+   valida el destino; falta confirmar en la prueba end-to-end contra
+   Google real que el parámetro efectivamente llega, que es lo que se
+   rompe si falta el paso 6 de [§ 2](#2-google--configuración). Mismo
+   motivo que el punto 2: `e2e/onboarding-first-expense.spec.ts` ya
+   asume el botón de Google y falla hoy porque el provider todavía no
+   está configurado en el Dashboard — no es una regresión de código.
 
 ## 5. Resend — SMTP para Supabase Auth
 
