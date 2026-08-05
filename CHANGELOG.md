@@ -6,6 +6,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.23.0] — 2026-08-05
+
+### Arreglado — en modo demo no se podía cargar un gasto
+
+- `CaptureFlow` gatea su render con `if (!household || !userId)` usando `useCurrentUserId()`, y ese
+  hook resuelve a `null` **para siempre** cuando no hay sesión de Supabase — el caso del modo demo,
+  que nunca crea una. La pantalla de captura quedaba en **"Cargando…"** eternamente: en demo era
+  imposible cargar un gasto, que es la única métrica por la que se juzga esta app. Pasa a
+  `useEffectiveUserId()`.
+- Mismo bug en `@modal/(.)accounts/new`, que además hacía `return null`: se abría la URL del modal
+  y no se dibujaba nada.
+- Es el tercer y cuarto caso del mismo patrón (el primero fue Categorías, en la v0.22.0). **Quedan
+  ~13 pantallas más usando `useCurrentUserId()`**, varias de ellas de escritura: familia, ajustes,
+  perfil, importar, datos, notificaciones, detalle de cuenta, resumen de tarjeta, recurrentes,
+  inversiones, repartir un movimiento, editar un movimiento y `/accounts/new` full-screen. No se
+  tocaron en este cambio, pero hay que revisarlas una por una: `useCurrentUserId()` es correcto
+  solo donde se necesita la sesión REAL (`OnboardingGate`, `DbOwnerSync`).
+
+### Agregado — el riesgo de "portal huérfano" queda cubierto por un test
+
+- `docs/auditoria-rutas-interceptoras.md` § 4 advertía que un `Modal` portaleado a `document.body`
+  podía sobrevivir a un "volver" y tapar la pantalla entera, porque con `cacheComponents: true`
+  `Activity` oculta su propio subárbol pero no lo que ese subárbol portaleó afuera. Estaba
+  verificado solo en escritorio.
+- `e2e/modal-portal-orphan.spec.ts` lo cubre ahora en **mobile** para las dos rutas interceptoras
+  que quedan. **El overlay no sobrevive en ninguna de las dos.** La aserción fuerte no es que el
+  contenido desaparezca sino que la pantalla de abajo reciba eventos de puntero: un `click` de
+  Playwright falla si otro elemento los intercepta, que es lo que haría un overlay huérfano aunque
+  fuera invisible.
+- Los dos modales se comportan distinto y los dos están bien: al volver, `/add` desmonta su
+  subárbol y `/accounts/new` lo deja montado pero oculto. Por eso el test afirma `toBeHidden()` y
+  no `toHaveCount(0)` — exigir que desaparezca del DOM sería fijar un detalle de implementación.
+
 ## [0.22.0] — 2026-08-05
 
 ### Arreglado — Categorías no renderizaba nada en modo demo

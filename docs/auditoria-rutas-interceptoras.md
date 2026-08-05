@@ -8,15 +8,14 @@
 
 ## 0. Estado al 2026-08-05
 
-**El encargo está cerrado.** Queda una sola cosa sin verificar y está anotada abajo: el riesgo de
-portal huérfano (§ 4) se probó solo en desktop. Lo que cambió desde que se escribió el resto del
-documento:
+**El encargo está cerrado.** Lo único que sigue sin verificar es la hipótesis sobre qué dispara
+el bug de Next (§ 3). Lo que cambió desde que se escribió el resto del documento:
 
 | Punto | Estado |
 |---|---|
 | Medir el alcance con evidencia (§ 8.1) | **Hecho.** Resultado abajo, en § 3. No se reprodujo |
 | Migrar `transactions` (§ 5.1) | **Hecho.** `/transactions?tx=<id>`, mismo patrón que cuentas |
-| Auditar `@modal/(.)add` y `@modal/(.)accounts/new` (§ 5.2) | **Hecho.** Las dos se quedan; decisión argumentada en § 5.2 |
+| Auditar `@modal/(.)add` y `@modal/(.)accounts/new` (§ 5.2) | **Hecho.** Las dos se quedan; decisión en § 5.2. Portal huérfano verificado en desktop y mobile |
 | Bugs silenciosos abiertos (§ 6) | **Hechos los tres.** Ver § 6 |
 | Convención escrita (§ 5.3) | **Hecha**, en `CLAUDE.md` § "Convención de rutas" |
 
@@ -282,9 +281,18 @@ acumulaban y forzaban recargas, y eso no se sostuvo con la medición.
   da problemas es pagar en UX por un beneficio que no existe. Si en algún momento aparece
   evidencia de que acumula, se reevalúa; el costo de sacarlo después es el mismo que ahora.
 
-**Lo que sí queda por verificar:** el riesgo de portal huérfano de § 4 se probó solo en desktop.
-Las dos usan `Modal` sin `contained`, o sea portal a `document.body`, y el escenario de `Activity`
-con `cacheComponents: true` en mobile sigue sin ejercitarse.
+**El portal huérfano de § 4 quedó verificado también en mobile, y NO se produce.** Cubierto por
+`e2e/modal-portal-orphan.spec.ts`, que corre en viewport de iPhone 13: abre cada modal por
+navegación blanda (la que activa el interceptor), vuelve con el botón atrás y comprueba que el
+contenido del modal ya no se ve **y que la pantalla de abajo recibe eventos de puntero** — un
+`click` de Playwright falla si otro elemento los intercepta, que es justo lo que haría un overlay
+huérfano aunque fuera invisible.
+
+Un detalle que conviene saber antes de tocar esto: los dos modales se comportan **distinto** y los
+dos están bien. Al volver, `/add` desmonta su subárbol, y `/accounts/new` lo deja montado pero
+oculto — eso es `Activity` haciendo lo suyo con `cacheComponents: true`. Por eso el test afirma
+`toBeHidden()` y no `toHaveCount(0)`: exigir que desaparezca del DOM sería fijar un detalle de
+implementación que React puede cambiar, y no es lo que rompe al usuario.
 
 ### 5.3. Los ~6 pares lista/detalle que todavía no tienen split view
 
@@ -356,7 +364,7 @@ hallazgos abiertos, y conviene verificarlos porque comparten la propiedad de fal
 1. ~~**Confirmar el alcance con evidencia**~~ — **hecho**, § 3. No se reprodujo en 61 recompiles.
    Queda una hipótesis sin verificar sobre el disparador real.
 2. ~~**Auditar las rutas interceptoras vivas**~~ — **hecho** para las tres, incluido el portal
-   huérfano de § 4. Falta el camino de mobile.
+   huérfano de § 4 en desktop Y mobile (`e2e/modal-portal-orphan.spec.ts`).
 3. ~~**Plan de corrección priorizado**~~ — **hecho y ejecutado**: `transactions` migrada (§ 5.1)
    y la decisión de producto sobre las dos interceptoras que quedan, tomada y argumentada
    (§ 5.2).
