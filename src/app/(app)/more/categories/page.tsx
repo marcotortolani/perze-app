@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Card, EmptyState, ErrorState, ListRow, OptionCard, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
-import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
+import { useArchivedCategories, useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useTransactions, useInvalidateTransactions } from "@/hooks/use-transactions";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
@@ -17,6 +18,7 @@ import { householdsRepo } from "@/lib/repos/households-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { applyCategoryTemplate, type CategoryTemplateChoice } from "@/lib/onboarding/apply-category-template";
 import { mergeDuplicateCategories } from "@/lib/categories/merge-duplicate-categories";
+import { buildCategoryUsageIndex, collectSubtree, isDeletable, subtreeUsage } from "@/lib/categories/category-usage";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "@/lib/reference/category-templates";
 import { buildNewCategoryInput, findExistingCategoryByName } from "@/features/capture/create-category";
 import { CategorySheet, type CategorySheetTarget } from "@/features/categories/CategorySheet";
@@ -251,6 +253,72 @@ function CategoryTree({
 }
 
 /**
+ * Las archivadas, con la misma jerarquía que el árbol activo.
+ *
+ * Antes era una lista plana, y con duplicados era imposible saber de cuál
+ * "Salud" colgaba cada "Farmacia" — la archivada o la activa. Eso importa
+ * porque borrar exige el camino inverso al de archivar: archivar arrastra a
+ * las hijas, así que borrar va de la hoja hacia la raíz, y sin ver el vínculo
+ * la madre parecía bloqueada sin motivo.
+ *
+ * Una hija cuya madre NO está archivada (se archivó solo la hoja) no tiene
+ * bajo qué anidarse: va al primer nivel, pero diciendo de quién viene.
+ */
+function ArchivedCategoryTree({
+  archived,
+  activeById,
+  onEdit,
+}: {
+  archived: CategoryRow[];
+  activeById: Map<string, CategoryRow>;
+  onEdit: (category: CategoryRow) => void;
+}) {
+  const t = useTranslations();
+  const categoryLabel = useCategoryLabel();
+  const archivedById = new Map(archived.map((c) => [c.id, c]));
+  const roots = archived.filter((c) => c.parentId === null || !archivedById.has(c.parentId));
+  const childrenOf = new Map<string, CategoryRow[]>();
+  for (const c of archived) {
+    if (c.parentId && archivedById.has(c.parentId)) childrenOf.set(c.parentId, [...(childrenOf.get(c.parentId) ?? []), c]);
+  }
+
+  const rowFor = (category: CategoryRow, meta: string | undefined) => (
+    <ListRow
+      icon={(category.icon as IconName) ?? "tag"}
+      label={categoryLabel(category)}
+      {...(meta ? { meta } : {})}
+      onClick={() => onEdit(category)}
+    />
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {roots.map((category) => {
+        const children = childrenOf.get(category.id) ?? [];
+        // Huérfana: su madre existe pero no está archivada. Se dice de quién
+        // viene, que es la única forma de distinguir dos hijas homónimas.
+        const activeParent = category.parentId ? activeById.get(category.parentId) : undefined;
+        const meta = activeParent
+          ? t("categoryTemplate.archivedChildOf", { parent: categoryLabel(activeParent) })
+          : children.length > 0
+            ? t("categoryTemplate.subcategoriesMeta", { count: children.length })
+            : undefined;
+        return (
+          <Card key={category.id} padding="4px 12px" style={{ opacity: 0.55 }}>
+            {rowFor(category, meta)}
+            {children.map((child) => (
+              <div key={child.id} style={{ paddingLeft: 28 }}>
+                {rowFor(child, undefined)}
+              </div>
+            ))}
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * Separado del wrapper de arriba a propósito: `useState(templateChoiceFrom(household.settings))`
  * solo lee el valor guardado correctamente si `household` YA está cargado
  * en el primer render de este componente — con el `useState` en el
@@ -274,6 +342,11 @@ function CategoryManagerForm({
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
   const invalidateCategories = useInvalidateCategories(household.id);
+  const { data: archivedCategories = [] } = useArchivedCategories(household.id);
+  const queryClient = useQueryClient();
+  // Borrar o restaurar cambia qué referencia a qué, así que el índice de uso
+  // se recalcula junto con las listas.
+  const invalidateUsage = () => queryClient.invalidateQueries({ queryKey: ["category-usage", household.id] });
   const invalidateHousehold = useInvalidateHousehold();
   const invalidateTransactions = useInvalidateTransactions(household.id);
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
@@ -309,6 +382,68 @@ function CategoryManagerForm({
   }, [household.id, invalidateCategories, invalidateTransactions, t]);
 
   const usedCategoryIds = useMemo(() => new Set(transactions.map((tx) => tx.categoryId).filter((id): id is string => id !== null)), [transactions]);
+  /**
+   * Índice de uso de TODAS las categorías, para saber cuáles se pueden
+   * borrar. Vive en una query aparte porque lee seis tablas (transacciones,
+   * repartos, presupuestos, recurrentes, reglas y comercios) — ver
+   * `lib/categories/category-usage.ts`, que explica por qué "0 movimientos"
+   * no alcanza como criterio.
+   */
+  const { data: usageIndex } = useQuery({
+    queryKey: ["category-usage", household.id],
+    queryFn: () => buildCategoryUsageIndex(household.id),
+  });
+
+  /**
+   * Traduce el uso a la frase que ve el usuario, o `null` si no hay nada que
+   * la referencie y por lo tanto se puede borrar. Mientras el índice carga
+   * devuelve una frase vacía —no `null`— para que el botón nazca
+   * deshabilitado: habilitarlo por un instante, antes de saber si hay
+   * referencias, es exactamente el momento en que alguien lo aprieta.
+   */
+  const deleteBlockedReason = (category: CategoryRow | undefined): string | null => {
+    if (!category) return "";
+    if (!usageIndex) return "";
+    // El criterio es el SUBÁRBOL, no la categoría sola: borrar arrastra a las
+    // subcategorías, así que tener hijas no bloquea — bloquea que alguna de
+    // ellas tenga algo asociado.
+    const usage = subtreeUsage(usageIndex, category.id);
+    if (isDeletable(usage)) return null;
+    const parts = [
+      usage.transactions > 0 ? t("categoryTemplate.usageTransactions", { count: usage.transactions }) : null,
+      usage.splits > 0 ? t("categoryTemplate.usageSplits", { count: usage.splits }) : null,
+      usage.budgets > 0 ? t("categoryTemplate.usageBudgets", { count: usage.budgets }) : null,
+      usage.recurringRules > 0 ? t("categoryTemplate.usageRecurring", { count: usage.recurringRules }) : null,
+      usage.categorizationRules > 0 ? t("categoryTemplate.usageRules", { count: usage.categorizationRules }) : null,
+      usage.payees > 0 ? t("categoryTemplate.usagePayees", { count: usage.payees }) : null,
+    ].filter((p): p is string => p !== null);
+    return t("categoryTemplate.deleteBlocked", { reasons: parts.join(" · ") });
+  };
+
+  /** Cuántas subcategorías se van a borrar junto con ella, para avisarlo antes. */
+  const deleteCascadeCount = (category: CategoryRow | undefined): number => {
+    if (!category || !usageIndex) return 0;
+    return collectSubtree(usageIndex, category.id).length - 1;
+  };
+
+  const handleDeleteCategory = (category: CategoryRow) => {
+    if (!usageIndex) return;
+    const label = categoryLabel(category);
+    // Hoja a raíz: en ningún momento queda una hija colgando de una madre
+    // que ya se borró.
+    const ids = collectSubtree(usageIndex, category.id);
+    const childCount = ids.length - 1;
+    void categoriesRepo.removeMany(ids).then(() => {
+      invalidateCategories();
+      invalidateUsage();
+    });
+    toast(
+      childCount > 0
+        ? t("categoryTemplate.categoryDeletedWithChildren", { name: label, count: childCount })
+        : t("categoryTemplate.categoryDeletedForGood", { name: label })
+    );
+  };
+
   const movementCounts = useMemo(() => {
     const map = new Map<string, number>();
     for (const tx of transactions) {
@@ -317,6 +452,9 @@ function CategoryManagerForm({
     return map;
   }, [transactions]);
   const countInKind = categories.filter((c) => c.kind === kind).length;
+  // Las archivadas siguen al segmentado igual que el árbol: gastos y ingresos
+  // no se mezclan en la misma vista.
+  const archivedInKind = archivedCategories.filter((c) => c.kind === kind);
 
   const handleSaveCategory = async (target: CategorySheetTarget, values: { name: string; icon: IconName }) => {
     if (target.mode === "edit") {
@@ -349,14 +487,15 @@ function CategoryManagerForm({
    * restaura todo el subárbol — no hay diálogo de confirmación porque el
    * toast ES el camino de vuelta.
    */
-  const handleDeleteCategory = (category: CategoryRow) => {
+  const handleArchiveCategory = (category: CategoryRow) => {
     const label = categoryLabel(category);
     const children = categories.filter((c) => c.parentId === category.id && c.archivedAt === null);
     const ids = [category.id, ...children.map((c) => c.id)];
     void categoriesRepo.archiveWithChildren(category.id).then(() => {
       invalidateCategories();
+      invalidateUsage();
     });
-    toast(children.length > 0 ? t("categoryTemplate.categoryDeletedWithChildren", { name: label, count: children.length }) : t("categoryTemplate.categoryDeleted", { name: label }), {
+    toast(children.length > 0 ? t("categoryTemplate.categoryArchivedWithChildren", { name: label, count: children.length }) : t("categoryTemplate.categoryArchived", { name: label }), {
       action: {
         label: t("common.undo"),
         onClick: () => {
@@ -366,6 +505,33 @@ function CategoryManagerForm({
         },
       },
     });
+  };
+
+  /**
+   * Revive una categoría archivada desde la sección "Archivadas".
+   *
+   * Revive también sus ancestros archivados: restaurar una subcategoría sola,
+   * con el padre todavía archivado, la dejaba colgando como si fuera raíz
+   * (`CategoryTree` trata como raíz a cualquiera cuyo padre no esté en la
+   * lista activa). Archivar un padre arrastra a sus hijos, así que lo
+   * simétrico al restaurar es arrastrar a los padres.
+   *
+   * Sin "deshacer" en el toast a propósito: la acción inversa es archivar,
+   * que está a un tap en el sheet de la categoría recién restaurada.
+   */
+  const handleRestoreCategory = (category: CategoryRow) => {
+    const byId = new Map(archivedCategories.map((c) => [c.id, c]));
+    const ids = [category.id];
+    let parentId = category.parentId;
+    while (parentId && byId.has(parentId)) {
+      ids.push(parentId);
+      parentId = byId.get(parentId)!.parentId;
+    }
+    void categoriesRepo.restoreMany(ids).then(() => {
+      invalidateCategories();
+      invalidateUsage();
+    });
+    toast(t("categoryTemplate.categoryRestored", { name: categoryLabel(category) }));
   };
 
   const handleSaveTemplate = async (templateChoice: CategoryTemplateChoice = choice) => {
@@ -432,9 +598,42 @@ function CategoryManagerForm({
                   {t(kind === "expense" ? "categoryTemplate.countExpense" : "categoryTemplate.countIncome", { count: countInKind })}
                 </p>
                 <CategoryTree categories={categories} kind={kind} movementCounts={movementCounts} onEdit={(category) => setSheetTarget({ mode: "edit", category })} twoColumns={hasChosenTemplate} />
+                {/* Crear cierra la lista, como última fila — mismo patrón que
+                    `/more/tags` y `/more/rules`, las otras dos pantallas de
+                    gestión, que ya resolvían "agregar" con una `ListRow` de
+                    variante `action` en vez de un botón primario suelto.
+                    Antes era un `<Button variant="primary">` al final del
+                    scroller: en escritorio quedaba tan abajo que había que
+                    scrollear la pantalla entera para llegar.
+
+                    Mismo tope de ancho que "Cambiar plantilla" — sin él la
+                    fila se estira por debajo de las dos columnas del masonry
+                    de arriba. */}
+                <div className="lg:max-w-[var(--content-max-width)]" style={{ marginTop: 8 }}>
+                  <ListRow icon="plus" label={t("categoryTemplate.newCategory")} variant="action" onClick={() => setSheetTarget({ mode: "create", kind, parent: null })} />
+                </div>
                 <p className="t-caption" style={{ margin: "16px 0 0", color: "var(--text-muted)" }}>
                   {t("categoryTemplate.archiveNote")}
                 </p>
+                {/* Sin esta sección, archivar era irreversible en la práctica:
+                    `restoreMany` solo estaba cableado al "Deshacer" del toast,
+                    así que apenas ese toast se iba no quedaba ninguna pantalla
+                    desde donde recuperar la categoría — justo lo contrario de
+                    lo que promete la nota de acá arriba. Espeja la sección
+                    "Archivadas" de `/accounts`: atenuadas, y un tap las
+                    revive. */}
+                {archivedInKind.length > 0 ? (
+                  <div className="lg:max-w-[var(--content-max-width)]" style={{ marginTop: 20 }}>
+                    <p className="t-label" style={{ margin: "0 0 4px", color: "var(--text-muted)" }}>
+                      {t("categoryTemplate.archivedSection")}
+                    </p>
+                    <ArchivedCategoryTree
+                      archived={archivedInKind}
+                      activeById={new Map(categories.map((c) => [c.id, c]))}
+                      onEdit={(category) => setSheetTarget({ mode: "edit", category })}
+                    />
+                  </div>
+                ) : null}
                 {hasChosenTemplate ? (
                   // Mismo tope que "Nueva categoría" — sin esto, esta fila
                   // (una sola columna dentro del `<div>` de la izquierda,
@@ -456,23 +655,17 @@ function CategoryManagerForm({
             </div>
           )}
         </div>
-        {/* Tope de ancho en desktop — sin esto, un botón `fullWidth` (el
-            default) se estira a las dos columnas de arriba, que es
-            exactamente lo que había que evitar. `--content-max-width`
-            (560px) es el mismo tope que ya usan los sheets de esta
-            pantalla, no un número inventado. */}
-        <div className="lg:max-w-[var(--content-max-width)]">
-          <Button variant="primary" onClick={() => setSheetTarget({ mode: "create", kind, parent: null })}>
-            {t("categoryTemplate.newCategory")}
-          </Button>
-        </div>
       </div>
       <CategorySheet
         key={sheetTarget?.mode === "edit" ? sheetTarget.category.id : sheetTarget?.mode === "create" ? `create-${sheetTarget.parent?.id ?? "root"}-${sheetTarget.kind}` : "none"}
         target={sheetTarget}
         onClose={() => setSheetTarget(null)}
         onSave={handleSaveCategory}
+        onArchive={handleArchiveCategory}
+        onRestore={handleRestoreCategory}
         onDelete={handleDeleteCategory}
+        deleteBlockedReason={deleteBlockedReason(sheetTarget?.mode === "edit" ? sheetTarget.category : undefined)}
+        deleteCascadeCount={deleteCascadeCount(sheetTarget?.mode === "edit" ? sheetTarget.category : undefined)}
         onAddSubcategory={(parent) => setSheetTarget({ mode: "create", kind: parent.kind, parent })}
       />
       {/* Único lugar donde el módulo de 3 opciones reaparece después de la

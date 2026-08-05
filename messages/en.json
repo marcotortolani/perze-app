@@ -921,7 +921,12 @@
   "field": {
    "note": "the note",
    "payeeName": "the payee"
-  }
+  },
+  "editRule": "Edit rule",
+  "deleteRule": "Delete rule",
+  "updated": "Rule updated",
+  "deleted": "\"{name}\" deleted",
+  "notFound": "We couldn't find that rule."
  },
  "tagsPayeesPage": {
   "title": "Tags and payees",
@@ -1202,9 +1207,9 @@
   "changeTemplate": "Change template",
   "changeTemplateTitle": "Change template",
   "duplicatesMerged": "{count, plural, one {We merged # duplicate category} other {We merged # duplicate categories}}",
-  "deleteCategory": "Delete category",
-  "categoryDeleted": "\"{name}\" archived",
-  "categoryDeletedWithChildren": "\"{name}\" and its {count} subcategories, archived",
+  "archiveCategory": "Archive category",
+  "categoryArchived": "\"{name}\" archived",
+  "categoryArchivedWithChildren": "\"{name}\" and its {count} subcategories, archived",
   "expensesTab": "Expenses",
   "incomeTab": "Income",
   "countExpense": "{count} expense",
@@ -1219,7 +1224,24 @@
   "archiveNote": "Archiving a category doesn't delete the transactions already assigned to it — they still count in your reports.",
   "listEmpty": "You don't have any categories yet. Create the first one or pick a template.",
   "iconSearchPlaceholder": "Search icon…",
-  "loadError": "We couldn't load your categories."
+  "loadError": "We couldn't load your categories.",
+  "archivedSection": "Archived",
+  "restoreCategory": "Restore",
+  "categoryRestored": "\"{name}\" restored",
+  "deleteCategory": "Delete category",
+  "deleteOnlyEmptyNote": "Only categories without any transactions can be deleted.",
+  "deleteBlocked": "Can't delete: {reasons}.",
+  "categoryDeletedForGood": "\"{name}\" deleted",
+  "usageTransactions": "{count, plural, one {# transaction} other {# transactions}}",
+  "usageSplits": "{count, plural, one {# split} other {# splits}}",
+  "usageBudgets": "{count, plural, one {# budget} other {# budgets}}",
+  "usageRecurring": "{count, plural, one {# recurring} other {# recurring}}",
+  "usageRules": "{count, plural, one {# rule} other {# rules}}",
+  "usagePayees": "{count, plural, one {# payee} other {# payees}}",
+  "usageChildren": "{count, plural, one {# subcategory} other {# subcategories}}",
+  "archivedChildOf": "Subcategory of {parent}",
+  "deleteCascadeWarning": "Deleting this category also deletes its {count, plural, one {# subcategory} other {# subcategories}}.",
+  "categoryDeletedWithChildren": "\"{name}\" and its {count, plural, one {# subcategory} other {# subcategories}}, deleted"
  },
  "settingsPage": {
   "yourCurrency": "Your currency",

@@ -40,6 +40,16 @@ export default function CategorizationRulesPage() {
             {rules.map((rule) => {
               const category = rule.actions.categoryId ? categoryById.get(rule.actions.categoryId) : undefined;
               return (
+                // `onClick` abre el editor. Antes la fila no era tocable: una
+                // regla mal escrita no se podía corregir ni sacar, solo
+                // apagar — y apagada seguía ocupando la lista igual.
+                //
+                // El `stopPropagation` del `Switch` es necesario, no
+                // decorativo: con un slot `right` presente `ListRow` no puede
+                // ser un `<button>` (un botón no admite contenido
+                // interactivo adentro), así que renderiza un `div` con el
+                // `onClick` en la raíz — y sin frenarlo acá, tocar el switch
+                // apagaría la regla Y navegaría al editor.
                 <ListRow
                   key={rule.id}
                   label={rule.name}
@@ -49,7 +59,12 @@ export default function CategorizationRulesPage() {
                     category: category ? categoryLabel(category) : t("categorizationRulesPage.noCategoryAction"),
                     count: rule.hitCount,
                   })}
-                  right={<Switch checked={rule.isActive} onChange={(on) => handleToggle(rule.id, on)} id={`rule-${rule.id}`} />}
+                  onClick={() => router.push(`/more/rules/${rule.id}/edit`)}
+                  right={
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <Switch checked={rule.isActive} onChange={(on) => handleToggle(rule.id, on)} id={`rule-${rule.id}`} />
+                    </span>
+                  }
                 />
               );
             })}

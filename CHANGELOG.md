@@ -6,6 +6,76 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.20.0] — 2026-08-05
+
+### Agregado — las categorías se pueden borrar, y las archivadas se pueden recuperar
+
+- **Archivar dejó de ser un borrado irreversible disfrazado.** `restoreMany` estaba cableado
+  únicamente al "Deshacer" del toast, así que apenas ese toast se iba no quedaba ninguna pantalla
+  desde donde recuperar la categoría — justo lo contrario de lo que promete la nota de esa
+  pantalla. Ahora hay una sección **"Archivadas"** al final del árbol, espejando la de
+  `/accounts`, y un tap revive.
+- **Y el botón decía lo que no hacía.** Era "Borrar categoría" en rojo, pero llamaba a
+  `archiveWithChildren()`: ponía `archivedAt` y no borraba nada. La app se contradecía sola — el
+  toast que salía después ya decía "archivada". Ahora dice **"Archivar categoría"** y es
+  `secondary`, porque es reversible. Se renombraron también las claves que mentían
+  (`deleteCategory` → `archiveCategory`, `categoryDeleted` → `categoryArchived`).
+- **Borrado de verdad, con la regla escrita en pantalla.** Debajo del botón siempre se lee el
+  criterio; cuando algo bloquea, el texto nombra QUÉ lo bloquea ("No se puede borrar: 4
+  movimientos") para saber dónde ir a soltarlo.
+- **El criterio no es "0 movimientos", aunque así se pidió.** Una categoría se referencia desde
+  **seis** tablas, no una: transacciones, **repartos**, presupuestos, recurrentes, reglas de
+  auto-categorización y el comercio por defecto. La lista sale de `reassignAllReferences`
+  (`merge-duplicate-categories.ts`), que ya era la autoritativa del repo. El caso que obliga a
+  mirar más allá de las transacciones es `transaction_splits.categoryId`, que **no admite null**:
+  un reparto cuya categoría se borró no se puede renderizar ni reparar desde la interfaz.
+- **Borrar arrastra a las subcategorías, y se avisa antes.** Tener hijas no bloquea; bloquea que
+  alguna de ellas tenga algo asociado. El subárbol se borra de **hoja a raíz**, así que en ningún
+  instante queda una hija colgando de una madre que ya no está.
+- **Las archivadas se muestran anidadas.** Eran una lista plana, y con duplicados era imposible
+  saber de cuál "Salud" colgaba cada "Farmacia" — la archivada o la activa. Una archivada cuya
+  madre no lo está aparece al primer nivel diciendo de quién viene.
+- `categoriesRepo.list()` no filtraba `deletedAt`. Nadie lo había notado porque hasta ahora nada
+  escribía esa columna para categorías.
+
+### Agregado — las reglas de auto-categorización se editan y se borran
+
+- La fila de la lista no era tocable: una regla mal escrita no se podía corregir ni sacar, solo
+  apagar con el switch — y apagada seguía ocupando la lista igual. Ahora abre un editor en
+  `/more/rules/[id]/edit`.
+- Borrar no pregunta: ejecuta, vuelve a la lista y ofrece **Deshacer**, que es el patrón por
+  defecto del proyecto.
+- El formulario se extrajo a **`RuleForm`**, compartido entre crear y editar, en vez de duplicar
+  el segmentado, el sheet de categorías y la validación en dos archivos.
+- **`archive()` de este repo tampoco archivaba**: ponía `deletedAt`, que `list()` filtra, y no
+  existe ninguna pantalla de reglas archivadas. Como no tenía callers, pasó a llamarse `remove()`,
+  con un `restore()` para el deshacer.
+- El `update()` de reglas fallaba en silencio con el mismo `if (!existing) return;` que se corrigió
+  en cuentas. Ahora lanza.
+
+### Arreglado — el índice de uso quedaba desfasado y bloqueaba borrados válidos
+
+- Borrabas una categoría archivada y la siguiente aparecía bloqueada por subcategorías que ya no
+  existían, hasta recargar la página. **No era el caché de Next**: las categorías viven en Dexie y
+  TanStack Query, que ese toggle no toca; el reload lo tapaba porque reconstruye el estado desde
+  la base.
+- La causa: seis de las siete fuentes se leían frescas de Dexie dentro del cálculo, y la séptima
+  —la lista de categorías, que alimenta el conteo de subcategorías— llegaba por parámetro desde el
+  estado de React. Al borrar se invalidan las dos queries a la vez y el índice se recalculaba con
+  el array del render anterior, que todavía tenía adentro lo recién borrado.
+- Ahora **las siete se leen en la misma pasada**, así que el índice es consistente consigo mismo
+  por construcción. Cubierto por una regresión explícita.
+- Como efecto colateral de ese bug pueden haber quedado subcategorías archivadas cuya madre fue
+  borrada. Aparecen al primer nivel de "Archivadas" y se borran normalmente; no se tocan solas.
+
+### Cambiado — "Nueva categoría" deja de ser un botón al pie
+
+- En escritorio quedaba tan abajo que había que scrollear la pantalla entera para llegar. Pasa a
+  ser la **última fila de la lista**, con el mismo `ListRow` de variante `action` que ya usaban
+  `/more/tags` y `/more/rules` — las tres pantallas de gestión quedan parejas. Al dejar de ser un
+  botón primario, además, no hay conflicto con la regla de que el primario vive en los últimos
+  200px de la pantalla.
+
 ## [0.19.0] — 2026-08-05
 
 ### Cambiado — el calendario muestra el mes entero, no solo el día que elijas

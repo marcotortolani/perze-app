@@ -11,7 +11,59 @@ export type NewCategoryInput = Omit<
 export const categoriesRepo = {
   async list(householdId: string): Promise<CategoryRow[]> {
     const rows = await getDb().categories.where("householdId").equals(householdId).toArray();
-    return rows.filter((c) => c.archivedAt === null).sort((a, b) => a.sortOrder - b.sortOrder);
+    // `deletedAt` se empezó a filtrar cuando apareció `remove()`: antes nada
+    // escribía esa columna para categorías, así que la condición no existía
+    // y una categoría borrada habría seguido apareciendo acá.
+    return rows.filter((c) => c.archivedAt === null && c.deletedAt === null).sort((a, b) => a.sortOrder - b.sortOrder);
+  },
+
+  /**
+   * Solo las archivadas. Existe como consulta aparte —y no relajando el
+   * filtro de `list()`— porque de `list()` cuelga toda la app: la captura,
+   * los filtros de movimientos, los presupuestos y los análisis asumen que
+   * lo que reciben es lo que se puede elegir HOY. Meterles las archivadas
+   * ahí las haría reaparecer como opción en todos lados.
+   *
+   * El único consumidor es la sección "Archivadas" de `/more/categories`,
+   * que es lo que hace que archivar sea reversible: antes `restoreMany` solo
+   * estaba cableado al "Deshacer" del toast, así que una vez que ese toast
+   * se iba no había ninguna pantalla desde donde recuperarla.
+   */
+  async listArchived(householdId: string): Promise<CategoryRow[]> {
+    const rows = await getDb().categories.where("householdId").equals(householdId).toArray();
+    return rows.filter((c) => c.archivedAt !== null && c.deletedAt === null).sort((a, b) => a.sortOrder - b.sortOrder);
+  },
+
+  /**
+   * Borrado de verdad, a diferencia de `archive()`: la categoría desaparece
+   * de las dos listas y no vuelve.
+   *
+   * Es un soft delete (`deletedAt`) y no un `db.categories.delete()` porque
+   * la fila tiene que viajar por el outbox para que el borrado llegue al
+   * servidor y a los otros dispositivos — mismo patrón que
+   * `transactionsRepo.softDelete`. Que sea recuperable desde la base no lo
+   * hace recuperable desde la interfaz: para el usuario esto es definitivo,
+   * y por eso la pantalla solo lo ofrece cuando NADA referencia a la
+   * categoría (ver `buildCategoryUsageIndex`). Este método no revalida esa
+   * condición: quien llama es responsable de haberla chequeado.
+   */
+  async remove(id: string): Promise<void> {
+    await enqueueCategoryUpdate(id, { deletedAt: nowIso() });
+  },
+
+  /**
+   * Borra un subárbol completo. `ids` viene de `collectSubtree`, en orden de
+   * hoja a raíz: así no hay ningún instante intermedio con hijas colgando de
+   * una madre que ya no está.
+   *
+   * Simétrico a `archiveWithChildren`: archivar arrastra a las hijas, así que
+   * borrar también. Quien llama es responsable de haber verificado que NADA
+   * del subárbol esté referenciado (`subtreeUsage` + `isDeletable`).
+   */
+  async removeMany(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      await enqueueCategoryUpdate(id, { deletedAt: nowIso() });
+    }
   },
 
   async get(id: string): Promise<CategoryRow | undefined> {

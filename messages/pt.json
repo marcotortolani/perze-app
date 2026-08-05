@@ -921,7 +921,12 @@
   "field": {
    "note": "a nota",
    "payeeName": "o comerciante"
-  }
+  },
+  "editRule": "Editar regra",
+  "deleteRule": "Excluir regra",
+  "updated": "Regra atualizada",
+  "deleted": "\"{name}\" excluída",
+  "notFound": "Não encontramos essa regra."
  },
  "tagsPayeesPage": {
   "title": "Tags e comerciantes",
@@ -1202,9 +1207,9 @@
   "changeTemplate": "Trocar modelo",
   "changeTemplateTitle": "Trocar modelo",
   "duplicatesMerged": "{count, plural, one {Unificamos # categoria duplicada} other {Unificamos # categorias duplicadas}}",
-  "deleteCategory": "Excluir categoria",
-  "categoryDeleted": "\"{name}\" arquivada",
-  "categoryDeletedWithChildren": "\"{name}\" e suas {count} subcategorias, arquivadas",
+  "archiveCategory": "Arquivar categoria",
+  "categoryArchived": "\"{name}\" arquivada",
+  "categoryArchivedWithChildren": "\"{name}\" e suas {count} subcategorias, arquivadas",
   "expensesTab": "Despesas",
   "incomeTab": "Receitas",
   "countExpense": "{count} de despesa",
@@ -1219,7 +1224,24 @@
   "archiveNote": "Arquivar uma categoria não apaga as movimentações que já estão nela: elas continuam contando nos relatórios.",
   "listEmpty": "Você ainda não tem nenhuma categoria. Crie a primeira ou escolha um modelo.",
   "iconSearchPlaceholder": "Buscar ícone…",
-  "loadError": "Não foi possível carregar suas categorias."
+  "loadError": "Não foi possível carregar suas categorias.",
+  "archivedSection": "Arquivadas",
+  "restoreCategory": "Restaurar",
+  "categoryRestored": "\"{name}\" restaurada",
+  "deleteCategory": "Excluir categoria",
+  "deleteOnlyEmptyNote": "Só é possível excluir categorias que não têm nenhuma movimentação.",
+  "deleteBlocked": "Não dá para excluir: {reasons}.",
+  "categoryDeletedForGood": "\"{name}\" excluída",
+  "usageTransactions": "{count, plural, one {# movimentação} other {# movimentações}}",
+  "usageSplits": "{count, plural, one {# divisão} other {# divisões}}",
+  "usageBudgets": "{count, plural, one {# orçamento} other {# orçamentos}}",
+  "usageRecurring": "{count, plural, one {# recorrente} other {# recorrentes}}",
+  "usageRules": "{count, plural, one {# regra} other {# regras}}",
+  "usagePayees": "{count, plural, one {# estabelecimento} other {# estabelecimentos}}",
+  "usageChildren": "{count, plural, one {# subcategoria} other {# subcategorias}}",
+  "archivedChildOf": "Subcategoria de {parent}",
+  "deleteCascadeWarning": "Excluir esta categoria também exclui suas {count, plural, one {# subcategoria} other {# subcategorias}}.",
+  "categoryDeletedWithChildren": "\"{name}\" e suas {count, plural, one {# subcategoria} other {# subcategorias}}, excluídas"
  },
  "settingsPage": {
   "yourCurrency": "Sua moeda",

@@ -921,7 +921,12 @@
   "field": {
    "note": "la nota",
    "payeeName": "el comercio"
-  }
+  },
+  "editRule": "Editar regla",
+  "deleteRule": "Borrar regla",
+  "updated": "Regla actualizada",
+  "deleted": "\"{name}\" borrada",
+  "notFound": "No encontramos esa regla."
  },
  "tagsPayeesPage": {
   "title": "Tags y comercios",
@@ -1202,9 +1207,9 @@
   "changeTemplate": "Cambiar plantilla",
   "changeTemplateTitle": "Cambiar plantilla",
   "duplicatesMerged": "{count, plural, one {Unificamos # categoría duplicada} other {Unificamos # categorías duplicadas}}",
-  "deleteCategory": "Borrar categoría",
-  "categoryDeleted": "\"{name}\" archivada",
-  "categoryDeletedWithChildren": "\"{name}\" y sus {count} subcategorías, archivadas",
+  "archiveCategory": "Archivar categoría",
+  "categoryArchived": "\"{name}\" archivada",
+  "categoryArchivedWithChildren": "\"{name}\" y sus {count} subcategorías, archivadas",
   "expensesTab": "Gastos",
   "incomeTab": "Ingresos",
   "countExpense": "{count} de gasto",
@@ -1219,7 +1224,24 @@
   "archiveNote": "Archivar una categoría no borra los movimientos que ya la tienen: siguen contando en los reportes.",
   "listEmpty": "Todavía no hay ninguna categoría. Creá la primera o elegí una plantilla.",
   "iconSearchPlaceholder": "Buscar ícono…",
-  "loadError": "No pudimos cargar tus categorías."
+  "loadError": "No pudimos cargar tus categorías.",
+  "archivedSection": "Archivadas",
+  "restoreCategory": "Restaurar",
+  "categoryRestored": "\"{name}\" restaurada",
+  "deleteCategory": "Borrar categoría",
+  "deleteOnlyEmptyNote": "Solo se pueden borrar las categorías que no tienen ningún movimiento.",
+  "deleteBlocked": "No se puede borrar: {reasons}.",
+  "categoryDeletedForGood": "\"{name}\" borrada",
+  "usageTransactions": "{count, plural, one {# movimiento} other {# movimientos}}",
+  "usageSplits": "{count, plural, one {# reparto} other {# repartos}}",
+  "usageBudgets": "{count, plural, one {# presupuesto} other {# presupuestos}}",
+  "usageRecurring": "{count, plural, one {# recurrente} other {# recurrentes}}",
+  "usageRules": "{count, plural, one {# regla} other {# reglas}}",
+  "usagePayees": "{count, plural, one {# comercio} other {# comercios}}",
+  "usageChildren": "{count, plural, one {# subcategoría} other {# subcategorías}}",
+  "archivedChildOf": "Subcategoría de {parent}",
+  "deleteCascadeWarning": "Borrar esta categoría también borra sus {count, plural, one {# subcategoría} other {# subcategorías}}.",
+  "categoryDeletedWithChildren": "\"{name}\" y sus {count, plural, one {# subcategoría} other {# subcategorías}}, borradas"
  },
  "settingsPage": {
   "yourCurrency": "Tu moneda",
