@@ -96,7 +96,14 @@ async function enqueueAccountUpdate(id: string, patch: Partial<AccountRow>): Pro
   const db = getDb();
   await db.transaction("rw", db.accounts, db.outbox, async () => {
     const existing = await db.accounts.get(id);
-    if (!existing) return;
+    // Antes esto era `if (!existing) return;` — un `archive()` sobre una
+    // fila que no está resolvía con éxito sin escribir nada ni encolar
+    // nada: la UI mostraba el toast de "archivada", la cuenta seguía ahí,
+    // y no quedaba rastro en ningún lado. Todos los call sites pasan el id
+    // de una fila que acaban de leer, así que no encontrarla es un error
+    // de verdad, no un caso esperado. Mismo criterio que
+    // `applyBalanceDelta`, que ya lanzaba.
+    if (!existing) throw new Error(`Cuenta ${id} no encontrada`);
     const nextRev = existing.clientRev + 1;
     const updated: AccountRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
     await db.accounts.put(updated);

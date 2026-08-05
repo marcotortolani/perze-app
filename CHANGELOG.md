@@ -6,6 +6,42 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.18.1] — 2026-08-05
+
+### Arreglado — tres cosas que fallaban sin hacer ruido
+
+- **Archivar una cuenta que no está en Dexie ya no resuelve con éxito.** `enqueueAccountUpdate`
+  hacía `if (!existing) return;`, así que la operación terminaba bien sin escribir ni encolar
+  nada: la UI mostraba el toast de "archivada", la cuenta seguía ahí, y no quedaba rastro en
+  ningún lado. Ahora lanza, igual que ya hacía `applyBalanceDelta`. Todos los call sites pasan el
+  id de una fila que acaban de leer, así que no encontrarla es un error de verdad y no un caso
+  esperado.
+- **El header de página dejó de re-renderizar el shell entero en cada render de cada pantalla.**
+  `usePageHeader` llama al `setState` del layout con un objeto nuevo en cada render; que eso no
+  terminara en "Maximum update depth exceeded" dependía de un bail-out de React, y un wrapper sin
+  `useMemo` en el medio alcanzaba para romperlo. El proveedor ahora descarta lo que es equivalente
+  a lo que ya tenía, y el `onBack` que recibe tiene identidad estable.
+- **El efecto sin dependencias se dejó como estaba, a propósito.** Es load-bearing y no era obvio:
+  en el master-detail de escritorio hay dos consumidores montados a la vez, y lo único que
+  devuelve el header a su estado de lista cuando el detalle se desmonta es que la lista vuelva a
+  registrarse en el render siguiente. Con un array de dependencias quedaría el botón de volver de
+  un detalle que ya no existe.
+- **Las dos recargas automáticas del service worker ahora dejan rastro en la consola.** La app
+  tenía un segundo camino por el que podía recargarse sola —borrando todo el Cache Storage— ante
+  cualquier error que pareciera un chunk que no carga. Es un mecanismo de recuperación legítimo
+  para un deploy nuevo, pero sin log era indistinguible de un bug. El mensaje que lo disparó queda
+  registrado, así que si algún día lo activa un import dinámico que falla por otra razón, se ve.
+  El patrón de match se dejó igual: la queja era la falta de rastro, no que matcheara de más.
+
+### Documentación
+
+- `docs/auditoria-rutas-interceptoras.md` queda cerrado. Se sumó la **decisión sobre las dos rutas
+  interceptoras que siguen vivas: las dos se quedan.** El argumento para tocarlas era que
+  acumulaban y forzaban recargas, y la medición no lo sostuvo. `(.)accounts/new` era el candidato
+  a eliminar, pero sacarlo cambiaría crear una cuenta de modal sobre la lista a pantalla completa:
+  pagar en experiencia por un beneficio que no existe. Queda anotado lo único sin verificar — el
+  riesgo de portal huérfano en mobile.
+
 ## [0.18.0] — 2026-08-05
 
 ### Cambiado — el detalle de movimiento pasa a search param, como ya lo había hecho el de cuenta

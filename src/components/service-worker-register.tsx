@@ -32,10 +32,18 @@ function looksLikeChunkError(message: string): boolean {
   return /loading chunk|chunkloaderror|failed to fetch dynamically imported module|importing a module script failed/i.test(message);
 }
 
-async function recoverFromStaleCache(): Promise<void> {
+async function recoverFromStaleCache(trigger: string): Promise<void> {
   const last = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) ?? 0);
   if (Date.now() - last < CHUNK_RECOVERY_WINDOW_MS) return;
   window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+
+  // Deja rastro ANTES de tocar nada. Esta función borra todo el Cache
+  // Storage y recarga la página: es el segundo camino por el que la app
+  // puede recargarse sola, y sin este log era indistinguible de un bug
+  // —una "recarga misteriosa" en medio de cualquier pantalla—. Si algún
+  // día un import dinámico falla por una razón que NO es un precache
+  // viejo, el mensaje que lo disparó queda acá para verlo.
+  console.warn("[perze/sw] recuperación por chunk que no carga: se borra el Cache Storage y se recarga. Disparado por:", trigger);
 
   // Purga el precache viejo y fuerza al SW a buscar la versión nueva antes
   // de la única recarga. Best-effort en cada paso: lo importante es llegar
@@ -58,12 +66,13 @@ export function ServiceWorkerRegister() {
 
     // AC-16 — chunks que fallan al cargar = precache desactualizado.
     const onError = (event: ErrorEvent) => {
-      if (looksLikeChunkError(event.message ?? "")) void recoverFromStaleCache();
+      const text = event.message ?? "";
+      if (looksLikeChunkError(text)) void recoverFromStaleCache(text);
     };
     const onRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason as { name?: string; message?: string } | undefined;
       const text = `${reason?.name ?? ""} ${reason?.message ?? ""}`;
-      if (looksLikeChunkError(text)) void recoverFromStaleCache();
+      if (looksLikeChunkError(text)) void recoverFromStaleCache(text);
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
@@ -74,6 +83,10 @@ export function ServiceWorkerRegister() {
       // una vez si hay varias pestañas — solo recargamos la primera.
       if (reloaded) return;
       reloaded = true;
+      // Igual que arriba: una recarga que el usuario no pidió deja rastro.
+      // Esta es la esperada —el service worker nuevo tomó control— pero sin
+      // el log las dos se ven idénticas desde afuera.
+      console.warn("[perze/sw] el service worker nuevo tomó control: se recarga para servir la versión nueva.");
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);

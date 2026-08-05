@@ -8,14 +8,16 @@
 
 ## 0. Estado al 2026-08-05
 
-El encargo se ejecutó parcialmente. Lo que cambió desde que se escribió el resto del documento:
+**El encargo está cerrado.** Queda una sola cosa sin verificar y está anotada abajo: el riesgo de
+portal huérfano (§ 4) se probó solo en desktop. Lo que cambió desde que se escribió el resto del
+documento:
 
 | Punto | Estado |
 |---|---|
 | Medir el alcance con evidencia (§ 8.1) | **Hecho.** Resultado abajo, en § 3. No se reprodujo |
 | Migrar `transactions` (§ 5.1) | **Hecho.** `/transactions?tx=<id>`, mismo patrón que cuentas |
-| Auditar `@modal/(.)add` y `@modal/(.)accounts/new` (§ 5.2) | Medidas, **sin decisión escrita** |
-| Bugs silenciosos abiertos (§ 6) | **Sin tocar** |
+| Auditar `@modal/(.)add` y `@modal/(.)accounts/new` (§ 5.2) | **Hecho.** Las dos se quedan; decisión argumentada en § 5.2 |
+| Bugs silenciosos abiertos (§ 6) | **Hechos los tres.** Ver § 6 |
 | Convención escrita (§ 5.3) | **Hecha**, en `CLAUDE.md` § "Convención de rutas" |
 
 Y dos correcciones a lo que este documento afirmaba:
@@ -265,15 +267,24 @@ observó el portal huérfano de § 4: después de cerrar con `back()`, la pantal
 limpia en los dos casos. Eso se probó **solo en desktop**; el camino de mobile con `Modal` sin
 `contained` sigue sin verificar.
 
-Con eso, la decisión sigue abierta pero ya no es a ciegas. La lectura recomendada, a confirmar:
+**Decisión (2026-08-05): las dos se quedan como están.** El argumento para tocarlas era que
+acumulaban y forzaban recargas, y eso no se sostuvo con la medición.
 
 - **`(.)add` no se migra.** Es decisión cerrada de `CLAUDE.md`, está en el camino crítico de la
-  métrica de los 5 segundos, y `/add?modal=1` sería peor semántica. Si algún día acumula, la
-  mitigación es reiniciar el dev server, no rediseñar el flujo de captura.
-- **`(.)accounts/new` es el candidato real a eliminar.** Aporta mucho menos —no hay share target
-  ni shortcut de la PWA apuntando a `/accounts/new`— y su propio comentario ya dice que la mitad
-  de su razón de ser desapareció cuando se migró el detalle de cuenta. Sacarlo baja la superficie
-  de acumulación sin discutir nada de producto.
+  métrica de los 5 segundos, y `/add?modal=1` sería peor semántica: la URL dejaría de describir
+  el destino y pasaría a describir cómo se dibuja. Si algún día acumula, la mitigación es
+  reiniciar el dev server, no rediseñar el flujo de captura.
+- **`(.)accounts/new` tampoco se toca, pero por poco.** Era el candidato a eliminar —no hay share
+  target ni shortcut de la PWA apuntando a `/accounts/new`, y su propio comentario dice que la
+  mitad de su razón de ser desapareció al migrar el detalle de cuenta—. Lo que lo salva es que
+  **sacarlo sí cambia la experiencia**: crear una cuenta pasaría de abrirse como modal sobre la
+  lista a reemplazar la pantalla entera. Cambiar eso para reducir una superficie que medimos y no
+  da problemas es pagar en UX por un beneficio que no existe. Si en algún momento aparece
+  evidencia de que acumula, se reevalúa; el costo de sacarlo después es el mismo que ahora.
+
+**Lo que sí queda por verificar:** el riesgo de portal huérfano de § 4 se probó solo en desktop.
+Las dos usan `Modal` sin `contained`, o sea portal a `document.body`, y el escenario de `Activity`
+con `cacheComponents: true` en mobile sigue sin ejercitarse.
 
 ### 5.3. Los ~6 pares lista/detalle que todavía no tienen split view
 
@@ -301,25 +312,32 @@ hallazgos abiertos, y conviene verificarlos porque comparten la propiedad de fal
   transición de `blocked`, sin reintento. Si ese replace se perdía, el gate quedaba clavado sin
   salida. Se agregó `pathname` a las deps para que cualquier cambio de ruta lo reintente.
 
-### Abiertos, a verificar
+### Resueltos el 2026-08-05
 
-- **`usePageHeader` corre un `useLayoutEffect` sin array de dependencias**
+- **`usePageHeader` corría un `useLayoutEffect` sin array de dependencias**
   (`design-system/nav/page-header-context.tsx`), llamando al `setState` del padre con un objeto
-  literal nuevo en cada render. Hoy no entra en loop solo porque React hace bail-out cuando el
-  elemento `children` es referencialmente idéntico. Es frágil: un wrapper sin `useMemo` en el medio
-  lo convierte en "Maximum update depth exceeded". Además, dos consumidores montados a la vez se
-  pisan el header (ver § 4).
-- **`service-worker-register.tsx:50,77`**: hay un `window.location.reload()` que se dispara ante
-  cualquier `unhandledrejection` cuyo mensaje matchee un patrón de "no se pudo cargar un chunk",
-  borrando todo el Cache Storage antes. Es un mecanismo de recuperación legítimo para un deploy
-  nuevo, pero significa que **existe un segundo camino por el que la app puede recargarse sola sin
-  explicación visible**. Cualquier import dinámico que falle por una razón no relacionada produce
-  una "recarga misteriosa". Vale la pena revisar si el patrón de match es lo bastante específico y
-  si conviene loguear cuando se dispara. *(Hipótesis de un agente investigador, no verificada en
-  ejecución.)*
-- **`accounts-repo.ts` — `enqueueAccountUpdate` hace `if (!existing) return;`**: un `archive()`
-  sobre una fila que no está resuelve exitosamente sin escribir nada. Falla en silencio.
-- **`transactions/layout.tsx`** arrastra la detección de hard-nav vieja (§ 5.1).
+  literal nuevo en cada render. No entraba en loop solo porque React hace bail-out cuando el
+  elemento `children` es referencialmente idéntico — un wrapper sin `useMemo` en el medio lo
+  convertía en "Maximum update depth exceeded".
+
+  **El efecto sin dependencias NO se tocó, porque es load-bearing** y esto no era evidente: en el
+  master-detail de escritorio hay dos consumidores montados a la vez, y lo único que devuelve el
+  header a su estado de lista cuando el detalle se desmonta es que la lista vuelva a registrarse
+  en el render siguiente. Con un array de dependencias, el header quedaría con el botón de volver
+  de un detalle que ya no existe. Lo que se arregló es el otro lado: el proveedor descarta con
+  `samePageHeaderConfig` lo que es equivalente a lo que ya tenía, y `usePageHeader` pasa un
+  `onBack` con identidad estable (un wrapper que lee la última versión desde un ref, así que
+  tampoco arrastra closures viejas). El efecto sigue corriendo siempre; lo que dejó de pasar es
+  que el árbol entero se re-renderice por eso.
+- **`service-worker-register.tsx`** ahora **loguea antes de recargar**, en los dos caminos: el de
+  recuperación por chunk que no carga —incluyendo el mensaje que lo disparó, para poder ver si
+  algún día lo activa algo que no es un precache viejo— y el de `controllerchange`. El patrón de
+  match se dejó como estaba: la queja del informe era que la recarga no dejaba rastro, no que
+  matcheara de más, y sin un caso real de falso positivo, ajustarlo sería adivinar.
+- **`accounts-repo.ts` — `enqueueAccountUpdate` hacía `if (!existing) return;`**: ahora lanza.
+  Todos los call sites pasan el id de una fila que acaban de leer, así que no encontrarla es un
+  error de verdad. Cubierto por `src/lib/repos/accounts-repo.test.ts`.
+- **`transactions/layout.tsx`** ya no existe (§ 5.1).
 
 ## 7. Qué NO tocar
 
@@ -339,12 +357,11 @@ hallazgos abiertos, y conviene verificarlos porque comparten la propiedad de fal
    Queda una hipótesis sin verificar sobre el disparador real.
 2. ~~**Auditar las rutas interceptoras vivas**~~ — **hecho** para las tres, incluido el portal
    huérfano de § 4. Falta el camino de mobile.
-3. ~~**Plan de corrección priorizado**~~ — **hecho y ejecutado** en su parte mecánica:
-   `transactions` migrada (§ 5.1). La parte que necesita decisión de producto sigue abierta
+3. ~~**Plan de corrección priorizado**~~ — **hecho y ejecutado**: `transactions` migrada (§ 5.1)
+   y la decisión de producto sobre las dos interceptoras que quedan, tomada y argumentada
    (§ 5.2).
-4. **Verificar los hallazgos abiertos de § 6** — **pendiente, sin tocar.** Son tres:
-   `enqueueAccountUpdate` fallando en silencio, `usePageHeader` sin array de dependencias, y el
-   `window.location.reload()` del service worker sin rastro en el log.
+4. ~~**Verificar los hallazgos abiertos de § 6**~~ — **hechos los tres**, con tests donde había
+   lógica que testear. Ver § 6.
 5. ~~**Dejar la convención escrita**~~ — **hecha** en `CLAUDE.md`, § "Convención de rutas", con la
    receta de siete pasos y los seis pares de CONS-DESK nombrados.
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, PageHeaderContext, Sheet, Sidebar, TabBar, type PageHeaderConfig, type TabItem, type SidebarNavGroup } from "@/design-system";
+import { AppHeader, PageHeaderContext, samePageHeaderConfig, Sheet, Sidebar, TabBar, type PageHeaderConfig, type TabItem, type SidebarNavGroup } from "@/design-system";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
@@ -69,7 +69,15 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   // `usePageHeader` (ver `page-header-context.tsx`) en vez de renderizar su
   // propio `<AppHeader>` — el layout es el único lugar donde el componente
   // se instancia.
-  const [pageHeader, setPageHeader] = useState<PageHeaderConfig | null>(null);
+  const [pageHeader, setPageHeaderState] = useState<PageHeaderConfig | null>(null);
+  // `usePageHeader` registra en CADA render de cada página (necesario: ver la
+  // nota larga en `page-header-context.tsx`), así que sin este descarte el
+  // layout entero volvía a renderizar en cada render de cualquier pantalla.
+  // Que eso no terminara en "Maximum update depth exceeded" dependía de un
+  // bail-out de React, no de nada que estuviera escrito acá.
+  const setPageHeader = useCallback((next: PageHeaderConfig | null) => {
+    setPageHeaderState((prev) => (samePageHeaderConfig(prev, next) ? prev : next));
+  }, []);
 
   // Mismo flujo que `/more`: si hay cambios sin sincronizar se avisa antes
   // de cerrar sesión, si no hay nada que perder se cierra directo.
