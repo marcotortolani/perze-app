@@ -62,9 +62,23 @@ export function useCalendarView(): CalendarView {
     params.set("to", range.to);
   };
 
+  /**
+   * Abrir el calendario DESELECCIONA el movimiento abierto.
+   *
+   * La segunda columna del split tiene un solo ocupante y gana la última
+   * acción explícita del usuario. Antes el detalle ganaba siempre: con un
+   * movimiento abierto, tocar el chip no mostraba nada —el calendario
+   * quedaba tapado— y no había forma de salir, porque el chip ya estaba
+   * "encendido" y volver a tocarlo lo apagaba sin devolver el calendario.
+   *
+   * Esto no rompe el camino inverso, que es el que motivaba la regla vieja:
+   * llegar a un movimiento DESDE un día del calendario sigue mostrando el
+   * detalle, y el rango del día sigue filtrando la lista de la izquierda.
+   */
   const openCalendar = useCallback(() => {
     push((params) => {
       params.set("view", "calendar");
+      params.delete("tx");
       applyRange(params, monthRange(scope.month));
     });
   }, [push, scope.month]);

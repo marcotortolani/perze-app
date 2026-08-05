@@ -20,6 +20,7 @@ import { applyCategoryTemplate, type CategoryTemplateChoice } from "@/lib/onboar
 import { mergeDuplicateCategories } from "@/lib/categories/merge-duplicate-categories";
 import { buildCategoryUsageIndex, collectSubtree, isDeletable, subtreeUsage } from "@/lib/categories/category-usage";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "@/lib/reference/category-templates";
+import { CATEGORY_MESSAGE_KEY } from "@/lib/reference/category-i18n";
 import { buildNewCategoryInput, findExistingCategoryByName } from "@/features/capture/create-category";
 import { CategorySheet, type CategorySheetTarget } from "@/features/categories/CategorySheet";
 import type { CategoryKind, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
@@ -51,6 +52,12 @@ function countTemplateItems(items: typeof BASIC_CATEGORY_TEMPLATE): number {
  * agrupa en una línea final separada por "·".
  */
 function CategoryTemplatePreview({ items }: { items: CategoryTemplateItem[] }) {
+  const t = useTranslations();
+  // El `name` de la plantilla es el fallback que se persiste en la fila, no
+  // lo que se muestra: acá se traduce por `i18nKey`, igual que hace
+  // `useCategoryLabel()` con las categorías ya creadas. Sin esto la preview
+  // listaba "Supermercado · Verdulería · Carnicería" con la app en inglés.
+  const label = (item: CategoryTemplateItem) => t(CATEGORY_MESSAGE_KEY[item.i18nKey]);
   const withChildren = items.filter((item) => item.children && item.children.length > 0);
   const withoutChildren = items.filter((item) => !item.children || item.children.length === 0);
 
@@ -58,14 +65,14 @@ function CategoryTemplatePreview({ items }: { items: CategoryTemplateItem[] }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4, marginBottom: 4, paddingLeft: 14, borderLeft: "2px solid var(--border)" }}>
       {withChildren.map((item) => (
         <div key={item.i18nKey}>
-          <span style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{item.name}</span>
+          <span style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>{label(item)}</span>
           <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-            {item.children!.map((child) => child.name).join(" · ")}
+            {item.children!.map((child) => label(child)).join(" · ")}
           </span>
         </div>
       ))}
       {withoutChildren.length > 0 ? (
-        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{withoutChildren.map((item) => item.name).join(" · ")}</span>
+        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{withoutChildren.map((item) => label(item)).join(" · ")}</span>
       ) : null}
     </div>
   );

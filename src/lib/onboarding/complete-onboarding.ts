@@ -19,6 +19,18 @@ export interface CompleteOnboardingParams {
   usage: HouseholdUsage;
   accountName: string;
   accountKind: AccountKind;
+  /**
+   * Nombre con el que el resto del hogar te ve. Es una copia denormalizada
+   * de `profiles.display_name` (ver `profiles-repo.updateDisplayName`), y
+   * lo cargó A2b (`/onboarding/register`).
+   *
+   * Antes acá había un `"Vos"` hardcodeado, con dos problemas: se veía en
+   * español con la app en inglés, y —peor— `household_members.display_name`
+   * es lo que ven LOS DEMÁS, así que tu pareja te veía llamado "Vos". Sin
+   * nombre queda vacío y J1 cae al `familyPage.unnamed` de siempre (el
+   * registro lo exige, así que en la práctica siempre viene).
+   */
+  displayName?: string | null | undefined;
 }
 
 /**
@@ -37,7 +49,7 @@ export interface CompleteOnboardingParams {
  * se revierte (nunca queda un household a medias). `setCurrentHouseholdId`
  * se mueve al final: solo se marca "activo" un household completo.
  */
-export async function completeOnboarding({ userId, countryCode, currencyCode, usage, accountName, accountKind }: CompleteOnboardingParams): Promise<{ householdId: string; accountId: string }> {
+export async function completeOnboarding({ userId, countryCode, currencyCode, usage, accountName, accountKind, displayName = null }: CompleteOnboardingParams): Promise<{ householdId: string; accountId: string }> {
   // "pareja" y "familia" activan el módulo family — A5 lo promete
   // explícitamente para "pareja" ("Activa el grupo familiar"), no solo
   // para "familia". Solo "solo" queda sin ningún módulo encendido.
@@ -68,7 +80,7 @@ export async function completeOnboarding({ userId, countryCode, currencyCode, us
         householdId: household.id,
         profileId: userId,
         role: "owner",
-        displayName: "Vos",
+        displayName: displayName?.trim() ?? "",
         color: "var(--primary-fill)",
         joinedAt: nowIso(),
       });

@@ -51,21 +51,46 @@ const API_NETWORK_ONLY: RuntimeCaching = {
  *   `networkTimeoutSeconds: 3` — en 3 segundos sin respuesta cae al cache
  *   (o al fallback `/offline` si tampoco hay cache), en vez de colgarse.
  */
+/**
+ * Ninguna navegación redirigida se guarda. Serwist cachea cualquier
+ * respuesta 200 (`cacheOkAndOpaquePlugin`), y una redirección seguida ES
+ * un 200: pedir `/` sin sesión devuelve, después de seguir el 307 del
+ * proxy, el HTML de `/login` con status 200 — que queda guardado **bajo la
+ * clave `/`**. Después, ya con sesión, alcanza con que la red tarde más
+ * que `networkTimeoutSeconds` para que el service worker sirva ese
+ * `/login` cacheado y devuelva al usuario a la pantalla de acceso, con los
+ * campos vacíos y sin ningún error que explique nada.
+ *
+ * Guardar una respuesta cuya URL final no es la pedida está mal aunque no
+ * haya sesión de por medio: la clave del cache deja de describir lo que
+ * hay adentro.
+ *
+ * Ojo con un detalle de Serwist: el filtro por defecto (200 u opaca) solo
+ * se agrega si NINGÚN plugin declara `cacheWillUpdate`, así que este lo
+ * reemplaza y tiene que repetir esa condición además de la suya.
+ */
+const DISCARD_REDIRECTS = {
+  cacheWillUpdate: async ({ response }: { response: Response }) => {
+    if (response.redirected || response.type === "opaqueredirect") return null;
+    return response.status === 200 || response.status === 0 ? response : null;
+  },
+};
+
 const NAVIGATION_PREFETCH_STALE_WHILE_REVALIDATE: RuntimeCaching = {
   matcher: ({ request, url: { pathname }, sameOrigin }) =>
     request.headers.get("RSC") === "1" && request.headers.get("Next-Router-Prefetch") === "1" && sameOrigin && !pathname.startsWith("/api/"),
-  handler: new StaleWhileRevalidate({ cacheName: "pages-rsc-prefetch" }),
+  handler: new StaleWhileRevalidate({ cacheName: "pages-rsc-prefetch", plugins: [DISCARD_REDIRECTS] }),
 };
 
 const NAVIGATION_RSC_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
   matcher: ({ request, url: { pathname }, sameOrigin }) => request.headers.get("RSC") === "1" && sameOrigin && !pathname.startsWith("/api/"),
-  handler: new NetworkFirst({ cacheName: "pages-rsc", networkTimeoutSeconds: 3 }),
+  handler: new NetworkFirst({ cacheName: "pages-rsc", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] }),
 };
 
 const NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
   matcher: ({ request, url: { pathname }, sameOrigin }) =>
     request.headers.get("Content-Type")?.includes("text/html") === true && sameOrigin && !pathname.startsWith("/api/"),
-  handler: new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3 }),
+  handler: new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] }),
 };
 
 /**

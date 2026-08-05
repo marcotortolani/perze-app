@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Icon, IconButton, Input } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
+import { useEmailField } from "@/hooks/use-email-field";
 import { requestPasswordReset } from "@/features/auth/password-auth";
 
 /**
@@ -17,7 +18,7 @@ export default function ForgotPasswordPage() {
   const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const email = useEmailField();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -28,13 +29,11 @@ export default function ForgotPasswordPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
   const handleSubmit = async () => {
-    if (!emailValid || sending) return;
+    if (!email.valid || sending) return;
     setSending(true);
     try {
-      await requestPasswordReset(email);
+      await requestPasswordReset(email.value);
       setSent(true);
     } finally {
       setSending(false);
@@ -69,17 +68,10 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      <Input
-        type="email"
-        autoComplete="email"
-        placeholder={t("forgotPassword.emailPlaceholder")}
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        autoFocus
-      />
+      <Input placeholder={t("forgotPassword.emailPlaceholder")} {...email.bind} autoFocus />
 
       <div style={{ marginTop: "auto" }}>
-        <Button size="lg" disabled={!emailValid || sending} onClick={handleSubmit}>
+        <Button size="lg" disabled={!email.valid || sending} onClick={handleSubmit}>
           {sending ? t("forgotPassword.sending") : t("forgotPassword.submit")}
         </Button>
       </div>

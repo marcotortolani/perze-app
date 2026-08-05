@@ -36,7 +36,13 @@
   "edit": "Edit",
   "delete": "Delete",
   "seeAll": "See all",
-  "continue": "Continue"
+  "continue": "Continue",
+  "emailError": {
+   "missingAt": "The @ is missing: try {suggestion}",
+   "missingDomain": "The end of the domain is missing: try {suggestion}",
+   "invalid": "That email doesn't parse: try something like {suggestion}",
+   "example": "ana@gmail.com"
+  }
  },
  "ds": {
   "errorState": {
@@ -630,10 +636,25 @@
  "onboarding": {
   "welcome": {
    "skip": "Skip",
-   "title": "Log an expense: five seconds.",
-   "subtitle": "No forms, no system keyboard, no connection needed.",
-   "demoPlaceholder": "Keypad demo, looping",
-   "start": "Get started"
+   "next": "Next",
+   "start": "Get started",
+   "slides": {
+    "one": {
+     "title": "Log an expense: five seconds.",
+     "subtitle": "No forms, no system keyboard, no connection needed.",
+     "demo": "Keypad demo on loop"
+    },
+    "two": {
+     "title": "Several currencies, one number.",
+     "subtitle": "Accounts in pesos, dollars, whatever you use. And if a rate is missing we tell you — we don't make it up.",
+     "demo": "Demo of accounts in three currencies"
+    },
+    "three": {
+     "title": "It grows with you, not before.",
+     "subtitle": "Budgets, goals, investments, family group: turn on what you use and the rest never shows up.",
+     "demo": "Demo of the optional modules"
+    }
+   }
   },
   "auth": {
    "tagline": "Personal finances, without friction.",
@@ -649,7 +670,8 @@
    "demoError": "Couldn't load the sample data — try again.",
    "linkError": "That link no longer works — enter your email and request a new code.",
    "haveAccount": "I already have an account",
-   "checkError": "We couldn't verify your account — check your connection and try again."
+   "checkError": "We couldn't verify your account — check your connection and try again.",
+   "haveInviteCode": "I have an invite code"
   },
   "verify": {
    "back": "Back",
@@ -1652,7 +1674,14 @@
   "mirrorNoTransactions": "No transactions visible to this member.",
   "mustSettleFirst": "This member has a pending balance — settle up or forgive it before removing them.",
   "removed": "Member removed from the household",
-  "remove": "Remove {name} from the household"
+  "remove": "Remove {name} from the household",
+  "joinSubtitle": "Paste the code you were given and you're in.",
+  "joinNeedsAccount": "Create your account first — we'll keep the code and bring you back here.",
+  "joinCreateAccount": "Create my account",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "inviteExpires": "The code expires in 7 days.",
+  "you": "You"
  },
  "permissionsPage": {
   "title": "Permissions & visibility",

@@ -73,7 +73,12 @@ export default function FamilyPageContent() {
         <ListRow
           key={m.profileId}
           icon="users"
-          label={m.displayName ?? t("familyPage.unnamed")}
+          /* Tu propia fila se rotula con el idioma de la app, no con el
+             `display_name` guardado: esa columna es una copia denormalizada
+             pensada para que TE VEAN LOS DEMÁS, y los households creados
+             antes de este fix tienen ahí un "Vos" literal que aparecía tal
+             cual con la app en inglés. */
+          label={m.profileId === userId ? t("familyPage.you") : (m.displayName?.trim() || t("familyPage.unnamed"))}
           meta={t(ROLE_MESSAGE_KEY[m.role])}
           onClick={m.profileId !== userId ? () => router.push(`/family/mirror/${m.profileId}`) : undefined}
           right={
@@ -84,7 +89,7 @@ export default function FamilyPageContent() {
                   e.stopPropagation();
                   handleRemove(m.profileId);
                 }}
-                aria-label={t("familyPage.remove", { name: m.displayName ?? t("familyPage.unnamed") })}
+                aria-label={t("familyPage.remove", { name: m.displayName?.trim() || t("familyPage.unnamed") })}
                 style={{ background: "none", border: 0, padding: 8, margin: -8, cursor: "pointer" }}
               >
                 <Icon name="close" size={16} color="var(--text-muted)" />

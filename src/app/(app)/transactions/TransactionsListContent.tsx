@@ -29,6 +29,7 @@ import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, typ
 import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
 import { formatDateMedium } from "@/i18n/formatting";
 import { useCalendarView } from "./use-calendar-view";
+import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
@@ -117,6 +118,10 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selection, setSelection] = useState<Set<string> | null>(null);
 
+  // El split de dos columnas solo existe de este breakpoint para arriba, y
+  // eso cambia qué significa elegir un movimiento (ver `openTransaction`).
+  const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
+
   /**
    * Abre el detalle de un movimiento como SELECCIÓN de esta misma pantalla
    * (`?tx=<id>`), no como navegación a otra ruta — ver la nota larga en
@@ -135,10 +140,38 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
   const openTransaction = useCallback(
     (id: string) => {
       const next = new URLSearchParams(searchParams);
-      next.set("tx", id);
-      router.push(`/transactions?${next.toString()}`, { scroll: false });
+
+      // Tocar el movimiento que YA está abierto lo cierra. Sin esto no había
+      // ninguna forma de volver a "nada seleccionado" desde la propia lista:
+      // el único camino era el botón de volver del header.
+      //
+      // Se cierra con un `push` sin `tx` y no con `router.back()` —la
+      // convención del resto del proyecto— porque un toggle tiene que ser
+      // determinista: si venís de mirar el movimiento A y después el B,
+      // `back()` desde B te deja en A seleccionado, que es cualquier cosa
+      // menos deseleccionar. El botón de volver del header sigue usando
+      // `back()`, que ahí sí es el gesto simétrico de abrir.
+      if (next.get("tx") === id) {
+        next.delete("tx");
+      } else {
+        next.set("tx", id);
+        // Solo en escritorio: elegir un movimiento apaga la vista de
+        // calendario, porque ahí los dos se pelean la segunda columna y gana
+        // la última acción explícita (ver `openCalendar` en
+        // `use-calendar-view.ts`). En móvil no hay tal pelea —el calendario
+        // es contenido arriba de las filas y el detalle abre en un `Modal`
+        // encima— así que apagarlo sería sacarle al usuario el mes que estaba
+        // recorriendo por haber mirado un movimiento.
+        //
+        // El rango `from`/`to` no se toca en ningún caso: el día que se venía
+        // mirando sigue filtrando la lista, con su chip para quitarlo.
+        if (isSplit) next.delete("view");
+      }
+
+      const query = next.toString();
+      router.push(query ? `/transactions?${query}` : "/transactions", { scroll: false });
     },
-    [router, searchParams]
+    [router, searchParams, isSplit]
   );
 
   // El alcance y la navegación de la vista de calendario viven en un hook

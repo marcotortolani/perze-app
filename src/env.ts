@@ -34,6 +34,12 @@ export const env = createEnv({
     // esperar el link. El código de `verifyOtp` sigue en el archivo, no se
     // borra: `"1"` lo reactiva el día que haya plantilla propia (Resend).
     NEXT_PUBLIC_AUTH_OTP_CODE: z.string().optional(),
+    // El service worker NO se registra en desarrollo: con Turbopack los
+    // nombres de chunk cambian en cada arranque, así que el precache de la
+    // sesión anterior sirve HTML que apunta a archivos que ya no existen y
+    // la app queda en blanco, sin un solo error en consola que lo explique.
+    // `"1"` lo enciende igual, para poder probar offline/instalación local.
+    NEXT_PUBLIC_ENABLE_SW_IN_DEV: z.string().optional(),
   },
   shared: {
     NODE_ENV: z.enum(["development", "production", "test"]),
@@ -46,5 +52,6 @@ export const env = createEnv({
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS,
     NEXT_PUBLIC_AUTH_OTP_CODE: process.env.NEXT_PUBLIC_AUTH_OTP_CODE,
+    NEXT_PUBLIC_ENABLE_SW_IN_DEV: process.env.NEXT_PUBLIC_ENABLE_SW_IN_DEV,
   },
 });

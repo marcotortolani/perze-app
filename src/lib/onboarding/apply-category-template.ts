@@ -28,7 +28,10 @@ export async function applyCategoryTemplate(householdId: string, choice: Categor
   const existing = allExisting.filter((c) => c.archivedAt === null);
 
   const template = choice === "scratch" ? [] : choice === "complete" ? COMPLETE_CATEGORY_TEMPLATE : BASIC_CATEGORY_TEMPLATE;
-  const templateKeys = new Set(flattenTemplate(template).map((item) => item.i18nKey));
+  // `Set<string>` explícito: `i18nKey` de la plantilla es la unión de claves
+  // conocidas, pero acá se compara contra el `i18nKey` de una fila guardada,
+  // que es `string | null` (puede venir de una versión anterior).
+  const templateKeys = new Set<string>(flattenTemplate(template).map((item) => item.i18nKey));
 
   const unusedSystemCategories = existing.filter((c) => c.isSystem && !usedCategoryIds.has(c.id) && !(c.i18nKey && templateKeys.has(c.i18nKey)));
   for (const category of unusedSystemCategories) {
