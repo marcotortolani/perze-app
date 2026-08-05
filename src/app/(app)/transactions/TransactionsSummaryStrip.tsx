@@ -15,10 +15,12 @@ export interface TransactionsSummaryStripProps {
 /**
  * Ingresos · Gastos · Balance de un conjunto de movimientos.
  *
- * Vivía inline en `TransactionsListContent` (el resumen del período). Se
- * extrajo al aparecer el segundo consumidor —el panel de `/transactions/calendar`,
- * que lo muestra para el mes visible o para el día elegido— antes que duplicar
- * el markup y que las dos versiones se separaran con el primer retoque.
+ * Vivía inline en `TransactionsListContent` (el resumen del período) y se
+ * extrajo al aparecer un segundo consumidor. Hoy volvió a tener uno solo: el
+ * calendario dejó de ser una pantalla con su propia lista y pasó a ser una
+ * vista de `/transactions`, así que el día elegido es un rango de fecha sobre
+ * ESTA lista y sus totales ya salen de acá. Se mantiene como componente
+ * propio: la franja es sticky adentro del scroller y tiene entidad suficiente.
  *
  * Polaridad: ingresos en `--money-positive` (aqua, nunca verde), gastos en
  * tinta neutra y balance con signo — `CLAUDE.md` § polaridad del dinero. El

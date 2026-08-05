@@ -189,7 +189,13 @@ export function TransactionDetailContent({ id }: { id: string }) {
   };
 
   return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24 }}>
+      // `maxWidth`: el techo de lectura del detalle es cosa del detalle, no de
+      // la columna. Vivía en el wrapper del `SplitGrid`, pero esa columna ahora
+      // también aloja el calendario, que quiere más ancho — y hacer que el
+      // grid cambie de geometría según el ocupante daría un salto al abrir un
+      // movimiento desde el calendario. Mismo criterio que ya está escrito en
+      // `(app)/layout.tsx` sobre el ancho de lectura de cada pantalla.
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24, maxWidth: 420 }}>
       <div style={{ textAlign: "center" }}>
         <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />
         {transaction.amountBase !== null && transaction.currencyCode !== household.baseCurrency ? (

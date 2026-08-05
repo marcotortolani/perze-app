@@ -21,9 +21,15 @@ export function defaultMovementsFilters(): MovementsFilters {
   return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], tagIds: [], onlyPending: false };
 }
 
-export function countActiveFilters(f: MovementsFilters): number {
+/**
+ * `dateOwnedByCalendar`: con la vista de calendario abierta el rango lo manda
+ * el mes o el día elegido en la grilla, que se escribe en los params
+ * `from`/`to` y le gana al preset (ver `calendar-scope.ts`). Contar el preset
+ * ahí sería contar un filtro que no está haciendo nada.
+ */
+export function countActiveFilters(f: MovementsFilters, dateOwnedByCalendar = false): number {
   let n = 0;
-  if (f.datePreset !== "all") n += 1;
+  if (!dateOwnedByCalendar && f.datePreset !== "all") n += 1;
   if (f.kind !== "all") n += 1;
   if (f.accountIds.length > 0) n += 1;
   if (f.categoryIds.length > 0) n += 1;
@@ -41,6 +47,12 @@ export interface MovementsFiltersSheetProps {
   categories: CategoryRow[];
   tags: TagRow[];
   resultCount: number;
+  /**
+   * Oculta la sección de período. Con el calendario abierto el rango sale de
+   * la grilla y le gana al preset, así que dejar los chips visibles sería una
+   * mentira: se toca "último mes" y no pasa nada.
+   */
+  dateOwnedByCalendar?: boolean;
 }
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -56,7 +68,7 @@ function toggle<T>(list: T[], value: T): T[] {
  * dibuja debajo de categorías, y solo si el household ya tiene alguna —
  * sin eso, la sección quedaría siempre vacía.
  */
-export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, tags, resultCount }: MovementsFiltersSheetProps) {
+export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, tags, resultCount, dateOwnedByCalendar = false }: MovementsFiltersSheetProps) {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
 
@@ -85,18 +97,20 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
           anidado compitiendo con el de `Sheet`. */}
       <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1, minHeight: 0, overflowY: "auto" }}>
-        <div>
-          <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
-            {t("movements.filters.period")}
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {DATE_PRESETS.map((p) => (
-              <Chip key={p.id} selected={filters.datePreset === p.id} onClick={() => onChange({ ...filters, datePreset: p.id })}>
-                {p.label}
-              </Chip>
-            ))}
+        {dateOwnedByCalendar ? null : (
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
+              {t("movements.filters.period")}
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {DATE_PRESETS.map((p) => (
+                <Chip key={p.id} selected={filters.datePreset === p.id} onClick={() => onChange({ ...filters, datePreset: p.id })}>
+                  {p.label}
+                </Chip>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>

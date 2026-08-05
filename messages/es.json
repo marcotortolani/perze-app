@@ -506,7 +506,8 @@
    "deleteCount": "Borrar {count}",
    "categorize": "Categorizar",
    "categorizeComingSoon": "Categorizar en lote todavía no está disponible.",
-   "errorWhat": "No pudimos cargar tus movimientos."
+   "errorWhat": "No pudimos cargar tus movimientos.",
+   "dayCount": "{count, plural, one {# movimiento} other {# movimientos}}"
   },
   "detail": {
    "selectPrompt": "Elegí un movimiento de la lista para ver el detalle acá.",
@@ -548,14 +549,13 @@
    "tags": "Etiquetas"
   },
   "calendar": {
-   "title": "Calendario",
-   "back": "Volver",
    "prevMonth": "Mes anterior",
    "nextMonth": "Mes siguiente",
    "empty": "Sin movimientos ese día.",
    "emptyMonth": "Sin movimientos este mes.",
    "wholeMonth": "Todo el mes",
-   "selectPrompt": "Elegí un día para ver sus movimientos."
+   "intensityLess": "Menos",
+   "intensityMore": "Más"
   },
   "edit": {
    "notFound": "No encontramos ese movimiento.",

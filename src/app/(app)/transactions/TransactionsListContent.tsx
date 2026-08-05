@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -26,10 +26,13 @@ import { usePendingMutations } from "@/lib/offline";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
+import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
+import { formatDateLong } from "@/i18n/formatting";
+import { useCalendarView } from "./use-calendar-view";
 import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
-type ListItem = { type: "header"; date: string; total: bigint; currency: string } | { type: "row"; tx: TransactionRecord };
+type ListItem = { type: "header"; date: string; total: bigint; currency: string; count: number } | { type: "row"; tx: TransactionRecord };
 
 /**
  * Cuánto sangra hacia afuera el resalte de la fila seleccionada, a cada lado.
@@ -41,22 +44,6 @@ type ListItem = { type: "header"; date: string; total: bigint; currency: string 
  * tocar el layout de la pantalla.
  */
 const SELECTION_BLEED = 12;
-
-function periodStartFor(preset: MovementsFilters["datePreset"], now: Date): { from?: string; to?: string } {
-  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  switch (preset) {
-    case "this-month":
-      return { from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() };
-    case "last-month":
-      return { from: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(), to: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() };
-    case "last-7":
-      return { from: startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)).toISOString() };
-    case "last-30":
-      return { from: startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)).toISOString() };
-    default:
-      return {};
-  }
-}
 
 /**
  * `merchant` (arriba, en `<TransactionRow>`) ya muestra el nombre de la
@@ -72,8 +59,24 @@ function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categ
   return [account?.name, secondary].filter(Boolean).join(" · ");
 }
 
-/** D1/D2/D6/D7 — lista de movimientos. Bloque D, Fase 7. */
-export function MovementsListContent() {
+export interface MovementsListContentProps {
+  /**
+   * La grilla del mes, cuando va DENTRO del scroller de la lista (mobile y
+   * tablet). En escritorio el calendario vive en la segunda columna y esto
+   * llega vacío — quién lo dibuja dónde lo decide `page.tsx`, que es el que
+   * conoce el breakpoint.
+   */
+  calendarSlot?: ReactNode;
+  /**
+   * `true` cuando la vista de calendario está activa, en cualquiera de los dos
+   * layouts. No es lo mismo que `calendarSlot`: en escritorio el calendario
+   * está abierto pero no va acá adentro.
+   */
+  calendarOpen?: boolean;
+}
+
+/** D1/D2/D5/D6/D7 — lista de movimientos y su vista de calendario. Bloque D, Fase 7. */
+export function MovementsListContent({ calendarSlot, calendarOpen = false }: MovementsListContentProps = {}) {
   const t = useTranslations();
   usePageHeader({ title: t("nav.movements") });
   const locale = useLocale() as Locale;
@@ -138,6 +141,11 @@ export function MovementsListContent() {
     [router, searchParams]
   );
 
+  // El alcance y la navegación de la vista de calendario viven en un hook
+  // propio, compartido con `page.tsx`: las dos puntas lo derivan de la misma
+  // URL en vez de pasarse estado.
+  const calendar = useCalendarView();
+
   // Resultados del buscador flotante (`?category=` / `?payee=`) aterrizan
   // acá ya filtrados en vez de en una lista sin filtrar — ver `SearchOverlay`.
   const categoryIdParam = searchParams.get("category");
@@ -176,11 +184,16 @@ export function MovementsListContent() {
   const now = new Date();
   const { from, to } = fromParam ? { from: fromParam, to: toParam ?? undefined } : periodStartFor(filters.datePreset, now);
 
-  const filtered = useMemo(() => {
+  /**
+   * Todo menos el rango de fecha. Es lo que alimenta el heatmap del
+   * calendario: si se calculara sobre `filtered`, elegir un día apagaría el
+   * resto del mes y la visualización se borraría a sí misma. La semántica que
+   * queda es la correcta — "gasto por día del mes visible, bajo los filtros
+   * activos" — y el rango de fecha gobierna solo la lista.
+   */
+  const nonDateFiltered = useMemo(() => {
     if (!transactions) return [];
     return transactions.filter((t) => {
-      if (from && t.occurredAt < from) return false;
-      if (to && t.occurredAt >= to) return false;
       if (filters.kind !== "all" && t.kind !== filters.kind) return false;
       if (filters.accountIds.length > 0 && !filters.accountIds.includes(t.accountId)) return false;
       if (filters.categoryIds.length > 0 && (!t.categoryId || !filters.categoryIds.includes(t.categoryId))) return false;
@@ -192,7 +205,17 @@ export function MovementsListContent() {
       if (payeeIdParam && t.payeeId !== payeeIdParam) return false;
       return true;
     });
-  }, [transactions, from, to, filters, payeeIdParam, tagIdsByTx]);
+  }, [transactions, filters, payeeIdParam, tagIdsByTx]);
+
+  const filtered = useMemo(
+    () =>
+      nonDateFiltered.filter((t) => {
+        if (from && t.occurredAt < from) return false;
+        if (to && t.occurredAt >= to) return false;
+        return true;
+      }),
+    [nonDateFiltered, from, to]
+  );
 
   // Ingresos/Gastos/Balance son el resumen del PERÍODO, no de lo que se ve
   // en la lista — solo respetan el rango de fecha (mismo concepto que
@@ -222,7 +245,13 @@ export function MovementsListContent() {
   const items = useMemo<ListItem[]>(() => {
     const byDay = new Map<string, TransactionRecord[]>();
     for (const t of filtered) {
-      const day = t.occurredAt.slice(0, 10);
+      // `dayKeyOf` y no `occurredAt.slice(0, 10)`: el slice devuelve el día en
+      // UTC, así que un movimiento de la noche caía en el día siguiente en
+      // cualquier huso negativo. Ahora que el calendario cuenta por día y la
+      // lista filtra por rango de medianoche local, las dos puntas tienen que
+      // usar la MISMA definición de "día" o tocar una celda muestra un
+      // conjunto distinto del que esa celda contó.
+      const day = dayKeyOf(t.occurredAt);
       const list = byDay.get(day) ?? [];
       list.push(t);
       byDay.set(day, list);
@@ -232,18 +261,72 @@ export function MovementsListContent() {
     for (const day of days) {
       const dayTx = byDay.get(day)!;
       const dayTotal = dayTx.reduce((s, t) => (t.kind === "transfer" || t.amountBase === null ? s : s + (t.kind === "income" ? t.amountBase : -t.amountBase)), 0n);
-      result.push({ type: "header", date: day, total: dayTotal, currency: baseCurrency });
+      result.push({ type: "header", date: day, total: dayTotal, currency: baseCurrency, count: dayTx.length });
       for (const t of dayTx) result.push({ type: "row", tx: t });
     }
     return result;
   }, [filtered, baseCurrency]);
 
   const parentRef = useRef<HTMLDivElement>(null);
+  // Los nodos van a ESTADO y no solo a un `ref`: la medición de abajo tiene
+  // que correr cuando el nodo aparece, y el primer render de esta pantalla es
+  // un skeleton — el scroller real monta varios renders después. Un `ref`
+  // pasivo no despierta a ningún efecto. Mismo motivo que el callback ref de
+  // `useScrollOverflow`.
+  const [scrollerNode, setScrollerNode] = useState<HTMLDivElement | null>(null);
+  const [listNode, setListNode] = useState<HTMLDivElement | null>(null);
+  // `useCallback` y NO un arrow inline: con un ref inline React lo llama con
+  // `null` y con el nodo en CADA render, y como acá adentro hay un `setState`
+  // eso sería un loop infinito — que se ve como un cuelgue, no como un error.
+  const scrollerRefCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      parentRef.current = node;
+      fadeScrollerRef(node);
+      setScrollerNode(node);
+    },
+    [fadeScrollerRef]
+  );
+
+  /**
+   * Distancia entre el origen del scroller y el arranque de la lista.
+   *
+   * Vale 0 salvo cuando el calendario va adentro del scroller (mobile): ahí la
+   * lista virtualizada ya no empieza en el tope, y sin esto el virtualizador
+   * cree que el primer ítem está arriba de todo y desmonta filas que todavía
+   * se ven. Se MIDE en vez de calcularse porque depende del ancho del teléfono
+   * (las celdas del mes son cuadradas), de cuántas filas tenga el mes y del
+   * alto de la franja de totales.
+   */
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useEffect(() => {
+    if (!calendarSlot) {
+      setScrollMargin(0);
+      return;
+    }
+    if (!scrollerNode || !listNode) return;
+    const measure = () => {
+      const next = listNode.getBoundingClientRect().top - scrollerNode.getBoundingClientRect().top + scrollerNode.scrollTop;
+      setScrollMargin((prev) => (Math.abs(prev - next) < 0.5 ? prev : next));
+    };
+    measure();
+    // Observa el scroller (cambia de ancho al rotar, y con él el alto de las
+    // celdas cuadradas) y todo lo que vive ANTES de la lista. Observar la
+    // lista misma realimentaría: su alto cambia cuando el virtualizador
+    // reacciona a este mismo valor.
+    const observer = new ResizeObserver(measure);
+    observer.observe(scrollerNode);
+    for (const sibling of Array.from(scrollerNode.children)) {
+      if (sibling !== listNode) observer.observe(sibling);
+    }
+    return () => observer.disconnect();
+  }, [calendarSlot, scrollerNode, listNode]);
+
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
     estimateSize: (i) => (items[i]?.type === "header" ? 40 : 68),
     overscan: 8,
+    scrollMargin,
   });
 
   const handleDelete = (tx: TransactionRecord) => deleteTransaction(tx.id);
@@ -303,7 +386,7 @@ export function MovementsListContent() {
     return <EmptyState message={t("transactions.list.empty")} actionLabel={t("transactions.list.emptyAction")} onAction={() => router.push("/add")} />;
   }
 
-  const activeFilterCount = countActiveFilters(filters);
+  const activeFilterCount = countActiveFilters(filters, calendarOpen);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, paddingTop: 12 }}>
@@ -320,21 +403,60 @@ export function MovementsListContent() {
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.filters")}</span>
           {activeFilterCount > 0 ? <StatusBadge status="good">{activeFilterCount}</StatusBadge> : null}
         </button>
+        {/* Toggle de vista, no navegación. Antes esto empujaba a
+            `/transactions/calendar`, una pantalla propia que reimplementaba
+            esta misma lista; ahora el calendario es una vista de acá,
+            gobernada por `?view=calendar`, y elegir un día es un rango de
+            fecha sobre la lista que ya está.
+
+            El estado activo va por superficie de selección, nunca por
+            `--primary-fill`: en cada pantalla hay un solo violeta y es la
+            acción primaria (acá, el FAB). */}
         <button
           type="button"
-          // `router.push` normal. Antes era `window.location.href` —una
-          // recarga dura a propósito— porque `/transactions/calendar` es
-          // hermana de `[id]` bajo el directorio que interceptaba
-          // `@detail/(.)[id]`, y cualquier navegación blanda hacia ahí la
-          // agarraba el interceptor tratando "calendar" como un id. Ese
-          // interceptor ya no existe (el detalle es `?tx=`), así que no hay
-          // nada que esquivar.
-          onClick={() => router.push("/transactions/calendar")}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-chip)", padding: "8px 14px", cursor: "pointer" }}
+          aria-pressed={calendarOpen}
+          onClick={() => (calendarOpen ? calendar.closeCalendar() : calendar.openCalendar())}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: calendarOpen ? "var(--selection-surface)" : "var(--surface-2)",
+            boxShadow: calendarOpen ? "inset 0 0 0 1px var(--selection-ring)" : undefined,
+            border: 0,
+            borderRadius: "var(--radius-chip)",
+            padding: "8px 14px",
+            cursor: "pointer",
+          }}
         >
-          <Icon name="calendar" size={16} color="var(--text-secondary)" />
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.calendar")}</span>
+          <Icon name="calendar" size={16} color={calendarOpen ? "var(--text-primary)" : "var(--text-secondary)"} />
+          <span style={{ fontSize: 13, color: calendarOpen ? "var(--text-primary)" : "var(--text-secondary)" }}>{t("transactions.list.calendar")}</span>
         </button>
+        {/* El alcance del día vive acá y no en la franja de totales: en
+            escritorio la franja está en la otra columna, y el chip tiene que
+            quedar donde se lo ve mientras se recorre la lista. Es además la
+            traducción del viejo chip "todo el mes". */}
+        {calendar.scope.day ? (
+          <button
+            type="button"
+            aria-label={t("transactions.calendar.wholeMonth")}
+            onClick={() => calendar.selectDay(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "var(--surface-2)",
+              border: 0,
+              borderRadius: "var(--radius-chip)",
+              padding: "8px 14px",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              fontSize: 13,
+            }}
+          >
+            {formatDateLong(locale, noonUtc(calendar.scope.day))}
+            <Icon name="close" size={14} color="var(--text-secondary)" />
+          </button>
+        ) : null}
         <div style={{ flex: 1 }} />
         {selection ? (
           <button type="button" onClick={() => setSelection(null)} style={{ background: "none", border: 0, color: "var(--primary-ink)", fontSize: 13, cursor: "pointer" }}>
@@ -343,30 +465,21 @@ export function MovementsListContent() {
         ) : null}
       </div>
 
-      <TransactionsSummaryStrip income={periodIncome} expense={periodExpense} balance={periodBalance} />
-
-      {items.length === 0 ? (
-        <EmptyState message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
-      ) : (
-        // Wrapper propio para el fade: el scroller de abajo ya usa su
-        // `position:relative` para el virtualizador (anclar las filas
-        // absolutas), así que `scroll-fade-bottom` no puede ir ahí — necesita
-        // un contenedor no-scrolleable distinto. No puede ir en el root de la
-        // página tampoco: la barra de selección múltiple y el sheet de
-        // filtros son hermanos posteriores fuera de este `ternary`, y el fade
-        // no debe taparlos.
-        <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", flex: 1, minHeight: 0 } as CSSProperties}>
+      {/* Wrapper propio para el fade: el scroller de abajo ya usa su
+          `position:relative` para el virtualizador (anclar las filas
+          absolutas), así que `scroll-fade-bottom` no puede ir ahí — necesita
+          un contenedor no-scrolleable distinto. No puede ir en el root de la
+          página tampoco: la barra de selección múltiple y el sheet de
+          filtros son hermanos posteriores, y el fade no debe taparlos. */}
+      <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", flex: 1, minHeight: 0 } as CSSProperties}>
           <div
-            // Un solo nodo, dos consumidores: el virtualizador necesita
-            // `parentRef` para medir el scroll; `useScrollOverflow` necesita
-            // el mismo nodo para comparar `scrollHeight`/`clientHeight`. Un
+            // Un solo nodo, tres consumidores: el virtualizador necesita
+            // `parentRef` para medir el scroll, `useScrollOverflow` necesita
+            // el mismo nodo para comparar `scrollHeight`/`clientHeight`, y la
+            // medición de `scrollMargin` necesita saber cuándo aparece. Un
             // `ref` de React solo acepta un valor, así que un callback ref
-            // asigna `parentRef.current` y además reenvía el nodo al
-            // callback ref que devuelve el hook.
-            ref={(node) => {
-              parentRef.current = node;
-              fadeScrollerRef(node);
-            }}
+            // reparte — y tiene que ser `useCallback`, ver su definición.
+            ref={scrollerRefCallback}
             className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
             // `paddingRight`: separa el texto/monto de la barra de scroll,
             // que si no queda pegada contra el borde del contenido en
@@ -394,7 +507,60 @@ export function MovementsListContent() {
               paddingRight: SELECTION_BLEED + 8,
             }}
           >
-            <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+            {/* El calendario scrollea CON la lista: en un teléfono chico no
+                entran los dos a la vez, y fijarlo dejaba a la lista con la
+                altura sobrante, que a 568px de alto es cero. No se arregla
+                achicando el mes — cualquier techo que deje lugar a tres filas
+                de lista pone las celdas por debajo del mínimo táctil de 44px.
+                El calendario no es un encabezado fijo, es contenido. */}
+            {calendarSlot ? <div style={{ paddingBottom: 16 }}>{calendarSlot}</div> : null}
+
+            {/* La franja de totales sí queda pegada: es una línea, sobrevive
+                en cualquier alto y mantiene visible a qué corresponden los
+                números mientras se recorre la lista. Va DENTRO del scroller
+                para pegarse a su borde y no a un punto de la página. El
+                sangrado compensa el `marginInline` negativo del scroller: sin
+                eso el fondo no llega al canal de selección y se ven pasar las
+                filas por los costados. */}
+            <div
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                background: "var(--page)",
+                marginInline: -SELECTION_BLEED,
+                paddingInline: SELECTION_BLEED,
+              }}
+            >
+              <TransactionsSummaryStrip income={periodIncome} expense={periodExpense} balance={periodBalance} />
+            </div>
+
+            {/* El wrapper se renderiza SIEMPRE, con lista o vacío: es el nodo
+                contra el que se mide `scrollMargin` y tiene que ser hijo
+                directo del scroller para que el `ResizeObserver` pueda
+                distinguirlo de sus hermanos. Y el estado vacío va acá adentro
+                y no en lugar del scroller: si no, un día sin movimientos
+                borraría el calendario de la pantalla y no habría forma de
+                elegir otro día. */}
+            <div ref={setListNode}>
+              {items.length === 0 ? (
+                calendarOpen && calendar.scope.day ? (
+                  <EmptyState
+                    message={t("transactions.calendar.empty")}
+                    actionLabel={t("transactions.calendar.wholeMonth")}
+                    onAction={() => calendar.selectDay(null)}
+                  />
+                ) : calendarOpen ? (
+                  <EmptyState message={t("transactions.calendar.emptyMonth")} />
+                ) : (
+                  <EmptyState
+                    message={t("transactions.list.emptyFiltered")}
+                    actionLabel={t("transactions.list.clearFilters")}
+                    onAction={() => setFilters(defaultMovementsFilters())}
+                  />
+                )
+              ) : (
+                <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
               {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = items[virtualRow.index];
               if (!item) return null;
@@ -422,7 +588,11 @@ export function MovementsListContent() {
                     left: -SELECTION_BLEED,
                     width: `calc(100% + ${SELECTION_BLEED * 2}px)`,
                     paddingInline: SELECTION_BLEED,
-                    transform: `translateY(${virtualRow.start}px)`,
+                    // `virtualRow.start` está medido desde el origen del
+                    // SCROLLER; este `transform` posiciona desde el origen de
+                    // la LISTA. Restar `scrollMargin` traduce de uno al otro
+                    // (vale 0 cuando la lista arranca en el tope).
+                    transform: `translateY(${virtualRow.start - scrollMargin}px)`,
                     ...(item.type === "row" && !selection && item.tx.id === activeTxId
                       ? { background: "var(--selection-surface)", boxShadow: "inset 0 0 0 1px var(--selection-ring)", borderRadius: "var(--radius-card)" }
                       : null),
@@ -435,6 +605,13 @@ export function MovementsListContent() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0 6px", background: "var(--page)" }}>
                       <span className="t-label" style={{ color: "var(--text-secondary)" }}>
                         {new Date(`${item.date}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" })}
+                        {/* El conteo solo con el calendario abierto: ahí el
+                            día es el alcance elegido y saber cuántos son
+                            informa. En la lista normal, repetido en cada
+                            cabecera, es ruido. */}
+                        {calendarOpen ? (
+                          <span style={{ color: "var(--text-muted)" }}> · {t("transactions.list.dayCount", { count: item.count })}</span>
+                        ) : null}
                       </span>
                       <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: item.total >= 0n ? "var(--money-positive)" : "var(--text-muted)" }}>
                         {formatAmountCompact(money(item.total, item.currency), { showSign: true })}
@@ -497,10 +674,11 @@ export function MovementsListContent() {
                 </div>
               );
             })}
-          </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
 
       {selection && selection.size > 0 ? (
         <div style={{ position: "sticky", bottom: 0, display: "flex", gap: 12, padding: "12px 0", background: "var(--page)" }}>
@@ -527,6 +705,7 @@ export function MovementsListContent() {
         categories={categories}
         tags={tags}
         resultCount={filtered.length}
+        dateOwnedByCalendar={calendarOpen}
       />
     </div>
   );

@@ -506,7 +506,8 @@
    "deleteCount": "Delete {count}",
    "categorize": "Categorize",
    "categorizeComingSoon": "Bulk categorizing isn't available yet.",
-   "errorWhat": "We couldn't load your movements."
+   "errorWhat": "We couldn't load your movements.",
+   "dayCount": "{count, plural, one {# transaction} other {# transactions}}"
   },
   "detail": {
    "selectPrompt": "Pick a transaction from the list to see its detail here.",
@@ -548,14 +549,13 @@
    "tags": "Tags"
   },
   "calendar": {
-   "title": "Calendar",
-   "back": "Back",
    "prevMonth": "Previous month",
    "nextMonth": "Next month",
    "empty": "No transactions that day.",
    "emptyMonth": "No transactions this month.",
    "wholeMonth": "Whole month",
-   "selectPrompt": "Pick a day to see its transactions."
+   "intensityLess": "Less",
+   "intensityMore": "More"
   },
   "edit": {
    "notFound": "We couldn't find that transaction.",
