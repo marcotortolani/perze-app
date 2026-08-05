@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/modal";
 import { AccountFormFlow } from "@/features/accounts/AccountFormFlow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAccounts } from "@/hooks/use-accounts";
 
 /**
@@ -22,7 +22,10 @@ import { useInvalidateAccounts } from "@/hooks/use-accounts";
 export default function InterceptedNewAccountPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  // `useEffectiveUserId`: con el hook crudo, `userId` queda en `null` para
+  // siempre en modo demo (nunca hay sesión de Supabase) y el `return null`
+  // de abajo deja el modal VACÍO — se abre la URL y no se dibuja nada.
+  const userId = useEffectiveUserId();
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
   if (!household || !userId) return null;

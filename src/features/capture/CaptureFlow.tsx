@@ -20,7 +20,7 @@ import { tagsRepo } from "@/lib/repos/tags-repo";
 import type { AccountRow } from "@/lib/db/schema";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { AccountPickerSheet } from "./AccountPickerSheet";
 import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
@@ -55,7 +55,15 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const locale = useLocale() as Locale;
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  // `useEffectiveUserId` y no `useCurrentUserId`: el gate de más abajo
+  // (`if (!household || !userId)`) deja la captura en "Cargando…" para
+  // siempre cuando no hay sesión de Supabase — el caso del modo demo, que
+  // nunca crea una. O sea que en demo no se podía cargar un gasto, que es
+  // LA métrica del producto. Es el caso exacto que documenta
+  // `use-current-user.ts`: sustituye por `DEMO_USER_ID` solo cuando el
+  // tri-estado ya confirmó que no hay sesión, así que no reabre el bug B3
+  // de escrituras con `created_by` inventado.
+  const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
