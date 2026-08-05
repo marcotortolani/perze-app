@@ -27,6 +27,7 @@ import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
+import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
 import { formatDateMedium } from "@/i18n/formatting";
 import { useCalendarView } from "./use-calendar-view";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
@@ -74,10 +75,17 @@ export interface MovementsListContentProps {
    * está abierto pero no va acá adentro.
    */
   calendarOpen?: boolean;
+  /**
+   * Los filtros los tiene `page.tsx` y no esta lista: el heatmap del
+   * calendario también los necesita, y con el estado acá adentro filtrar por
+   * una categoría listaba una cosa y pintaba otra.
+   */
+  filters: MovementsFilters;
+  onFiltersChange: (filters: MovementsFilters) => void;
 }
 
 /** D1/D2/D5/D6/D7 — lista de movimientos y su vista de calendario. Bloque D, Fase 7. */
-export function MovementsListContent({ calendarSlot, calendarOpen = false }: MovementsListContentProps = {}) {
+export function MovementsListContent({ calendarSlot, calendarOpen = false, filters, onFiltersChange }: MovementsListContentProps) {
   const t = useTranslations();
   usePageHeader({ title: t("nav.movements") });
   const locale = useLocale() as Locale;
@@ -114,7 +122,6 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
   const errorState = useQueryErrorState(transactionsQuery, { what: t("transactions.list.errorWhat") });
   const pending = usePendingMutations();
 
-  const [filters, setFilters] = useState<MovementsFilters>(defaultMovementsFilters());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selection, setSelection] = useState<Set<string> | null>(null);
 
@@ -200,16 +207,6 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
   // Sale del mismo param que lee `page.tsx`; no se pasa por prop porque la
   // lista ya tiene el `searchParams` a mano para sus filtros.
   const activeTxId = searchParams.get("tx");
-  useEffect(() => {
-    if (!categoryIdParam && !kindParam && !pendingFxParam) return;
-    setFilters((f) => {
-      const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
-      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
-      const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
-      if (nextCategoryIds === f.categoryIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
-      return { ...f, categoryIds: nextCategoryIds, kind: nextKind, onlyPending: nextOnlyPending };
-    });
-  }, [categoryIdParam, kindParam, pendingFxParam]);
 
   const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -224,21 +221,10 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
    * queda es la correcta — "gasto por día del mes visible, bajo los filtros
    * activos" — y el rango de fecha gobierna solo la lista.
    */
-  const nonDateFiltered = useMemo(() => {
-    if (!transactions) return [];
-    return transactions.filter((t) => {
-      if (filters.kind !== "all" && t.kind !== filters.kind) return false;
-      if (filters.accountIds.length > 0 && !filters.accountIds.includes(t.accountId)) return false;
-      if (filters.categoryIds.length > 0 && (!t.categoryId || !filters.categoryIds.includes(t.categoryId))) return false;
-      if (filters.tagIds.length > 0) {
-        const txTagIds = tagIdsByTx.get(t.id) ?? [];
-        if (!filters.tagIds.some((id) => txTagIds.includes(id))) return false;
-      }
-      if (filters.onlyPending && t.fxRate !== null) return false;
-      if (payeeIdParam && t.payeeId !== payeeIdParam) return false;
-      return true;
-    });
-  }, [transactions, filters, payeeIdParam, tagIdsByTx]);
+  const nonDateFiltered = useMemo(
+    () => (transactions ?? []).filter((t) => matchesNonDateFilters(t, filters, tagIdsByTx, payeeIdParam)),
+    [transactions, filters, payeeIdParam, tagIdsByTx]
+  );
 
   const filtered = useMemo(
     () =>
@@ -601,7 +587,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
                   <EmptyState
                     message={t("transactions.list.emptyFiltered")}
                     actionLabel={t("transactions.list.clearFilters")}
-                    onAction={() => setFilters(defaultMovementsFilters())}
+                    onAction={() => onFiltersChange(defaultMovementsFilters())}
                   />
                 )
               ) : (
@@ -745,7 +731,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
         filters={filters}
-        onChange={setFilters}
+        onChange={onFiltersChange}
         accounts={accounts}
         categories={categories}
         tags={tags}

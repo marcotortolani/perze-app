@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePageHeader } from "@/design-system";
@@ -10,6 +10,9 @@ import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
+import { defaultMovementsFilters, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
+import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
 import { MovementsListContent } from "./TransactionsListContent";
 import { TransactionDetailContent } from "./TransactionDetailContent";
 import { TransactionsDetailEmpty } from "./TransactionsDetailEmpty";
@@ -130,17 +133,61 @@ export default function MovementsPage() {
   const txId = searchParams.get("tx");
 
   /**
-   * El heatmap se calcula sobre TODOS los movimientos del household, no sobre
-   * la lista filtrada. Dos razones: el gasto por día es una referencia fija
-   * —si se filtrara por el rango activo, elegir un día apagaría el resto del
-   * mes y la visualización se borraría a sí misma— y así el calendario no
-   * depende del estado de filtros, que vive adentro de la lista.
+   * Los filtros viven ACÁ y no adentro de la lista porque tienen dos
+   * consumidores: la lista, que decide qué filas muestra, y el heatmap del
+   * calendario, que pinta el gasto por día **bajo los filtros activos**. Con el
+   * estado adentro de la lista, filtrar por una categoría listaba una cosa y
+   * pintaba otra — el color decía "gastaste esto" cuando en realidad decía
+   * "gastaste esto en todo".
+   *
+   * Solo sube el estado; la lista sigue derivando lo suyo. El criterio
+   * compartido es `matchesNonDateFilters`, no una copia en cada lado.
+   */
+  const [filters, setFilters] = useState<MovementsFilters>(defaultMovementsFilters());
+
+  // Prefiltros que llegan por deep link: del home (`?kind=`, `?pending=`) y del
+  // buscador flotante (`?category=`). Suben con el estado que sincronizan.
+  const categoryIdParam = searchParams.get("category");
+  const kindParam = searchParams.get("kind");
+  const pendingFxParam = searchParams.get("pending");
+  const payeeIdParam = searchParams.get("payee");
+  useEffect(() => {
+    if (!categoryIdParam && !kindParam && !pendingFxParam) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sincronización genuina con el querystring de un deep link: el param SIEMBRA el filtro y después el usuario es dueño de él desde el sheet, así que no es derivable en el render. Mismo caso que el `?search=1` de `(app)/layout.tsx`.
+    setFilters((f) => {
+      const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
+      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
+      const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
+      if (nextCategoryIds === f.categoryIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
+      return { ...f, categoryIds: nextCategoryIds, kind: nextKind, onlyPending: nextOnlyPending };
+    });
+  }, [categoryIdParam, kindParam, pendingFxParam]);
+
+  const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
+  const tagIdsByTx = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const link of transactionTagLinks ?? []) {
+      map.set(link.transactionId, [...(map.get(link.transactionId) ?? []), link.tagId]);
+    }
+    return map;
+  }, [transactionTagLinks]);
+
+  /** Lo que alimenta el heatmap: todos los filtros MENOS la fecha. */
+  const heatmapTransactions = useMemo(
+    () => (transactions ?? []).filter((tx) => matchesNonDateFilters(tx, filters, tagIdsByTx, payeeIdParam)),
+    [transactions, filters, tagIdsByTx, payeeIdParam]
+  );
+
+  /**
+   * El heatmap respeta los filtros activos pero NO el rango de fecha: si se
+   * filtrara por el rango, elegir un día apagaría el resto del mes y la
+   * visualización se borraría a sí misma.
    */
   const calendar = calendarView.open ? (
     <TransactionsMonthCalendar
       month={calendarView.scope.month}
       selectedDay={calendarView.scope.day}
-      transactions={transactions ?? []}
+      transactions={heatmapTransactions}
       baseCurrency={household?.baseCurrency ?? "UYU"}
       onMonthChange={calendarView.changeMonth}
       onSelectDay={calendarView.selectDay}
@@ -150,7 +197,14 @@ export default function MovementsPage() {
   // En escritorio el calendario vive en la segunda columna, así que no baja
   // como slot; en mobile y tablet va adentro del scroller de la lista, arriba
   // de las filas.
-  const list = <MovementsListContent calendarOpen={calendarView.open} calendarSlot={isSplit ? undefined : calendar} />;
+  const list = (
+    <MovementsListContent
+      calendarOpen={calendarView.open}
+      calendarSlot={isSplit ? undefined : calendar}
+      filters={filters}
+      onFiltersChange={setFilters}
+    />
+  );
   // `key`: al cambiar de movimiento se remonta el detalle, así el estado local
   // (el sheet de resolver cotización) no se arrastra de uno al otro.
   const detail = txId ? <TransactionDetailContent key={txId} id={txId} /> : null;
