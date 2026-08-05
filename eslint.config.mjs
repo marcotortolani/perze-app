@@ -19,6 +19,14 @@ const eslintConfig = defineConfig([
     // Paquete de diseño de origen (wireframes, alta fidelidad, design
     // system a portar) — no es código de la app, ver README.md.
     "perze-design/**",
+    // Mismo criterio para `docs/`: además de los documentos, ahí viven el
+    // bundle del design system y la biblioteca de componentes de origen
+    // (`docs/library/perze-v2.jsx`, `docs/design/*.js`) — código
+    // versionado como REFERENCIA, que se porta a mano y no se mantiene.
+    // Estaban dando 16 errores que no se iban a arreglar nunca, y eso
+    // dejaba `pnpm lint` en rojo permanente: un comando que siempre falla
+    // no avisa de nada, que es peor que no tenerlo.
+    "docs/**",
     // Service worker compilado por Serwist — build output, no fuente.
     "public/sw.js",
   ]),
