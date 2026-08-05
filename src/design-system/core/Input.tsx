@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { ChangeEvent, CSSProperties, ElementType } from "react";
+import type { ChangeEvent, CSSProperties, ElementType, FocusEvent } from "react";
 import { IconButton } from "./IconButton";
 
 export interface InputProps {
@@ -12,6 +12,8 @@ export interface InputProps {
   placeholder?: string | undefined;
   value?: string | undefined;
   onChange?: ((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void) | undefined;
+  /** Para validar al salir del campo en vez de en cada tecla. */
+  onBlur?: ((e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void) | undefined;
   style?: CSSProperties | undefined;
   name?: string | undefined;
   id?: string | undefined;
@@ -20,6 +22,12 @@ export interface InputProps {
   /** `"password"` para contraseñas (§1, acceso controlado) — nunca para montos, eso sigue siendo el Keypad. `"date"` usa el picker nativo del sistema, aceptable para fechas fuera del contexto de un movimiento (p. ej. fecha de nacimiento en el perfil) — `DateStrip` es solo para fechar un movimiento cerca de "hoy". Default `"text"`. */
   type?: "text" | "email" | "password" | "date" | undefined;
   autoComplete?: string | undefined;
+  /** Teclado del sistema en móvil. `"email"` trae la arroba y el punto al primer nivel. */
+  inputMode?: "text" | "email" | "numeric" | "decimal" | "tel" | "search" | "url" | undefined;
+  /** `"none"` para email y cualquier identificador: el teclado de iOS/Android capitaliza la primera letra por defecto y un email no la quiere nunca. */
+  autoCapitalize?: "none" | "sentences" | "words" | "characters" | undefined;
+  autoCorrect?: "on" | "off" | undefined;
+  spellCheck?: boolean | undefined;
   /** Campo mostrado pero no editable (p. ej. el email en `/onboarding/register`, ya fijado por la sesión). Texto en `--text-secondary` sobre `--surface-2` para leerse como apagado, no como error. */
   readOnly?: boolean | undefined;
   disabled?: boolean | undefined;

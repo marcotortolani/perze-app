@@ -41,7 +41,10 @@ test.describe("calendario de movimientos", () => {
     await seedDemoHousehold(page);
     await page.goto("/transactions");
 
-    // Antes de prenderlo no hay grilla, y la lista ya está.
+    // Antes de prenderlo no hay grilla, y la lista ya está. El chip primero:
+    // contar botones apenas termina el `goto` es una carrera con el render de
+    // la lista, y da 0 sin que nada esté roto.
+    await expect(calendarChip(page)).toBeVisible();
     await expect(dayCellsWithSpending(page)).toHaveCount(0);
     const rowsBefore = await page.locator("main").getByRole("button").count();
     expect(rowsBefore).toBeGreaterThan(2);
@@ -65,14 +68,20 @@ test.describe("calendario de movimientos", () => {
 
   test("elegir un día angosta la lista que ya está, y el chip de alcance la devuelve al mes", async ({ page }) => {
     await seedDemoHousehold(page);
-    await page.goto("/transactions?view=calendar");
+    await page.goto("/transactions");
 
-    // "Cuántos días muestra la lista" se cuenta por sus cabeceras de día, no
+    // Por el chip y no navegando a `?view=calendar` a mano: entrar por la URL
+    // deja la vista abierta pero SIN `from`/`to`, así que la lista sigue con
+    // su preset por defecto y no con el mes. Es `openCalendar()` quien fija el
+    // rango, y este test compara contra él.
+    await calendarChip(page).click();
+    await expect(dayCellsWithSpending(page).first()).toBeVisible();
+
+    // Y "cuántos días muestra la lista" se cuenta por sus cabeceras de día, no
     // por filas: la lista es virtualizada, así que la cantidad de filas EN EL
-    // DOM depende del scroll y del overscan, no de los datos. Contar botones
-    // hacía que este test fallara de forma intermitente sin que nada estuviera
-    // roto. Con el calendario abierto cada cabecera lleva su conteo, y eso da
-    // un ancla estable.
+    // DOM depende del scroll y del overscan, no de los datos. Con el
+    // calendario abierto cada cabecera lleva su conteo, y eso sí es un ancla
+    // estable.
     const dayHeaders = page.getByText(/· \d+ movimiento/);
     await expect(dayHeaders.first()).toBeVisible();
     expect(await dayHeaders.count()).toBeGreaterThan(1);
@@ -118,8 +127,13 @@ test.describe("calendario de movimientos", () => {
     // celda ni un control conocido — la fila se ubica por su ícono + texto.
     await page.locator("main").getByRole("button").filter({ hasText: /US\$|AR\$|\$U/ }).first().click();
 
-    // El detalle es una selección de esta misma pantalla, y `view`/`from`/`to`
-    // sobreviven: si no, cerrar devolvería a una lista sin filtrar.
+    // El detalle es una selección de esta misma pantalla y el alcance
+    // `from`/`to` sobrevive: si no, cerrar devolvería a una lista sin filtrar.
+    //
+    // En MÓVIL el calendario sigue prendido: no compite con nada —es contenido
+    // arriba de las filas, y el detalle abre en un `Modal` encima—, así que
+    // apagarlo sería sacarle al usuario el mes que estaba recorriendo. En
+    // escritorio sí se apaga, y eso se prueba en el describe del final.
     await page.waitForURL(/tx=/);
     await expect(page).toHaveURL(/view=calendar/);
     await expect(page).toHaveURL(/from=/);
@@ -169,5 +183,68 @@ test.describe("calendario de movimientos", () => {
 
     await page.waitForURL(/\/transactions\?.*view=calendar/);
     await expect(page.getByRole("button", { name: "Mes anterior" })).toBeVisible();
+  });
+});
+
+/**
+ * La segunda columna del split (escritorio) tiene un solo ocupante y gana la
+ * última acción explícita del usuario. Antes el detalle ganaba siempre: con un
+ * movimiento abierto, tocar el chip no mostraba el calendario y no había forma
+ * de volver a "nada seleccionado" desde la lista.
+ *
+ * Viewport propio: el resto del archivo corre en 390×844 (móvil), donde el
+ * calendario va adentro del scroller de la lista y no hay segunda columna.
+ */
+test.describe("escritorio · el detalle y el calendario se turnan", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  /** Las filas de movimiento son los botones de la lista que llevan un monto. */
+  function movementRows(page: Page) {
+    return page.locator("main button").filter({ hasText: /\$/ });
+  }
+
+  test("tocar el movimiento ya seleccionado lo deselecciona", async ({ page }) => {
+    await seedDemoHousehold(page);
+    await page.goto("/transactions");
+
+    const row = movementRows(page).first();
+    await row.click();
+    await expect(page).toHaveURL(/tx=/);
+
+    await row.click();
+    await expect(page).not.toHaveURL(/tx=/);
+  });
+
+  test("el chip del calendario deselecciona el movimiento y ocupa la columna", async ({ page }) => {
+    await seedDemoHousehold(page);
+    await page.goto("/transactions");
+
+    await movementRows(page).first().click();
+    await expect(page).toHaveURL(/tx=/);
+
+    await calendarChip(page).click();
+
+    await expect(page).toHaveURL(/view=calendar/);
+    await expect(page).not.toHaveURL(/tx=/);
+    await expect(page.getByRole("button", { name: "Mes anterior" })).toBeVisible();
+  });
+
+  test("elegir un movimiento apaga el calendario y conserva el rango", async ({ page }) => {
+    await seedDemoHousehold(page);
+    await page.goto("/transactions");
+    // Por el chip y no navegando a `?view=calendar` a mano: es `openCalendar()`
+    // quien fija el rango del mes, que es justamente lo que este test verifica
+    // que sobreviva.
+    await calendarChip(page).click();
+    await expect(page.getByRole("button", { name: "Mes anterior" })).toBeVisible();
+
+    await movementRows(page).first().click();
+
+    await expect(page).toHaveURL(/tx=/);
+    await expect(page).not.toHaveURL(/view=calendar/);
+    await expect(calendarChip(page)).toHaveAttribute("aria-pressed", "false");
+    // El rango sigue puesto: el día que se venía mirando no deja de filtrar la
+    // lista de la izquierda solo porque se abrió un movimiento.
+    await expect(page).toHaveURL(/from=/);
   });
 });

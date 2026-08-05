@@ -1,7 +1,21 @@
+import type { CategoryI18nKey } from "./category-i18n";
+
 export interface CategoryTemplateItem {
-  /** Clave de `reference.category.*` — ver `CategoryRow.i18nKey`. */
-  i18nKey: string;
-  /** Nombre en ES rioplatense: se persiste en `CategoryRow.name` como fallback/búsqueda. */
+  /**
+   * La identidad de la categoría, y lo único que la UI muestra: se traduce
+   * con `CATEGORY_MESSAGE_KEY` (`reference.category.*`, ES/EN/PT).
+   *
+   * Tipada contra la unión de claves reales y no como `string`: agregar un
+   * ítem de plantilla sin su mensaje ahora no compila, en vez de aparecer en
+   * pantalla como una clave cruda o como el `name` en español.
+   */
+  i18nKey: CategoryI18nKey;
+  /**
+   * Nombre en ES rioplatense. **No es lo que se muestra** — se persiste en
+   * `CategoryRow.name` como fallback y para búsqueda; lo visible sale de
+   * `useCategoryLabel()`, que traduce mientras la categoría siga gobernada
+   * por la plantilla (`isSystem`).
+   */
   name: string;
   icon: string;
   color: string;

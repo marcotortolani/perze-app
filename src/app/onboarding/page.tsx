@@ -10,6 +10,8 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { seedDemoHousehold } from "@/lib/seed/demo-household";
 import { clearDemoCookie, enterDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
+import { useEmailField } from "@/hooks/use-email-field";
+import { purgeNavigationCaches } from "@/lib/pwa/navigation-caches";
 import { createClient } from "@/lib/supabase/client";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
@@ -38,11 +40,9 @@ export default function OnboardingAuthPage() {
   const router = useRouter();
   const setField = useOnboardingStore((s) => s.setField);
   const invalidateHousehold = useInvalidateHousehold();
-  const [email, setEmail] = useState("");
+  const email = useEmailField();
   const [seeding, setSeeding] = useState(false);
   const [sending, setSending] = useState(false);
-
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   /**
    * El link del mail de verificación termina acá con los tokens en el
@@ -116,6 +116,11 @@ export default function OnboardingAuthPage() {
       // la marca, al vencer la sesión el proxy volvía a mostrar la pantalla
       // de alta en vez de /login.
       markRegistered();
+      // Mismo motivo que en `/login`: lo navegado sin sesión quedó
+      // cacheado como el redirect a esta pantalla, y sin tirarlo el
+      // service worker puede devolver acá a alguien que ya entró.
+      await purgeNavigationCaches();
+      if (cancelled) return;
 
       // AC-9 — `resolveOnboardingDestination` consulta el servidor y puede
       // fallar (sin red, proyecto pausado). Nunca degradar en silencio a
@@ -146,12 +151,12 @@ export default function OnboardingAuthPage() {
   };
 
   const handleMagicLink = async () => {
-    if (!emailValid || sending) return;
+    if (!email.valid || sending) return;
     setSending(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: email.value,
         options: {
           shouldCreateUser: true,
           // C7/proxy — sin esto GoTrue arma el link con el `site_url` pelado
@@ -165,7 +170,7 @@ export default function OnboardingAuthPage() {
         toast.error(error.message);
         return;
       }
-      setField("email", email);
+      setField("email", email.value);
       router.push("/onboarding/verify");
     } finally {
       setSending(false);
@@ -221,15 +226,9 @@ export default function OnboardingAuthPage() {
           </div>
         ) : null}
 
-        <Input
-          type="email"
-          autoComplete="email"
-          placeholder={t("onboarding.auth.emailPlaceholder")}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <Input placeholder={t("onboarding.auth.emailPlaceholder")} {...email.bind} />
 
-        <Button disabled={!emailValid || sending} icon="mail" onClick={handleMagicLink}>
+        <Button disabled={!email.valid || sending} icon="mail" onClick={handleMagicLink}>
           {sending ? t("onboarding.auth.sendingLink") : t("onboarding.auth.sendLink")}
         </Button>
 
@@ -242,6 +241,16 @@ export default function OnboardingAuthPage() {
           style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
         >
           {t("onboarding.auth.haveAccount")}
+        </button>
+
+        {/* El invitado que no tiene el link a mano (se lo dictaron, o lo
+            perdió) no tenía cómo llegar a `/join` desde ningún lado. */}
+        <button
+          type="button"
+          onClick={() => router.push("/join")}
+          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
+        >
+          {t("onboarding.auth.haveInviteCode")}
         </button>
       </div>
 

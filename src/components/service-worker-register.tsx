@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { env } from "@/env";
 
 /**
  * Serwist no inyecta el registro solo (a diferencia de `next-pwa`) — sin
@@ -58,11 +59,42 @@ async function recoverFromStaleCache(trigger: string): Promise<void> {
   window.location.reload();
 }
 
+/**
+ * En `next dev` el service worker está apagado, y además desregistra el
+ * que haya quedado de antes.
+ *
+ * Turbopack renombra los chunks en cada arranque del server, así que el
+ * precache de la sesión anterior sirve un HTML que referencia archivos que
+ * ya no existen: la app queda **en blanco, sin un solo error en consola**
+ * —los pedidos se resuelven desde el cache, así que ni siquiera hay un
+ * chunk error que dispare `recoverFromStaleCache()`— y la única salida es
+ * borrar el service worker a mano desde DevTools. Nadie asocia una
+ * pantalla blanca en localhost con un service worker.
+ *
+ * Desregistrar (y no solo "no registrar") es la parte importante: apagarlo
+ * de acá en adelante no saca el que el navegador ya tiene instalado.
+ */
+const SW_ENABLED = env.NODE_ENV !== "development" || env.NEXT_PUBLIC_ENABLE_SW_IN_DEV === "1";
+
 export function ServiceWorkerRegister() {
   const t = useTranslations();
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    if (!SW_ENABLED) {
+      void (async () => {
+        const registrations = await navigator.serviceWorker.getRegistrations().catch(() => []);
+        if (registrations.length === 0) return;
+        console.warn("[perze/sw] service worker de una sesión de desarrollo anterior: se desregistra y se limpia el Cache Storage.");
+        await Promise.all(registrations.map((r) => r.unregister().catch(() => false)));
+        if (typeof caches !== "undefined") {
+          const keys = await caches.keys().catch(() => []);
+          await Promise.all(keys.map((key) => caches.delete(key).catch(() => false)));
+        }
+      })();
+      return;
+    }
 
     // AC-16 — chunks que fallan al cargar = precache desactualizado.
     const onError = (event: ErrorEvent) => {

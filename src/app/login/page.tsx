@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, Input, Logo } from "@/design-system";
@@ -11,6 +11,8 @@ import { signInWithPasswordAction } from "@/features/auth/sign-in-with-password.
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { markRegistered } from "@/lib/auth/registered-cookie";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
+import { useEmailField } from "@/hooks/use-email-field";
+import { purgeNavigationCaches } from "@/lib/pwa/navigation-caches";
 
 /**
  * C7 — solución de transición (ver `docs/mejora-auth-oauth-y-email.md`):
@@ -19,28 +21,75 @@ import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destinati
  * login/signup indistinguibles sin contraseña; acá sí hace falta
  * distinguirlos porque el registro (`/onboarding/register`) ya fijó una.
  */
+/**
+ * Salida del login: navegación de documento, NUNCA `router.replace()`.
+ *
+ * El bug: `signInWithPasswordAction` crea la sesión **en el servidor**, así
+ * que el cliente de GoTrue del navegador nunca emite `SIGNED_IN`. Y
+ * `useCurrentUserId()` cachea con `staleTime: Infinity` invalidando solo
+ * con ese evento, así que su valor —resuelto al cargar esta pantalla, sin
+ * sesión— se queda en `null` para toda la vida de la página. Con una
+ * navegación de cliente, `OnboardingGate` lee ese `null` cacheado, concluye
+ * que no hay sesión y hace `router.replace("/login")`: volvés al login, con
+ * el formulario vacío, sesión válida y ni un error que lo explique.
+ *
+ * Recargar tampoco salía, porque `/login` no reaccionaba a tener sesión
+ * (ver el efecto de abajo). Navegar a mano a `/` sí funcionaba: ahí se
+ * monta todo de cero y la query resuelve con la cookie.
+ *
+ * Una navegación de documento arranca la app entera desde las cookies —
+ * cliente de Supabase, cache de TanStack Query y proxy, los tres a la vez—
+ * que es exactamente lo que hace falta después de un cambio de sesión.
+ */
+function leave(destination: string): void {
+  window.location.assign(destination);
+}
+
 export default function LoginPage() {
   const t = useTranslations();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const email = useEmailField();
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canSubmit = emailValid && password.length > 0 && !signingIn;
+  // Con sesión viva esta pantalla no tiene nada que ofrecer, y quedarse acá
+  // es una calle sin salida: el usuario ve un formulario de acceso mientras
+  // ya está autenticado, y recargar no cambia nada. Pasó de verdad —era la
+  // segunda mitad del bug que arregla `leave()`— y sigue siendo el estado
+  // correcto aunque aquel no vuelva: entrar a `/login` con la sesión puesta
+  // (un bookmark, el historial) tiene que llevar a la app.
+  useEffect(() => {
+    let cancelled = false;
+    void createClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!cancelled && data.session) leave("/");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const canSubmit = email.valid && password.length > 0 && !signingIn;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSigningIn(true);
     setError(null);
     try {
-      const result = await signInWithPasswordAction(email, password);
+      const result = await signInWithPasswordAction(email.value, password);
       if (result.errorCode) {
         setError(translateAuthError(result, t as (key: string) => string));
         return;
       }
       markRegistered();
+      // Todo lo que se navegó SIN sesión quedó cacheado por el service
+      // worker como la respuesta de `/` — que era el redirect a `/login`.
+      // Si no se tira acá, la navegación de abajo puede servirse desde ese
+      // cache y devolver a esta misma pantalla con la sesión ya creada.
+      await purgeNavigationCaches();
       // La sesión ya quedó en cookies reales (Set-Cookie de la Server
       // Action); este cliente del browser las lee para seguir operando
       // como siempre — outbox, RLS, etc. — con la misma instancia de acá
@@ -51,18 +100,20 @@ export default function LoginPage() {
       } = await supabase.auth.getUser();
       const access = user ? await profilesRepo.getOwnAccess(user.id) : null;
       if (access && access.accessStatus !== "approved") {
-        router.replace("/pending");
+        window.location.assign("/pending");
         return;
       }
       // AC-1 — con household local va directo a la app; en un dispositivo
       // nuevo va a `/onboarding/restore` a bajar sus datos, sin pasar por
-      // la pantalla de alta. Si el chequeo falla, "/" deja que el gate
-      // reintente por el camino normal.
+      // la pantalla de alta. Si el chequeo falla contra el servidor, "/"
+      // deja que el gate reintente por el camino normal.
+      let destination = "/";
       try {
-        router.replace(await resolveOnboardingDestination());
+        destination = await resolveOnboardingDestination();
       } catch {
-        router.replace("/");
+        destination = "/";
       }
+      leave(destination);
     } finally {
       setSigningIn(false);
     }
@@ -81,12 +132,10 @@ export default function LoginPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Input
-          type="email"
-          autoComplete="email"
           placeholder={t("login.emailPlaceholder")}
-          value={email}
+          {...email.bind}
           onChange={(e) => {
-            setEmail(e.target.value);
+            email.onChange(e);
             setError(null);
           }}
           autoFocus

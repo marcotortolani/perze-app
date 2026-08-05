@@ -36,7 +36,13 @@
   "edit": "Editar",
   "delete": "Borrar",
   "seeAll": "Ver todos",
-  "continue": "Continuar"
+  "continue": "Continuar",
+  "emailError": {
+   "missingAt": "Falta el @: probá {suggestion}",
+   "missingDomain": "Falta el final del dominio: probá {suggestion}",
+   "invalid": "Ese email no se entiende: probá algo como {suggestion}",
+   "example": "ana@gmail.com"
+  }
  },
  "ds": {
   "errorState": {
@@ -630,10 +636,25 @@
  "onboarding": {
   "welcome": {
    "skip": "Saltear",
-   "title": "Cargar un gasto: cinco segundos.",
-   "subtitle": "Sin formularios, sin teclado del sistema, sin conexión si hace falta.",
-   "demoPlaceholder": "Demo del keypad en loop",
-   "start": "Empezar"
+   "next": "Siguiente",
+   "start": "Empezar",
+   "slides": {
+    "one": {
+     "title": "Cargar un gasto: cinco segundos.",
+     "subtitle": "Sin formularios, sin teclado del sistema, sin conexión si hace falta.",
+     "demo": "Demo del keypad en loop"
+    },
+    "two": {
+     "title": "Varias monedas, un solo número.",
+     "subtitle": "Cuentas en pesos, dólares o lo que uses. Y si falta una cotización te lo decimos, no la inventamos.",
+     "demo": "Demo de las cuentas en tres monedas"
+    },
+    "three": {
+     "title": "Crece con vos, no antes.",
+     "subtitle": "Presupuestos, metas, inversiones, grupo familiar: prendés lo que uses y el resto no aparece.",
+     "demo": "Demo de los módulos opcionales"
+    }
+   }
   },
   "auth": {
    "tagline": "Finanzas personales, sin fricción.",
@@ -649,7 +670,8 @@
    "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
    "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo.",
    "haveAccount": "Ya tengo cuenta",
-   "checkError": "No pudimos verificar tu cuenta — revisá la conexión y probá de nuevo."
+   "checkError": "No pudimos verificar tu cuenta — revisá la conexión y probá de nuevo.",
+   "haveInviteCode": "Tengo un código de invitación"
   },
   "verify": {
    "back": "Volver",
@@ -1652,7 +1674,14 @@
   "mirrorNoTransactions": "No hay movimientos visibles para este miembro.",
   "mustSettleFirst": "Este miembro tiene saldo pendiente — liquidá o condoná antes de sacarlo.",
   "removed": "Miembro removido del hogar",
-  "remove": "Sacar a {name} del hogar"
+  "remove": "Sacar a {name} del hogar",
+  "joinSubtitle": "Pegá el código que te compartieron y entrás al grupo.",
+  "joinNeedsAccount": "Primero creá tu cuenta: guardamos el código y volvés acá solo.",
+  "joinCreateAccount": "Crear mi cuenta",
+  "copyLink": "Copiar link",
+  "linkCopied": "Link copiado",
+  "inviteExpires": "El código vence en 7 días.",
+  "you": "Vos"
  },
  "permissionsPage": {
   "title": "Permisos y visibilidad",

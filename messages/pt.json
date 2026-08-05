@@ -36,7 +36,13 @@
   "edit": "Editar",
   "delete": "Excluir",
   "seeAll": "Ver todos",
-  "continue": "Continuar"
+  "continue": "Continuar",
+  "emailError": {
+   "missingAt": "Falta o @: tente {suggestion}",
+   "missingDomain": "Falta o final do domínio: tente {suggestion}",
+   "invalid": "Esse email não faz sentido: tente algo como {suggestion}",
+   "example": "ana@gmail.com"
+  }
  },
  "ds": {
   "errorState": {
@@ -630,10 +636,25 @@
  "onboarding": {
   "welcome": {
    "skip": "Pular",
-   "title": "Registrar um gasto: cinco segundos.",
-   "subtitle": "Sem formulários, sem teclado do sistema, sem conexão se precisar.",
-   "demoPlaceholder": "Demo do teclado em loop",
-   "start": "Começar"
+   "next": "Próximo",
+   "start": "Começar",
+   "slides": {
+    "one": {
+     "title": "Registrar um gasto: cinco segundos.",
+     "subtitle": "Sem formulários, sem teclado do sistema, sem conexão se precisar.",
+     "demo": "Demo do keypad em loop"
+    },
+    "two": {
+     "title": "Várias moedas, um só número.",
+     "subtitle": "Contas em reais, dólares ou o que você usar. E se faltar uma cotação a gente avisa, não inventa.",
+     "demo": "Demo das contas em três moedas"
+    },
+    "three": {
+     "title": "Cresce com você, não antes.",
+     "subtitle": "Orçamentos, metas, investimentos, grupo familiar: você liga o que usa e o resto nem aparece.",
+     "demo": "Demo dos módulos opcionais"
+    }
+   }
   },
   "auth": {
    "tagline": "Finanças pessoais, sem fricção.",
@@ -649,7 +670,8 @@
    "demoError": "Não foi possível carregar os dados de exemplo — tente de novo.",
    "linkError": "Esse link não funciona mais — digite seu email e peça um novo código.",
    "haveAccount": "Já tenho conta",
-   "checkError": "Não conseguimos verificar sua conta — verifique a conexão e tente de novo."
+   "checkError": "Não conseguimos verificar sua conta — verifique a conexão e tente de novo.",
+   "haveInviteCode": "Tenho um código de convite"
   },
   "verify": {
    "back": "Voltar",
@@ -1652,7 +1674,14 @@
   "mirrorNoTransactions": "Nenhum movimento visível para esse membro.",
   "mustSettleFirst": "Esse membro tem saldo pendente — acerte ou perdoe antes de removê-lo.",
   "removed": "Membro removido do lar",
-  "remove": "Remover {name} do lar"
+  "remove": "Remover {name} do lar",
+  "joinSubtitle": "Cole o código que te passaram e você entra no grupo.",
+  "joinNeedsAccount": "Primeiro crie sua conta: guardamos o código e você volta para cá sozinho.",
+  "joinCreateAccount": "Criar minha conta",
+  "copyLink": "Copiar link",
+  "linkCopied": "Link copiado",
+  "inviteExpires": "O código vence em 7 dias.",
+  "you": "Você"
  },
  "permissionsPage": {
   "title": "Permissões e visibilidade",

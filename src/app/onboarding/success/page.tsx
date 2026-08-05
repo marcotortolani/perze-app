@@ -78,8 +78,12 @@ export default function OnboardingSuccessPage() {
 
       const accountName = draft.accountPreset ?? "Efectivo";
       const accountKind = PRESET_KIND[accountName] ?? (accountName === "Otro" ? "other" : "wallet");
+      // El nombre real del registro (A2b) — es el que van a ver los otros
+      // miembros del hogar en J1.
+      const profile = await profilesRepo.getOwn(user.id).catch(() => null);
       const { householdId, accountId } = await completeOnboarding({
         userId: user.id,
+        displayName: profile?.displayName ?? null,
         countryCode: draft.countryCode,
         currencyCode: draft.currencyCode,
         usage: draft.usage ?? "solo",

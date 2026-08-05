@@ -6,7 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [0.24.0] — 2026-08-05
+## [0.25.0] — 2026-08-05
 
 ### Arreglado — la escala del heatmap del calendario aplastaba los días chicos
 
@@ -48,10 +48,113 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
   es **virtualizada**: cuántas filas hay en el DOM depende del scroll y del overscan, no de los
   datos. Pasa a contar **cabeceras de día**, que sí es un ancla estable — el mes entero tiene
   varias, el día elegido tiene exactamente una.
+- Tenía además una segunda causa, encontrada en paralelo en la v0.24.0 y conservada al mergear:
+  el test entraba por la URL `?view=calendar`, que deja la vista abierta pero **sin `from`/`to`**,
+  así que la lista arrancaba con su preset y no con el mes. Ahora entra por el chip, que es quien
+  fija el rango. Las dos correcciones son independientes y quedaron las dos.
 - Nota de entorno, por si vuelve a aparecer: `playwright.config.ts` usa `reuseExistingServer`, así
   que un `next dev` colgado en el puerto **3100** de una corrida anterior hace que la suite corra
   contra código viejo. Y sin `.env.local` el `webServer` ni arranca (`Invalid environment
   variables`), lo que se manifiesta como timeouts masivos y no como un error de configuración.
+
+## [0.24.0] — 2026-08-05
+
+### Arreglado — entrar con contraseña te devolvía al login
+
+- `signInWithPasswordAction` crea la sesión **en el servidor**, así que el cliente de GoTrue del
+  navegador nunca emite `SIGNED_IN`. `useCurrentUserId()` cachea con `staleTime: Infinity` y se
+  invalida solo con ese evento: su valor —resuelto al cargar `/login`, sin sesión— quedaba en
+  `null` para toda la vida de la página. Con la navegación de cliente que venía después,
+  `OnboardingGate` leía ese `null`, concluía que no había sesión y hacía `replace("/login")`.
+  Volvías al login, con el formulario vacío, la sesión creada y ni un error que lo explicara.
+- La salida del login pasa a ser **navegación de documento** (`window.location.assign`): después
+  de un cambio de sesión hay que rearrancar el cliente de Supabase, el cache de TanStack Query y
+  el proxy desde las cookies, los tres a la vez.
+- `/login` con sesión viva ahora se va a la app. Era una calle sin salida: recargar no cambiaba
+  nada y el único escape era escribir la URL a mano.
+
+### Arreglado — el service worker guardaba redirecciones y servía `/login` con sesión válida
+
+- Serwist cachea cualquier respuesta 200, y una redirección seguida **es** un 200: pedir `/` sin
+  sesión devolvía, tras seguir el 307 del proxy, el HTML de `/login` con status 200 — guardado
+  **bajo la clave `/`**. Después, ya con sesión, alcanzaba con que la red tardara más que
+  `networkTimeoutSeconds` para servir ese `/login` cacheado.
+- Las tres estrategias de navegación descartan ahora las respuestas redirigidas. Cuidado con el
+  detalle de Serwist: el filtro por defecto (200 u opaca) solo se agrega si ningún plugin declara
+  `cacheWillUpdate`, así que el nuestro repite esa condición además de la suya.
+- `purgeNavigationCaches()` tira los caches de navegación al iniciar sesión: el filtro evita que
+  se vuelva a envenenar, pero no desaloja lo que la PWA instalada ya tenía.
+
+### Arreglado — el service worker corría en `next dev` y dejaba la app en blanco
+
+- Con Turbopack los chunks cambian de nombre en cada arranque, así que el precache de la sesión
+  anterior servía HTML que apuntaba a archivos inexistentes: pantalla en blanco **sin un solo
+  error en consola** —los pedidos se resolvían desde el cache, así que ni siquiera había un chunk
+  error que disparara `recoverFromStaleCache()`—. Además el cache es compartido entre worktrees,
+  porque para el navegador `localhost` es un solo origen.
+- En desarrollo ya no se registra y **se desregistra el que hubiera quedado**, limpiando el Cache
+  Storage. `NEXT_PUBLIC_ENABLE_SW_IN_DEV=1` lo enciende para probar offline o instalación local.
+
+### Agregado — `/join`: canjear una invitación es un flujo completo
+
+- Nada en la app linkeaba a `/join`. Ahora J3 copia el link (`/join?invite=CÓDIGO`, que la
+  pantalla prellena) y A2 ofrece "tengo un código de invitación" para quien lo recibió dictado.
+- El parámetro **no puede llamarse `code`**: `proxy.ts` intercepta cualquier URL con `?code=` como
+  canje PKCE de Supabase y la manda a `/auth/callback` antes de que la pantalla renderice.
+- El invitado sin cuenta no podía canjear nada (`accept_invite` exige `auth.uid()`) y, si se
+  registraba, `resolveOnboardingDestination()` lo mandaba a A4 y **terminaba creando su propio
+  hogar**. Ahora el código se guarda (`pending-invite.ts`) y esa misma función lo devuelve a
+  `/join` apenas hay sesión.
+- La pantalla lleva el wordmark —como A2 y login— y limpia lo que se pega desde un chat: comillas,
+  espacios, saltos de línea, minúsculas.
+
+### Arreglado — el email se cargaba con la primera letra en mayúscula
+
+- Cuatro pantallas (A2, login, recuperar contraseña, J3) repetían la misma regex de validación y
+  ninguna normalizaba. `useEmailField()` unifica las cuatro: minúscula forzada en el estado y en
+  el campo, `autoCapitalize="none"` —`type="email"` no alcanza en Android—, validación por Zod y
+  error que propone la corrección al salir del campo.
+- No era cosmético: si la invitación lleva email, `accept_invite` la vuelve **nominal** y compara
+  contra el de la sesión.
+
+### Agregado — A1 son los tres slides que el diseño prometía
+
+- El mockup dibujaba tres puntos y un solo slide, y el código copió los puntos: un indicador de
+  tres páginas que no se podía pasar. Ahora hay tres slides con swipe, el primario dice
+  "Siguiente" hasta el último, y el gesto es el que el bloque A declara (24 px horizontales y
+  opacidad, 240 ms).
+- El título estaba en `t-hero-xl` (64 px) cuando A1 lo especifica en 40 px. Con eso corregido, más
+  huecos por `flex-basis` y altura acotada del contenedor, **entra completo en un iPhone SE**
+  (375×667) sin scroll y con el primario sobre el pliegue.
+
+### Cambiado — en Movimientos, el detalle y el calendario se turnan
+
+- La segunda columna del split la ganaba siempre el detalle: con un movimiento abierto, tocar el
+  chip no mostraba el calendario y no había forma de salir. Pasa a tener **un solo ocupante, y
+  gana la última acción explícita**: el chip deselecciona el movimiento, elegir un movimiento
+  apaga el calendario, y tocar el movimiento ya abierto lo cierra.
+- El rango `from`/`to` no se toca nunca: el día que se venía mirando sigue filtrando la lista.
+- La regla de "elegir un movimiento apaga el calendario" es **solo de escritorio**. En móvil no
+  compiten —el calendario es contenido arriba de las filas y el detalle abre en un `Modal`— y
+  apagarlo sería sacarle al usuario el mes que estaba recorriendo.
+
+### Arreglado — texto en español con la app en inglés
+
+- Grupo familiar mostraba "Vos" en tu propia fila. No era una string de UI: `completeOnboarding()`
+  escribía ese literal en `household_members.display_name`, que además es **lo que ven los demás**
+  — tu pareja te iba a ver listado como "Vos". Ahora se guarda el nombre real del registro, y tu
+  propia fila se rotula con el idioma de la app.
+- La preview de plantillas de categorías imprimía el `name` en español, que es el fallback que se
+  persiste, no lo que se muestra. Traduce por `i18nKey`, igual que `useCategoryLabel()`. De paso
+  `CategoryTemplateItem.i18nKey` pasó de `string` a la unión de claves reales: agregar un ítem sin
+  su mensaje ya no compila.
+
+### Arreglado — tests de la vista de calendario que fallaban antes de este cambio
+
+- Dos contaban botones apenas terminaba el `goto`, antes de que la lista renderizara. Uno daba 0;
+  el otro fallaba por una fila porque navegar a `?view=calendar` a mano deja la vista abierta pero
+  **sin** `from`/`to` —es `openCalendar()` quien fija el rango—, así que "volver al mes entero"
+  comparaba contra otro conjunto de filas.
 
 ## [0.23.0] — 2026-08-05
 
