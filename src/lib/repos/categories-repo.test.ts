@@ -1,0 +1,150 @@
+import "fake-indexeddb/auto";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getDb, resetDbForTests } from "../db/client";
+import { outbox } from "../offline/outbox";
+import { categoriesRepo, detachFromTemplate } from "./categories-repo";
+import type { CategoryRow } from "../db/schema";
+
+const HOUSEHOLD = "hh-1";
+const USER = "user-1";
+
+function category(overrides: Partial<CategoryRow> = {}): CategoryRow {
+  return {
+    id: "c-1",
+    householdId: HOUSEHOLD,
+    parentId: null,
+    name: "Supermercado",
+    i18nKey: "groceries",
+    icon: "cart",
+    color: "var(--data-1)",
+    kind: "expense",
+    nature: "variable",
+    isSystem: true,
+    sortOrder: 0,
+    archivedAt: null,
+    visibility: "household",
+    ownerId: null,
+    createdBy: USER,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    deletedAt: null,
+    clientRev: 1,
+    ...overrides,
+  };
+}
+
+describe("detachFromTemplate — copy-on-write", () => {
+  it("editar name sobre isSystem:true desprende (isSystem false) pero conserva i18nKey", () => {
+    const existing = category();
+    const patch = detachFromTemplate(existing, { name: "Almacén" });
+    // `i18nKey` NO se anula — es la identidad que evita que un cambio de
+    // plantilla posterior recree "Supermercado" para la misma clave.
+    expect(patch).toEqual({ name: "Almacén", isSystem: false });
+  });
+
+  it("editar icon sobre isSystem:true desprende igual, conservando i18nKey", () => {
+    const existing = category();
+    const patch = detachFromTemplate(existing, { icon: "storefront" });
+    expect(patch).toEqual({ icon: "storefront", isSystem: false });
+  });
+
+  it("archivar (solo archivedAt) sobre isSystem:true NO desprende", () => {
+    const existing = category();
+    const patch = detachFromTemplate(existing, { archivedAt: "2026-02-01T00:00:00.000Z" });
+    expect(patch).toEqual({ archivedAt: "2026-02-01T00:00:00.000Z" });
+  });
+
+  it("sobre isSystem:false, el patch pasa intacto", () => {
+    const existing = category({ isSystem: false, i18nKey: null });
+    const patch = detachFromTemplate(existing, { name: "Otro nombre" });
+    expect(patch).toEqual({ name: "Otro nombre" });
+  });
+});
+
+describe("categoriesRepo", () => {
+  beforeEach(() => {
+    resetDbForTests(`perze-test-categories-repo-${crypto.randomUUID()}`);
+  });
+
+  afterEach(async () => {
+    await getDb().delete();
+  });
+
+  it("update con name sobre una categoría de plantilla la desprende y sube clientRev", async () => {
+    const [created] = await categoriesRepo.bulkCreate([
+      { householdId: HOUSEHOLD, parentId: null, name: "Supermercado", i18nKey: "groceries", icon: "cart", color: "var(--data-1)", kind: "expense", nature: "variable", isSystem: true, sortOrder: 0, visibility: "household", ownerId: null, createdBy: USER },
+    ]);
+    await categoriesRepo.update(created!.id, { name: "Almacén" });
+
+    const updated = await categoriesRepo.get(created!.id);
+    expect(updated?.name).toBe("Almacén");
+    expect(updated?.isSystem).toBe(false);
+    expect(updated?.i18nKey).toBe("groceries");
+    expect(updated?.clientRev).toBe(2);
+  });
+
+  it("update con archivedAt sobre una categoría de plantilla NO la desprende", async () => {
+    const [created] = await categoriesRepo.bulkCreate([
+      { householdId: HOUSEHOLD, parentId: null, name: "Supermercado", i18nKey: "groceries", icon: "cart", color: "var(--data-1)", kind: "expense", nature: "variable", isSystem: true, sortOrder: 0, visibility: "household", ownerId: null, createdBy: USER },
+    ]);
+    await categoriesRepo.archive(created!.id);
+
+    const updated = await categoriesRepo.get(created!.id);
+    expect(updated?.isSystem).toBe(true);
+    expect(updated?.i18nKey).toBe("groceries");
+    expect(updated?.archivedAt).not.toBeNull();
+  });
+
+  describe("archiveWithChildren / restoreMany", () => {
+    async function seedParentWithChildren() {
+      const [parent] = await categoriesRepo.bulkCreate([
+        { householdId: HOUSEHOLD, parentId: null, name: "Salud", i18nKey: null, icon: "heart-pulse", color: "var(--data-3)", kind: "expense", nature: "variable", isSystem: false, sortOrder: 0, visibility: "household", ownerId: null, createdBy: USER },
+      ]);
+      const children = await categoriesRepo.bulkCreate([
+        { householdId: HOUSEHOLD, parentId: parent!.id, name: "Farmacia", i18nKey: null, icon: "pharmacy", color: "var(--data-3)", kind: "expense", nature: "variable", isSystem: false, sortOrder: 1, visibility: "household", ownerId: null, createdBy: USER },
+        { householdId: HOUSEHOLD, parentId: parent!.id, name: "Consultas", i18nKey: null, icon: "stethoscope", color: "var(--data-3)", kind: "expense", nature: "variable", isSystem: false, sortOrder: 2, visibility: "household", ownerId: null, createdBy: USER },
+        { householdId: HOUSEHOLD, parentId: parent!.id, name: "Seguro", i18nKey: null, icon: "shield", color: "var(--data-3)", kind: "expense", nature: "variable", isSystem: false, sortOrder: 3, visibility: "household", ownerId: null, createdBy: USER },
+      ]);
+      return { parent: parent!, children };
+    }
+
+    it("archiva la raíz y sus hijas, devuelve los 4 ids", async () => {
+      const { parent, children } = await seedParentWithChildren();
+
+      const ids = await categoriesRepo.archiveWithChildren(parent.id);
+
+      expect(ids).toHaveLength(4);
+      expect(new Set(ids)).toEqual(new Set([parent.id, ...children.map((c) => c.id)]));
+      const remaining = await categoriesRepo.list(HOUSEHOLD);
+      expect(remaining).toHaveLength(0);
+    });
+
+    it("encola un update en el outbox por cada fila archivada", async () => {
+      const { parent } = await seedParentWithChildren();
+      await categoriesRepo.archiveWithChildren(parent.id);
+
+      const pending = (await outbox.listPending()).filter((e) => e.table === "categories" && e.op === "update");
+      expect(pending.length).toBeGreaterThanOrEqual(4);
+    });
+
+    it("archivar una hoja (sin hijas) devuelve un solo id", async () => {
+      const { children } = await seedParentWithChildren();
+      const leaf = children[0]!;
+
+      const ids = await categoriesRepo.archiveWithChildren(leaf.id);
+
+      expect(ids).toEqual([leaf.id]);
+    });
+
+    it("restoreMany revive todo el subárbol", async () => {
+      const { parent, children } = await seedParentWithChildren();
+      const ids = await categoriesRepo.archiveWithChildren(parent.id);
+
+      await categoriesRepo.restoreMany(ids);
+
+      const restored = await categoriesRepo.list(HOUSEHOLD);
+      expect(restored).toHaveLength(1 + children.length);
+      expect(restored.every((c) => c.archivedAt === null)).toBe(true);
+    });
+  });
+});

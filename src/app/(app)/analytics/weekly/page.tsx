@@ -59,7 +59,7 @@ export default function WeeklySummaryPage() {
   const baseCurrency = household.baseCurrency;
 
   const categoryChangeLabel = summary.biggestCategoryChange
-    ? categoryLabel(categoryById.get(summary.biggestCategoryChange.categoryId) ?? { name: summary.biggestCategoryChange.categoryId, i18nKey: null })
+    ? categoryLabel(categoryById.get(summary.biggestCategoryChange.categoryId) ?? { name: summary.biggestCategoryChange.categoryId, i18nKey: null, isSystem: false })
     : null;
 
   return (

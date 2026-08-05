@@ -42,7 +42,7 @@ export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[]
         ...(modules.includes("recurring") ? [{ id: "recurring", route: "/recurring", icon: "refresh" as IconName, labelKey: "morePage.recurring" }] : []),
         ...(modules.includes("debts") ? [{ id: "debts", route: "/debts", icon: "handshake" as IconName, labelKey: "morePage.debts" }] : []),
         ...(modules.includes("investments") ? [{ id: "investments", route: "/investments", icon: "invest" as IconName, labelKey: "nav.investments" }] : []),
-        { id: "categories", route: "/more/categories", icon: "tag", labelKey: "morePage.categories" },
+        { id: "categories", route: "/more/categories", icon: "square-half", labelKey: "morePage.categories" },
         { id: "tags", route: "/more/tags", icon: "tag", labelKey: "morePage.tagsAndPayees" },
         { id: "rules", route: "/more/rules", icon: "refresh", labelKey: "morePage.rules" },
       ],

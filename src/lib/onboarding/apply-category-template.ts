@@ -65,7 +65,12 @@ async function createOrReviveOne(
 ): Promise<CategoryRow> {
   const found = byI18nKey.get(item.i18nKey);
   if (found) {
-    if (found.archivedAt !== null) await categoriesRepo.update(found.id, { archivedAt: null });
+    // Solo revive automáticamente si sigue siendo de la plantilla
+    // (`isSystem`). Una fila desprendida por el usuario (`detachFromTemplate`
+    // — editada, `isSystem: false`, pero con `i18nKey` intacto a propósito
+    // para que ESTE `byI18nKey.get` la encuentre y no cree una duplicada) es
+    // suya: si la archivó a mano, cambiar de plantilla no puede des-archivarla.
+    if (found.isSystem && found.archivedAt !== null) await categoriesRepo.update(found.id, { archivedAt: null });
     return found;
   }
   return createOne(householdId, userId, item, parentId, sortOrder);

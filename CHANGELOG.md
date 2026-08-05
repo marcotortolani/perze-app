@@ -6,6 +6,88 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.16.0] — 2026-08-05
+
+### Agregado — gestor completo de categorías: crear, subcategorías, más íconos
+
+- **Ajustes → Categorías deja de ser solo un selector de plantilla.** Antes ocultaba con
+  `!isSystem` todas las categorías que vienen de la plantilla —o sea, todas las que el usuario
+  tiene al empezar— y no ofrecía crear ninguna. Ahora muestra el árbol completo (raíces + hijas,
+  siempre expandidas), permite crear una categoría nueva o una subcategoría dentro de una
+  existente (`CategorySheet`, reemplaza a `EditCategorySheet`), editar nombre e ícono de
+  cualquiera —incluidas las de plantilla— y archivar en cascada (`archiveWithChildren`, con un
+  solo "Deshacer" que restaura todo el subárbol).
+- **Picker de íconos: de 16 a ~57, agrupados por tema y con buscador.** `Icon.tsx` suma ~38
+  glifos de Phosphor que el set anterior no tenía (transporte, casa y servicios, salud, ocio,
+  educación, familia, compras, viajes) — antes no había gimnasio, mascotas ni educación. El
+  `aria-label` de cada ícono pasa a estar traducido (antes era la clave cruda en inglés, ej.
+  `"heart-pulse"`).
+- **En desktop, cada categoría raíz es un bloque en un layout de masonry real** (`columns-2` +
+  `break-inside-avoid`), no un grid de 2 columnas: un grid fuerza a cada fila a la altura de su
+  bloque más alto, así que una categoría sin subcategorías quedaba con hueco muerto al lado de
+  una con 3. Con `columns-2` cada bloque ocupa solo su propia altura y el siguiente sube a
+  llenar el espacio — mismo mecanismo que un masonry de Pinterest.
+
+### Corregido — categorías duplicadas ("Supermercado" x2, "Transporte" x2, …)
+
+- **Causa raíz: `detachFromTemplate` anulaba `i18nKey` al editar una categoría de plantilla.**
+  Renombrar "Salud" → "Médicos" la desprendía de la plantilla (`isSystem: false`) pero también
+  le borraba la clave que `applyCategoryTemplate` usa para reconocerla — un cambio de plantilla
+  posterior no la encontraba y creaba una "Salud" nueva. Ahora `i18nKey` queda intacto a
+  propósito (es la identidad estable) y solo `isSystem` pasa a `false`; `useCategoryLabel` y
+  `createOrReviveOne` se ajustaron para seguir mostrando el nombre editado y no volver a tocar
+  (revivir/archivar) una fila que el usuario ya hizo propia.
+- **Los duplicados que ya existían se fusionan solos.** `mergeDuplicateCategories()` corre una
+  vez por entrada a la pantalla (idempotente): agrupa raíces activas por nombre+tipo, se queda
+  con la que tiene más movimientos como titular, reasigna transacciones, presupuestos, reglas
+  recurrentes, reglas de auto-categorización (`actions.categoryId`, anidado), el comercio por
+  defecto y los splits, fusiona o reparenta las subcategorías, y archiva la duplicada — con un
+  toast avisando cuántas unificó.
+- **La plantilla (Básica/Completa/Empezar de cero) se aplica una sola vez.** El módulo de las 3
+  opciones solo aparece mientras el household nunca la aplicó explícitamente
+  (`categoryTemplateChoice` sin escribir en `settings`); al tocar "Aplicar" desaparece para
+  siempre de la pantalla principal. Para cambiarla después hay una fila discreta "Cambiar
+  plantilla" que la reabre en un sheet aparte — nunca como bloque permanente compitiendo con
+  "Nueva categoría" por la única acción primaria de la pantalla.
+
+### Corregido — layout de `/more/categories`
+
+- El picker de íconos se estiraba a ~90% del ancho del overlay en desktop (mismo bug que ya se
+  había resuelto en el monto de `recurring/[id]/edit`): el `Sheet` no tenía `maxWidth`, así que
+  el grid de íconos quedaba en una sola fila larguísima con huecos enormes en vez de envolver en
+  varias filas. Capado a `--content-max-width` (560px).
+- **El botón "Nueva categoría" parecía fijo.** Vivía por fuera del contenedor con
+  `overflowY: auto`, así que ni scrolleaba con la lista ni era realmente el último ítem —quedaba
+  clavado abajo estuvieras donde estuvieras. Ahora es el último elemento dentro del scroller.
+- En desktop, tanto ese botón como la fila "Cambiar plantilla" se estiraban por debajo de las
+  dos columnas del masonry de arriba. Capados al mismo `--content-max-width` que el resto de los
+  overlays de esta pantalla.
+- **Faltaba el degradé de fundido del borde inferior y el corte no caía en el borde del
+  viewport.** La pantalla maneja su propio scroller interno pero nunca se agregó a
+  `OWN_SCROLLER_ROUTES` (`(app)/layout.tsx`) — el `<main>` compartido del shell seguía
+  intentando scrollear también, dos contenedores de scroll anidados en conflicto, con el corte
+  cayendo en el borde más corto del scroller interno en vez del viewport real. Registrada la
+  ruta, y conectado `scroll-fade-bottom` + `useScrollOverflow` (mismo patrón que `/more`,
+  `/accounts`, `/transactions` y el home).
+- `padding-bottom` del scroller +50% en mobile (24px → 36px, `pb-9`) para que el botón no quede
+  pegado contra la tab bar al llegar al final; en desktop vuelve a 24px (`lg:pb-6`), donde no
+  hay tab bar debajo.
+
+### Corregido — ícono de conciliación y de categorías inconsistentes
+
+- Las filas de movimientos de conciliación (`kind === "adjustment"`) usaban `target` —el mismo
+  ícono que presupuestos— en los 4 lugares donde aparecen (home, detalle de cuenta,
+  `/transactions`, calendario), mientras que el botón "Conciliar" del menú de una cuenta ya
+  usaba `circle-half-tilt` correctamente. Unificado a `circle-half-tilt` en los cuatro.
+- La sidebar de escritorio usaba `tag` (compartido con "Tags y comercios") para "Categorías";
+  la vista móvil de "Más" ya usaba `square-half`. Unificado.
+- El teclado de monto de `recurring/[id]/edit` arrancaba en 0 en vez de precargar el monto
+  vigente al tocar el héroe para editarlo — el comentario que lo justificaba describía un
+  comportamiento contrario al del resto de la app (`PayCardSheet` sí precarga). Corregido con
+  `amountToExpression()`, mismo patrón que `PayCardSheet`.
+
+---
+
 ## [0.15.0] — 2026-08-04
 
 ### Agregado — recurrentes v3: auto-registro por regla, catch-up y multi-frecuencia

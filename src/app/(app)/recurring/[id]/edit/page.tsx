@@ -154,12 +154,6 @@ export default function EditRecurringRulePage({
   // primer operando (no en el resultado a medio armar) hasta que se toca
   // "=" — ahí `amount-step` también lo hace así.
   const pending = expr !== null && hasKeypadOperator(expr)
-  // Igual que `PayCardSheet`/`reconcile`: el teclado siempre arranca vacío
-  // y muestra "0" hasta que el usuario tipea — nunca precarga el monto
-  // guardado como si fuera texto editable (eso mostraba el bigint crudo
-  // sin punto ni coma, "USD 150000" en vez de "USD 1.500,00"). El monto
-  // vigente se ve arriba, ya formateado por `<Amount>`, hasta que se
-  // confirma uno nuevo.
   const currentAmount = (() => {
     if (expr === null || expr === '') return rule.expectedAmount
     try {
@@ -211,14 +205,16 @@ export default function EditRecurringRulePage({
       })
       invalidateRules()
       toast(t('recurringPage.updated'))
-      // `replace`, no `push`: esta pantalla ya está en el historial arriba
-      // del detalle original (venimos de tocar "Editar" ahí). Un `push`
-      // acá agrega una entrada más — el historial queda [lista, detalle,
-      // editar, detalle] y "volver" desde el detalle post-guardado cae en
-      // "editar" en vez de en la lista. `replace` reemplaza la entrada de
-      // "editar" por la del detalle, así que "volver" salta directo al
-      // detalle original y de ahí a la lista, como corresponde.
-      router.replace(`/recurring/${rule.id}`)
+      // `back()`, no `replace`/`push`: el detalle original ya está en el
+      // historial justo debajo (venimos de tocar "Editar" ahí). El intento
+      // anterior usaba `replace(`/recurring/${rule.id}`)`, que reemplazaba
+      // "editar" por una URL IDÉNTICA a la que ya estaba debajo — el
+      // historial quedaba `[detalle, detalle]` duplicado, no `[detalle]`,
+      // y "volver" necesitaba dos toques (el primero caía en el
+      // duplicado, indistinguible de "no pasó nada"). `back()` no agrega
+      // nada, solo recorre el historial que ya existe: un solo toque
+      // alcanza.
+      router.back()
     } finally {
       setSaving(false)
     }
@@ -231,7 +227,15 @@ export default function EditRecurringRulePage({
       <div className="flex flex-1 flex-col gap-4 pt-4">
         <button
           type="button"
-          onClick={() => setSheet('amount')}
+          onClick={() => {
+            // Precarga el keypad con el monto vigente convertido a
+            // expresión — igual que `PayCardSheet` precarga `expectedDue` —
+            // para que editar arranque desde el valor actual en vez de 0.
+            setExpr(
+              amountToExpression(rule.expectedAmount, rule.currencyCode, locale),
+            )
+            setSheet('amount')
+          }}
           className="bg-transparent border-0 cursor-pointer text-center"
         >
           <Amount

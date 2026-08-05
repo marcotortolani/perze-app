@@ -13,7 +13,7 @@ const ChartCard = dynamic(() => import("@/design-system/charts/ChartCard").then(
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCurrentUserId } from "@/hooks/use-current-user";
-import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
+import { useAccount, useAccounts, useInvalidateAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -62,6 +62,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const { data: allTransactions = [] } = useTransactions(household?.id);
   const transactions = useMemo(() => allTransactions.filter((t) => t.accountId === id || t.counterAccountId === id), [allTransactions, id]);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
+  const invalidateAccount = useInvalidateAccount(id);
   const invalidateAfterWrite = useInvalidateAfterTransactionWrite(household?.id);
   const { data: latestStatement } = useLatestCardStatement(id);
   const invalidateStatements = useInvalidateCardStatements(id);
@@ -142,9 +143,29 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
   const handleArchive = async () => {
     await accountsRepo.archive(account.id);
-    invalidateAccounts();
-    router.push("/accounts");
+    // `await`: antes estas dos invalidaciones se disparaban sin esperar,
+    // justo antes de `router.back()` desmontando el componente — una
+    // carrera innecesaria. Se invalidan las DOS keys: la lista
+    // (`useInvalidateAccounts`) y el detalle puntual de esta cuenta
+    // (`useInvalidateAccount`, key distinta) — sin la segunda, reabrir
+    // esta misma cuenta seguía mostrando "Archivar" hasta un reload.
+    await Promise.all([invalidateAccounts(), invalidateAccount()]);
+    // `back()`, no `replace`/`push`: esta pantalla se llegó con push desde
+    // la lista, así que la lista YA está en el historial justo debajo.
+    // `replace("/accounts")` reemplazaba esta entrada por una URL IDÉNTICA
+    // a la que ya estaba debajo — el historial quedaba `[accounts,
+    // accounts]` duplicado, y "volver" necesitaba dos toques para salir de
+    // verdad. `back()` simplemente recorre el historial que ya existe, sin
+    // agregar nada: nunca duplica.
+    router.back();
     toast(t("accountsPage.detail.archived"));
+  };
+
+  const handleUnarchive = async () => {
+    await accountsRepo.unarchive(account.id);
+    await Promise.all([invalidateAccounts(), invalidateAccount()]);
+    router.back();
+    toast(t("accountsPage.detail.unarchived"));
   };
 
   // "Pagar tarjeta" en vez de "Transferir": técnicamente es la misma
@@ -234,7 +255,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <ListRow icon="edit" label={t("accountsPage.detail.edit")} onClick={() => router.push(`/accounts/${account.id}/edit`)} />
-        <ListRow icon="target" label={t("accountsPage.detail.reconcile")} onClick={() => router.push(`/accounts/${account.id}/reconcile`)} />
+        <ListRow icon="circle-half-tilt" label={t("accountsPage.detail.reconcile")} onClick={() => router.push(`/accounts/${account.id}/reconcile`)} />
         {accountRecurringCount > 0 ? (
           <ListRow icon="refresh" label={t("recurringPage.viewRecurring")} value={String(accountRecurringCount)} variant="value" onClick={() => router.push(`/recurring?accountId=${account.id}`)} />
         ) : null}
@@ -243,7 +264,11 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <ListRow icon="refresh" label={t("accountsPage.detail.transfer")} onClick={() => router.push("/add")} />
         )}
-        <ListRow icon="trash" label={t("accountsPage.detail.archive")} destructive onClick={handleArchive} />
+        {account.archivedAt !== null ? (
+          <ListRow icon="undo" label={t("accountsPage.detail.unarchive")} onClick={handleUnarchive} />
+        ) : (
+          <ListRow icon="trash" label={t("accountsPage.detail.archive")} destructive onClick={handleArchive} />
+        )}
       </div>
 
       <div>
@@ -270,7 +295,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             return (
               <TransactionRow
                 key={tx.id}
-                icon={(category?.icon as IconName) ?? (reconciliation ? "target" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                icon={(category?.icon as IconName) ?? (reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
                 merchant={
                   category
                     ? categoryLabel(category)

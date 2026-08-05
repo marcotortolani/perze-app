@@ -248,8 +248,25 @@ export function categoryFromRow(row: RawCategory): CategoryRow {
     // No existe columna en Postgres — se reconstruye por nombre desde las
     // plantillas, igual que el backfill de la versión 2 de Dexie. Una
     // categoría renombrada por el usuario queda `null` y se muestra con
-    // `name`, que es exactamente el comportamiento local.
-    i18nKey: I18N_KEY_BY_NAME.get(row.name) ?? null,
+    // `name`, que es exactamente el comportamiento local. `is_system` es la
+    // guarda: sin ella, el copy-on-write de `detachFromTemplate` no
+    // sobrevive el round trip — una categoría desprendida a la que solo se
+    // le cambió el ícono (nombre intacto) se re-adjuntaría a la plantilla
+    // apenas se re-hidrata en otro dispositivo, porque el nombre coincide.
+    //
+    // Límite conocido: localmente `detachFromTemplate` deja `i18nKey`
+    // intacto para que `applyCategoryTemplate` reconozca esa clave como "ya
+    // resuelta" y no cree una fila nueva (ver su comentario). Acá, en
+    // cambio, SIEMPRE se reconstruye a `null` para una fila desprendida,
+    // porque Postgres no guarda `i18nKey` y no hay forma de distinguir
+    // "esta fila ya fue health alguna vez" de "esta fila nunca lo fue" sin
+    // esa columna. Consecuencia: en un dispositivo nuevo (o tras un
+    // reinstall/re-hidratado completo), una categoría desprendida pierde esa
+    // identidad y un cambio de plantilla posterior podría volver a crear una
+    // fila para esa clave. Cerrarlo del todo requeriría una columna nueva en
+    // Postgres (`template_key`, nunca limpiada) — fuera de alcance mientras
+    // el uso real sea de un solo dispositivo por household.
+    i18nKey: row.is_system ? (I18N_KEY_BY_NAME.get(row.name) ?? null) : null,
     icon: row.icon ?? "tag",
     color: row.color ?? "var(--data-1)",
     kind: row.kind as CategoryKind,

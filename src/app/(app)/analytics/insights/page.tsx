@@ -42,7 +42,7 @@ export default function InsightsPage() {
     return {
       streak,
       pace: pace.map((p) => ({
-        label: p.categoryId ? categoryLabel(categoryById.get(p.categoryId) ?? { name: p.categoryId, i18nKey: null }) : t("insightsPage.wholeHousehold"),
+        label: p.categoryId ? categoryLabel(categoryById.get(p.categoryId) ?? { name: p.categoryId, i18nKey: null, isSystem: false }) : t("insightsPage.wholeHousehold"),
         date: p.projectedOverspendDate,
       })),
     };

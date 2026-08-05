@@ -45,6 +45,28 @@ describe("buildNewCategoryInput", () => {
     const input = buildNewCategoryInput({ householdId: "hh-1", name: "Primera", kind: "expense", createdBy: "user-1", existing: [] });
     expect(input.sortOrder).toBe(0);
   });
+
+  it("con parent, hereda parentId, kind y color — sin importar el kind pedido", () => {
+    const parent = { ...category("p", "Salud", 0), kind: "expense" as const, color: "var(--data-3)" };
+    const input = buildNewCategoryInput({ householdId: "hh-1", name: "Farmacia", kind: "income", createdBy: "user-1", existing: [parent], parent });
+    expect(input.parentId).toBe("p");
+    expect(input.kind).toBe("expense");
+    expect(input.color).toBe("var(--data-3)");
+  });
+
+  it("sin parent, los defaults quedan idénticos a hoy (parentId null, color rotativo)", () => {
+    const input = buildNewCategoryInput({ householdId: "hh-1", name: "Nueva", kind: "expense", createdBy: "user-1", existing: [] });
+    expect(input.parentId).toBeNull();
+    expect(input.color).toBe("var(--data-1)");
+  });
+
+  it("icon respeta el default 'tag' y el explícito si se pasa", () => {
+    const withoutIcon = buildNewCategoryInput({ householdId: "hh-1", name: "Nueva", kind: "expense", createdBy: "user-1", existing: [] });
+    expect(withoutIcon.icon).toBe("tag");
+
+    const withIcon = buildNewCategoryInput({ householdId: "hh-1", name: "Nueva", kind: "expense", createdBy: "user-1", existing: [], icon: "bus" });
+    expect(withIcon.icon).toBe("bus");
+  });
 });
 
 describe("findExistingCategoryByName", () => {

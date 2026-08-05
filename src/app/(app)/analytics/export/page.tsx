@@ -62,7 +62,7 @@ export default function ExportReportsPage() {
       tx.occurredAt,
       tx.kind,
       accountById.get(tx.accountId)?.name ?? tx.accountId,
-      tx.categoryId ? categoryLabel(categoryById.get(tx.categoryId) ?? { name: tx.categoryId, i18nKey: null }) : "",
+      tx.categoryId ? categoryLabel(categoryById.get(tx.categoryId) ?? { name: tx.categoryId, i18nKey: null, isSystem: false }) : "",
       tx.payeeId ? (payeeById.get(tx.payeeId)?.name ?? tx.payeeId) : "",
       formatAmount(money(tx.amount, tx.currencyCode)),
       tx.amountBase !== null ? formatAmount(money(tx.amountBase, household.baseCurrency)) : "",

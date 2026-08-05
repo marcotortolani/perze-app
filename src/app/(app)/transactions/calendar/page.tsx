@@ -161,7 +161,7 @@ export default function MovementsCalendarPage() {
               return (
                 <TransactionRow
                   key={tx.id}
-                  icon={(category?.icon as IconName) ?? (tx.kind === "adjustment" ? "target" : isCardPayment(tx) ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                  icon={(category?.icon as IconName) ?? (tx.kind === "adjustment" ? "circle-half-tilt" : isCardPayment(tx) ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
                   merchant={
                     category
                       ? categoryLabel(category)

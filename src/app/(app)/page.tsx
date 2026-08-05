@@ -449,7 +449,7 @@ export default function HomePage() {
             status={budgetAlerts[0]!.level === "exceeded" ? "critical" : "warning"}
             icon="alert"
             text={t(budgetAlerts[0]!.level === "exceeded" ? "home.budgetExceededInsight" : "home.budgetWarningInsight", {
-              category: budgetAlerts[0]!.budget.categoryId ? categoryLabel(categoryById.get(budgetAlerts[0]!.budget.categoryId!) ?? { name: budgetAlerts[0]!.budget.name, i18nKey: null }) : budgetAlerts[0]!.budget.name,
+              category: budgetAlerts[0]!.budget.categoryId ? categoryLabel(categoryById.get(budgetAlerts[0]!.budget.categoryId!) ?? { name: budgetAlerts[0]!.budget.name, i18nKey: null, isSystem: false }) : budgetAlerts[0]!.budget.name,
               percent: Math.round(budgetAlerts[0]!.progress * 100),
             })}
             actionLabel={t("home.seeBudgets")}
@@ -511,7 +511,7 @@ export default function HomePage() {
                 confirmActionLabel={t("transactions.list.confirmDeleteAction")}
               >
                 <TransactionRow
-                  icon={(category?.icon as IconName) ?? (reconciliation ? "target" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                  icon={(category?.icon as IconName) ?? (reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
                   merchant={
                     category
                       ? categoryLabel(category)

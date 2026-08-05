@@ -388,7 +388,7 @@ export function MovementsListContent() {
                         ) : null}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <TransactionRow
-                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "adjustment" ? "target" : isCardPayment(item.tx) ? "credit-card" : item.tx.kind === "transfer" ? "refresh" : "cart")}
+                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "adjustment" ? "circle-half-tilt" : isCardPayment(item.tx) ? "credit-card" : item.tx.kind === "transfer" ? "refresh" : "cart")}
                             merchant={
                               (item.tx.categoryId ? categoryById.get(item.tx.categoryId) : undefined)
                                 ? categoryLabel(categoryById.get(item.tx.categoryId!)!)
