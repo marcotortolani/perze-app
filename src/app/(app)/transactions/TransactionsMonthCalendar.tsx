@@ -7,7 +7,7 @@ import { formatDateLong, formatMonthYearHeading, formatWeekdayNarrow, type Local
 import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { todayIso } from "@/lib/dates/today";
-import { expenseTotalsByDay, isFutureDay, monthGrid, noonUtc, shiftMonth, weekdayAnchors } from "@/features/movements/calendar-scope";
+import { expenseTotalsByDay, heatMixPercent, isFutureDay, monthGrid, noonUtc, shiftMonth, weekdayAnchors } from "@/features/movements/calendar-scope";
 import type { TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
 /**
@@ -114,7 +114,10 @@ export function TransactionsMonthCalendar({
         {cells.map((iso, i) => {
           if (!iso) return <div key={`empty-${i}`} />;
           const total = totalsByDay.get(iso) ?? 0n;
-          const intensity = total > 0n ? Math.max(0.12, Number(total) / maxTotal) : 0;
+          // Cuánto color le toca al día. La curva, el piso y el techo viven en
+          // `calendar-scope.ts` porque son la parte testeable —y la que ya se
+          // calibró mal una vez—, no una constante de estilo.
+          const mixPercent = heatMixPercent(total, maxTotal);
           const isSelected = iso === selectedDay;
           const isToday = iso === today;
           // Un día futuro no puede tener movimientos, así que elegirlo es una
@@ -142,8 +145,8 @@ export function TransactionsMonthCalendar({
                 // usa el resalte de fila de esta misma lista.
                 background: isSelected
                   ? "var(--selection-surface)"
-                  : intensity > 0
-                    ? `color-mix(in srgb, var(--data-1) ${Math.round(intensity * 70)}%, var(--surface-1))`
+                  : mixPercent > 0
+                    ? `color-mix(in srgb, var(--data-1) ${Math.round(mixPercent)}%, var(--surface-1))`
                     : "var(--surface-1)",
                 boxShadow: isSelected
                   ? "inset 0 0 0 1px var(--selection-ring)"
@@ -170,7 +173,12 @@ export function TransactionsMonthCalendar({
 
       {/* Leyenda de intensidad. Un heatmap sin escala no se puede leer: el
           color codifica un dato y no hay forma de saber qué significa un tono
-          intermedio. `docs/02-design-system.md` la exige. */}
+          intermedio.
+
+          Y nombra la métrica —"menos GASTO" / "más GASTO"— porque el color
+          codifica solo gastos: los ingresos no entran. Sin eso, un día con un
+          ingreso grande y sin gastos se ve vacío y parece un bug. Es el único
+          lugar de la pantalla donde se puede decir de qué habla el color. */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
         <span className="t-caption" style={{ color: "var(--text-muted)" }}>
           {t("transactions.calendar.intensityLess")}

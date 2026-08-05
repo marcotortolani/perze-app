@@ -554,8 +554,8 @@
    "empty": "Sin movimientos ese día.",
    "emptyMonth": "Sin movimientos este mes.",
    "wholeMonth": "Todo el mes",
-   "intensityLess": "Menos",
-   "intensityMore": "Más"
+   "intensityLess": "Menos gasto",
+   "intensityMore": "Más gasto"
   },
   "edit": {
    "notFound": "No encontramos ese movimiento.",

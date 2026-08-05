@@ -554,8 +554,8 @@
    "empty": "No transactions that day.",
    "emptyMonth": "No transactions this month.",
    "wholeMonth": "Whole month",
-   "intensityLess": "Less",
-   "intensityMore": "More"
+   "intensityLess": "Less spending",
+   "intensityMore": "More spending"
   },
   "edit": {
    "notFound": "We couldn't find that transaction.",

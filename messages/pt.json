@@ -554,8 +554,8 @@
    "empty": "Sem movimentações nesse dia.",
    "emptyMonth": "Sem movimentações neste mês.",
    "wholeMonth": "Mês inteiro",
-   "intensityLess": "Menos",
-   "intensityMore": "Mais"
+   "intensityLess": "Menos gasto",
+   "intensityMore": "Mais gasto"
   },
   "edit": {
    "notFound": "Não encontramos essa movimentação.",

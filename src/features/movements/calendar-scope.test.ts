@@ -3,6 +3,9 @@ import {
   dayKeyOf,
   dayRange,
   expenseTotalsByDay,
+  HEAT_CEILING,
+  HEAT_FLOOR,
+  heatMixPercent,
   isFutureDay,
   localMidnightIso,
   monthGrid,
@@ -168,6 +171,57 @@ describe("monthOfDay e isFutureDay", () => {
     expect(isFutureDay("2026-08-06", "2026-08-05")).toBe(true);
     expect(isFutureDay("2026-08-05", "2026-08-05")).toBe(false);
     expect(isFutureDay("2026-08-04", "2026-08-05")).toBe(false);
+  });
+});
+
+describe("heatMixPercent", () => {
+  it("un día sin gasto no tiene color", () => {
+    // Cero se reserva para "no hubo gasto", que es información: la celda queda
+    // idéntica al fondo.
+    expect(heatMixPercent(0n, 1000)).toBe(0);
+  });
+
+  it("cualquier gasto, por chico que sea, se separa del día vacío", () => {
+    // El bug reportado: con la escala lineal y piso 8%, un gasto minúsculo
+    // contra un mes con un día caro quedaba indistinguible de no gastar nada.
+    expect(heatMixPercent(1n, 1_000_000)).toBeGreaterThanOrEqual(HEAT_FLOOR);
+    expect(heatMixPercent(1n, 1_000_000)).toBeGreaterThan(0);
+  });
+
+  it("el día más caro del mes llega al techo", () => {
+    expect(heatMixPercent(1000n, 1000)).toBeCloseTo(HEAT_CEILING, 10);
+  });
+
+  it("nunca se pasa del techo aunque el total supere el máximo", () => {
+    // Defensivo: si `maxTotal` llegara desfasado, el `color-mix` no puede
+    // emitir un porcentaje fuera de rango.
+    expect(heatMixPercent(5000n, 1000)).toBe(HEAT_CEILING);
+  });
+
+  it("más gasto nunca da menos color", () => {
+    const totals = [20n, 40n, 80n, 150n, 300n, 1000n];
+    const mixes = totals.map((t) => heatMixPercent(t, 1000));
+    for (let i = 1; i < mixes.length; i++) {
+      expect(mixes[i]!).toBeGreaterThan(mixes[i - 1]!);
+    }
+  });
+
+  it("reparte los días de un mes sesgado en vez de amontonarlos", () => {
+    // Este es el test que falla si alguien vuelve a la escala lineal: con
+    // lineal, estos seis días daban 11/12/15/19/28/70 — los cuatro más chicos
+    // separados por 1 y 3 puntos, o sea indistinguibles a ojo.
+    const mixes = [20n, 40n, 80n, 150n, 300n, 1000n].map((t) => heatMixPercent(t, 1000));
+    for (let i = 1; i < mixes.length; i++) {
+      expect(mixes[i]! - mixes[i - 1]!).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("se mantiene dentro del rango declarado", () => {
+    for (const total of [1n, 7n, 250n, 999n, 1000n]) {
+      const mix = heatMixPercent(total, 1000);
+      expect(mix).toBeGreaterThanOrEqual(HEAT_FLOOR);
+      expect(mix).toBeLessThanOrEqual(HEAT_CEILING);
+    }
   });
 });
 

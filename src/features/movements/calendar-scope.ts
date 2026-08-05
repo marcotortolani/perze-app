@@ -195,6 +195,49 @@ export function expenseTotalsByDay(transactions: Pick<TransactionRecord, "kind" 
 }
 
 /**
+ * Los dos extremos de la rampa del heatmap, en porcentaje de mezcla de
+ * `--data-1` sobre `--surface-1`.
+ *
+ * **El piso NO es cero.** Cero se reserva para el día en que no hubo ningún
+ * gasto, que es información: la celda queda idéntica al fondo. Cualquier gasto,
+ * por chico que sea, tiene que separarse de eso — antes el piso efectivo era
+ * 8% y un gasto chico se leía igual que un día vacío. 10% es el mínimo que
+ * dibuja el propio diseño (`docs/design/bloque-d-movimientos.html:457`).
+ *
+ * **El techo es 70% por contraste, no por gusto.** El número del día vive
+ * DENTRO de la celda, y los tonos medios no admiten texto chico: medido con la
+ * fórmula de luminancia relativa WCAG, entre 80% y 87% de mezcla ninguna tinta
+ * llega a 4,5:1 —ni la clara ni la oscura, en ninguno de los dos temas—, así
+ * que un techo más alto obligaría a invertir la tinta Y a saltear esa banda,
+ * dejando un escalón visible en una rampa que debe ser continua. A 70% el
+ * número queda en 5,5:1 en claro y en oscuro con una sola tinta. Es además el
+ * máximo que usa el diseño.
+ */
+export const HEAT_FLOOR = 10;
+export const HEAT_CEILING = 70;
+
+/**
+ * Cuánto color le toca a un día, en porcentaje de mezcla.
+ *
+ * **Raíz cuadrada y no lineal.** El gasto diario tiene una distribución muy
+ * sesgada —pocos días caros y muchos chicos—, así que normalizar linealmente
+ * contra el máximo del mes aplasta a casi todos contra el piso: en un mes
+ * 1000/300/150/80/40/20 los cuatro más chicos caían entre 11% y 15%,
+ * indistinguibles entre sí. La raíz levanta la zona baja sin perder el
+ * significado de magnitud: un día más caro siempre pinta más que uno más
+ * barato, que es lo que un ranking por cuantiles sí rompería.
+ *
+ * `maxTotal` es el máximo del MES VISIBLE, no el histórico: contra el máximo
+ * global un mes tranquilo se vería entero en blanco, y la comparación entre
+ * sus días —que es para lo que sirve el heatmap— se perdería.
+ */
+export function heatMixPercent(total: bigint, maxTotal: number): number {
+  if (total <= 0n) return 0;
+  const ratio = Math.sqrt(Number(total) / Math.max(1, maxTotal));
+  return HEAT_FLOOR + Math.min(1, ratio) * (HEAT_CEILING - HEAT_FLOOR);
+}
+
+/**
  * El rango de un preset del sheet de filtros.
  *
  * Vive acá y no en la pantalla porque comparte `localMidnightIso` con el
