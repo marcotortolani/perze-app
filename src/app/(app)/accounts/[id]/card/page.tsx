@@ -159,7 +159,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
                 meta={formatNumericDate(locale, new Date(tx.occurredAt), dateFormat)}
                 value={money(-tx.amount, tx.currencyCode)}
                 polarity="negative"
-                onClick={() => router.push(`/transactions/${tx.id}`)}
+                onClick={() => router.push(`/transactions?tx=${tx.id}`)}
               />
             );
           })}

@@ -50,10 +50,14 @@ import {
 } from "@/design-system";
 import { BarChart, LineChart, SeriesLegend, Sparkline } from "@/design-system/charts";
 import { ContextualTooltip, LockScreen } from "@/design-system/systems";
-import { CountUp, MorphButton, Pressable, StaggerList } from "@/components/motion";
+import { CountUp, DetailPanelTransition, MorphButton, PageEnter, Pressable, StaggerList } from "@/components/motion";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { money } from "@/lib/money/money";
 import { rateFromInteger } from "@/lib/fx/rate";
+
+/** Registros de mentira para demostrar `DetailPanelTransition` — lo único que
+ *  importa es que la `transitionKey` cambie. */
+const DETAIL_PANEL_DEMO = ["Itaú · Caja de ahorro", "BBVA · Caja de ahorro", "Visa BBVA · Tarjeta"] as const;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -98,6 +102,8 @@ export default function ComponentsPage() {
   const [keypadBuffer, setKeypadBuffer] = useState("1.250");
   const [pin, setPin] = useState("12");
   const [countUpValue, setCountUpValue] = useState(125_000n);
+  const [detailPanelIndex, setDetailPanelIndex] = useState(0);
+  const [pageEnterRun, setPageEnterRun] = useState(0);
   const [privacy, setPrivacy] = useState(false);
   const [otp, setOtp] = useState("123");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -438,6 +444,35 @@ export default function ComponentsPage() {
         />
         <div style={{ maxWidth: 260 }}>
           <MorphButton onConfirm={() => new Promise((r) => setTimeout(r, 50))}>Guardar</MorphButton>
+        </div>
+        {/* `DetailPanelTransition` — la transición del panel de detalle en un
+            master-detail de escritorio (`/transactions`, `/accounts`). Acá se
+            demuestra con un botón que cambia la `transitionKey`, que es lo
+            único que dispara la animación: en las pantallas reales ese valor
+            es el id del registro seleccionado. */}
+        <Row>
+          <Button variant="secondary" fullWidth={false} onClick={() => setDetailPanelIndex((i) => (i + 1) % DETAIL_PANEL_DEMO.length)}>
+            Siguiente detalle
+          </Button>
+        </Row>
+        <div style={{ maxWidth: 320, background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16 }}>
+          <DetailPanelTransition transitionKey={DETAIL_PANEL_DEMO[detailPanelIndex]!}>
+            <ListRow label={DETAIL_PANEL_DEMO[detailPanelIndex]!} icon="wallet" variant="value" meta="Detalle" />
+          </DetailPanelTransition>
+        </div>
+        {/* `PageEnter` — entrada de pantalla. A diferencia de
+            `DetailPanelTransition`, anima al MONTARSE: acá se remonta con una
+            `key` que cambia, que es la única forma de volver a verlo sin
+            recargar. En una pantalla real no lleva key: ocurre una vez. */}
+        <Row>
+          <Button variant="secondary" fullWidth={false} onClick={() => setPageEnterRun((n) => n + 1)}>
+            Repetir entrada de pantalla
+          </Button>
+        </Row>
+        <div style={{ maxWidth: 320, background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16 }}>
+          <PageEnter key={pageEnterRun} style={{}}>
+            <ListRow label="Contenido de la pantalla" icon="chart" variant="value" meta="PageEnter" />
+          </PageEnter>
         </div>
       </Section>
 

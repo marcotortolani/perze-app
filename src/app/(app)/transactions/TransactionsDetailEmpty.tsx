@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { EmptyState } from "@/design-system";
-import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -17,10 +16,16 @@ import { money } from "@/lib/money/money";
 // entra al bundle de ninguna pantalla que no lo pida.
 const CategoryRadarChart = dynamic(() => import("@/design-system/charts/CategoryRadarChart").then((m) => m.CategoryRadarChart), { ssr: false });
 
-/** Slot @detail sin selección — en mobile no hay columna que llenar, así que no dibuja nada. */
-export default function TransactionDetailDefault() {
+/**
+ * Columna de detalle sin movimiento seleccionado, en desktop.
+ *
+ * Vivía en `transactions/@detail/default.tsx` — el placeholder obligatorio del
+ * slot paralelo. Ese slot ya no existe (el detalle es `?tx=`), así que esto es
+ * ahora un render condicional común que el contenedor monta solo cuando hay
+ * split y no hay selección; el chequeo de viewport lo hace él, no este archivo.
+ */
+export function TransactionsDetailEmpty() {
   const t = useTranslations();
-  const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   const { data: household } = useCurrentHousehold();
   const { data: categories } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
@@ -70,7 +75,6 @@ export default function TransactionDetailDefault() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, categories, transactions]);
 
-  if (!isSplit) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <EmptyState message={t("transactions.detail.selectPrompt")} />

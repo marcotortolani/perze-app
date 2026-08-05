@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EmptyState, usePageHeader } from "@/design-system";
 import { Modal } from "@/components/modal";
+import { DetailPanelTransition } from "@/components/motion";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useAccount } from "@/hooks/use-accounts";
@@ -125,7 +126,11 @@ export default function AccountsPage() {
     <>
       <SplitGrid
         left={list}
-        right={detail ?? <EmptyState message={t("accountsPage.detail.selectPrompt")} />}
+        right={
+          <DetailPanelTransition transitionKey={accountId ?? "__empty"}>
+            {detail ?? <EmptyState message={t("accountsPage.detail.selectPrompt")} />}
+          </DetailPanelTransition>
+        }
         overflowing={overflowing}
         detailScrollerRef={detailScrollerRef}
       />

@@ -72,7 +72,14 @@ describe("router.back() en vez de router.replace(url)/router.push(url) al volver
     { label: "more/rules/new/page.tsx — crear", path: "src/app/(app)/more/rules/new/page.tsx", expectedBackCalls: 2 },
     { label: "investments/[portfolioId]/trades/new/page.tsx — crear operación", path: "src/app/(app)/investments/[portfolioId]/trades/new/page.tsx", expectedBackCalls: 2 },
     { label: "investments/[portfolioId]/instruments/new/page.tsx — crear instrumento", path: "src/app/(app)/investments/[portfolioId]/instruments/new/page.tsx", expectedBackCalls: 2 },
-    { label: "transactions/[id]/page.tsx — borrar", path: "src/app/(app)/transactions/[id]/page.tsx", expectedBackCalls: 2 },
+    // Mismo movimiento que cuentas: el detalle dejó de ser una ruta
+    // (`/transactions/[id]`) y pasó a ser una selección con search param
+    // dentro de `/transactions`. El `back()` de borrar vive ahora en
+    // `TransactionDetailContent.tsx`, y es uno solo: el del header lo
+    // registra el contenedor (`page.tsx`), no el detalle. `[id]/page.tsx`
+    // quedó como redirect de compatibilidad y por eso ya no está en esta
+    // lista (su `router.replace` es correcto ahí).
+    { label: "transactions/TransactionDetailContent.tsx — borrar", path: "src/app/(app)/transactions/TransactionDetailContent.tsx", expectedBackCalls: 1 },
     { label: "transactions/[id]/split/page.tsx — guardar reparto", path: "src/app/transactions/[id]/split/page.tsx", expectedBackCalls: 2 },
     { label: "transactions/[id]/edit/page.tsx — cerrar editor", path: "src/app/transactions/[id]/edit/page.tsx", expectedBackCalls: 1 },
     { label: "recurring/[id]/edit/page.tsx — guardar", path: "src/app/(app)/recurring/[id]/edit/page.tsx", expectedBackCalls: 2 },
@@ -89,7 +96,9 @@ describe("router.back() en vez de router.replace(url)/router.push(url) al volver
 
   // Pushes legítimos que NO deben convertirse en replace/back — si alguien
   // los "corrige" por error, este test lo marca.
-  it("transactions/[id]/page.tsx — duplicar sigue usando push (es un registro nuevo)", () => {
-    expect(source("src/app/(app)/transactions/[id]/page.tsx")).toMatch(/router\.push\(`\/transactions\/\$\{copy\.id\}`\)/);
+  it("transactions/TransactionDetailContent.tsx — duplicar sigue usando push (es un registro nuevo)", () => {
+    const code = source("src/app/(app)/transactions/TransactionDetailContent.tsx");
+    expect(code).toMatch(/next\.set\("tx", copy\.id\)/);
+    expect(code).toMatch(/router\.push\(`\/transactions\?\$\{next\.toString\(\)\}`/);
   });
 });

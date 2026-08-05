@@ -25,8 +25,8 @@ interface QuickAction {
  * Buscador flotante — reemplaza la navegación a `/search` y el ⌘K de
  * `command-palette.tsx` (borrado, unificado acá): misma superficie para
  * las dos entradas, misma lógica de ranking (`searchAll`), mismos hrefs
- * correctos a detalle (`/transactions/{id}`, `/accounts/{id}`) en vez de
- * a la lista. Cablear desde `(app)/layout.tsx`.
+ * correctos a detalle (`/transactions?tx={id}`, `/accounts?account={id}`) en
+ * vez de a la lista. Cablear desde `(app)/layout.tsx`.
  */
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations();
@@ -77,7 +77,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         title,
         subtitle: tx.note && category ? tx.note : undefined,
         meta: formatAmountCompact(money(tx.amount, tx.currencyCode), { showSign: false }),
-        href: `/transactions/${tx.id}`,
+        href: `/transactions?tx=${tx.id}`,
         icon: (category?.icon as string) ?? "cart",
         sortKey: tx.occurredAt,
       });

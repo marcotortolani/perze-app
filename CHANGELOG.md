@@ -6,6 +6,67 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.18.0] — 2026-08-05
+
+### Cambiado — el detalle de movimiento pasa a search param, como ya lo había hecho el de cuenta
+
+- `/transactions/<id>` deja de ser una ruta y pasa a ser una selección dentro de la lista:
+  **`/transactions?tx=<id>`**. Es la gemela de lo que v0.17.0 hizo con cuentas, y se hizo por el
+  mismo motivo de producto: pasar de un movimiento a otro **es la misma pantalla**, y hacerlo
+  pasar por una navegación de ruta desmontaba el layout y remontaba el detalle para cambiar una
+  sola columna. Eso se veía como un parpadeo en cada cambio de registro.
+- Como efecto colateral desaparece la ruta interceptora, que es la que sufría el bug abierto de
+  Next ([#91265](https://github.com/vercel/next.js/issues/91265)) por el que en desarrollo se
+  acumula un marcador `(.)` hasta que el server tira `Invalid interception route` y fuerza una
+  recarga completa de página.
+- **Se borraron `transactions/layout.tsx` (96 líneas) y todo `transactions/@detail/`**: el
+  interceptor, el `default.tsx` obligatorio del slot paralelo y el archivo de especificidad que
+  existía solo para que el interceptor no reclamara `"calendar"` como si fuera un id de
+  movimiento. Con ellos se va la detección vieja de hard-nav (`initialPathname` congelado), que
+  hacía que al abrir un segundo movimiento el detalle se dibujara en la columna de la lista.
+- **El botón "Calendario" vuelve a ser una navegación blanda.** Era `window.location.href`, o sea
+  una recarga dura de documento puesta a propósito para esquivar al interceptor. Sin interceptor
+  no hay nada que esquivar.
+- **Al abrir un movimiento se conservan los filtros de la URL.** La lista recibe `?kind=`,
+  `?from=`, `?to=` y `?pending=` desde el home, y `?category=` y `?payee=` desde el buscador;
+  ahora el id se suma a los que ya estaban en vez de reemplazarlos, así que la lista de atrás
+  mantiene su filtro y cerrar el detalle no devuelve a una lista sin filtrar.
+- `/transactions/<id>` sigue viva como **redirect de compatibilidad** — hay una PWA instalada con
+  historial largo y un 404 ahí sería una regresión real. Editar y repartir siguen siendo rutas
+  propias (`/transactions/<id>/edit`, `/split`): son pantallas completas, no una selección.
+
+### Agregado — transiciones de motion en el panel de detalle y en la entrada del dashboard
+
+- **`DetailPanelTransition`** — al cambiar de registro, la columna de detalle funde y se desplaza
+  en vez de reemplazarse de golpe. Con el search param el cambio es instantáneo, y sin nada que
+  lo acompañe se leía como un salto. Va en `/transactions` y en `/accounts`.
+- Usa `mode="wait"` (el panel saliente se va antes de que entre el nuevo) porque superponerlos en
+  el mismo track del grid hacía que la columna diera un estirón a mitad de camino, ya que el
+  detalle de dos registros rara vez mide lo mismo de alto. La salida es un tween de 120 ms y la
+  entrada un spring `default`; el total queda por debajo del techo de 320 ms.
+- **`PageEnter`** — entrada suave del dashboard: funde y sube 10 px una sola vez, al montarse.
+  Usa `spring.soft`, que es la curva declarada para "sheets, pantallas". **No es intercambiable
+  con `DetailPanelTransition`**, que lleva `initial={false}` y justamente no anima en el primer
+  render. Envuelve el retorno con datos y no los estados de carga, así el gesto ocurre cuando el
+  contenido reemplaza al skeleton en vez de animar dos veces.
+- Los dos respetan el ajuste propio de intensidad además de `prefers-reduced-motion`: en
+  "Reducida" solo funden, sin desplazamiento, y en "Mínima" no animan. Los dos entraron en
+  `/dev/components`.
+
+### Documentación
+
+- **`CLAUDE.md` gana la regla que faltaba**: un master-detail se hace con search param, nunca con
+  slot paralelo más ruta interceptora, con la receta de siete pasos y los seis pares pendientes
+  de CONS-DESK nombrados (metas, presupuestos, recurrentes, deudas, familia, inversiones). El
+  patrón viejo se venía copiando de `accounts/` y `transactions/`, que eran los dos ejemplos
+  vivos; ahora no queda ninguno del que copiarlo mal.
+- **`docs/auditoria-rutas-interceptoras.md` se actualizó con la medición.** El resultado corrige
+  al propio documento: **61 recompiles de HMR con ~90 navegaciones por rutas interceptoras dieron
+  cero errores**, así que el bug de Next es real pero **no se reproduce a pedido**, y el modelo de
+  "cada guardado suma un marcador" no se sostiene. Queda anotada la hipótesis vigente —que la
+  acumulación la dispara mutar el árbol de rutas, no editar el contenido de un archivo— y sin
+  verificar.
+
 ## [0.17.1] — 2026-08-05
 
 ### Cambiado — cada subcategoría deja de heredar el ícono genérico de su padre

@@ -217,6 +217,59 @@ tab bar en vez de reemplazar la pantalla. Replicar este mismo patrón —ruta he
 interceptora en `@modal`— para cualquier otro flujo que deba abrirse tanto por deep link
 como por modal desde adentro.
 
+**Un master-detail se hace con search param, nunca con slot paralelo + ruta interceptora.**
+Esta es la regla que más veces se rompió por imitación, porque el patrón viejo estuvo vivo en
+`accounts/` y en `transactions/` durante meses y se copiaba de ahí. Las dos ya están migradas:
+`/accounts?account=<id>` y `/transactions?tx=<id>`. **`src/app/(app)/accounts/page.tsx` es la
+implementación de referencia** y `transactions/page.tsx` la réplica.
+
+El motivo principal no es un bug de terceros, es de producto: elegir otro registro de la lista
+**es la misma pantalla**, y hacerlo pasar por una navegación de ruta desmonta el layout y
+remonta el detalle para cambiar una sola columna. Eso se ve como un parpadeo. Con un param la
+lista nunca se desmonta, conserva su scroll y sus filtros. El segundo motivo es el bug abierto
+de Next ([vercel/next.js#91265](https://github.com/vercel/next.js/issues/91265)), por el que
+las rutas interceptoras acumulan un marcador `(.)` hasta que el server tira `Invalid
+interception route` y fuerza una recarga completa; **es solo en desarrollo, y no se reproduce
+a pedido** —61 recompiles de HMR con ~90 navegaciones por el interceptor no lo dispararon—,
+así que sirve como refuerzo del argumento pero no hay que apoyarse solo en él. Está
+documentado en `docs/auditoria-rutas-interceptoras.md`.
+
+La receta, en el orden en que conviene escribirla:
+
+1. **Lista y detalle en archivos propios** (`XListContent.tsx`, `XDetailContent.tsx`), no
+   adentro de `page.tsx`. El detalle recibe `{ id }` por prop, nunca `params`.
+2. **`page.tsx` es el contenedor**: lee el param, arma `SplitGrid` (lista + detalle) en
+   desktop y lista + `<Modal contained>` en mobile, con `key={id}` en el detalle para que el
+   estado local no se arrastre de un registro al otro.
+3. **El header del shell lo registra el contenedor**, con un `DetailHeaderBridge` montado
+   solo cuando hay selección y **después** de la lista en el JSX. El detalle no llama a
+   `usePageHeader`: en desktop los dos están montados a la vez y `usePageHeader` sobrescribe
+   su config en cada render sin cleanup, así que gana el último efecto en correr.
+4. **Abrir con `push` y `{ scroll: false }`, conservando los demás search params**
+   (`new URLSearchParams(searchParams)` + `set`). Armar la URL desde cero borra los filtros
+   con los que se llegó a la lista —desde el home o desde el buscador— y al cerrar devuelve a
+   una lista sin filtrar. **Cerrar siempre con `router.back()`**, simétrico al `push`.
+5. **La ruta vieja `[id]/page.tsx` queda como redirect de compatibilidad** con `replace`, no
+   se borra: hay una PWA instalada con historial largo y un 404 ahí es una regresión real. El
+   directorio `[id]/` sigue haciendo falta igual para los sub-flujos.
+6. **Los sub-flujos siguen siendo rutas de verdad**: `edit`, `split`, `card`, `installments`,
+   `reconcile`. Son pantallas completas, no una selección.
+7. **La transición del panel** va con `DetailPanelTransition` (`src/components/motion/`), que
+   es lo que reemplaza al parpadeo por algo deliberado. Su gemelo `PageEnter` es para entrada
+   de pantalla y **no son intercambiables**: `DetailPanelTransition` lleva `initial={false}` y
+   no anima en el primer render.
+
+**Las rutas interceptoras quedan reservadas para un solo caso**: mismo destino que se dibuja
+como modal o como pantalla completa según cómo se llegó (`@modal/(.)add`, decisión cerrada más
+arriba). No son la herramienta para un master-detail, y salen más caras: obligan a un slot
+paralelo, a un `default.tsx` y a un archivo de especificidad por cada ruta hermana del `[id]`
+—si no, el interceptor reclama `"new"` o `"calendar"` como si fueran un id—. La migración de
+`transactions` borró 5 archivos y ~200 líneas que existían solo para compensar eso.
+
+**Los pares que todavía no tienen split view** —metas, presupuestos, recurrentes, deudas,
+familia e inversiones, anotados como CONS-DESK en `docs/plan-de-trabajo.md`— se hacen así.
+Ninguno debe recibir el patrón viejo.
+
 ---
 
 ## Definición de "terminado" para una pantalla

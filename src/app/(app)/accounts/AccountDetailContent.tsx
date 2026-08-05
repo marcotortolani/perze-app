@@ -318,7 +318,7 @@ export function AccountDetailContent({ id }: { id: string }) {
                 meta={formatNumericDate(locale, new Date(tx.occurredAt), dateFormat)}
                 value={displayValue}
                 polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" || tx.kind === "adjustment" ? "neutral" : "negative"}
-                onClick={() => router.push(`/transactions/${tx.id}`)}
+                onClick={() => router.push(`/transactions?tx=${tx.id}`)}
               />
             );
           })

@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sparkline } from "@/design-system/charts";
 import { ContextualTooltip } from "@/design-system/systems";
 import type { IconName } from "@/design-system/core/Icon";
-import { CountUp } from "@/components/motion";
+import { CountUp, PageEnter } from "@/components/motion";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { BirthdayBanner } from "@/components/birthday-banner";
@@ -279,9 +279,14 @@ export default function HomePage() {
   const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
 
   return (
-    // `scroll-fade-bottom`: mismo tratamiento que `/accounts` — home maneja
-    // su propio scroll (sumada a `OWN_SCROLLER_ROUTES` en `(app)/layout.tsx`)
-    // para tener el mismo fade y aire real al final de "Movimientos recientes".
+    // `PageEnter`: entrada suave del dashboard. Envuelve el retorno CON
+    // DATOS, no los estados de carga de más arriba — así el gesto ocurre
+    // cuando el contenido reemplaza al skeleton, en vez de animar el skeleton
+    // y volver a animar cuando llegan los datos.
+    <PageEnter>
+    {/* `scroll-fade-bottom`: mismo tratamiento que `/accounts` — home maneja
+        su propio scroll (sumada a `OWN_SCROLLER_ROUTES` en `(app)/layout.tsx`)
+        para tener el mismo fade y aire real al final de "Movimientos recientes". */}
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
       <div
         ref={scrollerRef}
@@ -529,7 +534,7 @@ export default function HomePage() {
                   polarity={polarity}
                   privacy={privacy}
                   syncIssue={tx.syncState === "ok" ? undefined : tx.syncState}
-                  onClick={() => router.push(`/transactions/${tx.id}`)}
+                  onClick={() => router.push(`/transactions?tx=${tx.id}`)}
                 />
               </SwipeableRow>
             );
@@ -540,5 +545,6 @@ export default function HomePage() {
       </div>
       </div>
     </div>
+    </PageEnter>
   );
 }

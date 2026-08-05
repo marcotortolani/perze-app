@@ -273,7 +273,7 @@ test.describe("movimientos", () => {
     await page.goto("/transactions");
     // nth(2): las primeras dos son la barra de "Filtros"/"Calendario", no una fila.
     await page.locator("main").getByRole("button").nth(2).click();
-    await page.waitForURL(/\/transactions\/.+/);
+    await page.waitForURL(/\/transactions\?tx=.+/);
     const formUrl = page.url();
 
     await expectReplaceNotPush(page, {
@@ -297,7 +297,7 @@ test.describe("movimientos", () => {
     await page.goto("/transactions");
     // nth(2): las primeras dos son la barra de "Filtros"/"Calendario", no una fila.
     await page.locator("main").getByRole("button").nth(2).click();
-    await page.waitForURL(/\/transactions\/.+/);
+    await page.waitForURL(/\/transactions\?tx=.+/);
     const txUrl = page.url();
 
     await page.getByRole("button", { name: "Dividir en categorías" }).click();
@@ -318,7 +318,7 @@ test.describe("movimientos", () => {
     await page.goto("/transactions");
     // nth(2): las primeras dos son la barra de "Filtros"/"Calendario", no una fila.
     await page.locator("main").getByRole("button").nth(2).click();
-    await page.waitForURL(/\/transactions\/.+/);
+    await page.waitForURL(/\/transactions\?tx=.+/);
 
     await page.getByRole("button", { name: "Editar" }).click();
     await page.waitForURL(/\/transactions\/.+\/edit/);

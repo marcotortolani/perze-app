@@ -27,8 +27,8 @@ describe("scoreMatch", () => {
 
 describe("searchAll", () => {
   const items: Searchable[] = [
-    { id: "tx-1", group: "transactions", title: "Café", href: "/transactions/tx-1", icon: "cart", sortKey: "2026-07-01" },
-    { id: "tx-2", group: "transactions", title: "Cafetería del centro", href: "/transactions/tx-2", icon: "cart", sortKey: "2026-07-10" },
+    { id: "tx-1", group: "transactions", title: "Café", href: "/transactions?tx=tx-1", icon: "cart", sortKey: "2026-07-01" },
+    { id: "tx-2", group: "transactions", title: "Cafetería del centro", href: "/transactions?tx=tx-2", icon: "cart", sortKey: "2026-07-10" },
     { id: "acc-1", group: "accounts", title: "Cuenta Café", href: "/accounts?account=acc-1", icon: "wallet" },
   ];
 
@@ -50,7 +50,7 @@ describe("searchAll", () => {
       id: `tx-${i}`,
       group: "transactions" as const,
       title: "Café",
-      href: `/transactions/tx-${i}`,
+      href: `/transactions?tx=tx-${i}`,
       icon: "cart",
     }));
     const results = searchAll("cafe", many, { perGroup: 3 });

@@ -6,6 +6,28 @@
 > uno. Todo lo que está acá está verificado contra el repo salvo lo que se marca explícitamente
 > como hipótesis.
 
+## 0. Estado al 2026-08-05
+
+El encargo se ejecutó parcialmente. Lo que cambió desde que se escribió el resto del documento:
+
+| Punto | Estado |
+|---|---|
+| Medir el alcance con evidencia (§ 8.1) | **Hecho.** Resultado abajo, en § 3. No se reprodujo |
+| Migrar `transactions` (§ 5.1) | **Hecho.** `/transactions?tx=<id>`, mismo patrón que cuentas |
+| Auditar `@modal/(.)add` y `@modal/(.)accounts/new` (§ 5.2) | Medidas, **sin decisión escrita** |
+| Bugs silenciosos abiertos (§ 6) | **Sin tocar** |
+| Convención escrita (§ 5.3) | **Hecha**, en `CLAUDE.md` § "Convención de rutas" |
+
+Y dos correcciones a lo que este documento afirmaba:
+
+- **Quedan DOS rutas interceptoras vivas, no tres**, y una está mal nombrada más abajo: es
+  `@modal/(.)accounts/**new**`, que intercepta solo `/accounts/new`, no `(.)accounts` entero.
+- **El bug de Next no se reproduce a pedido.** Sigue siendo real —los 45 errores del log original
+  no se inventaron— pero el disparador no es "un guardado con HMR", que es lo que este documento
+  daba por sentado. Ver § 3.
+
+---
+
 ## 1. El síntoma, y por qué costó tanto
 
 En `/accounts`, archivar o desarchivar una cuenta dejaba la app clavada en el spinner de arranque
@@ -85,7 +107,44 @@ error está forzando recargas.
 **Antes de medir cualquier cosa, reiniciar el dev server.** Un log heredado de una sesión anterior
 mide el bug de Next acumulado, no el estado del código.
 
+### Qué dio la medición (2026-08-05, Next 16.2.6)
+
+Se midió con el procedimiento de arriba, sobre un dev server recién arrancado y con el log
+limpio (0 errores de baseline). Los guardados con HMR se dispararon con un script que agrega y
+saca un comentario de un archivo fuente cada 12–20 s; la navegación se automatizó por el
+navegador para que fuera reproducible y no dependiera de la coordinación a mano.
+
+| Escenario | Navegaciones por el interceptor | Recompiles HMR | Errores | Recargas |
+|---|---|---|---|---|
+| `/transactions` detalle, HMR sobre un hook | ~55 | 15 | **0** | 1 |
+| `/add` como modal | 6 ciclos abrir/cerrar | 7 | **0** | 0 |
+| `/accounts/new` como modal | 6 ciclos | 6 | **0** | 0 |
+| `/transactions`, HMR sobre `transactions/page.tsx` | ~25 | 19 | **0** | 0 |
+| **Total de la sesión** | **~90** | **61** | **0** | 11 |
+
+**Ninguna de las tres rutas interceptoras acumuló un solo `(.)` en 61 actualizaciones de HMR.**
+La única recarga con explicación clara llegó 0,66 s después de un recompile: es el fallback
+normal de Turbopack cuando no puede aplicar el HMR en caliente sobre un hook, no el bug.
+
+Esto **no contradice** el informe original —45 errores en un log real son 45 errores— pero sí
+invalida el modelo mental de que cada guardado suma un marcador. Si fuera así, 61 guardados lo
+habrían mostrado.
+
+**Hipótesis vigente, sin verificar:** la acumulación ocurre cuando el dev bundler
+**re-recolecta el árbol de rutas**, no en cada HMR. Eso pasa al **crear, borrar o renombrar
+archivos de ruta** —lo que uno hace durante horas de desarrollo real sobre una sección— y no al
+editar el contenido de archivos existentes, que es lo único que hicieron estas cuatro corridas.
+El test que falta es mutar el árbol de rutas en loop y volver a medir.
+
+**Consecuencia práctica:** no se puede usar "está pasando ahora" como argumento para priorizar
+una migración. El argumento que sí se sostiene es el otro, y es independiente de Next: elegir
+otro registro de una lista es la misma pantalla, y hacerlo pasar por una navegación de ruta
+desmonta el layout para cambiar una columna. Eso parpadea también en producción.
+
 ## 4. Cómo se resolvió: cuentas como implementación de referencia
+
+> Cuentas fue la primera. `transactions` se migró después con esta misma receta — ver § 5.1 y, para
+> la versión normativa y generalizada, `CLAUDE.md` § "Convención de rutas".
 
 Se migró el master-detail de cuentas de **ruta interceptada** a **search param**:
 
@@ -150,41 +209,42 @@ punto obligado de la auditoría.
 
 ## 5. Lo que falta auditar
 
-Quedan tres rutas interceptoras vivas:
+Quedan **dos** rutas interceptoras vivas:
 
 ```text
-src/app/(app)/transactions/@detail/(.)[id]     ← el gemelo directo del caso ya resuelto
 src/app/(app)/@modal/(.)add
-src/app/(app)/@modal/(.)accounts
+src/app/(app)/@modal/(.)accounts/new     ← intercepta solo /accounts/new
 ```
 
-### 5.1. `transactions/@detail/(.)[id]` — prioridad alta
+### 5.1. `transactions/@detail/(.)[id]` — RESUELTO
 
-Es el mismo patrón que cuentas, con los mismos archivos y las mismas cicatrices. **19 de los 45
-errores del log eran de `/transactions/`**, así que no es teórico: está pasando hoy, solo que el
-usuario reportó cuentas primero.
+Migrada a `/transactions?tx=<id>`, mismo patrón que cuentas. Lo que se hizo:
 
-Evidencia concreta a revisar:
+- **Nuevos:** `TransactionsListContent.tsx` (la lista, que antes vivía dentro de `page.tsx` y el
+  layout importaba desde ahí), `TransactionDetailContent.tsx` (el cuerpo del viejo `[id]/page.tsx`,
+  recibiendo `{ id }`) y `TransactionsDetailEmpty.tsx` (el empty state más el `CategoryRadarChart`
+  del viejo `@detail/default.tsx`, ahora un render condicional del contenedor).
+- **Borrados:** `transactions/layout.tsx` entero —las 96 líneas de `DETAIL_ID_PATTERN`,
+  `initialPathname` y la detección vieja de hard-nav— y todo `transactions/@detail/`: el
+  interceptor, el `default.tsx` obligatorio del slot y el hack de especificidad de `calendar`.
+- **`page.tsx`** pasó a contenedor master-detail, con `DetailHeaderBridge` montado después de la
+  lista.
+- **`[id]/page.tsx`** quedó como redirect de compatibilidad. El directorio sigue vivo para `edit`
+  y `split`.
+- **El `window.location.href` de "Calendario" volvió a ser `router.push`.** Era una recarga dura a
+  propósito para esquivar al interceptor; sin interceptor no hay nada que esquivar.
+- **Al abrir un movimiento se conservan los demás search params.** La lista recibe filtros por URL
+  desde el home (`?kind=`, `?from=`, `?to=`, `?pending=`) y desde el buscador (`?category=`,
+  `?payee=`); armar la URL desde cero los borraba y al cerrar devolvía a una lista sin filtrar.
+  Este punto no estaba previsto en el encargo y es el que más fácil se pasa por alto.
+- **Call sites actualizados:** home, calendario, detalle de cuenta, resumen de tarjeta y
+  `search-overlay.tsx`. Los de `/edit` y `/split` no se tocaron: son rutas de verdad.
+- **Tests:** `navigation-uses-replace.test.ts` (el caso apunta ahora a `TransactionDetailContent`,
+  con 1 `back()` en vez de 2 porque el del header se mudó al contenedor), las tres esperas de URL
+  de `e2e/navigation-replace.spec.ts` y los fixtures de `src/lib/search/rank.test.ts`.
 
-- `transactions/layout.tsx:84-86` todavía usa la detección **vieja** de hard-nav
-  (`initialPathname` congelado comparado contra el `pathname` actual). Cuentas ya la había
-  reemplazado porque provocaba que, al abrir un segundo registro, el detalle se dibujara en la
-  columna de la lista y la lista desapareciera — se percibía exactamente como "recarga". Acá sigue
-  sin corregir.
-- `transactions/page.tsx:293` tiene `window.location.href = "/transactions/calendar"` — una recarga
-  dura **a propósito**, puesta para esquivar al interceptor. Es el gemelo exacto del hack que había
-  en cuentas para `resolve-fx` y que se borró en esta migración. Si el interceptor se va, esto vuelve
-  a ser un `router.push` normal.
-- `transactions/@detail/calendar/page.tsx` es el mismo hack de especificidad que
-  `accounts/@detail/resolve-fx/page.tsx`.
-- `transactions/@detail/default.tsx` es más pesado que el de cuentas: renderiza un
-  `CategoryRadarChart` para que la columna derecha no quede vacía en desktop. Migrarlo implica
-  decidir dónde vive eso ahora (probablemente inline en el contenedor, igual que el `EmptyState` de
-  cuentas).
-
-Los call sites a `/transactions/<id>` hay que enumerarlos igual que se hizo con cuentas
-(`grep -rn 'transactions/' src --include='*.tsx' | grep '\${'`), sin olvidar `search-overlay.tsx` y
-su test en `src/lib/search/rank.test.ts`, ni las esperas de URL en `e2e/navigation-replace.spec.ts`.
+La convención para que esto no se reintroduzca quedó escrita en `CLAUDE.md`, § "Convención de
+rutas".
 
 ### 5.2. `@modal/(.)add` y `@modal/(.)accounts` — evaluar, no migrar por reflejo
 
@@ -198,14 +258,22 @@ Estos dos son **distintos** y no hay que tratarlos como el caso anterior:
 - Migrarlos a search param es posible pero cambia la semántica de la URL de un flujo de captura que
   está en el camino crítico del producto (la métrica de "cargar un gasto en menos de 5 segundos").
 
-**Lo que hay que decidir con evidencia, no a priori**: ¿estas dos rutas también acumulan `(.)` y
-fuerzan recargas? El log histórico solo mostró errores de `/accounts/` y `/transactions/`, pero eso
-puede ser simplemente porque son las secciones que más se navegaron durante esa sesión. Hay que
-reproducir: abrir `/add` como modal repetidas veces intercalando guardados con HMR, y mirar el log.
+**Lo que había que decidir con evidencia**: ¿estas dos rutas también acumulan `(.)` y fuerzan
+recargas? **Medido: no, o al menos no de forma reproducible** — ver la tabla de § 3. Doce ciclos
+de abrir/cerrar los dos modales con 13 recompiles de HMR encima dieron cero errores. Tampoco se
+observó el portal huérfano de § 4: después de cerrar con `back()`, la pantalla de abajo quedó
+limpia en los dos casos. Eso se probó **solo en desktop**; el camino de mobile con `Modal` sin
+`contained` sigue sin verificar.
 
-Si acumulan, las opciones no son solo "migrar": también sirve reducir la superficie (menos rutas
-interceptoras = menos acumulación) o esperar el fix de Next para un flujo donde la interceptación
-sí aporta valor real. **Este es un juicio que hay que argumentar, no resolver mecánicamente.**
+Con eso, la decisión sigue abierta pero ya no es a ciegas. La lectura recomendada, a confirmar:
+
+- **`(.)add` no se migra.** Es decisión cerrada de `CLAUDE.md`, está en el camino crítico de la
+  métrica de los 5 segundos, y `/add?modal=1` sería peor semántica. Si algún día acumula, la
+  mitigación es reiniciar el dev server, no rediseñar el flujo de captura.
+- **`(.)accounts/new` es el candidato real a eliminar.** Aporta mucho menos —no hay share target
+  ni shortcut de la PWA apuntando a `/accounts/new`— y su propio comentario ya dice que la mitad
+  de su razón de ser desapareció cuando se migró el detalle de cuenta. Sacarlo baja la superficie
+  de acumulación sin discutir nada de producto.
 
 ### 5.3. Los ~6 pares lista/detalle que todavía no tienen split view
 
@@ -267,19 +335,18 @@ hallazgos abiertos, y conviene verificarlos porque comparten la propiedad de fal
 
 ## 8. El encargo
 
-1. **Confirmar el alcance con evidencia**, no por inspección de código: reiniciar el dev server,
-   ejercitar `/transactions` (abrir un movimiento, abrir otro, editar, borrar) y `/add` intercalando
-   guardados con HMR, y medir el log con el procedimiento de § 3. Reportar qué rutas acumulan y a
-   qué velocidad.
-2. **Auditar las tres rutas interceptoras vivas** contra los criterios de § 5, incluyendo el riesgo
-   de portal huérfano de § 4 para cada una.
-3. **Proponer un plan de corrección priorizado**, separando lo que es migración mecánica (el gemelo
-   de `transactions`, con cuentas como referencia línea por línea) de lo que necesita una decisión
-   de producto (`@modal/(.)add`).
-4. **Verificar los hallazgos abiertos de § 6** y decidir cuáles entran en el plan y cuáles se dejan
-   anotados.
-5. **Dejar la convención escrita** para los ~6 pares que faltan (§ 5.3), para que el patrón viejo no
-   se reintroduzca por imitación.
+1. ~~**Confirmar el alcance con evidencia**~~ — **hecho**, § 3. No se reprodujo en 61 recompiles.
+   Queda una hipótesis sin verificar sobre el disparador real.
+2. ~~**Auditar las rutas interceptoras vivas**~~ — **hecho** para las tres, incluido el portal
+   huérfano de § 4. Falta el camino de mobile.
+3. ~~**Plan de corrección priorizado**~~ — **hecho y ejecutado** en su parte mecánica:
+   `transactions` migrada (§ 5.1). La parte que necesita decisión de producto sigue abierta
+   (§ 5.2).
+4. **Verificar los hallazgos abiertos de § 6** — **pendiente, sin tocar.** Son tres:
+   `enqueueAccountUpdate` fallando en silencio, `usePageHeader` sin array de dependencias, y el
+   `window.location.reload()` del service worker sin rastro en el log.
+5. ~~**Dejar la convención escrita**~~ — **hecha** en `CLAUDE.md`, § "Convención de rutas", con la
+   receta de siete pasos y los seis pares de CONS-DESK nombrados.
 
 Criterio de verificación para cualquier migración que salga de esto: `pnpm lint`, `npx tsc --noEmit`,
 `npx vitest run`, `pnpm build`, más la prueba de § 3 con el server recién reiniciado. Y actualizar
