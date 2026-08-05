@@ -548,10 +548,14 @@
    "tags": "Tags"
   },
   "calendar": {
+   "title": "Calendar",
    "back": "Back",
    "prevMonth": "Previous month",
    "nextMonth": "Next month",
-   "empty": "No transactions that day."
+   "empty": "No transactions that day.",
+   "emptyMonth": "No transactions this month.",
+   "wholeMonth": "Whole month",
+   "selectPrompt": "Pick a day to see its transactions."
   },
   "edit": {
    "notFound": "We couldn't find that transaction.",

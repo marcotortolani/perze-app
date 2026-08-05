@@ -66,6 +66,7 @@ import {
   GameControllerIcon,
   GasPumpIcon,
   GavelIcon,
+  GearSixIcon,
   GiftIcon,
   GlobeIcon,
   GoogleLogoIcon,
@@ -190,6 +191,9 @@ export const ICONS = {
   "circle-half-tilt": CircleHalfTiltIcon,
   filter: FunnelIcon,
   edit: PencilSimpleIcon,
+  // `GearSix` y no `Gear`: a 20px —el tamaño del sidebar— los seis dientes
+  // se leen limpios y los ocho del otro se empastan.
+  gear: GearSixIcon,
   globe: GlobeIcon,
   trash: TrashIcon,
   wifi: WifiHighIcon,

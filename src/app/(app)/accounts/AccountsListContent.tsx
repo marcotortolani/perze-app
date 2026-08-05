@@ -329,7 +329,19 @@ function AccountCard({ account, active = false, onClick, muted = false }: { acco
   const t = useTranslations();
   const usage = account.kind === "credit_card" && account.creditLimit ? Number(-account.currentBalance) / Number(account.creditLimit) : null;
   return (
-    <div style={{ opacity: muted ? 0.55 : 1, background: active ? "var(--selection-surface)" : undefined, borderRadius: "var(--radius-card)" }}>
+    // El anillo faltaba acá y sí estaba en `DesktopAccountCard`: la superficie
+    // sola da 1,24:1 contra surface-2 en modo claro (defecto 2 de
+    // `docs/auditoria-visual.md`), o sea que la selección quedaba casi
+    // invisible justo en la variante compacta. Mismo par de tokens que el
+    // resto del sistema.
+    <div
+      style={{
+        opacity: muted ? 0.55 : 1,
+        borderRadius: "var(--radius-card)",
+        ...(active ? { background: "var(--selection-surface)", boxShadow: "inset 0 0 0 1px var(--selection-ring)" } : null),
+      }}
+      {...(active ? { "aria-current": true as const } : {})}
+    >
       <ListRow
         icon={ACCOUNT_KIND_ICON[account.kind]}
         iconBackground={accountColorVar(account.color)}

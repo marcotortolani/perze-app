@@ -26,9 +26,21 @@ import { usePendingMutations } from "@/lib/offline";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
+import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
 type ListItem = { type: "header"; date: string; total: bigint; currency: string } | { type: "row"; tx: TransactionRecord };
+
+/**
+ * Cuánto sangra hacia afuera el resalte de la fila seleccionada, a cada lado.
+ *
+ * Es aire para el resalte, no para el contenido: el scroller y cada fila
+ * compensan este valor con margen negativo + padding, así el texto y los
+ * montos quedan exactamente en el mismo x que antes y alineados con las
+ * cabeceras de día. Sale del `--screen-padding` de 20px, así que entra sin
+ * tocar el layout de la pantalla.
+ */
+const SELECTION_BLEED = 12;
 
 function periodStartFor(preset: MovementsFilters["datePreset"], now: Date): { from?: string; to?: string } {
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -143,6 +155,10 @@ export function MovementsListContent() {
   // `onlyPending` significara "needs_fx" y no "sync pendiente" — no se
   // renombra en este cambio para no tocar de más).
   const pendingFxParam = searchParams.get("pending");
+  // El movimiento cuyo detalle se está viendo, para resaltarlo en la lista.
+  // Sale del mismo param que lee `page.tsx`; no se pasa por prop porque la
+  // lista ya tiene el `searchParams` a mano para sus filtros.
+  const activeTxId = searchParams.get("tx");
   useEffect(() => {
     if (!categoryIdParam && !kindParam && !pendingFxParam) return;
     setFilters((f) => {
@@ -327,20 +343,7 @@ export function MovementsListContent() {
         ) : null}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0 12px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
-        <div>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.income")}</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--money-positive)" }}>{formatAmountCompact(periodIncome, { showSign: false })}</div>
-        </div>
-        <div>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.expenses")}</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>{formatAmountCompact(periodExpense, { showSign: false })}</div>
-        </div>
-        <div>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("transactions.list.balance")}</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>{formatAmountCompact(periodBalance, { showSign: true })}</div>
-        </div>
-      </div>
+      <TransactionsSummaryStrip income={periodIncome} expense={periodExpense} balance={periodBalance} />
 
       {items.length === 0 ? (
         <EmptyState message={t("transactions.list.emptyFiltered")} actionLabel={t("transactions.list.clearFilters")} onAction={() => setFilters(defaultMovementsFilters())} />
@@ -369,7 +372,27 @@ export function MovementsListContent() {
             // que si no queda pegada contra el borde del contenido en
             // desktop. `lg:pb-8` (32px, no 0): aire real al final de la
             // lista para el fade de arriba, igual que en `/accounts`.
-            style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", position: "relative", paddingRight: 8 }}
+            //
+            // `marginInline: -SELECTION_BLEED` + el mismo valor sumado al
+            // padding: el contenido queda EXACTAMENTE donde estaba (el borde
+            // de contenido no se mueve ni un píxel), pero la caja de scroll
+            // se ensancha hacia afuera. Eso es lo que le da lugar al resalte
+            // de la fila seleccionada para sangrar sin que `overflowX:
+            // hidden` lo recorte: el overflow recorta contra la caja de
+            // PADDING, no contra la de contenido. El lugar sale del
+            // `--screen-padding` (20px) de `<main>`, mismo truco que ya usan
+            // los banners de esta pantalla con `calc(-1 * var(--screen-padding))`.
+            style={{
+              height: "100%",
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              overscrollBehavior: "contain",
+              position: "relative",
+              marginInline: -SELECTION_BLEED,
+              paddingLeft: SELECTION_BLEED,
+              paddingRight: SELECTION_BLEED + 8,
+            }}
           >
             <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
               {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -380,7 +403,33 @@ export function MovementsListContent() {
                   key={virtualRow.key}
                   data-index={virtualRow.index}
                   ref={virtualizer.measureElement}
-                  style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${virtualRow.start}px)` }}
+                  // El resalte de la fila seleccionada vive ACÁ y no adentro
+                  // de `SwipeableRow`, que tiene `overflow: hidden` y lo
+                  // recortaría. Dibujarlo por detrás además es lo correcto
+                  // durante el swipe: `SwipeableRow` es transparente en
+                  // reposo y solo se vuelve opaco mientras se arrastra, así
+                  // que la fila se despega del resalte con el gesto en vez de
+                  // llevárselo puesto.
+                  //
+                  // `left`/`width`/`paddingInline` compensados: la caja crece
+                  // `SELECTION_BLEED` hacia cada lado y el contenido queda en
+                  // el mismo x de siempre, alineado con las cabeceras de día
+                  // y con el resto de las filas. Sin esto, el anillo pasaba
+                  // justo por el borde del ícono y del monto.
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: -SELECTION_BLEED,
+                    width: `calc(100% + ${SELECTION_BLEED * 2}px)`,
+                    paddingInline: SELECTION_BLEED,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    ...(item.type === "row" && !selection && item.tx.id === activeTxId
+                      ? { background: "var(--selection-surface)", boxShadow: "inset 0 0 0 1px var(--selection-ring)", borderRadius: "var(--radius-card)" }
+                      : null),
+                  }}
+                  // Codificación no visual, para que la fila activa se
+                  // anuncie como tal y no dependa solo del color.
+                  {...(item.type === "row" && !selection && item.tx.id === activeTxId ? { "aria-current": true as const } : {})}
                 >
                   {item.type === "header" ? (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0 6px", background: "var(--page)" }}>

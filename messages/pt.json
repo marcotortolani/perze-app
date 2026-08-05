@@ -548,10 +548,14 @@
    "tags": "Etiquetas"
   },
   "calendar": {
+   "title": "Calendário",
    "back": "Voltar",
    "prevMonth": "Mês anterior",
    "nextMonth": "Próximo mês",
-   "empty": "Sem movimentações nesse dia."
+   "empty": "Sem movimentações nesse dia.",
+   "emptyMonth": "Sem movimentações neste mês.",
+   "wholeMonth": "Mês inteiro",
+   "selectPrompt": "Escolha um dia para ver suas movimentações."
   },
   "edit": {
    "notFound": "Não encontramos essa movimentação.",

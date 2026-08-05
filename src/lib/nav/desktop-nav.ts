@@ -56,22 +56,24 @@ export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[]
           },
         ]
       : []),
+    // Sistema entra como UNA entrada, no como un bloque de siete. Los siete
+    // destinos (perfil, seguridad, notificaciones, sincronización, ajustes,
+    // datos, acerca de) son configuración que se visita de vez en cuando, y
+    // desplegados ocupaban un tercio del alto del sidebar: con varios módulos
+    // encendidos el panel no entraba en pantalla y scrolleaba. Ahora se llega
+    // a todos por `/more`, que en escritorio muestra exactamente ese bloque
+    // (ver `(app)/more/page.tsx`).
+    //
+    // Sin `captionKey` a propósito: un encabezado "SISTEMA" sobre una sola
+    // fila es ruido, y la fila ya se llama igual.
+    //
+    // Esta entrada reemplaza además a la de "Más", que apuntaba al mismo
+    // `/more`: en escritorio esa página era una copia de lo que el sidebar ya
+    // muestra al costado. En móvil "Más" sigue existiendo como 5º tab de la
+    // `TabBar`, que se arma aparte de esto.
     {
       id: "system",
-      captionKey: "ds.sidebar.system",
-      items: [
-        { id: "profile", route: "/more/profile", icon: "user", labelKey: "morePage.profile" },
-        { id: "security", route: "/more/security", icon: "lock", labelKey: "morePage.security" },
-        { id: "notifications", route: "/more/notifications", icon: "alert", labelKey: "notificationsPage.title" },
-        { id: "sync", route: "/more/sync", icon: "refresh", labelKey: "syncDiagnosticsPage.title" },
-        { id: "settings", route: "/more/settings", icon: "edit", labelKey: "morePage.settings" },
-        { id: "data", route: "/more/data", icon: "install", labelKey: "morePage.dataAndBackup" },
-        { id: "about", route: "/more/about", icon: "mail", labelKey: "morePage.about" },
-      ],
-    },
-    {
-      id: "more",
-      items: [{ id: "more", route: "/more", icon: "more", labelKey: "nav.more" }],
+      items: [{ id: "system", route: "/more", icon: "gear", labelKey: "morePage.system" }],
     },
   ];
   return groups.filter((group) => group.items.length > 0);
@@ -79,7 +81,10 @@ export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[]
 
 /**
  * Match por prefijo más largo: `/more/categories` tiene que encender la
- * entrada "Categorías", no la de "Más" (que también matchea `/more`).
+ * entrada "Categorías", no la de "Sistema" (que matchea `/more` y por lo
+ * tanto también `/more/categories`). Las subrutas de sistema que NO tienen
+ * entrada propia (`/more/profile`, `/more/settings`, …) caen bien: su único
+ * match es `/more`, o sea "Sistema".
  */
 export function activeNavId(pathname: string, groups: NavGroup[]): string | null {
   let best: NavItem | null = null;

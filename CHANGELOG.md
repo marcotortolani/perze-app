@@ -6,6 +6,72 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.19.0] — 2026-08-05
+
+### Cambiado — el calendario muestra el mes entero, no solo el día que elijas
+
+- Entrar a `/transactions/calendar` **no mostraba ningún movimiento**: el panel solo existía con
+  un día seleccionado. Ahora arranca con el mes visible completo y se angosta al día que se
+  toque; el chip "Todo el mes" —o volver a tocar el mismo día— devuelve al mes.
+- **La grilla tiene un techo propio de 400px.** Las celdas son cuadradas (`aspectRatio: "1"`), así
+  que heredar el ancho del shell (1200px) hacía que el mes creciera de **alto**: cada día medía
+  ~162px y el calendario pasaba de 1000px, o sea que había que scrollear para ver un mes entero.
+- En los dos layouts el calendario queda **fijo** y el único scroller vertical es la lista: en
+  escritorio como columna derecha, en móvil como bloque de abajo. Un solo scroller es además lo
+  que permite virtualizar la lista sin ramificar el código.
+- El corte a dos columnas usa `DESKTOP_BREAKPOINT` (1024px) y no el `SPLIT_BREAKPOINT` de
+  `/transactions`: ese umbral más ancho existe porque allá la lista de la izquierda tiene que ser
+  legible, y acá la izquierda está topeada en 400px.
+- **Los totales excluyen los movimientos sin cotización** y declaran el conteo con
+  `NeedsFxBanner`, en vez de sumarlos como si valieran cero.
+- Dos correcciones de fecha que ya habían mordido antes: `todayIso()` en lugar de
+  `new Date().toISOString().slice(0, 10)` —que adelanta el día entre las 21:00 y la medianoche en
+  cualquier huso negativo— y un helper `noonUtc()` para los días sintetizados en el cliente, por
+  la misma razón.
+- El header pasa a registrarse con `usePageHeader` y su "volver" usa `push`, no `back()`: al
+  calendario se llega desde el chip de `/transactions` pero también por deep link con el historial
+  vacío.
+- Se extrajo **`TransactionsSummaryStrip`** (Ingresos · Gastos · Balance), que vivía inline en la
+  lista de movimientos, al aparecer este segundo consumidor.
+
+### Cambiado — la navegación de escritorio deja de scrollear
+
+- Con varios módulos encendidos el sidebar no entraba en pantalla: **21 entradas** entre los
+  primarios, DINERO, PERSONAS, los siete destinos de SISTEMA y "Más", más de 1100px de alto.
+- **SISTEMA colapsa en una sola entrada.** Perfil, Seguridad, Notificaciones, Estado de
+  sincronización, Ajustes, Datos y backup y Acerca de son configuración que se visita de vez en
+  cuando, y desplegados ocupaban un tercio del panel. Se llega a los siete por `/more`.
+- **Desaparece "Más" del sidebar**, porque apuntaba al mismo `/more`. En escritorio esa página era
+  una copia de lo que el sidebar ya muestra al costado; en móvil sigue siendo el 5º tab y la
+  única puerta a todo, así que ahí no cambia nada.
+- Resultado: **14 entradas**, sin scroll (medido: `scrollHeight` = `clientHeight`).
+- `/more` se adapta: en escritorio muestra solo el bloque Sistema —con **Panel del operador
+  adentro de la tarjeta**, no suelto abajo— y el header dice "Sistema". La columna que queda
+  libre la llena el `ZMark`, con la versión debajo: antes esa línea se centraba respecto del grid
+  entero y quedaba descentrada respecto de lo único visible.
+- Se agrega el ícono `gear` al set (`GearSix` de Phosphor: a 20px los seis dientes se leen y los
+  ocho del otro se empastan). No aparece como ícono elegible para una categoría, que usa su
+  propia lista curada.
+
+### Agregado — la lista de movimientos resalta el que estás viendo
+
+- Con el detalle en la columna de al lado no había ninguna señal de qué fila estaba abierta.
+  Ahora la fila seleccionada lleva el par canónico del sistema: `--selection-surface` más anillo
+  `--selection-ring`, el mismo que `SegmentedControl`, `DateStrip`, `OptionCard` y las tarjetas de
+  `/accounts`. Nada de violeta, que está reservado a la acción primaria.
+- El resalte **sangra 12px hacia cada lado sin mover el contenido**: la caja crece contra el
+  `--screen-padding` y el texto queda en el mismo píxel que el de las demás filas. Sin eso el
+  anillo pasaba justo por el borde del ícono y del monto.
+- Vive por detrás de `SwipeableRow` y no adentro, porque ese componente tiene `overflow: hidden`
+  y lo recortaría. De paso es lo correcto durante el swipe: la fila es transparente en reposo y
+  solo se vuelve opaca mientras se arrastra, así que se despega del resalte con el gesto.
+- Lleva `aria-current` para no depender solo del color, y **no se dibuja durante la selección
+  múltiple**: ahí manda el checkbox, y dos lenguajes de selección a la vez se leen como "esta fila
+  también está tildada".
+- El `AccountCard` compacto de `/accounts` recupera el anillo que solo tenía su variante de
+  escritorio: la superficie sola da 1,24:1 en modo claro, que es el defecto 2 de la auditoría
+  visual.
+
 ## [0.18.1] — 2026-08-05
 
 ### Arreglado — tres cosas que fallaban sin hacer ruido

@@ -4,7 +4,8 @@ import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Card, ListRow, Sheet, StatusBadge, usePageHeader } from "@/design-system";
+import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
@@ -27,7 +28,12 @@ const CAPTION_STYLE = {
 /** Índice de secciones (B7) — Bloque B, Fase 6. Los módulos apagados no aparecen. */
 export default function MorePage() {
   const t = useTranslations();
-  usePageHeader({ title: t("nav.more") });
+  // En escritorio esta pantalla ES la de Sistema (ver el comentario del grid
+  // más abajo), así que el header la nombra por lo que muestra. Acá sí va
+  // `useIsDesktop()` y no CSS porque es un string, no layout: cuesta un frame
+  // con "Más" antes de hidratar, que es preferible a duplicar el `<h1>`.
+  const isDesktop = useIsDesktop();
+  usePageHeader({ title: isDesktop ? t("morePage.system") : t("nav.more") });
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
@@ -74,11 +80,20 @@ export default function MorePage() {
         className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
         style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingRight: 8 }}
       >
-      {/* `lg`+: DINERO + PERSONAS a la izquierda; SISTEMA, admin y cerrar
-          sesión a la derecha, en vez de una sola columna larga que fuerza
-          scroll de sobra. */}
+      {/* En `lg`+ esta página es la de SISTEMA y nada más: DINERO y PERSONAS
+          ya están en el sidebar, al costado, y repetirlos acá era mostrar dos
+          veces lo mismo en la misma pantalla. En móvil no hay sidebar y esta
+          es la única puerta a todo, así que se muestra completa.
+
+          Se oculta por CSS (`lg:hidden`) y no con `useIsDesktop()`: ese hook
+          devuelve `false` en el snapshot de servidor, así que habría un frame
+          con la lista larga antes de hidratar. Mismo criterio que el
+          `hidden lg:flex` con el que `(app)/layout.tsx` oculta el sidebar. */}
       <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 20 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {/* `display` por clase y no inline: un `style={{display:"flex"}}`
+            le gana por especificidad a `lg:hidden` y la columna no se
+            ocultaba. `gap-5` = 20px en la escala de Tailwind v4. */}
+        <div className="flex flex-col gap-5 lg:hidden">
           <section>
             <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
             <Card padding="4px 16px">
@@ -121,16 +136,12 @@ export default function MorePage() {
               <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
               <ListRow icon="install" label={t("morePage.dataAndBackup")} onClick={() => router.push("/more/data")} />
               <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
+              {/* El panel del operador vive DENTRO de Sistema, no en una
+                  tarjeta suelta debajo: es una sección de sistema más, y
+                  aislada parecía una categoría propia de un solo ítem. */}
+              {ownAccess?.isAppAdmin ? <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} /> : null}
             </Card>
           </section>
-
-          {ownAccess?.isAppAdmin ? (
-            <section>
-              <Card padding="4px 16px">
-                <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} />
-              </Card>
-            </section>
-          ) : null}
 
           <Card padding="4px 16px">
             {demoActive ? (
@@ -140,9 +151,25 @@ export default function MorePage() {
             )}
           </Card>
         </div>
+
+        {/* En `lg`+ la primera columna está oculta, así que SISTEMA cae a la
+            izquierda y esta quedaría vacía — con la línea de versión de abajo
+            centrada respecto del grid entero, o sea descentrada respecto de
+            lo único que se ve. Se llena con el `ZMark`, mismo tratamiento que
+            `debts/new`, `goals/new`, `family/invite` y `more/profile`: la
+            variante `flip` está documentada en el contrato como relleno
+            decorativo de columnas vacías, no como loader. La versión pasa a
+            vivir acá debajo, ya centrada en su propia columna. */}
+        <div className="hidden lg:flex" style={{ flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
+          <ZMark variant="flip" animated size={28} gap={8} aria-label={t("app.name")} />
+          <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>
+            {t("morePage.version", { version: APP_VERSION })}
+          </p>
+        </div>
       </div>
 
-      <p className="t-caption" style={{ textAlign: "center", color: "var(--text-muted)" }}>
+      {/* En móvil no hay segunda columna donde ponerla: queda al pie, como siempre. */}
+      <p className="t-caption lg:hidden" style={{ textAlign: "center", color: "var(--text-muted)" }}>
         {t("morePage.version", { version: APP_VERSION })}
       </p>
       </div>
