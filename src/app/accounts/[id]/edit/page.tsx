@@ -7,7 +7,7 @@ import { EmptyState } from "@/design-system";
 import { AccountFormFlow } from "@/features/accounts/AccountFormFlow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 
 /** E3 — editar cuenta. Ruta de página completa, mismo patrón que `/transactions/[id]/editar`. */
 export default function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +15,7 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
   const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: account, isLoading } = useAccount(id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
@@ -27,10 +27,14 @@ export default function EditAccountPage({ params }: { params: Promise<{ id: stri
       householdId={household.id}
       userId={userId}
       existing={account}
-      onClose={() => router.push(`/accounts/${id}`)}
+      // `back()`, no `replace`/`push` — se llega acá con push desde el
+      // detalle, que ya está en el historial justo debajo, tanto
+      // cancelando como guardando. `replace` a esa MISMA url duplicaba la
+      // entrada (`[detalle, detalle]`) y "volver" necesitaba dos toques.
+      onClose={() => router.back()}
       onSaved={() => {
         invalidateAccounts();
-        router.push(`/accounts/${id}`);
+        router.back();
       }}
     />
   );

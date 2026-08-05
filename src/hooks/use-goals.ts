@@ -17,5 +17,5 @@ export function useGoals(householdId: string | undefined) {
 
 export function useInvalidateGoals(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: goalsKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: goalsKey(householdId), refetchType: "all" });
 }

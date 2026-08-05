@@ -17,5 +17,5 @@ export function useRecurringRules(householdId: string | undefined) {
 
 export function useInvalidateRecurringRules(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: recurringRulesKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: recurringRulesKey(householdId), refetchType: "all" });
 }

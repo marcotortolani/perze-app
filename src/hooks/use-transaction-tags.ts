@@ -29,5 +29,5 @@ export function useTransactionTagsFor(transactionIds: string[]) {
 
 export function useInvalidateTransactionTags() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ["transaction-tags"] });
+  return () => queryClient.invalidateQueries({ queryKey: ["transaction-tags"], refetchType: "all" });
 }

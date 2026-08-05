@@ -17,5 +17,5 @@ export function useNotificationPreferences(householdId: string | undefined, prof
 
 export function useInvalidateNotificationPreferences(householdId: string | undefined, profileId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && profileId && queryClient.invalidateQueries({ queryKey: notificationPreferencesKey(householdId, profileId) });
+  return () => householdId && profileId && queryClient.invalidateQueries({ queryKey: notificationPreferencesKey(householdId, profileId), refetchType: "all" });
 }

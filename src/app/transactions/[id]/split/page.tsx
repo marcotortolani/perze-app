@@ -84,7 +84,10 @@ export default function SplitTransactionPage({ params }: { params: Promise<{ id:
         }))
       );
       toast(t("splitPage.saved"));
-      router.push(`/transactions/${id}`);
+      // `back()`, no `replace`/`push` — el detalle ya está en el
+      // historial justo debajo. `replace` a esa MISMA url duplicaba la
+      // entrada.
+      router.back();
     } finally {
       setSaving(false);
     }

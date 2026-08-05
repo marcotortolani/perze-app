@@ -29,10 +29,8 @@ async function reorderAccounts(group: AccountRow[], fromIndex: number, toIndex: 
 }
 
 export interface AccountsListContentProps {
-  /** Cuenta cuyo detalle se está viendo — la resalta en la lista. Solo se
-   *  usa en el hard-reload de `/accounts/[id]` (ver `layout.tsx`); la
-   *  navegación con click no la necesita porque el detalle interceptado no
-   *  remonta esta lista. */
+  /** Cuenta cuyo detalle se está viendo (`?account=` en la URL) — la resalta
+   *  en la lista. Lo pasa siempre `page.tsx`, que es el que lee el param. */
   activeId?: string | undefined;
 }
 
@@ -100,7 +98,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
             key={a.id}
             account={a}
             active={a.id === activeId}
-            onClick={() => router.push(`/accounts/${a.id}`)}
+            onClick={() => router.push(`/accounts?account=${a.id}`, { scroll: false })}
             onMoveUp={i > 0 ? () => reorderAccounts(group, i, i - 1, invalidateAccounts) : undefined}
             onMoveDown={i < group.length - 1 ? () => reorderAccounts(group, i, i + 1, invalidateAccounts) : undefined}
           />
@@ -111,7 +109,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
       <div>
         {group.map((a, i) => (
           <DragRow key={a.id} id={a.id} index={i} rowHeight={64} dragLabel={t("accountsPage.list.reorder", { name: a.name })} onReorder={(from, to) => reorderAccounts(group, from, to, invalidateAccounts)}>
-            <AccountCard account={a} active={a.id === activeId} onClick={() => router.push(`/accounts/${a.id}`)} />
+            <AccountCard account={a} active={a.id === activeId} onClick={() => router.push(`/accounts?account=${a.id}`, { scroll: false })} />
           </DragRow>
         ))}
         {trailing}
@@ -160,11 +158,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
             icon="alert"
             label={t("accountsPage.list.resolvePendingFx")}
             meta={t("accountsPage.list.pendingFxCount", { count: pendingFxCount })}
-            // `window.location`, no `router.push`: `/accounts/resolve-fx` es
-            // hermana de `[id]` bajo el mismo directorio que intercepta
-            // `@detail/(.)[id]` — mismo problema y mismo arreglo que el
-            // botón "Calendario" de `/transactions`, ver esa nota.
-            onClick={() => { window.location.href = "/accounts/resolve-fx"; }}
+            onClick={() => router.push("/accounts/resolve-fx")}
           />
         ) : null}
 
@@ -189,7 +183,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
           <div>
             <span className="t-label" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.archived")}</span>
             {archived.map((a) => (
-              <AccountCard key={a.id} account={a} onClick={() => router.push(`/accounts/${a.id}`)} muted />
+              <AccountCard key={a.id} account={a} onClick={() => router.push(`/accounts?account=${a.id}`, { scroll: false })} muted />
             ))}
           </div>
         ) : null}

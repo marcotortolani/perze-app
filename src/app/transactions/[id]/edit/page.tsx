@@ -29,7 +29,15 @@ export default function EditTransactionPage({ params }: { params: Promise<{ id: 
       household={household}
       accounts={accounts}
       categories={categories}
-      onClose={() => router.push("/transactions")}
+      // `back()`, no `replace`/`push` — se llega acá con push desde el
+      // detalle o desde un swipe-right en una lista, que ya está en el
+      // historial justo debajo en los dos casos; `onClose` dispara tanto
+      // al cancelar como al guardar (ver `EditTransactionFlow.tsx`).
+      // `replace("/transactions")` no solo duplicaba la entrada — también
+      // mandaba siempre a la lista aunque se hubiera entrado desde el
+      // detalle de un movimiento puntual. `back()` vuelve a donde
+      // realmente se estaba.
+      onClose={() => router.back()}
     />
   );
 }

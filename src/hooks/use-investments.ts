@@ -16,7 +16,7 @@ export function usePortfolios(householdId: string | undefined) {
 
 export function useInvalidatePortfolios(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: ["portfolios", householdId] });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: ["portfolios", householdId], refetchType: "all" });
 }
 
 export function useTrades(portfolioId: string | undefined) {
@@ -29,7 +29,7 @@ export function useTrades(portfolioId: string | undefined) {
 
 export function useInvalidateTrades(portfolioId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => portfolioId && queryClient.invalidateQueries({ queryKey: ["trades", portfolioId] });
+  return () => portfolioId && queryClient.invalidateQueries({ queryKey: ["trades", portfolioId], refetchType: "all" });
 }
 
 export function useAssetClasses() {
@@ -38,7 +38,7 @@ export function useAssetClasses() {
 
 export function useInvalidateAssetClasses() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ["asset-classes"] });
+  return () => queryClient.invalidateQueries({ queryKey: ["asset-classes"], refetchType: "all" });
 }
 
 export function useInstruments(householdId: string | undefined) {
@@ -51,7 +51,7 @@ export function useInstruments(householdId: string | undefined) {
 
 export function useInvalidateInstruments(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: ["instruments", householdId] });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: ["instruments", householdId], refetchType: "all" });
 }
 
 export function useLatestPrices(instrumentIds: string[]) {

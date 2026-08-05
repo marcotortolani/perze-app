@@ -17,5 +17,5 @@ export function useInvites(householdId: string | undefined) {
 
 export function useInvalidateInvites(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: invitesKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: invitesKey(householdId), refetchType: "all" });
 }

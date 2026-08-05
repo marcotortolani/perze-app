@@ -9,11 +9,15 @@ import { useInvalidateAccounts } from "@/hooks/use-accounts";
 
 /**
  * Intercepta `/accounts/new` en navegación blanda desde dentro de
- * `/accounts` — sin este archivo, `accounts/@detail/(.)[id]` se queda con
- * el push y trata "new" como si fuera un id de cuenta (ver la guarda en
- * `accounts/@detail/new/page.tsx`). Mismo patrón que `@modal/(.)add`:
+ * `/accounts`, para que crear una cuenta se dibuje como modal encima de la
+ * lista en vez de reemplazar la pantalla. Mismo patrón que `@modal/(.)add`:
  * `router.back()` en vez de `router.push`, para no re-fetchear la lista de
  * abajo al cerrar.
+ *
+ * (Antes esta nota explicaba además que sin este archivo el interceptor
+ * `accounts/@detail/(.)[id]` reclamaba "new" como si fuera un id de cuenta.
+ * Ese interceptor ya no existe: el detalle de cuenta pasó a ser un search
+ * param, ver `(app)/accounts/page.tsx`.)
  */
 export default function InterceptedNewAccountPage() {
   const router = useRouter();
@@ -31,7 +35,7 @@ export default function InterceptedNewAccountPage() {
         onClose={() => router.back()}
         onSaved={(account) => {
           invalidateAccounts();
-          router.replace(`/accounts/${account.id}`);
+          router.replace(`/accounts?account=${account.id}`);
         }}
       />
     </Modal>

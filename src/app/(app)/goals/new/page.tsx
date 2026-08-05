@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, Input, Keypad, ListRow, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useInvalidateGoals } from "@/hooks/use-goals";
 import { useTransactions } from "@/hooks/use-transactions";
 import { goalsRepo } from "@/lib/repos/goals-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { computeThreeMonthCushion } from "@/lib/analytics/goal-projection";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { money, toMajorUnitsUnsafe } from "@/lib/money/money";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
@@ -24,7 +24,7 @@ export default function NewGoalPage() {
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: transactions = [] } = useTransactions(household?.id);
   const invalidateGoals = useInvalidateGoals(household?.id);
@@ -36,12 +36,38 @@ export default function NewGoalPage() {
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Con `cacheComponents: true` (Next 16), `router.back()` no desmonta esta
+  // pantalla — la deja oculta (`Activity`, modo hidden) con su `useState`
+  // intacto. Los efectos SÍ se limpian al ocultarse, así que la cleanup de
+  // un efecto vacío es el único gancho confiable para "se abandonó este
+  // formulario": ahí se resetea el borrador entero, para que la próxima
+  // entrada a `/goals/new` arranque vacía en vez de heredar el nombre y el
+  // monto de la meta anterior. Mismo patrón que `recurring/new/page.tsx`.
+  useEffect(() => {
+    return () => {
+      setName("");
+      setExpr("");
+      setAccountId(null);
+      setAccountSheetOpen(false);
+      setSaving(false);
+    };
+  }, []);
+
   if (!household || !userId) return null;
 
   const account = accounts.find((a) => a.id === accountId);
   const canSave = name.trim() !== "" && expr.trim() !== "";
   const cushion = computeThreeMonthCushion(transactions, new Date());
   const cushionMoney = money(cushion, household.baseCurrency);
+  const numberLocale = numberLocaleForUiLocale(locale);
+  // Monto YA EVALUADO y formateado, no la expresión cruda tal como se
+  // tipea — mostrar `"10000+5000"` literal (sin separador de miles, sin
+  // evaluar) es lo que hacía confuso este monto: el usuario nunca veía el
+  // número que se iba a guardar hasta después de guardar. `evaluateKeypadExpression`
+  // tolera una expresión a medio tipear (un operador colgando al final no
+  // rompe, ver `lib/money/keypad.ts`), así que es seguro llamarla en cada
+  // tecla.
+  const heroAmount = formatAmount(evaluateKeypadExpression(expr || "0", household.baseCurrency, numberLocale), { showSign: false, locale: numberLocale });
 
   const useCushion = () => setExpr(String(toMajorUnitsUnsafe(cushionMoney)).replace(".", decimalSeparator));
 
@@ -63,7 +89,9 @@ export default function NewGoalPage() {
       });
       invalidateGoals();
       toast(t("goalsPage.created"));
-      router.push("/goals");
+      // `back()`, no `replace`/`push` — la lista ya está en el historial
+      // justo debajo. `replace("/goals")` duplicaba esa misma entrada.
+      router.back();
     } finally {
       setSaving(false);
     }
@@ -92,12 +120,13 @@ export default function NewGoalPage() {
             <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
           </button>
 
-          <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
-            {household.baseCurrency} {expr || "0"}
+          <div style={{ textAlign: "center" }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("goalsPage.targetAmount")}</div>
+            <div style={{ marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 32 }}>{heroAmount}</div>
           </div>
 
           <div style={{ marginTop: "auto" }}>
-            <Keypad onKey={(k) => setExpr((s) => (k === "clear" ? "" : k === "backspace" ? s.slice(0, -1) : s + (k === "," ? "," : k)))} onClear={() => setExpr("")} />
+            <Keypad onKey={(k) => setExpr((s) => (k === "clear" ? "" : k === "backspace" ? s.slice(0, -1) : s + (k === "," ? decimalSeparator : k)))} onClear={() => setExpr("")} />
             <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: 16 }}>
               {t("common.save")}
             </Button>

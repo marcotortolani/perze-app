@@ -370,7 +370,7 @@ export default function HomePage() {
       {/* `flexShrink: 0`: sin esto colapsaba a 0px de alto. `overflowX: "auto"`
           en el propio carrusel hace que el navegador coaccione
           `overflow-y` a `auto` también (misma regla CSSOM que ya rompía
-          scroll horizontal en `accounts/layout.tsx`/`transactions/layout.tsx`,
+          scroll horizontal en `accounts/page.tsx`/`transactions/layout.tsx`,
           acá al revés) — como hijo de este flex-column con `height:100%`,
           eso le da un `min-height` automático de 0 (la regla de flexbox
           para ítems que son su propio contenedor de scroll), así que
@@ -380,7 +380,7 @@ export default function HomePage() {
       <AccountCarousel
         accounts={accountSummaries}
         privacy={privacy}
-        onSelect={(id) => router.push(`/accounts/${id}`)}
+        onSelect={(id) => router.push(`/accounts?account=${id}`, { scroll: false })}
         gridOnDesktop
         style={{ flexShrink: 0 }}
       />
@@ -398,7 +398,7 @@ export default function HomePage() {
                 icon="credit-card"
                 iconBackground={accountColorVar(a.color)}
                 privacy={privacy}
-                onClick={() => router.push(`/accounts/${a.id}`)}
+                onClick={() => router.push(`/accounts?account=${a.id}`, { scroll: false })}
               />
             ))}
           </div>

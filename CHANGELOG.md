@@ -6,6 +6,148 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.17.0] — 2026-08-05
+
+### Cambiado — el detalle de cuenta deja de ser una ruta y pasa a ser un search param
+
+- **`/accounts/[id]` → `/accounts?account=<id>`.** El detalle de cuenta era una ruta
+  interceptada por un slot paralelo (`accounts/@detail/(.)[id]`). Eso disparaba un bug abierto de
+  Next.js 16 ([vercel/next.js#91265](https://github.com/vercel/next.js/issues/91265)): las rutas
+  interceptoras acumulan un marcador `(.)` **en cada actualización de HMR**, sin limpiar las
+  anteriores. Tras un rato de desarrollo la ruta quedaba como `/accounts/(.)(.)…(.)<uuid>`, el
+  server tiraba `Invalid interception route` y Next forzaba una recarga completa de página. Medido
+  sobre un log real de ~5 h: **45 errores, 44 de ellos seguidos de recarga en menos de un segundo,
+  y 26 recargas encadenadas** en ráfagas de 3–4. Eso era el "loading en loop del que no se sale" y
+  el "golpe" de UI al cambiar de cuenta — no era una transición mal animada, era una recarga real
+  de documento. **Es solo en desarrollo** (HMR/Turbopack); producción nunca estuvo afectada.
+- **Sin ruta interceptora no hay nada que acumule marcadores**, así que el bug deja de aplicar por
+  construcción y no por parche. Se borraron los 4 archivos del slot `@detail` (incluidos
+  `new/page.tsx` y `resolve-fx/page.tsx`, que eran puros hacks de especificidad para que el
+  interceptor no reclamara `"new"` o `"resolve-fx"` como si fueran un id de cuenta) y
+  `accounts/layout.tsx` entero, cuyas ~100 líneas eran todas compensación de rarezas de
+  interceptación. Neto en `accounts/`: **−503 líneas, +162**.
+- **De paso, seleccionar una cuenta dejó de ser una navegación de ruta**: la lista ya no se
+  desmonta, conserva su scroll (`{ scroll: false }`) y solo cambia la columna de detalle. El
+  detalle se abre con `push` —para que el botón atrás del navegador y el de Android lo cierren,
+  que es el gesto esperado en una PWA— y se cierra siempre con `router.back()`.
+- **Cierra además un bug latente de portal huérfano**: el detalle interceptado se dibujaba dentro
+  de `<Modal>`, que hace `createPortal` a `document.body`. Con `cacheComponents: true`,
+  `router.back()` no desmonta una pantalla de ruta —la deja oculta en modo `Activity`— y `Activity`
+  **no puede ocultar contenido portaleado**, así que el overlay opaco podía sobrevivir tapando la
+  pantalla entera. Ahora el modal es un render condicional común dentro de la misma ruta.
+- `/accounts/<id>` sigue vivo como redirect de compatibilidad: hay una PWA instalada con historial
+  largo y un 404 ahí sería una regresión real.
+
+### Corregido — "volver" necesitaba dos toques en ~16 pantallas
+
+- Al guardar, archivar, borrar, conciliar o dividir, las pantallas hacían
+  `router.replace(urlDeLaLista)`. Pero esa URL **ya estaba justo debajo en el historial** (se había
+  llegado con un `push` desde ahí), así que `replace` no evitaba la entrada: la **duplicaba**. El
+  historial quedaba `[lista, lista]` y el primer "volver" caía en el duplicado, indistinguible de
+  "no pasó nada"; recién el segundo salía de verdad. Reportado en recurrentes y confirmado por
+  construcción en los ~16 sitios que compartían el patrón.
+- Reemplazado por `router.back()`, que recorre el historial existente sin agregar nada, en cuentas,
+  metas, presupuestos, deudas, reglas, inversiones, movimientos y recurrentes.
+- **Como efecto secundario, dos flujos mejoraron solos**: editar un movimiento ahora vuelve al
+  detalle del que se venía en vez de saltar siempre a la lista, y crear un instrumento como
+  sub-paso de una operación vuelve a la operación que se estaba llenando en vez de a una vacía
+  (esto último estaba anotado como "limitación aceptada").
+
+### Corregido — editar una conciliación la convertía en un gasto, en silencio
+
+- El detalle de movimiento ofrecía "Editar" para cualquier `kind`, incluidas las conciliaciones
+  (`kind === "adjustment"`). `EditTransactionFlow` no sabe representarlas: las cargaba como
+  `expense`, exigía elegir una categoría (una conciliación no tiene) y, si se guardaba,
+  **persistía el cambio de tipo de forma permanente**. El ajuste dejaba de excluirse de los
+  agregados que hoy lo tratan aparte (resumen del período, flujo de dinero, ciclo de tarjeta,
+  patrimonio neto) y, si era negativo, violaba la regla de que todo `kind !== "adjustment"` tiene
+  monto positivo. Era corrupción de datos, no solo una UX rara.
+- "Editar" ya no se ofrece para conciliaciones. Corregir el monto de una es borrarla y volver a
+  conciliar. "Dividir en categorías" también se ocultó para ajustes y transferencias, donde no
+  tiene sentido (no hay con quién repartir una transferencia entre cuentas propias).
+
+### Corregido — el modo demo dejaba ocho pantallas de escritura en blanco
+
+- El modo demo **nunca crea sesión de Supabase** a propósito, así que `useCurrentUserId()` resuelve
+  a `null` para siempre. Ocho pantallas de alta gateaban su render entero con `if (!userId) return
+  null` esperando un id real que nunca iba a llegar: editar cuenta, conciliar, crear meta,
+  presupuesto, deuda, regla, operación e instrumento quedaban permanentemente en blanco para
+  cualquiera que entrara con "Probar con datos de ejemplo".
+- Nuevo `useEffectiveUserId()`: sustituye por `DEMO_USER_ID` **solo** cuando el tri-estado ya
+  confirmó que no hay sesión (`null`, no `undefined` — mientras carga sigue devolviendo `undefined`
+  para no repetir el bug de escrituras con id demo que este archivo ya documentaba). Fuera del
+  demo es idéntico a `useCurrentUserId()`.
+
+### Corregido — el teclado de "editar movimiento" borraba de a cuatro toques
+
+- `EditTransactionFlow` sembraba el buffer del teclado con `formatAmount()`, que es un formateador
+  de **presentación**: separadores de miles y decimales rellenados (`"25.000,00"`). El borrado hace
+  `slice(0,-1)` sobre ese string crudo, así que había que comerse cuatro toques (`,00` → `,0` →
+  `,` → `.000`) antes de que desapareciera un dígito real.
+- Cambiado a `amountToExpression()`, que es lo que usa el resto de la app (`PayCardSheet`,
+  `recurring/[id]/edit`): sin separadores de miles, sin ceros de relleno y en el separador decimal
+  del locale. Corrige de paso un bug latente: `formatAmount` sin `locale` explícito asumía `es-UY`
+  sin importar el idioma de la UI, así que en `en-US` el monto se abría mal parseado.
+
+### Agregado — desarchivar una cuenta
+
+- El detalle de una cuenta archivada seguía ofreciendo "Archivar", sin ninguna acción inversa: una
+  vez archivada no había forma de recuperarla desde la UI. Ahora la fila alterna entre "Archivar" y
+  "Desarchivar" según `archivedAt`, con `accountsRepo.unarchive()`.
+- Archivar o desarchivar ahora invalida **las dos** query keys —la lista y el detalle puntual— y
+  espera a que terminen antes de navegar. Sin la del detalle, reabrir la misma cuenta seguía
+  mostrando la acción vieja hasta recargar.
+
+### Corregido — metas y presupuestos: monto heredado del anterior y hero sin evaluar
+
+- Crear una segunda meta o presupuesto arrancaba con el monto (y el nombre, y la cuenta) del
+  anterior. Con `cacheComponents: true`, `router.back()` no desmonta la pantalla: la deja oculta en
+  `Activity` con su `useState` intacto. Se agregó el mismo efecto de limpieza que ya tenía
+  `recurring/new`, que es el gancho confiable para "se abandonó este formulario".
+- El monto se mostraba como la **expresión cruda tal como se tipea** (`"10000+5000"` literal, sin
+  separador de miles y sin evaluar), sin ningún label que dijera qué era ese número, y sin tecla
+  `=` para resolverlo — el usuario no veía el valor que iba a guardar hasta después de guardarlo.
+  Ahora el hero muestra el monto ya evaluado y formateado, con su label. Corregido también un
+  desajuste de separador decimal: la sugerencia de "colchón de 3 meses" usaba el del locale pero
+  tipear una coma insertaba siempre `","`.
+
+### Corregido — dos gates podían dejar la app clavada en el spinner de arranque
+
+- **`DbOwnerSync`** resolvía la base Dexie activa en una cadena async **sin `try`/`catch`**. Si
+  cualquier paso rechazaba (Dexie cerrada a mitad de operación, una query que no resuelve sin
+  sesión), `setSettled(true)` nunca corría y `OnboardingGate` mostraba su spinner en toda la app
+  para siempre. Ahora va en `try`/`finally`: el gate se libera pase lo que pase, y el error queda
+  logueado en vez de tragarse en silencio dentro de una IIFE.
+- **`OnboardingGate`** disparaba su `router.replace` de rescate **una sola vez** por transición de
+  `blocked`, sin reintento. Si ese replace se perdía, el gate quedaba clavado: `blocked` no
+  cambiaba, las deps del efecto tampoco, y el efecto no volvía a dispararse. Se agregó `pathname` a
+  las deps para que cualquier cambio de ruta lo reintente.
+
+### Agregado — regresión de navegación, e2e y documento de auditoría
+
+- `src/app/__tests__/navigation-uses-replace.test.ts`: guardarraíl barato que cuenta los
+  `router.back()` esperados por archivo y prohíbe que vuelva a aparecer un `router.replace(` en los
+  ~16 sitios corregidos, sin levantar Playwright.
+- `e2e/navigation-replace.spec.ts`: 12 casos que ejercitan cada flujo de punta a punta y confirman
+  que **un solo** "volver" sale de verdad. La aserción es deliberadamente doble: que el back no
+  caiga en el formulario abandonado **y** que no deje la URL igual que antes — sin la segunda, el
+  bug de la entrada duplicada pasaba el test sin que la pantalla se moviera. Cuatro casos quedan en
+  `skip` con el motivo documentado: deudas, inversiones y repartir un gasto leen directo de Supabase
+  y no tienen historia offline/demo todavía.
+- `docs/auditoria-rutas-interceptoras.md`: informe de causa raíz del bug de Next 16 más el encargo
+  de auditoría para las tres rutas interceptoras que siguen vivas (`transactions/@detail/(.)[id]`,
+  `@modal/(.)add`, `@modal/(.)accounts`) — 19 de aquellos 45 errores eran de `/transactions/`, así
+  que ahí sigue pasando. Incluye el procedimiento de detección (el error vive en el log del dev
+  server, **nunca** en la consola del navegador, que es lo que hizo que costara tres intentos
+  fallidos encontrarlo) y la convención para los ~6 pares lista/detalle que todavía faltan.
+
+### Corregido — ícono de "Categorías" en el menú "Más"
+
+- La fila de "Categorías" de `/more` seguía usando `tag`, el mismo ícono que "Tags y comercios".
+  Pasa a `square-half`, completando la unificación que 0.16.0 empezó por la sidebar de escritorio.
+
+---
+
 ## [0.16.0] — 2026-08-05
 
 ### Agregado — gestor completo de categorías: crear, subcategorías, más íconos

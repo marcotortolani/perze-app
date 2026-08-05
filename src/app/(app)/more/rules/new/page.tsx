@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useInvalidateCategorizationRules } from "@/hooks/use-categorization-rules";
@@ -17,7 +17,7 @@ import type { RuleMatchField } from "@/lib/db/schema";
 export default function NewCategorizationRulePage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: categories = [] } = useCategories(household?.id);
   const categoryLabel = useCategoryLabel();
@@ -51,7 +51,9 @@ export default function NewCategorizationRulePage() {
       });
       invalidate();
       toast(t("categorizationRulesPage.created"));
-      router.push("/more/rules");
+      // `back()`, no `replace`/`push` — la lista ya está en el historial
+      // justo debajo. `replace("/more/rules")` duplicaba esa misma entrada.
+      router.back();
     } finally {
       setSaving(false);
     }

@@ -8,7 +8,7 @@ import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { MorphButton } from "@/components/motion";
 import { ScreenShell } from "@/components/screen-shell";
 import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
-import { AmountStep } from "@/features/capture/AmountStep";
+import { AmountStep, amountToExpression } from "@/features/capture/AmountStep";
 import { CategoryStep } from "@/features/capture/CategoryStep";
 import { DetailsSheet } from "@/features/capture/DetailsSheet";
 import { useFrequentCategories } from "@/features/capture/use-frequent-categories";
@@ -21,8 +21,6 @@ import { useInvalidateTransactionTags, useTagIdsForTransaction } from "@/hooks/u
 import { useCurrentUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
-import { formatAmount } from "@/lib/money/format";
-import { money } from "@/lib/money/money";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import type { AccountRow, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { useFrequentTags } from "@/features/capture/use-frequent-tags";
@@ -91,7 +89,15 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   useEffect(() => {
     reset();
     setField("kind", transaction.kind === "adjustment" ? "expense" : transaction.kind);
-    setField("amountExpression", formatAmount(money(transaction.amount, transaction.currencyCode), { showSign: false, showSymbol: false }));
+    // `amountToExpression`, no `formatAmount`: el buffer del teclado tiene
+    // que ser la expresión CRUDA que se tipearía a mano (sin separador de
+    // miles, sin ceros de relleno) — `formatAmount` es para MOSTRAR, no
+    // para editar. Con el string de presentación ("25.000,00"), borrar un
+    // carácter a la vez no tocaba ningún dígito real hasta el cuarto
+    // toque (los primeros tres se comían el padding de la fracción y el
+    // separador de miles). Mismo patrón que ya usan `PayCardSheet.tsx` y
+    // `recurring/[id]/edit/page.tsx`.
+    setField("amountExpression", amountToExpression(transaction.amount, transaction.currencyCode, locale));
     setField("currency", transaction.currencyCode);
     setField("accountId", transaction.accountId);
     setField("counterAccountId", transaction.counterAccountId);

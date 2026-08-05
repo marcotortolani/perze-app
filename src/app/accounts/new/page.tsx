@@ -46,7 +46,7 @@ export default function NewAccountPage() {
       onClose={() => router.push("/accounts")}
       onSaved={(account) => {
         invalidateAccounts();
-        router.push(`/accounts/${account.id}`);
+        router.push(`/accounts?account=${account.id}`);
       }}
     />
   );

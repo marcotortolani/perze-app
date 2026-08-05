@@ -18,14 +18,14 @@ import { Icon } from "@/design-system/core/Icon";
  * (como los detalles de movimiento/cuenta, sin `ScreenShell` porque asumen
  * el fondo del shell) queda transparente al interceptarse — en mobile,
  * `children` y `detail` se apilan en el mismo DOM (`transactions/layout.tsx`,
- * `accounts/layout.tsx`), así que sin fondo sólido el texto de la lista de
+ * `accounts/page.tsx`), así que sin fondo sólido el texto de la lista de
  * atrás se ve encimado con el del modal. `overflowY: auto` porque el
  * contenido interceptado no siempre trae su propio scroll (`ScreenShell`
  * tampoco lo pone) y acá sí puede superar el alto del viewport.
  *
  * `createPortal(..., document.body)`: en mobile este componente se monta
  * como hijo del slot `detail` dentro de `.app-shell-main`/`.app-shell`
- * (`transactions/layout.tsx`, `accounts/layout.tsx`) — cualquier ancestro
+ * (`transactions/layout.tsx`, `accounts/page.tsx`) — cualquier ancestro
  * con `transform`, `filter` o `contain` (o que Tailwind/una librería le
  * agregue después) convierte este `position: fixed` en relativo a ESE
  * ancestro en vez de al viewport, y el overlay termina recortado o

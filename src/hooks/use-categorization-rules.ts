@@ -17,5 +17,5 @@ export function useCategorizationRules(householdId: string | undefined) {
 
 export function useInvalidateCategorizationRules(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: categorizationRulesKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: categorizationRulesKey(householdId), refetchType: "all" });
 }

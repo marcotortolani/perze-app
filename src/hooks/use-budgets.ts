@@ -17,5 +17,5 @@ export function useBudgets(householdId: string | undefined) {
 
 export function useInvalidateBudgets(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: budgetsKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: budgetsKey(householdId), refetchType: "all" });
 }

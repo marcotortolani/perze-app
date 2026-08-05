@@ -47,7 +47,9 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
     await goalsRepo.archive(goal.id);
     invalidateGoals();
     toast(t("goalsPage.deleted"));
-    router.push("/goals");
+    // `back()`, no `replace`/`push` — la lista ya está en el historial
+    // justo debajo. `replace("/goals")` duplicaba esa misma entrada.
+    router.back();
   };
 
   return (

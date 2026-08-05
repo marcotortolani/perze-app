@@ -140,10 +140,10 @@ export default function NewRecurringRulePage() {
 
       invalidateRules();
       toast(t("recurringPage.created"));
-      // `replace`, no `push`: mismo motivo que en `[id]/edit` — evita una
-      // entrada extra de historial ("nuevo") entre la lista de antes y la
-      // de después, que haría que "volver" caiga en el formulario vacío.
-      router.replace("/recurring");
+      // `back()`, no `replace`/`push` — mismo motivo que en `[id]/edit`:
+      // la lista ya está en el historial justo debajo, y `replace` a esa
+      // MISMA url duplicaba la entrada en vez de evitarla.
+      router.back();
     } finally {
       setSaving(false);
     }

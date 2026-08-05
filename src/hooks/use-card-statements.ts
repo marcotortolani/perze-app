@@ -25,5 +25,5 @@ export function useLatestCardStatement(accountId: string | undefined) {
 
 export function useInvalidateCardStatements(accountId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => accountId && queryClient.invalidateQueries({ queryKey: cardStatementsKey(accountId) });
+  return () => accountId && queryClient.invalidateQueries({ queryKey: cardStatementsKey(accountId), refetchType: "all" });
 }

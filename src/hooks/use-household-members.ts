@@ -17,5 +17,5 @@ export function useHouseholdMembers(householdId: string | undefined) {
 
 export function useInvalidateHouseholdMembers(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: householdMembersKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: householdMembersKey(householdId), refetchType: "all" });
 }

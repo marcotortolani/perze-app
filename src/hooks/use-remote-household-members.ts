@@ -17,5 +17,5 @@ export function useRemoteHouseholdMembers(householdId: string | undefined) {
 
 export function useInvalidateRemoteHouseholdMembers(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: remoteHouseholdMembersKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: remoteHouseholdMembersKey(householdId), refetchType: "all" });
 }

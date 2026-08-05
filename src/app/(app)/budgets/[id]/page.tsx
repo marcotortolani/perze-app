@@ -46,7 +46,9 @@ export default function BudgetDetailPage({ params }: { params: Promise<{ id: str
     await budgetsRepo.archive(budget.id);
     invalidateBudgets();
     toast(t("budgetsPage.deleted"));
-    router.push("/budgets");
+    // `back()`, no `replace`/`push` — la lista ya está en el historial
+    // justo debajo. `replace("/budgets")` duplicaba esa misma entrada.
+    router.back();
   };
 
   return (

@@ -97,7 +97,14 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   const handleDelete = async () => {
     await deleteTransaction(transaction.id);
-    router.push("/transactions");
+    // `back()`, no `replace`/`push` — este detalle se llega con push
+    // desde varios lugares (lista, home, calendario, tarjeta, cuenta), que
+    // ya está en el historial justo debajo en cualquiera de los casos.
+    // `replace("/transactions")` no solo duplicaba esa entrada — también
+    // ignoraba los otros 4 puntos de entrada y mandaba siempre a la lista
+    // aunque se hubiera llegado desde otro lado. `back()` vuelve a donde
+    // realmente se estaba.
+    router.back();
   };
 
   const handleDuplicate = async () => {
@@ -252,10 +259,26 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
+        {/* Una conciliación (`kind === "adjustment"`) no tiene categoría ni
+            encaja en gasto/ingreso/transferencia — el editor genérico
+            (`EditTransactionFlow`) no sabe representarla: forzaba elegir
+            categoría y, si se guardaba, convertía el ajuste en un gasto
+            de forma permanente (corrompía el dato: perdía la exclusión de
+            agregados que hoy le corresponde, y podía violar la regla de
+            monto positivo si el ajuste era negativo). Corregir el monto
+            de una conciliación ya creada es borrar y volver a conciliar,
+            no reabrir este editor. "Dividir en categorías" tampoco tiene
+            sentido para un ajuste ni para una transferencia — no hay con
+            quién repartir "el ajuste de $500" o "la transferencia entre
+            mis propias cuentas". */}
+        {transaction.kind !== "adjustment" ? (
+          <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
+        ) : null}
         <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
         <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
-        <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
+        {transaction.kind !== "transfer" && transaction.kind !== "adjustment" ? (
+          <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
+        ) : null}
         <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
       </div>
 

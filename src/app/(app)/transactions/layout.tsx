@@ -18,13 +18,13 @@ function SplitGrid({ left, right, overflowing, detailScrollerRef }: { left: Reac
           la izquierda, que hereda el `padding-inline` de `<main>` — esta
           columna no tiene ningún padding propio del lado derecho).
           `minWidth: 0` + `overflowX: hidden`: mismo fix que
-          `accounts/layout.tsx` — sin `minWidth: 0` el ítem de grid vale
+          `accounts/page.tsx` — sin `minWidth: 0` el ítem de grid vale
           `min-width: auto` y el contenido (una cifra larga, un chart)
           podía forzarlo más ancho que `minmax(340px,420px)`, y
           `overflow-y: auto` sin `overflow-x` explícito activa
           `overflow-x: auto` implícito por la propia regla de `overflow`. */}
       {/* `scroll-fade-bottom` en un wrapper propio — mismo patrón que
-          `accounts/layout.tsx`. `paddingBottom: 32` adentro del scroller:
+          `accounts/page.tsx`. `paddingBottom: 32` adentro del scroller:
           aire real al final para el fade. */}
       <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "12px", minWidth: 0, maxWidth: 420, minHeight: 0 } as CSSProperties}>
         <div
@@ -61,7 +61,7 @@ function SplitGrid({ left, right, overflowing, detailScrollerRef }: { left: Reac
  * arranca en `SPLIT_BREAKPOINT` (1280px).
  *
  * Caso especial — hard-reload de `/transactions/<id>`: mismo problema y
- * mismo arreglo que `accounts/layout.tsx` (ver esa nota completa). Un
+ * mismo arreglo que `accounts/page.tsx` (ver esa nota completa). Un
  * hard-reload no pasa por la ruta interceptora: `children` termina siendo
  * el DETALLE (no la lista) y `@detail` cae a su placeholder vacío. Se
  * detecta comparando `pathname` con el pathname del PRIMER render de este

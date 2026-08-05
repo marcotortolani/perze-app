@@ -88,7 +88,7 @@ export default function MorePage() {
               {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}
               {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => router.push("/debts")} /> : null}
               {modules.includes("investments") ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
-              <ListRow icon="tag" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
+              <ListRow icon="square-half" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
               <ListRow icon="tag" label={t("morePage.tagsAndPayees")} onClick={() => router.push("/more/tags")} />
               <ListRow icon="refresh" label={t("morePage.rules")} onClick={() => router.push("/more/rules")} />
             </Card>

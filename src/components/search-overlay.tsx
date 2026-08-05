@@ -59,7 +59,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const index = useMemo<Searchable[]>(() => {
     const items: Searchable[] = [];
     for (const a of accounts) {
-      items.push({ id: a.id, group: "accounts", title: a.name, subtitle: a.currencyCode, href: `/accounts/${a.id}`, icon: "wallet" });
+      items.push({ id: a.id, group: "accounts", title: a.name, subtitle: a.currencyCode, href: `/accounts?account=${a.id}`, icon: "wallet" });
     }
     for (const c of categories) {
       const label = categoryLabel(c);

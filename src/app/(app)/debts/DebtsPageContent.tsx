@@ -69,7 +69,7 @@ export default function DebtsPageContent() {
             label={a.name}
             meta={t(ACCOUNT_KIND_MESSAGE_KEY[a.kind])}
             variant="value"
-            onClick={() => router.push(`/accounts/${a.id}`)}
+            onClick={() => router.push(`/accounts?account=${a.id}`)}
             value={
               <div style={{ textAlign: "right" }}>
                 <Amount value={money(a.currentBalance, a.currencyCode)} size="body" showSign={false} tabular />

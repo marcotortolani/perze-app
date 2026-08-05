@@ -54,6 +54,10 @@ export const accountsRepo = {
     await enqueueAccountUpdate(id, { archivedAt: nowIso() });
   },
 
+  async unarchive(id: string): Promise<void> {
+    await enqueueAccountUpdate(id, { archivedAt: null });
+  },
+
   async softDelete(id: string): Promise<void> {
     await enqueueAccountUpdate(id, { deletedAt: nowIso() });
   },

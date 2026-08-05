@@ -18,7 +18,7 @@ export function useTransactions(householdId: string | undefined, filters: Transa
 
 export function useInvalidateTransactions(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: ["transactions", householdId] });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: ["transactions", householdId], refetchType: "all" });
 }
 
 /**
@@ -36,8 +36,8 @@ export function useInvalidateAfterTransactionWrite(householdId: string | undefin
   const queryClient = useQueryClient();
   return () => {
     if (!householdId) return;
-    queryClient.invalidateQueries({ queryKey: ["transactions", householdId] });
-    queryClient.invalidateQueries({ queryKey: accountsKey(householdId) });
+    queryClient.invalidateQueries({ queryKey: ["transactions", householdId], refetchType: "all" });
+    queryClient.invalidateQueries({ queryKey: accountsKey(householdId), refetchType: "all" });
   };
 }
 

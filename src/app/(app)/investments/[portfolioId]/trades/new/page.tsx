@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useInstruments, useInvalidateTrades } from "@/hooks/use-investments";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
@@ -22,7 +22,7 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const { portfolioId } = use(params);
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: instruments = [] } = useInstruments(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
@@ -84,7 +84,10 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
       });
       invalidateTrades();
       toast(fxSource === "pending" ? t("newTradePage.savedPendingFx") : t("newTradePage.saved"));
-      router.push("/investments");
+      // `back()`, no `replace`/`push` — la lista ya está en el historial
+      // justo debajo. `replace("/investments")` duplicaba esa misma
+      // entrada.
+      router.back();
     } finally {
       setSaving(false);
     }

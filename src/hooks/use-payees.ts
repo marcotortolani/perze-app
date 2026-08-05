@@ -17,5 +17,5 @@ export function usePayees(householdId: string | undefined) {
 
 export function useInvalidatePayees(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: payeesKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: payeesKey(householdId), refetchType: "all" });
 }

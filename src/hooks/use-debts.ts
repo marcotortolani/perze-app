@@ -41,5 +41,5 @@ export function useDebtSchedule(debtId: string | undefined) {
 
 export function useInvalidateDebts(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: debtsKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: debtsKey(householdId), refetchType: "all" });
 }

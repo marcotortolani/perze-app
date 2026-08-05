@@ -20,6 +20,7 @@ App PWA de finanzas personales: multi-cuenta, multi-moneda, multi-país, con gru
 | — | `auditoria-visual.md` | 49 defectos ordenados por costo de arreglarlos después. Corrige al diseño y al contrato | Antes de programar pantallas |
 | — | `marca/` | Sistema de marca: logotipo, ícono, favicon, splash, y los assets ya generados para el repo | Antes del primer deploy |
 | — | `mejora-auth-oauth-y-email.md` | Runbook de configuración: encender login con Google, por qué Apple queda descartado, y reemplazar el proveedor de mail default de Supabase por Resend (SMTP de Auth + transaccionales) | Cuando se decida prender OAuth o resolver el límite de 2 mails/hora del proveedor default |
+| — | `auditoria-rutas-interceptoras.md` | Causa raíz del "loading en loop" en dev (bug abierto de Next 16 con rutas interceptoras), el patrón de migración a search param que lo resuelve, y el encargo de auditoría para los sitios que siguen afectados | Antes de tocar cualquier master-detail, y ante cualquier síntoma de recarga o spinner sin error en la consola |
 
 ## Estado
 

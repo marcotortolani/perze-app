@@ -286,7 +286,7 @@ export default function RecurringRuleDetailPage({
 
         <button
           type="button"
-          onClick={() => router.push(`/accounts/${account?.id}`)}
+          onClick={() => router.push(`/accounts?account=${account?.id}`)}
           style={{
             background: 'var(--surface-2)',
             border: 0,

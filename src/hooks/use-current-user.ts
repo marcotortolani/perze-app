@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { isDemoModeActive } from "@/lib/demo/demo-mode";
+import { DEMO_USER_ID } from "@/lib/demo-user";
 
 export const currentUserKey = ["auth", "user"] as const;
 
@@ -71,6 +73,24 @@ export function useCurrentUserId(): string | null | undefined {
   });
 
   return data;
+}
+
+/**
+ * `useCurrentUserId()` para pantallas que ESCRIBEN. El modo demo nunca crea
+ * sesión de Supabase (`enterDemoMode()` en `lib/demo/demo-mode.ts`), así
+ * que ahí `useCurrentUserId()` resuelve para siempre a `null` — sin esto,
+ * toda pantalla de alta (conciliar, crear meta/presupuesto/deuda/regla/
+ * operación, editar cuenta) queda bloqueada en su gate de carga y nunca
+ * pinta nada para un usuario en demo. Solo sustituye por `DEMO_USER_ID`
+ * cuando el tri-estado ya CONFIRMÓ que no hay sesión (`null`, no
+ * `undefined` — mientras carga, sigue devolviendo `undefined` para no
+ * repetir el bug de B3 que este archivo ya documentó arriba) y la cookie
+ * de demo está activa. Fuera de demo, es idéntico a `useCurrentUserId()`.
+ */
+export function useEffectiveUserId(): string | null | undefined {
+  const userId = useCurrentUserId();
+  if (userId === null && isDemoModeActive()) return DEMO_USER_ID;
+  return userId;
 }
 
 /**

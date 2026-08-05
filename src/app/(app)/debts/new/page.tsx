@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransaction } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
@@ -35,7 +35,7 @@ export default function NewDebtPage() {
   const searchParams = useSearchParams();
   const fromTransactionId = searchParams.get("fromTransaction") ?? undefined;
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: sourceTransaction } = useTransaction(fromTransactionId);
@@ -96,7 +96,13 @@ export default function NewDebtPage() {
       }
       invalidateDebts();
       toast(t("debtsPage.created"));
-      router.push("/debts");
+      // `back()`, no `replace`/`push` — se llega acá con push desde la
+      // lista o desde la tarjeta, que ya está en el historial justo
+      // debajo en cualquiera de los dos casos. `replace("/debts")`
+      // duplicaba esa entrada, y además ignoraba el caso "vengo de la
+      // tarjeta" (siempre mandaba a la lista). `back()` vuelve a donde
+      // realmente se estaba, sea cual sea.
+      router.back();
     } finally {
       setSaving(false);
     }

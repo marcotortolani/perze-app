@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Input, ListRow, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInvalidateInstruments } from "@/hooks/use-investments";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
@@ -15,10 +15,14 @@ const FIXED_INCOME_CLASS_NAMES = new Set(["Bonos soberanos", "ONs", "Letras", "P
 
 /** I7b — crear instrumento a mano: el formulario de 4 campos que I7 prometía. */
 export default function NewInstrumentPage({ params }: { params: Promise<{ portfolioId: string }> }) {
-  const { portfolioId } = use(params);
+  // El id de portfolio ya no hace falta acá — el destino post-guardado
+  // ahora es `router.back()` (ver `handleSave`), así que no hace falta
+  // construir ninguna URL con él. Se sigue llamando `use(params)` porque
+  // Next lo exige para el contrato de params async de esta ruta.
+  use(params);
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: assetClasses = [] } = useAssetClasses();
   const invalidateInstruments = useInvalidateInstruments(household?.id);
@@ -57,7 +61,17 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
       });
       invalidateInstruments();
       toast(t("newInstrumentPage.created"));
-      router.push(`/investments/${portfolioId}/trades/new`);
+      // `back()`, no `replace`/`push` — se llega acá con push desde la
+      // lista de inversiones O como sub-paso desde `trades/new` (crear un
+      // instrumento sin salir de cargar una operación); en los dos casos
+      // esa pantalla de origen ya está en el historial justo debajo.
+      // Antes esto hacía `replace` a una URL fija (`trades/new`), que
+      // duplicaba la entrada en el caso "desde la lista" Y, en el
+      // sub-paso, siempre mandaba a un `trades/new` VACÍO en vez del que
+      // se estaba llenando (limitación aceptada en su momento). `back()`
+      // resuelve los dos casos a la vez: vuelve exactamente a la pantalla
+      // real de origen, con lo que ya se había cargado ahí.
+      router.back();
     } finally {
       setSaving(false);
     }

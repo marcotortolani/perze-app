@@ -17,5 +17,5 @@ export function useCategories(householdId: string | undefined) {
 
 export function useInvalidateCategories(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: categoriesKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: categoriesKey(householdId), refetchType: "all" });
 }

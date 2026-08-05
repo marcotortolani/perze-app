@@ -17,5 +17,5 @@ export function useTags(householdId: string | undefined) {
 
 export function useInvalidateTags(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: tagsKey(householdId) });
+  return () => householdId && queryClient.invalidateQueries({ queryKey: tagsKey(householdId), refetchType: "all" });
 }

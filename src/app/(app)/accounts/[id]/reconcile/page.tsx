@@ -12,7 +12,7 @@ import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money, subtract } from "@/lib/money/money";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /** E5 — conciliación: "¿cuánto dice tu banco que tenés?" → diferencia → ajuste. Bloque E, Fase 8. */
@@ -22,7 +22,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
   const locale = useLocale() as Locale;
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: account, isLoading } = useAccount(id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
@@ -89,7 +89,12 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
       });
       invalidateAccounts();
       invalidateTransactions();
-      router.push(`/accounts/${account.id}`);
+      // `back()`, no `replace`/`push` — esta pantalla se llegó con push
+      // desde el detalle de la cuenta, que ya está en el historial justo
+      // debajo. `replace` a esa MISMA url duplicaba la entrada (el
+      // historial quedaba `[detalle, detalle]`) y "volver" necesitaba dos
+      // toques. `back()` no agrega nada, solo recorre lo que ya existe.
+      router.back();
       toast(t("accountsPage.reconcile.reconciled"));
     } finally {
       setSaving(false);

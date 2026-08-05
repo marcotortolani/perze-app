@@ -66,7 +66,16 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     // consulta la cookie; con sesión viva, sigue a `/onboarding`, que ya
     // detecta la sesión existente y salta directo a `/onboarding/country`.
     router.replace(userId === null ? (readRegisteredCookie() ? "/login" : "/onboarding") : "/onboarding");
-  }, [exempt, blocked, userId, router]);
+    // `pathname` en las deps aunque no se use en el cuerpo: este efecto es
+    // el ÚNICO rescate del estado `blocked`, y se dispara una sola vez por
+    // transición. Si ese `replace` se pierde (por ejemplo despachado
+    // mientras el router ya está procesando otra navegación), `blocked` no
+    // cambia, las deps no cambian, el efecto no se vuelve a disparar y el
+    // gate queda mostrando su spinner para siempre — sin salida que no sea
+    // recargar a mano. Con `pathname` adentro, cualquier cambio de ruta
+    // posterior lo reintenta: un fallo que se auto-cura en vez de uno que
+    // exige intervención.
+  }, [exempt, blocked, userId, router, pathname]);
 
   // Validando sesión/base (o redirigiendo): pantalla de carga con el ZMark
   // animado — nunca el flash del onboarding ni un blanco sin explicación.
