@@ -9,7 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useTransactions } from "@/hooks/use-transactions";
 import { householdsRepo } from "@/lib/repos/households-repo";
@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const locale = useLocale() as Locale;
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const decimalSeparatorPref = useFormatPreferencesStore((s) => s.decimalSeparator);
   const setDecimalSeparatorPref = useFormatPreferencesStore((s) => s.setDecimalSeparator);
   const dateFormatPref = useFormatPreferencesStore((s) => s.dateFormat);

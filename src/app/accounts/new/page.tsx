@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AccountFormFlow } from "@/features/accounts/AccountFormFlow";
 import { Skeleton } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAccounts } from "@/hooks/use-accounts";
 
 /**
@@ -13,7 +13,7 @@ import { useInvalidateAccounts } from "@/hooks/use-accounts";
  * el destino de un deep link (shortcut, link externo), no solo de la
  * navegación blanda que intercepta `@modal/(.)accounts/new`.
  *
- * `userId` es tri-estado (`useCurrentUserId`): `undefined` mientras la
+ * `userId` es tri-estado (`useEffectiveUserId`): `undefined` mientras la
  * sesión todavía no resolvió, `null` cuando ya se sabe que no hay sesión.
  * Antes los dos casos pintaban la misma pantalla en blanco — el segundo se
  * quedaba así para siempre en vez de mandar a loguearse.
@@ -21,7 +21,7 @@ import { useInvalidateAccounts } from "@/hooks/use-accounts";
 export default function NewAccountPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
   useEffect(() => {

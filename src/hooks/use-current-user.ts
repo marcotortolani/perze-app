@@ -86,6 +86,23 @@ export function useCurrentUserId(): string | null | undefined {
  * `undefined` — mientras carga, sigue devolviendo `undefined` para no
  * repetir el bug de B3 que este archivo ya documentó arriba) y la cookie
  * de demo está activa. Fuera de demo, es idéntico a `useCurrentUserId()`.
+ *
+ * **Este es el hook por defecto de las PANTALLAS.** El mismo bug apareció
+ * cuatro veces antes de que se barriera el resto (Categorías en la v0.22.0,
+ * captura y el modal de cuenta nueva en la v0.23.0): con el hook crudo, toda
+ * pantalla que gatea su render con `if (!userId)` queda en "Cargando…" para
+ * siempre en modo demo, porque ahí nunca hay sesión de Supabase. La regla, en
+ * una línea: **si la pantalla ESCRIBE, o si necesita saber cuál de los
+ * miembros del household sos, va `useEffectiveUserId()`.**
+ *
+ * `useCurrentUserId()` queda para la plomería de auth, que es donde la
+ * diferencia entre "no hay sesión" y "hay una sesión demo" IMPORTA. Hoy son
+ * exactamente dos consumidores, y conviene que sigan siendo pocos:
+ *
+ * - `components/onboarding-gate.tsx` — decide si hay sesión; con el
+ *   sustituto nunca mandaría a onboarding.
+ * - `components/db-owner-sync.tsx` — namespacea la base Dexie por usuario
+ *   real (`perze-${userId}`) y tiene una rama explícita para `null`.
  */
 export function useEffectiveUserId(): string | null | undefined {
   const userId = useCurrentUserId();

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { getDb } from "@/lib/db/client";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { todayIso } from "@/lib/dates/today";
 import { materializeDueRecurring } from "./materialize";
@@ -35,7 +35,7 @@ async function setMeta(key: string, value: string): Promise<void> {
 export function useRecurringMaterializer(): void {
   const t = useTranslations();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const invalidateTransactions = useInvalidateTransactions(household?.id);
   const ranRef = useRef(false);
 

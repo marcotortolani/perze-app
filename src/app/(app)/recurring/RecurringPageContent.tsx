@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Amount, Button, Chip, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
@@ -40,7 +40,7 @@ export default function RecurringPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: rules } = useRecurringRules(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
   const invalidateTransactions = useInvalidateTransactions(household?.id);

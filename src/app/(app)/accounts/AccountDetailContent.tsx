@@ -12,7 +12,7 @@ const LineChart = dynamic(() => import("@/design-system/charts/LineChart").then(
 const ChartCard = dynamic(() => import("@/design-system/charts/ChartCard").then((m) => m.ChartCard), { ssr: false });
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccount, useAccounts, useInvalidateAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
@@ -62,7 +62,7 @@ export function AccountDetailContent({ id }: { id: string }) {
   const dateFormat = useDateFormatPreference();
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: account, isLoading } = useAccount(id);
   const { data: allAccounts = [] } = useAccounts(household?.id);

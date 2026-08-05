@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { Amount, Button, IconButton, Switch } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useTransaction } from "@/hooks/use-transactions";
 import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
@@ -28,7 +28,7 @@ export default function SplitTransactionPage({ params }: { params: Promise<{ id:
   const { id } = use(params);
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: transaction } = useTransaction(id);
   const { data: members } = useRemoteHouseholdMembers(household?.id);

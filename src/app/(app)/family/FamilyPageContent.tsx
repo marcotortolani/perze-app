@@ -7,7 +7,7 @@ import { EmptyState, Icon, ListRow, Skeleton, usePageHeader } from "@/design-sys
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { markHouseholdMemberFormer } from "@/lib/repos/household-members-remote";
 import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
 import { computeNetBalances } from "@/lib/analytics/settle-up";
@@ -23,7 +23,7 @@ const ROLE_MESSAGE_KEY = {
 export default function FamilyPageContent() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);

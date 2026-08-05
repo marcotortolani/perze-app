@@ -32,7 +32,7 @@ import { BirthdayBanner } from "@/components/birthday-banner";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useBirthdayBannerStore } from "@/stores/birthday-banner-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { ageFromBirthDate, isBirthdayToday } from "@/lib/analytics/age";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -121,7 +121,7 @@ export default function HomePage() {
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
   const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: profile } = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
   const dismissedYear = useBirthdayBannerStore((s) => s.dismissedYear);
   const dismissBirthdayBanner = useBirthdayBannerStore((s) => s.dismiss);

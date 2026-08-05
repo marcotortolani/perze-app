@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ComparisonBars, EmptyState, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -28,7 +28,7 @@ const MEMBER_COLORS = ["var(--data-1)", "var(--data-2)", "var(--data-3)", "var(-
 export default function ComparePage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
   const { data: members } = useRemoteHouseholdMembers(household?.id);

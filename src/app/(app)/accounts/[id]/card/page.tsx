@@ -7,7 +7,7 @@ import { Amount, Button, Chip, EmptyState, ListRow, ProgressBar, Sheet, Skeleton
 import type { IconName } from "@/design-system/core/Icon";
 import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useTransaction, useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -30,7 +30,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: account, isLoading: accountLoading } = useAccount(id);
   usePageHeader({ onBack: () => router.back(), backLabel: t("ds.appHeader.back"), ...(account ? { title: account.name } : {}) });
   const { data: transactions } = useTransactions(household?.id, { accountId: id });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCurrentUserId } from "./use-current-user";
+import { useEffectiveUserId } from "./use-current-user";
 import { profilesRepo, type OwnAccess } from "@/lib/repos/profiles-repo";
 
 const OWN_ACCESS_KEY = ["auth", "own-access"] as const;
@@ -14,7 +14,7 @@ const OWN_ACCESS_KEY = ["auth", "own-access"] as const;
  * nuevo, server-side, con `SECURITY DEFINER`.
  */
 export function useOwnAccess(): OwnAccess | undefined {
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data } = useQuery({
     queryKey: [...OWN_ACCESS_KEY, userId],
     queryFn: () => profilesRepo.getOwnAccess(userId as string),

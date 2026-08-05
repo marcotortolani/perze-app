@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Amount, Button, EmptyState, NeedsFxBanner, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
 import { settlementsRepo, type SettlementMethod } from "@/lib/repos/settlements-repo";
@@ -22,7 +22,7 @@ import { money } from "@/lib/money/money";
 export default function SettleUpPage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const [settling, setSettling] = useState<{ memberId: string; amount: bigint } | null>(null);

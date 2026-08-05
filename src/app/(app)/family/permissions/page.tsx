@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -28,7 +28,7 @@ const VISIBILITY_MESSAGE_KEY = {
 export default function PermissionsPage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
   const { data: accounts } = useAccounts(household?.id);

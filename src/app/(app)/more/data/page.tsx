@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Button, Card, ListRow, Sheet, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
@@ -52,7 +52,7 @@ export default function DataAndBackupPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const { data: accounts } = useAccounts(household?.id);
   const { data: categories } = useCategories(household?.id);

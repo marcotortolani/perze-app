@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
-import { useCurrentUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
+import { useEffectiveUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ageFromBirthDate } from "@/lib/analytics/age";
@@ -26,7 +26,7 @@ import { ageFromBirthDate } from "@/lib/analytics/age";
 export default function ProfilePage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const email = useCurrentUserEmail();
   const profileQuery = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
 

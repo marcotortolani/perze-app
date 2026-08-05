@@ -18,7 +18,7 @@ import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use
 import { useInvalidateCategories } from "@/hooks/use-categories";
 import { useInvalidateTags, useTags } from "@/hooks/use-tags";
 import { useInvalidateTransactionTags, useTagIdsForTransaction } from "@/hooks/use-transaction-tags";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
@@ -52,7 +52,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const invalidateCategories = useInvalidateCategories(household.id);
   const invalidateTags = useInvalidateTags(household.id);
   const invalidateTransactionTags = useInvalidateTransactionTags();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: transactions } = useTransactions(household.id);
   const { data: tags = [] } = useTags(household.id);
   const { data: existingTagIds } = useTagIdsForTransaction(transaction.id);

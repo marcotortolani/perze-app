@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Amount, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
@@ -23,7 +23,7 @@ export default function InvestmentsPageContent() {
   const t = useTranslations();
   usePageHeader({ title: t("nav.investments") });
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
   const invalidatePortfolios = useInvalidatePortfolios(household?.id);

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateNotificationPreferences, useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { notificationPreferencesRepo, type NotificationPreferences } from "@/lib/repos/notification-preferences-repo";
 import { getCurrentPushSubscription, PushUnsupportedError, subscribeToPush, unsubscribeFromPush } from "@/lib/push/subscribe";
@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: prefs } = useNotificationPreferences(household?.id, userId ?? undefined);
   const invalidate = useInvalidateNotificationPreferences(household?.id, userId ?? undefined);
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);

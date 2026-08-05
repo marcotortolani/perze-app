@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, ColumnMappingRow, CsvPreviewTable, EmptyState, ListRow, Sheet, Skeleton, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { parseCsv } from "@/lib/import/csv-parser";
@@ -25,7 +25,7 @@ const FIELDS: ImportField[] = ["date", "description", "amount"];
 export default function ImportCsvPage() {
   const t = useTranslations();
   const router = useRouter();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: accounts = [] } = useAccounts(household?.id);
   const invalidateAccounts = useInvalidateAccounts(household?.id);

@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, Input, Keypad, KeypadKey, ListRow, SegmentedControl, Sheet, Switch, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -38,7 +38,7 @@ export default function NewRecurringRulePage() {
   const fromTransactionId = searchParams.get("fromTransaction") ?? undefined;
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: origin } = useTransaction(fromTransactionId);
