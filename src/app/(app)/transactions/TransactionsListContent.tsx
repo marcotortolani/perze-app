@@ -27,7 +27,7 @@ import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
-import { formatDateLong } from "@/i18n/formatting";
+import { formatDateMedium } from "@/i18n/formatting";
 import { useCalendarView } from "./use-calendar-view";
 import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
@@ -393,7 +393,12 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
       {pending && pending > 0 ? (
         <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding)) 12px", borderRadius: 0, flexShrink: 0 }} />
       ) : null}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, flexShrink: 0 }}>
+      {/* `flexWrap`: con el calendario abierto y un día elegido son tres
+          chips, y en un teléfono chico no entran en una línea. Que baje el
+          tercero es prolijo; lo que no se puede es que un chip se parta por
+          dentro y quede más alto que sus hermanos. `rowGap` para que las dos
+          filas respiren igual que las columnas. */}
+      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, rowGap: 8, paddingBottom: 12, flexShrink: 0 }}>
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
@@ -451,9 +456,16 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false }: Mov
               cursor: "pointer",
               color: "var(--text-secondary)",
               fontSize: 13,
+              // Una sola línea, siempre. Con la fecha larga el chip se partía
+              // en dos renglones y quedaba más alto que los de al lado; en un
+              // iPhone SE directamente roto. `flexShrink: 0` para que la fila
+              // de chips no lo apriete cuando no hay ancho: si algo tiene que
+              // ceder, es el espacio libre de la derecha.
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
-            {formatDateLong(locale, noonUtc(calendar.scope.day))}
+            {formatDateMedium(locale, noonUtc(calendar.scope.day))}
             <Icon name="close" size={14} color="var(--text-secondary)" />
           </button>
         ) : null}

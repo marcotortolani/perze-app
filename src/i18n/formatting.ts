@@ -48,6 +48,23 @@ export function formatDateShort(locale: Locale, date: Date): string {
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(date);
 }
 
+/**
+ * Día de la semana y mes ABREVIADOS: "mié, 5 ago" · "Wed, Aug 5" · "qua., 5 de ago.".
+ *
+ * Existe para los lugares donde hace falta el día de la semana pero no hay
+ * ancho para escribirlo entero. El caso que lo pidió es el chip de alcance del
+ * calendario: con `formatDateLong` decía "miércoles, 5 de agosto", se partía
+ * en dos renglones y quedaba más alto que los chips de al lado — en un iPhone
+ * SE directamente roto.
+ *
+ * La abreviatura la resuelve `Intl` por locale, no una tabla propia: cada
+ * idioma corta distinto (es "mié", en "Wed", pt "qua.") y el orden de los
+ * campos también cambia.
+ */
+export function formatDateMedium(locale: Locale, date: Date): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" }).format(date);
+}
+
 export function formatDateLong(locale: Locale, date: Date): string {
   return new Intl.DateTimeFormat(locale, {
     weekday: "long",
