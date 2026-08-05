@@ -29,7 +29,7 @@ function tabForPathname(pathname: string): string {
 }
 
 /** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
-const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/accounts", "/more", "/more/settings", "/more/categories"]);
+const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/transactions/calendar", "/accounts", "/more", "/more/settings", "/more/categories"]);
 
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
