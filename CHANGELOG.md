@@ -6,6 +6,53 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.24.0] — 2026-08-05
+
+### Arreglado — la escala del heatmap del calendario aplastaba los días chicos
+
+- Un día con gasto chico se veía **igual que un día sin nada**, y mirando el mes entero casi no
+  había diferencia visual entre días. Medido: con la escala anterior, gastos de **80, 40, 20 y 1**
+  contra un máximo de 1000 daban **todos exactamente 8%** de mezcla. No se parecían: eran el mismo
+  color, y el mismo que el piso.
+- **La calibración estaba por debajo del propio diseño.** El piso efectivo era 8% (`Math.max(0.12,
+  …)` × 70) contra el **10%** que es el mínimo que dibuja `bloque-d-movimientos.html:457`. Y la
+  normalización era lineal contra el máximo del mes, así que un solo día caro empuja a todos los
+  demás contra el piso — que es el caso **normal**, no el raro: el gasto diario tiene una
+  distribución muy sesgada, pocos días caros y muchos chicos.
+- Ahora el piso es 10 y la curva es **raíz cuadrada**, que levanta la zona baja sin perder el
+  significado de magnitud (un día más caro siempre pinta más, cosa que un ranking por cuantiles sí
+  rompería). Los mismos seis días pasan de `70/28/19/15/12/11` a `70/43/33/27/22/19`.
+- **Cero se reserva para "no hubo gasto"**: esa celda queda idéntica al fondo, y eso es
+  información, no ausencia de estilo.
+- **El techo queda en 70%, y no es una decisión estética.** El número del día vive DENTRO de la
+  celda, y los tonos medios no admiten texto chico: medido con la fórmula de luminancia relativa
+  WCAG, **entre 80% y 87% de mezcla ninguna tinta llega a 4,5:1**, ni la clara ni la oscura, en
+  ninguno de los dos temas. Subir el techo obligaría a invertir la tinta —con el punto de inversión
+  **opuesto por tema**, porque en oscuro la celda se aclara al subir la mezcla y en claro se
+  oscurece— y además a saltear esa banda, dejando un escalón en una rampa que debe ser continua.
+  Verificado en el navegador sobre la celda más intensa real: **5,33:1 en oscuro y 5,58:1 en
+  claro**.
+- **La leyenda ahora nombra la métrica**: "Menos gasto / Más gasto". El heatmap codifica solo
+  gastos, así que un día con un ingreso grande y sin gastos se ve vacío — correcto, pero parecía un
+  bug. Es el único lugar de la pantalla donde se puede decir de qué habla el color.
+- La escala vive en `calendar-scope.ts` y no inline en el componente porque es la parte testeable,
+  y ya se calibró mal una vez. El test de **separación mínima entre días consecutivos** es el que
+  falla si alguien vuelve a la escala lineal.
+- Fuera de alcance, declarado: el diseño además baja la tinta del número a `--text-secondary` por
+  debajo del 30%. No entra — atenuar los días tranquilos trabaja en contra de que se vean, que es
+  lo que motivó este cambio.
+
+### Arreglado — un e2e del calendario fallaba de forma intermitente
+
+- El test contaba botones del DOM para verificar que elegir un día angostaba la lista, y la lista
+  es **virtualizada**: cuántas filas hay en el DOM depende del scroll y del overscan, no de los
+  datos. Pasa a contar **cabeceras de día**, que sí es un ancla estable — el mes entero tiene
+  varias, el día elegido tiene exactamente una.
+- Nota de entorno, por si vuelve a aparecer: `playwright.config.ts` usa `reuseExistingServer`, así
+  que un `next dev` colgado en el puerto **3100** de una corrida anterior hace que la suite corra
+  contra código viejo. Y sin `.env.local` el `webServer` ni arranca (`Invalid environment
+  variables`), lo que se manifiesta como timeouts masivos y no como un error de configuración.
+
 ## [0.23.0] — 2026-08-05
 
 ### Arreglado — en modo demo no se podía cargar un gasto
