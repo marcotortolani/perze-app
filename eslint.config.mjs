@@ -36,7 +36,11 @@ const eslintConfig = defineConfig([
     // CLAUDE.md § i18n. `/dev/*` es la referencia visual del design
     // system, en español a propósito (docs/01-arquitectura-datos.md) —
     // excluida junto con tests y e2e, que aseran contra copy fijo.
-    ignores: ["src/app/dev/**", "e2e/**", "**/*.test.{ts,tsx}"],
+    // `src/emails/auth/**` son las plantillas de Auth de Supabase: van en
+    // español fijo a propósito (el Dashboard tiene una sola plantilla por
+    // tipo, sin noción de locale — ver `src/emails/auth/copy.ts`), así
+    // que no aplica el guardarraíl de next-intl.
+    ignores: ["src/app/dev/**", "e2e/**", "**/*.test.{ts,tsx}", "src/emails/auth/**"],
     rules: {
       "react/jsx-no-literals": [
         "error",

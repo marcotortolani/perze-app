@@ -1,3 +1,4 @@
+
 # Mejora: Google OAuth + Resend para email
 
 > Este documento **no es especificación de producto** y no entra en la cadena
@@ -21,35 +22,40 @@ resuelve eso y de paso habilita mails que la app todavía no manda (invitación
 al household, resumen semanal). Ver [§ 5](#5-resend--smtp-para-supabase-auth)
 y [§ 6](#6-resend--mails-transaccionales-de-la-app).
 
-## 0. Pendientes inmediatos — retomar por acá
+## 0. Estado actual
 
-Quedaron de la sesión del 2026-08-01 que arregló el login por el link del
-mail (v0.6.1). El código de la app ya no depende de ninguno de estos pasos
-para funcionar — el link del mail default ya inicia sesión de verdad — pero
-los dos primeros mejoran el mail en sí y el tercero destraba usuarios
-reales:
+La plantilla propia ya no es un `.html` escrito a mano: se genera desde
+`src/emails/auth/{magic-link,recovery}.tsx` con react-email
+(`docs/mejora-auth-oauth-y-email.md` § 5 y § 8) y trae el branding de
+Perze — wordmark, tipografía, tokens de color en modo claro. Sigue
+teniendo las mismas dos vías que antes: el código de 6 dígitos grande
+(`{{ .Token }}`) y el botón "O continuá con un click", que apunta a
+`/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/onboarding`
+— **nunca `{{ .ConfirmationURL }}`**, que cae en el flujo implícito con
+tokens en el fragment.
 
-- [ ] **Pegar la plantilla propia en el Dashboard**: Authentication →
-  Emails → *Magic Link*, con el contenido de
-  `supabase/templates/magic_link.html`. `supabase config push` la rechaza
-  en plan free, pero el editor del Dashboard sí la acepta. La plantilla
-  actual ya trae las dos vías: el código de 6 dígitos grande ({{ .Token }})
-  y el botón "O continuá con un click", que apunta a
-  `/auth/callback?token_hash={{ .TokenHash }}&type=email` — un route que la
-  app ahora sí consume server-side. **Nunca volver a {{ .ConfirmationURL }}**:
-  ese termina en el flujo implícito con tokens en el fragment, que A2
-  tolera solo como red de seguridad.
-- [ ] **Verificar el Site URL** en Authentication → URL Configuration: la
-  plantilla usa `{{ .SiteURL }}` para armar el link, así que tiene que
-  apuntar al dominio del deploy (con `http://localhost:3000` en la
-  allowlist de redirects para seguir probando con `pnpm dev`).
+Pendiente, en este orden:
+
 - [ ] **Resend como SMTP de Auth** — el paso de mayor valor, ver
   [§ 5](#5-resend--smtp-para-supabase-auth): el proveedor default solo
   entrega a miembros del proyecto y con tope de 2 mails/hora, así que hoy
-  ningún usuario real puede recibir su código.
+  ningún usuario real puede recibir su código. Lo ejecuta el operador
+  (Dashboard de Supabase + DNS de Resend), no es un cambio de código.
+- [ ] **Pegar `supabase/templates/magic_link.html` y `recovery.html` en el
+  Dashboard**: Authentication → Emails. `supabase config push` sigue
+  rechazándolas en plan free con o sin SMTP propio; el editor del
+  Dashboard sí las acepta. Los archivos se regeneran con
+  `pnpm email:export` desde el TSX — nunca se editan a mano
+  (`src/emails/auth/templates.test.ts` lo verifica).
+- [ ] **Verificar el Site URL** en Authentication → URL Configuration: la
+  plantilla usa `{{ .SiteURL }}` para armar el link y el wordmark, así que
+  tiene que apuntar al dominio del deploy (con `http://localhost:3000` en
+  la allowlist de redirects para seguir probando con `pnpm dev`).
 - [ ] **Probar el ciclo completo con un mail ajeno al proyecto** una vez
-  hecho lo anterior: registro → mail → código tipeado Y link clickeado →
-  `/pending` → aprobación desde el panel del operador → onboarding.
+  hecho lo anterior: registro → mail con branding → código tipeado **y**
+  link clickeado → `/pending` → aprobación desde el panel del operador →
+  onboarding. Las dos vías, no una — es la puerta de entrada a revertir
+  la transición de contraseñas de § 0.1.
 
 ## 0.1 Solución de transición: registro con contraseña, `/login`, `/forgot-password`
 
@@ -223,15 +229,16 @@ documento:
 Es el cambio de mayor valor inmediato: destraba tres problemas ya activos.
 
 **Por qué hace falta.** Hoy todo el mail de Auth sale por el proveedor
-default de Supabase, que en `supabase/config.toml:207-209` está limitado a
-**2 mails por hora** y, según la documentación de Supabase, ese proveedor
-default **solo entrega a miembros del equipo del proyecto** — no puede
-mandarle un OTP a un usuario real. Ese límite fue justamente lo que frenó
-las pruebas de A2 registradas en `docs/plan-de-trabajo.md:522`. Además,
-`supabase/templates/magic_link.html` ya está escrito y **no se puede
-aplicar**: `supabase config push` la rechaza en plan free
-(`supabase/config.toml:282-289`), y por eso el commit `eea7061` tuvo que
-resolver la plantilla del OTP por otro camino.
+default de Supabase, que estaba limitado a **2 mails por hora** y, según la
+documentación de Supabase, ese proveedor default **solo entrega a miembros
+del equipo del proyecto** — no puede mandarle un OTP a un usuario real. Ese
+límite fue justamente lo que frenó las pruebas de A2 registradas en
+`docs/plan-de-trabajo.md:522`. Además, `supabase/templates/magic_link.html`
+(ahora generado por react-email, ver [§ 8](#8-flujo-de-las-plantillas-de-auth-con-react-email))
+**no se puede aplicar por `config push`**: `supabase config push` la
+rechaza en plan free, con SMTP propio o sin él, y por eso el commit
+`eea7061` tuvo que resolver la plantilla del OTP por otro camino primero.
+El HTML se pega a mano en el Dashboard.
 
 **Límites del plan gratuito de Resend** (verificado en
 [resend.com/pricing](https://resend.com/pricing)): 3.000 mails por mes, tope
@@ -258,13 +265,14 @@ sobra; el techo que importa vigilar es el diario, no el mensual.
    | Remitente | una dirección del dominio verificado |
 
 4. Al activar SMTP propio, Supabase eleva el límite inicial a **30 mails por
-   hora** (ajustable después en Rate Limits). Actualizar
-   `supabase/config.toml:209` para que el archivo refleje el límite real.
-5. Recién con SMTP propio activo se puede descomentar
-   `[auth.email.template.magic_link]`
-   (`supabase/config.toml:287-289`) y correr `supabase config push` sin que
-   lo rechace — `supabase/templates/magic_link.html` ya está listo y
-   esperando ese paso.
+   hora** (ajustable después en Rate Limits). `supabase/config.toml` ya
+   refleja ese valor — es documentación, no algo que este archivo
+   configure: el rate limit real vive en el Dashboard del proyecto remoto.
+5. `pnpm email:assets && pnpm email:export` genera
+   `supabase/templates/{magic_link,recovery}.html` desde
+   `src/emails/auth/*.tsx`. Pegar ambos en Authentication → Emails
+   (Magic Link y Recovery) — **esto sigue siendo manual**, `config push`
+   no lo aplica en plan free.
 
 La API key de Resend es secreto de servidor: se carga solo en la
 configuración SMTP de Supabase, nunca como `NEXT_PUBLIC_*` ni en el bundle
@@ -272,49 +280,104 @@ del cliente.
 
 ## 6. Resend — mails transaccionales de la app
 
-Backlog priorizado de lo que hoy no existe y que Resend habilitaría, cada uno
-con el archivo que lo tocaría:
+Backlog de lo que hoy no existe y que Resend habilita. Alcance de esta
+pasada: **solo el primer punto.**
 
-- **Invitación al household (J3).** `household_invites` ya guarda una
-  columna `email` que **nadie usa hoy** — el código de invitación se
-  comparte a mano (`src/lib/repos/invites-repo.ts`,
-  `src/app/(app)/family/invite/page.tsx`). Es el hueco más evidente y el
-  mejor primer caso de uso.
+- **Invitación al household (J3) — implementado.**
+  `household_invites` guardaba una columna `email` que nadie usaba: el
+  código se compartía a mano (`src/lib/repos/invites-repo.ts`,
+  `src/app/(app)/family/invite/page.tsx`). Ahora, con email cargado,
+  `/family/invite` manda el mail vía `src/app/api/emails/invite/route.ts`
+  — ver [§ 8](#8-flujo-de-las-plantillas-de-auth-con-react-email) para el
+  patrón general de plantillas y el detalle del handler.
 - **Resumen semanal, alertas de presupuesto, recordatorios de recurrentes e
-  insights.** Las cuatro preferencias ya existen en
-  `src/lib/repos/notification-preferences-repo.ts` con **un solo canal
-  implementado, push**. Email es particularmente relevante porque en iOS el
-  Web Push exige la PWA instalada — sin eso, esos avisos hoy no llegan por
-  ningún lado.
-- **Confirmación de export de datos y de borrado de cuenta (K9).**
+  insights — fuera de alcance, con motivo.** Las cuatro preferencias ya
+  existen en `src/lib/repos/notification-preferences-repo.ts` con **un
+  solo canal implementado, push**. Sumar email exige una migración de
+  schema primero (`notification_preferences` es un booleano por tipo, sin
+  noción de canal) y una decisión de producto que no se toma sola: **qué
+  dispara cada aviso y con qué frecuencia** — `supabase/functions/send-push/index.ts`
+  deja escrito en su cabecera que hoy nadie lo dispara, a propósito.
+  Resend resuelve el transporte, no el disparador.
+- **Confirmación de export de datos y de borrado de cuenta (K9) — fuera de
+  alcance**, mismo criterio de priorización: no hay urgencia sin un
+  disparador todavía definido.
 
-Dos puntos que son **decisión pendiente, no detalle de implementación**:
+**Dónde vive el envío — decisión cerrada: Route Handlers de Next, no una
+Edge Function.** El envío disparado por el usuario (invitar a alguien) no
+necesita `service_role` ni cron: corre con la sesión del usuario y RLS
+como barrera de autorización, igual que `src/app/api/fx/route.ts`. Una
+Edge Function tendría sentido recién para lo que dispare el *servidor* sin
+que haya un usuario navegando (el resumen semanal, por ejemplo) — que es
+justo lo que queda fuera de esta pasada. `src/emails/send.ts` envuelve el
+SDK de Resend; el secreto se carga como `RESEND_API_KEY` en el entorno del
+deploy de Next (bloque `server` de `src/env.ts`), nunca como
+`NEXT_PUBLIC_*` ni en un secreto de Supabase — acá no hay Edge Function
+que lo necesite.
 
-- `notification_preferences` es un booleano por tipo de aviso, **sin noción
-  de canal**. Sumar email pide una migración de schema (una columna de canal
-  por tipo, o una segunda columna paralela por tipo) — no se resuelve solo
-  con código de envío.
-- `supabase/functions/send-push/index.ts` deja escrito en su cabecera que
-  **nadie lo dispara todavía**, a propósito: la frecuencia y el disparador
-  de cada tipo de notificación son decisión de producto que no se toma sola.
-  El mismo pendiente aplica igual a email — Resend resuelve el transporte,
-  no el disparador.
+## 7. Google + colapso de A2 — hecho
 
-**Dónde vive el envío.** Una Edge Function nueva, hermana de `send-push`,
-reusando su mismo patrón: validación del request con Zod, `service_role`
-para leer `notification_preferences`, respuesta opaca vía el helper
-`internalError` (nunca se devuelve `error.message` de Postgres al
-invocador), y sin CORS porque es server-to-server. El secreto se carga con
-`supabase secrets set RESEND_API_KEY=...`, igual que `VAPID_PRIVATE_KEY` hoy.
+`NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS=google` enciende los botones que ya
+estaban programados (`src/app/onboarding/page.tsx`). Lo que faltaba —el
+colapso del email bajo "Usar mi email" que exige `CLAUDE.md` § "Orden de
+A2"— está programado: sin la variable, A2 es idéntica a como era; con
+ella, el email colapsa y el `Input` aparece recién al tocar el disparador,
+con foco automático. Apple sigue sin dibujarse — la rama del código queda
+intacta, ver [§ 3](#3-apple--descartado-y-por-qué).
 
-## 7. Orden recomendado y costo
+Pendiente, y es prueba manual, no de código: instalar la PWA y confirmar
+que el ida y vuelta de `signInWithOAuth` en modo standalone deja la sesión
+en la ventana instalada, y que `?next=` sobrevive el viaje completo — se
+rompe si falta el paso 6 de [§ 2](#2-google--configuración).
 
-| Paso | Costo | Destraba |
+## 8. Flujo de las plantillas de Auth con react-email
+
+Los tres emails de esta pasada (`magic_link`, `recovery`, invitación al
+household) comparten el mismo sistema de branding en `src/emails/`:
+
+- `src/emails/theme.ts` — los hexes del **modo claro** de
+  `docs/02-design-system.md` (muchos clientes de mail ignoran
+  `prefers-color-scheme`) y el stack tipográfico (`Inter`, no `Geist` —
+  Geist está autohospedada bajo un hash de Next e inalcanzable desde un
+  cliente de mail).
+- `src/emails/components/{EmailLayout,EmailButton,Wordmark}.tsx` — el
+  shell, el botón primario y el wordmark, como PNG absoluto (
+  `scripts/generate-email-assets.mjs`, `pnpm email:assets`): un SVG no se
+  renderiza de forma confiable en Gmail ni en Outlook.
+- `src/emails/auth/{magic-link,recovery}.tsx` — las dos plantillas de
+  Auth, **en español fijo** (el Dashboard de Supabase tiene una sola
+  plantilla por tipo, sin noción de locale — ver el comentario de
+  `src/emails/auth/copy.ts` para las dos alternativas evaluadas y
+  descartadas). Emiten los placeholders Go (`{{ .Token }}`,
+  `{{ .TokenHash }}`, `{{ .SiteURL }}`) **literales**, sin que React los
+  escape — `src/emails/auth/templates.test.ts` lo verifica.
+- `src/emails/invite.tsx` — la única plantilla con i18n real (ES/EN/PT vía
+  next-intl), porque la manda la propia app y no GoTrue.
+
+**Ciclo de edición:** tocar el `.tsx` → `pnpm email:export` (regenera
+`supabase/templates/{magic_link,recovery}.html` desde el TSX con
+`scripts/export-email-templates.mjs`, que bundlea con esbuild y renderiza
+con `@react-email/render`) → commitear el HTML junto con el cambio →
+pegarlo a mano en el Dashboard. El Dashboard es la fuente **efectiva**
+mientras `supabase config push` siga rechazando plantillas en plan free;
+el HTML commiteado es la fuente de verdad de lo que *debería* estar
+pegado ahí, y el test de paridad byte a byte es lo que evita que diverjan.
+
+**Preview:** `pnpm dev` + `/dev/emails` (solo fuera de producción, mismo
+guardarraíl que el resto de `/dev`). No se instaló el CLI `react-email`:
+levanta su propio servidor Next dentro del proyecto y arriesgaba
+`pnpm build`.
+
+## 9. Orden recomendado y costo
+
+| Paso | Costo | Estado |
 | --- | --- | --- |
-| Resend SMTP en Supabase Auth | US$ 0 | OTP a usuarios reales, 30/h en vez de 2/h, plantilla propia |
-| Google OAuth | US$ 0 | El p90 de 90 s de A2 |
-| Colapso de A2 + prueba en PWA | código | Que A2 coincida con la decisión cerrada |
-| Mails transaccionales | US$ 0 hasta 3.000/mes | Invitaciones, avisos sin push en iOS |
+| Plantillas de Auth con branding (react-email) | US$ 0 | Código listo — falta pegar en el Dashboard (config del operador) |
+| Resend SMTP en Supabase Auth | US$ 0 | Config del operador — ver [§ 5](#5-resend--smtp-para-supabase-auth) |
+| Google OAuth + colapso de A2 | US$ 0 | Código listo — falta la config de Google Cloud (operador) |
+| Invitación al household por email | US$ 0 hasta 3.000/mes | Implementado |
+| Reversión de la transición de contraseñas | código | Bloqueado hasta probar el OTP real con un mail ajeno al proyecto — ver § 0.1 |
+| Resumen semanal, alertas, K9 | US$ 0 hasta 3.000/mes | Fuera de alcance — falta migración de canal y decisión de disparador |
 
 Apple queda fuera de alcance por decisión, no por orden de prioridad — ver
 [§ 3](#3-apple--descartado-y-por-qué). Todo el camino de esta tabla cuesta

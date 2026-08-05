@@ -12,13 +12,17 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
-    "db:push": "supabase db push --linked"
+    "db:push": "supabase db push --linked",
+    "email:assets": "node scripts/generate-email-assets.mjs",
+    "email:export": "node scripts/export-email-templates.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@hookform/resolvers": "^5.4.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-slot": "^1.2.4",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@serwist/turbopack": "9.5.11",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",
@@ -40,6 +44,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.76.1",
     "recharts": "^3.10.1",
+    "resend": "^6.18.1",
     "serwist": "^9.5.11",
     "shadcn": "^4.8.3",
     "sharp": "^0.34.5",
