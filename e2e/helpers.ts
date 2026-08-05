@@ -19,7 +19,9 @@ export async function seedDemoHousehold(page: Page): Promise<void> {
   // resuelva y dispare el `router.replace`. Mirar la URL o el DOM ahí es una
   // carrera — hay que esperar a que esa llamada de red termine primero.
   await page.waitForLoadState("networkidle");
-  const skipWelcome = page.getByRole("button", { name: "Empezar" });
+  // "Saltear" y no "Empezar": A1 son tres slides y el botón primario dice
+  // "Siguiente" hasta el último. "Saltear" está en los tres.
+  const skipWelcome = page.getByRole("button", { name: "Saltear" });
   const demoButton = page.getByText("Probar con datos de ejemplo");
   if (await skipWelcome.isVisible().catch(() => false)) {
     await skipWelcome.click();
@@ -74,11 +76,30 @@ export async function enableModule(page: Page, label: string): Promise<void> {
  */
 export async function expectReplaceNotPush(
   page: Page,
-  { formUrl, save, expectedUrlAfterSave }: { formUrl: string; save: () => Promise<void>; expectedUrlAfterSave: string | RegExp }
+  {
+    formUrl,
+    save,
+    expectedUrlAfterSave,
+    afterSave,
+  }: {
+    formUrl: string;
+    save: () => Promise<void>;
+    expectedUrlAfterSave: string | RegExp;
+    /**
+     * Lo que haya que verificar del estado INMEDIATAMENTE posterior a guardar
+     * —típicamente el toast de confirmación—. Va acá y no después de llamar a
+     * este helper: abajo hay un `goBack()`, y para cuando esa navegación
+     * termina el toast ya expiró. Diez aserciones del spec estaban escritas
+     * así y la primera fallaba de forma reproducible; las otras nueve pasaban
+     * de casualidad, por llegar antes de que el toast se apagara.
+     */
+    afterSave?: () => Promise<unknown>;
+  }
 ): Promise<void> {
   await save();
   await page.waitForURL(expectedUrlAfterSave);
   const landedUrl = page.url();
+  await afterSave?.();
   await page.goBack();
   await expect(page).not.toHaveURL(formUrl);
   await expect(page).not.toHaveURL(landedUrl);

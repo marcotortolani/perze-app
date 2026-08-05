@@ -6,6 +6,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.22.0] — 2026-08-05
+
+### Arreglado — Categorías no renderizaba nada en modo demo
+
+- `/more/categories` usaba `useCurrentUserId()` en su barrera de carga, y ese hook resuelve a
+  `null` **para siempre** cuando no hay sesión de Supabase — que es exactamente el caso del modo
+  demo, que nunca crea una. La pantalla quedaba en skeleton eternamente. Ahora usa
+  `useEffectiveUserId()`, que es el hook que `use-current-user.ts` documenta para las pantallas
+  que ESCRIBEN, y esta crea, edita, archiva y borra categorías.
+- Está así desde la v0.3.0. No se detectó antes porque el e2e que lo cubre venía sin ejecutarse
+  (ver abajo).
+
+### Arreglado — la suite de e2e de navegación llevaba mucho tiempo sin correr entera
+
+- `navigation-replace.spec.ts` tenía **1 test fallando y 11 que nunca llegaban a ejecutarse**: el
+  `describe` es serial, así que el primer fallo dejaba a todos los siguientes en `skipped` o
+  `did not run`. El id del test fallado coincide con el registrado el 4 de agosto, o sea que la
+  falla es anterior a los cambios de navegación de las v0.18–v0.20. Ahora **pasan los 8** que no
+  están explícitamente en `skip`.
+- **La causa raíz era una aserción mal ubicada, no la app.** Diez comprobaciones de toast estaban
+  escritas DESPUÉS de `expectReplaceNotPush`, que termina con un `goBack()`: para cuando esa
+  navegación termina, el toast ya expiró. La traza lo confirmó — el toast se renderizaba y
+  desaparecía antes de que la aserción lo buscara. Las otras nueve pasaban por llegar a tiempo,
+  no por estar bien. El helper gana un parámetro `afterSave` que corre en el momento correcto.
+- Tres tests asumían seguir parados en el detalle o la lista después de llamar al helper, que
+  deja la página una entrada más atrás en el historial.
+- El de editar un movimiento esperaba aterrizar en `/transactions`; el editor hace `router.back()`
+  y desde que el detalle es un search param vuelve a `/transactions?tx=<id>`. Su comentario decía
+  lo contrario y también se corrigió.
+- `categories-manage.spec.ts` se actualizó al copy nuevo ("Archivar categoría", que antes decía
+  "Borrar categoría" sin borrar) y a que archivar ya no hace desaparecer la categoría de la
+  pantalla sino que la baja a "Archivadas".
+
 ## [0.21.0] — 2026-08-05
 
 ### Cambiado — el calendario dejó de ser una pantalla y pasó a ser una vista de Movimientos

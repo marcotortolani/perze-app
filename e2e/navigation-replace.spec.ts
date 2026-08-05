@@ -32,8 +32,8 @@ test.describe("cuentas", () => {
       formUrl,
       save: () => page.getByRole("button", { name: "Archivar" }).click(),
       expectedUrlAfterSave: "/accounts",
+      afterSave: () => expect(page.getByText("Cuenta archivada")).toBeVisible(),
     });
-    await expect(page.getByText("Cuenta archivada")).toBeVisible();
   });
 
   test("reconciliar una cuenta salta la pantalla de conciliar al volver", async ({ page }) => {
@@ -75,6 +75,13 @@ test.describe("cuentas", () => {
       expectedUrlAfterSave: accountUrl,
     });
 
+    // `expectReplaceNotPush` termina con un `goBack()`, así que acá ya NO
+    // estamos en el detalle de la cuenta sino en la lista: hay que volver a
+    // abrirlo antes de buscar "Editar" de nuevo. El test asumía lo contrario
+    // y nunca se notó porque este `describe` es serial y el primer caso venía
+    // fallando, dejando a todos los demás en `skipped`.
+    await page.goto(accountUrl);
+
     // Cancelar sin guardar tampoco debe dejar el formulario alcanzable.
     await page.getByRole("button", { name: "Editar" }).click();
     await page.waitForURL(/\/accounts\/.+\/edit/);
@@ -106,9 +113,12 @@ test.describe("metas y presupuestos", () => {
       formUrl: newFormUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: "/goals",
+      afterSave: () => expect(page.getByText("Meta creada")).toBeVisible(),
     });
-    await expect(page.getByText("Meta creada")).toBeVisible();
 
+    // Igual que en cuentas: el helper deja la página una entrada MÁS ATRÁS,
+    // así que hay que volver a la lista antes de seguir.
+    await page.goto("/goals");
     await page.getByText("Viaje a Bariloche", { exact: true }).click();
     await page.waitForURL(/\/goals\/.+/);
     const detailUrl = page.url();
@@ -116,8 +126,8 @@ test.describe("metas y presupuestos", () => {
       formUrl: detailUrl,
       save: () => page.getByRole("button", { name: "Eliminar meta" }).click(),
       expectedUrlAfterSave: "/goals",
+      afterSave: () => expect(page.getByText("Meta eliminada")).toBeVisible(),
     });
-    await expect(page.getByText("Meta eliminada")).toBeVisible();
   });
 
   test("crear y borrar un presupuesto saltan el formulario al volver", async ({ page }) => {
@@ -136,9 +146,12 @@ test.describe("metas y presupuestos", () => {
       formUrl: newFormUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: "/budgets",
+      afterSave: () => expect(page.getByText("Presupuesto creado")).toBeVisible(),
     });
-    await expect(page.getByText("Presupuesto creado")).toBeVisible();
 
+    // Igual que en cuentas: el helper deja la página una entrada MÁS ATRÁS,
+    // así que hay que volver a la lista antes de seguir.
+    await page.goto("/budgets");
     await page.getByRole("button", { name: /Todo el hogar/ }).click();
     await page.waitForURL(/\/budgets\/.+/);
     const detailUrl = page.url();
@@ -146,8 +159,8 @@ test.describe("metas y presupuestos", () => {
       formUrl: detailUrl,
       save: () => page.getByRole("button", { name: "Eliminar presupuesto" }).click(),
       expectedUrlAfterSave: "/budgets",
+      afterSave: () => expect(page.getByText("Presupuesto eliminado")).toBeVisible(),
     });
-    await expect(page.getByText("Presupuesto eliminado")).toBeVisible();
   });
 });
 
@@ -175,8 +188,8 @@ test.describe("deudas y reglas", () => {
       formUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: "/debts",
+      afterSave: () => expect(page.getByText("Deuda creada")).toBeVisible(),
     });
-    await expect(page.getByText("Deuda creada")).toBeVisible();
   });
 
   test("crear una regla de auto-categorización salta el formulario al volver", async ({ page }) => {
@@ -194,8 +207,8 @@ test.describe("deudas y reglas", () => {
       formUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: "/more/rules",
+      afterSave: () => expect(page.getByText("Regla creada")).toBeVisible(),
     });
-    await expect(page.getByText("Regla creada")).toBeVisible();
   });
 });
 
@@ -228,8 +241,8 @@ test.describe("inversiones", () => {
       formUrl: instrumentFormUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: tradesNewUrl,
+      afterSave: () => expect(page.getByText("Instrumento creado")).toBeVisible(),
     });
-    await expect(page.getByText("Instrumento creado")).toBeVisible();
   });
 
   test.skip("crear un instrumento como sub-paso de una operación aterriza en trades/new, no en el instrumento abandonado", async ({ page }) => {
@@ -280,8 +293,8 @@ test.describe("movimientos", () => {
       formUrl,
       save: () => page.getByRole("button", { name: "Borrar" }).click(),
       expectedUrlAfterSave: "/transactions",
+      afterSave: () => expect(page.getByText("Movimiento borrado")).toBeVisible(),
     });
-    await expect(page.getByText("Movimiento borrado")).toBeVisible();
   });
 
   // `household-members-remote.ts` lee los miembros directo de Supabase a
@@ -309,8 +322,8 @@ test.describe("movimientos", () => {
       formUrl,
       save: () => page.getByRole("button", { name: "Guardar" }).click(),
       expectedUrlAfterSave: txUrl,
+      afterSave: () => expect(page.getByText("Reparto guardado")).toBeVisible(),
     });
-    await expect(page.getByText("Reparto guardado")).toBeVisible();
   });
 
   test("editar un movimiento desde el detalle salta el editor al volver", async ({ page }) => {
@@ -319,17 +332,21 @@ test.describe("movimientos", () => {
     // nth(2): las primeras dos son la barra de "Filtros"/"Calendario", no una fila.
     await page.locator("main").getByRole("button").nth(2).click();
     await page.waitForURL(/\/transactions\?tx=.+/);
+    const detailUrl = page.url();
 
     await page.getByRole("button", { name: "Editar" }).click();
     await page.waitForURL(/\/transactions\/.+\/edit/);
     const formUrl = page.url();
-    // `onClose` de `EditTransactionFlow` manda siempre a la LISTA, no de
-    // vuelta al detalle (`transactions/[id]/edit/page.tsx`) — comportamiento
-    // ya existente, sin relación con el fix de push→replace.
+    // `onClose` del editor es `router.back()` (`transactions/[id]/edit/page.tsx`),
+    // así que vuelve a la entrada anterior: el DETALLE, que desde que dejó de
+    // ser una ruta propia es `/transactions?tx=<id>`. El comentario que había
+    // acá decía "manda siempre a la LISTA" y esperaba `/transactions` — nunca
+    // se detectó porque este `describe` es serial y venía quedando en
+    // `skipped` detrás del primer caso que fallaba.
     await expectReplaceNotPush(page, {
       formUrl,
       save: () => page.getByRole("button", { name: "Guardar cambios" }).click(),
-      expectedUrlAfterSave: "/transactions",
+      expectedUrlAfterSave: detailUrl,
     });
   });
 });

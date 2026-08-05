@@ -51,13 +51,26 @@ test("categorías: crear, agregar subcategoría, editar una de plantilla, y arch
   await expect(page.getByRole("button", { name: "Salud" })).toHaveCount(0);
 
   // Archivar la raíz creada — cascada sobre su subcategoría, con Deshacer.
+  // El botón se llamaba "Borrar categoría" y no borraba nada: llamaba a
+  // `archiveWithChildren()`. Ahora dice lo que hace, y "Borrar categoría"
+  // existe aparte, para el borrado definitivo.
   await page.getByRole("button", { name: "Mascotas E2E" }).click();
-  await dialog.getByRole("button", { name: "Borrar categoría" }).click();
+  await dialog.getByRole("button", { name: "Archivar categoría" }).click();
   await expect(page.getByText('"Mascotas E2E" y sus 1 subcategorías, archivadas')).toBeVisible();
-  await expect(page.getByRole("button", { name: "Mascotas E2E" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Perros E2E" })).toHaveCount(0);
+
+  // Archivar ya no la hace DESAPARECER de la pantalla: la baja a la sección
+  // "Archivadas", que es lo que hace que sea reversible sin depender de que
+  // el toast siga vivo. Sigue una sola por nombre, así que estar adentro de
+  // esa sección prueba que salió del árbol activo.
+  const archivadas = page.getByText("Archivadas", { exact: true }).locator("..");
+  await expect(page.getByRole("button", { name: "Mascotas E2E" })).toHaveCount(1);
+  await expect(archivadas.getByRole("button", { name: "Mascotas E2E" })).toBeVisible();
+  await expect(archivadas.getByRole("button", { name: "Perros E2E" })).toBeVisible();
 
   await page.getByRole("button", { name: "Deshacer" }).click();
   await expect(page.getByRole("button", { name: "Mascotas E2E" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Perros E2E" })).toBeVisible();
+  // Y vuelven al árbol activo: la sección de archivadas queda vacía y no se
+  // renderiza.
+  await expect(page.getByText("Archivadas", { exact: true })).toHaveCount(0);
 });
