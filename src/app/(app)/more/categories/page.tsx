@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { Button, Card, EmptyState, ErrorState, ListRow, OptionCard, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
-import { useCurrentUserId } from "@/hooks/use-current-user";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useArchivedCategories, useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useTransactions, useInvalidateTransactions } from "@/hooks/use-transactions";
@@ -134,7 +134,12 @@ function TemplatePicker({
 export default function CategoryManagerPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const userId = useCurrentUserId();
+  // `useEffectiveUserId` y no `useCurrentUserId`: esta pantalla ESCRIBE
+  // (crea, edita, archiva y borra categorías), y el modo demo nunca crea
+  // sesión de Supabase — con el hook crudo, `userId` queda en `null` para
+  // siempre y la barrera de carga de abajo deja la pantalla en skeleton
+  // eternamente. Es el caso que el propio `use-current-user.ts` documenta.
+  const userId = useEffectiveUserId();
   const categoriesQuery = useCategories(household?.id);
   const transactionsQuery = useTransactions(household?.id);
   const t = useTranslations();
