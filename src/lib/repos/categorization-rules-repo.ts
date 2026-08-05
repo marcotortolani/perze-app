@@ -28,7 +28,12 @@ export const categorizationRulesRepo = {
     // C10 — clientRev real, ver la nota en accounts-repo.ts.
     await db.transaction("rw", db.categorizationRules, db.outbox, async () => {
       const existing = await db.categorizationRules.get(id);
-      if (!existing) return;
+      // Lanza en vez de resolver en silencio: todos los call sites pasan el
+      // id de una fila que acaban de leer, así que no encontrarla es un
+      // error. Mismo criterio que `accounts-repo.ts`, donde un `return`
+      // silencioso hacía que archivar una cuenta mostrara el toast de éxito
+      // sin escribir nada.
+      if (!existing) throw new Error(`Regla ${id} no encontrada`);
       const nextRev = existing.clientRev + 1;
       const updated: CategorizationRuleRow = { ...existing, ...patch, updatedAt: nowIso(), clientRev: nextRev };
       await db.categorizationRules.put(updated);
@@ -36,8 +41,23 @@ export const categorizationRulesRepo = {
     });
   },
 
-  async archive(id: string): Promise<void> {
+  /**
+   * Borra la regla. Se llamaba `archive()`, pero no archivaba: pone
+   * `deletedAt` y `list()` filtra por esa columna, así que la regla
+   * desaparece y no hay ninguna pantalla que muestre las "archivadas". El
+   * nombre viejo describía algo que no existe; no tenía ningún caller, así
+   * que renombrarlo no rompe nada.
+   *
+   * Soft delete y no un `delete()` de Dexie para que el borrado viaje por el
+   * outbox hasta el servidor — mismo patrón que `categoriesRepo.remove`.
+   */
+  async remove(id: string): Promise<void> {
     await this.update(id, { deletedAt: nowIso() });
+  },
+
+  /** Deshacer de `remove()` — lo usa el toast de la lista de reglas. */
+  async restore(id: string): Promise<void> {
+    await this.update(id, { deletedAt: null });
   },
 
   /** Se llama cuando una regla efectivamente categorizó un movimiento — para el badge "9 correcciones sobre 28" de K7. */

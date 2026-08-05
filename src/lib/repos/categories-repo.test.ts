@@ -146,5 +146,30 @@ describe("categoriesRepo", () => {
       expect(restored).toHaveLength(1 + children.length);
       expect(restored.every((c) => c.archivedAt === null)).toBe(true);
     });
+
+    // Sin esta consulta, archivar era irreversible en la práctica: `list()`
+    // filtra las archivadas y `restoreMany` solo estaba cableado al
+    // "Deshacer" del toast, así que apenas ese toast se iba no había ninguna
+    // pantalla desde donde recuperarlas.
+    it("listArchived devuelve exactamente lo que list() esconde", async () => {
+      const { parent, children } = await seedParentWithChildren();
+      const leaf = children[0]!;
+
+      await categoriesRepo.archiveWithChildren(leaf.id);
+
+      const activas = await categoriesRepo.list(HOUSEHOLD);
+      const archivadas = await categoriesRepo.listArchived(HOUSEHOLD);
+
+      expect(archivadas.map((c) => c.id)).toEqual([leaf.id]);
+      expect(archivadas.every((c) => c.archivedAt !== null)).toBe(true);
+      expect(activas.map((c) => c.id).sort()).toEqual([parent.id, children[1]!.id, children[2]!.id].sort());
+      // Las dos listas particionan el total: ninguna fila se pierde ni se repite.
+      expect(activas.length + archivadas.length).toBe(1 + children.length);
+    });
+
+    it("listArchived queda vacío cuando no hay ninguna archivada", async () => {
+      await seedParentWithChildren();
+      expect(await categoriesRepo.listArchived(HOUSEHOLD)).toEqual([]);
+    });
   });
 });
