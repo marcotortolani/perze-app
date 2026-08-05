@@ -20,7 +20,7 @@ export interface IconPickerProps {
  * `src/features/`, no en el design system: no tiene ficha en
  * `docs/contrato-componentes.md` y no debería inventarse una acá.
  *
- * Con ~57 íconos, una sola grilla plana ya no entra en dos pantallazos —
+ * Con ~104 íconos, una sola grilla plana ya no entra en dos pantallazos —
  * agrupa por tema y agrega buscador, filtrando sobre el nombre traducido
  * del ícono (`CATEGORY_ICON_MESSAGE_KEY`), mismo `normalize()` que usa
  * `CategoryStep`.

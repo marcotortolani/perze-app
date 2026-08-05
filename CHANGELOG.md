@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.17.1] — 2026-08-05
+
+### Cambiado — cada subcategoría deja de heredar el ícono genérico de su padre
+
+- En la plantilla "Completa", las nueve subcategorías arrancaban con el glifo del padre
+  (`shopping-cart` para las tres de supermercado, `car` para las tres de transporte,
+  `heart-pulse` para las tres de salud). En la lista de categorías las tres hijas se veían
+  idénticas entre sí y también idénticas al padre, así que el ícono no aportaba nada para
+  distinguirlas: **Verdulería** → `carrot`, **Carnicería** → `cow`, **Almacén** → `basket`,
+  **Transporte público** → `bus`, **Estacionamiento** → `letter-circle-p`, **Consultas** →
+  `stethoscope`, **Seguro médico** → `shield`.
+- Cuatro categorías de primer nivel tenían un ícono directamente equivocado, heredado de cuando
+  el set no tenía alternativa: **Ropa** (`tag` → `shirt`), **Educación** (`briefcase` →
+  `graduation`), **Mascotas** (`heart-pulse` → `paw`) y **Regalos** (`handshake` → `gift`).
+- Esto cambia **solo los defaults de plantilla**, o sea lo que se aplica al crear un household
+  nuevo. Las categorías existentes guardan su `icon` en la fila, así que las que ya se editaron
+  a mano no se tocan y las que no, siguen con el ícono viejo hasta que se editen.
+
+### Agregado — el picker de íconos de categorías pasa de 61 a 104 glifos
+
+- El set venía dimensionado para el *chrome* de la app, no para categorías, así que había rubros
+  enteros que no tenían glifo y terminaban en `tag` o `briefcase`. Los huecos más notorios que
+  quedan cubiertos: **impuestos, suscripciones/streaming, internet, expensas, limpieza, peaje,
+  delivery, terapia y donaciones**.
+- Los 43 nuevos, por grupo — Comida: `bread`, `fish`, `ice-cream`, `bowl-food`, `wine`, `cake`.
+  Transporte: `taxi`, `motorcycle`, `road`, `globe`. Casa y servicios: `building`, `broom`,
+  `washing-machine`, `plant`, `wifi`, `toolbox`. Salud: `pill`, `syringe`, `brain`, `hospital`.
+  Ocio: `monitor-play`, `guitar`, `confetti`, `tent`, `mountains`, `running`, `camera`. Compras:
+  `sneaker`, `bag`, `watch`, `laptop`, `smartphone`. Plata: `vault`, `percent`, `calculator`,
+  `invoice`, `invest`. Otros: `scales`, `gavel`, `hand-heart`, `dog`, `cat`, `cloud`.
+- Ocho de esos ya existían en `ICONS` y nunca se habían ofrecido en el picker (`building`,
+  `wifi`, `toolbox`, `globe`, `camera`, `smartphone`, `scales`, `invest`); los otros 35 son
+  imports nuevos de Phosphor. `bone` se sumó como alternativa a `cow` para carnicería.
+- Todos con su clave `reference.icon.*` traducida a ES/EN/PT, que es lo que alimenta el buscador
+  del picker y el `aria-label` de cada botón: se busca por rubro ("peaje", "streaming",
+  "donaciones"), no por el nombre del glifo en inglés.
+- **`letter-circle-p` para estacionamiento no es un capricho**: Phosphor no tiene glifo de
+  parking, y la P en círculo es la señalética universal.
+- La grilla es `auto-fill` con scroll, así que los 104 entran sin tocar el layout del sheet.
+
+---
+
 ## [0.17.0] — 2026-08-05
 
 ### Cambiado — el detalle de cuenta deja de ser una ruta y pasa a ser un search param
