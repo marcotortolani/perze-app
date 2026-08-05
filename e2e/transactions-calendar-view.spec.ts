@@ -67,7 +67,15 @@ test.describe("calendario de movimientos", () => {
     await seedDemoHousehold(page);
     await page.goto("/transactions?view=calendar");
 
-    const monthRows = await page.locator("main").getByRole("button").count();
+    // "Cuántos días muestra la lista" se cuenta por sus cabeceras de día, no
+    // por filas: la lista es virtualizada, así que la cantidad de filas EN EL
+    // DOM depende del scroll y del overscan, no de los datos. Contar botones
+    // hacía que este test fallara de forma intermitente sin que nada estuviera
+    // roto. Con el calendario abierto cada cabecera lleva su conteo, y eso da
+    // un ancla estable.
+    const dayHeaders = page.getByText(/· \d+ movimiento/);
+    await expect(dayHeaders.first()).toBeVisible();
+    expect(await dayHeaders.count()).toBeGreaterThan(1);
 
     const day = dayCellsWithSpending(page).first();
     const dayLabel = await day.getAttribute("aria-label");
@@ -78,9 +86,8 @@ test.describe("calendario de movimientos", () => {
     await page.waitForURL(DAY_SCOPE_URL);
     await expect(day).toHaveAttribute("aria-pressed", "true");
 
-    // La lista se angostó: mismo componente, menos filas.
-    const dayRows = await page.locator("main").getByRole("button").count();
-    expect(dayRows).toBeLessThan(monthRows);
+    // La lista se angostó a ese día: queda una sola cabecera.
+    await expect(dayHeaders).toHaveCount(1);
 
     // Y aparece el chip de alcance, que es la traducción del viejo "todo el
     // mes" — se ubica por su `aria-label` porque el texto visible es la fecha
@@ -91,7 +98,7 @@ test.describe("calendario de movimientos", () => {
     // Volver al mes entero: mismo path, y la lista se ensancha de nuevo.
     await scopeChip.click();
     await expect(scopeChip).toHaveCount(0);
-    expect(await page.locator("main").getByRole("button").count()).toBe(monthRows);
+    await expect(dayHeaders.nth(1)).toBeVisible();
 
     // El día quedó deseleccionado, no solo "sin chip".
     await expect(page.getByRole("button", { name: dayLabel! })).toHaveAttribute("aria-pressed", "false");
