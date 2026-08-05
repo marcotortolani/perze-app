@@ -6,6 +6,95 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.21.0] — 2026-08-05
+
+### Cambiado — el calendario dejó de ser una pantalla y pasó a ser una vista de Movimientos
+
+- **`/transactions/calendar` era una ruta que el diseño nunca pidió.**
+  `docs/design/bloque-d-movimientos.html` dibuja D5 con el `AppHeader` de Movimientos, **sin botón
+  de volver**, y un toggle de vista. Se había programado como pantalla propia, con su header y su
+  back: tocar un chip costaba una navegación de ruta entera.
+- **Y la pantalla duplicaba lo que ya existía.** Reimplementaba la lista virtualizada, el
+  `TransactionsSummaryStrip`, el `NeedsFxBanner`, las cabeceras por día y los estados vacíos. La
+  copia además era **peor que el original**: sin swipe, sin selección múltiple, sin etiquetas en el
+  `meta`, sin `syncIssue` y sin el resalte de la fila abierta.
+- Ahora es **`?view=calendar`** sobre `/transactions`. Elegir un día no abre nada: escribe
+  `from`/`to`, los mismos search params que ya gobernaban el rango de la lista, y la única lista se
+  angosta. El resumen ya se calculaba solo por rango de fecha, así que los totales del día salieron
+  sin escribir una línea.
+- **El alcance no tiene estado propio.** Mes visible y día elegido se **derivan** de `from`/`to`
+  (`features/movements/calendar-scope.ts`), así que la grilla no puede desincronizarse de lo que la
+  lista muestra. `use-calendar-view.ts` es el único lugar que traduce entre URL y alcance, y lo
+  comparten el contenedor y la lista.
+- **En escritorio el calendario ocupa la segunda columna**, la misma que el detalle. Con `?tx=`
+  abierto gana el detalle, y volver restaura el calendario con el día todavía elegido porque el
+  param nunca se pierde. Las columnas pasaron de `minmax(340px,420px)` a `minmax(360px,560px)`:
+  ~54/46 a 1280 y ~60/40 a 1440, y la derecha deja de crecer más arriba. El techo de lectura de
+  420px se mudó del grid al contenido del detalle — si la geometría dependiera del ocupante, la
+  columna daría un salto de ancho justo al abrir un movimiento.
+- Del diseño entran cuatro cosas que faltaban: **semana de lunes a domingo**, **leyenda de
+  intensidad** (un heatmap sin escala no se puede leer), **días futuros atenuados y `disabled` de
+  verdad** —elegirlos siempre daba una lista vacía, o sea era una interacción sin salida— y el
+  **conteo de movimientos** en la cabecera del día, solo con el calendario abierto. El día elegido
+  va con `--selection-surface` + `--selection-ring` y no con el relleno solo que pide el diseño: la
+  auditoría midió eso en 1,065:1 en modo claro.
+- La ruta vieja queda como **redirect de servidor**: el chip la abría con `push`, así que hay
+  historial real en cualquier PWA instalada y un 404 ahí sería una regresión.
+- Queda una divergencia declarada: el diseño pide un `SegmentedControl ['Lista','Calendario']` y
+  quedó el chip toggle, porque con la lista visible debajo un segmentado que dice "Calendario" es
+  engañoso. Registrada en `docs/plan-de-trabajo.md` (CONS-D05), junto con la deuda de `MonthCalendar`
+  **invertida**: hay que subir el componente de biblioteca al contrato de D5, no bajar la pantalla.
+
+### Arreglado — en un iPhone SE la lista de movimientos del calendario no se veía
+
+- El calendario era fijo en los dos layouts y la lista se quedaba con la altura sobrante, que en un
+  teléfono chico es **cero**: a 568px de alto, menos 56 de header y 64 de tab bar quedan ~448, y el
+  mes solo ya mide ~400px. El panel arrancaba con ~48px útiles.
+- **No se arreglaba achicando el mes**: cualquier techo que deje lugar a tres filas de lista pone
+  las celdas por debajo del mínimo táctil de 44px. El calendario no es un encabezado fijo, es
+  contenido — así que en móvil scrollea junto con la lista. Lo que queda pegado es la franja de
+  totales, que es una línea y sobrevive a cualquier alto.
+- Esto corrige la línea de la 0.19.0 que decía que "en los dos layouts el calendario queda fijo":
+  dejó de ser cierto en móvil.
+- Consecuencia para el virtualizador: la lista ya no arranca en el origen del scroller, así que esa
+  distancia se **mide** contra el DOM y se le pasa como `scrollMargin`, con un `ResizeObserver` que
+  la recalcula al rotar y al cambiar de mes. Se mide en vez de calcularse porque depende del ancho
+  del teléfono (las celdas son cuadradas), de cuántas filas tenga el mes y de si hay banner.
+- El aire superior va en el wrapper del calendario y no como `paddingTop` del scroller: Chrome ancla
+  los `sticky` al borde del content box, y ese padding bajaba la franja de totales dejando una
+  banda transparente por la que se veían pasar las filas.
+- El despeje del FAB se mudó adentro del scroller. Con el padding afuera, las filas aparecían y
+  desaparecían contra una línea varios píxeles por encima del tab bar — se leía como una banda
+  opaca pegada abajo.
+- La barra de scroll quedaba pegada al texto y al calendario. Se ensancha la caja de scroll hasta el
+  borde de la pantalla con `marginInline` negativo y el mismo valor de vuelta como padding: el borde
+  del contenido no se mueve ni un píxel.
+- El chip de alcance decía "miércoles, 5 de agosto", se partía en dos renglones y quedaba más alto
+  que los chips de al lado. Va abreviado —"mar, 4 ago" · "Wed, Aug 5" · "qua., 5 de ago."— vía un
+  `formatDateMedium` nuevo, que deja la abreviatura en manos de `Intl` porque cada idioma corta
+  distinto y cambia el orden de los campos.
+
+### Arreglado — dos bugs de fecha que el refactor destapó
+
+- **Los límites de rango se arman con medianoche LOCAL serializada a UTC**, la misma receta que ya
+  usaba `periodStartFor`, que se mudó al mismo módulo para que las dos no puedan divergir. Un
+  `${iso}T00:00:00Z` —lo natural de escribir— habría corrido los días tres horas en UTC−3. Hay un
+  test que compara las dos recetas.
+- **La suite pasó a correr con `TZ=America/Montevideo`.** Sin eso, en una CI en UTC ese test pasa
+  sin probar nada: ahí los dos strings coinciden.
+- **Las cabeceras por día agrupaban con `occurredAt.slice(0, 10)`, que es el día en UTC.** Un
+  movimiento de la noche caía en el día siguiente. Era invisible mientras el calendario tenía su
+  propia lista, porque agrupaba y filtraba con el mismo criterio equivocado; al pasar a filtrar por
+  rango local, el heatmap habría contado un día y la lista mostrado otro. Va por `dayKeyOf`.
+
+### Nota de implementación — la transición del panel
+
+- Meter los tres estados de la segunda columna (vacío, calendario, detalle) en el mismo
+  `AnimatePresence mode="wait"` lo deja **trabado**: la salida del estado vacío no resuelve nunca y
+  el hijo nuevo no llega a montarse, así que el calendario no aparecía. El `transitionKey` de
+  `DetailPanelTransition` cambia ahora solo cuando cambia el **detalle**, y el calendario entra con
+  `PageEnter`, que es exactamente animación de montaje.
+
 ## [0.20.0] — 2026-08-05
 
 ### Agregado — las categorías se pueden borrar, y las archivadas se pueden recuperar
