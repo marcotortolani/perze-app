@@ -50,22 +50,4 @@ export const priceSnapshotsRepo = {
     if (data.close === null || data.provider === null || data.asOf === null) return null;
     return { instrumentId, close: data.close, currencyCode: data.currencyCode, asOf: data.asOf, provider: data.provider };
   },
-
-  /**
-   * I4 — serie histórica para el gráfico de fluctuación. Un cierre por día
-   * (los escribe `daily-price-sync`, el cron), así que el rango "día" no
-   * da un gráfico intradía real — eso queda resuelto aparte con la
-   * variación día a día entre los dos últimos cierres, no con este método.
-   */
-  async historyFor(instrumentId: string, sinceIso: string): Promise<{ asOf: string; close: number }[]> {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("price_snapshots")
-      .select("as_of, close")
-      .eq("instrument_id", instrumentId)
-      .gte("as_of", sinceIso)
-      .order("as_of", { ascending: true });
-    if (error) throw error;
-    return (data ?? []).map((row) => ({ asOf: row.as_of, close: row.close }));
-  },
 };

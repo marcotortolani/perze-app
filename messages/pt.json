@@ -1886,15 +1886,6 @@
   "avgPrice": "Preço médio",
   "currentPrice": "Preço atual",
   "weight": "Peso no portfólio",
-  "today": "hoje",
-  "fluctuation": "Flutuação",
-  "range": {
-   "week": "Semana",
-   "month": "Mês",
-   "6m": "6 meses",
-   "year": "Ano"
-  },
-  "notEnoughHistory": "Ainda não há histórico de preços suficiente para esse período — faltam {count, plural, one {# dia} other {# dias}}.",
   "removeFromWatchlist": "Remover do acompanhamento",
   "removedFromWatchlist": "{symbol} removido do acompanhamento",
   "history": "Histórico",

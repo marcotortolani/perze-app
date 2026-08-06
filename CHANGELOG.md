@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.27] — 2026-08-06
+
+### Quitado — gráfico de fluctuación del detalle de instrumento
+
+Pedido del usuario: la fluctuación histórica (selector de rango + `LineChart`, agregada en
+la pasada anterior) demanda más trabajo del que vale ahora mismo — no es el foco actual de
+la app. Se saca por completo de `InstrumentDetailContent`, junto con todo lo que existía
+solo para sostenerla: `priceSnapshotsRepo.historyFor()`, `usePriceHistory()` y
+`src/lib/prices/history-range.ts` (+ su test) se eliminan — no quedaba ningún otro
+consumidor. También se va la variación "↑ X% hoy" que vivía pegada al precio actual, ya
+que dependía de la misma serie histórica. El resto del detalle (valor, P&L, cantidad,
+precio promedio/actual, toggle de moneda, historial de operaciones, registrar operación,
+eliminar de seguimiento) queda intacto.
+
 ## [0.29.26] — 2026-08-06
 
 ### Corregido — "Registrar operación" arrastraba el instrumento/precio del anterior

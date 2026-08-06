@@ -1886,15 +1886,6 @@
   "avgPrice": "Average price",
   "currentPrice": "Current price",
   "weight": "Weight in portfolio",
-  "today": "today",
-  "fluctuation": "Fluctuation",
-  "range": {
-   "week": "Week",
-   "month": "Month",
-   "6m": "6 months",
-   "year": "Year"
-  },
-  "notEnoughHistory": "Not enough price history for this range yet — {count, plural, one {# day} other {# days}} to go.",
   "removeFromWatchlist": "Remove from watchlist",
   "removedFromWatchlist": "{symbol} removed from watchlist",
   "history": "History",

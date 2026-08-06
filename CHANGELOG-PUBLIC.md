@@ -40,6 +40,12 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.27 — 6 de agosto de 2026
+
+### Quitado
+
+- El gráfico de fluctuación histórica en el detalle de un instrumento se sacó por ahora.
+
 ## 0.29.26 — 6 de agosto de 2026
 
 ### Arreglado
