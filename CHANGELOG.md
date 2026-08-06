@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.34] — 2026-08-06
+
+### Cambiado — historial de operaciones: fecha corta con día abreviado, precio sin redondear
+
+Pedido del usuario: la fecha de cada operación en el historial de instrumento pasa de
+`formatDateShort` ("6 ago") a `formatDateMedium` ("mié, 6 ago") — mismo formato que ya usa
+`TransactionsListContent`, día de la semana incluido. Y el precio unitario de esa misma
+línea deja de pasar por `formatAmountCompact`: para una moneda con muchos dígitos (pesos
+argentinos, típicamente) redondeaba a "K"/"M" ("AR$ 24,7 K" en vez de "AR$ 24.660,00"),
+justo el número completo que esta línea existe para mostrar. Pasa a `formatAmount`, sin
+abreviar.
+
 ## [0.29.33] — 2026-08-06
 
 ### Corregido — data912 mezclaba pesos y dólares bajo la misma moneda "ARS"

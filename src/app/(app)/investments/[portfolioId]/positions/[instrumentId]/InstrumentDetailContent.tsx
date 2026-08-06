@@ -11,7 +11,7 @@ import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidat
 import { computePositions } from "@/lib/analytics/positions";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
-import { formatAmountCompact, formatNumber } from "@/lib/money/format";
+import { formatAmount, formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { fxRepo } from "@/lib/repos/fx-repo";
@@ -19,7 +19,7 @@ import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
 import { FOREGROUND_REFRESH_MS } from "@/lib/prices/refresh-cadence";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
-import { formatDateShort, formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
+import { formatDateMedium, formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
 export interface InstrumentDetailContentProps {
@@ -331,7 +331,12 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
                 key={tr.id}
                 icon={tr.kind === "buy" ? "plus" : "minus"}
                 label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
-                meta={`${formatDateShort(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmountCompact(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
+                // D61 — mismo formato de fecha que Transactions (día abreviado
+                // a 3 letras) y precio unitario SIN abreviar: `formatAmountCompact`
+                // redondeaba a "K"/"M" un precio en pesos de varios dígitos
+                // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
+                // que esta línea existe para mostrar completo.
+                meta={`${formatDateMedium(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
                 variant="value"
                 value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
               />

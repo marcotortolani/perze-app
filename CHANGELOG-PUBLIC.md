@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.34 — 6 de agosto de 2026
+
+### Arreglado
+
+- El precio de cada operación en el historial de un instrumento ya no se redondea a "K"/"M"
+  — se ve completo, con todos sus dígitos.
+
 ## 0.29.33 — 6 de agosto de 2026
 
 ### Arreglado
