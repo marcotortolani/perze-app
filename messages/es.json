@@ -1072,6 +1072,26 @@
   "privacyTitle": "Privacidad",
   "license": "Licencia MIT — código abierto."
  },
+ "landingPage": {
+  "headline": "Tus finanzas, en foco.",
+  "subtitle": "Cargá un gasto en menos de 5 segundos. Multi-cuenta, multi-moneda, multi-país — local-first, y tuyo.",
+  "cta": "Empezar",
+  "features": {
+   "fast": {
+    "title": "Rápido de verdad",
+    "body": "Menos de 5 segundos y 3 decisiones para cargar un gasto."
+   },
+   "multiCurrency": {
+    "title": "Todas tus monedas",
+    "body": "Varias cuentas, monedas y países, en un solo lugar."
+   },
+   "private": {
+    "title": "Tus datos, tuyos",
+    "body": "Código abierto, autohospedado — nunca pasa por un tercero."
+   }
+  },
+  "aboutLink": "Sobre PERZE"
+ },
  "home": {
   "empty": "Todavía no cargaste ningún movimiento. Registrá tu primer gasto para ver tu resumen acá.",
   "emptyAction": "Cargar mi primer gasto",

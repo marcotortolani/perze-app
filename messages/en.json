@@ -1072,6 +1072,26 @@
   "privacyTitle": "Privacy",
   "license": "MIT license — open source."
  },
+ "landingPage": {
+  "headline": "Your money, in focus.",
+  "subtitle": "Log an expense in under 5 seconds. Multi-account, multi-currency, multi-country — local-first, and yours.",
+  "cta": "Get started",
+  "features": {
+   "fast": {
+    "title": "Actually fast",
+    "body": "Under 5 seconds and 3 decisions to log an expense."
+   },
+   "multiCurrency": {
+    "title": "All your currencies",
+    "body": "Several accounts, currencies, and countries, in one place."
+   },
+   "private": {
+    "title": "Your data, yours",
+    "body": "Open source, self-hosted — never routed through a third party."
+   }
+  },
+  "aboutLink": "About PERZE"
+ },
  "home": {
   "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
   "emptyAction": "Add my first expense",

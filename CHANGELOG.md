@@ -6,6 +6,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.8] — 2026-08-06
+
+### Agregado — landing pública en `/start`
+
+El link que se comparte de afuera hoy caía directo en el formulario de email de A2, sin contarle
+a un visitante nuevo de qué se trata la app. `proxy.ts` ahora manda a `/start` (no a `/onboarding`)
+a cualquier sesión sin autenticar que entra a "/" — el resto de las rutas protegidas sigue yendo
+directo a `/onboarding`, un deep link ya trae intención propia. El CTA de la landing entra por
+`/onboarding/welcome` (A1, los 3 slides deslizables que ya existían en código), no directo al
+formulario de email.
+
+Mismo patrón que `/about` (server component, sin sesión, indexable, fuera del shell de `(app)/`),
+sumada a las tres allowlists que tienen que coincidir (`PUBLIC_PREFIXES`, `EXEMPT_PREFIXES` de
+`OnboardingGate`, `PIN_EXEMPT_PREFIXES` de `PinGate`) y a `robots.ts`/`sitemap.ts`. El fondo de
+puntos con degradé fundido hacia los bordes es decorativo y siempre está prendido acá — recicla
+los tokens de `page-backdrop` (`--dot-gap`/`--dot-size`/`--dot-ink`) sin depender del atributo
+`data-backdrop`, que es opt-in y un visitante nuevo nunca activó.
+
 ## [0.28.7] — 2026-08-06
 
 ### Arreglado — las monedas nuevas no se agregaban de verdad, en ningún lado

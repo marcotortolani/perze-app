@@ -83,7 +83,12 @@ export async function proxy(request: NextRequest) {
   // más). La distinción "ya se registró en este dispositivo" que hacía
   // `perze_registered` era solo para elegir `/login`, que ya no existe.
   if (!user && !isDemo && !isPublicPath(request.nextUrl.pathname)) {
-    return redirectTo(request, response, "/onboarding");
+    // "/" es el link que se comparte de afuera — sin sesión, manda a la
+    // landing (`/start`), no directo al formulario de email de A2. Cualquier
+    // otra ruta protegida sin sesión sigue yendo a `/onboarding`: alguien
+    // que ya tenía intención de llegar a una pantalla puntual (un deep
+    // link) no necesita el discurso de venta de vuelta.
+    return redirectTo(request, response, request.nextUrl.pathname === "/" ? "/start" : "/onboarding");
   }
 
   // Acceso controlado (§3.2) — verificarse por OTP/contraseña no alcanza:

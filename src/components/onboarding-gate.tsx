@@ -19,7 +19,7 @@ import { useDbOwnerStore } from "@/stores/db-owner-store";
 // sesión, `proxy.ts` los manda a `/onboarding` antes de que este gate
 // cliente llegue a montarse. `/about` es contenido público de marca —
 // tiene que verse igual con o sin sesión, nunca redirigir.
-const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending", "/about"];
+const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending", "/about", "/start"];
 
 /**
  * Gate del Bloque A: sin household o sin sesión real, cualquier ruta de la

@@ -18,7 +18,7 @@ const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
  * nada sensible. `/about` es la página pública de marca — cero datos de
  * usuario, nunca debe pedir PIN.
  */
-const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/pending", "/about"];
+const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/pending", "/about", "/start"];
 
 const EDIT_RECENT_WINDOW_MS = 60_000;
 

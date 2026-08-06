@@ -20,7 +20,7 @@
  * Módulo separado de `proxy.ts` a propósito, sin depender de `@/env`: así
  * se puede testear el allowlist en sí sin mockear Supabase/NextRequest.
  */
-const PUBLIC_PREFIXES = ["/onboarding", "/auth", "/join", "/offline", "/api/fx", "/dev", "/about"];
+const PUBLIC_PREFIXES = ["/onboarding", "/auth", "/join", "/offline", "/api/fx", "/dev", "/about", "/start"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
