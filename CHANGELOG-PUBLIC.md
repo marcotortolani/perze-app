@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.37 — 6 de agosto de 2026
+
+### Arreglado
+
+- El gráfico de evolución de saldo (90 días) del detalle de una cuenta podía mostrar
+  valores inventados para fechas anteriores a tu primer movimiento real, y el saldo de
+  "hoy" podía cambiar entre una recarga y otra. Ahora se calcula siempre desde tus
+  movimientos reales y es consistente.
+
 ## 0.29.36 — 6 de agosto de 2026
 
 ### Arreglado

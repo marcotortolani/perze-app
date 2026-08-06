@@ -23,9 +23,9 @@ import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { PayCardSheet } from "@/features/cards/PayCardSheet";
 import { expectedDueAmount, isCreditCardAccount } from "@/lib/analytics/card-cycle";
-import { computeTransactionEffects } from "@/lib/repos/balance-effects";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
-import { money, toMajorUnitsUnsafe } from "@/lib/money/money";
+import { computeAccountEvolution } from "@/lib/analytics/account-evolution";
+import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { formatNumericDate, numberLocaleForUiLocale } from "@/i18n/formatting";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
@@ -34,12 +34,6 @@ import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import type { Locale } from "@/i18n/formatting";
 
 const EVOLUTION_DAYS = 90;
-
-function daysAgoIso(days: number, from: Date): string {
-  const d = new Date(from);
-  d.setDate(d.getDate() - days);
-  return d.toISOString();
-}
 
 /**
  * E2 (detalle + evolución) y E4 (resumen de tarjeta) — Bloque E, Fase 8.
@@ -90,48 +84,11 @@ export function AccountDetailContent({ id }: { id: string }) {
 
   const evolution = useMemo(() => {
     if (!account) return [];
-    const now = new Date();
-    const windowStartIso = daysAgoIso(EVOLUTION_DAYS, now);
-
-    // Reconstrucción hacia atrás: el saldo actual menos la suma de los
-    // efectos de cada movimiento dentro de la ventana da el saldo de hace
-    // 90 días — no hay tabla de snapshots todavía (`docs/01 § 2.7` la deja
-    // para cuando exista sync real), así que se recalcula desde `current_balance`.
-    let cursor = account.currentBalance;
-    const deltaByDay = new Map<string, bigint>();
-    for (const t of transactions) {
-      if (t.occurredAt < windowStartIso) continue;
-      const effects = computeTransactionEffects(t);
-      const effect = effects.find((e) => e.accountId === account.id);
-      if (!effect) continue;
-      const day = t.occurredAt.slice(0, 10);
-      deltaByDay.set(day, (deltaByDay.get(day) ?? 0n) + effect.delta);
-      cursor -= effect.delta;
-    }
-    const startBalance = cursor;
-    // Tarjeta de crédito: el saldo es negativo y crece hacia abajo a
-    // medida que se gasta más — matemáticamente correcto, pero al revés
-    // de lo que se quiere leer acá. Una tarjeta no tiene "fondo que se
-    // consume", tiene CONSUMO que se acumula: pagarla del todo lo vuelve
-    // a cero, no lo "llena". Graficar `-saldo` (el consumo, siempre ≥ 0)
-    // deja la línea subiendo cuando se gasta más y bajando cuando se
-    // paga — la lectura intuitiva para una deuda. Las cuentas de
-    // liquidez (caja de ahorro, billetera, inversión, cripto) siguen
-    // graficando el saldo tal cual, sin invertir.
-    const sign = isCreditCardAccount(account) ? -1 : 1;
-
-    const points: { label: string; value: number }[] = [];
-    let running = startBalance;
-    for (let i = EVOLUTION_DAYS; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const iso = d.toISOString().slice(0, 10);
-      running += deltaByDay.get(iso) ?? 0n;
-      if (i % 7 === 0 || i === 0) {
-        points.push({ label: d.toLocaleDateString(locale, { day: "2-digit", month: "short" }), value: sign * toMajorUnitsUnsafe(money(running, account.currencyCode)) });
-      }
-    }
-    return points;
+    const points = computeAccountEvolution({ account, transactions, windowDays: EVOLUTION_DAYS, now: new Date() });
+    return points.map((p) => ({
+      label: new Date(`${p.isoDate}T12:00:00Z`).toLocaleDateString(locale, { day: "2-digit", month: "short", timeZone: "UTC" }),
+      value: p.value,
+    }));
   }, [account, transactions, locale]);
 
   if (isLoading || !household) {
@@ -212,13 +169,13 @@ export function AccountDetailContent({ id }: { id: string }) {
               ]}
               rows={evolution.map((p, i) => ({
                 label: p.label,
-                value: formatAmountCompact(money(BigInt(Math.round(p.value * 100)), account.currencyCode), { showSign: false }),
+                value: formatAmountCompact(money(fromMajorUnitsUnsafe(p.value, account.currencyCode), account.currencyCode), { showSign: false }),
                 emphasis: i === evolution.length - 1,
               }))}
             />
           }
         >
-          <LineChart data={evolution} formatValue={(v) => formatAmountCompact(money(BigInt(Math.round(v * 100)), account.currencyCode), { showSign: false })} />
+          <LineChart data={evolution} formatValue={(v) => formatAmountCompact(money(fromMajorUnitsUnsafe(v, account.currencyCode), account.currencyCode), { showSign: false })} />
         </ChartCard>
       ) : null}
 

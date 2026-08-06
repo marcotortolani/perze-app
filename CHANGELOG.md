@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.37] — 2026-08-06
+
+### Corregido — evolución de saldo (90 días) mostraba valores fabricados, no cero antes del primer movimiento
+
+`AccountDetailContent.tsx` reconstruía el gráfico/tabla de evolución arrancando de
+`account.currentBalance` y restándole hacia atrás los efectos de cada movimiento dentro
+de la ventana — pero `currentBalance` es un campo que el pull en background
+(`src/lib/offline/pull.ts`) puede pisar con el valor del servidor a medio recalcular
+mientras el outbox todavía tiene transacciones en tránsito: el guard existente
+(`hasPendingOutboxFor("transactions")`) es un booleano de household entero, no por
+transacción, así que hay una ventana entre el drenado de una entrada del outbox y la
+siguiente en la que un pull disparado por realtime puede pisar el `currentBalance` local
+(correcto) con un parcial del servidor. Como la reconstrucción arrancaba de ese valor, el
+error se propagaba a los dos síntomas reportados a la vez: todos los días anteriores a la
+primera transacción real quedaban en una recta plana no-cero (en vez de $0), y el punto de
+"hoy" mostraba un valor distinto en cada render, según qué tan a medio terminar estuviera
+el último pull.
+
+Reescrito para reconstruir desde `account.opening_balance` sumando los efectos de TODAS
+las transacciones locales (que siempre están al día, porque los writes de Dexie son
+síncronos y no dependen de la carrera de sync) en vez de restar desde un campo
+sincronizado — elimina la dependencia del timing de sync por completo, no solo la
+mitiga. Extraída a una función pura y testeada, `computeAccountEvolution()` en
+`src/lib/analytics/account-evolution.ts` (antes vivía inline en el `useMemo` del
+componente, sin tests).
+
+De paso, `formatValue` del `LineChart` y la columna de la tabla reconvertían el número de
+unidades mayores a bigint con `BigInt(Math.round(v * 100))` — un `* 100` hardcodeado que
+asume 2 decimales para toda moneda (la misma clase de bug que ya se corrigió en D53 para
+el separador numérico). Para ARS el redondeo daba casualmente el valor correcto porque
+`decimalsFor("ARS") === 2`, pero para una cuenta en una moneda de 0 decimales (CLP, JPY)
+o de 8 (cripto) el resultado hubiera estado mal por varios órdenes de magnitud.
+Reemplazado por `fromMajorUnitsUnsafe(v, currencyCode)`, que deriva la escala real en vez
+de asumirla.
+
 ## [0.29.36] — 2026-08-06
 
 ### Corregido — porcentajes con `.toFixed()` hardcodeado, ignoraban el ajuste de decimal
