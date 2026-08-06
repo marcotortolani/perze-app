@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { money } from "../money/money";
-import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromAmounts, rateFromInteger } from "./rate";
+import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromAmounts, rateFromInteger, roundRateForDisplay } from "./rate";
 
 describe("parseRate / formatRate", () => {
   it("ida y vuelta sin pérdida", () => {
@@ -59,6 +59,28 @@ describe("formatRateTrimmed", () => {
 
   it("negativo", () => {
     expect(formatRateTrimmed(parseRate("-0.500000000000"))).toBe("-0.5");
+  });
+});
+
+describe("roundRateForDisplay", () => {
+  it("2 decimales cuando el rate vale 1 o más", () => {
+    expect(formatRateTrimmed(roundRateForDisplay(parseRate("1520.4567")))).toBe("1520.46");
+  });
+
+  it("no colapsa un rate chico a un puñado de ceros — conserva cifras significativas", () => {
+    // 1 ARS ≈ 0,00065789 USD — con el corte fijo viejo de 6 decimales
+    // salía "0,000658", perdible pero legible; el caso real reportado
+    // era bastante más chico y SÍ colapsaba.
+    const chico = roundRateForDisplay(parseRate("0.00000254321"));
+    expect(formatRateTrimmed(chico)).not.toBe("0");
+    // Con magnitud 1e-6, guarda 9 decimales (3 - (-6)) → conserva las
+    // primeras cifras significativas en vez de redondear todo a 0.
+    expect(formatRateTrimmed(chico)).toBe("0.000002543");
+  });
+
+  it("nunca pasa de RATE_DECIMALS (12) decimales", () => {
+    const diminuto = roundRateForDisplay(parseRate("0.0000000000012345"));
+    expect(formatRate(diminuto).split(".")[1]!.length).toBe(12);
   });
 });
 

@@ -27,6 +27,13 @@ export interface FxResolution {
   asOf: string | null;
   /** El dato tiene más de un día — la app lo dice, nunca lo esconde. */
   isStale: boolean;
+  /**
+   * Otras variantes conocidas del mismo par (blue/CCL/tarjeta, oficial…) —
+   * `resolveFxRate` no lo llena (es una función pura sobre UN resultado);
+   * lo agrega `fxRepo.resolve()` con lo que trajo `/api/fx`, para que E6
+   * pueda ofrecer un picker en vez de una sola cotización fija.
+   */
+  availableQuoteKinds?: Array<{ quoteKind: string; rate: ScaledRate; asOf: string; provider: string }> | undefined;
 }
 
 const PENDING: FxResolution = {

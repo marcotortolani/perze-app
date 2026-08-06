@@ -1270,7 +1270,17 @@
   "saveOverride": "Guardar override",
   "keypadCancel": "Cancelar",
   "keypadDone": "Listo",
-  "flipDisplayDirection": "Invertir la dirección mostrada"
+  "flipDisplayDirection": "Invertir la dirección mostrada",
+  "quoteKinds": {
+   "oficial": "Oficial",
+   "blue": "Blue",
+   "mep": "MEP",
+   "ccl": "CCL",
+   "mayorista": "Mayorista",
+   "cripto": "Cripto",
+   "tarjeta": "Tarjeta",
+   "default": "Estándar"
+  }
  },
  "pinKeypad": {
   "progress": "{current} de {total} dígitos"

@@ -6,6 +6,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.9] — 2026-08-06
+
+### Arreglado — "Actualizar" no traía nada, y el rate se mostraba como "0,0000025"
+
+- **`/currencies` con `baseCurrency = UYU` (el default de cualquier household nuevo) nunca tenía
+  cotización real.** Ninguno de los dos proveedores implementados cubre UYU: `dolarapi.ts` solo
+  hace USD↔ARS, `frankfurter.ts` no cubre monedas LatAm. Tocar "Actualizar" corría el flujo
+  entero sin ningún bug de caché/invalidación — simplemente no había a dónde ir a buscar el dato.
+  Se agrega `dolarapi-uy.ts` (`uy.dolarapi.com/v1/cotizaciones`), que cierra el hueco para
+  USD/EUR/ARS/BRL/GBP/CHF/PYG contra UYU.
+- **El rate se mostraba siempre en la dirección `moneda → base`**, sin importar cuál de las dos
+  valía más — así que cualquier moneda más débil que la base (el caso común: ARS/UYU contra USD)
+  arrancaba mostrando una fracción minúscula tipo "0,0000025" en vez de "1 USD = 1.520 ARS". Ahora
+  el default muestra la dirección donde 1 unidad de la moneda fuerte equivale a varias de la
+  débil; el botón de invertir sigue disponible para pisar ese default. De paso, `roundRateForDisplay`
+  pasa de un corte fijo de 6 decimales a escalar según la magnitud real (~4 cifras significativas),
+  para que un par con más orden de magnitud de diferencia no termine igual de ilegible.
+- **Dólar blue/CCL/tarjeta ya estaban soportados de punta a punta en el modelo de datos**
+  (`fx_rates.quote_kind`, `household_fx_preferences`, `dolarapi.ts` ya trae las 7 variantes) pero
+  no había ninguna UI para elegir — la ruta `/api/fx` resolvía UNA sola y descartaba el resto en
+  silencio. Ahora la ruta devuelve todas las variantes conocidas del día y `/currencies` las
+  ofrece como chips clickeables por moneda; elegir una la guarda como preferencia del household
+  para ese par (`fxRepo.setPreference`, ya existía, sin ningún caller hasta ahora).
+- **Cripto sin ningún proveedor real** — estaba en el diseño desde el origen (`fx_provider`
+  admitía `'coingecko'` como valor desde la primera migración) pero nunca se escribió el módulo.
+  Se agrega `coingecko.ts` (`/simple/price`, sin API key), con las cryptos más comunes
+  (BTC/ETH/USDT/USDC/BNB/SOL/XRP/ADA/DOGE/DOT/LTC) contra los fiat que CoinGecko cotiza
+  directo — UYU no está en su lista de `vs_currencies`, así que cripto↔UYU sigue sin cobertura.
+- El cron diario (`daily-fx-sync`) se actualiza en paralelo con los mismos dos proveedores nuevos,
+  y de paso se corrige su lista de monedas Frankfurter, que tenía solo 14 de las 30 reales —
+  estaba desalineada de `frankfurter.ts` del cliente desde que ese archivo se corrigió.
+
 ## [0.28.8] — 2026-08-06
 
 ### Agregado — landing pública en `/start`

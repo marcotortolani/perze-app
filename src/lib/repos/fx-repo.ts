@@ -26,6 +26,17 @@ async function ratesForPair(base: string, quote: string): Promise<FxRateRow[]> {
     .toArray();
 }
 
+/** Una fila por `quoteKind`, la más reciente ≤ `date` — mismo criterio que usa `resolveFxRate` para elegir UNA, aplicado a cada variante para el picker de E6. */
+function bestByQuoteKind(records: readonly FxRateRecord[], date: string): FxRateRecord[] {
+  const best = new Map<string, FxRateRecord>();
+  for (const r of records) {
+    if (r.asOf > date) continue;
+    const current = best.get(r.quoteKind);
+    if (!current || r.asOf > current.asOf) best.set(r.quoteKind, r);
+  }
+  return [...best.values()];
+}
+
 async function getManualOverrideExact(householdId: string, base: string, quote: string): Promise<{ rate: ScaledRate; quoteKind: string } | null> {
   const rows = await ratesForPair(base, quote);
   const manual = rows
@@ -152,15 +163,18 @@ export const fxRepo = {
       ratesForPair(base, quote),
     ]);
 
-    let resolution = resolveFxRate({
-      base,
-      quote,
-      date,
-      manualOverride,
-      ratesForPair: cachedRows.map(toRecord),
-      preferredProvider: preference.preferredProvider,
-      preferredQuoteKind: preference.preferredQuoteKind,
-    });
+    let resolution: FxResolution = {
+      ...resolveFxRate({
+        base,
+        quote,
+        date,
+        manualOverride,
+        ratesForPair: cachedRows.map(toRecord),
+        preferredProvider: preference.preferredProvider,
+        preferredQuoteKind: preference.preferredQuoteKind,
+      }),
+      availableQuoteKinds: bestByQuoteKind(cachedRows.map(toRecord), date),
+    };
 
     const isOnline = typeof navigator === "undefined" || navigator.onLine;
     // A8 — antes solo se consultaba la red cuando el local daba `pending`.
@@ -187,32 +201,36 @@ export const fxRepo = {
             provider: string | null;
             quoteKind: string | null;
             asOf: string | null;
+            availableQuoteKinds?: Array<{ quoteKind: string; rate: string; asOf: string; provider: string }>;
           };
+          // Todas las variantes que trajo la ruta (blue/CCL/tarjeta, no
+          // solo la que quedó resuelta) se cachean acá — sin esto, el
+          // picker de E6 solo podría ofrecer la que ya se había resuelto
+          // antes, porque `/api/fx` es la única puerta a un proveedor
+          // externo y el resto se descartaba en silencio.
+          const freshRecords: FxRateRecord[] = (data.availableQuoteKinds ?? []).map((q) => ({
+            base,
+            quote,
+            asOf: q.asOf,
+            provider: q.provider,
+            quoteKind: q.quoteKind,
+            rate: parseRate(q.rate),
+            fetchedAt: nowIso(),
+          }));
+          if (freshRecords.length > 0) await fxRepo.cacheQuotes(freshRecords);
+
           if (data.rate !== null && data.provider && data.quoteKind && data.asOf) {
-            await fxRepo.cacheQuotes([
-              {
-                base,
-                quote,
-                asOf: data.asOf,
-                provider: data.provider,
-                quoteKind: data.quoteKind,
-                rate: parseRate(data.rate),
-                fetchedAt: nowIso(),
-              },
-            ]);
             resolution = resolveFxRate({
               base,
               quote,
               date,
               manualOverride,
-              ratesForPair: [
-                ...cachedRows.map(toRecord),
-                { base, quote, asOf: data.asOf, provider: data.provider, quoteKind: data.quoteKind, rate: parseRate(data.rate), fetchedAt: nowIso() },
-              ],
+              ratesForPair: [...cachedRows.map(toRecord), ...freshRecords],
               preferredProvider: preference.preferredProvider,
               preferredQuoteKind: preference.preferredQuoteKind,
             });
           }
+          resolution = { ...resolution, availableQuoteKinds: freshRecords.length > 0 ? freshRecords : resolution.availableQuoteKinds };
         }
       } catch {
         // Sin red o la API falló: se guarda igual sin conversión (needs_fx). Nunca bloquea.

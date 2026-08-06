@@ -3,7 +3,9 @@ import { z } from "zod";
 import { formatRate, parseRate, type ScaledRate } from "@/lib/fx/rate";
 import { type FxManualOverride, type FxRateRecord, resolveFxRate } from "@/lib/fx/resolve";
 import { createDolarApiProvider } from "@/lib/fx/providers/dolarapi";
+import { createDolarApiUyProvider } from "@/lib/fx/providers/dolarapi-uy";
 import { createFrankfurterProvider } from "@/lib/fx/providers/frankfurter";
+import { createCoinGeckoProvider } from "@/lib/fx/providers/coingecko";
 import type { FxProvider } from "@/lib/fx/providers/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +23,7 @@ import { createClient } from "@/lib/supabase/server";
  * que antes de conectar Supabase. Cuando exista el cron, esto debería
  * encontrar casi siempre un `fx_rates` fresco y dejar de llamar afuera.
  */
-const providers: FxProvider[] = [createDolarApiProvider(), createFrankfurterProvider()];
+const providers: FxProvider[] = [createDolarApiProvider(), createDolarApiUyProvider(), createFrankfurterProvider(), createCoinGeckoProvider()];
 
 /**
  * D10 — a propósito NO usa `lib/dates/today.ts` (el helper tz-aware del
@@ -181,6 +183,19 @@ export async function GET(request: Request) {
     ratesForPair = [...fresh, ...ratesForPair];
   }
 
+  // Variantes disponibles para el par (blue/CCL/tarjeta, oficial, etc.)
+  // — `resolveFxRate` ya elige UNA sola por preferencia, pero E6 necesita
+  // mostrarle al usuario todas las que existan para que elija con un
+  // click. Misma regla de "más reciente ≤ date" que la cadena de
+  // resolución, aplicada por separado a cada `quoteKind`.
+  const bestByQuoteKind = new Map<string, FxRateRecord>();
+  for (const r of ratesForPair) {
+    if (r.asOf > date) continue;
+    const current = bestByQuoteKind.get(r.quoteKind);
+    if (!current || r.asOf > current.asOf) bestByQuoteKind.set(r.quoteKind, r);
+  }
+  const availableQuoteKinds = [...bestByQuoteKind.values()].sort((a, b) => a.quoteKind.localeCompare(b.quoteKind));
+
   const resolution = resolveFxRate({
     base,
     quote,
@@ -199,6 +214,7 @@ export async function GET(request: Request) {
       quoteKind: resolution.quoteKind,
       asOf: resolution.asOf,
       isStale: resolution.isStale,
+      availableQuoteKinds: availableQuoteKinds.map((r) => ({ quoteKind: r.quoteKind, rate: formatRate(r.rate), asOf: r.asOf, provider: r.provider })),
     },
     { headers: NO_STORE_HEADERS }
   );

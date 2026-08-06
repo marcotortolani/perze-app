@@ -9,7 +9,7 @@ import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow,
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
+import { RATE_SCALE, formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
@@ -20,6 +20,7 @@ import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
 const PENDING_RESOLUTION: FxResolution = { source: "pending", rate: null, provider: null, quoteKind: null, asOf: null, isStale: false };
 const CUSTOM_CODE_PATTERN = /^[A-Z0-9]{2,10}$/;
+
 
 /**
  * E6 — monedas y tipos de cambio por par. No existe para el perfil SIMPLE
@@ -134,6 +135,13 @@ export default function CurrenciesPage() {
     } finally {
       setCreatingCurrency(false);
     }
+  };
+
+  /** Blue/CCL/tarjeta, con un click — queda guardado por household+par (`fx-repo.ts`, `householdFxPreferences`) hasta que el usuario elija otra. */
+  const handleSelectQuoteKind = async (currency: string, quoteKind: string, provider: string) => {
+    if (!household) return;
+    await fxRepo.setPreference(household.id, `${currency}/${baseCurrency}`, provider, quoteKind);
+    await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
   };
 
   const handleRefresh = async () => {
@@ -308,11 +316,27 @@ export default function CurrenciesPage() {
               </button>
             );
           }
-          const showInverted = invertedDisplay[currency] ?? false;
+          // Default sin tocar el flip: mostrar la dirección donde 1 unidad
+          // de la moneda MÁS FUERTE equivale a varias de la más débil —
+          // "1 USD = 1.520 ARS", nunca "1 ARS = 0,00000066 USD". Antes
+          // siempre arrancaba `currency → baseCurrency` sin importar cuál
+          // de las dos valía más, así que cualquier moneda más débil que
+          // la base (el caso común: ARS/UYU contra USD) arrancaba
+          // mostrando una fracción minúscula. El botón de flip sigue
+          // pisando este default una vez que el usuario lo toca.
+          const defaultInverted = resolution.rate !== null && resolution.rate < RATE_SCALE;
+          const showInverted = invertedDisplay[currency] ?? defaultInverted;
           const displayRate = roundRateForDisplay(showInverted ? invertRate(resolution.rate) : resolution.rate);
           const displayPair = showInverted ? `${baseCurrency} → ${currency}` : `${currency} → ${baseCurrency}`;
+          // Blue/CCL/tarjeta (dólar argentino) o cualquier otro par con más
+          // de una fuente el mismo día — se ofrece como chips clickeables
+          // en vez de una sola cotización fija. Con 0-1 variante no hay
+          // nada que elegir, no se dibuja nada de más.
+          const quoteKindOptions = resolution.availableQuoteKinds ?? [];
+          const activeQuoteKind = resolution.source === "manual" ? "custom" : resolution.quoteKind;
           return (
-            <div key={currency} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div key={currency} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <button
                 type="button"
                 onClick={() => openEditor(currency, resolution.rate!)}
@@ -333,6 +357,64 @@ export default function CurrenciesPage() {
                 size={36}
                 iconSize={16}
               />
+            </div>
+            {quoteKindOptions.length > 1 ? (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingLeft: 2 }}>
+                {quoteKindOptions.map((q) => {
+                  // `quoteKind` es un `string` dinámico (viene de un
+                  // proveedor externo, no de un tipo cerrado) — un
+                  // `switch` con literales en cada `case` tipa bien contra
+                  // `currenciesPage.quoteKinds.*`; lo que un proveedor
+                  // invente y no esté acá cae al string crudo, nunca rompe.
+                  let label: string = q.quoteKind;
+                  switch (q.quoteKind) {
+                    case "oficial":
+                      label = t("currenciesPage.quoteKinds.oficial");
+                      break;
+                    case "blue":
+                      label = t("currenciesPage.quoteKinds.blue");
+                      break;
+                    case "mep":
+                      label = t("currenciesPage.quoteKinds.mep");
+                      break;
+                    case "ccl":
+                      label = t("currenciesPage.quoteKinds.ccl");
+                      break;
+                    case "mayorista":
+                      label = t("currenciesPage.quoteKinds.mayorista");
+                      break;
+                    case "cripto":
+                      label = t("currenciesPage.quoteKinds.cripto");
+                      break;
+                    case "tarjeta":
+                      label = t("currenciesPage.quoteKinds.tarjeta");
+                      break;
+                    case "default":
+                      label = t("currenciesPage.quoteKinds.default");
+                      break;
+                  }
+                  return (
+                    <button
+                      key={q.quoteKind}
+                      type="button"
+                      onClick={() => handleSelectQuoteKind(currency, q.quoteKind, q.provider)}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        border: `1px solid ${activeQuoteKind === q.quoteKind ? "var(--text-primary)" : "var(--border)"}`,
+                        background: "none",
+                        color: activeQuoteKind === q.quoteKind ? "var(--text-primary)" : "var(--text-secondary)",
+                        fontSize: 12,
+                        fontWeight: activeQuoteKind === q.quoteKind ? 600 : 400,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
             </div>
           );
         })

@@ -67,17 +67,30 @@ export function rateFromInteger(n: number): ScaledRate {
 /**
  * Redondeo consciente de magnitud, PARA HUMANOS: 2 decimales si el rate
  * vale 1 o más (nadie cotiza ARS/USD a más de 2 decimales — es la
- * convención real de cualquier casa de cambio), 6 si vale menos de 1 (una
- * tasa invertida chica como "0,000656" necesita más lugares para no
- * colapsar a "0,00"). Invertir un rate cuyo recíproco no termina en
- * decimal es matemáticamente inevitable que no sea "redondo" — sin esto,
- * la app mostraba los 12 decimales crudos de `fx_rate` en vez de lo que un
- * humano realmente escribiría. Nunca toca lo que usa `convert()` para la
- * plata real — eso sigue siendo el rate completo, sin redondear; esto es
- * solo para lo que se MUESTRA/EDITA.
+ * convención real de cualquier casa de cambio). Por debajo de 1, en vez de
+ * un corte fijo en 6 decimales, escala para conservar ~4 cifras
+ * significativas — un corte fijo colapsaba cualquier par con más de 4-5
+ * órdenes de magnitud de diferencia (un peso frente a una cripto de precio
+ * alto, o simplemente ARS/UYU contra USD sin pasar por la dirección
+ * "fuerte → débil" que ya elige `defaultInverted` en `/currencies`) a algo
+ * como "0,000003" sin ninguna cifra que decir nada. Invertir un rate cuyo
+ * recíproco no termina en decimal es matemáticamente inevitable que no
+ * sea "redondo" — sin este redondeo la app mostraba los 12 decimales
+ * crudos de `fx_rate`. Nunca toca lo que usa `convert()` para la plata
+ * real — eso sigue siendo el rate completo, sin redondear; esto es solo
+ * para lo que se MUESTRA/EDITA.
  */
 export function roundRateForDisplay(rate: ScaledRate): ScaledRate {
-  const decimals = (rate < 0n ? -rate : rate) >= RATE_SCALE ? 2 : 6;
+  const abs = rate < 0n ? -rate : rate;
+  let decimals = 2;
+  if (abs > 0n && abs < RATE_SCALE) {
+    // Orden de magnitud vía Number() — solo decide CUÁNTOS decimales
+    // mostrar, nunca el valor final (eso lo hace `roundHalfEven` sobre el
+    // bigint exacto más abajo, sin pasar la plata por punto flotante).
+    const asNumber = Number(abs) / Number(RATE_SCALE);
+    const magnitude = Math.floor(Math.log10(asNumber)); // negativo: -1 para 0,1-0,99, -4 para 0,0001-0,00099...
+    decimals = Math.min(RATE_DECIMALS, Math.max(6, 3 - magnitude));
+  }
   const divisor = 10n ** BigInt(RATE_DECIMALS - decimals);
   return roundHalfEven(rate, divisor) * divisor;
 }

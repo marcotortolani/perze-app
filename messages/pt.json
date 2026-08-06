@@ -1270,7 +1270,17 @@
   "saveOverride": "Salvar ajuste",
   "keypadCancel": "Cancelar",
   "keypadDone": "Concluído",
-  "flipDisplayDirection": "Inverter a direção exibida"
+  "flipDisplayDirection": "Inverter a direção exibida",
+  "quoteKinds": {
+   "oficial": "Oficial",
+   "blue": "Blue",
+   "mep": "MEP",
+   "ccl": "CCL",
+   "mayorista": "Atacado",
+   "cripto": "Cripto",
+   "tarjeta": "Cartão",
+   "default": "Padrão"
+  }
  },
  "pinKeypad": {
   "progress": "{current} de {total} dígitos"
