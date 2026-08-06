@@ -829,7 +829,21 @@
   "activeToday": "Active today",
   "active7d": "Active in 7 days",
   "active30d": "Active in 30 days",
-  "inactive": "No recent activity"
+  "inactive": "No recent activity",
+  "appUpdateBroadcast": {
+   "sectionTitle": "Notifications",
+   "action": "Announce new version",
+   "actionMeta": "Push to every subscribed device, across all households",
+   "sheetTitle": "Announce new version",
+   "warning": "This sends a push to every subscribed device across all households on this instance. It can't be undone once sent.",
+   "bodyLabel": "Message",
+   "title": "New version available",
+   "defaultBody": "PERZE {version} is ready.",
+   "confirm": "Send to everyone",
+   "sending": "Sending…",
+   "sent": "Sent to {count} devices",
+   "error": "Couldn't send. Try again."
+  }
  },
  "conflictsPage": {
   "title": "Sync conflicts",
@@ -896,6 +910,20 @@
    "cardStatementDue": {
     "label": "Card due date",
     "description": "When your statement is about to come due"
+   },
+   "householdJoined": {
+    "label": "New member in your household",
+    "description": "When someone accepts your invitation"
+   }
+  },
+  "profileToggles": {
+   "inviteReceived": {
+    "label": "Invitations",
+    "description": "When someone invites you to a PERZE household"
+   },
+   "appUpdates": {
+    "label": "New PERZE version",
+    "description": "When an update is available"
    }
   }
  },

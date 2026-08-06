@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.14 — 6 de agosto de 2026
+
+### Nuevo
+
+- Notificaciones push nuevas: te avisamos cuando te invitan a un hogar, cuando alguien se une al
+  tuyo, y cuando hay una versión nueva de PERZE — cada una con su propio interruptor en Más →
+  Notificaciones.
+
 ## 0.29.13 — 6 de agosto de 2026
 
 ### Nuevo

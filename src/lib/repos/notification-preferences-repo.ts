@@ -10,9 +10,11 @@ export interface NotificationPreferences {
   recurringReminders: boolean;
   insights: boolean;
   cardStatementDue: boolean;
+  /** D35 — "alguien se unió a tu hogar" (owner/admin). */
+  householdJoined: boolean;
 }
 
-const DEFAULTS = { budgetAlerts: true, weeklySummary: true, recurringReminders: true, insights: true, cardStatementDue: true };
+const DEFAULTS = { budgetAlerts: true, weeklySummary: true, recurringReminders: true, insights: true, cardStatementDue: true, householdJoined: true };
 
 /**
  * K12 — preferencias de notificación, una fila por miembro (RLS: solo la
@@ -24,7 +26,7 @@ export const notificationPreferencesRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("notification_preferences")
-      .select("id, household_id, profile_id, budget_alerts, weekly_summary, recurring_reminders, insights, card_statement_due")
+      .select("id, household_id, profile_id, budget_alerts, weekly_summary, recurring_reminders, insights, card_statement_due, household_joined")
       .eq("household_id", householdId)
       .eq("profile_id", profileId)
       .maybeSingle();
@@ -39,6 +41,7 @@ export const notificationPreferencesRepo = {
       recurringReminders: data.recurring_reminders,
       insights: data.insights,
       cardStatementDue: data.card_statement_due,
+      householdJoined: data.household_joined,
     };
   },
 
@@ -53,6 +56,7 @@ export const notificationPreferencesRepo = {
       recurring_reminders: prefs.recurringReminders,
       insights: prefs.insights,
       card_statement_due: prefs.cardStatementDue,
+      household_joined: prefs.householdJoined,
     };
     const { error } = await supabase.from("notification_preferences").upsert(row as never, { onConflict: "household_id,profile_id" });
     if (error) throw error;

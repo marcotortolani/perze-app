@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, EmptyState, ErrorState, ListRow, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { Button, EmptyState, ErrorState, Input, ListRow, Sheet, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { useOwnAccess } from "@/hooks/use-own-access";
 import { formatNumericDate, type Locale } from "@/i18n/formatting";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
+import { APP_VERSION } from "@/lib/version";
 
 const ACCESS_REQUESTS_KEY = ["admin", "access-requests"] as const;
 const METRICS_KEY = ["admin", "metrics"] as const;
@@ -30,6 +31,9 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
   const [acting, setActing] = useState<string | null>(null);
   const ownAccess = useOwnAccess();
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastBody, setBroadcastBody] = useState(t("adminPage.appUpdateBroadcast.defaultBody", { version: APP_VERSION }));
+  const [broadcasting, setBroadcasting] = useState(false);
   usePageHeader({ title: t("adminPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   // Defensa en profundidad: la entrada en Más ya se oculta a un no-operador
@@ -70,6 +74,30 @@ export default function AdminPage() {
       ]);
     } finally {
       setActing(null);
+    }
+  };
+
+  // D35 — el único disparador manual de un push broadcast (`kind:
+  // "app_update"`): pega al Route Handler propio (nunca a la Edge
+  // Function directo, que no tiene CORS a propósito), que reenvía la
+  // sesión del operador — `send-push` es quien de verdad decide si puede.
+  const handleBroadcastAppUpdate = async () => {
+    if (broadcasting || !broadcastBody.trim()) return;
+    setBroadcasting(true);
+    try {
+      const res = await fetch("/api/admin/notify-app-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: t("adminPage.appUpdateBroadcast.title"), body: broadcastBody.trim() }),
+      });
+      if (!res.ok) throw new Error("broadcast failed");
+      const { sent } = (await res.json()) as { sent: number };
+      toast(t("adminPage.appUpdateBroadcast.sent", { count: sent }));
+      setBroadcastOpen(false);
+    } catch {
+      toast(t("adminPage.appUpdateBroadcast.error"));
+    } finally {
+      setBroadcasting(false);
     }
   };
 
@@ -187,7 +215,26 @@ export default function AdminPage() {
             </div>
           )}
         </section>
+
+        <section>
+          <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>
+            {t("adminPage.appUpdateBroadcast.sectionTitle")}
+          </div>
+          <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: "0 16px" }}>
+            <ListRow label={t("adminPage.appUpdateBroadcast.action")} meta={t("adminPage.appUpdateBroadcast.actionMeta")} onClick={() => setBroadcastOpen(true)} />
+          </div>
+        </section>
       </div>
+
+      <Sheet open={broadcastOpen} title={t("adminPage.appUpdateBroadcast.sheetTitle")} onClose={() => setBroadcastOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p className="t-body" style={{ color: "var(--text-secondary)", margin: 0 }}>{t("adminPage.appUpdateBroadcast.warning")}</p>
+          <Input label={t("adminPage.appUpdateBroadcast.bodyLabel")} value={broadcastBody} onChange={(e) => setBroadcastBody(e.target.value)} autoFocus />
+          <Button variant="danger" disabled={broadcasting || !broadcastBody.trim()} onClick={handleBroadcastAppUpdate}>
+            {broadcasting ? t("adminPage.appUpdateBroadcast.sending") : t("adminPage.appUpdateBroadcast.confirm")}
+          </Button>
+        </div>
+      </Sheet>
     </div>
   );
 }

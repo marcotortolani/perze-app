@@ -6,6 +6,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.14] — 2026-08-06
+
+### Agregado — push notifications para invitaciones recibidas, nuevo miembro del hogar y nueva versión
+
+Auditoría previa (D35): `recurring_reminders` ya mandaba push cuando se materializa un
+recurrente — nada que construir ahí. Los otros tres pedidos solo tenían el camino de mail; el
+push nunca existía porque los dos primeros no encajan en el modelo de `send-push`
+(household-scoped, filtrado por `notification_preferences` de household+profile) — "te
+invitaron" es ANTES de ser miembro de nada, y "nueva versión" no es de ningún hogar en particular.
+
+`send-push` suma un segundo modo de destinatario: `profileIds` explícito sin `householdId`,
+filtrado por la nueva `profile_notification_preferences` (una fila por perfil, sin household) en
+vez de `notification_preferences`. Sin `profileIds` en ese modo es un broadcast a todo dispositivo
+suscrito — reservado a `service_role` o a `profiles.is_app_admin`.
+
+- **Invitación recibida** (`household_invite`): nuevo trigger `notify_invite_created()` en
+  `household_invites` — busca si el mail de la invitación coincide con una cuenta ya existente
+  (`auth.users`, consultado directo desde la función SQL) y le manda push. Sin cuenta todavía, el
+  mail sigue siendo el único camino — nadie recibe un push sin haberse registrado antes.
+- **Alguien se unió a tu hogar** (`household_joined`): `notify_invite_accepted()` (el trigger que
+  ya mandaba el mail al owner/admin) suma una segunda llamada a `send-push` con los mismos
+  destinatarios. Nueva columna `notification_preferences.household_joined`.
+- **Nueva versión disponible** (`app_update`): sin disparador automático — encender un envío que
+  sale solo con cada deploy es una decisión de producto que no se toma sola (mismo criterio que ya
+  regía para el resto de `send-push`). Nuevo botón "Avisar sobre nueva versión" en el panel del
+  operador, con confirmación explícita (es un broadcast, no se puede deshacer) — pega a un Route
+  Handler propio (`/api/admin/notify-app-update`) que reenvía la sesión del operador a `send-push`,
+  nunca `service_role` fuera de una Edge Function/cron.
+
+`/more/notificaciones` suma los tres toggles nuevos (`householdJoined` junto a los household-scoped
+existentes; `inviteReceived`/`appUpdates` en una sección aparte, por perfil).
+
 ## [0.29.13] — 2026-08-06
 
 ### Agregado — "Estado de precios" ahora es una lista de seguimiento editable

@@ -1503,6 +1503,7 @@ export type Database = {
           card_statement_due: boolean
           created_at: string
           household_id: string
+          household_joined: boolean
           id: string
           insights: boolean
           profile_id: string
@@ -1515,6 +1516,7 @@ export type Database = {
           card_statement_due?: boolean
           created_at?: string
           household_id: string
+          household_joined?: boolean
           id: string
           insights?: boolean
           profile_id: string
@@ -1527,6 +1529,7 @@ export type Database = {
           card_statement_due?: boolean
           created_at?: string
           household_id?: string
+          household_joined?: boolean
           id?: string
           insights?: boolean
           profile_id?: string
@@ -1785,6 +1788,38 @@ export type Database = {
             columns: ["instrument_id"]
             isOneToOne: false
             referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_notification_preferences: {
+        Row: {
+          app_updates: boolean
+          created_at: string
+          invite_received: boolean
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          app_updates?: boolean
+          created_at?: string
+          invite_received?: boolean
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          app_updates?: boolean
+          created_at?: string
+          invite_received?: boolean
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2873,6 +2908,7 @@ export type Database = {
         Returns: string[]
       }
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
+      trigger_daily_price_sync: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

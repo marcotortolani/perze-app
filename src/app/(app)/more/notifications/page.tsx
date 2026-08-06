@@ -8,11 +8,16 @@ import { Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateNotificationPreferences, useNotificationPreferences } from "@/hooks/use-notification-preferences";
+import { useInvalidateProfileNotificationPreferences, useProfileNotificationPreferences } from "@/hooks/use-profile-notification-preferences";
 import { notificationPreferencesRepo, type NotificationPreferences } from "@/lib/repos/notification-preferences-repo";
+import { profileNotificationPreferencesRepo, type ProfileNotificationPreferences } from "@/lib/repos/profile-notification-preferences-repo";
 import { getCurrentPushSubscription, PushUnsupportedError, subscribeToPush, unsubscribeFromPush } from "@/lib/push/subscribe";
 
-type ToggleKey = "budgetAlerts" | "weeklySummary" | "recurringReminders" | "insights" | "cardStatementDue";
-const TOGGLES: ToggleKey[] = ["budgetAlerts", "weeklySummary", "recurringReminders", "insights", "cardStatementDue"];
+type ToggleKey = "budgetAlerts" | "weeklySummary" | "recurringReminders" | "insights" | "cardStatementDue" | "householdJoined";
+const TOGGLES: ToggleKey[] = ["budgetAlerts", "weeklySummary", "recurringReminders", "insights", "cardStatementDue", "householdJoined"];
+
+type ProfileToggleKey = "inviteReceived" | "appUpdates";
+const PROFILE_TOGGLES: ProfileToggleKey[] = ["inviteReceived", "appUpdates"];
 
 /** K12 — notificaciones: push por dispositivo + preferencias por tipo. Sin promesa de engagement: apagado por defecto, el usuario prende lo que quiere. */
 export default function NotificationsPage() {
@@ -22,6 +27,11 @@ export default function NotificationsPage() {
   const userId = useEffectiveUserId();
   const { data: prefs } = useNotificationPreferences(household?.id, userId ?? undefined);
   const invalidate = useInvalidateNotificationPreferences(household?.id, userId ?? undefined);
+  // D35 — "te invitaron" y "nueva versión" no son de ningún household en
+  // particular (el primero es ANTES de ser miembro de nada) — preferencia
+  // aparte, por perfil, sin `household_id`.
+  const { data: profilePrefs } = useProfileNotificationPreferences(userId ?? undefined);
+  const invalidateProfilePrefs = useInvalidateProfileNotificationPreferences(userId ?? undefined);
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
   usePageHeader({ title: t("notificationsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
@@ -30,7 +40,7 @@ export default function NotificationsPage() {
     getCurrentPushSubscription().then((sub) => setPushEnabled(sub !== null));
   }, []);
 
-  if (!household || !prefs || pushEnabled === null || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  if (!household || !prefs || !profilePrefs || pushEnabled === null || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const handleTogglePush = async (on: boolean) => {
     setPushBusy(true);
@@ -55,6 +65,12 @@ export default function NotificationsPage() {
     invalidate();
   };
 
+  const handleToggleProfilePreference = async (key: ProfileToggleKey, value: boolean) => {
+    const next: ProfileNotificationPreferences = { ...profilePrefs, [key]: value };
+    await profileNotificationPreferencesRepo.upsert(next);
+    invalidateProfilePrefs();
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column" }}>
@@ -75,6 +91,16 @@ export default function NotificationsPage() {
               <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 1 }}>{t(`notificationsPage.toggles.${key}.description`)}</div>
             </div>
             <Switch checked={prefs[key]} onChange={(v) => handleTogglePreference(key, v)} disabled={!pushEnabled} id={`pref-${key}`} />
+          </div>
+        ))}
+
+        {PROFILE_TOGGLES.map((key) => (
+          <div key={key} style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 56, opacity: pushEnabled ? 1 : 0.4 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{t(`notificationsPage.profileToggles.${key}.label`)}</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 1 }}>{t(`notificationsPage.profileToggles.${key}.description`)}</div>
+            </div>
+            <Switch checked={profilePrefs[key]} onChange={(v) => handleToggleProfilePreference(key, v)} disabled={!pushEnabled} id={`profile-pref-${key}`} />
           </div>
         ))}
 
