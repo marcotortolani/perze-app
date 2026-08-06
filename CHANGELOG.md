@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.30] — 2026-08-06
+
+### Corregido — una posición sin precio conocido mostraba "$0,00" en vez de "—"
+
+D36/D45 ya resolvían "sin dato todavía, se usa el último cache mientras resuelve la API" —
+pero el caso "nunca hubo ningún dato, ni cache ni API" seguía cayendo en el fallback
+`0n` de `value = price ? ... : 0n`, así que una posición realmente tenida (con cantidad
+> 0) pero sin ninguna cotización se veía como si valiera literalmente cero — un P&L de
+"−100%" incluido, ambos números inventados. `OverviewContent` (fila de posición: valor,
+variación, precio) e `InstrumentDetailContent` (hero de valor y P&L no realizado) ahora
+muestran "—" en ese caso puntual, distinto del fallback "Sin cotización" que ya existía
+para needs_fx (causa distinta: FX pendiente vs precio de mercado ausente — no se
+conflaron). `Instrumentos` ya lo hacía bien desde la reescritura anterior.
+
 ## [0.29.29] — 2026-08-06
 
 ### Corregido — el scope switcher quedaba pegado al borde superior en desktop

@@ -127,6 +127,12 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const unrealizedPnl = position ? value - position.costBasis : 0n;
   const avgPrice = position && position.quantity > 0 ? Number(position.costBasis) / position.quantity : null;
   const weightPct = portfolioTotalValue > 0n ? (Number(value) / Number(portfolioTotalValue)) * 100 : 0;
+  // D49 — una posición HELD sin precio conocido todavía no vale "$0,00":
+  // ese cero es inventado (y el P&L resultante, `0n - costBasis`, se vería
+  // como una pérdida del 100% que tampoco es real). Se muestra "—" en vez
+  // de arrastrar el fallback de "pendiente de cotización" (que es para FX,
+  // no para precio de mercado ausente — dos causas distintas).
+  const heldWithoutPrice = !!position && position.quantity > 0 && !price;
 
   // D39 — mismos montos, en la moneda elegida por el toggle. `null` =
   // pendiente de cotización (needs_fx), nunca un valor inventado.
@@ -160,14 +166,18 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
       <div style={{ textAlign: "center" }}>
         <div className="t-caption" style={{ color: "var(--text-muted)" }}>{assetClass?.name ?? t("investmentsPage.otherAssetClass")}</div>
         <div className="t-hero" style={{ margin: "8px 0 0" }}>
-          {displayValue !== null ? (
+          {heldWithoutPrice ? (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
+          ) : displayValue !== null ? (
             <Amount value={money(displayValue, displayCurrency)} size="hero" showSign={false} polarity="neutral" tabular />
           ) : (
             <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
           )}
         </div>
         <div style={{ marginTop: 4 }}>
-          {displayUnrealizedPnl !== null ? (
+          {heldWithoutPrice ? (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
+          ) : displayUnrealizedPnl !== null ? (
             <Amount value={money(displayUnrealizedPnl, displayCurrency)} size="body" showSign polarity="neutral" tabular />
           ) : (
             <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>

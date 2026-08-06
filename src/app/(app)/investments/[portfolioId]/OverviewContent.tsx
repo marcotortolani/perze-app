@@ -305,16 +305,20 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
             const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
             const changePct = price && Number(position.costBasis) > 0 ? ((Number(value) - Number(position.costBasis)) / Number(position.costBasis)) * 100 : 0;
             const baseValue = viewCurrency === "base" ? toBase(value, instrument.currencyCode) : null;
-            const displayValue =
-              viewCurrency === "base" ? (
-                baseValue !== null ? (
-                  <Amount value={money(baseValue, household.baseCurrency)} size="body" showSign={false} polarity="neutral" tabular />
-                ) : (
-                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
-                )
+            // D49 — sin ningún precio conocido todavía (ni cache ni API), un
+            // "$0,00" es un dato inventado, no un valor real: se muestra
+            // "—" en su lugar hasta que haya un primer dato de verdad.
+            const displayValue = !price ? (
+              <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
+            ) : viewCurrency === "base" ? (
+              baseValue !== null ? (
+                <Amount value={money(baseValue, household.baseCurrency)} size="body" showSign={false} polarity="neutral" tabular />
               ) : (
-                <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
-              );
+                <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
+              )
+            ) : (
+              <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
+            );
             return (
               <PositionRow
                 key={position.instrumentId}
@@ -328,9 +332,9 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
                     ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}),
                   })
                 )}
-                price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : undefined}
+                price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
                 value={displayValue}
-                changePct={<span>{changePct >= 0 ? "↑" : "↓"} {Math.abs(changePct).toFixed(1)}%</span>}
+                changePct={price ? <span>{changePct >= 0 ? "↑" : "↓"} {Math.abs(changePct).toFixed(1)}%</span> : undefined}
                 onClick={() => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`)}
               />
             );

@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.30 — 6 de agosto de 2026
+
+### Arreglado
+
+- Una posición sin ninguna cotización todavía se mostraba como "$0,00" en vez de avisar
+  que el dato no está disponible.
+
 ## 0.29.28 — 6 de agosto de 2026
 
 ### Arreglado
