@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.4] — 2026-08-06
+
+### Arreglado — remover a alguien del hogar no le cortaba el acceso real (seguridad)
+
+Auditoría del bloque J completa tras el primer invitado real de producción. Tres brechas reales,
+encontradas antes de que las explotara nadie más que esta sesión de pruebas:
+
+- **`current_households()` y `can_write()` nunca filtraban `status`.** Son la base de
+  prácticamente toda la RLS del esquema (cuentas, movimientos, presupuestos, invitaciones, lo que
+  cuelga de estas dos funciones). Marcar a un miembro `status: 'former'` (sacarlo del hogar) lo
+  sacaba de la lista en la UI, pero su sesión seguía leyendo y escribiendo el household completo
+  para siempre — vía la API directa, no solo por la app. Los tres fixes de la 0.28.2 arreglaron el
+  síntoma visual, no el corte de acceso real. Ahora las dos funciones exigen `status = 'active'`.
+- **Cualquier miembro veía el código de cualquier invitación pendiente del household**, no solo
+  las propias — la policy de `household_invites` no filtraba por rol, y la UI lo pintaba en
+  pantalla. Con el código, cualquiera podía canjear una invitación ajena y actualizarse el propio
+  rol (`accept_invite()` deja que el `role` de la invitación se aplique al canjear). Ahora la
+  policy de `SELECT` exige `is_household_admin()`.
+- **Un household podía quedarse sin ningún owner activo** por la vía de "sacar del hogar"
+  (`markHouseholdMemberFormer`, que solo toca `status`, nunca `role`). Ya existía una guarda
+  (`enforce_household_role_changes()`) para cambios de `role`, pero no cubría este caso porque no
+  toca `role`. Trigger nuevo, acotado a ese hueco puntual — sin duplicar la guarda que ya
+  funcionaba bien para lo suyo.
+- De paso, se revocaron 3 invitaciones de prueba que habían quedado sin aceptar ni revocar en el
+  household de producción (una con un email corrupto, `"M"`, de una prueba vieja).
+
 ## [0.28.3] — 2026-08-06
 
 ### Arreglado — "Efectivo"/"Otro" hardcodeados, CTA de gasto contra saldo cero, instalar PWA en un paso
