@@ -12,6 +12,7 @@ import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshot
 import { formatAmountCompact } from "@/lib/money/format";
 import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
+import { FOREGROUND_REFRESH_MS } from "@/lib/prices/refresh-cadence";
 import { useQueryClient } from "@tanstack/react-query";
 
 /**
@@ -66,16 +67,22 @@ export default function InstrumentsListPage() {
     });
   }, [providerInstrumentIds, instrumentIds, queryClient]);
 
-  // Live refresh al entrar — ver el comentario de cabecera. `refreshAll` ya
-  // está memoizado por `providerInstrumentIds` (no por referencia nueva en
-  // cada render), así que este efecto no reintenta en loop.
+  // Live refresh al entrar y cada `FOREGROUND_REFRESH_MS` mientras la
+  // pantalla sigue montada (D50) — ver el comentario de cabecera.
+  // `refreshAll` ya está memoizado por `providerInstrumentIds` (no por
+  // referencia nueva en cada render), así que este efecto no reintenta en loop.
   useEffect(() => {
     let cancelled = false;
-    refreshAll().catch(() => {
-      if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
-    });
+    const run = () => {
+      refreshAll().catch(() => {
+        if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
+      });
+    };
+    run();
+    const interval = setInterval(run, FOREGROUND_REFRESH_MS);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [refreshAll]);
 

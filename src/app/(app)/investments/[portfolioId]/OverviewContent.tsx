@@ -20,6 +20,7 @@ import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
 import { portfoliosRepo } from "@/lib/repos/portfolios-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
+import { FOREGROUND_REFRESH_MS } from "@/lib/prices/refresh-cadence";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
@@ -132,16 +133,24 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   // "Manual" (`PriceStatus`), que además nunca reflejaba un precio en
   // vivo (solo el cache de `price_snapshots`, que escribe el cron diario).
   // Ahora se pide la cotización real de mercado de todo lo que está en
-  // cartera una sola vez al entrar al portfolio, y la pantalla declara UN
-  // solo "última actualización" en vez de un badge por fila.
+  // cartera al entrar al portfolio, y la pantalla declara UN solo "última
+  // actualización" en vez de un badge por fila.
+  // D50 — más, cada `FOREGROUND_REFRESH_MS` mientras la pantalla sigue
+  // montada: antes solo se pedía una vez al entrar, así que quedarse
+  // parado en el portfolio con la pestaña abierta nunca reflejaba una
+  // variación de mercado sin recargar a mano.
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch en vivo genuino al entrar al portfolio, no derivable del render
-    refreshPrices().catch(() => {
-      if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
-    });
+    const run = () => {
+      refreshPrices().catch(() => {
+        if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
+      });
+    };
+    run();
+    const interval = setInterval(run, FOREGROUND_REFRESH_MS);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [refreshPrices]);
 

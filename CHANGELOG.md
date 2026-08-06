@@ -6,6 +6,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.31] — 2026-08-06
+
+### Agregado — cadencia de refresco de precios, dentro y fuera de inversiones
+
+Pedido del usuario: definir cuándo y con qué frecuencia se actualizan las cotizaciones.
+Antes `OverviewContent`/`instruments/page.tsx` solo pedían el precio real UNA vez al
+entrar — quedarse parado en la pantalla con la pestaña abierta nunca reflejaba una
+variación, y salir de `/investments` cortaba cualquier actualización por completo hasta
+la próxima visita.
+
+Dos cadencias, una sola fuente (`lib/prices/refresh-cadence.ts`):
+
+- **`FOREGROUND_REFRESH_MS` (5 min)** — mientras una pantalla de inversiones está
+  montada, además del fetch al entrar. Aplicado a los mismos efectos de refresh en vivo
+  que ya existían en `OverviewContent` e `instruments/page.tsx` (solo se agregó el
+  `setInterval`, sin tocar la lógica de fetch/escritura de cache).
+- **`BACKGROUND_REFRESH_MS` (20 min)** — nuevo `useBackgroundPriceSync()`, montado una
+  sola vez en `(app)/layout.tsx` (todo el shell autenticado, no solo `/investments`):
+  mientras el household tiene el módulo `investments` habilitado y tiene instrumentos con
+  proveedor real, refresca en segundo plano aunque el usuario esté en cualquier otra
+  pantalla de la app. Escribe SOLO en el store persistido (`useInstrumentPricesStore`,
+  D36) — nunca en el cache de `useLatestPrices`, porque cada pantalla arma su query key
+  con un subconjunto distinto de instrumentIds (tenidos vs. todo el catálogo) y no hay una
+  sola key a la que escribirle; el store persistido es el canal que de verdad propaga a
+  cualquier pantalla montada, sea cual sea su key. No dispara si la pestaña está en
+  background (`document.visibilityState === "hidden"`) — no vale la pena la red/batería
+  por un dato que nadie está mirando en ese instante.
+
+`InstrumentDetailContent` queda fuera de esta pasada a propósito — nunca tuvo su propio
+refresh en vivo (solo lee lo que otras pantallas ya cachearon) y agregarle uno con botón
+"Actualizar" + fecha/hora es la tarea siguiente, ya pedida aparte.
+
 ## [0.29.30] — 2026-08-06
 
 ### Corregido — una posición sin precio conocido mostraba "$0,00" en vez de "—"

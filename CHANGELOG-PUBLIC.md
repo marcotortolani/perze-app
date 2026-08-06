@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.31 — 6 de agosto de 2026
+
+### Mejorado
+
+- Los precios de tu portfolio ahora se actualizan solos cada pocos minutos mientras estás
+  viéndolo, y de a ratos aunque estés usando otra parte de la app.
+
 ## 0.29.30 — 6 de agosto de 2026
 
 ### Arreglado

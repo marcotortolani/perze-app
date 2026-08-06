@@ -12,6 +12,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
+import { useBackgroundPriceSync } from "@/hooks/use-background-price-sync";
 import { usePendingAccessRequestsCount } from "@/hooks/use-pending-access-requests";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
@@ -59,6 +60,10 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const pending = usePendingMutations();
   const online = useOnlineStatus();
   const { data: household, isLoading: householdLoading } = useCurrentHousehold();
+  // D50 — montado una sola vez para todo el shell autenticado, no solo
+  // /investments: mantiene el portfolio razonablemente al día aunque el
+  // usuario esté en otra parte de la app (ver el comentario del hook).
+  useBackgroundPriceSync();
   // El segmentado Personal/Compartido/Todo no tiene nada que discriminar con
   // un solo miembro — se oculta hasta que haya un segundo. Mientras la
   // query carga, `showScope` queda en `false` (no `undefined`) para que no
