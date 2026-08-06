@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.33] — 2026-08-06
+
+### Corregido — data912 mezclaba pesos y dólares bajo la misma moneda "ARS"
+
+Reporte del usuario buscando "YPF" al agregar un instrumento: aparecían "YPFD" y "YPFDD",
+los dos etiquetados "Acciones · ARS" sin ninguna forma de distinguirlos. Investigado contra
+la API en vivo de data912: **son instrumentos distintos y en monedas distintas**. `YPFD` es
+el ticker real de YPF S.A. en pesos (~$7.840). `YPFDD` es `YPFD` + el sufijo "D" — la
+variante dólar-cable/MEP del mismo papel, cotizada directamente en dólares (~US$5,18).
+Confirmado con el mismo patrón en bonos: `AL30` cierra ~85.850 (pesos) mientras
+`AL30D`/`AL30C` cierran ~56 (dólares, coherente con el tipo de cambio implícito).
+
+El código asumía "data912 no separa pesos de dólares" (comentario textual en
+`data912.ts`) y hardcodeaba `currencyCode: "ARS"` para absolutamente todo — dato falso
+para cualquier ticker con sufijo dólar, de los que hay bastantes en bonos y algunas
+acciones. Nueva `detectCurrency()`: un símbolo que termina en "D" o "C" es la variante
+dólar SOLO si el símbolo sin esa última letra existe como otro instrumento en la misma
+categoría (heurística estructural, no un patrón de texto — `YPFD` también termina en "D"
+y es en pesos, así que "termina en D → dólar" habría dado un falso positivo).
+
+Con el fix, la búsqueda ahora muestra "YPFD — Acciones · ARS" y "YPFDD — Acciones · USD":
+la distinción que el usuario pedía para no comprar sin saber en qué moneda. Cubierto con 2
+tests nuevos en `data912.test.ts` (incluido el caso YPFD que descarta el falso positivo).
+
 ## [0.29.32] — 2026-08-06
 
 ### Agregado — refresh en vivo, fecha/hora y botón "Actualizar" en el detalle de instrumento

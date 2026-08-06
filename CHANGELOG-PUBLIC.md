@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.33 — 6 de agosto de 2026
+
+### Arreglado
+
+- Al buscar un instrumento para agregar, algunos resultados que en realidad cotizan en
+  dólares se mostraban etiquetados como pesos argentinos. Ahora cada uno muestra su moneda
+  real.
+
 ## 0.29.32 — 6 de agosto de 2026
 
 ### Nuevo

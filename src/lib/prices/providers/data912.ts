@@ -65,9 +65,33 @@ export interface Data912SearchResult {
   symbol: string;
   category: Data912Category;
   assetClass: string;
-  /** Data912 no separa AR local de extranjero: acciones/CEDEARs/bonos/ONs/letras de este mercado cotizan en pesos — `docs/01-arquitectura-datos.md` § 2.8. */
-  currencyCode: "ARS";
+  currencyCode: "ARS" | "USD";
   close: number;
+}
+
+/**
+ * D52 — data912 SÍ separa pesos de dólares, solo que no con un campo:
+ * un ticker que termina en "D" o "C" es la variante dólar-cable/MEP del
+ * mismo instrumento en pesos ("D" = "dólar", "C" = "contado con liqui"),
+ * cotizada directamente en USD — confirmado contra la API en vivo:
+ * `AL30` (bono) cierra ~85.850 (pesos) mientras `AL30D`/`AL30C` cierran
+ * ~56 (dólares, coherente con el tipo de cambio implícito), y lo mismo
+ * pasa con acciones: `YPFD` (YPF S.A., ticker real, TERMINA en "D" pero
+ * no es un sufijo) cierra ~7.840 pesos mientras `YPFDD` — `YPFD` + el
+ * sufijo "D" — cierra ~5,18 dólares. Ahí está la trampa que reportó el
+ * usuario buscando "YPF": los dos resultados parecían iguales
+ * ("Acciones · ARS" los dos) pero uno es en pesos y el otro en dólares.
+ *
+ * No alcanza con "termina en D → dólar" (`YPFD` mismo termina en "D" y
+ * es en pesos): el sufijo solo es tal si el símbolo SIN esa última letra
+ * existe como otro instrumento en la misma categoría — ahí sí es la
+ * variante dólar de ese otro. Heurística estructural, no un patrón de
+ * texto fijo.
+ */
+function detectCurrency(symbol: string, symbolsInCategory: ReadonlySet<string>): "ARS" | "USD" {
+  const suffix = symbol.at(-1);
+  if (suffix !== "D" && suffix !== "C") return "ARS";
+  return symbolsInCategory.has(symbol.slice(0, -1)) ? "USD" : "ARS";
 }
 
 /**
@@ -84,9 +108,10 @@ export async function searchData912Instruments(query: string, fetchImpl: typeof 
   const results = await Promise.all(
     CATEGORIES.map(async (category) => {
       const entries = await fetchCategory(fetchImpl, category).catch(() => [] as Data912Entry[]);
+      const symbolsInCategory = new Set(entries.map((e) => e.symbol));
       return entries
         .filter((e) => e.symbol.includes(needle))
-        .map((e): Data912SearchResult => ({ symbol: e.symbol, category, assetClass: DATA912_CATEGORY_ASSET_CLASS[category], currencyCode: "ARS", close: e.c }));
+        .map((e): Data912SearchResult => ({ symbol: e.symbol, category, assetClass: DATA912_CATEGORY_ASSET_CLASS[category], currencyCode: detectCurrency(e.symbol, symbolsInCategory), close: e.c }));
     })
   );
   return results.flat().sort((a, b) => a.symbol.localeCompare(b.symbol));
