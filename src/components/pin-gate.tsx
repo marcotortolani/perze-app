@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { create } from "zustand";
 import { usePathname } from "next/navigation";
 import { LockScreen } from "@/design-system/systems";
 import { usePinStore } from "@/stores/pin-store";
@@ -8,6 +9,32 @@ import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { verifyBiometric } from "@/lib/security/webauthn";
 
 const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
+
+function readSessionUnlocked(): boolean {
+  return typeof window !== "undefined" && window.sessionStorage.getItem(UNLOCKED_SESSION_KEY) === "1";
+}
+
+/**
+ * D42 — antes `PinGate` y `usePinUnlocked()` cada uno guardaba su propio
+ * `useState(readSessionUnlocked)`: dos copias del mismo booleano, ninguna
+ * suscrita a la otra. Minimizar la PWA (o pasar a otra app y volver) no
+ * dispara un remount de React, así que nada releía `sessionStorage` — el
+ * gate se quedaba mostrando "desbloqueado" para siempre hasta cerrar la
+ * pestaña de verdad. Un store compartido (sin `persist`: `sessionStorage`
+ * ya es la persistencia real, esto es solo la capa reactiva) deja que
+ * `visibilitychange` en `PinGate` actualice un solo lugar y ambos
+ * consumidores lo vean al toque.
+ */
+const useSessionUnlockedStore = create<{ unlocked: boolean; setUnlocked: (v: boolean) => void }>((set) => ({
+  unlocked: readSessionUnlocked(),
+  setUnlocked: (v) => {
+    if (typeof window !== "undefined") {
+      if (v) window.sessionStorage.setItem(UNLOCKED_SESSION_KEY, "1");
+      else window.sessionStorage.removeItem(UNLOCKED_SESSION_KEY);
+    }
+    set({ unlocked: v });
+  },
+}));
 
 /**
  * Rutas pre-auth explícitas — la captura entra directo al keypad sin pedir
@@ -26,22 +53,17 @@ function isExemptPath(pathname: string): boolean {
   return PIN_EXEMPT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-function readSessionUnlocked(): boolean {
-  return typeof window !== "undefined" && window.sessionStorage.getItem(UNLOCKED_SESSION_KEY) === "1";
-}
-
 /**
  * `true` cuando el PIN no bloquearía nada ahora mismo — reusado por
  * superficies pre-auth (ej. `AccountPickerSheet` desde `/add`, C22) que
  * igual quieren ocultar saldos si el PIN está prendido y esta pestaña
- * todavía no se desbloqueó. Solo lee estado (`enabled` + sessionStorage),
- * no monta el `LockScreen` — eso es trabajo exclusivo de `PinGate`. El
- * lazy initializer de `useState` ya lee `sessionStorage` en el primer
- * render de cliente; no hace falta un efecto extra para eso.
+ * todavía no se desbloqueó. Solo lee estado (`enabled` + el store
+ * compartido de arriba), no monta el `LockScreen` — eso es trabajo
+ * exclusivo de `PinGate`.
  */
 export function usePinUnlocked(): boolean {
   const enabled = usePinStore((s) => s.enabled);
-  const [sessionUnlocked] = useState(readSessionUnlocked);
+  const sessionUnlocked = useSessionUnlockedStore((s) => s.unlocked);
   return !enabled || sessionUnlocked;
 }
 
@@ -67,7 +89,8 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const enabled = usePinStore((s) => s.enabled);
   const biometricEnabled = usePinStore((s) => s.biometricEnabled);
   const biometricCredentialId = usePinStore((s) => s.biometricCredentialId);
-  const [sessionUnlocked, setSessionUnlocked] = useState(readSessionUnlocked);
+  const sessionUnlocked = useSessionUnlockedStore((s) => s.unlocked);
+  const setSessionUnlocked = useSessionUnlockedStore((s) => s.setUnlocked);
   const triedBiometricRef = useRef(false);
   // `Date.now()` no puede llamarse en el cuerpo del render (regla de
   // pureza) — se lee acá, en un tick de 1s, y el render solo compara
@@ -79,6 +102,28 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     const interval = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // D42 — antes el gate solo se re-armaba al cerrar la PWA de verdad
+  // (`sessionStorage` sobrevive minimizar/pasar a otra app y volver).
+  // `visibilitychange` a `hidden` es la señal real de "salió de primer
+  // plano" en una PWA — ni un `blur` de ventana (dispara con un simple
+  // cambio de foco sin salir de la app, como abrir el teclado) ni un
+  // timer bastan. Re-bloquea sin esperar a que vuelva a estar visible:
+  // si se muestra tarde, el usuario ya vio el contenido en el instante
+  // que volvió. `triedBiometricRef` se resetea para que el intento
+  // automático de biometría (§2) vuelva a dispararse una vez por cada
+  // vez que se re-bloquea, no solo la primera vez que se montó el gate.
+  useEffect(() => {
+    if (!enabled) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setSessionUnlocked(false);
+        triedBiometricRef.current = false;
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [enabled, setSessionUnlocked]);
 
   const exempt = isExemptPath(pathname);
   const isRecentEditOfOwnCapture =
@@ -99,10 +144,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const unlockWithBiometric = async () => {
     if (!biometricCredentialId) return;
     const ok = await verifyBiometric(biometricCredentialId);
-    if (ok) {
-      window.sessionStorage.setItem(UNLOCKED_SESSION_KEY, "1");
-      setSessionUnlocked(true);
-    }
+    if (ok) setSessionUnlocked(true);
   };
 
   useEffect(() => {
@@ -119,10 +161,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
       lockoutSeconds={lockoutSeconds}
       onSubmit={async (pin) => {
         const ok = await verify(pin);
-        if (ok) {
-          window.sessionStorage.setItem(UNLOCKED_SESSION_KEY, "1");
-          setSessionUnlocked(true);
-        }
+        if (ok) setSessionUnlocked(true);
         return ok;
       }}
       onBiometric={canUseBiometric ? unlockWithBiometric : undefined}

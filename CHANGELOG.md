@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.21] — 2026-08-06
+
+### Corregido — el bloqueo por PIN/biométrico no se activaba al pasar a background
+
+Reporte del usuario: con el PIN o el biométrico activados, minimizar la PWA, pasar a otra
+app y volver mostraba el contenido directo, sin pedir desbloqueo — solo cerrar la PWA por
+completo (matar el proceso) re-armaba el gate.
+
+Causa: `PinGate` guardaba el estado "desbloqueado en esta sesión" en `sessionStorage`, que
+sobrevive minimizar/cambiar de app — solo se pierde al cerrar la pestaña/proceso de verdad.
+Y aunque hubiera existido una forma de invalidarlo, minimizar no dispara un remount de
+React, así que nada iba a releerlo de todos modos. Se agrega un listener de
+`visibilitychange`: apenas `document.visibilityState` pasa a `"hidden"` (la señal real de
+"salió de primer plano" en una PWA — a diferencia de un `blur` de ventana, que dispara con
+cualquier cambio de foco sin salir de la app), se limpia el desbloqueo de la sesión. Al
+volver a mostrarse, el gate ya está re-armado.
+
+De paso se corrige un bug latente relacionado: `PinGate` y `usePinUnlocked()` (usado por
+`AccountPickerSheet`/`PayCardSheet` para ocultar saldos pre-auth) cada uno mantenía su
+propio `useState(readSessionUnlocked)` — dos copias del mismo booleano, sin suscripción
+entre sí. Aunque el `visibilitychange` de `PinGate` limpiara `sessionStorage`, la copia de
+`usePinUnlocked()` en otro componente ya montado no se habría enterado hasta su próximo mount.
+Ahora las dos leen de un store de Zustand compartido (sin `persist`: `sessionStorage` sigue
+siendo la persistencia real; el store es solo la capa reactiva), así que un cambio en
+cualquiera de los dos lugares se ve en el otro al instante.
+
 ## [0.29.20] — 2026-08-06
 
 ### Corregido — el mensaje de "no coinciden" quedaba pegado al reingresar el PIN

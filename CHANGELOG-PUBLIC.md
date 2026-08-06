@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.21 — 6 de agosto de 2026
+
+### Arreglado
+
+- El bloqueo por PIN o huella ahora se activa también al minimizar la app o pasar a otra y
+  volver — antes solo se activaba si cerrabas la app por completo.
+
 ## 0.29.20 — 6 de agosto de 2026
 
 ### Arreglado
