@@ -1661,8 +1661,12 @@
   "copyCode": "Copy code",
   "codeCopied": "Code copied",
   "emailOptional": "Email (optional)",
-  "emailOptionalHint": "We don't send the email ourselves yet — copy the code and share it yourself.",
+  "emailOptionalHint": "If you add it, we can offer to send the invite by email.",
   "generateCode": "Generate code",
+  "sendByEmail": "Send it by email",
+  "sending": "Sending…",
+  "sent": "Invitation sent to {email}",
+  "sendError": "Couldn't send it — the code is still there to copy.",
   "roles": {
    "owner": "Owner",
    "admin": "Admin",
@@ -1683,6 +1687,24 @@
   "linkCopied": "Link copied",
   "inviteExpires": "The code expires in 7 days.",
   "you": "You"
+ },
+ "emails": {
+  "invite": {
+   "subject": "{inviterName} invited you to {householdName} on PERZE",
+   "preview": "{inviterName} invited you to join PERZE",
+   "title": "You're invited to {householdName}",
+   "body": "{inviterName} invited you to join PERZE, the personal finance app they use for {householdName}.",
+   "roleLabel": "You'll be able to:",
+   "roleDescriptions": {
+    "admin": "Does everything, including inviting people and deleting accounts.",
+    "member": "Adds and edits shared expenses, and sees what {inviterName} shares. Can't invite anyone or delete accounts.",
+    "viewer": "Sees what's shared and can't touch anything."
+   },
+   "buttonLabel": "Join",
+   "codeLabel": "Or enter this code by hand:",
+   "expiresNote": "This link expires in 7 days.",
+   "footer": "If you weren't expecting this invite, you can ignore this email."
+  }
  },
  "permissionsPage": {
   "title": "Permissions & visibility",

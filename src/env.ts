@@ -10,7 +10,16 @@ import * as z from "zod";
  * Functions/cron.
  */
 export const env = createEnv({
-  server: {},
+  server: {
+    // Resend — mails que manda la propia app (hoy solo la invitación al
+    // household, J3). Secreto de servidor: nunca `NEXT_PUBLIC_*`, nunca en
+    // el bundle del cliente (`CLAUDE.md`). Opcional a propósito — un
+    // self-host sin Resend configurado no debe romper el build; el route
+    // handler (`src/app/api/emails/invite/route.ts`) devuelve 503
+    // explícito si falta.
+    RESEND_API_KEY: z.string().min(1).optional(),
+    EMAIL_FROM: z.email().optional(),
+  },
   client: {
     // Para `metadataBase` (og:image, apple-touch-icon absolutos) — sin
     // dominio propio todavía, cae a localhost en dev/preview.

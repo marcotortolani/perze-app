@@ -1661,8 +1661,12 @@
   "copyCode": "Copiar código",
   "codeCopied": "Código copiado",
   "emailOptional": "Email (opcional)",
-  "emailOptionalHint": "Ainda não enviamos o email sozinhos — copie o código e compartilhe você mesmo.",
+  "emailOptionalHint": "Se você preencher, oferecemos enviar o convite por email.",
   "generateCode": "Gerar código",
+  "sendByEmail": "Enviar por email",
+  "sending": "Enviando…",
+  "sent": "Convite enviado para {email}",
+  "sendError": "Não deu para enviar — o código continua disponível para copiar.",
   "roles": {
    "owner": "Dono",
    "admin": "Admin",
@@ -1683,6 +1687,24 @@
   "linkCopied": "Link copiado",
   "inviteExpires": "O código vence em 7 dias.",
   "you": "Você"
+ },
+ "emails": {
+  "invite": {
+   "subject": "{inviterName} te convidou para {householdName} no PERZE",
+   "preview": "{inviterName} te convidou para o PERZE",
+   "title": "Você foi convidado para {householdName}",
+   "body": "{inviterName} te convidou para o PERZE, o app de finanças pessoais que usa para {householdName}.",
+   "roleLabel": "Você vai poder:",
+   "roleDescriptions": {
+    "admin": "Faz tudo, inclusive convidar e apagar contas.",
+    "member": "Adiciona e edita gastos compartilhados, e vê o que {inviterName} compartilhar. Não pode convidar ninguém nem apagar contas.",
+    "viewer": "Vê o que é compartilhado e não pode mexer em nada."
+   },
+   "buttonLabel": "Entrar",
+   "codeLabel": "Ou digite este código à mão:",
+   "expiresNote": "Este link vence em 7 dias.",
+   "footer": "Se você não esperava esse convite, pode ignorar este email."
+  }
  },
  "permissionsPage": {
   "title": "Permissões e visibilidade",

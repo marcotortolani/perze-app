@@ -3,21 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button, Input, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateInvites } from "@/hooks/use-invites";
-import { invitesRepo } from "@/lib/repos/invites-repo";
+import { invitesRepo, type HouseholdInvite } from "@/lib/repos/invites-repo";
 import { useEmailField } from "@/hooks/use-email-field";
 import { optionalEmailSchema } from "@/lib/validation/email";
 
 /**
- * J3 — invitar. Sin envío de email real todavía (necesitaría una Edge
- * Function + proveedor de correo, ninguno de los dos existe): se genera
- * un código que el usuario comparte a mano y se canjea en `/join`. El
- * código es el mismo camino que un QR — un QR es solo ese código
- * codificado en una imagen, así que agregarlo después no cambia el
- * modelo de datos.
+ * J3 — invitar. Se genera un código que el usuario comparte a mano y se
+ * canjea en `/join` — el código es el mismo camino que un QR, así que
+ * agregarlo después no cambia el modelo de datos. Con email cargado,
+ * además se ofrece mandarlo por mail (`/api/emails/invite`, Route
+ * Handler + Resend — decisión cerrada, no una Edge Function, ver
+ * `docs/mejora-auth-oauth-y-email.md` § 6): el envío es best-effort, el
+ * código sigue siendo el camino de respaldo si Resend no está
+ * configurado o el mail falla.
  *
  * El email NO es decorativo aunque sea opcional: si se carga, la
  * invitación queda nominal y `accept_invite`
@@ -26,6 +28,7 @@ import { optionalEmailSchema } from "@/lib/validation/email";
  */
 export default function InviteFamilyMemberPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const invalidateInvites = useInvalidateInvites(household?.id);
@@ -34,9 +37,12 @@ export default function InviteFamilyMemberPage() {
   // El email es opcional: vacío no es un error, pero escrito a medias sí.
   const email = useEmailField();
   const [creating, setCreating] = useState(false);
-  const [code, setCode] = useState<string | null>(null);
+  const [invite, setInvite] = useState<HouseholdInvite | null>(null);
+  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   if (!household) return null;
+
+  const code = invite?.code ?? null;
 
   const handleCreate = async () => {
     if (creating) return;
@@ -47,11 +53,33 @@ export default function InviteFamilyMemberPage() {
     }
     setCreating(true);
     try {
-      const invite = await invitesRepo.create({ householdId: household.id, email: parsed.data, role: "member" });
+      const created = await invitesRepo.create({ householdId: household.id, email: parsed.data, role: "member" });
       invalidateInvites();
-      setCode(invite.code);
+      setInvite(created);
+      if (created.email) void handleSendEmail(created);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleSendEmail = async (target: HouseholdInvite) => {
+    if (!target.email) return;
+    setSendState("sending");
+    try {
+      const res = await fetch("/api/emails/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteId: target.id, locale }),
+      });
+      if (!res.ok) {
+        setSendState("error");
+        toast.error(t("familyPage.sendError"));
+        return;
+      }
+      setSendState("sent");
+    } catch {
+      setSendState("error");
+      toast.error(t("familyPage.sendError"));
     }
   };
 
@@ -95,6 +123,27 @@ export default function InviteFamilyMemberPage() {
                 </Button>
               </div>
               <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>{t("familyPage.inviteExpires")}</p>
+              {/* Sin email cargado, este bloque entero no se dibuja: no
+                  hay a quién mandarle nada — el código/link de arriba
+                  siguen siendo el camino completo por su cuenta. */}
+              {invite?.email ? (
+                <>
+                  <p className="t-caption" style={{ margin: 0, color: sendState === "error" ? "var(--critical)" : "var(--text-muted)" }}>
+                    {sendState === "sending"
+                      ? t("familyPage.sending")
+                      : sendState === "sent"
+                        ? t("familyPage.sent", { email: invite.email })
+                        : sendState === "error"
+                          ? t("familyPage.sendError")
+                          : null}
+                  </p>
+                  {sendState === "error" ? (
+                    <Button variant="ghost" onClick={() => handleSendEmail(invite)}>
+                      {t("familyPage.sendByEmail")}
+                    </Button>
+                  ) : null}
+                </>
+              ) : null}
             </div>
           ) : (
             <>
