@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, Button, EmptyState, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, EmptyState, Icon, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
@@ -208,12 +208,24 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
 
   let totalValue = 0n;
   let excludedCount = 0;
+  // D60 — antes una posición sin precio de mercado conocido igual sumaba
+  // `0n` al total, como si de verdad valiera cero — el mismo problema de
+  // fondo que needs_fx (CLAUDE.md), pero por un dato distinto (precio
+  // ausente, no FX pendiente): un total que la incluye como si valiera
+  // cero muestra un patrimonio falso, no uno conservador. Se excluye y se
+  // cuenta aparte — nunca con el mismo contador/copy de `NeedsFxBanner`,
+  // que está redactado específicamente para FX pendiente.
+  let excludedNoPriceCount = 0;
   const byAssetClass = new Map<string, number>();
   for (const [instrumentId, position] of positions) {
     const instrument = instrumentById.get(instrumentId);
     const price = prices.get(instrumentId);
     if (!instrument) continue;
-    const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
+    if (!price) {
+      excludedNoPriceCount += 1;
+      continue;
+    }
+    const value = fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode);
     const baseValue = toBase(value, instrument.currencyCode);
     if (baseValue === null) {
       excludedCount += 1;
@@ -269,6 +281,28 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
       </div>
 
       <NeedsFxBanner count={excludedCount} />
+      {/* D60 — mismo peso visual que `NeedsFxBanner` pero copy propio: es
+          una causa distinta (precio de mercado ausente, no FX pendiente)
+          y `NeedsFxBanner` está redactado específicamente para la otra. */}
+      {excludedNoPriceCount > 0 ? (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px var(--screen-padding)",
+            background: "color-mix(in srgb, var(--warning) 12%, transparent)",
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 500,
+          }}
+        >
+          <Icon name="alert" size={15} strokeWidth={2} color="var(--warning)" />
+          <span>{t("investmentsPage.excludedNoPrice", { count: excludedNoPriceCount })}</span>
+        </div>
+      ) : null}
 
       <ListRow icon="plus" label={t("investmentsPage.recordTrade")} variant="action" onClick={() => router.push(`/investments/${portfolio.id}/trades/new`)} />
       <ListRow icon="target" label={t("allocationPage.title")} onClick={() => router.push("/investments/allocation")} />

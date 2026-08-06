@@ -6,6 +6,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.35] — 2026-08-06
+
+### Corregido — el total del portfolio sumaba posiciones sin precio como si valieran $0
+
+En `OverviewContent`, una posición sin ningún precio de mercado conocido caía en
+`value = price ? ... : 0n` y ese `0n` se sumaba igual al `totalValue` del Donut hero — un
+patrimonio falso (más bajo del real), el mismo problema que `needs_fx` mueve pero para un
+dato distinto (precio de mercado ausente, no FX pendiente). Ahora se excluye del total
+(mismo criterio que ya existía para `toBase() === null`) y se cuenta aparte. Nuevo aviso
+`investmentsPage.excludedNoPrice`, mismo peso visual que `NeedsFxBanner` pero copy propio
+— no se reutiliza el de `NeedsFxBanner`, que está redactado específicamente para FX
+pendiente, no para esta causa. `InstrumentDetailContent` ya excluía correctamente estas
+posiciones de su propio cálculo de `portfolioTotalValue` (para el peso %) — no tenía el
+bug, solo `OverviewContent`.
+
 ## [0.29.34] — 2026-08-06
 
 ### Cambiado — historial de operaciones: fecha corta con día abreviado, precio sin redondear

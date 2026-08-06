@@ -1875,7 +1875,8 @@
   "viewOriginalCurrency": "Original",
   "viewBaseCurrency": "{currency}",
   "pendingFx": "No rate yet",
-  "lastRefreshed": "Market values, last updated {date} at {time}"
+  "lastRefreshed": "Market values, last updated {date} at {time}",
+  "excludedNoPrice": "{count, plural, one {# position with no market price, excluded from the total} other {# positions with no market price, excluded from the total}}"
  },
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",

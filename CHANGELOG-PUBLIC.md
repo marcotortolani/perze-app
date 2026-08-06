@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.35 — 6 de agosto de 2026
+
+### Arreglado
+
+- El total de tu portfolio podía verse más bajo de lo real: una posición sin cotización
+  todavía sumaba como si valiera $0. Ahora se excluye y te avisa cuántas quedaron afuera.
+
 ## 0.29.34 — 6 de agosto de 2026
 
 ### Arreglado
