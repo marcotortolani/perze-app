@@ -10,7 +10,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { usePendingMutations } from "@/lib/offline";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useHouseholdMembers } from "@/hooks/use-household-members";
+import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { usePendingAccessRequestsCount } from "@/hooks/use-pending-access-requests";
 import { SearchOverlay } from "@/components/search-overlay";
@@ -60,7 +60,15 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   // un solo miembro — se oculta hasta que haya un segundo. Mientras la
   // query carga, `showScope` queda en `false` (no `undefined`) para que no
   // aparezca y desaparezca en el mismo montaje.
-  const { data: householdMembers } = useHouseholdMembers(household?.id);
+  //
+  // `useRemoteHouseholdMembers`, no `useHouseholdMembers`: la segunda lee
+  // Dexie local, que solo tiene la fila del propio dueño del dispositivo —
+  // un miembro que otro invitó y aceptó desde SU dispositivo nunca baja a
+  // este Dexie sin un pull-sync que todavía no existe (mismo comentario en
+  // `household-members-remote.ts`). Con la local, el switch nunca
+  // aparecía para el owner aunque el household tuviera 2+ miembros de
+  // verdad — bug real, no solo un caso raro.
+  const { data: householdMembers } = useRemoteHouseholdMembers(household?.id);
   const showScope = (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
   const pendingAccessRequests = usePendingAccessRequestsCount();

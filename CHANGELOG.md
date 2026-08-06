@@ -6,6 +6,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.6] — 2026-08-06
+
+### Arreglado — el switch Personal/Compartido/Todo no aparecía y, cuando aparecía, no filtraba nada
+
+Dos bugs distintos en el mismo control, encontrados al revisar por qué no se veía con un household
+de 2 miembros:
+
+- **`(app)/layout.tsx` calculaba la visibilidad del switch con `useHouseholdMembers`, que lee
+  Dexie local** — y Dexie local solo tiene la fila del propio dueño del dispositivo: un miembro
+  que otro invitó y aceptó desde SU dispositivo nunca baja ahí sin un pull-sync que todavía no
+  existe. Resultado: el switch nunca aparecía para el owner, aunque el household tuviera 2+
+  miembros de verdad. Se cambia a `useRemoteHouseholdMembers` (la misma fuente que ya usa
+  correctamente Grupo familiar), que lee Supabase directo.
+- **Aunque apareciera, no hacía nada.** El store (`useScopeStore`) y el `SegmentedControl` en
+  `AppHeader` estaban completos —tal como pide el contrato tras la migración de
+  `ScopeSwitcher`—, pero ningún hook de datos leía `scope`: cambiar entre Personal/Compartido/Todo
+  no alteraba ni una cifra del dashboard. Ahora el home filtra cuentas por `visibility`
+  (`private` → Personal, `household`/`custom` → Compartido, sin filtro → Todo) y de ahí se derivan
+  patrimonio neto, gastado/ingresado del período y movimientos recientes — todo lo que ya se
+  mostraba, ahora respeta el scope elegido. Se suma un estado vacío distinto ("nada en este
+  scope") para no confundirlo con el de onboarding cuando el household tiene datos pero no en el
+  scope actual.
+
 ## [0.28.5] — 2026-08-06
 
 ### Arreglado — el mail de aviso al operador nunca llegaba (proyecto migrado al sistema de API keys nuevo)

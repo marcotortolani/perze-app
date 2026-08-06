@@ -1065,6 +1065,7 @@
  "home": {
   "empty": "Todavía no cargaste ningún movimiento. Registrá tu primer gasto para ver tu resumen acá.",
   "emptyAction": "Cargar mi primer gasto",
+  "emptyScope": "No hay nada en este scope todavía. Probá cambiar el switch de arriba a \"Todo\".",
   "netWorth": "Patrimonio neto",
   "showAmounts": "Mostrar montos",
   "hideAmounts": "Ocultar montos",

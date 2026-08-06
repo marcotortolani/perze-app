@@ -1065,6 +1065,7 @@
  "home": {
   "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
   "emptyAction": "Add my first expense",
+  "emptyScope": "Nothing in this scope yet. Try switching the toggle above to \"All\".",
   "netWorth": "Net worth",
   "showAmounts": "Show amounts",
   "hideAmounts": "Hide amounts",

@@ -49,6 +49,8 @@ import { useConflicts } from "@/hooks/use-conflicts";
 import { usePendingMutations } from "@/lib/offline";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { usePrivacyStore } from "@/stores/privacy-store";
+import { useScopeStore } from "@/stores/scope-store";
+import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useNetWorthCurrencyStore } from "@/stores/net-worth-currency-store";
 import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
@@ -144,7 +146,21 @@ export default function HomePage() {
     }
     return map;
   }, [transactionTagLinks, tagById]);
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  // El switch Personal/Compartido/Todo del header (`AppHeader`, montado en
+  // `(app)/layout.tsx`) filtraba nada hasta acá — se pintaba, cambiaba el
+  // store, pero ningún cálculo del dashboard lo leía. `scopedAccounts`
+  // filtra por `visibility` (`match-scope.ts`) y `scopedTransactions` seguí
+  // pertenece por `accountId`/`counterAccountId` — todo lo que se muestra
+  // más abajo (patrimonio, gastado/ingresado, movimientos recientes, tarjetas)
+  // sale de estos dos, no de los arrays crudos del fetch.
+  const scope = useScopeStore((s) => s.scope);
+  const scopedAccounts = useMemo(() => (accounts ?? []).filter((a) => accountMatchesScope(a.visibility, scope)), [accounts, scope]);
+  const scopedAccountIds = useMemo(() => new Set(scopedAccounts.map((a) => a.id)), [scopedAccounts]);
+  const scopedTransactions = useMemo(
+    () => (transactions ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
+    [transactions, scopedAccountIds]
+  );
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts);
   const netWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.displayCurrency);
   const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
   const wantsUsd = netWorthDisplayCurrency === "usd" && household?.baseCurrency !== "USD";
@@ -161,7 +177,7 @@ export default function HomePage() {
   const spendByCategory = new Map<string, bigint>();
   let expenseThisPeriod = zero(baseCurrencyForPeriod);
   let incomeThisPeriod = zero(baseCurrencyForPeriod);
-  for (const tx of transactions ?? []) {
+  for (const tx of scopedTransactions) {
     if (tx.occurredAt < periodStart || tx.kind === "transfer" || tx.amountBase === null) continue;
     const m = money(tx.amountBase, baseCurrencyForPeriod);
     if (tx.kind === "expense") {
@@ -193,10 +209,14 @@ export default function HomePage() {
 
   if (errorState) return <ErrorState {...errorState} />;
 
-  const allAccounts = accounts ?? [];
-  const allTransactions = transactions ?? [];
+  const allAccounts = scopedAccounts;
+  const allTransactions = scopedTransactions;
 
-  if (allAccounts.length === 0 || allTransactions.length === 0) {
+  // Sin datos de verdad (recién onboardeado) vs. sin datos EN ESTE SCOPE
+  // (p. ej. "Personal" sin ninguna cuenta privada, con el hogar lleno de
+  // movimientos) son dos estados distintos — el primero pide cargar el
+  // primer gasto, el segundo solo necesita cambiar el switch del header.
+  if ((accounts ?? []).length === 0 || (transactions ?? []).length === 0) {
     return (
       <EmptyState
         message={t("home.empty")}
@@ -204,6 +224,10 @@ export default function HomePage() {
         onAction={() => router.push("/add")}
       />
     );
+  }
+
+  if (allAccounts.length === 0 || allTransactions.length === 0) {
+    return <EmptyState message={t("home.emptyScope")} />;
   }
 
   const baseCurrency = household.baseCurrency;

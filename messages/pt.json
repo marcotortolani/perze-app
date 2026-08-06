@@ -1065,6 +1065,7 @@
  "home": {
   "empty": "Você ainda não lançou nenhuma movimentação. Registre seu primeiro gasto para ver seu resumo aqui.",
   "emptyAction": "Lançar meu primeiro gasto",
+  "emptyScope": "Nada neste escopo ainda. Tente trocar o seletor acima para \"Tudo\".",
   "netWorth": "Patrimônio líquido",
   "showAmounts": "Mostrar valores",
   "hideAmounts": "Ocultar valores",
