@@ -494,6 +494,10 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.daily-fx-sync]
 verify_jwt = true
 
+# Bloque I — mismo criterio que `daily-fx-sync` de arriba.
+[functions.daily-price-sync]
+verify_jwt = true
+
 # pg-delta is the schema diff engine for db diff / db pull / db remote commit.
 # Set enabled = false to fall back to the legacy migra engine.
 [experimental.pgdelta]

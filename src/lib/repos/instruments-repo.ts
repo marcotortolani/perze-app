@@ -28,6 +28,9 @@ export interface Instrument {
   couponRate: number | null; // % anual, ej. 8.5
   couponFrequency: number | null; // pagos por año: 1, 2, 4, 12
   amortizationSchedule: AmortizationStep[] | null;
+  /** `null` = sin cobertura automática (I12: el precio se carga a mano). */
+  priceProvider: string | null;
+  providerSymbol: string | null;
 }
 
 /**
@@ -92,7 +95,7 @@ export const instrumentsRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("instruments")
-      .select("id, symbol, name, asset_class_id, currency_code, metadata, maturity_date, coupon_rate, coupon_frequency, amortization_schedule")
+      .select("id, symbol, name, asset_class_id, currency_code, metadata, maturity_date, coupon_rate, coupon_frequency, amortization_schedule, price_provider, provider_symbol")
       .or(`household_id.is.null,household_id.eq.${householdId}`)
       .order("symbol", { ascending: true });
     if (error) throw error;
@@ -103,6 +106,8 @@ export const instrumentsRepo = {
       assetClassId: row.asset_class_id,
       currencyCode: row.currency_code,
       quantityDecimals: (row.metadata as { quantityDecimals?: number } | null)?.quantityDecimals ?? null,
+      priceProvider: row.price_provider,
+      providerSymbol: row.provider_symbol,
       maturityDate: row.maturity_date,
       couponRate: row.coupon_rate,
       couponFrequency: row.coupon_frequency,
@@ -121,6 +126,9 @@ export const instrumentsRepo = {
     maturityDate?: string | null;
     couponRate?: number | null;
     couponFrequency?: number | null;
+    /** `null`/`undefined` = sin cobertura automática, el precio se carga a mano (I12) — el camino de primera clase, no un fallback. */
+    priceProvider?: string | null;
+    providerSymbol?: string | null;
   }): Promise<Instrument> {
     const supabase = createClient();
     const { data, error } = await supabase
@@ -136,9 +144,11 @@ export const instrumentsRepo = {
         maturity_date: input.maturityDate ?? null,
         coupon_rate: input.couponRate ?? null,
         coupon_frequency: input.couponFrequency ?? null,
+        price_provider: input.priceProvider ?? null,
+        provider_symbol: input.providerSymbol ?? null,
       } as never)
-      .select("id, symbol, name, asset_class_id, currency_code, maturity_date, coupon_rate, coupon_frequency")
-      .single<{ id: string; symbol: string; name: string; asset_class_id: string | null; currency_code: string; maturity_date: string | null; coupon_rate: number | null; coupon_frequency: number | null }>();
+      .select("id, symbol, name, asset_class_id, currency_code, maturity_date, coupon_rate, coupon_frequency, price_provider, provider_symbol")
+      .single<{ id: string; symbol: string; name: string; asset_class_id: string | null; currency_code: string; maturity_date: string | null; coupon_rate: number | null; coupon_frequency: number | null; price_provider: string | null; provider_symbol: string | null }>();
     if (error) throw error;
     return {
       id: data.id,
@@ -147,6 +157,8 @@ export const instrumentsRepo = {
       assetClassId: data.asset_class_id,
       currencyCode: data.currency_code,
       quantityDecimals: null,
+      priceProvider: data.price_provider,
+      providerSymbol: data.provider_symbol,
       maturityDate: data.maturity_date,
       couponRate: data.coupon_rate,
       couponFrequency: data.coupon_frequency,

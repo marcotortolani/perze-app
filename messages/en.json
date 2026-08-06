@@ -1821,11 +1821,23 @@
   "noPortfolio": "You don't have an investment portfolio yet.",
   "createPortfolio": "Create portfolio",
   "defaultPortfolioName": "My portfolio",
+  "portfolioName": "Portfolio name",
   "otherAssetClass": "Other",
   "noPositions": "You haven't logged any trades yet.",
   "recordTrade": "Log a trade",
   "newInstrument": "Create instrument manually",
   "positions": "Positions"
+ },
+ "instrumentDetailPage": {
+  "notFound": "We couldn't find this instrument.",
+  "priceUpdated": "Price updated",
+  "unrealized": "unrealized",
+  "quantity": "Quantity",
+  "avgPrice": "Average price",
+  "currentPrice": "Current price",
+  "weight": "Weight in portfolio",
+  "history": "History",
+  "noHistory": "No trades for this instrument yet."
  },
  "newInstrumentPage": {
   "symbol": "Symbol",

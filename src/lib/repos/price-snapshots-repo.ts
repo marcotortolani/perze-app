@@ -35,4 +35,19 @@ export const priceSnapshotsRepo = {
     const { error } = await supabase.from("price_snapshots").upsert({ instrument_id: instrumentId, as_of: asOf, provider: "manual", close, currency_code: currencyCode } as never);
     if (error) throw error;
   },
+
+  /**
+   * "Actualizar" de I12/I4 — pega a `/api/prices` para un instrumento con
+   * proveedor real (`data912`/`coingecko`). Nunca llama al proveedor
+   * externo directo (`CLAUDE.md`). Devuelve `null` si el instrumento no
+   * tiene proveedor, o si el proveedor no devolvió nada — nunca lanza por
+   * eso, es un estado esperado (FCI, plazo fijo, inmuebles).
+   */
+  async refreshFromProvider(instrumentId: string): Promise<LatestPrice | null> {
+    const res = await fetch(`/api/prices?instrumentId=${encodeURIComponent(instrumentId)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { close: number | null; provider: string | null; asOf: string | null; currencyCode: string; isStale: boolean };
+    if (data.close === null || data.provider === null || data.asOf === null) return null;
+    return { instrumentId, close: data.close, currencyCode: data.currencyCode, asOf: data.asOf, provider: data.provider };
+  },
 };

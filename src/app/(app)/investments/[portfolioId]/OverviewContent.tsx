@@ -7,47 +7,46 @@ import { Amount, EmptyState, ListRow, PositionRow, PriceStatus, Skeleton, usePag
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
-import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
-import { portfoliosRepo } from "@/lib/repos/portfolios-repo";
+
+export interface OverviewContentProps {
+  portfolioId: string;
+}
 
 /**
- * I1/I2 — inversiones: activa el portfolio (F0-equivalente del módulo) y
- * muestra la composición por clase de activo (Donut) + valor total.
- * Separado de `page.tsx` — ver el comentario en `budgets/BudgetsPageContent.tsx`.
+ * I2/I3 — overview de UN portfolio: composición por clase de activo
+ * (Donut) + valor total + posiciones. Antes esto vivía en `/investments`
+ * a secas y asumía "el primer portfolio del household"
+ * (`portfolios?.[0]`) — ahora `portfolioId` viene de la URL
+ * (`/investments/[portfolioId]`, la ruta que ya elige `PortfoliosListContent`),
+ * así que un household con más de un portfolio los distingue de verdad.
  */
-export default function InvestmentsPageContent() {
+export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   const t = useTranslations();
-  usePageHeader({ title: t("nav.investments") });
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
-  const invalidatePortfolios = useInvalidatePortfolios(household?.id);
   const { data: assetClasses } = useAssetClasses();
   const { data: instruments } = useInstruments(household?.id);
 
-  const portfolio = portfolios?.[0];
+  const portfolio = portfolios?.find((p) => p.id === portfolioId);
+  usePageHeader({ title: portfolio?.name ?? t("nav.investments"), onBack: () => router.push("/investments"), backLabel: t("ds.appHeader.back") });
   const { data: trades } = useTrades(portfolio?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
 
   if (!household || !portfolios || !assetClasses || !instruments || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
+  // Un `portfolioId` que no existe (más) para este household — vuelve a
+  // la lista en vez de quedarse en un overview huérfano.
   if (!portfolio) {
-    return (
-      <EmptyState
-        message={t("investmentsPage.noPortfolio")}
-        actionLabel={t("investmentsPage.createPortfolio")}
-        onAction={async () => {
-          await portfoliosRepo.create({ householdId: household.id, name: t("investmentsPage.defaultPortfolioName"), baseCurrency: household.baseCurrency, brokerAccountId: null, createdBy: userId });
-          invalidatePortfolios();
-        }}
-      />
-    );
+    router.replace("/investments");
+    return <Skeleton height={280} style={{ marginTop: 16 }} />;
   }
 
   if (!trades || pricesQuery.isLoading) return <Skeleton height={280} style={{ marginTop: 16 }} />;

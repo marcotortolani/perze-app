@@ -61,3 +61,8 @@ export function useLatestPrices(instrumentIds: string[]) {
     enabled: instrumentIds.length > 0,
   });
 }
+
+export function useInvalidateLatestPrices(instrumentIds: string[]) {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: ["latest-prices", [...instrumentIds].sort()], refetchType: "all" });
+}

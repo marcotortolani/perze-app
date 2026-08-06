@@ -9,9 +9,29 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInvalidateInstruments } from "@/hooks/use-investments";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
-import { CURRENCIES } from "@/lib/reference/countries-currencies";
+import { useCurrencies } from "@/hooks/use-currencies";
+import { SYMBOL_TO_COINGECKO_ID } from "@/lib/prices/coingecko-symbols";
 
 const FIXED_INCOME_CLASS_NAMES = new Set(["Bonos soberanos", "ONs", "Letras", "Plazo fijo"]);
+
+/**
+ * Clases que Data912 cubre (mercado argentino — `docs/01-arquitectura-datos.md`
+ * § 2.8). El resto (FCI, Plazo fijo, Inmuebles, Efectivo, Otros, ETFs
+ * internacionales sin proveedor todavía) queda con `priceProvider: null`
+ * — precio a mano, el camino de primera clase, no un fallback.
+ */
+const DATA912_CLASS_NAMES = new Set(["Acciones", "CEDEARs", "Bonos soberanos", "ONs", "Letras"]);
+
+/** Deriva `price_provider`/`provider_symbol` del nombre de la clase elegida — sin campo propio en el formulario todavía (I7b no lo pide), auto-detectado. */
+function derivePriceProvider(assetClassName: string | undefined, symbol: string): { priceProvider: string | null; providerSymbol: string | null } {
+  if (!assetClassName) return { priceProvider: null, providerSymbol: null };
+  if (DATA912_CLASS_NAMES.has(assetClassName)) return { priceProvider: "data912", providerSymbol: symbol.trim().toUpperCase() };
+  if (assetClassName === "Crypto") {
+    const coinGeckoId = SYMBOL_TO_COINGECKO_ID[symbol.trim().toUpperCase()];
+    return coinGeckoId ? { priceProvider: "coingecko", providerSymbol: coinGeckoId } : { priceProvider: null, providerSymbol: null };
+  }
+  return { priceProvider: null, providerSymbol: null };
+}
 
 /** I7b — crear instrumento a mano: el formulario de 4 campos que I7 prometía. */
 export default function NewInstrumentPage({ params }: { params: Promise<{ portfolioId: string }> }) {
@@ -25,6 +45,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: assetClasses = [] } = useAssetClasses();
+  const { data: currencies = [] } = useCurrencies();
   const invalidateInstruments = useInvalidateInstruments(household?.id);
   usePageHeader({ title: t("investmentsPage.newInstrument"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
@@ -48,6 +69,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
     if (!canSave || saving) return;
     setSaving(true);
     try {
+      const { priceProvider, providerSymbol } = derivePriceProvider(selectedAssetClass?.name, symbol);
       await instrumentsRepo.create({
         householdId: household.id,
         symbol: symbol.trim(),
@@ -55,6 +77,8 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
         assetClassId,
         currencyCode,
         createdBy: userId,
+        priceProvider,
+        providerSymbol,
         maturityDate: isFixedIncome && maturityDate ? maturityDate : null,
         couponRate: isFixedIncome && couponRate ? Number(couponRate.replace(",", ".")) : null,
         couponFrequency: isFixedIncome && couponRate ? Number(couponFrequency) : null,
@@ -125,7 +149,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
       </Sheet>
       <Sheet open={sheetOpen === "currency"} title={t("newInstrumentPage.currency")} onClose={() => setSheetOpen("none")}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {CURRENCIES.map((c) => (
+          {currencies.map((c) => (
             <ListRow key={c.code} label={`${c.code} — ${c.name}`} onClick={() => { setCurrencyCode(c.code); setSheetOpen("none"); }} />
           ))}
         </div>

@@ -1821,11 +1821,23 @@
   "noPortfolio": "Você ainda não tem um portfólio de investimentos.",
   "createPortfolio": "Criar portfólio",
   "defaultPortfolioName": "Meu portfólio",
+  "portfolioName": "Nome do portfólio",
   "otherAssetClass": "Outros",
   "noPositions": "Você ainda não registrou nenhuma operação.",
   "recordTrade": "Registrar operação",
   "newInstrument": "Criar instrumento manualmente",
   "positions": "Posições"
+ },
+ "instrumentDetailPage": {
+  "notFound": "Não encontramos esse instrumento.",
+  "priceUpdated": "Preço atualizado",
+  "unrealized": "não realizado",
+  "quantity": "Quantidade",
+  "avgPrice": "Preço médio",
+  "currentPrice": "Preço atual",
+  "weight": "Peso no portfólio",
+  "history": "Histórico",
+  "noHistory": "Ainda não há operações para este instrumento."
  },
  "newInstrumentPage": {
   "symbol": "Símbolo",

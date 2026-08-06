@@ -208,7 +208,7 @@ export const fxRepo = {
           // picker de E6 solo podría ofrecer la que ya se había resuelto
           // antes, porque `/api/fx` es la única puerta a un proveedor
           // externo y el resto se descartaba en silencio.
-          const freshRecords: FxRateRecord[] = (data.availableQuoteKinds ?? []).map((q) => ({
+          const variantRecords: FxRateRecord[] = (data.availableQuoteKinds ?? []).map((q) => ({
             base,
             quote,
             asOf: q.asOf,
@@ -217,9 +217,20 @@ export const fxRepo = {
             rate: parseRate(q.rate),
             fetchedAt: nowIso(),
           }));
+          // La variante resuelta SIEMPRE entra explícita, esté o no en
+          // `availableQuoteKinds` — una respuesta que no la mande ahí (un
+          // proveedor viejo, un mock de test) no debe perder el rate que
+          // sí vino en `data.rate`.
+          const resolvedRecord: FxRateRecord | null =
+            data.rate !== null && data.provider && data.quoteKind && data.asOf
+              ? { base, quote, asOf: data.asOf, provider: data.provider, quoteKind: data.quoteKind, rate: parseRate(data.rate), fetchedAt: nowIso() }
+              : null;
+          const freshRecords = resolvedRecord
+            ? [resolvedRecord, ...variantRecords.filter((v) => v.quoteKind !== resolvedRecord.quoteKind)]
+            : variantRecords;
           if (freshRecords.length > 0) await fxRepo.cacheQuotes(freshRecords);
 
-          if (data.rate !== null && data.provider && data.quoteKind && data.asOf) {
+          if (resolvedRecord) {
             resolution = resolveFxRate({
               base,
               quote,

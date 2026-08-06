@@ -4,18 +4,15 @@ import dynamic from "next/dynamic";
 import { Skeleton } from "@/design-system";
 import { ModuleGate } from "@/components/module-gate";
 
-const InvestmentsPageContent = dynamic(() => import("./InvestmentsPageContent"), {
+const PortfoliosListContent = dynamic(() => import("./PortfoliosListContent"), {
   loading: () => <Skeleton height={280} style={{ marginTop: 16 }} />,
 });
 
-/**
- * I1/I2 — inversiones: activa el portfolio y muestra la composición por
- * clase de activo (Donut) + valor total.
- */
+/** Raíz del bloque I — lista de portfolios, mismo rol que `/accounts` para cuentas. */
 export default function InvestmentsPage() {
   return (
     <ModuleGate module="investments">
-      <InvestmentsPageContent />
+      <PortfoliosListContent />
     </ModuleGate>
   );
 }

@@ -6,6 +6,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.0] — 2026-08-06
+
+### Agregado — núcleo del bloque I: portfolios múltiples, detalle de instrumento y precios reales
+
+Alcance acordado como "núcleo" tras auditar todo el bloque I (I1-I12 en distinto estado, la
+mayoría ya funcional): los tres huecos pedidos explícitamente, dejando I6 (registrar renta), I1
+(activación con cuenta broker), TWR/benchmarks y el objetivo de allocation para una fase
+siguiente.
+
+- **Portfolios múltiples de verdad.** El schema y el repo ya soportaban varios portfolios por
+  household, pero cada pantalla asumía `portfolios[0]` — sin selector, sin forma de crear un
+  segundo. `/investments` pasa a ser la lista (mismo rol que `/accounts` para cuentas, "+ Nuevo
+  portfolio" incluido); el overview de siempre se mueve a `/investments/[portfolioId]`, mismo
+  patrón de ruta que ya usaban `trades/new`/`instruments/new`.
+- **I4 — detalle de instrumento, antes un link roto en producción.** `OverviewContent` ya
+  navegaba a `positions/[instrumentId]`, pero esa ruta nunca se había escrito. Ahora muestra la
+  posición (valor + P&L no realizado), precio promedio, peso en el portfolio, estado del precio
+  con botón de actualizar, y el historial completo de operaciones de ese instrumento — cuánto
+  creció desde la compra hasta hoy, no solo el número final.
+- **Cotizaciones reales de mercado.** Cero proveedores implementados hasta ahora, pese a que la
+  fuente ya estaba decidida en `01-arquitectura-datos.md`. Se agrega **Data912** (mercado
+  argentino — acciones, CEDEARs, bonos, ONs, letras, comunitaria, sin API key) y **CoinGecko**
+  para instrumentos cripto, con el mismo patrón ya probado en FX: un cron diario
+  (`daily-price-sync`) que puebla `price_snapshots`, y `/api/prices` como única puerta para un
+  refresh puntual — el cliente nunca llama a un proveedor externo directo. Al crear un
+  instrumento (I7b), la clase de activo elegida ahora deriva automáticamente `price_provider`/
+  `provider_symbol`; el resto (FCI, plazo fijo, inmuebles) sigue con precio a mano, el camino de
+  primera clase, no un fallback.
+- **De paso, un bug de RLS real en producción**: `price_snapshots` solo tenía policy de `SELECT`
+  — "cargar un precio a mano" (I12) hacía un `.upsert()` desde el cliente que la base rechazaba
+  en silencio. Nueva policy acotada a `provider = 'manual'`: cualquier autenticado puede agregar
+  su precio manual, nunca puede escribir con el `provider` de una fuente real.
+
 ## [0.28.9] — 2026-08-06
 
 ### Arreglado — "Actualizar" no traía nada, y el rate se mostraba como "0,0000025"
