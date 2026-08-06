@@ -1,6 +1,7 @@
 import type { routing } from "./routing";
 import type { NumberLocale } from "@/lib/money/parse";
-import { useFormatPreferencesStore, type DateFormatPref } from "@/stores/format-preferences-store";
+import { currentSeparators } from "@/lib/money/number-format";
+import type { DateFormatPref } from "@/stores/format-preferences-store";
 
 export type Locale = (typeof routing.locales)[number];
 
@@ -26,10 +27,7 @@ export function numberLocaleForUiLocale(locale: Locale): NumberLocale {
  * que el keypad entiende como decimal.
  */
 export function decimalSeparatorForLocale(locale: Locale): string {
-  const pref = useFormatPreferencesStore.getState().decimalSeparator;
-  if (pref === "comma") return ",";
-  if (pref === "period") return ".";
-  return numberLocaleForUiLocale(locale) === "en-US" ? "." : ",";
+  return currentSeparators(numberLocaleForUiLocale(locale) !== "en-US").decimal;
 }
 
 /**

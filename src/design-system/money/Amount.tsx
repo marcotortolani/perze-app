@@ -4,8 +4,9 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useLocale } from "next-intl";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
+import { currentSeparators, groupDigits } from "@/lib/money/number-format";
 import type { Money } from "@/lib/money/money";
-import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 const SIZES: Record<string, CSSProperties> = {
   "hero-xl": {
@@ -134,7 +135,14 @@ export function Amount({
   const absAmount = negative ? -value.amount : value.amount;
   const intPart = absAmount / divisor;
   const fracPart = decimals > 0 ? (absAmount % divisor).toString().padStart(decimals, "0") : "";
-  const intFormatted = new Intl.NumberFormat(numberLocaleForUiLocale(locale)).format(intPart);
+  // D53 — `groupDigits`/`currentSeparators`, no `Intl.NumberFormat`: acá
+  // ambos separadores (miles y decimal) salen del MISMO par resuelto, así
+  // que nunca pueden quedar desincronizados como pasaba antes (de miles
+  // atado al idioma de la UI vía `Intl`, decimal atado al ajuste de
+  // Ajustes → Formato — con los dos en fuentes distintas, una combinación
+  // como ajuste "coma" + UI en inglés daba "1,500,00").
+  const { decimal, group } = currentSeparators(numberLocaleForUiLocale(locale) !== "en-US");
+  const intFormatted = groupDigits(intPart.toString(), group);
 
   // `negative ? "−"` no depende de `showSign` a propósito — ver el
   // comentario de la prop. Ocultar el signo negativo de un saldo real
@@ -201,7 +209,7 @@ export function Amount({
       {sign}
       {symbol}&nbsp;{intFormatted}
       {decimals > 0 ? (
-        <span style={{ color: mutedDecimals ? "var(--text-muted)" : "inherit" }}>{`${decimalSeparatorForLocale(locale)}${fracPart}`}</span>
+        <span style={{ color: mutedDecimals ? "var(--text-muted)" : "inherit" }}>{`${decimal}${fracPart}`}</span>
       ) : null}
     </span>
   );

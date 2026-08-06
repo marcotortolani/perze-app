@@ -6,6 +6,40 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.28] — 2026-08-06
+
+### Corregido — separador de miles y decimal podían quedar iguales ("1,500,00")
+
+Reporte del usuario, con captura: un monto se veía como "AR$ 1.500,00" con el separador de
+miles y el decimal siendo el mismo carácter en algunos casos, según la combinación de
+idioma de la UI y el ajuste de Ajustes → Formato. Causa raíz: **dos fuentes de verdad
+distintas para los dos separadores**. El decimal ya pasaba por
+`decimalSeparatorForLocale()`, que sí lee el ajuste guardado — pero el de MILES salía de
+`Intl.NumberFormat(numberLocaleForUiLocale(locale))`, atado únicamente al idioma de la UI,
+sin ninguna noción del ajuste. Con el ajuste en "coma" y la UI en inglés: `Intl` agrupaba
+con coma (así agrupa en-US) y el decimal —correcto según el ajuste— también era coma. Dos
+separadores iguales, número ambiguo.
+
+Nuevo `src/lib/money/number-format.ts`: `resolveSeparators()`/`currentSeparators()`
+resuelven AMBOS caracteres de una sola vez (el de miles siempre el opuesto del decimal ya
+resuelto, nunca de una fuente aparte) y `groupDigits()` inserta el separador de miles a
+mano, sin pasar por `Intl.NumberFormat` en ningún punto de la app. Reemplaza el
+agrupamiento en `formatAmount`/`formatAmountCompact`/`formatNumber`
+(`lib/money/format.ts`), en `<Amount>` (el único componente JSX que formatea plata) y en
+`FxEditor` (mismo bug, mismo patrón, encontrado en la misma pasada). `decimalSeparatorForLocale()`
+en `i18n/formatting.ts` pasa a delegar en el mismo resolver, sin cambiar su contrato
+público — todo el código de parseo de teclado numérico que ya la llamaba sigue igual.
+
+Verificado en vivo forzando el ajuste a "coma" con la UI en inglés: antes de este fix el
+comportamiento habría sido "1,500,00"; con el fix, "1.500,00" — separadores distintos,
+sin ambigüedad. Cubierto con tests nuevos en `number-format.test.ts` y casos agregados a
+`format.test.ts` que reproducen exactamente la combinación que rompía.
+
+Pendiente, anotado aparte (no en esta pasada): varios `%` en analytics/inversiones siguen
+usando `.toFixed(1)` hardcodeado en vez de este mismo resolver — cosmético (solo el
+carácter decimal, sin colisión de separadores posible en un porcentaje), no la causa del
+reporte del usuario.
+
 ## [0.29.27] — 2026-08-06
 
 ### Quitado — gráfico de fluctuación del detalle de instrumento

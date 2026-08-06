@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.28 — 6 de agosto de 2026
+
+### Arreglado
+
+- Con ciertas combinaciones de idioma y formato de número (Ajustes → Formato), un monto
+  podía mostrarse con el separador de miles y el decimal iguales, algo así como
+  "1,500,00". Ya se ven siempre distintos y correctos.
+
 ## 0.29.27 — 6 de agosto de 2026
 
 ### Quitado

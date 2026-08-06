@@ -5,9 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { Icon } from "../core/Icon";
 import { StatusBadge } from "../core/StatusBadge";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
+import { currentSeparators, groupDigits } from "@/lib/money/number-format";
 import { formatRateTrimmed, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { roundHalfEven } from "@/lib/money/money";
-import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 /**
  * Sin ceros finales, no cortado a 2 decimales: una tasa invertida chica
@@ -17,8 +18,11 @@ import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from 
 function displayRate(rate: ScaledRate, toCurrency: string, locale: Locale): string {
   const [intPart, fracPart] = formatRateTrimmed(roundRateForDisplay(rate)).split(".");
   const symbol = CURRENCY_SYMBOLS[toCurrency.toUpperCase()] ?? toCurrency;
-  const groupedInt = new Intl.NumberFormat(numberLocaleForUiLocale(locale)).format(BigInt(intPart ?? "0"));
-  return fracPart ? `${symbol} ${groupedInt}${decimalSeparatorForLocale(locale)}${fracPart}` : `${symbol} ${groupedInt}`;
+  // D53 — mismo par de separadores para miles y decimal, nunca dos fuentes
+  // distintas (`Intl.NumberFormat` atado al idioma + el ajuste aparte).
+  const { decimal, group } = currentSeparators(numberLocaleForUiLocale(locale) !== "en-US");
+  const groupedInt = groupDigits(intPart ?? "0", group);
+  return fracPart ? `${symbol} ${groupedInt}${decimal}${fracPart}` : `${symbol} ${groupedInt}`;
 }
 
 export interface FxEditorProps {

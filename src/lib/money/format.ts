@@ -1,6 +1,7 @@
 import { decimalsFor } from "./decimals";
 import type { Money } from "./money";
 import type { NumberLocale } from "./parse";
+import { currentSeparators, groupDigits } from "./number-format";
 
 /**
  * ISO 4217 define el código de 3 letras y los decimales de cada moneda —
@@ -76,8 +77,8 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   BDT: "৳",
 };
 
-function decimalSeparator(locale: NumberLocale): string {
-  return locale === "en-US" ? "." : ",";
+function separatorsFor(locale: NumberLocale) {
+  return currentSeparators(locale !== "en-US");
 }
 
 export interface FormatAmountOptions {
@@ -103,12 +104,13 @@ export function formatAmount(m: Money, opts: FormatAmountOptions = {}): string {
   const intPart = absAmount / divisor;
   const fracPart = absAmount % divisor;
 
-  const intFormatted = new Intl.NumberFormat(locale).format(intPart);
+  const { decimal, group } = separatorsFor(locale);
+  const intFormatted = groupDigits(intPart.toString(), group);
   const fracFormatted = decimals > 0 ? fracPart.toString().padStart(decimals, "0") : "";
 
   const sign = negative ? "−" : showSign ? "+" : "";
   const symbol = showSymbol ? `${CURRENCY_SYMBOLS[m.currency.toUpperCase()] ?? m.currency} ` : "";
-  const decimalPart = decimals > 0 ? `${decimalSeparator(locale)}${fracFormatted}` : "";
+  const decimalPart = decimals > 0 ? `${decimal}${fracFormatted}` : "";
 
   return `${sign}${symbol}${intFormatted}${decimalPart}`;
 }
@@ -140,8 +142,8 @@ export function formatAmountCompact(m: Money, opts: FormatAmountOptions = {}): s
       const scaledTenths = (majorUnits * 10n) / threshold;
       const whole = scaledTenths / 10n;
       const tenth = scaledTenths % 10n;
-      const dec = decimalSeparator(locale);
-      return `${sign}${symbol}${whole}${dec}${tenth} ${suffix}`;
+      const { decimal, group } = separatorsFor(locale);
+      return `${sign}${symbol}${groupDigits(whole.toString(), group)}${decimal}${tenth} ${suffix}`;
     }
   }
 
@@ -162,8 +164,10 @@ export interface FormatNumberOptions {
  */
 export function formatNumber(value: number, decimals: number, opts: FormatNumberOptions = {}): string {
   const { locale = "es-UY" } = opts;
-  return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
+  const { decimal, group } = separatorsFor(locale);
+  const negative = value < 0;
+  const fixed = Math.abs(value).toFixed(decimals);
+  const [intStr, fracStr = ""] = fixed.split(".");
+  const decimalPart = decimals > 0 ? `${decimal}${fracStr}` : "";
+  return `${negative ? "−" : ""}${groupDigits(intStr ?? "0", group)}${decimalPart}`;
 }
