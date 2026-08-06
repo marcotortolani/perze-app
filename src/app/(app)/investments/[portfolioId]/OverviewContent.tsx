@@ -377,7 +377,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
                 )}
                 price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
                 value={displayValue}
-                changePct={price ? <span>{changePct >= 0 ? "↑" : "↓"} {Math.abs(changePct).toFixed(1)}%</span> : undefined}
+                changePct={price ? <span>{changePct >= 0 ? "↑" : "↓"} {formatNumber(Math.abs(changePct), 1)}%</span> : undefined}
                 onClick={() => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`)}
               />
             );

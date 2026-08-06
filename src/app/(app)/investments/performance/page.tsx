@@ -9,6 +9,7 @@ import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hoo
 import { computePositions } from "@/lib/analytics/positions";
 import { computePortfolioReturn } from "@/lib/analytics/portfolio-return";
 import { fromMajorUnitsUnsafe } from "@/lib/money/money";
+import { formatNumber } from "@/lib/money/format";
 
 const MIN_DAYS = 30;
 
@@ -70,7 +71,7 @@ export default function PerformancePage() {
           <EmptyState message={t("performancePage.needsHistory", { days: Math.max(0, MIN_DAYS - daysSinceFirst) })} />
         ) : (
           <>
-            <StatTile label={t("performancePage.xirr")} value={result.xirr !== null ? `${(result.xirr * 100).toFixed(1)}%` : "—"} />
+            <StatTile label={t("performancePage.xirr")} value={result.xirr !== null ? `${formatNumber(result.xirr * 100, 1)}%` : "—"} />
             <p className="t-caption" style={{ color: "var(--text-muted)" }}>{t("performancePage.xirrExplainer")}</p>
             <p className="t-body" style={{ color: "var(--text-secondary)" }}>{t("performancePage.benchmarksUnavailable")}</p>
           </>

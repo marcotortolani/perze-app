@@ -10,7 +10,7 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { computeCurrencyExposure } from "@/lib/analytics/currency-exposure";
 import { convert } from "@/lib/fx/rate";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { todayIso } from "@/lib/repos/ids";
 import type { Money } from "@/lib/money/money";
 
@@ -56,7 +56,7 @@ export default function CurrencyExposurePage() {
         <StatTile label={t("currencyExposurePage.total")} value={formatAmountCompact(totalBase, { showSign: false })} />
         <SeriesLegend
           series={rows.map((row) => ({
-            label: `${row.currency}${row.pctOfNetWorth !== null ? ` · ${row.pctOfNetWorth.toFixed(0)}%` : ""}`,
+            label: `${row.currency}${row.pctOfNetWorth !== null ? ` · ${formatNumber(row.pctOfNetWorth, 0)}%` : ""}`,
             value: row.baseAmount ? formatAmountCompact(row.baseAmount, { showSign: false }) : formatAmountCompact(row.nativeAmount, { showSign: false }),
           }))}
         />

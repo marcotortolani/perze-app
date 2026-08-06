@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.36] — 2026-08-06
+
+### Corregido — porcentajes con `.toFixed()` hardcodeado, ignoraban el ajuste de decimal
+
+Cola pendiente de la auditoría de formato (D53): ocho lugares mostraban un `%` con
+`.toFixed(1)`/`.toFixed(0)` directo — siempre punto decimal, sin importar el ajuste de
+Ajustes → Formato. Reemplazados por `formatNumber(value, decimals)`, mismo resolver
+central que ya usa el resto de la app: `analytics/page.tsx` (tasa de ahorro),
+`analytics/currencies/page.tsx` (% del patrimonio por moneda), `analytics/wrapped/page.tsx`
+(tasa de ahorro, cifra grande), `analytics/inflation/page.tsx` (% de inflación, interpolado
+en el texto), `analytics/trends/page.tsx` (variación semanal), `OverviewContent.tsx`
+(variación de posición), `InstrumentDetailContent.tsx` (peso en el portfolio) y
+`performance/page.tsx` (XIRR). Deliberadamente sin tocar `Sparkline.tsx`/`LineChart.tsx`:
+sus `.toFixed(1)` son coordenadas de un `<path>` SVG, no números visibles al usuario —
+agregarles separador de miles hubiera roto el path.
+
 ## [0.29.35] — 2026-08-06
 
 ### Corregido — el total del portfolio sumaba posiciones sin precio como si valieran $0

@@ -10,7 +10,7 @@ import { usePriceIndex } from "@/hooks/use-price-index";
 import { previousClosedPeriodBounds, monthsOfHistory } from "@/lib/analytics/history";
 import { summarizePeriod } from "@/lib/analytics/period-summary";
 import { adjustForInflation, inflationBetween } from "@/lib/analytics/inflation";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
 const MIN_MONTHS = 2;
@@ -63,7 +63,7 @@ export default function InflationPage() {
         </div>
         {adjusted !== null && pctChange !== null ? (
           <p className="t-body" style={{ color: "var(--text-secondary)" }}>
-            {t("inflationPage.explainer", { percent: pctChange.toFixed(1) })}
+            {t("inflationPage.explainer", { percent: formatNumber(pctChange, 1) })}
           </p>
         ) : (
           <p className="t-body" style={{ color: "var(--text-muted)" }}>{t("inflationPage.noIndex")}</p>

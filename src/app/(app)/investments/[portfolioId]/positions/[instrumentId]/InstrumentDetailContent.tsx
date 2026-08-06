@@ -303,7 +303,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
           </div>
           <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.weight")}</div>
-            <div className="t-title" style={{ marginTop: 4 }}>{weightPct.toFixed(1)}%</div>
+            <div className="t-title" style={{ marginTop: 4 }}>{formatNumber(weightPct, 1)}%</div>
           </div>
         </div>
 

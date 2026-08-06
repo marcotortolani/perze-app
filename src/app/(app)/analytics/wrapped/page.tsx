@@ -11,7 +11,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { closedPeriodsCount, currentPeriodBounds } from "@/lib/analytics/history";
 import { computeWrappedSummary } from "@/lib/analytics/wrapped";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
 /**
@@ -91,7 +91,7 @@ export default function WrappedPage() {
       key={4}
       index={4}
       total={TOTAL_FRAMES}
-      figure={<div style={{ fontFamily: "var(--font-sans)", fontSize: 56, fontWeight: 600, letterSpacing: "-.02em" }}>{summary.savingsRatePct !== null ? `${summary.savingsRatePct.toFixed(1)}%` : "—"}</div>}
+      figure={<div style={{ fontFamily: "var(--font-sans)", fontSize: 56, fontWeight: 600, letterSpacing: "-.02em" }}>{summary.savingsRatePct !== null ? `${formatNumber(summary.savingsRatePct, 1)}%` : "—"}</div>}
       line={t("wrappedPage.savingsRateLine")}
     />,
     <StoryFrame

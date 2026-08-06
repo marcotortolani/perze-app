@@ -13,7 +13,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { closedPeriodsCount, daysOfHistory, daysUntilPeriodCloses, monthsOfHistory, previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { averageDailyExpense, summarizePeriod } from "@/lib/analytics/period-summary";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
 const MIN_TRENDS_CALENDAR_DAYS = 30;
@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
           style={{ flex: 3, minWidth: 0 }}
         />
         {periodSummary ? (
-          <StatTile label={t("analyticsPage.savingsRate")} value={periodSummary.savingsRatePct !== null ? `${periodSummary.savingsRatePct.toFixed(1)}%` : "—"} fit style={{ flex: 2, minWidth: 0 }} />
+          <StatTile label={t("analyticsPage.savingsRate")} value={periodSummary.savingsRatePct !== null ? `${formatNumber(periodSummary.savingsRatePct, 1)}%` : "—"} fit style={{ flex: 2, minWidth: 0 }} />
         ) : (
           <StatTile label={t("analyticsPage.dailySpend")} value={formatAmountCompact(money(dailyAvg, household.baseCurrency), { showSign: false })} fit style={{ flex: 2, minWidth: 0 }} />
         )}

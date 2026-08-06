@@ -12,7 +12,7 @@ import { Skeleton, StatTile, usePageHeader } from "@/design-system";
 const BarChart = dynamic(() => import("@/design-system/charts/BarChart").then((m) => m.BarChart), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
-import { formatAmountCompact } from "@/lib/money/format";
+import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { formatDateShort, type Locale } from "@/i18n/formatting";
 
@@ -50,7 +50,7 @@ export default function TrendsPage() {
         <StatTile
           label={t("trendsPage.thisWeek")}
           value={formatAmountCompact(money(thisWeek, baseCurrency), { showSign: false })}
-          delta={deltaPct !== null ? `${deltaPct >= 0 ? "↑" : "↓"} ${Math.abs(deltaPct).toFixed(1)}%` : undefined}
+          delta={deltaPct !== null ? `${deltaPct >= 0 ? "↑" : "↓"} ${formatNumber(Math.abs(deltaPct), 1)}%` : undefined}
           deltaPolarity={deltaPct === null ? "neutral" : deltaPct > 0 ? "negative" : "positive"}
           deltaNote={t("trendsPage.vsLastWeek")}
         />

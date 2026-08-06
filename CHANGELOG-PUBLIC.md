@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.36 — 6 de agosto de 2026
+
+### Arreglado
+
+- Algunos porcentajes (tasa de ahorro, inflación, variación de inversiones) no respetaban
+  el separador decimal elegido en Ajustes → Formato. Ya son consistentes con el resto de
+  la app.
+
 ## 0.29.35 — 6 de agosto de 2026
 
 ### Arreglado
