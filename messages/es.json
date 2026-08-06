@@ -1842,11 +1842,12 @@
   "positions": "Posiciones",
   "viewOriginalCurrency": "Moneda original",
   "viewBaseCurrency": "En {currency}",
-  "pendingFx": "Sin cotización"
+  "pendingFx": "Sin cotización",
+  "lastRefreshed": "Valores de mercado, última actualización: {date} a las {time}"
  },
  "instrumentDetailPage": {
   "notFound": "No encontramos este instrumento.",
-  "priceUpdated": "Precio actualizado",
+  "setPriceManually": "Cargar precio a mano",
   "unrealized": "no realizado",
   "quantity": "Cantidad",
   "avgPrice": "Precio promedio",
@@ -1910,9 +1911,13 @@
  },
  "pricesStatusPage": {
   "title": "Estado de los precios",
-  "empty": "Todavía no cargaste operaciones para tener precios que mostrar.",
+  "empty": "Todavía no tenés ningún instrumento para seguir.",
   "updatePrice": "Actualizar precio de {symbol}",
-  "price": "Precio ({currency})"
+  "price": "Precio ({currency})",
+  "addInstrument": "Agregar instrumento",
+  "metaWithPosition": "{name} · en cartera",
+  "removeFromList": "Eliminar de la lista",
+  "removed": "{symbol} eliminado de la lista"
  },
  "assetClassesPage": {
   "title": "Clases de activo",

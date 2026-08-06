@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
-import { Amount, EmptyState, ListRow, NeedsFxBanner, PositionRow, PriceStatus, SegmentedControl, Skeleton, usePageHeader } from "@/design-system";
+import { useLocale, useTranslations } from "next-intl";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Amount, EmptyState, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
@@ -17,6 +17,9 @@ import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
+import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
+import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
 
 export interface OverviewContentProps {
   portfolioId: string;
@@ -32,6 +35,8 @@ export interface OverviewContentProps {
  */
 export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
@@ -44,9 +49,45 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   const { data: trades } = useTrades(portfolio?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
+  const queryClient = useQueryClient();
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
   const instrumentById = useMemo(() => new Map((instruments ?? []).map((i) => [i.id, i])), [instruments]);
+  const providerInstrumentIds = useMemo(() => instrumentIds.filter((id) => instrumentById.get(id)?.priceProvider), [instrumentIds, instrumentById]);
+  // Escribe directo en el cache de `useLatestPrices` (misma query key que
+  // usa `InstrumentDetailContent` para este mismo portfolio) en vez de
+  // guardar el resultado en un state local — así el detalle de un
+  // instrumento ve el precio recién pedido sin tener que volver a
+  // pedirlo él mismo (D34: el refresh en vivo vive acá, no en I4).
+  const refreshPrices = useCallback(async () => {
+    if (providerInstrumentIds.length === 0) return;
+    const results = await Promise.all(providerInstrumentIds.map((id) => priceSnapshotsRepo.refreshFromProvider(id).then((quote) => [id, quote] as const)));
+    queryClient.setQueryData<Map<string, LatestPrice>>(["latest-prices", [...instrumentIds].sort()], (old) => {
+      const merged = new Map(old ?? []);
+      for (const [id, quote] of results) if (quote) merged.set(id, quote);
+      return merged;
+    });
+    setLastRefreshedAt(new Date());
+  }, [providerInstrumentIds, instrumentIds, queryClient]);
+
+  // D34 — antes cada posición mostraba su propio badge "Actualizado"/
+  // "Manual" (`PriceStatus`), que además nunca reflejaba un precio en
+  // vivo (solo el cache de `price_snapshots`, que escribe el cron diario).
+  // Ahora se pide la cotización real de mercado de todo lo que está en
+  // cartera una sola vez al entrar al portfolio, y la pantalla declara UN
+  // solo "última actualización" en vez de un badge por fila.
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch en vivo genuino al entrar al portfolio, no derivable del render
+    refreshPrices().catch(() => {
+      if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshPrices]);
+
   // Monedas de instrumentos EN CARTERA (no todo el catálogo) distintas de
   // la base — la Fase de tokens de CLAUDE.md prohíbe sumar bigints de
   // monedas distintas (`totalValue` antes sumaba el `value` crudo de cada
@@ -83,6 +124,8 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
   const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
+  // `pricesQuery.data` ya incluye el precio en vivo — `refreshPrices` lo
+  // escribe directo en este mismo cache (ver el efecto de arriba).
   const prices = pricesQuery.data ?? new Map();
 
   /**
@@ -141,7 +184,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
       <ListRow icon="tag" label={t("assetClassesPage.title")} onClick={() => router.push("/investments/asset-classes")} />
 
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, gap: 12 }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.positions")}</div>
           {/* Solo si hay algo que convertir: con todo en la moneda base el
               toggle no cambiaría nada y sería puro ruido. */}
@@ -156,6 +199,15 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
             />
           ) : null}
         </div>
+        {/* Un solo indicador de frescura por PANTALLA, no uno por fila
+            (D34) — declara cuándo se pidió el precio real por última vez
+            en vez de que cada posición lleve su propio "Actualizado"/
+            "Manual", que además nunca reflejaba el mercado en vivo. */}
+        {lastRefreshedAt ? (
+          <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 12 }}>
+            {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
+          </div>
+        ) : null}
         <div style={{ display: "flex", flexDirection: "column" }}>
           {[...positions.values()].map((position) => {
             const instrument = instrumentById.get(position.instrumentId);
@@ -191,7 +243,6 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
                 price={price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : undefined}
                 value={displayValue}
                 changePct={<span>{changePct >= 0 ? "↑" : "↓"} {Math.abs(changePct).toFixed(1)}%</span>}
-                status={<PriceStatus state={price ? "fresh" : "manual"} />}
                 onClick={() => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`)}
               />
             );

@@ -1842,11 +1842,12 @@
   "positions": "Positions",
   "viewOriginalCurrency": "Original currency",
   "viewBaseCurrency": "In {currency}",
-  "pendingFx": "No rate yet"
+  "pendingFx": "No rate yet",
+  "lastRefreshed": "Market values, last updated {date} at {time}"
  },
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",
-  "priceUpdated": "Price updated",
+  "setPriceManually": "Set price by hand",
   "unrealized": "unrealized",
   "quantity": "Quantity",
   "avgPrice": "Average price",
@@ -1910,9 +1911,13 @@
  },
  "pricesStatusPage": {
   "title": "Price status",
-  "empty": "You haven't logged any trades yet, so there are no prices to show.",
+  "empty": "You don't have any instrument to track yet.",
   "updatePrice": "Update {symbol}'s price",
-  "price": "Price ({currency})"
+  "price": "Price ({currency})",
+  "addInstrument": "Add instrument",
+  "metaWithPosition": "{name} · in your portfolio",
+  "removeFromList": "Remove from list",
+  "removed": "{symbol} removed from the list"
  },
  "assetClassesPage": {
   "title": "Asset classes",

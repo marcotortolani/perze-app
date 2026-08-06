@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { decimalSeparatorForLocale, formatNumericDate } from "./formatting";
+import { decimalSeparatorForLocale, formatNumericDate, formatTimeOfDay } from "./formatting";
 import { useFormatPreferencesStore } from "@/stores/format-preferences-store";
 
 const SAMPLE_DATE = new Date(2026, 7, 2); // 2 de agosto de 2026 (mes 0-indexado)
+const SAMPLE_DATETIME = new Date(2026, 7, 6, 13, 44); // 6 de agosto de 2026, 13:44
 
 describe("formatNumericDate", () => {
   it("dmy/mdy/ymd son fijos, sin importar el idioma de la UI", () => {
@@ -18,6 +19,12 @@ describe("formatNumericDate", () => {
 
   it("sin `pref` explícito, default a 'locale'", () => {
     expect(formatNumericDate("en", SAMPLE_DATE)).toBe(new Intl.DateTimeFormat("en").format(SAMPLE_DATE));
+  });
+});
+
+describe("formatTimeOfDay", () => {
+  it("D34 — deriva del locale vía Intl, nunca getHours()/getMinutes() a mano", () => {
+    expect(formatTimeOfDay("es", SAMPLE_DATETIME)).toBe(new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" }).format(SAMPLE_DATETIME));
   });
 });
 

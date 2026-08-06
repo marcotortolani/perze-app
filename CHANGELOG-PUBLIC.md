@@ -40,6 +40,20 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.13 — 6 de agosto de 2026
+
+### Nuevo
+
+- "Estado de precios" ahora deja agregar o sacar instrumentos para seguirles la cotización, aunque
+  todavía no hayas comprado nada — con un botón "Actualizar" para traer los precios reales de
+  mercado cuando quieras.
+
+### Cambiado
+
+- Las posiciones de tu cartera y el detalle de cada instrumento dejan de mostrar un cartel de
+  "Actualizado"/"Manual" por fila — ahora, al entrar a un portfolio, se traen los precios reales de
+  una sola vez, con un único aviso de "última actualización" para toda la pantalla.
+
 ## 0.29.12 — 6 de agosto de 2026
 
 ### Nuevo

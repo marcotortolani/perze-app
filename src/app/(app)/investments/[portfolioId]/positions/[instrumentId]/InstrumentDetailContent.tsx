@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Amount, Button, EmptyState, Input, ListRow, PriceStatus, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, EmptyState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateLatestPrices, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
@@ -17,15 +16,6 @@ import { formatDateShort, type Locale } from "@/i18n/formatting";
 export interface InstrumentDetailContentProps {
   portfolioId: string;
   instrumentId: string;
-}
-
-const STALE_HOURS = 24;
-
-function priceState(asOf: string | undefined, provider: string | undefined): { state: "fresh" | "stale" | "manual"; ageHours: number } {
-  if (!asOf) return { state: "manual", ageHours: 0 };
-  const ageHours = Math.round((Date.now() - new Date(asOf).getTime()) / (1000 * 60 * 60));
-  if (provider === "manual") return { state: "manual", ageHours };
-  return { state: ageHours > STALE_HOURS ? "stale" : "fresh", ageHours };
 }
 
 /**
@@ -50,7 +40,6 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const [editingPrice, setEditingPrice] = useState(false);
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const instrument = instruments?.find((i) => i.id === instrumentId);
@@ -83,24 +72,6 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
 
   const instrumentTrades = trades.filter((tr) => tr.instrumentId === instrumentId).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
 
-  const { state, ageHours } = priceState(price?.asOf, price?.provider);
-
-  const handleRefreshPrice = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      const refreshed = await priceSnapshotsRepo.refreshFromProvider(instrumentId);
-      if (refreshed) {
-        toast(t("instrumentDetailPage.priceUpdated"));
-        invalidatePrices();
-      } else {
-        setEditingPrice(true);
-      }
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   const handleSaveManual = async () => {
     if (!manualPrice.trim() || saving) return;
     setSaving(true);
@@ -125,9 +96,21 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
           <Amount value={money(unrealizedPnl, instrument.currencyCode)} size="body" showSign polarity="neutral" tabular />
           <span className="t-label" style={{ color: "var(--text-secondary)", marginLeft: 6 }}>{t("instrumentDetailPage.unrealized")}</span>
         </div>
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
-          <PriceStatus state={state} ageHours={ageHours} onUpdate={handleRefreshPrice} />
-        </div>
+        {/* D34 — sin badge de frescura acá: el precio real de mercado se
+            pide una sola vez al entrar al portfolio (`OverviewContent`),
+            no por instrumento. Lo único que sigue haciendo falta acá es
+            la carga a mano para lo que ningún proveedor cubre (FCI, plazo
+            fijo, inmuebles) — nunca un "actualizar" que reimplique volver
+            a pedir el mercado. */}
+        {!instrument.priceProvider ? (
+          <button
+            type="button"
+            onClick={() => setEditingPrice(true)}
+            style={{ marginTop: 12, background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--text-secondary)", fontFamily: "var(--font-sans)", fontSize: 13 }}
+          >
+            {t("instrumentDetailPage.setPriceManually")}
+          </button>
+        ) : null}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

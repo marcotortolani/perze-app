@@ -6,6 +6,36 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.13] — 2026-08-06
+
+### Agregado — "Estado de precios" ahora es una lista de seguimiento editable
+
+Antes esa pantalla solo listaba instrumentos con al menos una operación cargada. Ahora lista todo
+el catálogo visible del household (Patrón C: global + propio) — un instrumento se puede querer
+seguir de precio sin haber comprado nada todavía. "+" reusa el mismo buscador de I7 (no una
+segunda forma de crear un instrumento), y un botón "Actualizar" en el header dispara el mismo
+refresh en vivo que ya corría solo al entrar. Nuevo `instrumentsRepo.deleteUnused()` — solo se
+ofrece eliminar un instrumento propio del household sin ninguna operación cargada; uno del
+catálogo global o con historial no se puede borrar (la FK de `trades` lo rechazaría igual, la UI
+ya lo filtra antes).
+
+### Cambiado — el overview y el detalle de instrumento dejan de mostrar un badge de frescura por fila
+
+`PositionRow` (overview) e `InstrumentDetailContent` (I4) mostraban "Actualizado"/"Manual" por
+posición, sin reflejar nunca un precio en vivo (solo el cache de `price_snapshots`, que escribe el
+cron diario). Ahora, al entrar a un portfolio, se piden en vivo las cotizaciones de todo lo que
+está en cartera una sola vez — escritas directo en el cache compartido de `useLatestPrices`, así
+que el detalle de un instrumento las ve sin volver a pedirlas — y la pantalla declara un único
+"Valores de mercado, última actualización: {fecha} a las {hora}" en vez de un badge por fila. Nuevo
+`formatTimeOfDay()` (`i18n/formatting.ts`) para la hora, derivada del locale vía `Intl` como el
+resto de las fechas — no hay ajuste de 12h/24h en Ajustes → Formato todavía. El detalle de
+instrumento sin proveedor (FCI, plazo fijo) conserva un link simple "Cargar precio a mano", sin
+badge ni botón de "actualizar" que reimplique volver a pedir el mercado.
+
+**Diverge a propósito del diseño real** (I3/I4 en `bloque-i-inversiones.html` sí llevan un badge de
+frescura condicional) — decisión de producto tomada en vivo con el usuario, documentada acá para
+que quede explícita y no se "restaure" mirando el archivo de diseño viejo.
+
 ## [0.29.12] — 2026-08-06
 
 ### Agregado — histórico completo en el changelog público, desde el origen del proyecto

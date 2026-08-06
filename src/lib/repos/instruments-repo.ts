@@ -20,6 +20,8 @@ export interface Instrument {
   id: string;
   symbol: string;
   name: string;
+  /** `null` = catálogo global (Patrón C) — nunca se borra desde acá; solo un clonado propio del household puede eliminarse (`deleteUnused`). */
+  householdId: string | null;
   assetClassId: string | null;
   currencyCode: string;
   quantityDecimals: number | null;
@@ -95,7 +97,7 @@ export const instrumentsRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("instruments")
-      .select("id, symbol, name, asset_class_id, currency_code, metadata, maturity_date, coupon_rate, coupon_frequency, amortization_schedule, price_provider, provider_symbol")
+      .select("id, symbol, name, household_id, asset_class_id, currency_code, metadata, maturity_date, coupon_rate, coupon_frequency, amortization_schedule, price_provider, provider_symbol")
       .or(`household_id.is.null,household_id.eq.${householdId}`)
       .order("symbol", { ascending: true });
     if (error) throw error;
@@ -103,6 +105,7 @@ export const instrumentsRepo = {
       id: row.id,
       symbol: row.symbol,
       name: row.name,
+      householdId: row.household_id,
       assetClassId: row.asset_class_id,
       currencyCode: row.currency_code,
       quantityDecimals: (row.metadata as { quantityDecimals?: number } | null)?.quantityDecimals ?? null,
@@ -154,6 +157,7 @@ export const instrumentsRepo = {
       id: data.id,
       symbol: data.symbol,
       name: data.name,
+      householdId: input.householdId,
       assetClassId: data.asset_class_id,
       currencyCode: data.currency_code,
       quantityDecimals: null,
@@ -164,5 +168,19 @@ export const instrumentsRepo = {
       couponFrequency: data.coupon_frequency,
       amortizationSchedule: null,
     };
+  },
+
+  /**
+   * I12 — sacar un instrumento de la lista de seguimiento. Solo tiene
+   * sentido (y solo lo ofrece la UI) para uno propio del household sin
+   * ninguna operación cargada: uno del catálogo global no es tuyo para
+   * borrar, y uno con operaciones no puede irse sin romper el historial —
+   * la FK de `trades.instrument_id` lo rechazaría igual, pero la UI ya lo
+   * filtra antes de intentarlo.
+   */
+  async deleteUnused(id: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("instruments").delete().eq("id", id);
+    if (error) throw error;
   },
 };

@@ -110,3 +110,13 @@ export function formatNumericDate(locale: Locale, date: Date, pref: DateFormatPr
   if (pref === "ymd") return `${yyyy}-${mm}-${dd}`;
   return `${dd}/${mm}/${yyyy}`;
 }
+
+/**
+ * Hora del día — sin ajuste propio en Ajustes → Formato (no hay 12h/24h
+ * elegible hoy), así que deriva del locale de la UI vía `Intl`, nunca un
+ * `getHours()`/`getMinutes()` armado a mano — mismo criterio que las
+ * fechas "narrativas" de arriba.
+ */
+export function formatTimeOfDay(locale: Locale, date: Date): string {
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(date);
+}
