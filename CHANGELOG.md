@@ -6,6 +6,57 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.27.0] — 2026-08-06
+
+### Agregado — Google OAuth y Resend con el branding de Perze, de punta a punta
+
+- El mail de Auth default de Supabase entregaba **solo a miembros del proyecto** y con tope de
+  2/hora: ningún usuario real podía recibir su código. Las plantillas de magic-link y recovery se
+  reescriben con react-email (`src/emails/`) — wordmark, tokens de color en modo claro, tipografía
+  Inter (Geist no existe en un cliente de mail) — y se exportan a `supabase/templates/*.html` con
+  `pnpm email:export`, para pegar a mano en el Dashboard (plan free sigue rechazando
+  `config push` para plantillas, con o sin SMTP propio).
+- **Google OAuth**, ya programado y apagado por falta de credenciales, se enciende con
+  `NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS=google`. Faltaba una sola cosa: el colapso del email bajo
+  "Usar mi email" que exige `CLAUDE.md` § "Orden de A2" — el archivo de diseño lo dibuja siempre
+  visible, pero `CLAUDE.md` es la autoridad mayor y es categórico.
+- **Invitación al household (J3) por email** — `household_invites.email` se guardaba y nadie la
+  usaba; el código se compartía a mano. Ahora `/family/invite` dispara el mail vía
+  `POST /api/emails/invite` (Route Handler + Resend, no Edge Function: corre con la sesión del
+  usuario y RLS como barrera, sin necesitar `service_role`). Es la única plantilla con i18n real
+  (ES/EN/PT) — las de Auth van fijas en español porque el Dashboard de Supabase no tiene noción de
+  locale por plantilla.
+- **Se revierte la solución de transición de contraseñas** (`/login`, `/onboarding/register`,
+  `/forgot-password`, `/reset-password`, cookie `perze_registered`) que existía desde principios de
+  agosto mientras el mail no funcionaba de verdad. `CLAUDE.md` es categórico: sin contraseñas, ni
+  acá ni nunca. Las rutas viejas no se borran — quedan como stubs `redirect("/onboarding")`
+  (una PWA instalada con historial largo no puede recibir un 404) — se borran del todo en una
+  release futura. `NEXT_PUBLIC_AUTH_OTP_CODE` se elimina: el código de 6 dígitos es el único camino
+  de A3, no un flag. La hoja de "Contraseña" de `/more/security` se saca (queda PIN + biométrico).
+- **Página pública `/about`** — Google Auth Platform exige, para verificar el logo de la pantalla de
+  consentimiento OAuth, que la "Application home page" sea un URL público (sin login) que explique
+  el propósito de la app. `/` no servía: sin sesión, `proxy.ts` redirige a `/onboarding` (login)
+  antes de renderizar nada. `/about` es nueva, pública e indexable, sin tab bar, y sirve tanto de
+  home page como de privacy policy link ante Google.
+
+### Agregado — páginas de not-found y error con la marca de Perze
+
+- El 404 y el error boundary eran los genéricos de Next, sin ningún token de marca, tanto dentro
+  del shell autenticado como fuera. Ahora hay `not-found.tsx`/`error.tsx` en dos niveles — la raíz
+  (sin sidebar) y dentro de `(app)/` (con sidebar/tab bar, para una navegación de cliente rota ya
+  adentro de la app) — reusando `EmptyState`/`ErrorState` del design system, que ya traen el `ZMark`
+  de marca. `global-error.tsx` es la red de último recurso si el layout raíz mismo falla: la única
+  pantalla de la app sin next-intl, a propósito, porque reemplaza `Providers`/`IntlBoundary` enteros.
+
+### Arreglado — cerrar sesión se colgaba para siempre en `pnpm dev`
+
+- `signOut()` llama primero a `unsubscribeFromPush()`, que hacía `await navigator.serviceWorker.ready`
+  sin chequear si había un service worker activo. En dev el SW no se registra por default
+  (`CLAUDE.md` § gotchas: Turbopack cambia los nombres de chunk en cada arranque), así que esa
+  promesa nunca resolvía — ni rechazaba, quedaba pendiente para siempre — y el cierre de sesión
+  entero se colgaba en el primer `await`, sin ningún error visible. Ahora chequea
+  `navigator.serviceWorker.controller` antes de esperar `.ready`.
+
 ## [0.26.0] — 2026-08-05
 
 ### Arreglado — el heatmap del calendario ignoraba los filtros activos
