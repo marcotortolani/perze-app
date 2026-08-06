@@ -33,10 +33,15 @@ export async function markHouseholdMemberFormer(householdId: string, profileId: 
 
 export async function listRemoteHouseholdMembers(householdId: string): Promise<RemoteHouseholdMember[]> {
   const supabase = createClient();
+  // Bug real reportado en vivo: sin este filtro, un miembro que se saca
+  // (`markHouseholdMemberFormer`, `status: 'former'`) seguía apareciendo
+  // en J1 para siempre — la fila nunca se borra (J10: se conserva el
+  // historial de quién cargó qué), pero tampoco debe listarse como activo.
   const { data, error } = await supabase
     .from("household_members")
     .select("profile_id, role, display_name, color, status, joined_at")
-    .eq("household_id", householdId);
+    .eq("household_id", householdId)
+    .neq("status", "former");
   if (error) throw error;
   return (data ?? []).map((row) => ({
     profileId: row.profile_id,

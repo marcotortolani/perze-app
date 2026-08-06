@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { EmptyState, Icon, ListRow, Skeleton, usePageHeader } from "@/design-system";
+import { Button, EmptyState, Icon, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
@@ -29,6 +30,8 @@ export default function FamilyPageContent() {
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
   const { data: invites } = useInvites(household?.id);
   usePageHeader({ title: t("morePage.family"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   if (!household || !members || !invites) {
     return <Skeleton height={200} style={{ marginTop: 16 }} />;
@@ -40,6 +43,11 @@ export default function FamilyPageContent() {
 
   // J10: un miembro que se va liquida o condona antes — nunca se lo saca
   // con saldo pendiente, así que se chequea el neto antes de tocar `status`.
+  // Sacar a alguien del hogar es la excepción justificada al patrón
+  // "reversible, no confirmable" de `CLAUDE.md`: corta el acceso de OTRA
+  // persona al instante, no solo el propio, así que primero se confirma
+  // con las consecuencias explícitas (`removeConfirmBody`) en vez de un
+  // toast con deshacer.
   const handleRemove = async (targetId: string) => {
     if (!household) return;
     const shares = await transactionSharesRepo.listUnsettledForHousehold(household.id);
@@ -52,9 +60,15 @@ export default function FamilyPageContent() {
       router.push("/family/settle");
       return;
     }
-    await markHouseholdMemberFormer(household.id, targetId);
-    invalidateMembers();
-    toast(t("familyPage.removed"));
+    setRemoving(true);
+    try {
+      await markHouseholdMemberFormer(household.id, targetId);
+      invalidateMembers();
+      toast(t("familyPage.removed"));
+      setRemoveTarget(null);
+    } finally {
+      setRemoving(false);
+    }
   };
 
   if (members.length <= 1 && pendingInvites.length === 0) {
@@ -87,7 +101,7 @@ export default function FamilyPageContent() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRemove(m.profileId);
+                  setRemoveTarget({ id: m.profileId, name: m.displayName?.trim() || t("familyPage.unnamed") });
                 }}
                 aria-label={t("familyPage.remove", { name: m.displayName?.trim() || t("familyPage.unnamed") })}
                 style={{ background: "none", border: 0, padding: 8, margin: -8, cursor: "pointer" }}
@@ -106,6 +120,23 @@ export default function FamilyPageContent() {
           ))}
         </>
       ) : null}
+      <Sheet open={!!removeTarget} title={removeTarget ? t("familyPage.removeConfirmTitle", { name: removeTarget.name }) : undefined} onClose={() => (removing ? null : setRemoveTarget(null))}>
+        {removeTarget ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+              {t("familyPage.removeConfirmBody")}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Button variant="danger" disabled={removing} onClick={() => handleRemove(removeTarget.id)}>
+                {t("familyPage.removeConfirmAction")}
+              </Button>
+              <Button variant="ghost" disabled={removing} onClick={() => setRemoveTarget(null)}>
+                {t("common.cancel")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Sheet>
       </div>
   );
 }

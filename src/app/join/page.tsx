@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 import { invitesRepo } from "@/lib/repos/invites-repo";
 import { hydrateFromRemote } from "@/lib/offline/hydrate";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
+import { householdsRepo } from "@/lib/repos/households-repo";
+import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { clearPendingInviteCode, getPendingInviteCode, setPendingInviteCode } from "@/lib/onboarding/pending-invite";
 
 /** Solo las letras del alfabeto de `randomCode()` — lo pegado desde un
@@ -95,6 +97,17 @@ function JoinHouseholdContent() {
       // La hidratación scoped baja SOLO ese household (cuentas, categorías,
       // movimientos…) y lo deja activo, sin tocar el resto de la base local.
       await hydrateFromRemote({ householdId });
+      // `hydrateFromRemote` solo baja los datos: sin esto, `getCurrentHouseholdId()`
+      // (Dexie, `meta.currentHouseholdId`) sigue apuntando a lo que hubiera
+      // antes —el household propio si ya se había pasado por A11— y
+      // `useCurrentHousehold()` seguía mostrando ESE, nunca el que se
+      // acaba de aceptar. Bug real: un invitado que ya tenía cuenta propia
+      // veía "nada" del hogar del owner después de aceptar.
+      await householdsRepo.setCurrentHouseholdId(householdId);
+      const {
+        data: { user },
+      } = await createClient().auth.getUser();
+      if (user) void profilesRepo.setDefaultHousehold(user.id, householdId).catch(() => {});
       clearPendingInviteCode();
       invalidateHousehold();
       toast(t("familyPage.joined"));

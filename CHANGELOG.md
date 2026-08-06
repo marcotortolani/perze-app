@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.2] — 2026-08-06
+
+### Arreglado — un miembro invitado al grupo familiar quedaba sin ver nada del hogar al que entró
+
+Encontrado en vivo probando la invitación real de punta a punta, tres bugs distintos en la misma
+cadena:
+
+- **`/join` nunca marcaba el household aceptado como activo en este dispositivo.** `accept_invite`
+  y la hidratación scoped funcionaban bien, pero nadie llamaba a
+  `householdsRepo.setCurrentHouseholdId()` después: `useCurrentHousehold()` lee solo ese puntero
+  local (`meta.currentHouseholdId`), así que un invitado que ya tenía su propio household (por
+  ejemplo, alguien que ya había pasado por A11 antes de recibir la invitación) seguía viendo el
+  suyo — cuentas, movimientos y todo — después de "aceptar" el del otro. Ahora `/join` fija el
+  household activo y publica `profiles.default_household_id` (mismo patrón AC-3 de
+  `onboarding/success`) apenas el canje sale bien.
+- **`household_members.display_name` nunca se sincronizaba con `profiles.display_name`.** Es una
+  copia denormalizada a propósito (el resto del hogar no tiene tu perfil en su Dexie local), pero
+  `accept_invite()` insertaba la fila sin ella (quedaba `NULL` → "Sin nombre" para siempre) y
+  ningún trigger la actualizaba si alguien se renombraba después desde `/more/profile` — ni
+  siquiera el propio dueño del hogar. Migración nueva: `accept_invite()` la puebla al aceptar, y
+  un trigger `AFTER UPDATE OF display_name ON profiles` la mantiene sincronizada para siempre, con
+  backfill de las filas que ya habían quedado desincronizadas en producción.
+- **Sacar a alguien del hogar no lo sacaba de la lista.** `markHouseholdMemberFormer()` sí
+  marcaba `status: 'former'` en la base, pero `listRemoteHouseholdMembers()` nunca filtraba por
+  `status`, así que J1 seguía mostrando al miembro removido como si nada. Peor: si después se lo
+  volvía a invitar y aceptaba de nuevo, `accept_invite()` tenía `ON CONFLICT DO NOTHING` sobre esa
+  misma fila `former` — el "aceptar" no tiraba error, pero la fila nunca volvía a `active`, así
+  que no había forma real de que alguien removido volviera a entrar. Se corrigen los dos: el
+  `SELECT` ahora excluye `status = 'former'`, y el `ON CONFLICT` pasa a `DO UPDATE` que reactiva la
+  fila (`status`, `role`, `display_name`, `joined_at` al día, `left_at` en `NULL`).
+- Además, sacar a alguien del hogar ahora pide confirmación explícita con las consecuencias antes
+  de ejecutarse — la excepción justificada al patrón "reversible, no confirmable" de `CLAUDE.md`,
+  porque a diferencia de la mayoría de las acciones de la app esta corta el acceso de OTRA
+  persona al instante, no solo el propio.
+
 ## [0.28.1] — 2026-08-06
 
 ### Arreglado — la causa real de "solicitudes pendientes" vacío (el `LEFT JOIN` de 0.28.0 no era)
