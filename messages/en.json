@@ -1160,6 +1160,17 @@
  "offlinePage": {
   "message": "Offline — this screen hasn't loaded once yet. Screens you already visited still work."
  },
+ "notFoundPage": {
+  "title": "Page not found",
+  "message": "This screen doesn't exist or moved.",
+  "action": "Back to home"
+ },
+ "errorPage": {
+  "title": "Something went wrong",
+  "what": "Something failed on this end.",
+  "next": "Try again — if it keeps happening, head back home.",
+  "goHome": "Back to home"
+ },
  "search": {
   "title": "Search",
   "close": "Close search",

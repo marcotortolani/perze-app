@@ -93,6 +93,15 @@ const BACKDROP_INTENSITY_DEMOS = [
 export default function ComponentsPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
+  // Disparadores de `not-found.tsx`/`error.tsx` — los dos tienen que
+  // lanzar durante el render (un boundary de error de React nunca
+  // atrapa un throw dentro de un `onClick`), así que el botón solo pone
+  // el estado y el throw/`notFound()` pasa acá abajo, antes del JSX.
+  const [force404, setForce404] = useState(false);
+  const [forceError, setForceError] = useState(false);
+  if (force404) notFound();
+  if (forceError) throw new Error("Error forzado desde /dev/components — para ver error.tsx");
+
   const [segValue, setSegValue] = useState("expense");
   const [scopeValue, setScopeValue] = useState("Personal");
   const [switchOn, setSwitchOn] = useState(true);
@@ -361,6 +370,22 @@ export default function ComponentsPage() {
           </Button>
         </Row>
         <UndoToast message="Movimiento borrado" onUndo={() => {}} visible />
+      </Section>
+
+      <Section title="Páginas de error (dev)">
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-muted)" }}>
+          Dispara el boundary real de Next para esta ruta — sirve para ver{" "}
+          <code>{`(app)/error.tsx`}</code> y <code>{`(app)/not-found.tsx`}</code> (o los de la
+          raíz, si entrás a esta pantalla sin sesión) tal como se van a ver en producción.
+        </p>
+        <Row>
+          <Button variant="secondary" fullWidth={false} onClick={() => setForce404(true)}>
+            Forzar 404
+          </Button>
+          <Button variant="secondary" fullWidth={false} onClick={() => setForceError(true)}>
+            Forzar error
+          </Button>
+        </Row>
       </Section>
 
       <Section title="Charts">

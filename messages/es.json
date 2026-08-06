@@ -1160,6 +1160,17 @@
  "offlinePage": {
   "message": "Sin conexión — esta pantalla todavía no se cargó una vez. Las que ya visitaste siguen andando igual."
  },
+ "notFoundPage": {
+  "title": "Página no encontrada",
+  "message": "Esta pantalla no existe o se movió.",
+  "action": "Volver al inicio"
+ },
+ "errorPage": {
+  "title": "Algo salió mal",
+  "what": "Algo falló de este lado.",
+  "next": "Probá de nuevo — si sigue pasando, volvé al inicio.",
+  "goHome": "Volver al inicio"
+ },
  "search": {
   "title": "Buscar",
   "close": "Cerrar buscador",

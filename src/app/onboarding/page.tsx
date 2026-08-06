@@ -257,12 +257,15 @@ export default function OnboardingAuthPage() {
             `/onboarding/restore`, nunca a un formulario aparte. */}
 
         {/* El invitado que no tiene el link a mano (se lo dictaron, o lo
-            perdió) no tenía cómo llegar a `/join` desde ningún lado. */}
+            perdió) no tenía cómo llegar a `/join` desde ningún lado. El
+            ícono lo ancla como una acción reconocible — sin él, un link de
+            texto suelto quedaba perdido al pie de la pantalla. */}
         <button
           type="button"
           onClick={() => router.push("/join")}
-          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
         >
+          <Icon name="barcode" size={16} color="var(--text-secondary)" />
           {t("onboarding.auth.haveInviteCode")}
         </button>
       </div>

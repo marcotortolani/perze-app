@@ -39,8 +39,12 @@ const eslintConfig = defineConfig([
     // `src/emails/auth/**` son las plantillas de Auth de Supabase: van en
     // español fijo a propósito (el Dashboard tiene una sola plantilla por
     // tipo, sin noción de locale — ver `src/emails/auth/copy.ts`), así
-    // que no aplica el guardarraíl de next-intl.
-    ignores: ["src/app/dev/**", "e2e/**", "**/*.test.{ts,tsx}", "src/emails/auth/**"],
+    // que no aplica el guardarraíl de next-intl. `global-error.tsx` es la
+    // única pantalla real de la app sin next-intl: reemplaza el layout
+    // raíz entero (Providers/IntlBoundary incluidos) cuando ESE layout es
+    // el que falló, así que no puede depender de un locale que nunca
+    // llegó a montarse.
+    ignores: ["src/app/dev/**", "e2e/**", "**/*.test.{ts,tsx}", "src/emails/auth/**", "src/app/global-error.tsx"],
     rules: {
       "react/jsx-no-literals": [
         "error",

@@ -28,8 +28,26 @@ export async function subscribeToPush(profileId: string): Promise<PushSubscripti
   return subscription;
 }
 
+/**
+ * `navigator.serviceWorker.ready` no es "¿hay un SW registrado?" — es
+ * "esperá a que termine de activarse el que se está registrando ahora".
+ * Sin ningún SW controlando la página (el caso normal en `pnpm dev`: no se
+ * registra salvo `NEXT_PUBLIC_ENABLE_SW_IN_DEV=1`, `CLAUDE.md` § gotchas)
+ * esa promesa **no rechaza, se queda pendiente para siempre**. Antes estas
+ * dos funciones asumían que "serviceWorker" en `navigator` alcanzaba para
+ * esperar `.ready` con seguridad, y eso colgaba en dev cualquier caller —
+ * `unsubscribeFromPush()` es el primer `await` de `signOut()`
+ * (`lib/auth/sign-out.ts`), así que colgaba el cierre de sesión entero sin
+ * ningún error visible. `controller` es la señal correcta de "hay un SW
+ * activo ahora mismo, andá a buscar su suscripción" — sin él no hay nada
+ * que desuscribir.
+ */
+function hasActiveServiceWorker(): boolean {
+  return "serviceWorker" in navigator && navigator.serviceWorker.controller !== null;
+}
+
 export async function unsubscribeFromPush(): Promise<void> {
-  if (!("serviceWorker" in navigator)) return;
+  if (!hasActiveServiceWorker()) return;
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) return;
@@ -39,7 +57,7 @@ export async function unsubscribeFromPush(): Promise<void> {
 }
 
 export async function getCurrentPushSubscription(): Promise<PushSubscription | null> {
-  if (!("serviceWorker" in navigator)) return null;
+  if (!hasActiveServiceWorker()) return null;
   const registration = await navigator.serviceWorker.ready;
   return registration.pushManager.getSubscription();
 }

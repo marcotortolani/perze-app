@@ -11,6 +11,7 @@ import {
   BagIcon,
   BankIcon,
   BarbellIcon,
+  BarcodeIcon,
   BasketIcon,
   BeerBottleIcon,
   BicycleIcon,
@@ -212,6 +213,10 @@ export const ICONS = {
   fingerprint: FingerprintIcon,
   install: DownloadSimpleIcon,
   flag: FlagIcon,
+  // A2 — "Tengo un código de invitación": el código de J3 es básicamente
+  // un código de barras/QR tipeado a mano, así que el ícono lo ancla como
+  // una acción reconocible en vez de un link de texto perdido.
+  barcode: BarcodeIcon,
   "piggy-bank": PiggyBankIcon,
   "credit-card": CreditCardIcon,
   smartphone: DeviceMobileIcon,
