@@ -166,7 +166,16 @@ export const config = {
      * propia cookie de sesión vía Route Handler, así que el round-trip de
      * este proxy ahí es puro costo sin nada que proteja. `manifest.webmanifest`
      * tampoco necesita el gate de acceso.
+     *
+     * `robots.txt` y `sitemap.xml` (`src/app/robots.ts`) tampoco pueden
+     * pasar por acá: sin esta exclusión, cualquier crawler sin sesión
+     * —incluido el que usa Google para la verificación de marca de OAuth,
+     * `docs/mejora-auth-oauth-y-email.md` § 2— los recibía como un 307 a
+     * `/onboarding` en vez del contenido real, y un robots.txt que
+     * redirige a un login se lee como "todo el sitio requiere sesión" —
+     * exactamente el error que bloqueaba la verificación aunque `/about`
+     * respondiera bien al pedirla directo.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons|splash|serwist|api|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons|splash|serwist|api|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

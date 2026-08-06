@@ -61,6 +61,12 @@ export async function generateMetadata(): Promise<Metadata> {
     // incluso en producción — el preview al compartir el link queda roto.
     metadataBase: new URL(env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
     title: "PERZE",
+    // Señal explícita de "nombre de la app" para crawlers/verificadores
+    // automáticos (`<meta name="application-name">`) — Google Auth
+    // Platform la compara contra el nombre configurado en la pantalla de
+    // consentimiento OAuth al verificar la marca
+    // (`docs/mejora-auth-oauth-y-email.md` § 2).
+    applicationName: "PERZE",
     description: t("app.description"),
     // Única fuente de verdad: `package.json` vía `lib/version.ts` — se lee de
     // vuelta en el footer de "Más" (`(app)/mas/page.tsx`) para que no haga
