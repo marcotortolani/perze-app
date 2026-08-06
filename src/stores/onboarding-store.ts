@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AccountKind } from "@/lib/db/schema";
 
 /**
  * Borrador de onboarding (Bloque A) — decisiones que se van tomando entre
@@ -15,7 +16,13 @@ interface OnboardingDraft {
   usage: HouseholdUsage | null;
   countryCode: string;
   currencyCode: string;
+  /** Nombre visible del preset elegido en A6 — puede ser una marca
+   *  (`"Itaú"`) o, para "Efectivo"/"Otro", el label ya traducido al
+   *  idioma de la app. `accountKind` es la identidad real: separarla del
+   *  label es lo que permite traducir "Efectivo"/"Otro" sin romper la
+   *  inferencia de tipo de cuenta que antes comparaba este string a mano. */
   accountPreset: string | null;
+  accountKind: AccountKind | null;
   /** Cuenta creada al cerrar A11 — a la que todavía le falta el saldo real (A7). */
   pendingBalanceAccountId: string | null;
 }
@@ -33,6 +40,7 @@ function emptyDraft(): OnboardingDraft {
     countryCode: "UY",
     currencyCode: "UYU",
     accountPreset: null,
+    accountKind: null,
     pendingBalanceAccountId: null,
   };
 }

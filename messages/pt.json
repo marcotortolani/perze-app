@@ -721,7 +721,9 @@
   "success": {
    "title": "Pronto!",
    "subtitle": "Sua conta foi criada. Lance seu primeiro gasto para começar a ver seu resumo.",
+   "subtitleIncome": "Sua conta foi criada, mas começa zerada. Lance uma receita primeiro — depois você vai poder registrar gastos.",
    "cta": "Lançar meu primeiro gasto",
+   "ctaIncome": "Lançar minha primeira receita",
    "errorTitle": "Não conseguimos terminar de criar sua conta",
    "errorSubtitle": "Pode ser sua conexão. Tente de novo — nada do que você escolheu foi perdido.",
    "retry": "Tentar de novo"
@@ -742,9 +744,7 @@
    "balanceSubtitle": "Para que seu patrimônio comece correto. Você pode deixar em 0 e ajustar depois.",
    "continue": "Continuar",
    "installTitle": "Instale o PERZE",
-   "installPromptAvailable": "Acesse mais rápido, como um app nativo.",
-   "installPromptIos": "Toque no ícone de compartilhar do Safari e escolha \"Adicionar à Tela de Início\".",
-   "installPromptOther": "Procure \"Instalar app\" no menu do seu navegador.",
+   "installSubtitle": "Acesse mais rápido, como um app nativo.",
    "install": "Instalar",
    "later": "Agora não",
    "laterToast": "Você pode instalar depois em Ajustes"
@@ -1089,7 +1089,23 @@
   "reconciliation": "Conciliação",
   "movement": "Movimentação",
   "errorWhat": "Não conseguimos carregar seu resumo.",
-  "privacyTooltip": "Toque no olho para borrar os valores — útil em público."
+  "privacyTooltip": "Toque no olho para borrar os valores — útil em público.",
+  "reminders": {
+   "action": "Ajustar",
+   "dismissToday": "Não mostrar hoje",
+   "dismissForever": "Não mostrar mais lembretes",
+   "birthdateTitle": "Seu aniversário",
+   "birthdateHow": "Salve e a gente comemora com você — Ajustes → Perfil.",
+   "installPwaTitle": "Instale o app",
+   "modulesTitle": "Tem mais funções disponíveis",
+   "modulesHow": "Orçamentos, metas, dívidas, investimentos e mais — Ajustes → Mais funções.",
+   "themeTitle": "Escolha seu tema",
+   "themeHow": "Claro, escuro ou o do seu sistema — Ajustes → Tema.",
+   "formatTitle": "Formato de data e números",
+   "formatHow": "Ajuste do jeito que você está acostumado — Ajustes → Formato.",
+   "backdropTitle": "Fundo de pontos",
+   "backdropHow": "Um detalhe visual opcional para o painel — Ajustes → Fundo."
+  }
  },
  "analyticsPage": {
   "unavailable": "A análise ainda não está disponível nesta versão.",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Icon, Keypad } from "@/design-system";
+import { Button, Icon, Keypad, Sheet } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingHydrated, useOnboardingStore } from "@/stores/onboarding-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -13,7 +13,7 @@ import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { usePwaStore } from "@/stores/pwa-store";
-import { detectInstallPlatform } from "@/lib/pwa/platform";
+import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
 
 /**
  * A7 + A10 — fuera del camino crítico: se piden acá, después del primer
@@ -34,11 +34,13 @@ export default function OnboardingCompletePage() {
   const [expr, setExpr] = useState("");
   const installPrompt = usePwaStore((s) => s.deferredPrompt);
   const setDeferredPrompt = usePwaStore((s) => s.setDeferredPrompt);
-  const [isIosDevice, setIsIosDevice] = useState(false);
+  const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- detección de UA, no derivable en SSR.
-    setIsIosDevice(detectInstallPlatform() === "ios");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- detección de UA/display-mode, no derivable en SSR.
+    setInstallState({ platform: detectInstallPlatform(), standalone: isStandalonePwa() });
   }, []);
 
   useEffect(() => {
@@ -53,15 +55,39 @@ export default function OnboardingCompletePage() {
       await accountsRepo.update(account.id, { openingBalance: amount.amount, currentBalance: amount.amount });
       invalidateAccounts();
     }
+    // Ya instalada — nada que ofrecer. Pasa con el flujo (`isStandalonePwa()`
+    // cubre tanto "la instaló antes" como "abrió este onboarding desde
+    // dentro de la app ya instalada").
+    if (installState?.standalone) {
+      finish();
+      return;
+    }
     setStep("install");
   };
 
+  // Un solo botón resuelve la instalación de punta a punta donde el
+  // navegador lo permite (Chrome/Edge en Android, Windows y macOS
+  // disparan `beforeinstallprompt`, capturado en `pwa-store.ts`): tocarlo
+  // ya deja la PWA instalada, sin pasos manuales. Donde no hay API
+  // programática — iOS/iPadOS Safari nunca dispara ese evento, es una
+  // restricción de Apple, no algo que este código pueda evitar — el mismo
+  // botón abre la guía exacta para esa plataforma (`settingsPage.installGuide`,
+  // ya escrita y probada en Ajustes → Instalar app; no se reinventa acá).
   const handleInstall = async () => {
     if (installPrompt) {
-      await installPrompt.prompt();
-      setDeferredPrompt(null);
+      if (installing) return;
+      setInstalling(true);
+      try {
+        await installPrompt.prompt();
+        await installPrompt.userChoice;
+        setDeferredPrompt(null);
+        finish();
+      } finally {
+        setInstalling(false);
+      }
+      return;
     }
-    finish();
+    setInstallSheetOpen(true);
   };
 
   const finish = () => {
@@ -93,25 +119,30 @@ export default function OnboardingCompletePage() {
     <ScreenShell style={{ alignItems: "center", justifyContent: "center", padding: "var(--screen-padding)", gap: 20, textAlign: "center" }}>
       <Icon name="install" size={40} color="var(--primary-ink)" />
       <h1 className="t-title" style={{ margin: 0 }}>{t("onboarding.complete.installTitle")}</h1>
-      {installPrompt ? (
-        <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
-          {t("onboarding.complete.installPromptAvailable")}
-        </p>
-      ) : isIosDevice ? (
-        <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
-          {t("onboarding.complete.installPromptIos")}
-        </p>
-      ) : (
-        <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
-          {t("onboarding.complete.installPromptOther")}
-        </p>
-      )}
+      <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
+        {t("onboarding.complete.installSubtitle")}
+      </p>
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
-        {installPrompt ? <Button onClick={handleInstall}>{t("onboarding.complete.install")}</Button> : null}
-        <Button variant={installPrompt ? "secondary" : "primary"} onClick={() => { toast(t("onboarding.complete.laterToast")); finish(); }}>
+        <Button disabled={installing} onClick={handleInstall}>{t("onboarding.complete.install")}</Button>
+        <Button variant="secondary" disabled={installing} onClick={() => { toast(t("onboarding.complete.laterToast")); finish(); }}>
           {t("onboarding.complete.later")}
         </Button>
       </div>
+      <Sheet open={installSheetOpen} title={t("onboarding.complete.install")} onClose={() => setInstallSheetOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+            {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
+          </p>
+          <Button
+            onClick={() => {
+              setInstallSheetOpen(false);
+              finish();
+            }}
+          >
+            {t("onboarding.complete.continue")}
+          </Button>
+        </div>
+      </Sheet>
     </ScreenShell>
   );
 }

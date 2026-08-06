@@ -11,10 +11,9 @@ import { completeOnboarding } from "@/lib/onboarding/complete-onboarding";
 import { householdsRepo } from "@/lib/repos/households-repo";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
+import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { createClient } from "@/lib/supabase/client";
-import type { AccountKind } from "@/lib/db/schema";
-
-const PRESET_KIND: Record<string, AccountKind> = { Efectivo: "cash" };
+import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 
 /**
  * A11 — éxito + CTA gigante al keypad. Acá se crea el household real:
@@ -38,6 +37,13 @@ export default function OnboardingSuccessPage() {
   const invalidateHousehold = useInvalidateHousehold();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
+  // No se puede cargar un gasto desde una cuenta en cero (CLAUDE.md § dinero
+  // — un gasto llevaría el saldo a negativo sin que exista un movimiento
+  // real que lo explique). La cuenta que sale de A11 SIEMPRE arranca en
+  // cero (A7, el saldo real, se pide recién después del primer gasto), así
+  // que el CTA por default sugiere un ingreso — salvo que ya exista un
+  // household con saldo real (alguien que vuelve a este flujo por error).
+  const [suggestIncome, setSuggestIncome] = useState(true);
   const running = useRef(false);
 
   async function run() {
@@ -71,13 +77,22 @@ export default function OnboardingSuccessPage() {
       if (existingHouseholdId) {
         const [existingAccount] = await accountsRepo.list(existingHouseholdId);
         setField("pendingBalanceAccountId", existingAccount?.id ?? null);
+        setSuggestIncome(existingAccount ? existingAccount.currentBalance === 0n : true);
         invalidateHousehold();
         setStatus("ready");
         return;
       }
 
-      const accountName = draft.accountPreset ?? "Efectivo";
-      const accountKind = PRESET_KIND[accountName] ?? (accountName === "Otro" ? "other" : "wallet");
+      // Antes de este fix, `accountKind` se re-inferÍa acá comparando el
+      // string de `accountPreset` contra `"Efectivo"`/`"Otro"` a mano —
+      // rompía la i18n (esos dos textos no podían traducirse sin romper
+      // la comparación) y de paso perdía el `kind` real de cualquier
+      // preset de banco (`Itaú` es `savings`, pero caía al default
+      // `"wallet"` porque nunca se guardaba). Ahora A6 guarda el `kind`
+      // directo en el draft, así que acá solo hace falta el fallback para
+      // quien llega a A11 sin haber pasado por A6 (atajo de aprobación).
+      const accountName = draft.accountPreset ?? t(ACCOUNT_KIND_MESSAGE_KEY.cash);
+      const accountKind = draft.accountKind ?? "cash";
       // El nombre real del registro (A2b) — es el que van a ver los otros
       // miembros del hogar en J1.
       const profile = await profilesRepo.getOwn(user.id).catch(() => null);
@@ -148,11 +163,20 @@ export default function OnboardingSuccessPage() {
       <Icon name="check" size={48} color="var(--good)" />
       <h1 className="t-title" style={{ margin: 0 }}>{t("onboarding.success.title")}</h1>
       <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "32ch" }}>
-        {t("onboarding.success.subtitle")}
+        {t(suggestIncome ? "onboarding.success.subtitleIncome" : "onboarding.success.subtitle")}
       </p>
       <div style={{ width: "100%", marginTop: 16 }}>
-        <Button size="lg" onClick={() => router.push("/add")}>
-          {t("onboarding.success.cta")}
+        <Button
+          size="lg"
+          onClick={() => {
+            // Store efímero, no persistido — arranca en "expense" en
+            // cualquier otra entrada a `/add` (share target, shortcut,
+            // FAB). Acá se pisa a propósito, una sola vez, antes de navegar.
+            if (suggestIncome) useCaptureDraftStore.getState().setKind("income");
+            router.push("/add");
+          }}
+        >
+          {t(suggestIncome ? "onboarding.success.ctaIncome" : "onboarding.success.cta")}
         </Button>
       </div>
     </ScreenShell>

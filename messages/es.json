@@ -721,7 +721,9 @@
   "success": {
    "title": "¡Listo!",
    "subtitle": "Tu cuenta está creada. Cargá tu primer gasto para empezar a ver tu resumen.",
+   "subtitleIncome": "Tu cuenta está creada, pero arranca en cero. Cargá un ingreso primero — después vas a poder registrar gastos.",
    "cta": "Cargar mi primer gasto",
+   "ctaIncome": "Cargar mi primer ingreso",
    "errorTitle": "No pudimos terminar de crear tu cuenta",
    "errorSubtitle": "Puede ser tu conexión. Probá de nuevo — no se perdió nada de lo que ya elegiste.",
    "retry": "Probar de nuevo"
@@ -742,9 +744,7 @@
    "balanceSubtitle": "Para que tu patrimonio arranque correcto. Podés dejarlo en 0 y ajustarlo después.",
    "continue": "Continuar",
    "installTitle": "Instalá PERZE",
-   "installPromptAvailable": "Accedé más rápido, como una app nativa.",
-   "installPromptIos": "Tocá el ícono de compartir de Safari y elegí \"Agregar a inicio\".",
-   "installPromptOther": "Buscá \"Instalar app\" en el menú de tu navegador.",
+   "installSubtitle": "Accedé más rápido, como una app nativa.",
    "install": "Instalar",
    "later": "Ahora no",
    "laterToast": "Podés instalarla más tarde desde Ajustes"
@@ -1089,7 +1089,23 @@
   "reconciliation": "Conciliación",
   "movement": "Movimiento",
   "errorWhat": "No pudimos cargar tu resumen.",
-  "privacyTooltip": "Tocá el ojo para difuminar los montos — útil en público."
+  "privacyTooltip": "Tocá el ojo para difuminar los montos — útil en público.",
+  "reminders": {
+   "action": "Ajustar",
+   "dismissToday": "No mostrar por hoy",
+   "dismissForever": "No mostrar más recordatorios",
+   "birthdateTitle": "Tu cumpleaños",
+   "birthdateHow": "Guardalo y te lo festejamos el día — Ajustes → Perfil.",
+   "installPwaTitle": "Instalá la app",
+   "modulesTitle": "Hay más funciones disponibles",
+   "modulesHow": "Presupuestos, metas, deudas, inversiones y más — Ajustes → Más funciones.",
+   "themeTitle": "Elegí tu tema",
+   "themeHow": "Claro, oscuro o el de tu sistema — Ajustes → Tema.",
+   "formatTitle": "Formato de fecha y números",
+   "formatHow": "Ajustalo a como estás acostumbrado — Ajustes → Formato.",
+   "backdropTitle": "Fondo de puntos",
+   "backdropHow": "Un detalle visual opcional para el dashboard — Ajustes → Fondo."
+  }
  },
  "analyticsPage": {
   "unavailable": "El análisis todavía no está disponible en esta versión.",

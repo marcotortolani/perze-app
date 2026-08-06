@@ -6,6 +6,39 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.3] — 2026-08-06
+
+### Arreglado — "Efectivo"/"Otro" hardcodeados, CTA de gasto contra saldo cero, instalar PWA en un paso
+
+- **`accountPreset` guardaba el `AccountKind` a mano comparando el nombre del preset contra el
+  string literal `"Efectivo"`** — imposible de traducir sin romper la inferencia, y de paso
+  perdía el `kind` real de cualquier banco (`Itaú` caía al default `"wallet"` en vez de
+  `"savings"`, porque nunca se guardaba). `useOnboardingStore` ahora guarda `accountKind`
+  directo, separado del label — A6 lo fija al elegir el preset (traducido con
+  `reference.accountKind.*`, el mismo catálogo que usa el resto de la app) y A11 lo lee tal cual.
+- **El CTA de éxito del onboarding ofrecía "Cargar mi primer gasto" sobre una cuenta que siempre
+  arranca en 0** — A7 (el saldo real) se pide recién después, así que el primer gasto real
+  llevaría el saldo a negativo sin ningún movimiento que lo explique. Ahora, si la cuenta está en
+  cero, ofrece cargar un ingreso primero (mismo botón, mismo destino — `/add` con el tipo de
+  captura en `income`).
+- **Instalar la PWA después del primer gasto (A10) tenía tres mensajes fijos y un botón que solo
+  aparecía con `beforeinstallprompt` disponible** — sin chequear si la app ya estaba instalada.
+  Ahora reusa el mismo patrón maduro de Ajustes → Instalar app: un solo botón que instala en un
+  toque donde el navegador lo permite (Chrome/Edge en Android, Windows, macOS), y abre la guía
+  exacta por plataforma donde no hay API programática (iOS/iPadOS Safari nunca dispara ese
+  evento — restricción de Apple, no evitable desde el código). Si `isStandalonePwa()` ya da
+  `true`, el paso se saltea entero.
+
+### Agregado — recordatorios de baja intensidad en el dashboard
+
+- Banner opcional en el home que sugiere, de a uno por vez y rotando por día, cosas que se pueden
+  ajustar y que nadie encuentra si no las busca: cumpleaños, formato de fecha y números, tema,
+  fondo de puntos, instalar la app, o activar más módulos. Nunca una lista ("3 cosas
+  pendientes"), nunca compite con los banners más urgentes (offline, conflicto, cumpleaños de
+  hoy — si hay alguno de esos, el recordatorio no se muestra). Dos niveles de silencio: la X
+  calla hasta mañana, "No mostrar más recordatorios" apaga el sistema entero, para siempre, en
+  este dispositivo.
+
 ## [0.28.2] — 2026-08-06
 
 ### Arreglado — un miembro invitado al grupo familiar quedaba sin ver nada del hogar al que entró

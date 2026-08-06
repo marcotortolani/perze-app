@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button, IconButton, InstitutionTile, Input, ProgressSteps } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
+import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import type { AccountKind } from "@/lib/db/schema";
 
 interface Preset {
@@ -49,16 +50,6 @@ const PRESETS_BY_COUNTRY: Record<string, Preset[]> = {
   ],
 };
 
-// "Efectivo" y "Otro" quedan sin traducir a propósito: `accountPreset` los
-// guarda como string y `onboarding/success/page.tsx` los vuelve a comparar
-// literal contra "Efectivo" para inferir el `AccountKind` — cambiar el
-// texto acá rompería esa inferencia. Traducir esto bien requiere separar
-// identidad (`kind`) de label en el store, fuera del alcance de i18n.
-const ALWAYS: Preset[] = [
-  { name: "Efectivo", kind: "cash", color: "#6E6E76" },
-  { name: "Otro", kind: "other", color: "#6E6E76" },
-];
-
 /** A6 — primera cuenta: presets visuales por país, máximo 6 visibles + buscar. */
 export default function OnboardingAccountPage() {
   const router = useRouter();
@@ -68,17 +59,32 @@ export default function OnboardingAccountPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Preset | null>(null);
 
+  // "Efectivo" y "Otro" son los únicos dos presets que no son una marca de
+  // banco/billetera (esos SÍ quedan tal cual, un nombre propio no se
+  // traduce) — así que son los únicos dos que necesitan el label de
+  // `reference.accountKind.*`, ya traducido en los tres idiomas y
+  // reutilizado en toda la app para lo mismo. Adentro del componente
+  // porque necesita `t()`.
+  const always: Preset[] = useMemo(
+    () => [
+      { name: t(ACCOUNT_KIND_MESSAGE_KEY.cash), kind: "cash", color: "#6E6E76" },
+      { name: t(ACCOUNT_KIND_MESSAGE_KEY.other), kind: "other", color: "#6E6E76" },
+    ],
+    [t]
+  );
+
   const presets = useMemo(() => {
     const local = PRESETS_BY_COUNTRY[countryCode] ?? [];
-    const all = [...local, ...ALWAYS];
+    const all = [...local, ...always];
     if (!query.trim()) return all.slice(0, 6);
     const needle = query.trim().toLowerCase();
     return all.filter((p) => p.name.toLowerCase().includes(needle));
-  }, [countryCode, query]);
+  }, [countryCode, always, query]);
 
   const handleConfirm = () => {
     if (!selected) return;
     setField("accountPreset", selected.name);
+    setField("accountKind", selected.kind);
     router.push("/onboarding/success");
   };
 
@@ -90,7 +96,8 @@ export default function OnboardingAccountPage() {
           current={3}
           total={3}
           onSkip={() => {
-            setField("accountPreset", "Efectivo");
+            setField("accountPreset", t(ACCOUNT_KIND_MESSAGE_KEY.cash));
+            setField("accountKind", "cash");
             router.push("/onboarding/success");
           }}
           skipLabel={t("ds.progressSteps.skip")}

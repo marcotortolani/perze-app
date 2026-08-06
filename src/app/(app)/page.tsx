@@ -29,6 +29,8 @@ import { CountUp, PageEnter } from "@/components/motion";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { BirthdayBanner } from "@/components/birthday-banner";
+import { ReminderBanner } from "@/components/reminder-banner";
+import { useActiveReminder } from "@/lib/reminders/use-active-reminder";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useBirthdayBannerStore } from "@/stores/birthday-banner-store";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -182,6 +184,7 @@ export default function HomePage() {
   const seenPrivacyTooltip = useContextualTooltipStore((s) => s.hasSeen("home-privacy-toggle"));
   const markPrivacyTooltipSeen = useContextualTooltipStore((s) => s.markSeen);
   const [insightDismissed, setInsightDismissed] = useState(false);
+  const activeReminder = useActiveReminder({ hasBirthDate: !!profile?.birthDate, enabledModules: household?.enabledModules });
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const accountById = useMemo(() => new Map((accounts ?? []).map((a: AccountRowData) => [a.id, a])), [accounts]);
@@ -277,6 +280,10 @@ export default function HomePage() {
 
   const showBirthdayBanner = !!profile?.birthDate && isBirthdayToday(profile.birthDate, now) && dismissedYear !== now.getFullYear();
   const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
+  // Más urgente gana: offline/conflicto/cumpleaños se muestran arriba del
+  // recordatorio informativo, nunca los dos apilados — el recordatorio es
+  // ayuda de baja prioridad, no otra alarma.
+  const showReminderBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && !!activeReminder;
 
   return (
     // `PageEnter`: entrada suave del dashboard. Envuelve el retorno CON
@@ -303,6 +310,10 @@ export default function HomePage() {
           style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
         />
       ) : null}
+      {/* El recordatorio informativo solo aparece si no hay ya otro banner
+          arriba — offline/conflicto/cumpleaños son más urgentes, y apilar
+          avisos es exactamente el ruido que este banner intenta evitar. */}
+      {showReminderBanner ? <ReminderBanner reminder={activeReminder} /> : null}
 
       {/* Desktop ancho (`xl`, 1280px — `SPLIT_BREAKPOINT`, la misma que ya
           usan `/accounts` y `/transactions` para su split de lista+detalle
@@ -316,7 +327,7 @@ export default function HomePage() {
           todo el ancho de contenido disponible; recién a 1280px se parte.
           En mobile (`grid-cols-1`) es el mismo orden vertical de siempre: el
           grid de una sola columna ignora los `gridColumn` de más abajo. */}
-      <div className="grid grid-cols-1 xl:grid-cols-2" style={{ gap: 28, marginTop: showBirthdayBanner || (pending && pending > 0) || conflicts.length > 0 ? 28 : 0 }}>
+      <div className="grid grid-cols-1 xl:grid-cols-2" style={{ gap: 28, marginTop: showBirthdayBanner || (pending && pending > 0) || conflicts.length > 0 || showReminderBanner ? 28 : 0 }}>
       {/* Columna izquierda: patrimonio, cuentas, tarjetas, gastado/ingresado — el resumen financiero. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
       <section style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>

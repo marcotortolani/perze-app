@@ -721,7 +721,9 @@
   "success": {
    "title": "All set!",
    "subtitle": "Your account is ready. Add your first expense to start seeing your summary.",
+   "subtitleIncome": "Your account is ready, but it starts at zero. Log an income first — then you'll be able to track expenses.",
    "cta": "Add my first expense",
+   "ctaIncome": "Add my first income",
    "errorTitle": "We couldn't finish setting up your account",
    "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
    "retry": "Try again"
@@ -742,9 +744,7 @@
    "balanceSubtitle": "So your net worth starts correct. You can leave it at 0 and adjust it later.",
    "continue": "Continue",
    "installTitle": "Install PERZE",
-   "installPromptAvailable": "Get in faster, like a native app.",
-   "installPromptIos": "Tap Safari's share icon and choose \"Add to Home Screen\".",
-   "installPromptOther": "Look for \"Install app\" in your browser's menu.",
+   "installSubtitle": "Get in faster, like a native app.",
    "install": "Install",
    "later": "Not now",
    "laterToast": "You can install it later from Settings"
@@ -1089,7 +1089,23 @@
   "reconciliation": "Reconciliation",
   "movement": "Transaction",
   "errorWhat": "We couldn't load your summary.",
-  "privacyTooltip": "Tap the eye to blur amounts — handy in public."
+  "privacyTooltip": "Tap the eye to blur amounts — handy in public.",
+  "reminders": {
+   "action": "Adjust",
+   "dismissToday": "Don't show today",
+   "dismissForever": "Don't show reminders anymore",
+   "birthdateTitle": "Your birthday",
+   "birthdateHow": "Save it and we'll celebrate it — Settings → Profile.",
+   "installPwaTitle": "Install the app",
+   "modulesTitle": "There's more you can turn on",
+   "modulesHow": "Budgets, goals, debts, investments, and more — Settings → More features.",
+   "themeTitle": "Pick your theme",
+   "themeHow": "Light, dark, or match your system — Settings → Theme.",
+   "formatTitle": "Date and number format",
+   "formatHow": "Set it to how you're used to reading it — Settings → Format.",
+   "backdropTitle": "Dot background",
+   "backdropHow": "An optional visual touch for the dashboard — Settings → Background."
+  }
  },
  "analyticsPage": {
   "unavailable": "Analytics isn't available yet in this version.",
