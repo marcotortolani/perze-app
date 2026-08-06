@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, Input, ListRow, PriceStatus, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
-import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
+import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { useQueryClient } from "@tanstack/react-query";
 
 const STALE_HOURS = 24;
@@ -34,7 +34,34 @@ export default function PricesStatusPage() {
   const [editing, setEditing] = useState<{ instrumentId: string; symbol: string; currencyCode: string } | null>(null);
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
+  const [liveQuotes, setLiveQuotes] = useState<Map<string, LatestPrice>>(new Map());
   usePageHeader({ title: t("pricesStatusPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  /**
+   * I12 — antes esta pantalla solo mostraba `price_snapshots` cacheado (el
+   * cron diario), así que "estado de los precios" podía mostrar "viejo"
+   * aunque el mercado ya tuviera un valor fresco disponible. Al entrar acá
+   * se pide la cotización en vivo de cada instrumento con proveedor —
+   * `refreshFromProvider` no escribe `price_snapshots` (eso lo hace el cron),
+   * así que el resultado se guarda aparte y gana sobre el cache al mostrar.
+   */
+  const providerInstrumentIds = useMemo(
+    () => (instruments ?? []).filter((i) => instrumentIds.includes(i.id) && i.priceProvider).map((i) => i.id),
+    [instruments, instrumentIds]
+  );
+  useEffect(() => {
+    if (providerInstrumentIds.length === 0) return;
+    let cancelled = false;
+    Promise.all(providerInstrumentIds.map((id) => priceSnapshotsRepo.refreshFromProvider(id).then((quote) => [id, quote] as const))).then((results) => {
+      if (cancelled) return;
+      const map = new Map<string, LatestPrice>();
+      for (const [id, quote] of results) if (quote) map.set(id, quote);
+      setLiveQuotes(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [providerInstrumentIds]);
 
   if (!household || !portfolios || !trades || !instruments || pricesQuery.isLoading) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
@@ -68,7 +95,7 @@ export default function PricesStatusPage() {
         {[...positions.keys()].map((instrumentId) => {
           const instrument = instrumentById.get(instrumentId);
           if (!instrument) return null;
-          const price = pricesQuery.data?.get(instrumentId);
+          const price = liveQuotes.get(instrumentId) ?? pricesQuery.data?.get(instrumentId);
           const { state, ageHours } = classify(price?.asOf, price?.provider);
           return (
             <ListRow
@@ -82,7 +109,7 @@ export default function PricesStatusPage() {
         })}
       </div>
 
-      <Sheet open={editing !== null} title={editing ? t("pricesStatusPage.updatePrice", { symbol: editing.symbol }) : ""} onClose={() => setEditing(null)} height={260}>
+      <Sheet open={editing !== null} title={editing ? t("pricesStatusPage.updatePrice", { symbol: editing.symbol }) : ""} onClose={() => setEditing(null)}>
         {editing ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Input label={t("pricesStatusPage.price", { currency: editing.currencyCode })} value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} autoFocus />

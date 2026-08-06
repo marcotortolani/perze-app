@@ -6,6 +6,58 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.7] — 2026-08-06
+
+### Corregido — el total del portfolio sumaba montos de monedas distintas sin convertir
+
+Bug de plata real, no solo UX: `totalValue` en el overview de un portfolio sumaba el `value` crudo
+de cada posición **sin convertir a la moneda base**, aunque instrumentos de distinta moneda (un
+CEDEAR en ARS junto a una acción en USD, con base UYU) dieran un bigint sin sentido. No se había
+manifestado antes porque hasta 0.29.4 el buscador de instrumentos (I7) no traía nada fuera de la
+moneda base con la que se probaba. `OverviewContent.tsx` ahora resuelve el rate de cada moneda en
+cartera (`fxRepo.resolve`, mismo criterio que cualquier otra conversión de la app) antes de sumar,
+y **excluye del total las posiciones sin cotización disponible** en vez de tratarlas como si
+valieran 0 — declarado con `NeedsFxBanner`, igual que cualquier otro agregado (CLAUDE.md §
+needs_fx).
+
+### Agregado — moneda original vs moneda base en el overview del portfolio
+
+Nuevo toggle (`SegmentedControl`) sobre la lista de posiciones — solo aparece si hay alguna en
+moneda distinta a la base, para no sumar ruido cuando no hace falta. "Moneda original" es el
+comportamiento de siempre (cada posición en la moneda del instrumento); "En {moneda base}" usa la
+misma conversión que ahora protege el total, con "Sin cotización" para lo que quedó afuera.
+
+### Agregado — cantidad con stepper y teclado, precio con teclado y moneda indicada, cuenta con moneda visible
+
+En `trades/new` (cargar una operación): la cantidad pasa de un `<Input type="text">` a un número
+centrado con ±1 a los costados para el caso común (unidades enteras) y teclado numérico propio
+(tocando el número) para cantidades grandes o fraccionarias — mismo patrón de teclado que
+`/currencies`, reutilizando `appendKeypadRateDigit` (es un acumulador de dígitos genérico pese al
+nombre, no específico de tipos de cambio). El precio unitario indica la moneda del instrumento en
+la etiqueta ("Precio unitario (USD)") y también se edita por teclado numérico, nunca `<input
+type="number">` (CLAUDE.md). La cuenta de liquidación ahora muestra su moneda junto al nombre —
+antes "Itaú" a secas no alcanzaba para distinguir dos cuentas Itaú en monedas distintas.
+
+### Agregado — los precios ahora se piden en vivo al entrar a "Estado de precios" (I12)
+
+Antes esa pantalla solo mostraba `price_snapshots` cacheado (el cron diario), así que un
+instrumento podía figurar "viejo" con el mercado ya teniendo un valor fresco. Al entrar se pide la
+cotización en vivo de cada instrumento con proveedor — `refreshFromProvider` no escribe
+`price_snapshots` (esa persistencia es del cron), así que el resultado se guarda aparte y gana
+sobre el cache al mostrar el estado.
+
+### Arreglado — dos modales de inversiones con `height` fija y contenido corto
+
+"Editar clase" (Clases de activos) y "Actualizar precio" (Estado de precios) forzaban una altura
+de sheet mayor a la de su contenido real (un `Input` + uno o dos `Button`), dejando aire vacío en
+vez de ajustarse — mismo defecto reportado para este modal puntual, corregido sacando el `height`
+fijo (`Sheet` por defecto ya es `"auto"`).
+
+### Cambiado — "Agregar instrumento" en vez de "Crear instrumento a mano"
+
+Quedó desactualizado por 0.29.4: la pantalla de creación de instrumentos arranca en modo búsqueda
+desde esa versión, "a mano" ya no es lo que hace el botón por default.
+
 ## [0.29.6] — 2026-08-06
 
 ### Agregado — el buscador flotante ahora cubre tags y cualquier sección de la app

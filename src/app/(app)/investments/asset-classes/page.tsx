@@ -91,7 +91,11 @@ export default function AssetClassesPage() {
         <ListRow icon="plus" label={t("assetClassesPage.newClass")} variant="action" onClick={() => setCreating(true)} />
       </div>
 
-      <Sheet open={editing !== null} title={t("assetClassesPage.editTitle")} onClose={() => setEditing(null)} height={editing?.householdId !== null ? 320 : 240}>
+      {/* Sin `height` fija: el contenido (nombre + guardar + a veces borrar)
+          nunca llega a los 240/320px que esto tenía antes, así que la hoja
+          quedaba con aire vacío y un scroll que nunca hacía falta. `Sheet`
+          por defecto ya es `"auto"` (se ajusta al contenido). */}
+      <Sheet open={editing !== null} title={t("assetClassesPage.editTitle")} onClose={() => setEditing(null)}>
         {editing ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {editing.householdId === null ? (
@@ -110,7 +114,7 @@ export default function AssetClassesPage() {
         ) : null}
       </Sheet>
 
-      <Sheet open={creating} title={t("assetClassesPage.newClass")} onClose={() => setCreating(false)} height={240}>
+      <Sheet open={creating} title={t("assetClassesPage.newClass")} onClose={() => setCreating(false)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Input label={t("assetClassesPage.name")} value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
           <Button disabled={!newName.trim() || saving} onClick={handleCreate}>

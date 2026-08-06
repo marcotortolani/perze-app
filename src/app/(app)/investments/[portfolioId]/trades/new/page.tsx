@@ -3,8 +3,8 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
-import { Button, Input, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
+import { useLocale, useTranslations } from "next-intl";
+import { Button, IconButton, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -14,15 +14,40 @@ import { fxRepo } from "@/lib/repos/fx-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
+import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
+import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
 const KINDS: TradeKind[] = ["buy", "sell"];
+
+/**
+ * `quantity`/`price` son `number` en `NewTradeInput` (no `ScaledRate`, no
+ * `Money`) — `appendKeypadRateDigit` sirve igual porque es un acumulador de
+ * dígitos genérico (ver su comentario), pero el parseo de vuelta es propio:
+ * un `Number()` directo sobre el string ya normalizado, sin la escala de
+ * `parseRate` que es específica de tipos de cambio.
+ */
+function parseKeypadDecimal(raw: string, decimalSeparator: string): number | null {
+  if (raw === "" || raw === decimalSeparator) return null;
+  const normalized = raw.replaceAll(decimalSeparator, ".");
+  if (!/^\d*\.?\d*$/.test(normalized)) return null;
+  const n = Number(normalized);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Para arrancar el teclado desde el valor actual, en la misma notación con la que se lo va a seguir editando. */
+function toKeypadDigits(n: number, decimalSeparator: string): string {
+  if (n === 0) return "";
+  return String(n).replace(".", decimalSeparator);
+}
 
 /** I4-I7 — cargar una operación (compra/venta). Requiere un instrumento ya creado (I7b si hace falta). */
 export default function NewTradePage({ params }: { params: Promise<{ portfolioId: string }> }) {
   const { portfolioId } = use(params);
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
@@ -37,7 +62,8 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [priceLoading, setPriceLoading] = useState(false);
-  const [sheet, setSheet] = useState<"none" | "instrument" | "account">("none");
+  const [sheet, setSheet] = useState<"none" | "instrument" | "account" | "quantity" | "price">("none");
+  const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!household || !userId) return null;
@@ -65,6 +91,38 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const unitPrice = Number(price.replace(",", "."));
   const grossAmount = Number.isFinite(qty) && Number.isFinite(unitPrice) ? Math.round(qty * unitPrice * 100) : 0; // unidades mínimas (2 decimales, moneda fiat típica)
   const canSave = !!instrument && !!account && qty > 0 && unitPrice > 0;
+
+  // ±1 unidad, nunca negativo — un CEDEAR fraccionario ("0.5") sigue
+  // pudiendo tipearse a mano por el teclado, el stepper es para el caso
+  // común de cantidades enteras.
+  const adjustQuantity = (delta: number) => {
+    const current = Number(quantity.replace(",", ".")) || 0;
+    const next = Math.max(0, current + delta);
+    setQuantity(next === 0 ? "" : String(next));
+  };
+
+  const openQuantityKeypad = () => {
+    setKeypadDigits(toKeypadDigits(Number(quantity.replace(",", ".")) || 0, decimalSeparator));
+    setSheet("quantity");
+  };
+  const openPriceKeypad = () => {
+    setKeypadDigits(toKeypadDigits(Number(price.replace(",", ".")) || 0, decimalSeparator));
+    setSheet("price");
+  };
+  const commitKeypad = () => {
+    if (keypadDigits !== null) {
+      const parsed = parseKeypadDecimal(keypadDigits, decimalSeparator);
+      const raw = parsed !== null ? String(parsed) : "";
+      if (sheet === "quantity") setQuantity(raw);
+      else if (sheet === "price") setPrice(raw);
+    }
+    setSheet("none");
+    setKeypadDigits(null);
+  };
+  const cancelKeypad = () => {
+    setSheet("none");
+    setKeypadDigits(null);
+  };
 
   const handleSave = async () => {
     if (!canSave || !instrument || !account || saving) return;
@@ -133,16 +191,44 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
 
           <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
-            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
           </button>
 
-          <Input label={t("newTradePage.quantity")} placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/[^0-9.,]/g, ""))} />
-          <Input
-            label={t("newTradePage.unitPrice")}
-            placeholder={priceLoading ? t("newTradePage.loadingPrice") : "150,00"}
-            value={price}
-            onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ""))}
-          />
+          {/* Cantidad: número centrado + ±1 a los costados — el caso común
+              (comprar N unidades enteras) no necesita abrir el teclado. Tocar
+              el número sí lo abre, para cantidades grandes o fraccionarias
+              (CEDEARs). */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.quantity")}</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+              <IconButton icon="minus" ariaLabel={t("newTradePage.decreaseQuantity")} onClick={() => adjustQuantity(-1)} />
+              <button
+                type="button"
+                onClick={openQuantityKeypad}
+                style={{ background: "none", border: 0, minWidth: 88, padding: "8px 0", textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 28, color: "var(--text-primary)", cursor: "pointer" }}
+              >
+                {quantity || "0"}
+              </button>
+              <IconButton icon="plus" ariaLabel={t("newTradePage.increaseQuantity")} onClick={() => adjustQuantity(1)} />
+            </div>
+          </div>
+
+          {/* Precio: siempre por teclado numérico (no tiene sentido un
+              stepper de ±1 sobre un precio), con la moneda del instrumento
+              en la etiqueta — antes no se indicaba en qué moneda se estaba
+              tipeando el precio. */}
+          <button
+            type="button"
+            onClick={openPriceKeypad}
+            style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}
+          >
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>
+              {instrument ? t("newTradePage.unitPriceInCurrency", { currency: instrument.currencyCode }) : t("newTradePage.unitPrice")}
+            </div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>
+              {priceLoading ? t("newTradePage.loadingPrice") : price || "—"}
+            </div>
+          </button>
 
           <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
             {t("common.save")}
@@ -167,6 +253,27 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
           {accounts.map((a) => (
             <ListRow key={a.id} label={a.name} meta={a.currencyCode} onClick={() => { setAccountId(a.id); setSheet("none"); }} />
           ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={sheet === "quantity" || sheet === "price"} title={sheet === "quantity" ? t("newTradePage.quantity") : t("newTradePage.unitPrice")} onClose={cancelKeypad}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32, color: "var(--text-primary)" }}>
+            {keypadDigits || "0"}
+          </div>
+          <Keypad
+            operators={false}
+            onKey={(key) => setKeypadDigits((d) => appendKeypadRateDigit(d ?? "", key, decimalSeparator))}
+            onClear={() => setKeypadDigits("")}
+          />
+          <div style={{ display: "flex", gap: 12 }}>
+            <Button variant="secondary" onClick={cancelKeypad} style={{ flex: 1 }}>
+              {t("currenciesPage.keypadCancel")}
+            </Button>
+            <Button variant="primary" onClick={commitKeypad} style={{ flex: 1 }}>
+              {t("currenciesPage.keypadDone")}
+            </Button>
+          </div>
         </div>
       </Sheet>
     </div>

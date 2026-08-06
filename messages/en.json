@@ -1826,8 +1826,11 @@
   "otherAssetClass": "Other",
   "noPositions": "You haven't logged any trades yet.",
   "recordTrade": "Log a trade",
-  "newInstrument": "Create instrument manually",
-  "positions": "Positions"
+  "newInstrument": "Add instrument",
+  "positions": "Positions",
+  "viewOriginalCurrency": "Original currency",
+  "viewBaseCurrency": "In {currency}",
+  "pendingFx": "No rate yet"
  },
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",
@@ -1865,7 +1868,10 @@
   "chooseInstrument": "Choose instrument",
   "settlementAccount": "Settlement account",
   "quantity": "Quantity",
+  "decreaseQuantity": "Subtract one unit",
+  "increaseQuantity": "Add one unit",
   "unitPrice": "Unit price",
+  "unitPriceInCurrency": "Unit price ({currency})",
   "loadingPrice": "Looking up market price…",
   "saved": "Trade saved",
   "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."

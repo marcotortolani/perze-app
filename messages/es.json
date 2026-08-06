@@ -1826,8 +1826,11 @@
   "otherAssetClass": "Otros",
   "noPositions": "Todavía no cargaste ninguna operación.",
   "recordTrade": "Cargar operación",
-  "newInstrument": "Crear instrumento a mano",
-  "positions": "Posiciones"
+  "newInstrument": "Agregar instrumento",
+  "positions": "Posiciones",
+  "viewOriginalCurrency": "Moneda original",
+  "viewBaseCurrency": "En {currency}",
+  "pendingFx": "Sin cotización"
  },
  "instrumentDetailPage": {
   "notFound": "No encontramos este instrumento.",
@@ -1865,7 +1868,10 @@
   "chooseInstrument": "Elegir instrumento",
   "settlementAccount": "Cuenta de liquidación",
   "quantity": "Cantidad",
+  "decreaseQuantity": "Restar una unidad",
+  "increaseQuantity": "Sumar una unidad",
   "unitPrice": "Precio unitario",
+  "unitPriceInCurrency": "Precio unitario ({currency})",
   "loadingPrice": "Buscando precio de mercado…",
   "saved": "Operación guardada",
   "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar."
