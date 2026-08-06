@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.0] — 2026-08-06
+
+### Agregado — aviso al operador de una solicitud de acceso nueva
+
+- Hasta ahora la única forma de enterarte de que alguien pidió entrar era abrir la app y entrar a
+  Panel del operador a mano. Ahora hay dos avisos, sumados juntos:
+  - **Mail al operador** — `handle_new_user()` dispara la Edge Function nueva
+    `supabase/functions/notify-access-request` vía `net.http_post` apenas nace un perfil
+    `pending`, mismo patrón de Vault (`perze_project_url`/`perze_service_role_key`) que
+    `dispatch_due_notifications()`. Con branding liviano (wordmark, tokens de marca), manda a
+    **todos** los `is_app_admin` de la instancia, no solo al primero. Necesita sus propios
+    secrets de Edge Function (`RESEND_API_KEY`, `EMAIL_FROM`, `SITE_URL` —
+    `docs/self-hosting.md` § 1.7): sin ellos, el alta funciona igual y el mail simplemente no
+    sale, nunca bloquea a nadie.
+  - **Badge en la tab bar** — el contrato de `TabItem` ya soportaba un `badge` numérico (CON-13,
+    pensado justo para esto) y no se usaba. El tab "Más" ahora lo muestra con la cantidad de
+    solicitudes pendientes, solo para el operador; la fila "Panel del operador" adentro de Más
+    repite el conteo como texto.
+
+### Arreglado — la lista de "solicitudes pendientes" del panel del operador aparecía vacía
+
+- Las métricas contaban bien ("Pendientes: 1"), pero la lista de abajo — de donde se aprueba o
+  rechaza — mostraba "No hay solicitudes esperando aprobación" al mismo tiempo. La causa: el JOIN
+  contra `auth.users` para traer el email era `INNER`, y perdía la fila en silencio para al menos
+  un caso real en producción; `admin_metrics()` cuenta bien porque consulta `profiles` sola, sin
+  ese join. Pasa a `LEFT JOIN` — una solicitud real nunca desaparece de la lista por un problema
+  de resolución del email; en el peor caso el email sale vacío y la fila cae a mostrar el nombre o
+  el id.
+
 ## [0.27.2] — 2026-08-06
 
 ### Arreglado — la invitación al household nunca se canjeaba para un invitado sin aprobar

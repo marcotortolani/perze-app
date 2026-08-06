@@ -83,7 +83,8 @@
   "tabBar": {
    "add": "Agregar",
    "badgeCount": "{count, plural, one {# notificación} other {# notificaciones}}",
-   "budgetAlertsBadge": "{count, plural, one {# presupuesto al límite} other {# presupuestos al límite}}"
+   "budgetAlertsBadge": "{count, plural, one {# presupuesto al límite} other {# presupuestos al límite}}",
+   "accessRequestsBadge": "{count, plural, one {# solicitud de acceso pendiente} other {# solicitudes de acceso pendientes}}"
   },
   "contextualTooltip": {
    "gotIt": "Entendido"

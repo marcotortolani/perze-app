@@ -10,6 +10,7 @@ import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { useOwnAccess } from "@/hooks/use-own-access";
+import { usePendingAccessRequestsCount } from "@/hooks/use-pending-access-requests";
 import { APP_VERSION } from "@/lib/version";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { exitDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
@@ -39,6 +40,7 @@ export default function MorePage() {
   const { data: household } = useCurrentHousehold();
   const { conflicts } = useConflicts(household?.id);
   const ownAccess = useOwnAccess();
+  const pendingAccessRequests = usePendingAccessRequestsCount();
   const modules = household?.enabledModules ?? [];
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm" | "signing-out">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
@@ -139,7 +141,14 @@ export default function MorePage() {
               {/* El panel del operador vive DENTRO de Sistema, no en una
                   tarjeta suelta debajo: es una sección de sistema más, y
                   aislada parecía una categoría propia de un solo ítem. */}
-              {ownAccess?.isAppAdmin ? <ListRow icon="lock" label={t("adminPage.title")} onClick={() => router.push("/more/admin")} /> : null}
+              {ownAccess?.isAppAdmin ? (
+                <ListRow
+                  icon="lock"
+                  label={t("adminPage.title")}
+                  meta={pendingAccessRequests > 0 ? t("ds.tabBar.accessRequestsBadge", { count: pendingAccessRequests }) : undefined}
+                  onClick={() => router.push("/more/admin")}
+                />
+              ) : null}
             </Card>
           </section>
 

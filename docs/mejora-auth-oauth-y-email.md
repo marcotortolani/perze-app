@@ -325,18 +325,31 @@ pasada: **solo el primer punto.**
 - **Confirmación de export de datos y de borrado de cuenta (K9) — fuera de
   alcance**, mismo criterio de priorización: no hay urgencia sin un
   disparador todavía definido.
+- **Aviso al operador de una solicitud de acceso nueva — implementado.**
+  No es un mail de la app hacia un miembro del household, es un aviso del
+  *sistema* hacia el operador: exactamente el caso que la sección
+  siguiente marca como candidato a Edge Function. `handle_new_user()`
+  (`20260806010000_notify_admin_on_signup.sql`) dispara
+  `supabase/functions/notify-access-request` vía `net.http_post` cuando un
+  perfil nuevo nace `pending` — mismo patrón de Vault que
+  `dispatch_due_notifications()`. Se suma un badge en la tab bar (CON-13,
+  `TabItem.badge`) para el mismo aviso dentro de la app.
 
-**Dónde vive el envío — decisión cerrada: Route Handlers de Next, no una
-Edge Function.** El envío disparado por el usuario (invitar a alguien) no
-necesita `service_role` ni cron: corre con la sesión del usuario y RLS
-como barrera de autorización, igual que `src/app/api/fx/route.ts`. Una
-Edge Function tendría sentido recién para lo que dispare el *servidor* sin
-que haya un usuario navegando (el resumen semanal, por ejemplo) — que es
-justo lo que queda fuera de esta pasada. `src/emails/send.ts` envuelve el
-SDK de Resend; el secreto se carga como `RESEND_API_KEY` en el entorno del
-deploy de Next (bloque `server` de `src/env.ts`), nunca como
-`NEXT_PUBLIC_*` ni en un secreto de Supabase — acá no hay Edge Function
-que lo necesite.
+**Dónde vive el envío — dos caminos, según quién dispara.** Lo que dispara
+el *usuario* (invitar a alguien) va por Route Handler: no necesita
+`service_role` ni cron, corre con la sesión del usuario y RLS como barrera
+de autorización, igual que `src/app/api/fx/route.ts`. `src/emails/send.ts`
+envuelve el SDK de Resend; el secreto se carga como `RESEND_API_KEY` en el
+entorno del deploy de Next (bloque `server` de `src/env.ts`), nunca como
+`NEXT_PUBLIC_*`.
+
+Lo que dispara el *servidor* sin que haya un usuario navegando —el aviso al
+operador de arriba, y el resumen semanal/alertas el día que se implementen—
+va por Edge Function, con su propio `RESEND_API_KEY`/`EMAIL_FROM` como
+secrets de Supabase (`supabase secrets set`, ver `docs/self-hosting.md`
+§ 1.7): son las mismas credenciales de Resend, pero cargadas en un lugar
+aparte del `.env` de Next — Postgres no tiene acceso a ese entorno, y una
+Edge Function no lee `.env.local`.
 
 ## 7. Google + colapso de A2 — hecho
 

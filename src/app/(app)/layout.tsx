@@ -12,6 +12,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
+import { usePendingAccessRequestsCount } from "@/hooks/use-pending-access-requests";
 import { SearchOverlay } from "@/components/search-overlay";
 import { buildDesktopNav, activeNavId } from "@/lib/nav/desktop-nav";
 
@@ -62,6 +63,7 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const { data: householdMembers } = useHouseholdMembers(household?.id);
   const showScope = (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
+  const pendingAccessRequests = usePendingAccessRequestsCount();
   const [searchOpen, setSearchOpen] = useState(false);
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
@@ -170,7 +172,18 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
     { id: "movements", label: t("nav.movementsShort"), icon: "list", href: "/transactions" },
     { id: "add", label: "", icon: "plus", fab: true, href: "/add" },
     fourth.item,
-    { id: "more", label: t("nav.more"), icon: "more", href: "/more" },
+    {
+      id: "more",
+      label: t("nav.more"),
+      icon: "more",
+      href: "/more",
+      // CON-13 — el operador (y solo el operador: el hook queda deshabilitado
+      // para cualquier otro) ve acá cuántas solicitudes de acceso están
+      // esperando, sin tener que entrar a "Más" para enterarse.
+      ...(pendingAccessRequests > 0
+        ? { badge: pendingAccessRequests, badgeLabel: t("ds.tabBar.accessRequestsBadge", { count: pendingAccessRequests }) }
+        : {}),
+    },
   ];
 
   const activeTab = tabForPathname(pathname) || (pathname.startsWith(fourth.path) ? fourth.item.id : "");

@@ -446,6 +446,11 @@ allow_dynamic_registration = false
 [functions.send-push]
 verify_jwt = true
 
+# Solo la llama `handle_new_user()` vía `net.http_post` con el
+# service_role key (nunca el cliente) — mismo criterio que `daily-fx-sync`.
+[functions.notify-access-request]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

@@ -64,6 +64,20 @@ deploy de este repo Next.js.
    La notificación de tipo `insights` (detección de anomalías) no se dispara sola: no hay un
    motor de detección del lado servidor todavía — queda como feature pendiente, no como bug.
 
+7. (Opcional) Avisos por mail al operador cuando alguien nuevo pide acceso. Necesita, además de
+   los dos secrets de Vault del punto 6 (`handle_new_user()` es quien dispara el aviso), sus
+   propios secrets de Edge Function con las credenciales de Resend:
+
+   ```bash
+   supabase functions deploy notify-access-request
+   supabase secrets set RESEND_API_KEY=... EMAIL_FROM=notificaciones@tudominio.com SITE_URL=https://tudominio.com
+   ```
+
+   Son las mismas credenciales de Resend que usa el mail transaccional de la app (§ 6 de
+   `docs/mejora-auth-oauth-y-email.md`), pero cargadas **acá también** — los secrets de Edge
+   Function y las variables de entorno de Next.js son dos lugares separados, aunque el valor
+   sea el mismo. Sin estos dos secrets, el alta funciona igual — el mail simplemente no sale.
+
 ## 2. Variables de entorno
 
 Copiá `.env.example` a `.env.local` (desarrollo) o cargalas como variables de entorno reales
