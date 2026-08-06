@@ -28,7 +28,7 @@ export interface InputProps {
   autoCapitalize?: "none" | "sentences" | "words" | "characters" | undefined;
   autoCorrect?: "on" | "off" | undefined;
   spellCheck?: boolean | undefined;
-  /** Campo mostrado pero no editable (p. ej. el email en `/onboarding/register`, ya fijado por la sesión). Texto en `--text-secondary` sobre `--surface-2` para leerse como apagado, no como error. */
+  /** Campo mostrado pero no editable (p. ej. el email en `/more/profile`, ya fijado por la sesión). Texto en `--text-secondary` sobre `--surface-2` para leerse como apagado, no como error. */
   readOnly?: boolean | undefined;
   disabled?: boolean | undefined;
   /** Solo con `type="password"` — agrega el botón ver/ocultar (target 44×44) exigido por cualquier campo de contraseña del flujo de acceso controlado. */

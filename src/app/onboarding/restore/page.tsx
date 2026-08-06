@@ -8,7 +8,6 @@ import { ScreenShell } from "@/components/screen-shell";
 import { createClient } from "@/lib/supabase/client";
 import { hydrateFromRemote } from "@/lib/offline/hydrate";
 import { useInvalidateHousehold } from "@/hooks/use-current-household";
-import { markRegistered } from "@/lib/auth/registered-cookie";
 
 /**
  * AC-1 (`docs/auditoria-acceso.md`) — destino de `resolveOnboardingDestination()`
@@ -50,7 +49,6 @@ export default function OnboardingRestorePage() {
           return;
         }
 
-        markRegistered();
         router.replace("/");
       } catch {
         setStatus("error");

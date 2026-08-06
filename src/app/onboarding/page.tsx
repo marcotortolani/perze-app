@@ -16,7 +16,6 @@ import { createClient } from "@/lib/supabase/client";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
-import { markRegistered } from "@/lib/auth/registered-cookie";
 import { hasSeenWelcome } from "@/lib/onboarding/welcome-flag";
 import { env } from "@/env";
 
@@ -122,13 +121,9 @@ export default function OnboardingAuthPage() {
         return;
       }
 
-      // AC-8 — si hay sesión, en este dispositivo YA hubo una cuenta: sin
-      // la marca, al vencer la sesión el proxy volvía a mostrar la pantalla
-      // de alta en vez de /login.
-      markRegistered();
-      // Mismo motivo que en `/login`: lo navegado sin sesión quedó
-      // cacheado como el redirect a esta pantalla, y sin tirarlo el
-      // service worker puede devolver acá a alguien que ya entró.
+      // Lo navegado sin sesión quedó cacheado como el redirect a esta
+      // pantalla, y sin tirarlo el service worker puede devolver acá a
+      // alguien que ya entró.
       await purgeNavigationCaches();
       if (cancelled) return;
 
@@ -169,11 +164,13 @@ export default function OnboardingAuthPage() {
         email: email.value,
         options: {
           shouldCreateUser: true,
-          // C7/proxy — sin esto GoTrue arma el link con el `site_url` pelado
+          // Sin esto GoTrue arma el link con el `site_url` pelado
           // (`supabase/config.toml`), que vuelve como `?code=` a la raíz y
-          // nunca pasa por el canje de `/auth/callback`. `next` manda al
-          // registro nuevo (nombre + contraseña), no directo a A4.
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/register`,
+          // nunca pasa por el canje de `/auth/callback`. `next` manda de
+          // vuelta a `/onboarding`, que resuelve destino real
+          // (`resolveOnboardingDestination()`) — nunca directo a A4, que
+          // duplicaría household en un reingreso desde otro dispositivo.
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
         },
       });
       if (error) {
@@ -254,16 +251,10 @@ export default function OnboardingAuthPage() {
           </button>
         )}
 
-        {/* AC-7 — el camino al login (y desde ahí a "olvidé mi contraseña")
-            no existía desde esta pantalla: quien entraba a la app en un
-            dispositivo nuevo veía solo la pantalla de alta. */}
-        <button
-          type="button"
-          onClick={() => router.push("/login")}
-          style={{ background: "none", border: 0, cursor: "pointer", color: "var(--text-secondary)", fontSize: 13, alignSelf: "center" }}
-        >
-          {t("onboarding.auth.haveAccount")}
-        </button>
+        {/* Login y signup son indistinguibles (CLAUDE.md § "Orden de A2"):
+            el mismo `signInWithOtp` de arriba reingresa a quien ya tiene
+            cuenta — `resolveOnboardingDestination()` lo manda a la app o a
+            `/onboarding/restore`, nunca a un formulario aparte. */}
 
         {/* El invitado que no tiene el link a mano (se lo dictaron, o lo
             perdió) no tenía cómo llegar a `/join` desde ningún lado. */}

@@ -57,24 +57,6 @@ export const profilesRepo = {
   },
 
   /**
-   * C7 — si `/onboarding/register` ya se completó una vez, no hay que
-   * volver a pedir nombre/contraseña (p. ej. si el usuario reabre el link
-   * del mail después de haberse registrado). `null` = todavía no.
-   */
-  async getRegistrationCompletedAt(userId: string): Promise<string | null> {
-    const supabase = createClient();
-    const { data, error } = await supabase.from("profiles").select("registration_completed_at").eq("id", userId).maybeSingle();
-    if (error) throw error;
-    return data?.registration_completed_at ?? null;
-  },
-
-  async markRegistrationCompleted(userId: string): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase.from("profiles").update({ registration_completed_at: new Date().toISOString() }).eq("id", userId);
-    if (error) throw error;
-  },
-
-  /**
    * A4 — país elegido en onboarding (`20260801180000_access_control.sql`
    * documenta esta columna como completada acá, pero nada la escribía; la
    * métrica `byCountry` del panel de operador leía siempre `desconocido`).

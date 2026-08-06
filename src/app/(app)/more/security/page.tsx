@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Icon, Input, PinKeypad, Sheet, Switch, usePageHeader } from "@/design-system";
+import { Icon, PinKeypad, Switch, usePageHeader } from "@/design-system";
 import { usePinStore } from "@/stores/pin-store";
-import { setOwnPassword, translateAuthError } from "@/features/auth/password-auth";
-import { PASSWORD_PATTERN } from "@/features/auth/password-rules";
 import { isBiometricAvailable, registerBiometric } from "@/lib/security/webauthn";
 
 const PIN_LENGTH = 6;
@@ -29,11 +27,6 @@ export default function SecurityPage() {
   const [firstPin, setFirstPin] = useState("");
   const [pin, setPinDigits] = useState("");
   const [mismatch, setMismatch] = useState(false);
-  const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [savingPassword, setSavingPassword] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState(false);
   const [enrollingBiometric, setEnrollingBiometric] = useState(false);
   usePageHeader({ title: t("securityPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
@@ -98,37 +91,6 @@ export default function SecurityPage() {
     }
   };
 
-  const handleOpenPasswordSheet = () => {
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordError(null);
-    setPasswordSheetOpen(true);
-  };
-
-  const handleSavePassword = async () => {
-    if (savingPassword) return;
-    if (!PASSWORD_PATTERN.test(newPassword)) {
-      setPasswordError(t("securityPage.passwordRequirements"));
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError(t("securityPage.passwordMismatch"));
-      return;
-    }
-    setSavingPassword(true);
-    try {
-      const result = await setOwnPassword(newPassword);
-      if (result.errorCode) {
-        setPasswordError(translateAuthError(result, t as (key: string) => string));
-        return;
-      }
-      setPasswordSheetOpen(false);
-      toast(t("securityPage.passwordSaved"));
-    } finally {
-      setSavingPassword(false);
-    }
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 16, gap: 20 }}>
@@ -153,18 +115,6 @@ export default function SecurityPage() {
                 <Switch checked={biometricEnabled} onChange={handleToggleBiometric} disabled={enrollingBiometric} id="biometric-lock-switch" />
               </div>
             ) : null}
-
-            <button
-              type="button"
-              onClick={handleOpenPasswordSheet}
-              style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 4px", background: "none", border: 0, cursor: "pointer", textAlign: "left", width: "100%" }}
-            >
-              <Icon name="lock" size={20} color="var(--text-secondary)" />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{t("securityPage.password")}</div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("securityPage.passwordDescription")}</div>
-              </div>
-            </button>
           </>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
@@ -176,37 +126,6 @@ export default function SecurityPage() {
           </div>
         )}
       </div>
-
-      <Sheet open={passwordSheetOpen} title={t("securityPage.password")} onClose={() => setPasswordSheetOpen(false)} height={420}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Input
-            type="password"
-            autoComplete="new-password"
-            label={t("securityPage.newPassword")}
-            value={newPassword}
-            invalid={!!passwordError}
-            onChange={(e) => {
-              setNewPassword(e.target.value);
-              setPasswordError(null);
-            }}
-          />
-          <Input
-            type="password"
-            autoComplete="new-password"
-            label={t("securityPage.confirmPassword")}
-            value={confirmPassword}
-            invalid={!!passwordError}
-            hint={passwordError ?? t("securityPage.passwordRequirements")}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              setPasswordError(null);
-            }}
-          />
-          <Button size="lg" disabled={savingPassword} onClick={handleSavePassword}>
-            {savingPassword ? t("securityPage.savingPassword") : t("securityPage.savePassword")}
-          </Button>
-        </div>
-      </Sheet>
     </div>
   );
 }

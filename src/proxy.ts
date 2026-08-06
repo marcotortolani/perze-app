@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import { isPublicPath } from "@/lib/auth/public-paths";
 import { DEMO_COOKIE_NAME, isDemoCookieValue } from "@/lib/demo/demo-cookie";
-import { REGISTERED_COOKIE_NAME, isRegisteredCookieValue } from "@/lib/auth/registered-cookie";
 import { ACCESS_APPROVAL_COOKIE_NAME, ACCESS_APPROVAL_TTL_SECONDS, isAccessApprovalCookieValidFor } from "@/lib/auth/access-approval-cookie";
 import { hasAuthCallbackParams } from "@/lib/auth/has-auth-callback-params";
 
@@ -77,13 +76,14 @@ export async function proxy(request: NextRequest) {
   // exigiendo `auth.uid()` real para cualquier fila.
   const isDemo = isDemoCookieValue(request.cookies.get(DEMO_COOKIE_NAME)?.value);
 
-  // C7 — sin sesión, `perze_registered` decide entre "primera vez"
-  // (`/onboarding`) y "ya se registró en este dispositivo" (`/login`): sin
-  // esto, cualquiera que ya tiene cuenta ve de nuevo la pantalla de alta.
-  const isRegistered = isRegisteredCookieValue(request.cookies.get(REGISTERED_COOKIE_NAME)?.value);
-
+  // Sin contraseñas, A2 es login/signup indistinguibles (CLAUDE.md § "Orden
+  // de A2"): sin sesión, siempre `/onboarding` — ese mismo `signInWithOtp`
+  // reingresa a quien ya tiene cuenta (`resolveOnboardingDestination()` lo
+  // manda a la app o a `/onboarding/restore`, nunca crea un household de
+  // más). La distinción "ya se registró en este dispositivo" que hacía
+  // `perze_registered` era solo para elegir `/login`, que ya no existe.
   if (!user && !isDemo && !isPublicPath(request.nextUrl.pathname)) {
-    return redirectTo(request, response, isRegistered ? "/login" : "/onboarding");
+    return redirectTo(request, response, "/onboarding");
   }
 
   // Acceso controlado (§3.2) — verificarse por OTP/contraseña no alcanza:

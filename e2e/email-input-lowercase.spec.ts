@@ -1,14 +1,21 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Los campos de email de las pantallas públicas (A2, login, recuperar
- * contraseña) pasan por `useEmailField`: minúscula forzada y error que
- * propone la corrección al salir del campo. `/forgot-password` es la más
- * simple de las tres y no necesita sesión.
+ * El campo de email de A2 pasa por `useEmailField`: minúscula forzada y
+ * error que propone la corrección al salir del campo. `/forgot-password`
+ * (que probaba esto antes) se revirtió junto con las contraseñas
+ * (`docs/mejora-auth-oauth-y-email.md` § 0.1) — A2 es el único campo de
+ * email público que queda. Con Google encendido (`playwright.config.ts`)
+ * el email arranca colapsado: hay que expandirlo primero.
  */
 test("el email se normaliza a minúscula y el error propone la corrección", async ({ page }) => {
-  await page.goto("/forgot-password");
-  const field = page.getByRole("textbox").first();
+  await page.goto("/onboarding");
+  await page.waitForLoadState("networkidle");
+  const skip = page.getByRole("button", { name: "Saltear" });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.getByRole("button", { name: "Usar mi email" }).click();
+
+  const field = page.getByPlaceholder("tu@email.com");
 
   await field.fill("ANA.Perez@Gmail.COM");
   await expect(field).toHaveValue("ana.perez@gmail.com");

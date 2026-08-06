@@ -670,7 +670,6 @@
    "tryDemo": "Probar con datos de ejemplo",
    "demoError": "No se pudieron cargar los datos de ejemplo — probá de nuevo.",
    "linkError": "Ese link ya no sirve — ingresá tu email y pedí un código nuevo.",
-   "haveAccount": "Ya tengo cuenta",
    "checkError": "No pudimos verificar tu cuenta — revisá la conexión y probá de nuevo.",
    "haveInviteCode": "Tengo un código de invitación"
   },
@@ -683,12 +682,7 @@
    "resend": "Reenviar código",
    "resendCooldown": "Reenviar en {seconds}s",
    "resent": "Te reenviamos el código",
-   "changeEmail": "Cambiar email",
-   "waitingTitle": "Esperando el link",
-   "sentLinkTo": "Abrí el link que te mandamos a <b>{email}</b>.",
-   "resendLink": "Reenviar el link",
-   "resendLinkCooldown": "Reenviar el link en {seconds}s",
-   "resentLink": "Te reenviamos el link"
+   "changeEmail": "Cambiar email"
   },
   "country": {
    "back": "Volver",
@@ -753,24 +747,6 @@
    "install": "Instalar",
    "later": "Ahora no",
    "laterToast": "Podés instalarla más tarde desde Ajustes"
-  },
-  "register": {
-   "title": "Terminá de crear tu cuenta",
-   "subtitle": "Nombre y contraseña — país y moneda van en el próximo paso.",
-   "nameLabel": "Nombre",
-   "namePlaceholder": "Tu nombre",
-   "emailLabel": "Email",
-   "passwordLabel": "Contraseña",
-   "passwordPlaceholder": "Elegí una contraseña",
-   "confirmPasswordLabel": "Confirmá la contraseña",
-   "confirmPasswordPlaceholder": "Repetí la contraseña",
-   "showPassword": "Mostrar contraseña",
-   "hidePassword": "Ocultar contraseña",
-   "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
-   "passwordMismatch": "Las dos contraseñas no coinciden.",
-   "submit": "Crear cuenta",
-   "submitting": "Creando cuenta…",
-   "genericError": "No se pudo crear la cuenta — probá de nuevo."
   },
   "restore": {
    "title": "Trayendo tus datos",
@@ -1370,16 +1346,7 @@
   "biometricLock": "Desbloqueo biométrico",
   "biometricLockDescription": "Usar Face ID, huella u otro sensor del dispositivo en vez del PIN",
   "biometricEnabled": "Desbloqueo biométrico activado",
-  "biometricEnrollError": "No se pudo activar el sensor — probá de nuevo",
-  "password": "Contraseña",
-  "passwordDescription": "Alternativa al código por email para iniciar sesión",
-  "newPassword": "Contraseña nueva",
-  "confirmPassword": "Confirmá la contraseña",
-  "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
-  "passwordMismatch": "Las dos contraseñas no coinciden.",
-  "savePassword": "Guardar contraseña",
-  "savingPassword": "Guardando…",
-  "passwordSaved": "Contraseña actualizada"
+  "biometricEnrollError": "No se pudo activar el sensor — probá de nuevo"
  },
  "trendsPage": {
   "title": "Tendencias",
@@ -1819,50 +1786,5 @@
   "global": "Global",
   "globalEditNote": "Es una clase global. Guardar crea tu propia copia — la plantilla original no se toca.",
   "reorder": "Reordenar {name}"
- },
- "login": {
-  "subtitle": "Entrá con tu email y contraseña.",
-  "emailPlaceholder": "tu@email.com",
-  "passwordPlaceholder": "Tu contraseña",
-  "showPassword": "Mostrar contraseña",
-  "hidePassword": "Ocultar contraseña",
-  "submit": "Entrar",
-  "signingIn": "Entrando…",
-  "forgotPassword": "Olvidé mi contraseña",
-  "createAccount": "Crear una cuenta"
- },
- "forgotPassword": {
-  "back": "Volver",
-  "title": "Recuperar tu contraseña",
-  "subtitle": "Te mandamos un link para elegir una nueva.",
-  "emailPlaceholder": "tu@email.com",
-  "submit": "Enviar link",
-  "sending": "Enviando…",
-  "sentTitle": "Revisá tu email",
-  "sentSubtitle": "Si esa cuenta existe, te llegó un link para elegir una contraseña nueva.",
-  "backToLogin": "Volver a entrar",
-  "linkExpired": "Ese link ya no sirve — pedí uno nuevo."
- },
- "resetPassword": {
-  "title": "Elegí una contraseña nueva",
-  "subtitle": "Vas a usarla para entrar la próxima vez.",
-  "passwordLabel": "Contraseña nueva",
-  "passwordPlaceholder": "Elegí una contraseña",
-  "confirmPasswordLabel": "Confirmá la contraseña",
-  "confirmPasswordPlaceholder": "Repetí la contraseña",
-  "showPassword": "Mostrar contraseña",
-  "hidePassword": "Ocultar contraseña",
-  "passwordRequirements": "Al menos 8 caracteres, con mayúscula, minúscula y un número.",
-  "passwordMismatch": "Las dos contraseñas no coinciden.",
-  "submit": "Guardar contraseña",
-  "submitting": "Guardando…"
- },
- "auth": {
-  "errors": {
-   "invalid_credentials": "No encontramos una cuenta con esa combinación de email y contraseña — probá con el código por email en vez de la contraseña.",
-   "weak_password": "La contraseña necesita al menos 8 caracteres, con una mayúscula, una minúscula y un número.",
-   "rate_limited": "Demasiados intentos seguidos — esperá un minuto y probá de nuevo.",
-   "other": "Algo falló — probá de nuevo en un momento."
-  }
  }
 }

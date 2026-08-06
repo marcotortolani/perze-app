@@ -34,7 +34,7 @@ test("J3 · con email cargado, generar código dispara el envío", async ({ page
 
   let sendRequestBody: { inviteId: string; locale: string } | null = null;
   await page.route("**/api/emails/invite", async (route) => {
-    sendRequestBody = route.request().postDataJSON();
+    sendRequestBody = route.request().postDataJSON() as { inviteId: string; locale: string };
     await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
   });
 

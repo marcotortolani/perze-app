@@ -11,11 +11,13 @@ const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
 
 /**
  * Rutas pre-auth explícitas — la captura entra directo al keypad sin pedir
- * nada (CLAUDE.md § PIN). AC-11: login/forgot/reset/pending también van
- * exentas — no muestran ningún dato y pueden pertenecer a otra cuenta que
- * la del PIN local (el PIN es del dispositivo, no de la cuenta).
+ * nada (CLAUDE.md § PIN). AC-11: `/pending` también va exenta — no muestra
+ * ningún dato. `/login`, `/forgot-password` y `/reset-password` ya no hacen
+ * falta acá: son stubs de redirect de compatibilidad
+ * (docs/mejora-auth-oauth-y-email.md § 0.1) que nunca llegan a mostrar
+ * nada sensible.
  */
-const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/login", "/forgot-password", "/reset-password", "/pending"];
+const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/pending"];
 
 const EDIT_RECENT_WINDOW_MS = 60_000;
 

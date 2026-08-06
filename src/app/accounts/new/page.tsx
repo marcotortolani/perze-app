@@ -25,7 +25,7 @@ export default function NewAccountPage() {
   const invalidateAccounts = useInvalidateAccounts(household?.id);
 
   useEffect(() => {
-    if (userId === null) router.replace("/login");
+    if (userId === null) router.replace("/onboarding");
   }, [userId, router]);
 
   if (userId === null) return null;

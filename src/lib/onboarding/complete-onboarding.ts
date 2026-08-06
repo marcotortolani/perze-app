@@ -21,14 +21,19 @@ export interface CompleteOnboardingParams {
   accountKind: AccountKind;
   /**
    * Nombre con el que el resto del hogar te ve. Es una copia denormalizada
-   * de `profiles.display_name` (ver `profiles-repo.updateDisplayName`), y
-   * lo cargó A2b (`/onboarding/register`).
+   * de `profiles.display_name` (ver `profiles-repo.updateDisplayName`),
+   * que llega poblado desde el signup: `handle_new_user()`
+   * (`20260801030000_auth_new_user_trigger.sql`) lo toma de los metadatos
+   * de Google si hay OAuth, o si no del prefijo del email — corregible
+   * después desde `/more/profile`. No hay una pantalla de onboarding que
+   * lo pida a mano (la que existía, A2b `/onboarding/register`, se
+   * revirtió junto con las contraseñas — CLAUDE.md: sin contraseñas, ni
+   * acá ni nunca).
    *
    * Antes acá había un `"Vos"` hardcodeado, con dos problemas: se veía en
    * español con la app en inglés, y —peor— `household_members.display_name`
    * es lo que ven LOS DEMÁS, así que tu pareja te veía llamado "Vos". Sin
-   * nombre queda vacío y J1 cae al `familyPage.unnamed` de siempre (el
-   * registro lo exige, así que en la práctica siempre viene).
+   * nombre queda vacío y J1 cae al `familyPage.unnamed` de siempre.
    */
   displayName?: string | null | undefined;
 }

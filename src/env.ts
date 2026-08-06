@@ -37,12 +37,6 @@ export const env = createEnv({
     // en Supabase Auth (CLAUDE.md § "Orden de A2"); vacío = sin OAuth, los
     // botones no se dibujan (nunca deshabilitados).
     NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: z.string().optional(),
-    // C7 — bypass momentáneo del código de 6 dígitos (A3): mientras el envío
-    // de mail dependa del template default de Supabase (magic link, no
-    // código — CLAUDE.md § plan de acceso controlado), A3 solo ofrece
-    // esperar el link. El código de `verifyOtp` sigue en el archivo, no se
-    // borra: `"1"` lo reactiva el día que haya plantilla propia (Resend).
-    NEXT_PUBLIC_AUTH_OTP_CODE: z.string().optional(),
     // El service worker NO se registra en desarrollo: con Turbopack los
     // nombres de chunk cambian en cada arranque, así que el precache de la
     // sesión anterior sirve HTML que apunta a archivos que ya no existen y
@@ -60,7 +54,6 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS: process.env.NEXT_PUBLIC_AUTH_OAUTH_PROVIDERS,
-    NEXT_PUBLIC_AUTH_OTP_CODE: process.env.NEXT_PUBLIC_AUTH_OTP_CODE,
     NEXT_PUBLIC_ENABLE_SW_IN_DEV: process.env.NEXT_PUBLIC_ENABLE_SW_IN_DEV,
   },
 });

@@ -670,7 +670,6 @@
    "tryDemo": "Testar com dados de exemplo",
    "demoError": "Não foi possível carregar os dados de exemplo — tente de novo.",
    "linkError": "Esse link não funciona mais — digite seu email e peça um novo código.",
-   "haveAccount": "Já tenho conta",
    "checkError": "Não conseguimos verificar sua conta — verifique a conexão e tente de novo.",
    "haveInviteCode": "Tenho um código de convite"
   },
@@ -683,12 +682,7 @@
    "resend": "Reenviar código",
    "resendCooldown": "Reenviar em {seconds}s",
    "resent": "Reenviamos o código",
-   "changeEmail": "Trocar email",
-   "waitingTitle": "Esperando o link",
-   "sentLinkTo": "Abra o link que te enviamos para <b>{email}</b>.",
-   "resendLink": "Reenviar o link",
-   "resendLinkCooldown": "Reenviar o link em {seconds}s",
-   "resentLink": "Reenviamos o link"
+   "changeEmail": "Trocar email"
   },
   "country": {
    "back": "Voltar",
@@ -753,24 +747,6 @@
    "install": "Instalar",
    "later": "Agora não",
    "laterToast": "Você pode instalar depois em Ajustes"
-  },
-  "register": {
-   "title": "Termine de criar sua conta",
-   "subtitle": "Nome e senha — país e moeda vêm no próximo passo.",
-   "nameLabel": "Nome",
-   "namePlaceholder": "Seu nome",
-   "emailLabel": "Email",
-   "passwordLabel": "Senha",
-   "passwordPlaceholder": "Escolha uma senha",
-   "confirmPasswordLabel": "Confirme a senha",
-   "confirmPasswordPlaceholder": "Repita a senha",
-   "showPassword": "Mostrar senha",
-   "hidePassword": "Ocultar senha",
-   "passwordRequirements": "Pelo menos 8 caracteres, com maiúscula, minúscula e um número.",
-   "passwordMismatch": "As duas senhas não coincidem.",
-   "submit": "Criar conta",
-   "submitting": "Criando conta…",
-   "genericError": "Não foi possível criar a conta — tente de novo."
   },
   "restore": {
    "title": "Trazendo seus dados",
@@ -1370,16 +1346,7 @@
   "biometricLock": "Desbloqueio biométrico",
   "biometricLockDescription": "Usar Face ID, digital ou outro sensor do dispositivo em vez do PIN",
   "biometricEnabled": "Desbloqueio biométrico ativado",
-  "biometricEnrollError": "Não foi possível ativar o sensor — tente de novo",
-  "password": "Senha",
-  "passwordDescription": "Uma alternativa ao código por email para entrar",
-  "newPassword": "Nova senha",
-  "confirmPassword": "Confirme a senha",
-  "passwordRequirements": "Pelo menos 8 caracteres, com maiúscula, minúscula e um número.",
-  "passwordMismatch": "As duas senhas não coincidem.",
-  "savePassword": "Salvar senha",
-  "savingPassword": "Salvando…",
-  "passwordSaved": "Senha atualizada"
+  "biometricEnrollError": "Não foi possível ativar o sensor — tente de novo"
  },
  "trendsPage": {
   "title": "Tendências",
@@ -1819,50 +1786,5 @@
   "global": "Global",
   "globalEditNote": "Essa é uma classe global. Salvar cria sua própria cópia — o modelo original não é alterado.",
   "reorder": "Reordenar {name}"
- },
- "login": {
-  "subtitle": "Entre com seu email e senha.",
-  "emailPlaceholder": "voce@email.com",
-  "passwordPlaceholder": "Sua senha",
-  "showPassword": "Mostrar senha",
-  "hidePassword": "Ocultar senha",
-  "submit": "Entrar",
-  "signingIn": "Entrando…",
-  "forgotPassword": "Esqueci minha senha",
-  "createAccount": "Criar uma conta"
- },
- "forgotPassword": {
-  "back": "Voltar",
-  "title": "Recuperar sua senha",
-  "subtitle": "Enviamos um link para você escolher uma nova.",
-  "emailPlaceholder": "voce@email.com",
-  "submit": "Enviar link",
-  "sending": "Enviando…",
-  "sentTitle": "Verifique seu email",
-  "sentSubtitle": "Se essa conta existir, chegou um link para escolher uma senha nova.",
-  "backToLogin": "Voltar a entrar",
-  "linkExpired": "Esse link não serve mais — peça um novo."
- },
- "resetPassword": {
-  "title": "Escolha uma senha nova",
-  "subtitle": "Você vai usá-la para entrar na próxima vez.",
-  "passwordLabel": "Senha nova",
-  "passwordPlaceholder": "Escolha uma senha",
-  "confirmPasswordLabel": "Confirme a senha",
-  "confirmPasswordPlaceholder": "Repita a senha",
-  "showPassword": "Mostrar senha",
-  "hidePassword": "Ocultar senha",
-  "passwordRequirements": "Pelo menos 8 caracteres, com maiúscula, minúscula e um número.",
-  "passwordMismatch": "As duas senhas não coincidem.",
-  "submit": "Salvar senha",
-  "submitting": "Salvando…"
- },
- "auth": {
-  "errors": {
-   "invalid_credentials": "Não encontramos uma conta com essa combinação de email e senha — tente o código por email em vez da senha.",
-   "weak_password": "A senha precisa de pelo menos 8 caracteres, com maiúscula, minúscula e um número.",
-   "rate_limited": "Muitas tentativas seguidas — espere um minuto e tente de novo.",
-   "other": "Algo deu errado — tente de novo em instantes."
-  }
  }
 }

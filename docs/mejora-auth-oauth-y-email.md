@@ -57,44 +57,46 @@ Pendiente, en este orden:
   onboarding. Las dos vías, no una — es la puerta de entrada a revertir
   la transición de contraseñas de § 0.1.
 
-## 0.1 Solución de transición: registro con contraseña, `/login`, `/forgot-password`
+## 0.1 Solución de transición — revertida
 
-> **Esto es temporal y contradice el diseño a propósito.** No se toca de
-> nuevo por accidente — se revierte en un solo movimiento cuando este
-> documento haya resuelto Google Auth (§ 2) y Resend con plantilla propia
-> (§ 5), momento en el que el flujo real vuelve a ser el que ya describen
-> `docs/design/bloque-a-onboarding.html` (A2/A3/A4) y `CLAUDE.md`: **sin
-> contraseñas, ni acá ni nunca**, login y signup indistinguibles en A2.
+> **Esto ya no describe el código.** Queda documentado en pasado para que
+> nadie lo "restaure" mirando el diseño viejo o un commit anterior:
+> `docs/design/bloque-a-onboarding.html` (A2/A3/A4) y `CLAUDE.md` vuelven a
+> ser la única verdad — **sin contraseñas, ni acá ni nunca**, login y
+> signup indistinguibles en A2.
 
-El 2026-08-02 el link del mail seguía sin funcionar en producción — GoTrue
-devolvía `?code=...` a la raíz del sitio y `src/proxy.ts` lo descartaba
-antes de canjearlo (fix aparte, ver el commit que acompaña este cambio).
-Mientras ese fix no se probaba en un mail real y no había ni plantilla
-propia (§ 0, bloqueada en plan free) ni el operador de la instancia podía
-entrar (contraseña nunca fijada), se agregó una vía de acceso adicional:
+Entre el 2026-08-02 y esta pasada existió una vía de acceso adicional,
+mientras el link del mail no se probaba con un usuario real y no había ni
+plantilla propia de Resend ni Google OAuth configurado: `/onboarding/register`
+(nombre + contraseña, destino del link ya canjeado), `/login` (email +
+contraseña, elegido sobre `/onboarding` con la cookie `perze_registered`),
+`/forgot-password` → `/reset-password` (recovery de contraseña), y el
+código de 6 dígitos de A3 detrás de `NEXT_PUBLIC_AUTH_OTP_CODE` (apagado
+por default, a la espera de una plantilla propia).
 
-- **`/onboarding/register`** — destino del link ya canjeado. Pide nombre y
-  contraseña (con confirmación); el email queda fijo, tomado de la sesión.
-  País y moneda siguen siendo A4 (`/onboarding/country`), sin duplicar nada.
-- **`/login`** — email + contraseña, para quien ya se registró. `src/proxy.ts`
-  y `OnboardingGate` deciden entre esta pantalla y `/onboarding` con la
-  cookie `perze_registered` (`src/lib/auth/registered-cookie.ts`).
-- **`/forgot-password` → `/reset-password`** — dispara
-  `resetPasswordForEmail` (tipo `recovery`, mismo canje en
-  `auth/callback/route.ts` que ya sabía manejar `token_hash`/`code`) y
-  define la contraseña nueva.
-- El código de 6 dígitos (A3) **no se borró**: queda detrás de
-  `NEXT_PUBLIC_AUTH_OTP_CODE` (default apagado), listo para reactivarse
-  cuando haya plantilla de mail con código propio.
+**Se revirtió en esta pasada**, una vez confirmado que la plantilla propia
+(§ 8) entrega el código de verdad:
 
-**Al volver al flujo de diseño**, hay que: apagar/borrar `/login`,
-`/onboarding/register`, `/forgot-password`, `/reset-password`; borrar la
-cookie `perze_registered` y su lectura en `proxy.ts`/`OnboardingGate`;
-quitar el `emailRedirectTo` a `/onboarding/register` de `signInWithOtp` (que
-vuelve a apuntar donde corresponda una vez que el link haga login/signup
-directo); y decidir si `profiles.registration_completed_at` se elimina en
-una migración nueva o se deja de escribir sin más (es append-only, no se
-edita la migración que la creó).
+- `/login`, `/onboarding/register`, `/forgot-password` y `/reset-password`
+  **no se borraron**: quedan como stubs `redirect("/onboarding")`
+  (`CLAUDE.md` § convención de rutas, punto 5 — una PWA instalada con
+  historial largo no puede recibir un 404). Se borran del todo en una
+  release futura.
+- `perze_registered` (`src/lib/auth/registered-cookie.ts`) y su lectura en
+  `proxy.ts`/`OnboardingGate` se eliminaron: sin sesión, el destino es
+  siempre `/onboarding` — el mismo `signInWithOtp` reingresa a quien ya
+  tiene cuenta.
+- `emailRedirectTo` de `signInWithOtp` apunta a `/onboarding` (antes
+  `/onboarding/register`), que resuelve destino real con
+  `resolveOnboardingDestination()`.
+- `NEXT_PUBLIC_AUTH_OTP_CODE` se eliminó: el código de 6 dígitos es el
+  único camino de A3, no un flag.
+- `profiles.registration_completed_at` se dejó de escribir y se borró en
+  una migración nueva, append-only
+  (`supabase/migrations/20260805010000_drop_registration_completed.sql`)
+  — la migración original no se tocó.
+- La hoja de "Contraseña" de `/more/security` se sacó (quedan PIN y
+  biométrico, que es lo que pide L6).
 
 ## 1. Estado actual (por qué esto no es un bug)
 
@@ -377,7 +379,7 @@ levanta su propio servidor Next dentro del proyecto y arriesgaba
 | Resend SMTP en Supabase Auth | US$ 0 | Config del operador — ver [§ 5](#5-resend--smtp-para-supabase-auth) |
 | Google OAuth + colapso de A2 | US$ 0 | Código listo — falta la config de Google Cloud (operador) |
 | Invitación al household por email | US$ 0 hasta 3.000/mes | Implementado |
-| Reversión de la transición de contraseñas | código | Bloqueado hasta probar el OTP real con un mail ajeno al proyecto — ver § 0.1 |
+| Reversión de la transición de contraseñas | código | Implementado — falta la prueba manual con un mail ajeno al proyecto (requiere Resend configurado, § 5) antes de dar por buena en producción |
 | Resumen semanal, alertas, K9 | US$ 0 hasta 3.000/mes | Fuera de alcance — falta migración de canal y decisión de disparador |
 
 Apple queda fuera de alcance por decisión, no por orden de prioridad — ver

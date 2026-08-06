@@ -670,7 +670,6 @@
    "tryDemo": "Try with sample data",
    "demoError": "Couldn't load the sample data — try again.",
    "linkError": "That link no longer works — enter your email and request a new code.",
-   "haveAccount": "I already have an account",
    "checkError": "We couldn't verify your account — check your connection and try again.",
    "haveInviteCode": "I have an invite code"
   },
@@ -683,12 +682,7 @@
    "resend": "Resend code",
    "resendCooldown": "Resend in {seconds}s",
    "resent": "We resent the code",
-   "changeEmail": "Change email",
-   "waitingTitle": "Waiting for the link",
-   "sentLinkTo": "Open the link we sent to <b>{email}</b>.",
-   "resendLink": "Resend the link",
-   "resendLinkCooldown": "Resend the link in {seconds}s",
-   "resentLink": "We resent the link"
+   "changeEmail": "Change email"
   },
   "country": {
    "back": "Back",
@@ -753,24 +747,6 @@
    "install": "Install",
    "later": "Not now",
    "laterToast": "You can install it later from Settings"
-  },
-  "register": {
-   "title": "Finish creating your account",
-   "subtitle": "Name and password — country and currency come next.",
-   "nameLabel": "Name",
-   "namePlaceholder": "Your name",
-   "emailLabel": "Email",
-   "passwordLabel": "Password",
-   "passwordPlaceholder": "Choose a password",
-   "confirmPasswordLabel": "Confirm the password",
-   "confirmPasswordPlaceholder": "Type the password again",
-   "showPassword": "Show password",
-   "hidePassword": "Hide password",
-   "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
-   "passwordMismatch": "The two passwords don't match.",
-   "submit": "Create account",
-   "submitting": "Creating account…",
-   "genericError": "We couldn't create the account — try again."
   },
   "restore": {
    "title": "Bringing your data over",
@@ -1370,16 +1346,7 @@
   "biometricLock": "Biometric unlock",
   "biometricLockDescription": "Use Face ID, fingerprint, or another device sensor instead of the PIN",
   "biometricEnabled": "Biometric unlock turned on",
-  "biometricEnrollError": "Couldn't turn on the sensor — try again",
-  "password": "Password",
-  "passwordDescription": "An alternative to the email code for signing in",
-  "newPassword": "New password",
-  "confirmPassword": "Confirm password",
-  "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
-  "passwordMismatch": "The two passwords don't match.",
-  "savePassword": "Save password",
-  "savingPassword": "Saving…",
-  "passwordSaved": "Password updated"
+  "biometricEnrollError": "Couldn't turn on the sensor — try again"
  },
  "trendsPage": {
   "title": "Trends",
@@ -1819,50 +1786,5 @@
   "global": "Global",
   "globalEditNote": "This is a global class. Saving creates your own copy — the original template stays untouched.",
   "reorder": "Reorder {name}"
- },
- "login": {
-  "subtitle": "Sign in with your email and password.",
-  "emailPlaceholder": "you@email.com",
-  "passwordPlaceholder": "Your password",
-  "showPassword": "Show password",
-  "hidePassword": "Hide password",
-  "submit": "Sign in",
-  "signingIn": "Signing in…",
-  "forgotPassword": "Forgot my password",
-  "createAccount": "Create an account"
- },
- "forgotPassword": {
-  "back": "Back",
-  "title": "Recover your password",
-  "subtitle": "We'll send you a link to choose a new one.",
-  "emailPlaceholder": "you@email.com",
-  "submit": "Send link",
-  "sending": "Sending…",
-  "sentTitle": "Check your email",
-  "sentSubtitle": "If that account exists, a link to choose a new password is on its way.",
-  "backToLogin": "Back to sign in",
-  "linkExpired": "That link no longer works — request a new one."
- },
- "resetPassword": {
-  "title": "Choose a new password",
-  "subtitle": "You'll use it to sign in next time.",
-  "passwordLabel": "New password",
-  "passwordPlaceholder": "Choose a password",
-  "confirmPasswordLabel": "Confirm the password",
-  "confirmPasswordPlaceholder": "Type the password again",
-  "showPassword": "Show password",
-  "hidePassword": "Hide password",
-  "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
-  "passwordMismatch": "The two passwords don't match.",
-  "submit": "Save password",
-  "submitting": "Saving…"
- },
- "auth": {
-  "errors": {
-   "invalid_credentials": "We couldn't find an account with that email and password — try the email code instead of the password.",
-   "weak_password": "The password needs at least 8 characters, with an uppercase letter, a lowercase letter, and a number.",
-   "rate_limited": "Too many attempts in a row — wait a minute and try again.",
-   "other": "Something failed — try again in a moment."
-  }
  }
 }
