@@ -6,10 +6,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
+import { tradesRepo } from "@/lib/repos/trades-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { formatAmount, formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
@@ -51,6 +53,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const prices = useCachedLatestPrices(pricesQuery.data);
   const invalidatePrices = useInvalidateLatestPrices(instrumentIds);
   const invalidateInstruments = useInvalidateInstruments(household?.id);
+  const invalidateTrades = useInvalidateTrades(portfolioId);
 
   const [editingPrice, setEditingPrice] = useState(false);
   const [manualPrice, setManualPrice] = useState("");
@@ -59,6 +62,8 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
+  const [confirmingDeletePosition, setConfirmingDeletePosition] = useState(false);
+  const [deletingPosition, setDeletingPosition] = useState(false);
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const instrument = instruments?.find((i) => i.id === instrumentId);
@@ -221,6 +226,52 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
     }
   };
 
+  // "Reversible, no confirmable" (CLAUDE.md): borrar UNA operación ofrece
+  // deshacer por toast, como el resto de la app — `SwipeableRow` ya exige
+  // su propio paso de confirmación en el gesto (swipe hasta el commit +
+  // confirmación en la fila), así que un segundo diálogo modal encima
+  // sería redundante.
+  const handleDeleteTrade = async (tradeId: string) => {
+    await tradesRepo.softDelete(tradeId);
+    invalidateTrades();
+    toast(t("instrumentDetailPage.tradeDeleted"), {
+      duration: 5000,
+      action: {
+        label: t("common.undo"),
+        onClick: async () => {
+          await tradesRepo.restore(tradeId);
+          invalidateTrades();
+        },
+      },
+    });
+  };
+
+  // Eliminar la POSICIÓN completa sí es la excepción explícita a
+  // "reversible, no confirmable": borra TODAS las operaciones del
+  // instrumento en este portfolio de una vez (no hay "deshacer" razonable
+  // para un borrado en lote), así que lleva un `Sheet` de advertencia con
+  // el conteo real de operaciones afectadas antes de ejecutar.
+  const handleDeletePosition = async () => {
+    if (!instrument || deletingPosition) return;
+    setDeletingPosition(true);
+    try {
+      await Promise.all(instrumentTrades.map((tr) => tradesRepo.softDelete(tr.id)));
+      invalidateTrades();
+      // Después de borrar todas las operaciones, la posición queda en 0 —
+      // mismo criterio que "sacar de seguimiento" del header: solo se
+      // limpia del catálogo si es propio del household, nunca uno global.
+      if (instrument.householdId === household!.id) {
+        await instrumentsRepo.deleteUnused(instrument.id);
+        invalidateInstruments();
+      }
+      toast(t("instrumentDetailPage.positionDeleted", { symbol: instrument.symbol }));
+      setConfirmingDeletePosition(false);
+      router.push(`/investments/${portfolioId}`);
+    } finally {
+      setDeletingPosition(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 8, paddingBottom: 24 }}>
       <div style={{ textAlign: "center" }}>
@@ -327,29 +378,62 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
             {instrumentTrades.map((tr) => (
-              <ListRow
+              // D54 — mismo gesto que Transactions (D1): swipe izquierda
+              // borra (con su propia confirmación en la fila), swipe
+              // derecha edita. El tap normal en la fila sigue sin hacer
+              // nada acá — a diferencia de Transactions, esta lista no
+              // tiene un detalle propio por operación, solo editar/borrar.
+              <SwipeableRow
                 key={tr.id}
-                icon={tr.kind === "buy" ? "plus" : "minus"}
-                label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
-                // D61 — mismo formato de fecha que Transactions (día abreviado
-                // a 3 letras) y precio unitario SIN abreviar: `formatAmountCompact`
-                // redondeaba a "K"/"M" un precio en pesos de varios dígitos
-                // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
-                // que esta línea existe para mostrar completo.
-                meta={`${formatDateMedium(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
-                variant="value"
-                value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
-              />
+                onSwipeLeftCommit={() => handleDeleteTrade(tr.id)}
+                onSwipeRightCommit={() => router.push(`/investments/${portfolioId}/trades/${tr.id}/edit`)}
+                confirmLabel={t("instrumentDetailPage.confirmDeleteTrade")}
+                confirmActionLabel={t("common.delete")}
+              >
+                <ListRow
+                  icon={tr.kind === "buy" ? "plus" : "minus"}
+                  label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
+                  // D61 — mismo formato de fecha que Transactions (día abreviado
+                  // a 3 letras) y precio unitario SIN abreviar: `formatAmountCompact`
+                  // redondeaba a "K"/"M" un precio en pesos de varios dígitos
+                  // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
+                  // que esta línea existe para mostrar completo.
+                  meta={`${formatDateMedium(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
+                  variant="value"
+                  value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                />
+              </SwipeableRow>
             ))}
           </div>
         )}
       </div>
+
+      {instrumentTrades.length > 0 ? (
+        <Button variant="danger" onClick={() => setConfirmingDeletePosition(true)}>
+          {t("instrumentDetailPage.deletePosition")}
+        </Button>
+      ) : null}
 
       <Sheet open={editingPrice} title={t("instrumentsListPage.updatePrice", { symbol: instrument.symbol })} onClose={() => setEditingPrice(false)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Input label={t("instrumentsListPage.price", { currency: instrument.currencyCode })} value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} autoFocus />
           <Button disabled={!manualPrice.trim() || saving} onClick={handleSaveManual}>
             {t("common.save")}
+          </Button>
+        </div>
+      </Sheet>
+
+      {/* Excepción explícita a "reversible, no confirmable" (CLAUDE.md):
+          esto borra TODAS las operaciones del instrumento de una vez, sin
+          deshacer razonable, así que lleva advertencia + conteo real antes
+          de ejecutar. */}
+      <Sheet open={confirmingDeletePosition} title={t("instrumentDetailPage.deletePosition")} onClose={() => setConfirmingDeletePosition(false)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p className="t-body" style={{ color: "var(--text-secondary)" }}>
+            {t("instrumentDetailPage.deletePositionWarning", { count: instrumentTrades.length, symbol: instrument.symbol })}
+          </p>
+          <Button variant="danger" disabled={deletingPosition} onClick={handleDeletePosition}>
+            {deletingPosition ? "…" : t("instrumentDetailPage.deletePositionConfirm")}
           </Button>
         </div>
       </Sheet>

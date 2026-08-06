@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.42] — 2026-08-06
+
+### Nuevo — editar/eliminar operaciones de inversión y eliminar una posición completa
+
+`trades-repo.ts` solo tenía `create()` — sin `update`/`softDelete`/`restore`, ninguna
+pantalla podía corregir una operación cargada mal ni deshacer una. Se agregan los tres,
+mismo patrón `deleted_at` que `portfoliosRepo.softDelete()`/`transactionsRepo.softDelete()`
+(el `select` de `listForPortfolio` ya filtraba `deleted_at is null`, así que el soft
+delete es transparente para el resto del módulo sin tocar nada más). De paso, `Trade`
+ganó `settlementAccountId` — existía en `NewTradeInput` pero nunca se leía de vuelta, así
+que no había forma de precargarlo al editar.
+
+Nueva ruta `/investments/[portfolioId]/trades/[tradeId]/edit`, mismo layout que
+`trades/new` pero con el instrumento fijo (a qué instrumento pertenece una operación no
+se edita, se carga una operación distinta) y prefilled con tipo/cuenta/cantidad/precio
+vigentes.
+
+En el historial de `InstrumentDetailContent`, cada fila de operación es ahora un
+`SwipeableRow` (D1, el mismo componente que Transactions): swipe izquierda borra (con su
+propia confirmación en la fila — soft delete + "Deshacer" por sonner, "reversible, no
+confirmable"), swipe derecha abre la edición.
+
+Eliminar la **posición completa** es la excepción explícita a "reversible, no
+confirmable" que pidió el usuario: borra TODAS las operaciones del instrumento en el
+portfolio de una vez, sin deshacer razonable para un borrado en lote, así que lleva un
+`Sheet` de advertencia con el conteo real de operaciones afectadas antes de ejecutar. Si
+el instrumento es propio del household (no del catálogo global) y queda sin posición,
+también se limpia de seguimiento — mismo criterio que "sacar de seguimiento" del header.
+
 ## [0.29.41] — 2026-08-06
 
 ### Nuevo — editar un presupuesto existente

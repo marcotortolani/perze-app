@@ -1893,7 +1893,16 @@
   "removeFromWatchlist": "Remove from watchlist",
   "removedFromWatchlist": "{symbol} removed from watchlist",
   "history": "History",
-  "noHistory": "No trades for this instrument yet."
+  "noHistory": "No trades for this instrument yet.",
+  "editTrade": "Edit trade",
+  "tradeNotFound": "We couldn't find this trade.",
+  "tradeUpdated": "Trade updated",
+  "tradeDeleted": "Trade deleted",
+  "confirmDeleteTrade": "Delete trade?",
+  "deletePosition": "Delete position",
+  "deletePositionWarning": "This deletes {count, plural, one {# trade} other {# trades}} of {symbol} in this portfolio. This can't be undone.",
+  "deletePositionConfirm": "Yes, delete position",
+  "positionDeleted": "{symbol} removed from portfolio"
  },
  "newInstrumentPage": {
   "search": "Search instrument",

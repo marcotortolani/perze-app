@@ -1893,7 +1893,16 @@
   "removeFromWatchlist": "Remover do acompanhamento",
   "removedFromWatchlist": "{symbol} removido do acompanhamento",
   "history": "Histórico",
-  "noHistory": "Ainda não há operações para este instrumento."
+  "noHistory": "Ainda não há operações para este instrumento.",
+  "editTrade": "Editar operação",
+  "tradeNotFound": "Não encontramos essa operação.",
+  "tradeUpdated": "Operação atualizada",
+  "tradeDeleted": "Operação excluída",
+  "confirmDeleteTrade": "Excluir operação?",
+  "deletePosition": "Excluir posição",
+  "deletePositionWarning": "Isso exclui {count, plural, one {# operação} other {# operações}} de {symbol} neste portfólio. Não pode ser desfeito.",
+  "deletePositionConfirm": "Sim, excluir posição",
+  "positionDeleted": "{symbol} removido do portfólio"
  },
  "newInstrumentPage": {
   "search": "Buscar instrumento",

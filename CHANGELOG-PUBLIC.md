@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.42 — 6 de agosto de 2026
+
+### Nuevo
+
+- En Inversiones, ya podés editar o eliminar una operación de compra/venta desde el
+  detalle de un instrumento (deslizá la fila hacia la derecha para editar, hacia la
+  izquierda para borrar). También podés eliminar una posición completa, con una
+  advertencia previa porque borra todas sus operaciones y no se puede deshacer.
+
 ## 0.29.41 — 6 de agosto de 2026
 
 ### Nuevo
