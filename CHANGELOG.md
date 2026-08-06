@@ -6,6 +6,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.25] — 2026-08-06
+
+### Cambiado — toggle de moneda más compacto: "Original"/"{currency}"
+
+Pedido del usuario, con referencia visual: "Moneda original"/"En {currency}" ocupaba
+demasiado texto para un `SegmentedControl` de dos opciones. Ahora dice "Original"/"USD"
+(o la moneda base que corresponda) — mismo componente, mismo comportamiento, solo el
+copy de `investmentsPage.viewOriginalCurrency`/`viewBaseCurrency` en los tres idiomas.
+
 ## [0.29.24] — 2026-08-06
 
 ### Corregido — bug de escala: los precios de inversión se mostraban 100 veces más chicos

@@ -1872,8 +1872,8 @@
   "recordTrade": "Log a trade",
   "newInstrument": "Add instrument",
   "positions": "Positions",
-  "viewOriginalCurrency": "Original currency",
-  "viewBaseCurrency": "In {currency}",
+  "viewOriginalCurrency": "Original",
+  "viewBaseCurrency": "{currency}",
   "pendingFx": "No rate yet",
   "lastRefreshed": "Market values, last updated {date} at {time}"
  },

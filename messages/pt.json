@@ -1872,8 +1872,8 @@
   "recordTrade": "Registrar operação",
   "newInstrument": "Adicionar instrumento",
   "positions": "Posições",
-  "viewOriginalCurrency": "Moeda original",
-  "viewBaseCurrency": "Em {currency}",
+  "viewOriginalCurrency": "Original",
+  "viewBaseCurrency": "{currency}",
   "pendingFx": "Sem cotação",
   "lastRefreshed": "Valores de mercado, última atualização: {date} às {time}"
  },

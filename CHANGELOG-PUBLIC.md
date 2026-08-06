@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.25 — 6 de agosto de 2026
+
+### Mejorado
+
+- El toggle de moneda en inversiones ahora dice "Original"/"USD" en vez de "Moneda
+  original"/"En USD" — más corto y directo.
+
 ## 0.29.24 — 6 de agosto de 2026
 
 ### Arreglado
