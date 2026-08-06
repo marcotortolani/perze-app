@@ -19,6 +19,13 @@ export const env = createEnv({
     // explícito si falta.
     RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM: z.email().optional(),
+    // Finnhub — cotizaciones de acciones/ETFs de EE.UU. (NYSE/NASDAQ),
+    // fuera de lo que cubre Data912 (solo mercado argentino). Mismo
+    // criterio que Resend: opcional, nunca en el bundle del cliente — sin
+    // ella, la búsqueda de instrumentos y `/api/prices` simplemente no
+    // ofrecen resultados de Finnhub (`createFinnhubProvider`/
+    // `searchFinnhubInstruments` devuelven vacío en vez de romper).
+    FINNHUB_API_KEY: z.string().min(1).optional(),
   },
   client: {
     // Para `metadataBase` (og:image, apple-touch-icon absolutos) — sin

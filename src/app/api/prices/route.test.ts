@@ -28,6 +28,11 @@ function makeSupabaseMock(opts: { user: { id: string } | null; tableResults?: Re
 }
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+// `finnhub.ts` (agregado al mapa de proveedores de esta ruta) importa
+// `@/env` — sin mockearlo, `createEnv` explota en test por las env vars
+// públicas requeridas (`NEXT_PUBLIC_SUPABASE_URL`/`_ANON_KEY`) que no
+// están seteadas acá.
+vi.mock("@/env", () => ({ env: {} }));
 
 const fetchPriceMock = vi.fn();
 vi.mock("@/lib/prices/providers/data912", () => ({ createData912Provider: () => ({ id: "data912", fetchPrice: fetchPriceMock }) }));

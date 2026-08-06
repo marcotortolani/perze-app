@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { searchData912Instruments } from "@/lib/prices/providers/data912";
+import { searchFinnhubInstruments } from "@/lib/prices/providers/finnhub";
 import { SYMBOL_TO_COINGECKO_ID } from "@/lib/prices/coingecko-symbols";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,14 +41,21 @@ export async function GET(request: Request) {
   }
   const query = parsed.data.q.trim().toUpperCase();
 
-  const [data912Results, cryptoMatches] = await Promise.all([
+  const [data912Results, cryptoMatches, finnhubResults] = await Promise.all([
     searchData912Instruments(query).catch(() => []),
     Promise.resolve(Object.keys(SYMBOL_TO_COINGECKO_ID).filter((symbol) => symbol.includes(query))),
+    // `searchFinnhubInstruments` ya devuelve `[]` sin `FINNHUB_API_KEY` —
+    // el `.catch` es solo por si la API responde con error de verdad.
+    searchFinnhubInstruments(query).catch(() => []),
   ]);
 
   const results: InstrumentSearchResult[] = [
     ...data912Results.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: r.currencyCode, priceProvider: "data912", providerSymbol: r.symbol, close: r.close })),
     ...cryptoMatches.map((symbol): InstrumentSearchResult => ({ symbol, assetClass: "Crypto", currencyCode: "USD", priceProvider: "coingecko", providerSymbol: SYMBOL_TO_COINGECKO_ID[symbol]!, close: null })),
+    // I10 — acciones/ETFs de EE.UU. (NYSE/NASDAQ), siempre en USD: Finnhub
+    // no cotiza acá (su `/search` no trae precio), así que `close` queda
+    // `null` como el resto de los proveedores que tampoco lo traen.
+    ...finnhubResults.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: "USD", priceProvider: "finnhub", providerSymbol: r.symbol, close: null })),
   ];
 
   return NextResponse.json({ results }, { headers: NO_STORE_HEADERS });

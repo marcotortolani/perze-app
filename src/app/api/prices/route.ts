@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createData912Provider } from "@/lib/prices/providers/data912";
 import { createCoinGeckoPriceProvider } from "@/lib/prices/providers/coingecko";
+import { createFinnhubProvider } from "@/lib/prices/providers/finnhub";
 import type { PriceProvider } from "@/lib/prices/providers/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,6 +21,10 @@ import { createClient } from "@/lib/supabase/server";
 const providers: Record<string, PriceProvider> = {
   data912: createData912Provider(),
   coingecko: createCoinGeckoPriceProvider(),
+  // Sin `FINNHUB_API_KEY`, `fetchPrice` devuelve `null` (nunca lanza) —
+  // cae al mismo camino de "último conocido" de más abajo, un self-host
+  // sin la key no se rompe.
+  finnhub: createFinnhubProvider(),
 };
 
 const querySchema = z.object({ instrumentId: z.uuid("INSTRUMENTO_INVALIDO") });

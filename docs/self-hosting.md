@@ -43,6 +43,26 @@ deploy de este repo Next.js.
    supabase functions deploy daily-fx-sync
    ```
 
+   Y, si vas a usar el módulo de inversiones (I), la de precios de instrumentos (sin esto,
+   `price_snapshots` queda vacía para siempre — el precio a mano sigue funcionando igual):
+
+   ```bash
+   supabase functions deploy daily-price-sync
+   ```
+
+   Data912 (mercado argentino) y CoinGecko (crypto) no necesitan key. Para acciones/ETFs de
+   EE.UU. (Finnhub, NYSE/NASDAQ) hace falta una cuenta gratis en [finnhub.io](https://finnhub.io/)
+   y cargar el secret **acá también** — es un lugar separado de `FINNHUB_API_KEY` en
+   `.env.local`/tu plataforma de deploy, aunque el valor sea el mismo (esta Edge Function no lee
+   `.env`, corre en Deno):
+
+   ```bash
+   supabase secrets set FINNHUB_API_KEY=...
+   ```
+
+   Sin este secret, la búsqueda de instrumentos y las cotizaciones en vivo simplemente no
+   incluyen resultados de Finnhub — el resto del módulo funciona igual.
+
 6. Los cron jobs de `20260801160000_cron_engines.sql` (materializar recurrentes, cerrar
    resúmenes de tarjeta vencidos, purgar `audit_log`, podar `push_subscriptions`) quedan
    activos apenas se aplica la migración — no necesitan ningún paso más. Los dos que además

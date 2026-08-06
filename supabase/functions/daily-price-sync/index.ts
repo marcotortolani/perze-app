@@ -8,14 +8,19 @@
 //
 // Mismos proveedores que `src/lib/prices/providers/*.ts` del cliente,
 // portados a Deno: Data912 (mercado argentino — acciones, CEDEARs, bonos,
-// ONs, letras, sin key) y CoinGecko (crypto). Un instrumento sin
-// `price_provider` (FCI, plazo fijo, inmuebles, cualquier cosa sin
-// cobertura) queda sin cotización automática — el precio a mano sigue
-// siendo el camino de primera clase para esos, no un fallback.
+// ONs, letras, sin key), CoinGecko (crypto) y Finnhub (acciones/ETFs de
+// EE.UU., NYSE/NASDAQ). Un instrumento sin `price_provider` (FCI, plazo
+// fijo, inmuebles, cualquier cosa sin cobertura) queda sin cotización
+// automática — el precio a mano sigue siendo el camino de primera clase
+// para esos, no un fallback.
 //
 // Deploy: `supabase functions deploy daily-price-sync`
-// No necesita secrets propios — usa `SUPABASE_SERVICE_ROLE_KEY` que Supabase
-// ya inyecta a toda Edge Function.
+// Usa `SUPABASE_SERVICE_ROLE_KEY`, que Supabase ya inyecta a toda Edge
+// Function. Finnhub SÍ necesita un secret propio, que este archivo no
+// comparte con `.env`/`src/env.ts` (esto es Deno, no Next):
+// `supabase secrets set FINNHUB_API_KEY=...` (ver `docs/self-hosting.md`).
+// Sin ese secret, `fetchFinnhubPrices` devuelve `[]` sin romper el resto
+// del sync — mismo contrato que el proveedor del lado Next.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const DATA912_CATEGORIES = ["arg_stocks", "arg_cedears", "arg_bonds", "arg_corp", "arg_notes"];
@@ -66,6 +71,41 @@ async function fetchCoinGeckoPrices(instruments: Array<{ id: string; provider_sy
   return rows;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * A diferencia de Data912/CoinGecko (una llamada trae el mercado/lote
+ * entero), el free tier de Finnhub solo tiene `/quote` por símbolo — un
+ * pedido por instrumento, secuencial. 60 llamadas/min de tope: 1.1s entre
+ * pedidos deja margen real sin acercarse al límite. Un símbolo que falla
+ * (404, rate limit puntual) no tira abajo el resto — se reintenta mañana,
+ * mismo criterio que una categoría caída de Data912.
+ */
+async function fetchFinnhubPrices(instruments: Array<{ id: string; provider_symbol: string; currency_code: string }>): Promise<PriceSnapshotInsert[]> {
+  if (instruments.length === 0) return [];
+  const apiKey = Deno.env.get("FINNHUB_API_KEY");
+  if (!apiKey) return [];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const rows: PriceSnapshotInsert[] = [];
+
+  for (const [i, instrument] of instruments.entries()) {
+    if (i > 0) await sleep(1100);
+    try {
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(instrument.provider_symbol)}&token=${apiKey}`);
+      if (!res.ok) continue;
+      const data = (await res.json()) as { c: number; t: number };
+      if (data.t === 0) continue; // símbolo inexistente — ver la misma nota en finnhub.ts
+      rows.push({ instrument_id: instrument.id, as_of: today, provider: "finnhub", close: data.c, currency_code: instrument.currency_code });
+    } catch {
+      continue;
+    }
+  }
+  return rows;
+}
+
 Deno.serve(async () => {
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -79,10 +119,15 @@ Deno.serve(async () => {
   const all = (instruments ?? []) as Array<{ id: string; price_provider: string; provider_symbol: string; currency_code: string }>;
   const data912Instruments = all.filter((i) => i.price_provider === "data912");
   const coinGeckoInstruments = all.filter((i) => i.price_provider === "coingecko");
+  const finnhubInstruments = all.filter((i) => i.price_provider === "finnhub");
 
+  // Finnhub no va en el mismo `Promise.all`: es secuencial por dentro
+  // (rate limit, ver `fetchFinnhubPrices`) y correrlo en paralelo con los
+  // otros dos no lo acelera — Data912/CoinGecko ya terminan mucho antes.
   const [data912Rows, coinGeckoRows] = await Promise.all([fetchData912Prices(data912Instruments), fetchCoinGeckoPrices(coinGeckoInstruments)]);
+  const finnhubRows = await fetchFinnhubPrices(finnhubInstruments);
 
-  const rows = [...data912Rows, ...coinGeckoRows];
+  const rows = [...data912Rows, ...coinGeckoRows, ...finnhubRows];
   if (rows.length === 0) {
     return new Response(JSON.stringify({ upserted: 0 }), { headers: { "Content-Type": "application/json" } });
   }

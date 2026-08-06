@@ -6,6 +6,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.45] — 2026-08-06
+
+### Nuevo — Finnhub como proveedor de cotizaciones de EE.UU. (NYSE/NASDAQ)
+
+Data912 solo cubre el mercado argentino (CEDEARs incluidos, pero no la acción de origen en
+su bolsa real) — Finnhub llena ese hueco para acciones y ETFs de EE.UU. Investigado con un
+agente en paralelo contra las alternativas (Alpha Vantage 25 pedidos/día, Polygon 5/min +
+solo EOD, IEX Cloud dado de baja definitivamente en 2024): Finnhub gana por 60
+llamadas/minuto reales, `/quote` para precio puntual y `/search` gratis para autocompletar.
+
+Mismo patrón que los dos proveedores existentes (`src/lib/prices/providers/{data912,coingecko}.ts`):
+`createFinnhubProvider()` (`fetchPrice(providerSymbol)`, señal de "no existe" = `t === 0`
+de la respuesta de Finnhub, no `c === 0` — un precio real en `$0` es indistinguible de un
+ticker inválido si se usa el campo equivocado) y `searchFinnhubInstruments(query)`, sumado
+al mapa de proveedores de `/api/prices/route.ts` y al `Promise.all` de
+`/api/instruments/search/route.ts`. Filtra a `Common Stock`/`ETF` (mapeados a las clases de
+activo ya sembradas "Acciones"/"ETFs") y descarta tickers con sufijo de otra bolsa
+(`AAPL.MX`, `AAPL.L`) — el alcance pedido es NYSE/NASDAQ, no cualquier bolsa del mundo que
+Finnhub también indexa para la misma búsqueda. Siempre USD, sin heurística de moneda (a
+diferencia de D52 en Data912): Finnhub no mezcla monedas en una misma búsqueda.
+
+`FINNHUB_API_KEY` nueva en `src/env.ts`, server-only y opcional — sin ella, la búsqueda y
+`/api/prices` simplemente no devuelven resultados de Finnhub (Data912/CoinGecko siguen
+andando), un self-host sin la key no se rompe. `supabase/functions/daily-price-sync/index.ts`
+(Deno, no lee `.env`) gana su propio `fetchFinnhubPrices()`, secuencial con 1.1s entre
+pedidos (el free tier no tiene un endpoint de cotización en lote) y su propio secret
+(`supabase secrets set FINNHUB_API_KEY=...`), documentado en `docs/self-hosting.md`.
+
 ## [0.29.44] — 2026-08-06
 
 ### Nuevo — `/investments/[portfolioId]` migrado a master-detail con `?position=`

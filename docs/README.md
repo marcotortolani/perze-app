@@ -106,6 +106,6 @@ Deliberadamente **no** se usa verde/rojo para ingreso/gasto: es la convención m
 | Inflación, UVA, plazo fijo AR | [ArgentinaDatos](https://argentinadatos.com/) | No |
 | Acciones AR, CEDEARs, bonos, ONs | [Data912](https://data912.apidocs.ar/) | No |
 | Crypto | CoinGecko | Free tier |
-| Acciones internacionales | Finnhub / Twelve Data | Free tier |
+| Acciones/ETFs de EE.UU. (NYSE/NASDAQ) | [Finnhub](https://finnhub.io/) | Free tier, con key |
 
 Ninguna está en el camino crítico: todo se cachea en la base y siempre se puede cargar el valor a mano.

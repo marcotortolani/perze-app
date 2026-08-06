@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.45 — 6 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés buscar y seguir acciones y ETFs de Estados Unidos (NYSE/NASDAQ) en
+  Inversiones, además de lo que ya cubría el mercado argentino.
+
 ## 0.29.44 — 6 de agosto de 2026
 
 ### Arreglado

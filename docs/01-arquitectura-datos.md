@@ -655,7 +655,7 @@ portfolio_snapshots (                        -- para TWR y gráficos históricos
 | [Data912](https://data912.apidocs.ar/) | Acciones AR, CEDEARs, bonos, ONs, letras | Comunitaria, gratuita, sin key. Buena para BYMA. |
 | [BYMA APIs](https://www.byma.com.ar/en/byma-apis) | Mercado argentino oficial | Producto pago |
 | CoinGecko | Crypto | Free tier generoso |
-| Finnhub / Twelve Data / Alpha Vantage | Acciones y ETFs internacionales | Free tier con límite diario |
+| [Finnhub](https://finnhub.io/) | Acciones/ETFs de EE.UU. (NYSE/NASDAQ) | Free tier (60 llamadas/min), necesita `FINNHUB_API_KEY` |
 | **Manual** | Todo | Siempre disponible. Instrumentos ilíquidos, FCI, plazo fijo, inmuebles. |
 
 El `price_provider` es una columna por instrumento, no un supuesto global. Y siempre se puede ingresar precio a mano — sin eso, no sirve para ONs poco líquidas ni para un departamento.
