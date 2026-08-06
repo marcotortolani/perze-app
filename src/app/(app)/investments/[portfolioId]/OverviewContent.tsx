@@ -13,7 +13,7 @@ import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPric
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
-import { money } from "@/lib/money/money";
+import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
@@ -204,7 +204,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
     const instrument = instrumentById.get(instrumentId);
     const price = prices.get(instrumentId);
     if (!instrument) continue;
-    const value = price ? BigInt(Math.round(position.quantity * price.close)) : 0n;
+    const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
     const baseValue = toBase(value, instrument.currencyCode);
     if (baseValue === null) {
       excludedCount += 1;
@@ -302,7 +302,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
             if (!instrument) return null;
             const price = prices.get(position.instrumentId);
             const assetClass = instrument.assetClassId ? assetClassById.get(instrument.assetClassId) : undefined;
-            const value = price ? BigInt(Math.round(position.quantity * price.close)) : 0n;
+            const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
             const changePct = price && Number(position.costBasis) > 0 ? ((Number(value) - Number(position.costBasis)) / Number(position.costBasis)) * 100 : 0;
             const baseValue = viewCurrency === "base" ? toBase(value, instrument.currencyCode) : null;
             const displayValue =
@@ -328,7 +328,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
                     ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}),
                   })
                 )}
-                price={price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : undefined}
+                price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : undefined}
                 value={displayValue}
                 changePct={<span>{changePct >= 0 ? "↑" : "↓"} {Math.abs(changePct).toFixed(1)}%</span>}
                 onClick={() => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`)}

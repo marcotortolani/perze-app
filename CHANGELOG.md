@@ -6,6 +6,38 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.24] — 2026-08-06
+
+### Corregido — bug de escala: los precios de inversión se mostraban 100 veces más chicos
+
+Reporte del usuario, verificado contra Investing.com: el CEDEAR de Tesla figuraba a AR$
+150,00 cuando el valor real ronda los AR$ 33.000+. La causa era doble:
+
+1. **Bug de escala (el grave, afecta a TODOS los instrumentos con datos reales).**
+   `price_snapshots.close`/`trades.price` son `numeric` en unidades MAYORES (pesos,
+   dólares — un AAPL CEDEAR real a $24.660 se guarda como `24660`, no como centavos).
+   Pero en la UI ese número pasaba directo a `BigInt(Math.round(price.close))` y de ahí a
+   `money()`, que espera el bigint ya en unidades MÍNIMAS — el mismo `24660` se
+   interpretaba como "24660 centavos" = "$246,60", cien veces menos. Nuevo
+   `fromMajorUnitsUnsafe(value, currency)` en `lib/money/money.ts` (inverso de
+   `toMajorUnitsUnsafe`, que ya existía) hace la conversión real
+   (`value × 10^decimalsFor(currency)`) en los ocho puntos afectados:
+   `OverviewContent` (valor de posición ×2, precio en `PositionRow`), `InstrumentDetailContent`
+   (valor, precio actual, precio de cada operación del historial), `instruments/page.tsx`
+   (precio de la lista) y `performance/page.tsx` (valor actual para el XIRR). De paso,
+   `trades/new/page.tsx` dejaba de asumir `* 100` fijo al construir `netAmount` — ahora usa
+   `10 ** decimalsFor(instrument.currencyCode)`, mismo criterio, para cuando algún día haya
+   un instrumento en una moneda de más o menos de 2 decimales.
+
+2. **Un `price_snapshots` manual "de hoy" tapaba la cotización real del proveedor.**
+   `/api/prices` devolvía el snapshot más reciente de HOY sin verificar de dónde salía: si
+   alguien cargó un precio a mano en un instrumento que además tiene proveedor real
+   (`data912`/`coingecko`), esa entrada manual ganaba todo el día, aunque el proveedor
+   tuviera un dato fresco. Ahora el snapshot de hoy solo se usa como cache si su `provider`
+   coincide con `instrument.price_provider` — o si el instrumento no tiene proveedor
+   (FCI, plazo fijo, inmuebles: ahí el manual sigue siendo la fuente legítima, sin cambios).
+   Cubierto con 3 tests nuevos en `src/app/api/prices/route.test.ts`.
+
 ## [0.29.23] — 2026-08-06
 
 ### Agregado — editar nombre y eliminar un portfolio de inversiones

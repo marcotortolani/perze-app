@@ -76,7 +76,12 @@ export async function GET(request: Request) {
 
   const currencyCode = instrument.currency_code;
   const today = serverTodayIso();
-  const freshestToday = (latestRows ?? []).find((r) => r.as_of === today);
+  // D45 — si el instrumento tiene proveedor real, un snapshot de hoy solo
+  // vale como cache cuando viene de ESE proveedor: un `manual` suelto (p.
+  // ej. cargado antes de asignarle proveedor, o a mano por error) no debe
+  // taparle la cotización real para el resto del día. Sin proveedor
+  // (FCI, plazo fijo, inmuebles) el manual sigue siendo la fuente legítima.
+  const freshestToday = (latestRows ?? []).find((r) => r.as_of === today && (!instrument.price_provider || r.provider === instrument.price_provider));
   if (freshestToday) {
     return NextResponse.json({ close: freshestToday.close, provider: freshestToday.provider, asOf: freshestToday.as_of, currencyCode, isStale: false }, { headers: NO_STORE_HEADERS });
   }

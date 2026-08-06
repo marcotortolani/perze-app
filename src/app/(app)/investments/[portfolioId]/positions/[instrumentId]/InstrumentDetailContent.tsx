@@ -23,7 +23,7 @@ import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
-import { money } from "@/lib/money/money";
+import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
@@ -133,10 +133,11 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   let portfolioTotalValue = 0n;
   for (const [id, pos] of positions) {
     const p = prices.get(id);
-    if (p) portfolioTotalValue += BigInt(Math.round(pos.quantity * p.close));
+    const inst = instruments.find((i) => i.id === id);
+    if (p && inst) portfolioTotalValue += fromMajorUnitsUnsafe(pos.quantity * p.close, inst.currencyCode);
   }
 
-  const value = position && price ? BigInt(Math.round(position.quantity * price.close)) : 0n;
+  const value = position && price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
   const unrealizedPnl = position ? value - position.costBasis : 0n;
   const avgPrice = position && position.quantity > 0 ? Number(position.costBasis) / position.quantity : null;
   const weightPct = portfolioTotalValue > 0n ? (Number(value) / Number(portfolioTotalValue)) * 100 : 0;
@@ -147,8 +148,11 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const toDisplay = (v: bigint): bigint | null => (viewCurrency === "base" ? toBase(v) : v);
   const displayValue = toDisplay(value);
   const displayUnrealizedPnl = toDisplay(unrealizedPnl);
+  // `avgPrice` ya está en unidades mínimas (viene de `costBasis`, bigint) —
+  // acá no hace falta `fromMajorUnitsUnsafe`. `price.close` sí, viene
+  // crudo del proveedor en unidades mayores (D45).
   const displayAvgPrice = avgPrice !== null ? toDisplay(BigInt(Math.round(avgPrice))) : null;
-  const displayCurrentPrice = price ? toDisplay(BigInt(Math.round(price.close))) : null;
+  const displayCurrentPrice = price ? toDisplay(fromMajorUnitsUnsafe(price.close, instrument.currencyCode)) : null;
 
   const instrumentTrades = trades.filter((tr) => tr.instrumentId === instrumentId).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
 
@@ -308,7 +312,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
                 key={tr.id}
                 icon={tr.kind === "buy" ? "plus" : "minus"}
                 label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
-                meta={`${formatDateShort(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmountCompact(money(BigInt(Math.round(tr.price)), tr.currencyCode), { showSign: false })}`}
+                meta={`${formatDateShort(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmountCompact(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
                 variant="value"
                 value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
               />

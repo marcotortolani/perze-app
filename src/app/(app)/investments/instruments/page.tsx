@@ -10,7 +10,7 @@ import { computePositions } from "@/lib/analytics/positions";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { formatAmountCompact } from "@/lib/money/format";
-import { money } from "@/lib/money/money";
+import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -133,7 +133,7 @@ export default function InstrumentsListPage() {
         label={instrument.symbol}
         meta={instrument.name}
         variant="value"
-        value={price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : "—"}
+        value={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
         onClick={portfolio ? () => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`) : undefined}
       />
     );

@@ -126,3 +126,20 @@ export function toMajorUnitsUnsafe(a: Money): number {
   const d = decimalsFor(a.currency);
   return Number(a.amount) / 10 ** d;
 }
+
+/**
+ * Unidades mayores (`number`) → unidades mínimas (`bigint`) — el inverso
+ * de `toMajorUnitsUnsafe`, para el caso contrario: un `numeric` que ya
+ * llega en unidades mayores (`price_snapshots.close`, `trades.price`, una
+ * cotización de API) y hay que envolver en `Money` para mostrarlo con
+ * `<Amount>`/`formatAmountCompact`. D45 — pasar ese valor directo a
+ * `BigInt(Math.round(...))` sin escalarlo es exactamente el bug que hizo
+ * que un CEDEAR de $24.660 se mostrara como "$246,60": el bigint quedaba
+ * interpretado como si ya fueran centavos. SOLO para envolver un dato
+ * externo para mostrarlo, nunca para cálculos contables (que siguen
+ * siempre en bigint de punta a punta).
+ */
+export function fromMajorUnitsUnsafe(value: number, currency: CurrencyCode): bigint {
+  const d = decimalsFor(currency);
+  return BigInt(Math.round(value * 10 ** d));
+}

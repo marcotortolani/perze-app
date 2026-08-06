@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.24 — 6 de agosto de 2026
+
+### Arreglado
+
+- Los precios de instrumentos de inversión se mostraban 100 veces más chicos que el valor
+  real de mercado. Ya se ven correctos.
+
 ## 0.29.23 — 6 de agosto de 2026
 
 ### Nuevo

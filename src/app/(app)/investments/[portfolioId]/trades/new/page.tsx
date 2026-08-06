@@ -16,6 +16,7 @@ import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
+import { decimalsFor } from "@/lib/money/decimals";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
@@ -109,7 +110,10 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const account = accounts.find((a) => a.id === accountId);
   const qty = Number(quantity.replace(",", "."));
   const unitPrice = Number(price.replace(",", "."));
-  const grossAmount = Number.isFinite(qty) && Number.isFinite(unitPrice) ? Math.round(qty * unitPrice * 100) : 0; // unidades mínimas (2 decimales, moneda fiat típica)
+  // D45 — unidades mínimas de la moneda del INSTRUMENTO, nunca un `* 100`
+  // fijo (ARS/USD tienen 2 decimales hoy, pero un crypto con más no).
+  const grossAmount =
+    Number.isFinite(qty) && Number.isFinite(unitPrice) && instrument ? Math.round(qty * unitPrice * 10 ** decimalsFor(instrument.currencyCode)) : 0;
   const canSave = !!instrument && !!account && qty > 0 && unitPrice > 0;
 
   // ±1 unidad, nunca negativo — un CEDEAR fraccionario ("0.5") sigue

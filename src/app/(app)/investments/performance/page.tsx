@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { computePortfolioReturn } from "@/lib/analytics/portfolio-return";
+import { fromMajorUnitsUnsafe } from "@/lib/money/money";
 
 const MIN_DAYS = 30;
 
@@ -19,19 +20,22 @@ export default function PerformancePage() {
   const { data: portfolios } = usePortfolios(household?.id);
   const portfolio = portfolios?.[0];
   const { data: trades } = useTrades(portfolio?.id);
+  const { data: instruments } = useInstruments(household?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
 
   const result = useMemo(() => {
-    if (!trades || !pricesQuery.data) return null;
+    if (!trades || !pricesQuery.data || !instruments) return null;
+    const instrumentById = new Map(instruments.map((i) => [i.id, i]));
     const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
     let currentValue = 0n;
     for (const [instrumentId, position] of positions) {
       const price = pricesQuery.data.get(instrumentId);
-      if (price) currentValue += BigInt(Math.round(position.quantity * price.close));
+      const instrument = instrumentById.get(instrumentId);
+      if (price && instrument) currentValue += fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode);
     }
     return computePortfolioReturn(trades, currentValue, new Date());
-  }, [trades, pricesQuery.data]);
+  }, [trades, pricesQuery.data, instruments]);
   usePageHeader({ title: t("performancePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (!household || !portfolios) return <Skeleton height={240} style={{ marginTop: 16 }} />;
