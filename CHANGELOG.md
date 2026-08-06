@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.38] — 2026-08-06
+
+### Corregido — primera card del carrusel de cuentas en mobile con texto destacado sin motivo
+
+`AccountCarousel` decide qué cuenta es la "destacada" (texto `title` en vez de `body`) y
+en qué orden se renderizan las cards a partir de la prop `gridOnDesktop` — pero
+`(app)/page.tsx` la pasa fija en `true` (shorthand `gridOnDesktop`), pensada para que el
+CSS de `.account-grid-lg` decida el layout real por breakpoint. El componente, sin
+embargo, leía esa prop como si significara "estoy renderizando el grid de escritorio
+ahora mismo": en mobile heredaba igual el reordenamiento por peso del bento (la cuenta de
+mayor saldo primero, no el orden natural del swipe) y el tamaño de texto `title` de la
+primera card — resto de cuando esa posición mostraba un total, ya reemplazado por el
+patrimonio neto del héroe de arriba. Se agrega `useIsDesktop()` (mismo hook que ya usan
+`Overlay`/`AppHeader` para el corte de 1024px) y ambas decisiones —orden y card
+destacada— ahora solo aplican cuando `gridOnDesktop && isDesktop`, nunca solo por la
+prop.
+
 ## [0.29.37] — 2026-08-06
 
 ### Corregido — evolución de saldo (90 días) mostraba valores fabricados, no cero antes del primer movimiento

@@ -5,6 +5,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Amount } from "../money/Amount";
 import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 
 export interface AccountSummary {
   id: string;
@@ -203,12 +204,21 @@ export function AccountCarousel({ accounts = [], activeId, onSelect, privacy = f
     if (!gridOnDesktop) return { gridAccounts: accounts, gridSpans: [] as number[] };
     return assignBentoSlots(accounts);
   }, [accounts, gridOnDesktop]);
-  const renderedAccounts = gridOnDesktop ? gridAccounts : accounts;
+  // `gridOnDesktop` es la prop que el caller pasa (a menudo fija en
+  // `true`, dejando que sea el CSS de `.account-grid-lg` el que decida el
+  // layout real por breakpoint) — no basta para saber si ESTE render está
+  // mostrando el grid o el carrusel: hace falta el ancho real del
+  // viewport. Sin `useIsDesktop()` acá, mobile heredaba tanto el orden
+  // reordenado por peso del bento como el texto "destacado" de la primera
+  // card, aunque visualmente siguiera siendo un carrusel plano (D65).
+  const isDesktop = useIsDesktop();
+  const useGrid = gridOnDesktop && isDesktop;
+  const renderedAccounts = useGrid ? gridAccounts : accounts;
   // La destacada es siempre la primera del grid armado arriba — el slot
   // más ancho de la fila 1, que por construcción recibe la cuenta de
   // mayor peso. En mobile no hay noción de "destacada": el carrusel
   // muestra todas igual.
-  const featuredId = gridOnDesktop ? gridAccounts[0]?.id : undefined;
+  const featuredId = useGrid ? gridAccounts[0]?.id : undefined;
 
   // Click-and-drag con mouse (desktop): sin esto, un usuario sin trackpad ni
   // scroll horizontal solo podía mover el carrusel con Shift+rueda — nada

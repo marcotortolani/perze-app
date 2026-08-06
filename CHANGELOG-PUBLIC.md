@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.38 — 6 de agosto de 2026
+
+### Arreglado
+
+- En el inicio, en el celular, la primera cuenta del carrusel se veía con el texto más
+  grande y marcado que las demás sin motivo. Ahora todas las cuentas se ven igual en
+  mobile.
+
 ## 0.29.37 — 6 de agosto de 2026
 
 ### Arreglado
