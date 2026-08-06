@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { LineChart } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -23,6 +24,8 @@ import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
+import { fxRepo } from "@/lib/repos/fx-repo";
+import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
 import { MIN_HISTORY_POINTS, PRICE_HISTORY_RANGES, sinceIsoForRange, type PriceHistoryRange } from "@/lib/prices/history-range";
 import { formatDateShort, type Locale } from "@/i18n/formatting";
@@ -61,6 +64,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [historyRange, setHistoryRange] = useState<PriceHistoryRange>("month");
+  const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const instrument = instruments?.find((i) => i.id === instrumentId);
@@ -75,6 +79,22 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const canRemoveFromWatchlist = !!household && !!instrument && instrument.householdId === household.id && (!position || position.quantity === 0);
   const sinceIso = sinceIsoForRange(historyRange, todayIso());
   const historyQuery = usePriceHistory(instrumentId, sinceIso);
+
+  // I4/D39 — mismo toggle "moneda original / moneda base" que `OverviewContent`,
+  // acá acotado a un solo instrumento en vez de a todas las monedas en
+  // cartera. Un CEDEAR cotiza en pesos argentinos aunque el household lleve
+  // su base en dólares — este es el toggle que deja ver ambas lecturas.
+  const needsFxToggle = !!household && !!instrument && instrument.currencyCode !== household.baseCurrency;
+  const fxRateQuery = useQuery({
+    queryKey: ["instrument-fx-rate", household?.id, instrument?.currencyCode, household?.baseCurrency],
+    queryFn: () => fxRepo.resolve({ householdId: household!.id, base: instrument!.currencyCode, quote: household!.baseCurrency, date: todayIso() }),
+    enabled: needsFxToggle,
+  });
+  const toBase = (v: bigint): bigint | null => {
+    const rate = fxRateQuery.data?.rate;
+    if (!rate || !instrument) return null;
+    return convert(money(v, instrument.currencyCode), household!.baseCurrency, rate).amount;
+  };
 
   const handleRemoveFromWatchlist = async () => {
     if (!instrument || removing) return;
@@ -121,6 +141,15 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const avgPrice = position && position.quantity > 0 ? Number(position.costBasis) / position.quantity : null;
   const weightPct = portfolioTotalValue > 0n ? (Number(value) / Number(portfolioTotalValue)) * 100 : 0;
 
+  // D39 — mismos montos, en la moneda elegida por el toggle. `null` =
+  // pendiente de cotización (needs_fx), nunca un valor inventado.
+  const displayCurrency = viewCurrency === "base" ? household.baseCurrency : instrument.currencyCode;
+  const toDisplay = (v: bigint): bigint | null => (viewCurrency === "base" ? toBase(v) : v);
+  const displayValue = toDisplay(value);
+  const displayUnrealizedPnl = toDisplay(unrealizedPnl);
+  const displayAvgPrice = avgPrice !== null ? toDisplay(BigInt(Math.round(avgPrice))) : null;
+  const displayCurrentPrice = price ? toDisplay(BigInt(Math.round(price.close))) : null;
+
   const instrumentTrades = trades.filter((tr) => tr.instrumentId === instrumentId).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
 
   // Variación día a día: los dos cierres más recientes, no el rango
@@ -156,12 +185,37 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
       <div style={{ textAlign: "center" }}>
         <div className="t-caption" style={{ color: "var(--text-muted)" }}>{assetClass?.name ?? t("investmentsPage.otherAssetClass")}</div>
         <div className="t-hero" style={{ margin: "8px 0 0" }}>
-          <Amount value={money(value, instrument.currencyCode)} size="hero" showSign={false} polarity="neutral" tabular />
+          {displayValue !== null ? (
+            <Amount value={money(displayValue, displayCurrency)} size="hero" showSign={false} polarity="neutral" tabular />
+          ) : (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
+          )}
         </div>
         <div style={{ marginTop: 4 }}>
-          <Amount value={money(unrealizedPnl, instrument.currencyCode)} size="body" showSign polarity="neutral" tabular />
+          {displayUnrealizedPnl !== null ? (
+            <Amount value={money(displayUnrealizedPnl, displayCurrency)} size="body" showSign polarity="neutral" tabular />
+          ) : (
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
+          )}
           <span className="t-label" style={{ color: "var(--text-secondary)", marginLeft: 6 }}>{t("instrumentDetailPage.unrealized")}</span>
         </div>
+        {/* D39 — el toggle solo tiene sentido si el instrumento cotiza en
+            una moneda distinta de la base del household (un CEDEAR en
+            pesos con base en dólares); si coinciden, mostrarlo sería puro
+            ruido — mismo criterio que `OverviewContent`. */}
+        {needsFxToggle ? (
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+            <SegmentedControl
+              size="sm"
+              options={[
+                { id: "original", label: t("investmentsPage.viewOriginalCurrency") },
+                { id: "base", label: t("investmentsPage.viewBaseCurrency", { currency: household.baseCurrency }) },
+              ]}
+              value={viewCurrency}
+              onChange={(v) => setViewCurrency(v as "original" | "base")}
+            />
+          </div>
+        ) : null}
         {/* D34 — sin badge de frescura acá: el precio real de mercado se
             pide una sola vez al entrar al portfolio (`OverviewContent`),
             no por instrumento. Lo único que sigue haciendo falta acá es
@@ -191,11 +245,15 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         </div>
         <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.avgPrice")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>{avgPrice !== null ? formatAmountCompact(money(BigInt(Math.round(avgPrice)), instrument.currencyCode), { showSign: false }) : "—"}</div>
+          <div className="t-title" style={{ marginTop: 4 }}>
+            {displayAvgPrice !== null ? formatAmountCompact(money(displayAvgPrice, displayCurrency), { showSign: false }) : avgPrice !== null ? t("investmentsPage.pendingFx") : "—"}
+          </div>
         </div>
         <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.currentPrice")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>{price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : "—"}</div>
+          <div className="t-title" style={{ marginTop: 4 }}>
+            {displayCurrentPrice !== null ? formatAmountCompact(money(displayCurrentPrice, displayCurrency), { showSign: false }) : price ? t("investmentsPage.pendingFx") : "—"}
+          </div>
           {dayChangePct !== null ? (
             <div className="t-caption" style={{ marginTop: 2, color: "var(--text-secondary)" }}>
               {dayChangePct >= 0 ? "↑" : "↓"} {Math.abs(dayChangePct).toFixed(1)}% {t("instrumentDetailPage.today")}

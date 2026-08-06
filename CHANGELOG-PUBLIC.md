@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.18 — 6 de agosto de 2026
+
+### Nuevo
+
+- En el detalle de un instrumento que cotiza en otra moneda (por ejemplo, un CEDEAR en pesos)
+  ahora podés alternar entre ver los montos en esa moneda o convertidos a tu moneda base.
+
 ## 0.29.17 — 6 de agosto de 2026
 
 ### Nuevo

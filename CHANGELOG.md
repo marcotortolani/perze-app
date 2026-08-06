@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.18] — 2026-08-06
+
+### Agregado — toggle "moneda original / moneda base" en el detalle de instrumento (I4)
+
+Pedido del usuario: ver un CEDEAR en pesos argentinos (su moneda de cotización) con la
+opción de pasarlo a dólares (la base del household), igual que ya existía en el overview
+del portfolio (D34) pero ahí era por-instrumento-en-cartera, no dentro del detalle de uno
+en particular.
+
+Mismo mecanismo que `OverviewContent`: `fxRepo.resolve()` una sola vez para el par
+`instrument.currencyCode → household.baseCurrency` (acá acotado a un instrumento, no a la
+lista de monedas en cartera), `convert()` sobre el valor/P&L/precio promedio/precio actual,
+y `needs_fx` respetado — sin cotización, se muestra "pendiente de cotizar", nunca un
+número inventado. El toggle (`SegmentedControl`) solo se dibuja cuando la moneda del
+instrumento difiere de la base del household; si coinciden, sería puro ruido.
+
 ## [0.29.17] — 2026-08-06
 
 ### Agregado — "Instrumentos" reemplaza a "Estado de los precios"; fluctuación histórica en I4
