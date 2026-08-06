@@ -6,6 +6,42 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.10] — 2026-08-06
+
+### Corregido — la captura por voz no reconocía "ingresaron", moneda ni tags
+
+Bug reportado en vivo: dictar "ingresaron 2500 dólares de sueldo" no cambiaba el toggle
+gasto/ingreso, no detectaba USD, y no encontraba la categoría "Sueldo". La causa real era una
+sola — `detectKind()` (`parse-voice.ts`) solo cubría 1ª persona singular ("ingresé"/"ingrese");
+"ingresaron" (3ª plural, la forma real en que alguien narra "me depositaron el sueldo") no
+matcheaba nada, así que `kind` quedaba `null`, y sin `kind` la categoría se buscaba entre las de
+GASTO en vez de las de ingreso — "Sueldo" nunca iba a aparecer ahí. La cadena de wiring
+kind→categoría ya estaba bien armada (`CaptureFlow.tsx` ya llamaba `setKind()` cuando `kind` venía
+no-nulo); el fix es sumar más conjugaciones a las tres listas de verbos (gasto/ingreso/transferencia).
+
+### Agregado — la captura por voz ahora reconoce moneda y tags
+
+`parseVoiceCapture()` suma `currencyCode`: reconoce dólares/euros/reales y "pesos" calificado por
+país (uruguayos/argentinos/mexicanos/chilenos) — "pesos" a secas se queda en `null` a propósito,
+es ambiguo entre cuatro monedas y adivinar mal es peor que no tocar nada. Si hay UNA sola cuenta en
+la moneda detectada, `CaptureFlow` la selecciona sola (el destino es obvio); con cero o más de una,
+no adivina — el monto entra como "moneda original" sobre la cuenta ya elegida, convertido a su
+moneda (mismo mecanismo que ya usa el prefill de "pagar tarjeta"), y el usuario cambia de cuenta a
+mano si hacía falta otra.
+
+Nuevo `matchVoiceTags()` — a diferencia de la categoría (una sola), los tags no son excluyentes:
+busca cada tag del household en la frase completa (no solo en el comercio) y aplica todos los que
+aparecen, p. ej. "es reembolsable y del cliente" aplica los dos tags a la vez.
+
+### Arreglado — `SegmentedControl` quedaba más ancho que sus opciones dentro de una columna flex
+
+Dentro de cualquier `display: flex; flex-direction: column` (el contenedor más común de la app),
+`align-items: stretch` —el default del padre— estiraba el control al ancho completo aunque su
+`display` interno fuera `inline-flex`, dejando el relleno de superficie con un hueco vacío del lado
+derecho de las opciones. `alignSelf: "flex-start"` en la raíz lo saca de ese estiramiento sin
+importar el padre — afecta a las ~13 pantallas que usan el componente, no solo al toggle de `/add`
+donde se reportó.
+
 ## [0.29.9] — 2026-08-06
 
 ### Corregido — agregar una moneda sin tocar el rate la marcaba "Custom" y "Estándar" la borraba de la lista

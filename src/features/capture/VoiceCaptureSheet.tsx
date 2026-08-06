@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Icon, Sheet } from "@/design-system";
-import { matchVoiceCategory, parseVoiceCapture, type VoiceCaptureKind, type VoiceCategoryMatch } from "./parse-voice";
+import { matchVoiceCategory, matchVoiceTags, parseVoiceCapture, type VoiceCaptureKind, type VoiceCategoryMatch, type VoiceTagMatch } from "./parse-voice";
 
 export interface VoiceCategoryOption {
   id: string;
@@ -11,12 +11,19 @@ export interface VoiceCategoryOption {
   kind: "expense" | "income";
 }
 
+export interface VoiceTagOption {
+  id: string;
+  name: string;
+}
+
 export interface VoiceCaptureSheetProps {
   open: boolean;
   onClose: () => void;
   /** Categorías del household — se filtran por el `kind` detectado antes de intentar matchear. */
   categories: readonly VoiceCategoryOption[];
-  onApply: (result: { amountExpression: string; payeeName: string; kind: VoiceCaptureKind | null; categoryId: string | null }) => void;
+  /** Tags del household — a diferencia de la categoría, pueden matchear varios a la vez. */
+  tags: readonly VoiceTagOption[];
+  onApply: (result: { amountExpression: string; payeeName: string; kind: VoiceCaptureKind | null; categoryId: string | null; currencyCode: string | null; tagIds: string[] }) => void;
 }
 
 type SpeechRecognitionLike = {
@@ -55,14 +62,16 @@ const ERROR_MESSAGE_KEY: Record<string, string> = {
 };
 
 /** C9 — captura por voz. Todo lo interpretado queda editable antes de confirmar; degrada limpio si el navegador no la soporta. */
-export function VoiceCaptureSheet({ open, onClose, categories, onApply }: VoiceCaptureSheetProps) {
+export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: VoiceCaptureSheetProps) {
   const t = useTranslations();
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [amountExpression, setAmountExpression] = useState("");
   const [payeeName, setPayeeName] = useState("");
   const [kind, setKind] = useState<VoiceCaptureKind | null>(null);
+  const [currencyCode, setCurrencyCode] = useState<string | null>(null);
   const [matchedCategory, setMatchedCategory] = useState<VoiceCategoryMatch | null>(null);
+  const [matchedTags, setMatchedTags] = useState<VoiceTagMatch[]>([]);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const supported = !!getSpeechRecognition();
@@ -92,10 +101,12 @@ export function VoiceCaptureSheet({ open, onClose, categories, onApply }: VoiceC
       if (parsed.amountExpression) setAmountExpression(parsed.amountExpression);
       if (parsed.payeeName) setPayeeName(parsed.payeeName);
       setKind(parsed.kind);
+      setCurrencyCode(parsed.currencyCode);
       // Transferencia no tiene categoría — para el resto, filtrar por el
       // kind detectado (default gasto) evita matchear "sueldo" en un gasto.
       const candidateKind = parsed.kind === "income" ? "income" : "expense";
       setMatchedCategory(parsed.kind === "transfer" ? null : matchVoiceCategory(parsed.payeeName, categories.filter((c) => c.kind === candidateKind)));
+      setMatchedTags(matchVoiceTags(text, tags));
     };
     recognition.onerror = (event) => {
       setErrorKey(ERROR_MESSAGE_KEY[event.error ?? ""] ?? "capture.voice_sheet.errors.other");
@@ -162,10 +173,27 @@ export function VoiceCaptureSheet({ open, onClose, categories, onApply }: VoiceC
                     {`${t("capture.voice_sheet.categoryLabel")}: ${matchedCategory ? matchedCategory.categoryName : t("capture.voice_sheet.categoryUnmatched")}`}
                   </p>
                 ) : null}
+                {currencyCode ? (
+                  <p className="t-label" style={{ color: "var(--text-muted)", margin: 0 }}>
+                    {`${t("capture.voice_sheet.currencyLabel")}: ${currencyCode}`}
+                  </p>
+                ) : null}
+                {matchedTags.length > 0 ? (
+                  <p className="t-label" style={{ color: "var(--text-muted)", margin: 0 }}>
+                    {`${t("capture.voice_sheet.tagsLabel")}: ${matchedTags.map((tg) => tg.tagName).join(", ")}`}
+                  </p>
+                ) : null}
               </div>
               <Button
                 onClick={() => {
-                  onApply({ amountExpression, payeeName, kind, categoryId: matchedCategory?.categoryId ?? null });
+                  onApply({
+                    amountExpression,
+                    payeeName,
+                    kind,
+                    categoryId: matchedCategory?.categoryId ?? null,
+                    currencyCode,
+                    tagIds: matchedTags.map((tg) => tg.tagId),
+                  });
                   onClose();
                 }}
               >

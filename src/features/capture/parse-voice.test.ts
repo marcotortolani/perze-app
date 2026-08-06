@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchVoiceCategory, parseVoiceCapture } from "./parse-voice";
+import { matchVoiceCategory, matchVoiceTags, parseVoiceCapture } from "./parse-voice";
 
 describe("parseVoiceCapture", () => {
   it("extrae monto y comercio de una frase simple", () => {
@@ -38,6 +38,35 @@ describe("parseVoiceCapture", () => {
   it("sin verbo reconocible, kind queda en null — nunca inventa uno", () => {
     expect(parseVoiceCapture("2500 en transporte").kind).toBeNull();
   });
+
+  it("D33 — detecta ingreso en 3ª persona plural ('ingresaron'), no solo 1ª singular", () => {
+    // Bug reportado en vivo: "ingresaron 2500 dólares de sueldo" no
+    // cambiaba el toggle porque solo estaba "ingresé"/"ingrese" en la lista.
+    const result = parseVoiceCapture("ingresaron 2500 dólares de sueldo");
+    expect(result.kind).toBe("income");
+    expect(result.amountExpression).toBe("2500");
+    expect(result.currencyCode).toBe("USD");
+    expect(result.payeeName).toBe("sueldo");
+  });
+
+  it("D33 — más conjugaciones comunes de gasto/ingreso/transferencia", () => {
+    expect(parseVoiceCapture("gastó 500 en el kiosco").kind).toBe("expense");
+    expect(parseVoiceCapture("pagaron 1000 de alquiler").kind).toBe("expense");
+    expect(parseVoiceCapture("cobraron 800 de un cliente").kind).toBe("income");
+    expect(parseVoiceCapture("recibieron 200 de un regalo").kind).toBe("income");
+    expect(parseVoiceCapture("transfirieron 300 a ahorros").kind).toBe("transfer");
+  });
+
+  it("D33 — moneda: reconoce dólares/euros/reales, nunca adivina 'pesos' a secas", () => {
+    expect(parseVoiceCapture("gasté 100 dólares en el súper").currencyCode).toBe("USD");
+    expect(parseVoiceCapture("gasté 100 euros en el súper").currencyCode).toBe("EUR");
+    expect(parseVoiceCapture("gasté 100 reales en el súper").currencyCode).toBe("BRL");
+    expect(parseVoiceCapture("gasté 100 pesos uruguayos en el súper").currencyCode).toBe("UYU");
+    expect(parseVoiceCapture("gasté 100 pesos argentinos en el súper").currencyCode).toBe("ARS");
+    // "pesos" solo, sin calificar, es ambiguo entre UYU/ARS/MXN/CLP — no adivina.
+    expect(parseVoiceCapture("gasté 100 pesos en el súper").currencyCode).toBeNull();
+    expect(parseVoiceCapture("gasté 100 en el súper").currencyCode).toBeNull();
+  });
 });
 
 describe("matchVoiceCategory", () => {
@@ -62,5 +91,22 @@ describe("matchVoiceCategory", () => {
   it("sin texto o sin coincidencia, no matchea nada — nunca bloquea la carga", () => {
     expect(matchVoiceCategory(null, categories)).toBeNull();
     expect(matchVoiceCategory("cine", categories)).toBeNull();
+  });
+});
+
+describe("matchVoiceTags", () => {
+  const tags = [
+    { id: "tag-client", name: "Cliente" },
+    { id: "tag-refund", name: "Reembolsable" },
+    { id: "tag-personal", name: "Personal" },
+  ];
+
+  it("D33 — matchea varios tags a la vez, en cualquier parte de la frase", () => {
+    const result = matchVoiceTags("gasté 500 en el súper, es reembolsable y del cliente", tags);
+    expect(result.map((m) => m.tagId).sort()).toEqual(["tag-client", "tag-refund"].sort());
+  });
+
+  it("sin mención de ningún tag, devuelve vacío", () => {
+    expect(matchVoiceTags("gasté 500 en el súper", tags)).toEqual([]);
   });
 });

@@ -51,6 +51,13 @@ export function SegmentedControl({
       role="radiogroup"
       style={{
         display: "inline-flex",
+        // D33 — dentro de un padre `flex-direction: column` (el caso más
+        // común: casi toda pantalla que usa esto), `align-items: stretch`
+        // (el default del padre) estira este control al ancho del padre
+        // aunque sea `inline-flex` — el relleno de superficie quedaba más
+        // ancho que las opciones, con un hueco vacío del lado derecho.
+        // `alignSelf` lo saca de ese estiramiento sin importar el padre.
+        alignSelf: "flex-start",
         gap: 2,
         padding: 3,
         borderRadius: "var(--radius-chip)",

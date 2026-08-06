@@ -384,6 +384,8 @@
    "kindLabel": "Type",
    "categoryLabel": "Category",
    "categoryUnmatched": "Not recognized — pick it in the next step",
+   "currencyLabel": "Detected currency",
+   "tagsLabel": "Tags",
    "empty": "—",
    "errors": {
     "notAllowed": "We couldn't access the microphone — check the permission in your browser or installed app settings.",

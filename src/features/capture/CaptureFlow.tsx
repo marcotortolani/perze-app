@@ -422,11 +422,29 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         open={sheet === "voice"}
         onClose={() => setSheet("none")}
         categories={categories}
-        onApply={({ amountExpression, payeeName, kind: voiceKind, categoryId }) => {
+        tags={tags}
+        onApply={({ amountExpression, payeeName, kind: voiceKind, categoryId, currencyCode, tagIds }) => {
           if (amountExpression) setField("amountExpression", amountExpression);
           if (payeeName) setField("payeeName", payeeName);
           if (voiceKind) setKind(voiceKind);
           if (categoryId) setField("categoryId", categoryId);
+          if (tagIds.length > 0) setField("tagIds", tagIds);
+          // D33 — "ingresaron 2500 dólares de sueldo": si hay UNA sola
+          // cuenta en esa moneda, es el destino obvio (nadie tiene que
+          // elegir entre una opción). Con cero o más de una, adivinar cuál
+          // es peor que no tocar nada — el monto entra como "moneda
+          // original" sobre la cuenta ya elegida (mismo mecanismo que el
+          // prefill de "pagar tarjeta"), convertido a la moneda de la
+          // cuenta, y el usuario cambia de cuenta a mano si no era esa.
+          if (currencyCode && (voiceKind ?? draft.kind) !== "transfer" && currencyCode !== account?.currencyCode) {
+            const matches = accounts.filter((a: AccountRow) => a.currencyCode === currencyCode);
+            if (matches.length === 1) {
+              setField("accountId", matches[0]!.id);
+              setField("currency", "");
+            } else {
+              setField("currency", currencyCode);
+            }
+          }
         }}
       />
     </ScreenShell>
