@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.7] — 2026-08-06
+
+### Arreglado — las monedas nuevas no se agregaban de verdad, en ningún lado
+
+Dos síntomas del mismo problema de fondo: `currencies` es un catálogo global de solo lectura para
+el cliente (Patrón C — CLAUDE.md), y nada en la app tenía forma real de escribir ahí.
+
+- **`/currencies` (E6) dejaba tipear cualquier código libre** y lo trataba como válido apenas
+  pasaba una regex de forma (`/^[A-Z0-9]{2,10}$/), sin chequear que existiera en el catálogo real.
+  Localmente "parecía" funcionar (el override de FX quedaba en Dexie), pero rompía después:
+  `fx_rates.base` tiene una foreign key contra la tabla `currencies`, así que el sync fallaba, y
+  `/api/fx` respondía `MONEDA_DESCONOCIDA` apenas alguna otra pantalla pedía esa cotización.
+  Ahora, si el código tipeado no está en el catálogo, se pide nombre y tipo (fiat/cripto) y se crea
+  de verdad antes de seguir.
+- **El selector de moneda al crear una cuenta era una lista estática de 7 monedas hardcodeadas**
+  (`countries-currencies.ts`), sin leer el catálogo real (33+ monedas sembradas) ni forma de
+  agregar una nueva — ni siquiera cripto, que el catálogo nunca tuvo sembrada. Ahora lee el
+  catálogo real vía `useCurrencies()` y suma un chip "Otra moneda" que abre el mismo flujo de alta.
+
+La escritura pasa por una función nueva, `add_currency` (`SECURITY DEFINER`), documentada como
+excepción puntual al Patrón C — cualquier autenticado puede sumar una fila al catálogo global
+(útil para cripto y monedas fuera de la cobertura actual), pero solo con datos que pasan
+validación de forma, nunca pisando una fila existente.
+
 ## [0.28.6] — 2026-08-06
 
 ### Arreglado — el switch Personal/Compartido/Todo no aparecía y, cuando aparecía, no filtraba nada

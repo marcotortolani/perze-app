@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Chip, Icon, IconButton, Input, Keypad, OptionCard, SegmentedControl, Switch } from "@/design-system";
+import { Button, Chip, Icon, IconButton, Input, Keypad, OptionCard, SegmentedControl, Sheet, Switch } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
-import { COUNTRIES, CURRENCIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
+import { currenciesRepo } from "@/lib/repos/currencies-repo";
+import { useCurrencies, useInvalidateCurrencies } from "@/hooks/use-currencies";
+import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { ACCOUNT_COLOR_KEYS, accountColorVar, type AccountColorKey } from "@/lib/reference/account-colors";
 import { todayIso } from "@/lib/repos/ids";
@@ -59,6 +61,13 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [color, setColor] = useState<AccountColorKey | null>(
     existing?.color && (ACCOUNT_COLOR_KEYS as readonly string[]).includes(existing.color) ? (existing.color as AccountColorKey) : null
   );
+  const { data: currencies = [] } = useCurrencies();
+  const invalidateCurrencies = useInvalidateCurrencies();
+  const [addCurrencyOpen, setAddCurrencyOpen] = useState(false);
+  const [newCurrencyCode, setNewCurrencyCode] = useState("");
+  const [newCurrencyName, setNewCurrencyName] = useState("");
+  const [newCurrencyKind, setNewCurrencyKind] = useState<"fiat" | "crypto">("crypto");
+  const [addingCurrency, setAddingCurrency] = useState(false);
   const [openingExpr, setOpeningExpr] = useState("");
   const [includeInNetWorth, setIncludeInNetWorth] = useState(existing?.includeInNetWorth ?? true);
   // "custom" se define en J4 (permisos), no en este formulario — si la
@@ -74,6 +83,31 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [saving, setSaving] = useState(false);
 
   const canSave = name.trim().length > 0 && (kind !== "credit_card" || (statementDay && dueDay)) && (kind !== "loan" || (interestRate && termMonths));
+  const newCurrencyCodeNormalized = newCurrencyCode.trim().toUpperCase();
+  const canAddCurrency = /^[A-Z0-9]{2,10}$/.test(newCurrencyCodeNormalized) && newCurrencyName.trim().length > 0;
+
+  const handleAddCurrency = async () => {
+    if (!canAddCurrency || addingCurrency) return;
+    setAddingCurrency(true);
+    try {
+      const created = await currenciesRepo.add({
+        code: newCurrencyCodeNormalized,
+        name: newCurrencyName.trim(),
+        symbol: newCurrencyCodeNormalized,
+        decimals: newCurrencyKind === "crypto" ? 8 : 2,
+        kind: newCurrencyKind,
+      });
+      invalidateCurrencies();
+      setCurrencyCode(created.code);
+      setAddCurrencyOpen(false);
+      setNewCurrencyCode("");
+      setNewCurrencyName("");
+    } catch {
+      toast(t("accounts.form.addCurrencyError"));
+    } finally {
+      setAddingCurrency(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!canSave || saving) return;
@@ -225,11 +259,14 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           <div>
             <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.currency")}</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {CURRENCIES.map((c) => (
+              {currencies.map((c) => (
                 <Chip key={c.code} selected={currencyCode === c.code} onClick={() => setCurrencyCode(c.code)}>
                   {c.code}
                 </Chip>
               ))}
+              <Chip selected={false} onClick={() => setAddCurrencyOpen(true)}>
+                + {t("accounts.form.addCurrency")}
+              </Chip>
             </div>
           </div>
 
@@ -283,6 +320,35 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           </div>
         </div>
       )}
+      <Sheet open={addCurrencyOpen} title={t("accounts.form.addCurrency")} onClose={() => setAddCurrencyOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>{t("accounts.form.addCurrencyHint")}</p>
+          <Input
+            label={t("accounts.form.addCurrencyCode")}
+            value={newCurrencyCode}
+            onChange={(e) => setNewCurrencyCode(e.target.value.toUpperCase())}
+            placeholder="BTC, USDT, GBP…"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+          <Input label={t("accounts.form.addCurrencyName")} value={newCurrencyName} onChange={(e) => setNewCurrencyName(e.target.value)} placeholder={t("accounts.form.addCurrencyNamePlaceholder")} />
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.addCurrencyKind")}</p>
+            <SegmentedControl
+              options={[
+                { id: "crypto", label: t("accounts.form.addCurrencyCrypto") },
+                { id: "fiat", label: t("accounts.form.addCurrencyFiat") },
+              ]}
+              value={newCurrencyKind}
+              onChange={(v) => setNewCurrencyKind(v as "fiat" | "crypto")}
+            />
+          </div>
+          <Button disabled={!canAddCurrency || addingCurrency} onClick={handleAddCurrency}>
+            {t("accounts.form.addCurrencyConfirm")}
+          </Button>
+        </div>
+      </Sheet>
     </ScreenShell>
   );
 }

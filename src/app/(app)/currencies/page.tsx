@@ -13,8 +13,8 @@ import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, ty
 import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
-import { CURRENCIES } from "@/lib/reference/countries-currencies";
-import { FRANKFURTER_CURRENCIES } from "@/lib/fx/providers/frankfurter";
+import { useCurrencies, useInvalidateCurrencies } from "@/hooks/use-currencies";
+import { currenciesRepo } from "@/lib/repos/currencies-repo";
 import { CURRENCY_SYMBOLS } from "@/lib/money/format";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
@@ -91,21 +91,50 @@ export default function CurrenciesPage() {
     enabled: !!household && currencies.length > 0,
   });
 
-  // Catálogo fijo (7) ∪ cobertura real de Frankfurter (30, ver el
-  // comentario de `SUPPORTED` en el provider) — deduplicado, sin la base
-  // ni lo que ya está trackeado. El texto libre de abajo cubre lo que
-  // ninguno de los dos lista (ARS/UYU no están en Frankfurter, crypto en
-  // ninguno de los dos).
+  // Catálogo real (`currencies`, Patrón C — antes era un catálogo estático
+  // de 7 más la cobertura de Frankfurter, hardcodeado y desalineado del
+  // catálogo de verdad). Sin la base ni lo que ya está trackeado. El texto
+  // libre de abajo, cuando el código tipeado no está acá, ahora ofrece
+  // CREARLO en el catálogo real en vez de aceptarlo a ciegas — antes eso
+  // parecía funcionar en el momento (el override quedaba en Dexie local)
+  // pero rompía en el próximo sync (`fx_rates.base` tiene FK contra
+  // `currencies`) o en `/api/fx` (`MONEDA_DESCONOCIDA`).
+  const { data: allCurrencies = [] } = useCurrencies();
+  const invalidateCurrencies = useInvalidateCurrencies();
+  const [newCurrencyName, setNewCurrencyName] = useState("");
+  const [newCurrencyKind, setNewCurrencyKind] = useState<"fiat" | "crypto">("crypto");
+  const [creatingCurrency, setCreatingCurrency] = useState(false);
   const addableCurrencies = useMemo(() => {
-    const byCode = new Map<string, string>();
-    for (const c of CURRENCIES) byCode.set(c.code, c.name);
-    for (const c of FRANKFURTER_CURRENCIES) if (!byCode.has(c.code)) byCode.set(c.code, c.name);
-    byCode.delete(baseCurrency);
-    for (const code of currencies) byCode.delete(code);
-    return [...byCode.entries()].map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [currencies, baseCurrency]);
+    return allCurrencies
+      .filter((c) => c.code !== baseCurrency && !currencies.includes(c.code))
+      .map((c) => ({ code: c.code, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allCurrencies, currencies, baseCurrency]);
 
+  const knownCodes = useMemo(() => new Set(allCurrencies.map((c) => c.code)), [allCurrencies]);
   const customCodeValid = CUSTOM_CODE_PATTERN.test(customCode) && customCode !== baseCurrency && !currencies.includes(customCode);
+  const customCodeIsNew = customCodeValid && !knownCodes.has(customCode);
+
+  const handleCreateAndPickCurrency = async () => {
+    if (!customCodeValid || newCurrencyName.trim().length === 0 || creatingCurrency) return;
+    setCreatingCurrency(true);
+    try {
+      const created = await currenciesRepo.add({
+        code: customCode,
+        name: newCurrencyName.trim(),
+        symbol: customCode,
+        decimals: newCurrencyKind === "crypto" ? 8 : 2,
+        kind: newCurrencyKind,
+      });
+      invalidateCurrencies();
+      setNewCurrencyName("");
+      await handlePickNewCurrency(created.code);
+    } catch {
+      toast(t("accounts.form.addCurrencyError"));
+    } finally {
+      setCreatingCurrency(false);
+    }
+  };
 
   const handleRefresh = async () => {
     if (!household || currencies.length === 0 || refreshing) return;
@@ -320,11 +349,32 @@ export default function CurrenciesPage() {
               label={t("currenciesPage.customCodeLabel")}
               placeholder={t("currenciesPage.customCodePlaceholder")}
               value={customCode}
-              onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10))}
+              onChange={(e) => {
+                setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10));
+                setNewCurrencyName("");
+              }}
             />
-            <Button variant="secondary" style={{ marginTop: 8 }} disabled={!customCodeValid} onClick={() => handlePickNewCurrency(customCode)}>
-              {t("currenciesPage.customCodeAdd", { code: customCode || "…" })}
-            </Button>
+            {customCodeIsNew ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                <p className="t-label" style={{ margin: 0, color: "var(--text-secondary)" }}>{t("currenciesPage.customCodeNewHint", { code: customCode })}</p>
+                <Input label={t("accounts.form.addCurrencyName")} value={newCurrencyName} onChange={(e) => setNewCurrencyName(e.target.value)} placeholder={t("accounts.form.addCurrencyNamePlaceholder")} />
+                <SegmentedControl
+                  options={[
+                    { id: "crypto", label: t("accounts.form.addCurrencyCrypto") },
+                    { id: "fiat", label: t("accounts.form.addCurrencyFiat") },
+                  ]}
+                  value={newCurrencyKind}
+                  onChange={(v) => setNewCurrencyKind(v as "fiat" | "crypto")}
+                />
+                <Button variant="secondary" disabled={newCurrencyName.trim().length === 0 || creatingCurrency} onClick={handleCreateAndPickCurrency}>
+                  {t("accounts.form.addCurrencyConfirm")}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="secondary" style={{ marginTop: 8 }} disabled={!customCodeValid} onClick={() => handlePickNewCurrency(customCode)}>
+                {t("currenciesPage.customCodeAdd", { code: customCode || "…" })}
+              </Button>
+            )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", maxHeight: 300 }}>
             {addableCurrencies.length === 0 ? (

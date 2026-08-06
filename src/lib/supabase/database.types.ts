@@ -1804,7 +1804,6 @@ export type Database = {
           is_app_admin: boolean
           last_seen_at: string | null
           locale: string
-          registration_completed_at: string | null
           settings: Json
           timezone: string | null
         }
@@ -1822,7 +1821,6 @@ export type Database = {
           is_app_admin?: boolean
           last_seen_at?: string | null
           locale?: string
-          registration_completed_at?: string | null
           settings?: Json
           timezone?: string | null
         }
@@ -1840,7 +1838,6 @@ export type Database = {
           is_app_admin?: boolean
           last_seen_at?: string | null
           locale?: string
-          registration_completed_at?: string | null
           settings?: Json
           timezone?: string | null
         }
@@ -2745,6 +2742,29 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { invite_code: string }; Returns: string }
+      add_currency: {
+        Args: {
+          p_code: string
+          p_decimals: number
+          p_kind: string
+          p_name: string
+          p_symbol: string
+        }
+        Returns: {
+          code: string
+          decimals: number
+          is_active: boolean
+          kind: string
+          name: string
+          symbol: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "currencies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_list_access_requests: {
         Args: never
         Returns: {
