@@ -146,22 +146,24 @@ export default function MovementsPage() {
   const [filters, setFilters] = useState<MovementsFilters>(defaultMovementsFilters());
 
   // Prefiltros que llegan por deep link: del home (`?kind=`, `?pending=`) y del
-  // buscador flotante (`?category=`). Suben con el estado que sincronizan.
+  // buscador flotante (`?category=`/`?tag=`). Suben con el estado que sincronizan.
   const categoryIdParam = searchParams.get("category");
+  const tagIdParam = searchParams.get("tag");
   const kindParam = searchParams.get("kind");
   const pendingFxParam = searchParams.get("pending");
   const payeeIdParam = searchParams.get("payee");
   useEffect(() => {
-    if (!categoryIdParam && !kindParam && !pendingFxParam) return;
+    if (!categoryIdParam && !tagIdParam && !kindParam && !pendingFxParam) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sincronización genuina con el querystring de un deep link: el param SIEMBRA el filtro y después el usuario es dueño de él desde el sheet, así que no es derivable en el render. Mismo caso que el `?search=1` de `(app)/layout.tsx`.
     setFilters((f) => {
       const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
+      const nextTagIds = tagIdParam && !f.tagIds.includes(tagIdParam) ? [tagIdParam] : f.tagIds;
       const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
       const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
-      if (nextCategoryIds === f.categoryIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
-      return { ...f, categoryIds: nextCategoryIds, kind: nextKind, onlyPending: nextOnlyPending };
+      if (nextCategoryIds === f.categoryIds && nextTagIds === f.tagIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
+      return { ...f, categoryIds: nextCategoryIds, tagIds: nextTagIds, kind: nextKind, onlyPending: nextOnlyPending };
     });
-  }, [categoryIdParam, kindParam, pendingFxParam]);
+  }, [categoryIdParam, tagIdParam, kindParam, pendingFxParam]);
 
   const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
   const tagIdsByTx = useMemo(() => {

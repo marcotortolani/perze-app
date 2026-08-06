@@ -6,6 +6,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.6] — 2026-08-06
+
+### Agregado — el buscador flotante ahora cubre tags y cualquier sección de la app
+
+Tres huecos en `SearchOverlay`. Primero: un movimiento se encontraba por categoría pero nunca por
+sus tags — "Cliente" como tag no aparecía en ningún resultado aunque el movimiento estuviera
+etiquetado así. `rank.ts` suma `keywords` a `Searchable`: puntúan igual que título/subtítulo pero
+nunca se muestran en la fila (ya se ven en el detalle del movimiento), y hay un nuevo grupo "Tags"
+que además deja buscar el tag directo como destino (`/transactions?tag=<id>`, mismo patrón que
+`?category=`/`?payee=` — nuevo en `filter-predicate`/`page.tsx`, ya existía el campo
+`filters.tagIds` sin ninguna forma de sembrarlo por URL). Las notas/descripción del movimiento en
+realidad ya se buscaban (título si no hay categoría, subtítulo si la hay) — confirmado, sin cambios
+ahí.
+
+Segundo, más grande: los "accesos rápidos" del buscador eran 6 rutas fijas (agregar, dashboard,
+movimientos, cuentas, análisis, más), así que escribir "grup" no encontraba "Grupo familiar" — la
+sección ni siquiera estaba en la lista, no era un problema de scoring. Se reemplaza por el mismo
+inventario de `/more` (categorías, tags y comercios, reglas, tipos de cambio, perfil, seguridad,
+notificaciones, sincronización, ajustes, datos y backup, acerca de, panel del operador si es admin,
+y presupuestos/metas/recurrentes/deudas/inversiones/familia si el módulo está prendido — mismo
+gating por `enabled_modules` que ya usa `/more`), reusando los mismos `next-intl` keys que esas
+pantallas ya tienen, sin duplicar ningún string.
+
+Tercero: el matching de esos accesos era un `.includes()` crudo sin normalizar acentos — se
+reemplaza por el mismo `scoreMatch`/`normalize` que ya usa el resto del buscador, por consistencia
+("seguridad" sin tilde encontraba igual por casualidad del substring, pero "análisis" sin tilde no
+hubiera matcheado "Análisis").
+
 ## [0.29.5] — 2026-08-06
 
 ### Agregado — el override manual de FX ahora se sincroniza con el servidor

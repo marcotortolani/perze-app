@@ -60,4 +60,13 @@ describe("searchAll", () => {
   it("con query vacía devuelve nada", () => {
     expect(searchAll("", items)).toEqual([]);
   });
+
+  it("D30 — encuentra por keyword (tag) aunque no aparezca en título ni subtítulo", () => {
+    const withTags: Searchable[] = [
+      { id: "tx-1", group: "transactions", title: "Supermercado", href: "/transactions?tx=tx-1", icon: "cart", keywords: ["Cliente", "Reembolsable"] },
+      { id: "tx-2", group: "transactions", title: "Farmacia", href: "/transactions?tx=tx-2", icon: "cart", keywords: ["Personal"] },
+    ];
+    const results = searchAll("cliente", withTags);
+    expect(results.map((r) => r.id)).toEqual(["tx-1"]);
+  });
 });

@@ -4,7 +4,7 @@
  * antes de llamar acá; esta capa solo puntúa y ordena strings ya
  * etiquetados y ya normalizados.
  */
-export type SearchGroup = "transactions" | "accounts" | "categories" | "payees";
+export type SearchGroup = "transactions" | "accounts" | "categories" | "payees" | "tags";
 
 export interface SearchResult {
   id: string;
@@ -29,6 +29,8 @@ export interface Searchable {
   icon: string;
   href: string;
   sortKey?: string | undefined;
+  /** Texto que puntúa pero nunca se muestra — p. ej. los tags de un movimiento, para encontrarlo por "cliente" sin mostrar la lista de tags en cada fila. */
+  keywords?: string[] | undefined;
 }
 
 /** NFD + sin diacríticos + minúsculas — sin esto "cafe" no encuentra "Café", y la app es ES/PT. */
@@ -60,7 +62,8 @@ export function searchAll(query: string, items: Searchable[], opts?: { perGroup?
 
   const scored = items
     .map((item) => {
-      const score = Math.max(scoreMatch(normalize(item.title), needle) ?? 0, item.subtitle ? (scoreMatch(normalize(item.subtitle), needle) ?? 0) : 0);
+      const keywordScore = (item.keywords ?? []).reduce((best, kw) => Math.max(best, scoreMatch(normalize(kw), needle) ?? 0), 0);
+      const score = Math.max(scoreMatch(normalize(item.title), needle) ?? 0, item.subtitle ? (scoreMatch(normalize(item.subtitle), needle) ?? 0) : 0, keywordScore);
       return score > 0 ? { ...item, score } : null;
     })
     .filter((r): r is SearchResult => r !== null);

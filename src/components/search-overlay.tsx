@@ -10,10 +10,13 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useTags } from "@/hooks/use-tags";
+import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useOwnAccess } from "@/hooks/use-own-access";
 import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
-import { searchAll, type Searchable, type SearchResult } from "@/lib/search/rank";
+import { normalize, scoreMatch, searchAll, type Searchable, type SearchResult } from "@/lib/search/rank";
 
 interface QuickAction {
   id: string;
@@ -37,24 +40,62 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const { data: categories = [] } = useCategories(household?.id);
   const { data: payees = [] } = usePayees(household?.id);
   const { data: transactions = [] } = useTransactions(household?.id);
+  const { data: tags = [] } = useTags(household?.id);
+  const { data: transactionTagLinks = [] } = useTransactionTagsFor(transactions.map((tx) => tx.id));
+  const ownAccess = useOwnAccess();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const tagById = useMemo(() => new Map(tags.map((tg) => [tg.id, tg])), [tags]);
+  const tagIdsByTx = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const link of transactionTagLinks) {
+      map.set(link.transactionId, [...(map.get(link.transactionId) ?? []), link.tagId]);
+    }
+    return map;
+  }, [transactionTagLinks]);
 
-  const quickActions: QuickAction[] = useMemo(
-    () => [
+  /**
+   * D30 — antes eran 6 atajos fijos, así que buscar "grup" (Grupo familiar)
+   * o "seguridad" no encontraba nada aunque la palabra estuviera literal en
+   * el nombre de la pantalla: la sección ni siquiera estaba en la lista.
+   * Este es el mismo inventario de `/more` (con el mismo gating por
+   * `enabled_modules`/admin), para que el buscador cubra cualquier sección
+   * de la app y no solo movimientos/cuentas/categorías/comercios.
+   */
+  const quickActions: QuickAction[] = useMemo(() => {
+    const modules = household?.enabledModules ?? [];
+    const items: QuickAction[] = [
       { id: "add", label: t("search.actions.add"), route: "/add" },
       { id: "home", label: t("search.actions.home"), route: "/" },
       { id: "movements", label: t("search.actions.movements"), route: "/transactions" },
       { id: "accounts", label: t("search.actions.accounts"), route: "/accounts" },
       { id: "analytics", label: t("search.actions.analytics"), route: "/analytics" },
       { id: "more", label: t("search.actions.more"), route: "/more" },
-    ],
-    [t]
-  );
+      { id: "categories", label: t("morePage.categories"), route: "/more/categories" },
+      { id: "tagsAndPayees", label: t("morePage.tagsAndPayees"), route: "/more/tags" },
+      { id: "rules", label: t("morePage.rules"), route: "/more/rules" },
+      { id: "currencies", label: t("settingsPage.fxSources"), route: "/currencies" },
+      { id: "profile", label: t("morePage.profile"), route: "/more/profile" },
+      { id: "security", label: t("morePage.security"), route: "/more/security" },
+      { id: "notifications", label: t("notificationsPage.title"), route: "/more/notifications" },
+      { id: "sync", label: t("syncDiagnosticsPage.title"), route: "/more/sync" },
+      { id: "settings", label: t("morePage.settings"), route: "/more/settings" },
+      { id: "data", label: t("morePage.dataAndBackup"), route: "/more/data" },
+      { id: "about", label: t("morePage.about"), route: "/more/about" },
+    ];
+    if (modules.includes("budgets")) items.push({ id: "budgets", label: t("morePage.budgets"), route: "/budgets" });
+    if (modules.includes("goals")) items.push({ id: "goals", label: t("morePage.goals"), route: "/goals" });
+    if (modules.includes("recurring")) items.push({ id: "recurring", label: t("morePage.recurring"), route: "/recurring" });
+    if (modules.includes("debts")) items.push({ id: "debts", label: t("morePage.debts"), route: "/debts" });
+    if (modules.includes("investments")) items.push({ id: "investments", label: t("nav.investments"), route: "/investments" });
+    if (modules.includes("family")) items.push({ id: "family", label: t("morePage.family"), route: "/family" });
+    if (ownAccess?.isAppAdmin) items.push({ id: "admin", label: t("adminPage.title"), route: "/more/admin" });
+    return items;
+  }, [t, household?.enabledModules, ownAccess?.isAppAdmin]);
 
   const index = useMemo<Searchable[]>(() => {
     const items: Searchable[] = [];
@@ -68,9 +109,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     for (const p of payees) {
       items.push({ id: p.id, group: "payees", title: p.name, href: `/transactions?payee=${p.id}`, icon: "tag" });
     }
+    for (const tg of tags) {
+      items.push({ id: tg.id, group: "tags", title: tg.name, href: `/transactions?tag=${tg.id}`, icon: "tag" });
+    }
     for (const tx of transactions) {
       const category = tx.categoryId ? categoryById.get(tx.categoryId) : undefined;
       const title = category ? categoryLabel(category) : (tx.note ?? t("search.noNote"));
+      const txTagNames = (tagIdsByTx.get(tx.id) ?? []).map((tagId) => tagById.get(tagId)?.name).filter((name): name is string => !!name);
       items.push({
         id: tx.id,
         group: "transactions",
@@ -80,15 +125,27 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         href: `/transactions?tx=${tx.id}`,
         icon: (category?.icon as string) ?? "cart",
         sortKey: tx.occurredAt,
+        // D30 — un movimiento con la categoría "Cliente" y el tag "Reembolsable"
+        // antes solo se encontraba por categoría; los tags puntúan sin
+        // mostrarse en la fila (ya se ven al abrir el detalle).
+        keywords: txTagNames.length > 0 ? txTagNames : undefined,
       });
     }
     return items;
-  }, [accounts, categories, payees, transactions, categoryById, categoryLabel, t]);
+  }, [accounts, categories, payees, tags, transactions, categoryById, categoryLabel, tagById, tagIdsByTx, t]);
 
   const results = useMemo(() => searchAll(deferredQuery, index), [deferredQuery, index]);
   const filteredActions = useMemo(() => {
-    const needle = deferredQuery.trim().toLowerCase();
-    return needle ? quickActions.filter((a) => a.label.toLowerCase().includes(needle)) : quickActions;
+    const needle = normalize(deferredQuery);
+    if (!needle) return quickActions;
+    // Mismo criterio que `searchAll` (acento-insensible, prefijo de
+    // palabra) en vez de un `includes` crudo — así "seguridad" sin tilde
+    // encuentra "Seguridad", igual que en movimientos/cuentas.
+    return quickActions
+      .map((a) => ({ action: a, score: scoreMatch(normalize(a.label), needle) }))
+      .filter((x): x is { action: QuickAction; score: number } => x.score !== null)
+      .sort((x, y) => y.score - x.score)
+      .map((x) => x.action);
   }, [quickActions, deferredQuery]);
 
   const flatOptions = useMemo(
@@ -123,6 +180,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     { key: "accounts", label: t("search.accounts") },
     { key: "categories", label: t("search.categories") },
     { key: "payees", label: t("search.merchants") },
+    { key: "tags", label: t("search.tags") },
   ];
 
   return (

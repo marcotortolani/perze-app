@@ -1233,6 +1233,7 @@
   "accounts": "Accounts",
   "categories": "Categories",
   "merchants": "Merchants",
+  "tags": "Tags",
   "movement": "Transaction",
   "noNote": "No note",
   "actions": {
