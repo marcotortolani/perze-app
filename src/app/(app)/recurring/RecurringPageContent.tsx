@@ -177,7 +177,14 @@ export default function RecurringPageContent() {
               meta={ruleUpcoming ? `${relativeDayText(ruleUpcoming.nextDate.toISOString().slice(0, 10))} · ${account?.name ?? ""}` : t(`recurringPage.frequency.${rule.frequency}`)}
               variant="value"
               onClick={() => router.push(`/recurring/${rule.id}`)}
-              value={<Amount value={money(rule.expectedAmount, rule.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+              value={
+                <Amount
+                  value={money(rule.kind === "expense" ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
+                  size="body"
+                  polarity={rule.kind === "income" ? "positive" : "negative"}
+                  tabular
+                />
+              }
             />
           );
         })}
@@ -192,15 +199,31 @@ export default function RecurringPageContent() {
                 meta={t("recurringPage.chargeNow")}
                 variant="value"
                 onClick={() => handleChargeNow(rule.id, due[0]!)}
-                value={chargingId === rule.id ? "…" : <Amount value={money(rule.expectedAmount, rule.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                value={
+                  chargingId === rule.id ? (
+                    "…"
+                  ) : (
+                    <Amount
+                      value={money(rule.kind === "expense" ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
+                      size="body"
+                      polarity={rule.kind === "income" ? "positive" : "negative"}
+                      tabular
+                    />
+                  )
+                }
               />
             ))}
           </>
         ) : null}
 
-        <Button onClick={() => router.push("/recurring/new")} style={{ marginTop: 16 }}>
-          {t("recurringPage.newRule")}
-        </Button>
+        {/* `pb-6 lg:pb-0`: en mobile el FAB "+" de la TabBar queda pegado
+            arriba del botón primario sin este aire extra — en desktop no
+            hay TabBar, así que no hace falta. */}
+        <div className="pb-6 lg:pb-0">
+          <Button onClick={() => router.push("/recurring/new")} style={{ marginTop: 16 }}>
+            {t("recurringPage.newRule")}
+          </Button>
+        </div>
       </div>
 
       <div className="hidden lg:block">

@@ -6,6 +6,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.39] — 2026-08-06
+
+### Corregido — recurrentes: ingresos y gastos se veían idénticos, sin signo ni color
+
+`RecurringPageContent`, `RecurringMonthCalendar` y `/recurring/[id]` mostraban todos los
+montos con `polarity="neutral"` y `showSign={false}` hardcodeado, sin importar
+`rule.kind`. Desde que un recurrente puede ser ingreso o gasto (no solo gasto, que era
+el único caso cuando se escribió ese código), la lista quedó sin la codificación de
+polaridad que el resto de la app sí tiene: mismo color, mismo signo, imposible
+distinguir un ingreso de un gasto de un vistazo. Se alinea con el patrón ya establecido
+en `TransactionsListContent` — `polarity` por `kind` (`income` → `positive`/aqua,
+`expense` → `negative`/texto neutro) y el signo saliendo del propio `value` (negativo
+para gasto), no de un prop separado.
+
+### Corregido/Mejorado — varios de la cola de recurrentes
+
+- Botón primario de `/recurring`: "Nueva recurrente" → "Nuevo recurrente" — con
+  ingresos y gastos conviviendo, el sustantivo implícito es "movimiento recurrente"
+  (masculino), no "regla recurrente".
+- En mobile, el botón "Nuevo recurrente" quedaba pegado contra el FAB "+" de la
+  TabBar sin aire propio (`pb-6 lg:pb-0` en el wrapper, sin efecto en desktop porque
+  ahí no hay TabBar).
+
 ## [0.29.38] — 2026-08-06
 
 ### Corregido — primera card del carrusel de cuentas en mobile con texto destacado sin motivo

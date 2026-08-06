@@ -95,7 +95,19 @@ export function RecurringMonthCalendar() {
             <p className="t-body text-text-secondary">{t("recurringCalendarPage.noneThatDay")}</p>
           ) : (
             rulesOnSelectedDate.map((rule) => (
-              <ListRow key={rule!.id} label={rule!.name} onClick={() => router.push(`/recurring/${rule!.id}`)} value={<Amount value={money(rule!.expectedAmount, rule!.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />} />
+              <ListRow
+                key={rule!.id}
+                label={rule!.name}
+                onClick={() => router.push(`/recurring/${rule!.id}`)}
+                value={
+                  <Amount
+                    value={money(rule!.kind === "expense" ? -rule!.expectedAmount : rule!.expectedAmount, rule!.currencyCode)}
+                    size="body"
+                    polarity={rule!.kind === "income" ? "positive" : "negative"}
+                    tabular
+                  />
+                }
+              />
             ))
           )}
         </div>

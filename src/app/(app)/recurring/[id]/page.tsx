@@ -182,11 +182,10 @@ export default function RecurringRuleDetailPage({
         </div>
         <div style={{ textAlign: 'center' }}>
           <Amount
-            value={money(rule.expectedAmount, rule.currencyCode)}
+            value={money(rule.kind === 'expense' ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
             size="hero"
             fit
-            showSign={false}
-            polarity="neutral"
+            polarity={rule.kind === 'income' ? 'positive' : 'negative'}
             tabular
           />
         </div>
@@ -237,10 +236,9 @@ export default function RecurringRuleDetailPage({
                   >
                     <span>{displayDate(p.date)}</span>
                     <Amount
-                      value={money(p.amount, rule.currencyCode)}
+                      value={money(rule.kind === 'expense' ? -p.amount : p.amount, rule.currencyCode)}
                       size="body"
-                      showSign={false}
-                      polarity="neutral"
+                      polarity={rule.kind === 'income' ? 'positive' : 'negative'}
                       tabular
                     />
                   </div>

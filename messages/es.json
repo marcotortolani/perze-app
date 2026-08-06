@@ -1626,7 +1626,7 @@
  "recurringPage": {
   "empty": "Todavía no cargaste ninguna recurrente.",
   "emptyAction": "Crear recurrente",
-  "newRule": "Nueva recurrente",
+  "newRule": "Nuevo recurrente",
   "name": "Nombre",
   "namePlaceholder": "Ej: Netflix",
   "noCategory": "Sin categoría",

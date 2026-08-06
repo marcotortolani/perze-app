@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.39 — 6 de agosto de 2026
+
+### Mejorado
+
+- En Recurrentes, ahora los ingresos y los gastos se distinguen a simple vista: los
+  ingresos van en aqua con "+" y los gastos con "−", igual que en Movimientos.
+- El botón para crear un recurrente nuevo ahora tiene un poco más de aire respecto al
+  botón "+" de abajo en el celular, y dice "Nuevo recurrente".
+
 ## 0.29.38 — 6 de agosto de 2026
 
 ### Arreglado
