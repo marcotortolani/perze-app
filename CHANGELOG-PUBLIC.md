@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.19 — 6 de agosto de 2026
+
+### Arreglado
+
+- Algunas entradas de estas novedades se veían cortadas a mitad de frase — ya se muestran
+  completas.
+
 ## 0.29.18 — 6 de agosto de 2026
 
 ### Nuevo

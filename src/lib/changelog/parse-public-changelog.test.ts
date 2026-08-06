@@ -40,6 +40,21 @@ describe("parsePublicChangelog", () => {
     expect(parsePublicChangelog("solo texto, sin encabezados")).toEqual([]);
   });
 
+  it("un ítem envuelto en dos líneas (regla de \"dos líneas como máximo\") se une, no se corta", () => {
+    const md = `## 0.29.15 — 6 de agosto de 2026\n\n### Arreglado\n\n- Al entrar a "mi portfolio" ya no ves nunca "$ 0,00" en una posición mientras se actualiza el\n  precio — se muestra el último valor conocido hasta que llega el nuevo.\n- Un segundo ítem, de una sola línea.\n`;
+    const entries = parsePublicChangelog(md);
+    const entry = entries[0] as PublicChangelogVersionEntry;
+    expect(entry.groups).toEqual([
+      {
+        heading: "Arreglado",
+        items: [
+          'Al entrar a "mi portfolio" ya no ves nunca "$ 0,00" en una posición mientras se actualiza el precio — se muestra el último valor conocido hasta que llega el nuevo.',
+          "Un segundo ítem, de una sola línea.",
+        ],
+      },
+    ]);
+  });
+
   it("un `## ` que no matchea el formato de versión es una entrada narrativa, intercalada en su lugar", () => {
     const md = `## 0.2.0 — 28 de julio de 2026\n\n- Algo.\n\n## El principio\n\nPrimera línea de un párrafo\nque sigue en la línea de abajo.\n\nSegundo párrafo, separado por una línea en blanco.\n\n## 0.1.0 — 30 de mayo de 2026\n\n- Otra cosa.\n`;
     const entries = parsePublicChangelog(md);

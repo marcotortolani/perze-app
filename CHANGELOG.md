@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.19] — 2026-08-06
+
+### Corregido — el changelog público se veía cortado a mitad de frase
+
+Reporte del usuario: algunas entradas de "Novedades" (Más → Acerca de) se veían truncadas
+dentro de la app. `CHANGELOG-PUBLIC.md` no tenía nada faltante — la propia regla del
+archivo permite "dos líneas como máximo" por ítem cuando hace falta, y varias entradas ya
+usaban esa segunda línea envuelta (indentada, sin el guion inicial (`-`), convención
+estándar de Markdown para continuar un ítem de lista).
+
+`parsePublicChangelog()` (`src/lib/changelog/parse-public-changelog.ts`) es un parser de
+línea, no de Markdown genérico, y su regex de ítems (`/^-\s+(.+)$/`) solo reconocía la
+primera línea de cada bullet. La segunda línea no matcheaba ningún patrón del loop (no es
+versión, no es heading, no arranca con el guion (`-`)) y cayó siempre en el `continue` genérico —
+se perdía en silencio, así que el texto se veía cortado justo donde envolvía la línea.
+Ahora una línea no vacía que no matchea nada, con un grupo de ítems activo, se une con un
+espacio al último ítem — no es un parser de Markdown completo (sigue sin soportar
+sub-listas ni otra sintaxis), pero cubre exactamente el caso que la propia guía de estilo
+del archivo declara como válido.
+
 ## [0.29.18] — 2026-08-06
 
 ### Agregado — toggle "moneda original / moneda base" en el detalle de instrumento (I4)

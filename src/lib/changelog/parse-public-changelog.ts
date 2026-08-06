@@ -93,6 +93,19 @@ export function parsePublicChangelog(markdown: string): PublicChangelogEntry[] {
         current.groups.push(currentGroup);
       }
       currentGroup.items.push(itemMatch[1]!.trim());
+      continue;
+    }
+
+    // Continuación de un ítem envuelto en dos líneas (la regla de "dos
+    // líneas como máximo" del propio archivo) — la segunda línea viene
+    // indentada, sin `- `, así que antes caía en el `continue` de abajo y
+    // se perdía en silencio: el ítem se veía cortado a la mitad de la
+    // frase dentro de la app. Se une con un espacio al último ítem del
+    // grupo activo.
+    const continuation = line.trim();
+    if (continuation && currentGroup && currentGroup.items.length > 0) {
+      const lastIndex = currentGroup.items.length - 1;
+      currentGroup.items[lastIndex] = `${currentGroup.items[lastIndex]} ${continuation}`;
     }
   }
   flushParagraph();
