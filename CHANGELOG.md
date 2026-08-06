@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.5] — 2026-08-06
+
+### Agregado — el override manual de FX ahora se sincroniza con el servidor
+
+`fx_overrides` y `household_fx_preferences` existían en el schema desde `01-arquitectura-datos.md`
+§ 2.6 (la primera con RLS desde `20260801010800_fx_overrides.sql`, la segunda desde el día 1 de
+identidad), pero ningún caller les escribía nunca: `setManualOverride`/`clearManualOverride`/
+`setPreference` (`fx-repo.ts`) solo tocaban Dexie. Consecuencia doble — cargar un rate a mano en
+un dispositivo no se veía en los demás del household, y el cron
+`materialize_recurring_transactions()` (`perze-materialize-recurring`), que sí consulta
+`fx_overrides` server-side, nunca encontraba nada ahí.
+
+Nuevos `fx-overrides-repo.ts` y `fx-preferences-repo.ts` escriben directo a Supabase (mismo patrón
+que `currencies-repo.ts`, sin outbox — no es una mutación de plata) con push-through best-effort
+desde `fx-repo.ts`: si falla (offline, error del servidor) el valor local ya quedó aplicado, nunca
+bloquea. `fx_overrides` es bitácora inmutable (`valid_from`/`valid_to`) — cambiar el rate cierra la
+vigencia anterior un día antes de abrir la nueva, nunca se pisa `rate` de una fila existente.
+`/currencies` y `/accounts/resolve-fx` ahora pasan `createdBy` (antes ninguno de los dos llamaba
+con el usuario real).
+
+Nuevo `fxRepo.syncFromServer()` trae los overrides/preferencias vigentes y los cachea en Dexie —
+deliberadamente NO vive dentro de `resolve()` (que corre en cada guardado de movimiento y violaría
+el objetivo de <5s de CLAUDE.md), se llama explícito al entrar a `/currencies` y al tocar
+"Actualizar".
+
+`fx-overrides-repo.ts`/`fx-preferences-repo.ts` se importan con `import()` dinámico desde
+`fx-repo.ts`, no estático — ambos arrastran `supabase/client.ts`, que valida `env.ts` al cargar el
+módulo, y un import estático rompía cualquier test que importe `fx-repo.ts` sin mockear Supabase
+(la mayoría: lógica pura de captura/movimientos). `fx-repo.test.ts` suma un mock de
+`../supabase/client` para las nuevas rutas que sí lo ejercitan.
+
 ## [0.29.4] — 2026-08-06
 
 ### Agregado — buscador de instrumentos al crear una inversión, con precio de mercado precargado

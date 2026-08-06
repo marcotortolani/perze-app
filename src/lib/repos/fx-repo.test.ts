@@ -5,6 +5,30 @@ import { formatRate, invertRate, rateFromInteger } from "../fx/rate";
 import { todayIso } from "./ids";
 import { fxRepo } from "./fx-repo";
 
+// D27 — `setManualOverride`/`clearManualOverride`/`setPreference` ahora
+// también hablan con Supabase (`fx-overrides-repo.ts`,
+// `fx-preferences-repo.ts`): sin este mock, estos tests golpearían el
+// proyecto real con la anon key de `.env.local`. El fake resuelve
+// `{ data: null, error: null }` para cualquier query — "no hay nada en el
+// servidor todavía", que es exactamente el estado que esta suite no
+// necesita simular para probar la lógica local.
+function fakeQueryBuilder(): PromiseLike<{ data: null; error: null }> & Record<string, unknown> {
+  const builder: Record<string, unknown> = {
+    select: () => builder,
+    eq: () => builder,
+    is: () => builder,
+    order: () => builder,
+    update: () => builder,
+    insert: () => builder,
+    upsert: () => builder,
+    returns: () => builder,
+    maybeSingle: () => Promise.resolve({ data: null, error: null }),
+    then: (resolve: (value: { data: null; error: null }) => void) => resolve({ data: null, error: null }),
+  };
+  return builder as never;
+}
+vi.mock("../supabase/client", () => ({ createClient: () => ({ from: () => fakeQueryBuilder() }) }));
+
 describe("fxRepo — overrides manuales scoped por household (A8)", () => {
   beforeEach(() => {
     resetDbForTests(`perze-test-fx-repo-${crypto.randomUUID()}`);

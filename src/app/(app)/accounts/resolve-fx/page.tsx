@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, EmptyState, FxEditor, GroupCard, Keypad, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
@@ -24,6 +25,7 @@ export default function ResolveFxPage() {
   const router = useRouter();
   usePageHeader({ title: t("accountsPage.list.resolvePendingFx"), onBack: () => router.push("/accounts"), backLabel: t("accountsPage.resolveFx.back") });
   const { data: household } = useCurrentHousehold();
+  const userId = useEffectiveUserId();
   const { data: transactions = [], isLoading } = useTransactions(household?.id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const [editingCurrency, setEditingCurrency] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export default function ResolveFxPage() {
     setApplying(true);
     try {
       const txs = groups.find(([c]) => c === editingCurrency)?.[1] ?? [];
-      await fxRepo.setManualOverride(household.id, editingCurrency, baseCurrency, rate);
+      await fxRepo.setManualOverride(household.id, editingCurrency, baseCurrency, rate, "custom", userId ?? undefined);
       await Promise.all(txs.map((t) => resolvePendingFx({ transactionId: t.id, baseCurrency, rate })));
       invalidateTransactions();
       toast(t("accountsPage.resolveFx.resolvedCount", { count: txs.length }));

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow, RateRow, SegmentedControl, Sheet, Skeleton, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { RATE_SCALE, formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
@@ -32,6 +33,7 @@ export default function CurrenciesPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: household } = useCurrentHousehold();
+  const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
   const [editingPair, setEditingPair] = useState<string | null>(null);
   /**
@@ -65,6 +67,25 @@ export default function CurrenciesPage() {
   const decimalSeparator = decimalSeparatorForLocale(locale);
 
   const baseCurrency = household?.baseCurrency ?? "UYU";
+
+  // D27 — trae los overrides/preferencias vigentes del servidor al entrar
+  // a la pantalla: es lo que hace que un override cargado en otro
+  // dispositivo (o por otro miembro del household) aparezca acá, en vez
+  // de quedar invisible hasta que alguien lo vuelva a tipear. Deliberado
+  // que NO viva en `resolve()` — ver el comentario de `syncFromServer`.
+  useEffect(() => {
+    if (!household) return;
+    fxRepo
+      .syncFromServer(household.id)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] });
+        queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency] });
+      })
+      .catch(() => {
+        // sin red: la pantalla sigue mostrando lo que ya tenía en Dexie.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al entrar a la pantalla o cambiar de household, no en cada cambio de `currencies`/`baseCurrency` derivado
+  }, [household?.id]);
 
   const overridesQuery = useQuery({
     queryKey: ["fx-override-currencies", household?.id, baseCurrency],
@@ -157,6 +178,7 @@ export default function CurrenciesPage() {
     if (!household || currencies.length === 0 || refreshing) return;
     setRefreshing(true);
     try {
+      await fxRepo.syncFromServer(household.id);
       const results = await Promise.all(
         currencies.map((currency) => fxRepo.resolve({ householdId: household.id, base: currency, quote: baseCurrency, date: todayIso(), forceRefresh: true }))
       );
@@ -258,7 +280,7 @@ export default function CurrenciesPage() {
     // está mostrando, `fx_rate` se guarda siempre canónico
     // (`editingPair → baseCurrency`).
     const canonicalRate = inverted ? invertRate(manualRate) : manualRate;
-    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, canonicalRate);
+    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, canonicalRate, "custom", userId ?? undefined);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
       queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] }),
