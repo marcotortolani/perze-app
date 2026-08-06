@@ -51,6 +51,27 @@ describe("fxRepo — overrides manuales scoped por household (A8)", () => {
     expect(resolution.rate).toBe(rateFromInteger(1000));
   });
 
+  it("D25 — elegir una variante real (blue/CCL/etc) exige limpiar el override manual, o resolve() lo sigue devolviendo", async () => {
+    // El picker de E6 (`/currencies`) llama a las dos cosas juntas
+    // (`clearManualOverride` + `setPreference`) — este test prueba que
+    // hacerlo de verdad cambia la resolución, no solo que las funciones
+    // individuales no tiran error.
+    await fxRepo.setManualOverride("household-a", "USD", "ARS", rateFromInteger(1000));
+    await fxRepo.cacheQuotes([{ base: "USD", quote: "ARS", asOf: todayIso(), provider: "dolarapi", quoteKind: "blue", rate: rateFromInteger(1300), fetchedAt: "2026-07-27T10:00:00Z" }]);
+
+    // Con el override todavía vigente, blue no gana — coincide con el bug reportado en vivo.
+    const beforeClear = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: todayIso() });
+    expect(beforeClear.source).toBe("manual");
+
+    await fxRepo.clearManualOverride("household-a", "USD", "ARS");
+    await fxRepo.setPreference("household-a", "USD/ARS", "dolarapi", "blue");
+
+    const afterClear = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: todayIso() });
+    expect(afterClear.source).toBe("api");
+    expect(afterClear.quoteKind).toBe("blue");
+    expect(afterClear.rate).toBe(rateFromInteger(1300));
+  });
+
   it("A8 — un rate 'inherited' para HOY vuelve a consultar /api/fx si hay red", async () => {
     const today = todayIso();
     // Cache local: solo una cotización vieja (heredada), nada de hoy.

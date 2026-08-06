@@ -140,7 +140,16 @@ export default function CurrenciesPage() {
   /** Blue/CCL/tarjeta, con un click — queda guardado por household+par (`fx-repo.ts`, `householdFxPreferences`) hasta que el usuario elija otra. */
   const handleSelectQuoteKind = async (currency: string, quoteKind: string, provider: string) => {
     if (!household) return;
-    await fxRepo.setPreference(household.id, `${currency}/${baseCurrency}`, provider, quoteKind);
+    // El override manual (`fx_overrides`/Dexie `provider: 'manual'`) es
+    // SIEMPRE el primer paso de la cadena de resolución — gana incluso
+    // sobre una preferencia recién elegida acá, así que un household con
+    // un override vigente para este par no podía volver a elegir
+    // blue/CCL/etc nunca: `setPreference` guardaba la elección pero
+    // `resolveFxRate` ni siquiera llegaba a mirarla. Elegir una variante
+    // real acá es una decisión explícita de "quiero esta cotización de
+    // mercado, no la que tipeé a mano" — así que limpia el override del
+    // par, no solo guarda la preferencia.
+    await Promise.all([fxRepo.clearManualOverride(household.id, currency, baseCurrency), fxRepo.setPreference(household.id, `${currency}/${baseCurrency}`, provider, quoteKind)]);
     await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
   };
 

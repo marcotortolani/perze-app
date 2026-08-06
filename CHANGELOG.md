@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.3] — 2026-08-06
+
+### Arreglado — elegir blue/CCL/mayorista no hacía nada con un override manual vigente
+
+El override manual es siempre el primer paso de la cadena de resolución de FX — gana incluso
+sobre una preferencia de `quoteKind` recién elegida en el picker de `/currencies` (0.28.9):
+`setPreference` guardaba la elección, pero `resolveFxRate` ni siquiera llegaba a mirarla mientras
+hubiera un override vigente para el par. Un household que alguna vez cargó un valor a mano
+quedaba sin forma de volver a elegir una cotización de mercado real. Elegir una variante ahora
+limpia el override del par antes de guardar la preferencia — es una decisión explícita de "quiero
+esta cotización, no la que tipeé a mano".
+
 ## [0.29.2] — 2026-08-06
 
 ### Arreglado — dos detalles visuales en mobile: el banner de recordatorios y la barra de scroll
