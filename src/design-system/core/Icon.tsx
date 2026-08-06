@@ -16,6 +16,7 @@ import {
   BeerBottleIcon,
   BicycleIcon,
   BoneIcon,
+  BookmarkSimpleIcon,
   BooksIcon,
   BowlFoodIcon,
   BrainIcon,
@@ -331,6 +332,9 @@ export const ICONS = {
   dog: DogIcon,
   cat: CatIcon,
   cloud: CloudIcon,
+  // I4 — "eliminar de seguimiento" en el detalle de instrumento: un ícono
+  // reconocible de favorito/marcador, no un botón con texto separado.
+  bookmark: BookmarkSimpleIcon,
 } satisfies Record<string, PhosphorIcon>;
 
 export type IconName = keyof typeof ICONS;

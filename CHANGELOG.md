@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.17] — 2026-08-06
+
+### Agregado — "Instrumentos" reemplaza a "Estado de los precios"; fluctuación histórica en I4
+
+Pedido del usuario: "estado de los precios" no comunicaba nada útil — los precios siempre son
+los de mercado, y el ajuste manual (I12) ya se resuelve desde ahí mismo. Se reemplaza por
+"Instrumentos" (`/investments/instruments`, antes `/investments/prices`, que queda como
+`redirect` de compatibilidad — CLAUDE.md § convención de rutas, punto 5), con dos secciones:
+"En tu portfolio" (lo que ya se compró — obligatorio, son los precios que de todas formas hay
+que mantener actualizados) y "En seguimiento" (instrumentos sin posición que el household
+agregó solo para hacerles seguimiento). Cada fila ahora navega al detalle del instrumento
+(`positions/[instrumentId]`, I4) — antes solo se llegaba ahí desde una posición con operaciones
+cargadas, así que un instrumento en seguimiento puro no tenía forma de abrir su detalle.
+
+El botón de actualizar precio de cada fila vive en el `right` de `ListRow` (no en `value`) con
+`stopPropagation()` — con la fila ahora clickeable, ponerlo en `value` habría anidado un
+`<button>` dentro del `<button>` que `ListRow` arma cuando `onClick` está presente sin `right`.
+
+"Agregar instrumento" se saca de `OverviewContent` (el overview del portfolio) y queda solo
+en "Instrumentos" — la navegación pasa a ser mi portfolio → Instrumentos → Agregar instrumento,
+como pidió el usuario.
+
+`InstrumentDetailContent` (I4) suma un gráfico de fluctuación con selector de rango (semana /
+mes / 6 meses / año — `PRICE_HISTORY_RANGES`, `sinceIsoForRange()`) sobre `price_snapshots`
+(nuevo `priceSnapshotsRepo.historyFor()` / `usePriceHistory()`). **Decisión explícita, no un
+recorte silencioso**: no hay rango "día". `price_snapshots` guarda un cierre por instrumento
+por día (lo escribe el cron `daily-price-sync`) — no hay granularidad intradía, así que un
+gráfico de "hoy" mostraría como mucho dos puntos, exactamente lo que CLAUDE.md § "Mínimos de
+historial" dice que no hay que hacer ("un gráfico con dos puntos enseña una tendencia que no
+existe"). Además `SegmentedControl` tiene un tope duro de 4 opciones en su propio contrato
+("más de 4 es un Sheet"), y 5 rangos lo hubiera violado. La variación del día se sigue
+mostrando — como texto ("↑ 2.3% hoy") junto al precio actual, calculada entre los dos cierres
+más recientes, no como gráfico. Mismo criterio de mínimos para cualquier rango: con menos de
+`MIN_HISTORY_POINTS` (3) cierres reales, se muestra cuánto historial falta en vez del gráfico.
+
+Nuevo botón "Eliminar de seguimiento" (ícono bookmark, `IconButton` en el header) en I4 — solo
+visible cuando el instrumento es propio del household (no del catálogo global, Patrón C) y no
+tiene posición, mismo criterio que ya tenía la hoja de edición de "Instrumentos". Reutiliza
+`instrumentsRepo.deleteUnused()`, ya existente.
+
+Namespace de i18n `pricesStatusPage` renombrado a `instrumentsListPage` en los tres idiomas.
+
 ## [0.29.16] — 2026-08-06
 
 ### Agregado — "Registrar operación" desde el detalle de instrumento (I4)

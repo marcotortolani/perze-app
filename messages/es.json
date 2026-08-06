@@ -1882,6 +1882,17 @@
   "avgPrice": "Precio promedio",
   "currentPrice": "Precio actual",
   "weight": "Peso en el portfolio",
+  "today": "hoy",
+  "fluctuation": "Fluctuación",
+  "range": {
+   "week": "Semana",
+   "month": "Mes",
+   "6m": "6 meses",
+   "year": "Año"
+  },
+  "notEnoughHistory": "Todavía no hay suficiente historial de precios para este rango — faltan {count, plural, one {# día} other {# días}}.",
+  "removeFromWatchlist": "Eliminar de seguimiento",
+  "removedFromWatchlist": "{symbol} eliminado de seguimiento",
   "history": "Historial",
   "noHistory": "Todavía no hay operaciones para este instrumento."
  },
@@ -1938,13 +1949,14 @@
    "maturity": "Vencimiento"
   }
  },
- "pricesStatusPage": {
-  "title": "Estado de los precios",
+ "instrumentsListPage": {
+  "title": "Instrumentos",
   "empty": "Todavía no tenés ningún instrumento para seguir.",
+  "sectionPortfolio": "En tu portfolio",
+  "sectionWatchlist": "En seguimiento",
   "updatePrice": "Actualizar precio de {symbol}",
   "price": "Precio ({currency})",
   "addInstrument": "Agregar instrumento",
-  "metaWithPosition": "{name} · en cartera",
   "removeFromList": "Eliminar de la lista",
   "removed": "{symbol} eliminado de la lista"
  },

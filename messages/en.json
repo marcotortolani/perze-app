@@ -1882,6 +1882,17 @@
   "avgPrice": "Average price",
   "currentPrice": "Current price",
   "weight": "Weight in portfolio",
+  "today": "today",
+  "fluctuation": "Fluctuation",
+  "range": {
+   "week": "Week",
+   "month": "Month",
+   "6m": "6 months",
+   "year": "Year"
+  },
+  "notEnoughHistory": "Not enough price history for this range yet — {count, plural, one {# day} other {# days}} to go.",
+  "removeFromWatchlist": "Remove from watchlist",
+  "removedFromWatchlist": "{symbol} removed from watchlist",
   "history": "History",
   "noHistory": "No trades for this instrument yet."
  },
@@ -1938,13 +1949,14 @@
    "maturity": "Maturity"
   }
  },
- "pricesStatusPage": {
-  "title": "Price status",
+ "instrumentsListPage": {
+  "title": "Instruments",
   "empty": "You don't have any instrument to track yet.",
+  "sectionPortfolio": "In your portfolio",
+  "sectionWatchlist": "Watchlist",
   "updatePrice": "Update {symbol}'s price",
   "price": "Price ({currency})",
   "addInstrument": "Add instrument",
-  "metaWithPosition": "{name} · in your portfolio",
   "removeFromList": "Remove from list",
   "removed": "{symbol} removed from the list"
  },

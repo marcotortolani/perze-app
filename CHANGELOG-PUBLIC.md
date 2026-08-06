@@ -40,6 +40,18 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.17 — 6 de agosto de 2026
+
+### Nuevo
+
+- "Estado de los precios" pasa a llamarse "Instrumentos" y ahora separa lo que tenés comprado de
+  lo que solo seguís sin haber invertido todavía. "Agregar instrumento" se movió para adentro de
+  esta pantalla.
+- El detalle de un instrumento ahora muestra cómo se movió su precio en el tiempo, con selector
+  de semana, mes, 6 meses o año.
+- Podés sacar un instrumento de tu lista de seguimiento directamente desde su detalle, con el
+  ícono de marcador.
+
 ## 0.29.16 — 6 de agosto de 2026
 
 ### Nuevo

@@ -182,11 +182,13 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
       <NeedsFxBanner count={excludedCount} />
 
       <ListRow icon="plus" label={t("investmentsPage.recordTrade")} variant="action" onClick={() => router.push(`/investments/${portfolio.id}/trades/new`)} />
-      <ListRow icon="chart" label={t("investmentsPage.newInstrument")} onClick={() => router.push(`/investments/${portfolio.id}/instruments/new`)} />
       <ListRow icon="target" label={t("allocationPage.title")} onClick={() => router.push("/investments/allocation")} />
       <ListRow icon="trend" label={t("performancePage.title")} onClick={() => router.push("/investments/performance")} />
       <ListRow icon="calendar" label={t("futureIncomePage.title")} onClick={() => router.push("/investments/future-income")} />
-      <ListRow icon="clock" label={t("pricesStatusPage.title")} onClick={() => router.push("/investments/prices")} />
+      {/* "Agregar instrumento" se movió adentro de "Instrumentos" — ya no
+          hace falta un segundo acceso acá (queda: mi portfolio →
+          Instrumentos → Agregar instrumento). */}
+      <ListRow icon="invest" label={t("instrumentsListPage.title")} onClick={() => router.push("/investments/instruments")} />
       <ListRow icon="tag" label={t("assetClassesPage.title")} onClick={() => router.push("/investments/asset-classes")} />
 
       <div>

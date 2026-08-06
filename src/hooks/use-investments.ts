@@ -66,3 +66,11 @@ export function useInvalidateLatestPrices(instrumentIds: string[]) {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: ["latest-prices", [...instrumentIds].sort()], refetchType: "all" });
 }
+
+export function usePriceHistory(instrumentId: string | undefined, sinceIso: string) {
+  return useQuery({
+    queryKey: ["price-history", instrumentId ?? "", sinceIso],
+    queryFn: () => priceSnapshotsRepo.historyFor(instrumentId!, sinceIso),
+    enabled: !!instrumentId,
+  });
+}

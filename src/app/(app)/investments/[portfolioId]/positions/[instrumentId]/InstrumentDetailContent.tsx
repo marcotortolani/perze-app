@@ -3,14 +3,28 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, Button, EmptyState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { toast } from "sonner";
+import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { LineChart } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useAssetClasses, useInstruments, useInvalidateLatestPrices, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import {
+  useAssetClasses,
+  useInstruments,
+  useInvalidateInstruments,
+  useInvalidateLatestPrices,
+  useLatestPrices,
+  usePortfolios,
+  usePriceHistory,
+  useTrades,
+} from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
+import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
+import { todayIso } from "@/lib/repos/ids";
+import { MIN_HISTORY_POINTS, PRICE_HISTORY_RANGES, sinceIsoForRange, type PriceHistoryRange } from "@/lib/prices/history-range";
 import { formatDateShort, type Locale } from "@/i18n/formatting";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
@@ -40,14 +54,49 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   // mientras la consulta real todavía no resolvió, nunca "$ 0,00".
   const prices = useCachedLatestPrices(pricesQuery.data);
   const invalidatePrices = useInvalidateLatestPrices(instrumentIds);
+  const invalidateInstruments = useInvalidateInstruments(household?.id);
 
   const [editingPrice, setEditingPrice] = useState(false);
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [historyRange, setHistoryRange] = useState<PriceHistoryRange>("month");
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const instrument = instruments?.find((i) => i.id === instrumentId);
-  usePageHeader({ title: instrument?.symbol ?? t("nav.investments"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+  // Se computa antes de `usePageHeader` (no después del `if` de abajo) solo
+  // porque el botón de "eliminar de seguimiento" del header lo necesita, y
+  // todo hook tiene que correr antes de cualquier return condicional.
+  const positions = computePositions((trades ?? []).map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
+  const position = positions.get(instrumentId);
+  // Mismo criterio que la hoja de edición de "Instrumentos": solo un
+  // instrumento propio del household (no del catálogo global) y sin
+  // posición se puede sacar de seguimiento.
+  const canRemoveFromWatchlist = !!household && !!instrument && instrument.householdId === household.id && (!position || position.quantity === 0);
+  const sinceIso = sinceIsoForRange(historyRange, todayIso());
+  const historyQuery = usePriceHistory(instrumentId, sinceIso);
+
+  const handleRemoveFromWatchlist = async () => {
+    if (!instrument || removing) return;
+    setRemoving(true);
+    try {
+      await instrumentsRepo.deleteUnused(instrument.id);
+      invalidateInstruments();
+      toast(t("instrumentDetailPage.removedFromWatchlist", { symbol: instrument.symbol }));
+      router.back();
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  usePageHeader({
+    title: instrument?.symbol ?? t("nav.investments"),
+    onBack: () => router.back(),
+    backLabel: t("ds.appHeader.back"),
+    right: canRemoveFromWatchlist ? (
+      <IconButton icon="bookmark" ariaLabel={t("instrumentDetailPage.removeFromWatchlist")} onClick={handleRemoveFromWatchlist} disabled={removing} />
+    ) : undefined,
+  });
 
   // `pricesQuery.isLoading` deliberadamente no bloquea (D36, ver `OverviewContent`).
   if (!household || !portfolios || !assetClasses || !instruments || !trades) {
@@ -59,8 +108,6 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
 
   const assetClass = instrument.assetClassId ? assetClasses.find((a) => a.id === instrument.assetClassId) : undefined;
   const price = prices.get(instrumentId);
-  const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
-  const position = positions.get(instrumentId);
 
   // Peso en el portfolio: mismo cálculo de valor total que `OverviewContent`, sobre TODAS las posiciones, no solo esta.
   let portfolioTotalValue = 0n;
@@ -75,6 +122,21 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const weightPct = portfolioTotalValue > 0n ? (Number(value) / Number(portfolioTotalValue)) * 100 : 0;
 
   const instrumentTrades = trades.filter((tr) => tr.instrumentId === instrumentId).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
+
+  // Variación día a día: los dos cierres más recientes, no el rango
+  // seleccionado — con un cierre por día (D34, cron `daily-price-sync`) no
+  // hay granularidad intradía real, así que "hoy" se resuelve así en vez
+  // de fingir un gráfico de un solo tramo.
+  const history = historyQuery.data ?? [];
+  const dayChangePct = (() => {
+    if (history.length < 2) return null;
+    const last = history[history.length - 1];
+    const prev = history[history.length - 2];
+    if (!last || !prev || prev.close === 0) return null;
+    return ((last.close - prev.close) / prev.close) * 100;
+  })();
+  const chartPoints = history.map((h) => ({ label: formatDateShort(locale, new Date(`${h.asOf}T12:00:00Z`)), value: h.close }));
+  const hasEnoughHistory = history.length >= MIN_HISTORY_POINTS;
 
   const handleSaveManual = async () => {
     if (!manualPrice.trim() || saving) return;
@@ -134,11 +196,43 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.currentPrice")}</div>
           <div className="t-title" style={{ marginTop: 4 }}>{price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : "—"}</div>
+          {dayChangePct !== null ? (
+            <div className="t-caption" style={{ marginTop: 2, color: "var(--text-secondary)" }}>
+              {dayChangePct >= 0 ? "↑" : "↓"} {Math.abs(dayChangePct).toFixed(1)}% {t("instrumentDetailPage.today")}
+            </div>
+          ) : null}
         </div>
         <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.weight")}</div>
           <div className="t-title" style={{ marginTop: 4 }}>{weightPct.toFixed(1)}%</div>
         </div>
+      </div>
+
+      {/* I4 — fluctuación histórica: un cierre por día (cron `daily-price-sync`),
+          así que el rango no baja de "semana" — un gráfico de dos puntos
+          enseña una tendencia que no existe (mismo criterio que los mínimos
+          de historial de CLAUDE.md). Con menos de `MIN_HISTORY_POINTS`
+          cierres reales para el rango elegido, se muestra cuánto falta en
+          vez del gráfico. */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12 }}>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.fluctuation")}</div>
+          <SegmentedControl
+            size="sm"
+            options={PRICE_HISTORY_RANGES.map((r) => ({ id: r, label: t(`instrumentDetailPage.range.${r}`) }))}
+            value={historyRange}
+            onChange={(r) => setHistoryRange(r as PriceHistoryRange)}
+          />
+        </div>
+        {hasEnoughHistory ? (
+          <LineChart
+            data={chartPoints}
+            formatValue={(v) => formatAmountCompact(money(BigInt(Math.round(v)), instrument.currencyCode), { showSign: false })}
+            ariaLabel={t("instrumentDetailPage.fluctuation")}
+          />
+        ) : (
+          <EmptyState message={t("instrumentDetailPage.notEnoughHistory", { count: MIN_HISTORY_POINTS - history.length })} />
+        )}
       </div>
 
       <Button variant="secondary" onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}`)}>
@@ -165,9 +259,9 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         )}
       </div>
 
-      <Sheet open={editingPrice} title={t("pricesStatusPage.updatePrice", { symbol: instrument.symbol })} onClose={() => setEditingPrice(false)}>
+      <Sheet open={editingPrice} title={t("instrumentsListPage.updatePrice", { symbol: instrument.symbol })} onClose={() => setEditingPrice(false)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Input label={t("pricesStatusPage.price", { currency: instrument.currencyCode })} value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} autoFocus />
+          <Input label={t("instrumentsListPage.price", { currency: instrument.currencyCode })} value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} autoFocus />
           <Button disabled={!manualPrice.trim() || saving} onClick={handleSaveManual}>
             {t("common.save")}
           </Button>
