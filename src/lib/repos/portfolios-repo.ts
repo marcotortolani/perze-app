@@ -45,4 +45,17 @@ export const portfoliosRepo = {
     if (error) throw error;
     return { id: data.id, householdId: data.household_id, name: data.name, baseCurrency: data.base_currency, brokerAccountId: data.broker_account_id };
   },
+
+  async rename(id: string, name: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("portfolios").update({ name } as never).eq("id", id);
+    if (error) throw error;
+  },
+
+  /** Soft delete (`deleted_at`), como el resto de las entidades raíz (`01-arquitectura-datos.md` § 1). Las operaciones cargadas no se tocan — quedan huérfanas de un portfolio invisible, nunca se borran. */
+  async softDelete(id: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("portfolios").update({ deleted_at: new Date().toISOString() } as never).eq("id", id);
+    if (error) throw error;
+  },
 };

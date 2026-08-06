@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.23 — 6 de agosto de 2026
+
+### Nuevo
+
+- Ya podés renombrar o eliminar un portfolio de inversiones desde su pantalla (ícono de
+  lápiz arriba). Un portfolio con operaciones cargadas no se puede eliminar.
+
 ## 0.29.22 — 6 de agosto de 2026
 
 ### Mejorado

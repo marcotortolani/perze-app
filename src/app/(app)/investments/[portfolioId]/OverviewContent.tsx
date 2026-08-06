@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, EmptyState, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, EmptyState, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
-import { useAssetClasses, useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
@@ -17,6 +18,7 @@ import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
+import { portfoliosRepo } from "@/lib/repos/portfolios-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
@@ -44,10 +46,59 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   const { data: portfolios } = usePortfolios(household?.id);
   const { data: assetClasses } = useAssetClasses();
   const { data: instruments } = useInstruments(household?.id);
+  const invalidatePortfolios = useInvalidatePortfolios(household?.id);
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
-  usePageHeader({ title: portfolio?.name ?? t("nav.investments"), onBack: () => router.push("/investments"), backLabel: t("ds.appHeader.back") });
   const { data: trades } = useTrades(portfolio?.id);
+
+  const [editingPortfolio, setEditingPortfolio] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [deletingPortfolio, setDeletingPortfolio] = useState(false);
+  // Un portfolio con operaciones cargadas no se puede eliminar — son
+  // movimientos reales y no se tocan (mismo criterio que apagar un
+  // módulo, CLAUDE.md). El botón directamente no se dibuja en ese caso
+  // (nunca deshabilitado con una razón escondida, mismo criterio de A2).
+  const canDeletePortfolio = trades ? trades.length === 0 : false;
+
+  const handleOpenEdit = () => {
+    setNameInput(portfolio?.name ?? "");
+    setEditingPortfolio(true);
+  };
+
+  const handleSaveName = async () => {
+    if (!portfolio || !nameInput.trim() || savingName) return;
+    setSavingName(true);
+    try {
+      await portfoliosRepo.rename(portfolio.id, nameInput.trim());
+      invalidatePortfolios();
+      setEditingPortfolio(false);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleDeletePortfolio = async () => {
+    if (!portfolio || !canDeletePortfolio || deletingPortfolio) return;
+    setDeletingPortfolio(true);
+    try {
+      await portfoliosRepo.softDelete(portfolio.id);
+      invalidatePortfolios();
+      toast(t("investmentsPage.portfolioDeleted", { name: portfolio.name }));
+      // `back()`, no `replace`/`push` — la lista ya está en el historial
+      // justo debajo (mismo criterio que `goals/[id]/page.tsx`).
+      router.back();
+    } finally {
+      setDeletingPortfolio(false);
+    }
+  };
+
+  usePageHeader({
+    title: portfolio?.name ?? t("nav.investments"),
+    onBack: () => router.push("/investments"),
+    backLabel: t("ds.appHeader.back"),
+    right: portfolio ? <IconButton icon="edit" ariaLabel={t("investmentsPage.editPortfolio")} onClick={handleOpenEdit} /> : undefined,
+  });
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
   // D36 — el último valor de mercado conocido (localStorage) rellena el
@@ -169,8 +220,37 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
     value,
   }));
 
+  // El Sheet de editar/eliminar vive en las dos ramas de abajo (portfolio
+  // vacío = `EmptyState` temprano, o el overview completo): es el mismo
+  // botón de lápiz del header en cualquiera de las dos, y un portfolio sin
+  // posiciones es justo el caso en el que SÍ se puede borrar.
+  const editSheet = (
+    <Sheet open={editingPortfolio} title={t("investmentsPage.editPortfolio")} onClose={() => setEditingPortfolio(false)}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Input label={t("investmentsPage.portfolioName")} value={nameInput} onChange={(e) => setNameInput(e.target.value)} autoFocus />
+        <Button disabled={!nameInput.trim() || savingName} onClick={handleSaveName}>
+          {t("common.save")}
+        </Button>
+        {canDeletePortfolio ? (
+          <Button variant="danger" disabled={deletingPortfolio} onClick={handleDeletePortfolio}>
+            {t("investmentsPage.deletePortfolio")}
+          </Button>
+        ) : (
+          <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)", textAlign: "center" }}>
+            {t("investmentsPage.cannotDeletePortfolio")}
+          </p>
+        )}
+      </div>
+    </Sheet>
+  );
+
   if (positions.size === 0) {
-    return <EmptyState message={t("investmentsPage.noPositions")} actionLabel={t("investmentsPage.recordTrade")} onAction={() => router.push(`/investments/${portfolio.id}/trades/new`)} />;
+    return (
+      <>
+        <EmptyState message={t("investmentsPage.noPositions")} actionLabel={t("investmentsPage.recordTrade")} onAction={() => router.push(`/investments/${portfolio.id}/trades/new`)} />
+        {editSheet}
+      </>
+    );
   }
 
   return (
@@ -257,6 +337,7 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
           })}
         </div>
       </div>
+      {editSheet}
     </div>
   );
 }

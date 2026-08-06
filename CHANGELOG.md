@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.23] — 2026-08-06
+
+### Agregado — editar nombre y eliminar un portfolio de inversiones
+
+Reporte del usuario: después de crear un portfolio no había forma de renombrarlo ni de
+eliminarlo.
+
+`portfoliosRepo` suma `rename()` y `softDelete()` (`deleted_at`, mismo patrón que el resto
+de las entidades raíz — la policy de `UPDATE` de `portfolios` ya lo permitía, no hizo falta
+migración). El ícono de lápiz en el header de `OverviewContent` abre una `Sheet` con el
+nombre editable y, debajo, "Eliminar portfolio".
+
+**El borrado se bloquea si el portfolio tiene operaciones cargadas** — son movimientos
+reales y `CLAUDE.md` no los deja tocar; se sigue el mismo criterio de A2 para el botón
+"muerto": en vez de un botón deshabilitado sin explicación, directamente no se dibuja y
+queda un texto explicando por qué. Sin operaciones (justo el caso donde el overview cae en
+el `EmptyState` temprano en vez del render completo), el borrado sí está disponible — la
+`Sheet` de edición vive en las dos ramas del componente para cubrir ese caso. Sin
+confirmación adicional (CLAUDE.md § "reversible, no confirmable" — mismo criterio que
+`goals/[id]/page.tsx`): borra y vuelve a la lista con un toast.
+
 ## [0.29.22] — 2026-08-06
 
 ### Cambiado — "Instrumentos" ahora es solo símbolo + precio de mercado, sin badges
