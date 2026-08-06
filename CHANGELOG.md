@@ -6,6 +6,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.26] — 2026-08-06
+
+### Corregido — "Registrar operación" arrastraba el instrumento/precio del anterior
+
+Reporte del usuario: entrar al detalle de un instrumento, tocar "Registrar operación",
+volver atrás, entrar a OTRO instrumento y tocar "Registrar operación" de nuevo mostraba el
+ticket y precio del instrumento ANTERIOR, no del que se acababa de abrir.
+
+Causa: `trades/new/page.tsx` es la misma ruta (`/investments/[portfolioId]/trades/new`)
+para cualquier instrumento — solo cambia `?instrumentId=`. Next.js reutiliza la misma
+instancia del componente entre esas navegaciones, así que el `useState` de
+instrumento/cantidad/precio/cuenta quedaba pegado. Se separa en un componente interno
+(`NewTradeForm`) con `key={instrumentIdParam}`: un `key` distinto por cada instrumento (o
+por "ninguno") fuerza a React a desmontar y remontar limpio en vez de reusar la instancia
+— mismo criterio que "`key={id}` en el detalle" del recipe de master-detail de
+`CLAUDE.md`, aplicado acá aunque esta ruta todavía no sea master-detail en sí. El ref que
+evita reaplicar el prefill dos veces ya no necesita trackear el id anterior: el `key` del
+padre garantiza que arranca en `false` en cada instrumento distinto.
+
+Verificado en vivo contra el dev server: detalle de AAPL → Registrar operación (prefill
+AAPL, $24.660) → atrás → detalle de GOOGL → Registrar operación (prefill GOOGL, $9.750,
+sin rastro de AAPL).
+
 ## [0.29.25] — 2026-08-06
 
 ### Cambiado — toggle de moneda más compacto: "Original"/"{currency}"

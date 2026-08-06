@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.26 — 6 de agosto de 2026
+
+### Arreglado
+
+- "Registrar operación" a veces mostraba el ticket y precio del instrumento anterior en
+  vez del que acababas de abrir. Ya arranca siempre limpio.
+
 ## 0.29.25 — 6 de agosto de 2026
 
 ### Mejorado

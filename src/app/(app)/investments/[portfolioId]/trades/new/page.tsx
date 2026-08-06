@@ -46,11 +46,29 @@ function toKeypadDigits(n: number, decimalSeparator: string): string {
 /** I4-I7 — cargar una operación (compra/venta). Requiere un instrumento ya creado (I7b si hace falta). */
 export default function NewTradePage({ params }: { params: Promise<{ portfolioId: string }> }) {
   const { portfolioId } = use(params);
+  const searchParams = useSearchParams();
+  const prefillInstrumentId = searchParams.get("instrumentId");
+  // D45/D47 — Next.js reusa esta MISMA instancia de página al navegar de
+  // `?instrumentId=A` a `?instrumentId=B` (es la misma ruta, solo cambia
+  // el search param): sin este `key`, el `useState` de instrumento/precio/
+  // cantidad quedaba pegado del instrumento anterior. `key` fuerza un
+  // remount limpio por cada instrumento distinto (o al no venir de
+  // ninguno) — mismo criterio que "key={id} en el detalle" del recipe de
+  // master-detail de `CLAUDE.md`, aplicado acá aunque esta ruta todavía no
+  // sea master-detail en sí.
+  return <NewTradeForm key={prefillInstrumentId ?? "none"} portfolioId={portfolioId} prefillInstrumentId={prefillInstrumentId} />;
+}
+
+interface NewTradeFormProps {
+  portfolioId: string;
+  prefillInstrumentId: string | null;
+}
+
+function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: instruments = [] } = useInstruments(household?.id);
@@ -90,19 +108,19 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   // preselecciona una sola vez, por el mismo camino que elegirlo a mano en
   // la hoja, para no duplicar el fetch de cotización con otra lógica.
   // `instruments` puede tardar un tick en cargar, así que el efecto
-  // reintenta hasta encontrarlo; el ref evita re-aplicar el prefill si el
-  // usuario después cambia el instrumento a mano.
+  // reintenta hasta encontrarlo; el ref evita re-aplicar el prefill en
+  // cada refetch de `instruments` una vez que ya se aplicó — el `key` del
+  // componente padre ya garantiza que esto arranca en `false` por cada
+  // instrumento distinto, así que no hace falta trackear el id anterior acá.
   const prefillApplied = useRef(false);
   useEffect(() => {
-    if (prefillApplied.current) return;
-    const prefillId = searchParams.get("instrumentId");
-    if (!prefillId) return;
-    const inst = instruments.find((i) => i.id === prefillId);
+    if (prefillApplied.current || !prefillInstrumentId) return;
+    const inst = instruments.find((i) => i.id === prefillInstrumentId);
     if (!inst) return;
     prefillApplied.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill único desde el query param, no un loop de sincronización de estado
     handleSelectInstrument(inst);
-  }, [searchParams, instruments]);
+  }, [prefillInstrumentId, instruments]);
 
   if (!household || !userId) return null;
 
