@@ -1902,7 +1902,8 @@
   "deletePosition": "Excluir posição",
   "deletePositionWarning": "Isso exclui {count, plural, one {# operação} other {# operações}} de {symbol} neste portfólio. Não pode ser desfeito.",
   "deletePositionConfirm": "Sim, excluir posição",
-  "positionDeleted": "{symbol} removido do portfólio"
+  "positionDeleted": "{symbol} removido do portfólio",
+  "selectPrompt": "Escolha uma posição da lista para ver o detalhe aqui."
  },
  "newInstrumentPage": {
   "search": "Buscar instrumento",

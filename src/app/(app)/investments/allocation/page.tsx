@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Amount, EmptyState, Icon, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useAssetClasses, useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useLatestPrices, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { computePositions } from "@/lib/analytics/positions";
 import { assignBentoSlots } from "@/lib/layout/bento";
@@ -44,7 +44,7 @@ export default function AllocationPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
-  const portfolio = portfolios?.[0];
+  const portfolio = usePortfolioFromParam(portfolios);
   const { data: trades } = useTrades(portfolio?.id);
   const { data: assetClasses } = useAssetClasses();
   const { data: instruments } = useInstruments(household?.id);
@@ -159,7 +159,8 @@ export default function AllocationPage() {
             <button
               key={block.instrumentId}
               type="button"
-              onClick={() => router.push(`/investments/${portfolio.id}/positions/${block.instrumentId}`)}
+              // master-detail — search param, no ruta propia (ver `[portfolioId]/page.tsx`).
+              onClick={() => router.push(`/investments/${portfolio.id}?position=${block.instrumentId}`)}
               style={{
                 gridColumn: `span ${gridSpans[i]}`,
                 textAlign: "left",

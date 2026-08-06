@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInstruments, useLatestPrices, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { computePortfolioReturn } from "@/lib/analytics/portfolio-return";
 import { fromMajorUnitsUnsafe } from "@/lib/money/money";
@@ -19,7 +19,7 @@ export default function PerformancePage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
-  const portfolio = portfolios?.[0];
+  const portfolio = usePortfolioFromParam(portfolios);
   const { data: trades } = useTrades(portfolio?.id);
   const { data: instruments } = useInstruments(household?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);

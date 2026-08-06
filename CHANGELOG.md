@@ -6,6 +6,52 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.44] — 2026-08-06
+
+### Nuevo — `/investments/[portfolioId]` migrado a master-detail con `?position=`
+
+Mismo patrón exacto que `/accounts?account=<id>` y `/transactions?tx=<id>` (CLAUDE.md
+§ convención de rutas): la posición seleccionada ya no es una ruta propia
+(`positions/[instrumentId]/page.tsx`) sino un search param sobre la misma pantalla del
+overview — `SplitGrid` en desktop (≥1280px, `SPLIT_BREAKPOINT`), `Modal contained` en
+mobile. `OverviewContent` es la lista (sin cambios de contenido), `InstrumentDetailContent`
+el detalle. Ruta vieja convertida en redirect de compatibilidad (`replace`, la PWA
+instalada con historial largo no debe ver un 404). Deliberadamente NO se migra la
+selección de portfolio en sí (`/investments` → `/investments/[portfolioId]`): a
+diferencia de una cuenta o un movimiento, un portfolio es un destino de navegación
+completo con sub-rutas propias (alta de instrumento, carga/edición de operación) que ya
+cuelgan de `[portfolioId]/` — forzarlo a un tercer nivel de panel no tiene precedente en
+el resto de la app y `PortfoliosListContent` ya lo decidió así (ver su propio
+comentario). Queda documentado en el código, no reabierto en silencio.
+
+`InstrumentDetailContent` deja de llamar a `usePageHeader` por sí mismo — el patrón de
+detalle-por-param no tiene un slot `right` en el header (ni `AccountDetailContent` ni
+`TransactionDetailContent` lo usan): "actualizar precio" y "sacar de seguimiento" se
+mueven del header al cuerpo del panel, y el símbolo del instrumento pasa a mostrarse ahí
+también (en mobile `Modal contained` no dibuja título, así que la identidad del
+instrumento no puede depender solo del header).
+
+**Bug real encontrado durante la migración, corregido en `usePageHeader` mismo**: el
+overview de un portfolio se sigue re-renderizando solo mientras el detalle de una
+posición está abierto al lado (el refresco de precios en vivo, cada
+`FOREGROUND_REFRESH_MS`) — y como `usePageHeader` registra su config en CADA render sin
+dependencias (a propósito, ver su propio comentario, es lo que le permite a un detalle
+"ganarle" a una lista con solo montarse después en el JSX), ese re-render del overview
+reintroduce su propio título y le arrebata el header al detalle, que sigue seleccionado
+pero deja de aparecer arriba. Nuevo segundo parámetro `{ enabled }` en `usePageHeader` —
+`OverviewContent` lo usa para ceder el registro mientras el contenedor
+(`[portfolioId]/page.tsx`) le indica que hay una posición seleccionada en split de
+escritorio. Este bug es estructural al patrón (cualquier lista con estado async propio
+que se re-renderiza sola mientras su detalle está abierto lo sufre), no específico de
+inversiones — queda resuelto de forma reusable para el próximo caso.
+
+También corregido de paso: `allocation`, `performance`, `future-income` e
+`instruments` asumían siempre `portfolios?.[0]`, un bug real en cualquier household con
+más de un portfolio (el schema y el repo ya lo soportan, `PortfoliosListContent` no es
+nueva). Nuevo `usePortfolioFromParam()` — `?portfolio=<id>` cuando se llega desde
+`OverviewContent` (que sí sabe cuál es), `portfolios?.[0]` como único fallback para el
+acceso directo (nav lateral, deep link) donde no hay portfolio en contexto.
+
 ## [0.29.43] — 2026-08-06
 
 ### Nuevo/Corregido — `/investments/allocation` rediseñada como bento grid por posición

@@ -27,6 +27,16 @@ import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
 export interface OverviewContentProps {
   portfolioId: string;
+  /**
+   * `false` mientras el detalle de una posición está abierto al lado en
+   * split de escritorio — sin esto, el refresco de precios en vivo
+   * (`refreshPrices`, más abajo) reintroduce un `usePageHeader` propio en
+   * cada tick y le arrebata el título al detalle, que quedó seleccionado
+   * pero ya no aparece en el header (ver la nota larga en
+   * `usePageHeader`). En mobile (`Modal contained`, sin `DetailHeaderBridge`
+   * montado) siempre queda en `true`.
+   */
+  ownsHeader?: boolean;
 }
 
 /**
@@ -37,7 +47,7 @@ export interface OverviewContentProps {
  * (`/investments/[portfolioId]`, la ruta que ya elige `PortfoliosListContent`),
  * así que un household con más de un portfolio los distingue de verdad.
  */
-export default function OverviewContent({ portfolioId }: OverviewContentProps) {
+export default function OverviewContent({ portfolioId, ownsHeader = true }: OverviewContentProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const dateFormat = useDateFormatPreference();
@@ -94,12 +104,15 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
     }
   };
 
-  usePageHeader({
-    title: portfolio?.name ?? t("nav.investments"),
-    onBack: () => router.push("/investments"),
-    backLabel: t("ds.appHeader.back"),
-    right: portfolio ? <IconButton icon="edit" ariaLabel={t("investmentsPage.editPortfolio")} onClick={handleOpenEdit} /> : undefined,
-  });
+  usePageHeader(
+    {
+      title: portfolio?.name ?? t("nav.investments"),
+      onBack: () => router.push("/investments"),
+      backLabel: t("ds.appHeader.back"),
+      right: portfolio ? <IconButton icon="edit" ariaLabel={t("investmentsPage.editPortfolio")} onClick={handleOpenEdit} /> : undefined,
+    },
+    { enabled: ownsHeader }
+  );
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
   // D36 — el último valor de mercado conocido (localStorage) rellena el
@@ -305,13 +318,17 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
       ) : null}
 
       <ListRow icon="plus" label={t("investmentsPage.recordTrade")} variant="action" onClick={() => router.push(`/investments/${portfolio.id}/trades/new`)} />
-      <ListRow icon="target" label={t("allocationPage.title")} onClick={() => router.push("/investments/allocation")} />
-      <ListRow icon="trend" label={t("performancePage.title")} onClick={() => router.push("/investments/performance")} />
-      <ListRow icon="calendar" label={t("futureIncomePage.title")} onClick={() => router.push("/investments/future-income")} />
+      {/* `?portfolio=` en las tres que son por-portfolio: sin esto asumían
+          `portfolios?.[0]` puertas adentro (bug real en un household con
+          más de un portfolio, que el schema y el repo ya soportan). */}
+      <ListRow icon="target" label={t("allocationPage.title")} onClick={() => router.push(`/investments/allocation?portfolio=${portfolio.id}`)} />
+      <ListRow icon="trend" label={t("performancePage.title")} onClick={() => router.push(`/investments/performance?portfolio=${portfolio.id}`)} />
+      <ListRow icon="calendar" label={t("futureIncomePage.title")} onClick={() => router.push(`/investments/future-income?portfolio=${portfolio.id}`)} />
       {/* "Agregar instrumento" se movió adentro de "Instrumentos" — ya no
           hace falta un segundo acceso acá (queda: mi portfolio →
           Instrumentos → Agregar instrumento). */}
-      <ListRow icon="invest" label={t("instrumentsListPage.title")} onClick={() => router.push("/investments/instruments")} />
+      <ListRow icon="invest" label={t("instrumentsListPage.title")} onClick={() => router.push(`/investments/instruments?portfolio=${portfolio.id}`)} />
+      {/* Asset classes es del household, no del portfolio — sin param. */}
       <ListRow icon="tag" label={t("assetClassesPage.title")} onClick={() => router.push("/investments/asset-classes")} />
 
       <div>
@@ -378,7 +395,10 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
                 price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
                 value={displayValue}
                 changePct={price ? <span>{changePct >= 0 ? "↑" : "↓"} {formatNumber(Math.abs(changePct), 1)}%</span> : undefined}
-                onClick={() => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`)}
+                // master-detail — search param, no ruta propia (ver la nota larga en
+                // `[portfolioId]/page.tsx`). `{ scroll: false }`: seleccionar
+                // una posición no debe saltar el scroll de la lista al tope.
+                onClick={() => router.push(`/investments/${portfolio.id}?position=${instrument.id}`, { scroll: false })}
               />
             );
           })}

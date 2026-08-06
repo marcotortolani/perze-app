@@ -1902,7 +1902,8 @@
   "deletePosition": "Delete position",
   "deletePositionWarning": "This deletes {count, plural, one {# trade} other {# trades}} of {symbol} in this portfolio. This can't be undone.",
   "deletePositionConfirm": "Yes, delete position",
-  "positionDeleted": "{symbol} removed from portfolio"
+  "positionDeleted": "{symbol} removed from portfolio",
+  "selectPrompt": "Pick a position from the list to see its detail here."
  },
  "newInstrumentPage": {
   "search": "Search instrument",

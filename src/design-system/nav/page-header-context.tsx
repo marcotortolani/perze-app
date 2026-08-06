@@ -66,8 +66,26 @@ export function samePageHeaderConfig(a: PageHeaderConfig | null, b: PageHeaderCo
  * consumidor: una función que lee la última versión desde un ref, así que
  * su identidad no cambia entre renders y tampoco arrastra closures viejas.
  */
-export function usePageHeader(config: PageHeaderConfig): void {
+export interface UsePageHeaderOptions {
+  /**
+   * `false` suprime el registro de ESTE render sin dejar de llamar al
+   * hook (las reglas de hooks lo exigen siempre invocado). Existe para el
+   * caso en que dos consumidores compiten por el mismo header con un
+   * tercero fuera de los dos que decide cuál manda — p. ej. el overview de
+   * un portfolio, que se sigue re-renderizando solo (el refresco de
+   * precios en vivo) mientras el detalle de una posición está abierto al
+   * lado en split de escritorio. Sin este freno, "gana el último efecto
+   * en correr" deja de ser el DETALLE en cuanto el overview se
+   * re-renderiza por su cuenta después del mount inicial — el título
+   * vuelve a saltar al del portfolio aunque la selección siga viva. El
+   * contenedor (`page.tsx`) es quien sabe cuándo corresponde ceder.
+   */
+  enabled?: boolean;
+}
+
+export function usePageHeader(config: PageHeaderConfig, options?: UsePageHeaderOptions): void {
   const setConfig = useContext(PageHeaderContext);
+  const enabled = options?.enabled ?? true;
 
   const onBackRef = useRef(config.onBack);
   // En un efecto y no durante el render: escribir un ref mientras se
@@ -80,6 +98,7 @@ export function usePageHeader(config: PageHeaderConfig): void {
   const stableOnBack = useCallback(() => onBackRef.current?.(), []);
 
   useLayoutEffect(() => {
+    if (!enabled) return;
     setConfig({
       ...(config.title !== undefined ? { title: config.title } : {}),
       ...(config.backLabel !== undefined ? { backLabel: config.backLabel } : {}),

@@ -1902,7 +1902,8 @@
   "deletePosition": "Eliminar posición",
   "deletePositionWarning": "Esto borra las {count, plural, one {# operación} other {# operaciones}} de {symbol} en este portfolio. No se puede deshacer.",
   "deletePositionConfirm": "Sí, eliminar posición",
-  "positionDeleted": "{symbol} eliminado del portfolio"
+  "positionDeleted": "{symbol} eliminado del portfolio",
+  "selectPrompt": "Elegí una posición de la lista para ver el detalle acá."
  },
  "newInstrumentPage": {
   "search": "Buscar instrumento",

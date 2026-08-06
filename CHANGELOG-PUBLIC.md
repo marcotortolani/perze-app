@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.44 — 6 de agosto de 2026
+
+### Arreglado
+
+- En Inversiones, al abrir el detalle de una posición al lado de la lista (en pantallas
+  grandes), el título de arriba podía volver solo al nombre del portfolio aunque
+  siguieras viendo la posición. También, si tenés más de un portfolio, algunas pantallas
+  (asignación, rendimiento, ingresos futuros, instrumentos) podían mostrar datos del
+  portfolio equivocado.
+
 ## 0.29.43 — 6 de agosto de 2026
 
 ### Mejorado

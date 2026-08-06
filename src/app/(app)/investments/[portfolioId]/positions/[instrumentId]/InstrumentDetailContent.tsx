@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton } from "@/design-system";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
@@ -31,9 +31,17 @@ export interface InstrumentDetailContentProps {
 
 /**
  * I4 — detalle de instrumento: tu posición, P&L no realizado, peso en el
- * portfolio, y el historial de operaciones. Antes esta ruta no existía —
- * `OverviewContent` ya navegaba acá (`positions/${instrument.id}`), era
- * un link roto en producción.
+ * portfolio, y el historial de operaciones.
+ *
+ * master-detail — selección dentro de `/investments/[portfolioId]?position=<id>`,
+ * NO una ruta propia (mismo patrón que `AccountDetailContent`). Por eso
+ * NO llama a `usePageHeader`: lo hace el contenedor (`[portfolioId]/page.tsx`),
+ * y en mobile `Modal contained` dibuja su propio botón de volver sin
+ * título — el símbolo va en el cuerpo (línea de arriba) para no depender
+ * del header. Actualizar/sacar de seguimiento tampoco van en un `right`
+ * del header (ese slot no existe en el patrón de detalle-por-param): son
+ * acciones dentro del panel, mismo criterio que "Archivar" en
+ * `AccountDetailContent`.
  */
 export default function InstrumentDetailContent({ portfolioId, instrumentId }: InstrumentDetailContentProps) {
   const t = useTranslations();
@@ -152,23 +160,6 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
     }
   };
 
-  usePageHeader({
-    title: instrument?.symbol ?? t("nav.investments"),
-    onBack: () => router.back(),
-    backLabel: t("ds.appHeader.back"),
-    right:
-      instrument?.priceProvider || canRemoveFromWatchlist ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {instrument?.priceProvider ? (
-            <IconButton icon="refresh" ariaLabel={t("currenciesPage.refresh")} onClick={handleRefreshClick} disabled={refreshing} />
-          ) : null}
-          {canRemoveFromWatchlist ? (
-            <IconButton icon="bookmark" ariaLabel={t("instrumentDetailPage.removeFromWatchlist")} onClick={handleRemoveFromWatchlist} disabled={removing} />
-          ) : null}
-        </div>
-      ) : undefined,
-  });
-
   // `pricesQuery.isLoading` deliberadamente no bloquea (D36, ver `OverviewContent`).
   if (!household || !portfolios || !assetClasses || !instruments || !trades) {
     return <Skeleton height={280} style={{ marginTop: 16 }} />;
@@ -266,7 +257,11 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
       }
       toast(t("instrumentDetailPage.positionDeleted", { symbol: instrument.symbol }));
       setConfirmingDeletePosition(false);
-      router.push(`/investments/${portfolioId}`);
+      // master-detail — `back()`, no `push`: la posición se seleccionó con
+      // `?position=`, así que cerrar el detalle es deseleccionar, no
+      // navegar a una URL nueva (eso dejaba dos entradas en el historial:
+      // la del `?position=` viejo, todavía ahí, más esta).
+      router.back();
     } finally {
       setDeletingPosition(false);
     }
@@ -275,7 +270,13 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 8, paddingBottom: 24 }}>
       <div style={{ textAlign: "center" }}>
-        <div className="t-caption" style={{ color: "var(--text-muted)" }}>{assetClass?.name ?? t("investmentsPage.otherAssetClass")}</div>
+        {/* master-detail — el símbolo ya no vive en el título del header (esta
+            pantalla es una selección por param, no una ruta con su propio
+            header): en mobile `Modal contained` no dibuja título, así que
+            el símbolo tiene que estar acá para no perder la identidad del
+            instrumento. */}
+        <div className="t-label" style={{ color: "var(--text-primary)" }}>{instrument.symbol}</div>
+        <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 2 }}>{assetClass?.name ?? t("investmentsPage.otherAssetClass")}</div>
         <div className="t-hero" style={{ margin: "8px 0 0" }}>
           {heldWithoutPrice ? (
             <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
@@ -359,10 +360,19 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         </div>
 
         {/* D56 — mismo criterio que `OverviewContent`: un solo indicador de
-            frescura por pantalla, no un badge por dato. */}
-        {lastRefreshedAt ? (
-          <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 8 }}>
-            {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
+            frescura por pantalla, no un badge por dato. El botón de
+            actualizar se movió del `right` del header (que este patrón de
+            detalle-por-param no tiene, ver la nota del componente arriba)
+            a acá, al lado del texto que ya declaraba cuándo se pidió el
+            precio real por última vez. */}
+        {instrument.priceProvider ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 8 }}>
+            {lastRefreshedAt ? (
+              <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+                {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
+              </span>
+            ) : null}
+            <IconButton icon="refresh" ariaLabel={t("currenciesPage.refresh")} onClick={handleRefreshClick} disabled={refreshing} />
           </div>
         ) : null}
       </div>
@@ -413,6 +423,12 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
           {t("instrumentDetailPage.deletePosition")}
         </Button>
       ) : null}
+
+      {/* Mutuamente excluyente con "Eliminar posición" en la práctica:
+          `canRemoveFromWatchlist` exige posición en cero (o inexistente),
+          y esa condición implica `instrumentTrades.length === 0` de
+          arriba. */}
+      {canRemoveFromWatchlist ? <ListRow icon="bookmark" label={t("instrumentDetailPage.removeFromWatchlist")} onClick={handleRemoveFromWatchlist} /> : null}
 
       <Sheet open={editingPrice} title={t("instrumentsListPage.updatePrice", { symbol: instrument.symbol })} onClose={() => setEditingPrice(false)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

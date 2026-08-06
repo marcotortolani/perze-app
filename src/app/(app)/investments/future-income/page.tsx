@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { EmptyState, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useInstruments, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInstruments, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { computeFutureIncome } from "@/lib/analytics/future-income";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -22,7 +22,7 @@ export default function FutureIncomePage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
-  const portfolio = portfolios?.[0];
+  const portfolio = usePortfolioFromParam(portfolios);
   const { data: trades } = useTrades(portfolio?.id);
   const { data: instruments } = useInstruments(household?.id);
 

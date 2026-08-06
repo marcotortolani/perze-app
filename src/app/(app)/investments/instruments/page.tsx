@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EmptyState, Icon, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInstruments, useLatestPrices, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
@@ -42,7 +42,7 @@ export default function InstrumentsListPage() {
   const queryClient = useQueryClient();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
-  const portfolio = portfolios?.[0];
+  const portfolio = usePortfolioFromParam(portfolios);
   const { data: trades } = useTrades(portfolio?.id);
   const { data: instruments } = useInstruments(household?.id);
   const instrumentIds = useMemo(() => (instruments ?? []).map((i) => i.id), [instruments]);
@@ -141,7 +141,8 @@ export default function InstrumentsListPage() {
         meta={instrument.name}
         variant="value"
         value={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
-        onClick={portfolio ? () => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`) : undefined}
+        // master-detail — search param, no ruta propia (ver `[portfolioId]/page.tsx`).
+        onClick={portfolio ? () => router.push(`/investments/${portfolio.id}?position=${instrument.id}`) : undefined}
       />
     );
   };
