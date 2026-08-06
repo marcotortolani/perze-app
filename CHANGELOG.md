@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.4] — 2026-08-06
+
+### Agregado — buscador de instrumentos al crear una inversión, con precio de mercado precargado
+
+I7 pedía inventar el símbolo y el nombre de memoria (`TSLA`, `AAPL`...) en un formulario manual
+como única vía. Ahora `/investments/[portfolioId]/instruments/new` arranca en modo búsqueda:
+un input contra `/api/instruments/search` (nueva ruta, único punto de egreso — el cliente nunca
+llama a Data912 ni a CoinGecko directo, mismo criterio que `/api/fx`/`/api/prices`) que combina
+acciones/CEDEARs/bonos/ONs/letras del mercado argentino (Data912) con el listado curado de
+cryptos. Elegir un resultado deriva `priceProvider`/`providerSymbol`/`currencyCode` — nadie vuelve
+a escribir esos tres campos a mano — y si el household ya tiene ese instrumento con ese proveedor,
+lo reusa en vez de duplicar el catálogo ("Ya la tenés"). El formulario manual sigue existiendo
+para lo que ninguna fuente cubre (FCI, plazo fijo, inmuebles, ETFs internacionales), accesible con
+"¿No lo encontrás? Crear a mano", nunca como paso obligatorio.
+
+Al cargar una operación (`trades/new`), elegir un instrumento con `priceProvider` ahora dispara
+`priceSnapshotsRepo.refreshFromProvider()` y precarga el precio unitario con la cotización del
+momento — editable, nunca de solo lectura — en vez de dejar el campo vacío esperando que el
+usuario recuerde el valor de mercado.
+
+`navigation-uses-replace.test.ts` — el buscador sumó un tercer punto de salida (elegir un
+resultado también hace `router.back()`, igual que guardar a mano); el guardarraíl de conteo de
+`instruments/new/page.tsx` pasa de 2 a 3.
+
 ## [0.29.3] — 2026-08-06
 
 ### Arreglado — elegir blue/CCL/mayorista no hacía nada con un override manual vigente

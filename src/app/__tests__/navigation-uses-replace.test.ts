@@ -71,7 +71,10 @@ describe("router.back() en vez de router.replace(url)/router.push(url) al volver
     { label: "debts/new/page.tsx — crear", path: "src/app/(app)/debts/new/page.tsx", expectedBackCalls: 2 },
     { label: "more/rules/new/page.tsx — crear", path: "src/app/(app)/more/rules/new/page.tsx", expectedBackCalls: 2 },
     { label: "investments/[portfolioId]/trades/new/page.tsx — crear operación", path: "src/app/(app)/investments/[portfolioId]/trades/new/page.tsx", expectedBackCalls: 2 },
-    { label: "investments/[portfolioId]/instruments/new/page.tsx — crear instrumento", path: "src/app/(app)/investments/[portfolioId]/instruments/new/page.tsx", expectedBackCalls: 2 },
+    // 3 en vez de 2: el buscador (I7) sumó un tercer punto de salida —
+    // elegir un resultado (`handlePickResult`) vuelve igual que guardar a
+    // mano (`handleSave`), más el `onBack` del header.
+    { label: "investments/[portfolioId]/instruments/new/page.tsx — crear instrumento", path: "src/app/(app)/investments/[portfolioId]/instruments/new/page.tsx", expectedBackCalls: 3 },
     // Mismo movimiento que cuentas: el detalle dejó de ser una ruta
     // (`/transactions/[id]`) y pasó a ser una selección con search param
     // dentro de `/transactions`. El `back()` de borrar vive ahora en

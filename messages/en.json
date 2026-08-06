@@ -1840,6 +1840,12 @@
   "noHistory": "No trades for this instrument yet."
  },
  "newInstrumentPage": {
+  "search": "Search instrument",
+  "searchHint": "Type a symbol — AAPL, GGAL, BTC.",
+  "searchEmpty": "No results. You can create it by hand.",
+  "alreadyHave": "You already have it",
+  "createManually": "Can't find it? Create it by hand",
+  "backToSearch": "Back to search",
   "symbol": "Symbol",
   "name": "Name",
   "assetClass": "Asset class",
@@ -1859,6 +1865,7 @@
   "settlementAccount": "Settlement account",
   "quantity": "Quantity",
   "unitPrice": "Unit price",
+  "loadingPrice": "Looking up market price…",
   "saved": "Trade saved",
   "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."
  },

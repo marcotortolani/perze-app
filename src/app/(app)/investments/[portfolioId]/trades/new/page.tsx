@@ -11,9 +11,11 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useInstruments, useInvalidateTrades } from "@/hooks/use-investments";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
 import { fxRepo } from "@/lib/repos/fx-repo";
+import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
 import { money } from "@/lib/money/money";
+import type { Instrument } from "@/lib/repos/instruments-repo";
 
 const KINDS: TradeKind[] = ["buy", "sell"];
 
@@ -34,10 +36,28 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const [accountId, setAccountId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  const [priceLoading, setPriceLoading] = useState(false);
   const [sheet, setSheet] = useState<"none" | "instrument" | "account">("none");
   const [saving, setSaving] = useState(false);
 
   if (!household || !userId) return null;
+
+  // El precio arranca en el valor de mercado del momento, editable — nunca
+  // se lo pide "de memoria". Un instrumento sin proveedor (FCI, plazo
+  // fijo, inmuebles) deja el campo vacío como siempre, sin sugerencia.
+  const handleSelectInstrument = async (inst: Instrument) => {
+    setInstrumentId(inst.id);
+    setSheet("none");
+    setPrice("");
+    if (!inst.priceProvider) return;
+    setPriceLoading(true);
+    try {
+      const quote = await priceSnapshotsRepo.refreshFromProvider(inst.id);
+      if (quote) setPrice(String(quote.close));
+    } finally {
+      setPriceLoading(false);
+    }
+  };
 
   const instrument = instruments.find((i) => i.id === instrumentId);
   const account = accounts.find((a) => a.id === accountId);
@@ -117,7 +137,12 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
           </button>
 
           <Input label={t("newTradePage.quantity")} placeholder="10" value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/[^0-9.,]/g, ""))} />
-          <Input label={t("newTradePage.unitPrice")} placeholder="150,00" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ""))} />
+          <Input
+            label={t("newTradePage.unitPrice")}
+            placeholder={priceLoading ? t("newTradePage.loadingPrice") : "150,00"}
+            value={price}
+            onChange={(e) => setPrice(e.target.value.replace(/[^0-9.,]/g, ""))}
+          />
 
           <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
             {t("common.save")}
@@ -132,7 +157,7 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
       <Sheet open={sheet === "instrument"} title={t("newTradePage.instrument")} onClose={() => setSheet("none")}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {instruments.map((i) => (
-            <ListRow key={i.id} label={`${i.symbol} — ${i.name}`} meta={i.currencyCode} onClick={() => { setInstrumentId(i.id); setSheet("none"); }} />
+            <ListRow key={i.id} label={`${i.symbol} — ${i.name}`} meta={i.currencyCode} onClick={() => handleSelectInstrument(i)} />
           ))}
           <ListRow icon="plus" label={t("investmentsPage.newInstrument")} variant="action" onClick={() => router.push(`/investments/${portfolioId}/instruments/new`)} />
         </div>

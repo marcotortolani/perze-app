@@ -1840,6 +1840,12 @@
   "noHistory": "Ainda não há operações para este instrumento."
  },
  "newInstrumentPage": {
+  "search": "Buscar instrumento",
+  "searchHint": "Digite um símbolo — AAPL, GGAL, BTC.",
+  "searchEmpty": "Sem resultados. Você pode criar manualmente.",
+  "alreadyHave": "Você já tem",
+  "createManually": "Não encontrou? Criar manualmente",
+  "backToSearch": "Voltar à busca",
   "symbol": "Símbolo",
   "name": "Nome",
   "assetClass": "Classe de ativo",
@@ -1859,6 +1865,7 @@
   "settlementAccount": "Conta de liquidação",
   "quantity": "Quantidade",
   "unitPrice": "Preço unitário",
+  "loadingPrice": "Buscando preço de mercado…",
   "saved": "Operação salva",
   "savedPendingFx": "Salvo sem cotação — resolve sozinho ao reconectar."
  },
