@@ -9,6 +9,7 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
+import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 
 /** B10 — el mismo cooldown que la Edge Function ya exige del lado servidor (rate limit de `signInWithOtp`); acá es solo para no dejar tocar "Reenviar" en loop y quemar los reintentos sin que el usuario se entere por qué. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -69,7 +70,19 @@ export default function OnboardingVerifyPage() {
         router.push("/pending");
         return;
       }
-      router.push("/onboarding/country");
+
+      // AC-1/AC-9 — mismo chequeo que hace `/onboarding` al consumir el
+      // link clickeado: sin esto, un reingreso por código (dispositivo
+      // nuevo, o local storage limpio) mandaba siempre a A4 y creaba un
+      // household duplicado en vez de restaurar el que ya existía en el
+      // servidor. Nunca degradar en silencio a A4 si el chequeo falla
+      // (sin red, proyecto pausado) — se avisa y la pantalla queda
+      // utilizable en vez de perder el household existente.
+      try {
+        router.push(await resolveOnboardingDestination());
+      } catch {
+        toast.error(t("onboarding.auth.checkError"));
+      }
     } finally {
       setVerifying(false);
     }
