@@ -6,6 +6,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.8] — 2026-08-06
+
+### Agregado — Permisos y visibilidad distingue cuentas homónimas por ícono, moneda y país
+
+`/family` → Permisos y visibilidad listaba las cuentas solo por nombre: dos cuentas "Itaú" (una en
+UYU, otra en USD, o una en cada país) eran indistinguibles sin abrir cada una a ciegas. Cada fila
+ahora lleva el mismo ícono de tipo de cuenta con su color (`ACCOUNT_KIND_ICON`/`accountColorVar`,
+ya usados en `/accounts`) más `tipo · moneda · país` en el `meta` — el mismo trío que
+`AccountsListContent`, agregando la moneda explícita porque ahí la aporta el saldo formateado y acá
+no hay saldo que mostrar.
+
 ## [0.29.7] — 2026-08-06
 
 ### Corregido — el total del portfolio sumaba montos de monedas distintas sin convertir

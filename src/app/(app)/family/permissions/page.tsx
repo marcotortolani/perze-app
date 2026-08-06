@@ -14,6 +14,9 @@ import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members"
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { visibilityGrantsRepo, type VisibilityGrant } from "@/lib/repos/visibility-grants-repo";
+import { ACCOUNT_KIND_ICON, ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
+import { accountColorVar } from "@/lib/reference/account-colors";
+import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import type { Visibility } from "@/lib/db/schema";
 
 type Subject = { type: "account" | "category"; id: string; label: string; visibility: Visibility | "custom" };
@@ -103,7 +106,17 @@ export default function PermissionsPage() {
         {accounts.filter((a) => a.archivedAt === null).map((a) => (
           <ListRow
             key={a.id}
+            icon={ACCOUNT_KIND_ICON[a.kind]}
+            iconBackground={accountColorVar(a.color)}
             label={a.name}
+            // Antes solo mostraba el nombre: dos cuentas "Itaú" (una en
+            // UYU, otra en USD) no se podían distinguir acá sin abrir cada
+            // una. Mismo trío ícono/tipo/país que ya usa `AccountsListContent`,
+            // más la moneda — que ahí la aporta implícita el saldo formateado
+            // y acá no hay saldo que mostrar.
+            meta={`${t(ACCOUNT_KIND_MESSAGE_KEY[a.kind])} · ${a.currencyCode}${
+              a.countryCode && a.countryCode in COUNTRY_MESSAGE_KEY ? ` · ${t(COUNTRY_MESSAGE_KEY[a.countryCode as keyof typeof COUNTRY_MESSAGE_KEY])}` : ""
+            }`}
             variant="value"
             value={t(VISIBILITY_MESSAGE_KEY[a.visibility])}
             onClick={() => openEditor({ type: "account", id: a.id, label: a.name, visibility: a.visibility })}
