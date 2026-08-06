@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.2] — 2026-08-06
+
+### Arreglado — dos detalles visuales en mobile: el banner de recordatorios y la barra de scroll
+
+- **El banner de recordatorios (0.28.3) bleedeaba edge-to-edge con `border-radius` puesto** —
+  la combinación no tiene sentido: al pintar exactamente ancho completo, las esquinas quedan
+  recortadas contra el borde del viewport y se ven cuadradas, con el ícono pegado al borde
+  lateral. Se saca el `margin` negativo, mismo tratamiento que `InsightCard` (el card de alerta
+  de presupuesto, que sí se ve como card de verdad).
+- **La barra de scroll nativa quedaba mucho más adentro del borde real del viewport en mobile**
+  que en `/transactions` — no era solo el dashboard: las 5 pantallas con scroller propio
+  (`OWN_SCROLLER_ROUTES`) salvo `/transactions` tenían el mismo problema, un `paddingRight: 8`
+  sumado ARRIBA del padding lateral que ya reserva `<main>`. `/transactions` se veía bien de
+  pura casualidad — tiene un `margin`/`padding` propio para una razón completamente distinta (el
+  sangrado del resalte de fila seleccionada) que de paso corregía esto. Nuevo utility
+  `scroll-gutter-right` (`globals.css`) aplicado a las 5 pantallas: deja el contenido exactamente
+  donde estaba y acerca la barra al borde real, documentado en `02-design-system.md` § 4 para que
+  cualquier pantalla nueva con scroll propio lo use en vez de un `paddingRight` suelto.
+
 ## [0.29.1] — 2026-08-06
 
 ### Arreglado — el switch Personal/Compartido/Todo aparecía en pantallas donde no filtraba nada

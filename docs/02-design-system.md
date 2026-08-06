@@ -265,6 +265,15 @@ pregunta operativa es "¿puede esta lista, alguna vez, mezclar monedas?", no el 
 - Sin separadores entre filas de lista: alcanza con el espaciado y la alineación.
 - Tab bar 64px + safe area. FAB 64px, centrado, superpuesto.
 - Zona del pulgar: los últimos 200px contienen toda acción primaria.
+- **Barra de scroll: `scroll-gutter-right` (`globals.css`), nunca un `paddingRight` suelto.**
+  `<main>` (`.app-shell-main`) ya reserva el padding lateral de pantalla a los dos lados; una
+  pantalla con scroller propio (`OWN_SCROLLER_ROUTES`, `(app)/layout.tsx`) que le suma su propio
+  `paddingRight` al nodo `overflow-y: auto` para separar el contenido de la barra nativa está
+  sumando ESE padding arriba del de `<main>` — la barra termina mucho más adentro del borde real
+  del viewport de lo que se ve en cualquier otra app (D24). El utility deja el contenido exactamente
+  donde estaba y acerca la barra al borde real. Aplicarlo directo en el nodo `overflow-y: auto` de
+  cualquier scroller nuevo — nunca agrandar el padding lateral global para "arreglarlo", eso mueve
+  el contenido de toda la app, no solo el borde de la barra.
 
 ---
 

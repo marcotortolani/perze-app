@@ -65,7 +65,6 @@ export function ReminderBanner({ reminder }: ReminderBannerProps) {
         padding: "14px 16px",
         borderRadius: "var(--radius-card)",
         background: "var(--surface-1)",
-        margin: "0 calc(-1 * var(--screen-padding))",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>

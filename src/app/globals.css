@@ -803,6 +803,33 @@ html[data-backdrop-intensity="vivid"] {
 }
 
 /*
+ * `<main>` (`.app-shell-main`) ya reserva `--screen-padding` de aire a los
+ * dos lados. Cualquier pantalla de `OWN_SCROLLER_ROUTES` ((app)/layout.tsx)
+ * que además le pone su propio `paddingRight` al scroller para separar el
+ * contenido de la barra nativa está sumando ESE padding ARRIBA del de
+ * `<main>` — la barra de scroll termina mucho más adentro del borde real
+ * del viewport de lo que se ve en cualquier otra app (D24, encontrado
+ * comparando el dashboard contra `/transactions`, la única pantalla que
+ * por una razón no relacionada — el sangrado del resalte de fila
+ * seleccionada, `SELECTION_BLEED` en `TransactionsListContent.tsx` —
+ * terminaba con el valor correcto sin buscarlo).
+ *
+ * La regla para toda pantalla nueva con scroll propio: este utility en el
+ * nodo `overflow-y: auto`, en vez de un `paddingRight` suelto. Nunca
+ * agrandar `--screen-padding` global para "arreglarlo": eso movería el
+ * contenido de TODA la app, no solo el borde de la barra de scroll.
+ */
+@utility scroll-gutter-right {
+  /* Estira la caja de scroll 12px hacia afuera del padding de `<main>` — la
+     barra nativa, que pinta contra el borde de esa caja, queda a 8px del
+     borde real del viewport. */
+  margin-right: -12px;
+  /* 12px que compensan el estiramiento de arriba (el contenido no se mueve
+     ni un píxel) + 8px de aire real entre el contenido y la barra. */
+  padding-right: 20px;
+}
+
+/*
  * Base de `AccountCarousel` — `display`/`overflow-x` viven acá, NUNCA en
  * el `style` inline del componente: un inline style de React gana siempre
  * sobre cualquier clase, media query o no, así que el override de abajo

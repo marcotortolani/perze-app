@@ -584,8 +584,8 @@ function CategoryManagerForm({
         // el botón "Nueva categoría" no quede pegado contra la tab bar al
         // llegar al final del scroll. `lg:pb-6` vuelve a los 24px de
         // siempre en desktop (ahí no hay tab bar debajo, sobraba).
-        className="pb-9 lg:pb-6"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 16, paddingRight: 8, display: "flex", flexDirection: "column", gap: 16 }}
+        className="pb-9 lg:pb-6 scroll-gutter-right"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 16, display: "flex", flexDirection: "column", gap: 16 }}
       >
         {/* `lg`+: mientras el módulo de plantilla está visible (primera
             vez), el árbol va a la izquierda y la plantilla a la derecha —

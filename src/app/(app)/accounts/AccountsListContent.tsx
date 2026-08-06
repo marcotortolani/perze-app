@@ -150,12 +150,13 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
 
       <div
         ref={scrollerRef}
-        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
-        // `paddingRight`: separa las tarjetas de la barra de scroll en
-        // desktop. `lg:pb-8` (32px, no 0): aire real al final de la lista,
-        // consumido por el fade de `scroll-fade-bottom` de arriba en vez de
-        // que el fade tape directamente el último ítem.
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24, paddingRight: 8 }}
+        // `scroll-gutter-right`: separa las tarjetas de la barra de scroll
+        // nativa sin empujarla hacia adentro del borde real del viewport
+        // (`globals.css`, D24). `lg:pb-8` (32px, no 0): aire real al final
+        // de la lista, consumido por el fade de `scroll-fade-bottom` de
+        // arriba en vez de que el fade tape directamente el último ítem.
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8 scroll-gutter-right"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, paddingTop: 24 }}
       >
         {!simple ? <ListRow icon="bank" label={t("accountsPage.list.currenciesAndRates")} onClick={() => router.push("/currencies")} /> : null}
         {pendingFxCount > 0 ? (

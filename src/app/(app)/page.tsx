@@ -321,8 +321,8 @@ export default function HomePage() {
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
       <div
         ref={scrollerRef}
-        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
-        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 8, paddingRight: 8 }}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8 scroll-gutter-right"
+        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 8 }}
       >
       {showBirthdayBanner ? <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} /> : null}
       {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}

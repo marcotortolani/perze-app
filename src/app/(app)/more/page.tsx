@@ -79,8 +79,8 @@ export default function MorePage() {
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
       <div
         ref={scrollerRef}
-        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
-        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingRight: 8 }}
+        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8 scroll-gutter-right"
+        style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8 }}
       >
       {/* En `lg`+ esta página es la de SISTEMA y nada más: DINERO y PERSONAS
           ya están en el sidebar, al costado, y repetirlos acá era mostrar dos
