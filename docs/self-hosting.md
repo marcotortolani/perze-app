@@ -61,22 +61,33 @@ deploy de este repo Next.js.
    > acceso a `.env`. Vault es el lugar donde Supabase guarda secretos que un `SECURITY
    > DEFINER` puede leer sin que RLS ni un cliente autenticado los vea nunca.
 
+   > **Ojo con qué "service_role key" es:** en un proyecto que ya migró al sistema de API
+   > keys nuevo de Supabase (Settings → API muestra `sb_secret_...` en vez del JWT legacy),
+   > `perze_service_role_key` tiene que ser el `sb_secret_...`, no el JWT legacy — un Edge
+   > Function con `verify_jwt = true` devuelve `401 unauthenticated` con el legacy en esos
+   > proyectos, en silencio, sin ningún otro síntoma más que "el mail nunca llega". Si el
+   > dashboard todavía muestra ambos (legacy y nuevo), preferí el `sb_secret_...`.
+
    La notificación de tipo `insights` (detección de anomalías) no se dispara sola: no hay un
    motor de detección del lado servidor todavía — queda como feature pendiente, no como bug.
 
-7. (Opcional) Avisos por mail al operador cuando alguien nuevo pide acceso. Necesita, además de
-   los dos secrets de Vault del punto 6 (`handle_new_user()` es quien dispara el aviso), sus
-   propios secrets de Edge Function con las credenciales de Resend:
+7. (Opcional) Avisos por mail: al operador cuando alguien nuevo pide acceso, y al owner/admin
+   de un hogar cuando alguien acepta su invitación. Los dos disparan desde triggers de Postgres
+   (`handle_new_user()` y `household_invites_notify_accepted`) con los mismos dos secrets de
+   Vault del punto 6, y necesitan sus propios secrets de Edge Function con las credenciales de
+   Resend:
 
    ```bash
    supabase functions deploy notify-access-request
+   supabase functions deploy notify-invite-accepted
    supabase secrets set RESEND_API_KEY=... EMAIL_FROM=notificaciones@tudominio.com SITE_URL=https://tudominio.com
    ```
 
    Son las mismas credenciales de Resend que usa el mail transaccional de la app (§ 6 de
    `docs/mejora-auth-oauth-y-email.md`), pero cargadas **acá también** — los secrets de Edge
    Function y las variables de entorno de Next.js son dos lugares separados, aunque el valor
-   sea el mismo. Sin estos dos secrets, el alta funciona igual — el mail simplemente no sale.
+   sea el mismo. Sin estos dos secrets, el alta y la invitación funcionan igual — el mail
+   simplemente no sale.
 
 ## 2. Variables de entorno
 

@@ -334,6 +334,12 @@ pasada: **solo el primer punto.**
   perfil nuevo nace `pending` — mismo patrón de Vault que
   `dispatch_due_notifications()`. Se suma un badge en la tab bar (CON-13,
   `TabItem.badge`) para el mismo aviso dentro de la app.
+- **Aviso al owner/admin de que alguien aceptó su invitación —
+  implementado.** Mismo patrón que el punto anterior, del otro lado del
+  flujo J3: el trigger `household_invites_notify_accepted`
+  (`20260806070000_notify_invite_accepted.sql`) dispara
+  `supabase/functions/notify-invite-accepted` cuando `accepted_by` pasa de
+  `NULL` a un valor real.
 
 **Dónde vive el envío — dos caminos, según quién dispara.** Lo que dispara
 el *usuario* (invitar a alguien) va por Route Handler: no necesita

@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.5] — 2026-08-06
+
+### Arreglado — el mail de aviso al operador nunca llegaba (proyecto migrado al sistema de API keys nuevo)
+
+`notify-access-request` devolvía `401 unauthenticated` en silencio en cada intento, incluso con
+los dos secrets de Vault (`perze_project_url`/`perze_service_role_key`) cargados correctamente.
+Causa real, confirmada probando el Edge Function directo con `curl`: el proyecto ya migró al
+sistema de API keys nuevo de Supabase (`sb_secret_...`), y un Edge Function con `verify_jwt = true`
+deja de aceptar el `service_role` **legacy** (el JWT viejo) como credencial válida — sin ningún
+error visible del lado de la app, solo el 401 de la plataforma. Se actualizó el secret de Vault al
+`sb_secret_...` correcto y se verificó de punta a punta contra el trigger real. Documentado en
+`docs/self-hosting.md` para que ningún self-host futuro pierda el tiempo con el mismo síntoma.
+
+### Agregado — aviso al owner/admin cuando alguien acepta su invitación al hogar
+
+Mismo patrón que el aviso de "nueva solicitud de acceso" (0.28.0), del otro lado del flujo J3:
+`supabase/functions/notify-invite-accepted`, disparada por un trigger nuevo en
+`household_invites` que dispara `net.http_post` cuando `accepted_by` pasa de `NULL` a un valor
+real. Manda a todo owner/admin activo del hogar (nunca al que se acaba de unir), con el mismo
+criterio de "sale en silencio sin los secrets de Resend" que el resto de los avisos por mail.
+
 ## [0.28.4] — 2026-08-06
 
 ### Arreglado — remover a alguien del hogar no le cortaba el acceso real (seguridad)

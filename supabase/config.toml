@@ -451,6 +451,11 @@ verify_jwt = true
 [functions.notify-access-request]
 verify_jwt = true
 
+# Solo la llama el trigger `household_invites_notify_accepted` vía
+# `net.http_post` con el service_role key — mismo criterio de arriba.
+[functions.notify-invite-accepted]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
