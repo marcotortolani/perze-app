@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.11] — 2026-08-06
+
+### Agregado — changelog público dentro de la app (Más → Acerca de → Novedades)
+
+`CHANGELOG.md` es técnico — pensado para quien programa Perze, no para quien la usa. Nuevo
+`CHANGELOG-PUBLIC.md`: un documento paralelo, en español, con sus propias reglas de tono/formato/
+longitud escritas adentro del archivo (qué entra, qué no, cómo describir un bug arreglado desde el
+síntoma y no la causa técnica). `CLAUDE.md` suma la regla de mantenerlo actualizado junto con
+`CHANGELOG.md` cuando el cambio es user-facing, y de no forzar una entrada cuando no lo es.
+
+Nueva pantalla `/more/changelog` (Server Component: lee y parsea el `.md` en el servidor, sin
+cliente de Supabase — `parsePublicChangelog()` es un parser de línea a medida del formato fijo del
+archivo, no un parser de Markdown genérico) con un `ListRow` nuevo desde `/more/about`. El
+contenido queda deliberadamente solo en español — traducir cada entrada a los tres idiomas en cada
+versión es un costo de mantenimiento recurrente que no se paga para este proyecto; la UI alrededor
+(título, estado vacío) sí pasa por `next-intl` como el resto de la app.
+
 ## [0.29.10] — 2026-08-06
 
 ### Corregido — la captura por voz no reconocía "ingresaron", moneda ni tags

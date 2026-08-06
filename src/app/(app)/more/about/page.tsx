@@ -26,6 +26,7 @@ export default function AboutPage() {
         </div>
 
         <div style={{ paddingTop: 28 }}>
+          <ListRow icon="refresh" label={t("aboutPage.changelog")} meta={t("aboutPage.changelogMeta")} onClick={() => router.push("/more/changelog")} />
           <ListRow label={t("aboutPage.dataStorage")} meta={t("aboutPage.dataStorageMeta")} onClick={() => setDataSheetOpen(true)} />
           <ListRow label={t("aboutPage.operatorVisibility")} meta={t("aboutPage.operatorVisibilityMeta")} onClick={() => setPrivacySheetOpen(true)} />
           <ListRow label={t("aboutPage.currencyStandard")} meta={t("aboutPage.currencyStandardMeta")} onClick={() => setCurrencySheetOpen(true)} />

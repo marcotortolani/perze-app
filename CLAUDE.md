@@ -294,6 +294,14 @@ Antes de decir que una pantalla está lista, las ocho tienen que ser ciertas:
 - Los tipos de Supabase se regeneran con `pnpm db:types`. **Nunca editarlos a mano.**
 - Toda pantalla que aporte un patrón nuevo entra en `/dev/components`.
 - Si el diseño y lo que se puede programar no coinciden, **decilo** en vez de desviarte en silencio.
+- **`CHANGELOG.md` se actualiza antes de cada commit**, con la versión de `package.json` ya
+  bumpeada — técnico, para quien programa: qué cambió y por qué, en el nivel de detalle de un PR.
+- **`CHANGELOG-PUBLIC.md` se actualiza en el mismo commit cuando el cambio es user-facing** — algo
+  que la persona que usa la app puede notar o le resuelve algo. Sus propias reglas de tono, formato
+  y qué entra/qué no viven adentro del archivo, no acá; léelas ahí antes de escribir una entrada.
+  Un cambio puramente interno (refactor, fix de test, infraestructura) actualiza `CHANGELOG.md`
+  pero no toca este archivo — no hay que forzar una entrada por cada versión. Se lee dentro de la
+  app en Más → Acerca de → Novedades (`/more/changelog`).
 
 ## Comandos
 

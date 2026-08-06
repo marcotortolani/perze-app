@@ -1029,6 +1029,8 @@
   "title": "About",
   "name": "PERZE",
   "versionLine": "Version {version} · pronounced PER-se",
+  "changelog": "What's new",
+  "changelogMeta": "What changed in each version (in Spanish)",
   "dataStorage": "What data we keep",
   "dataStorageMeta": "And what never leaves your phone",
   "dataStorageBody": "Your transactions, accounts, and budgets live first on your phone (IndexedDB) and sync with your own Supabase project when you're online. Nothing is ever shared with third parties or used to train anything. If you self-host PERZE, that server is you.",
@@ -1042,6 +1044,11 @@
   "madeWithBody": "Geist Sans and Geist Mono, Phosphor icons, and exchange rates from BROU.",
   "quote": "The only thing that interferes with my learning is my education.",
   "quoteAuthor": "— Albert Einstein"
+ },
+ "changelogPage": {
+  "title": "What's new",
+  "version": "Version {version}",
+  "empty": "Nothing to show yet."
  },
  "privacyNotice": {
   "title": "Who can see what",
