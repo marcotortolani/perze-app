@@ -3,38 +3,37 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Button, EmptyState, Icon, Input, ListRow, PriceStatus, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { EmptyState, Icon, ListRow, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useInstruments, useInvalidateInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInstruments, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
-import { instrumentsRepo, type Instrument } from "@/lib/repos/instruments-repo";
+import type { Instrument } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
+import { formatAmountCompact } from "@/lib/money/format";
+import { money } from "@/lib/money/money";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useQueryClient } from "@tanstack/react-query";
 
-const STALE_HOURS = 24;
-
-function classify(asOf: string | undefined, provider: string | undefined): { state: "fresh" | "stale" | "manual"; ageHours: number } {
-  if (!asOf) return { state: "manual", ageHours: 0 };
-  const ageHours = Math.round((Date.now() - new Date(asOf).getTime()) / (1000 * 60 * 60));
-  if (provider === "manual") return { state: "manual", ageHours };
-  return { state: ageHours > STALE_HOURS ? "stale" : "fresh", ageHours };
-}
-
 /**
- * I12 — "Instrumentos": antes "Estado de los precios" (D34/redesign). Los
- * precios siempre son los de mercado — lo único que importa mostrar acá es
- * el catálogo en dos grupos: lo que ya está en el portfolio (obligado,
- * porque son los precios que de todas formas hay que actualizar) y lo que
- * se sigue sin haber comprado nada ("seguimiento"). "Agregar instrumento"
- * vive acá y ya no en el overview del portfolio (`OverviewContent`) — es
- * el mismo buscador de I7, no una segunda forma de crearlo.
+ * I12 — "Instrumentos": antes "Estado de los precios" (D34/redesign), y
+ * antes de eso una lista con badge "Actualizado"/"Manual" por fila (D42
+ * de esta pasada). El usuario la quiere leer como una tabla de cotizador
+ * (tipo Investing): símbolo, nombre, precio de mercado — nada de estado
+ * ni de acción por fila. "Manual" seguía siendo un concepto real (I12: FCI,
+ * plazo fijo, inmuebles, sin proveedor), pero esta lista no es el lugar
+ * para tocarlo — vive en el detalle del instrumento (I4,
+ * `InstrumentDetailContent`), que ya tiene "Cargar precio a mano" para
+ * instrumentos sin proveedor y "Eliminar de seguimiento" (D39). Acá el
+ * precio siempre sale del cache persistido (D36) — último valor conocido,
+ * refrescado por API con "Actualizar" en el header o al entrar — nunca se
+ * edita en este listado.
  *
- * "Actualizar" en el header dispara el mismo refresh en vivo que ya corre
- * solo al entrar — acá nunca se edita un valor a mano, son datos reales de
- * mercado; el precio manual sigue siendo la excepción para lo que ningún
- * proveedor cubre (FCI, plazo fijo, inmuebles).
+ * Lista el catálogo en dos grupos: lo que ya está en el portfolio
+ * (obligado, porque son los precios que de todas formas hay que
+ * mantener actualizados) y lo que se sigue sin haber comprado nada
+ * ("seguimiento"). "Agregar instrumento" vive acá y ya no en el overview
+ * del portfolio (`OverviewContent`) — es el mismo buscador de I7, no una
+ * segunda forma de crearlo.
  */
 export default function InstrumentsListPage() {
   const t = useTranslations();
@@ -45,16 +44,11 @@ export default function InstrumentsListPage() {
   const portfolio = portfolios?.[0];
   const { data: trades } = useTrades(portfolio?.id);
   const { data: instruments } = useInstruments(household?.id);
-  const invalidateInstruments = useInvalidateInstruments(household?.id);
   const instrumentIds = useMemo(() => (instruments ?? []).map((i) => i.id), [instruments]);
   const pricesQuery = useLatestPrices(instrumentIds);
   // D36 — mismo cache persistido que el overview/detalle: último precio
   // conocido mientras la consulta real todavía no resolvió.
   const prices = useCachedLatestPrices(pricesQuery.data);
-  const [editing, setEditing] = useState<{ instrumentId: string; symbol: string; currencyCode: string; deletable: boolean } | null>(null);
-  const [manualPrice, setManualPrice] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const providerInstrumentIds = useMemo(() => (instruments ?? []).filter((i) => i.priceProvider).map((i) => i.id), [instruments]);
@@ -131,59 +125,16 @@ export default function InstrumentsListPage() {
     (position && position.quantity !== 0 ? held : watchlist).push(instrument);
   }
 
-  const handleSaveManual = async () => {
-    if (!editing || !manualPrice.trim() || saving) return;
-    setSaving(true);
-    try {
-      await priceSnapshotsRepo.setManual(editing.instrumentId, Number(manualPrice.replace(",", ".")), editing.currencyCode);
-      await queryClient.invalidateQueries({ queryKey: ["latest-prices"] });
-      setEditing(null);
-      setManualPrice("");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!editing || !editing.deletable || deleting) return;
-    setDeleting(true);
-    try {
-      await instrumentsRepo.deleteUnused(editing.instrumentId);
-      invalidateInstruments();
-      toast(t("instrumentsListPage.removed", { symbol: editing.symbol }));
-      setEditing(null);
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const renderRow = (instrument: Instrument) => {
     const price = prices.get(instrument.id);
-    const { state, ageHours } = classify(price?.asOf, price?.provider);
-    const deletable = instrument.householdId === household.id && watchlist.includes(instrument);
     return (
       <ListRow
         key={instrument.id}
         label={instrument.symbol}
         meta={instrument.name}
-        // `right`, no `value` — con la fila ahora clickeable (va al detalle
-        // del instrumento) el botón de `PriceStatus` no puede vivir en
-        // `value`, que la convertiría en un <button> conteniendo otro
-        // botón. `right` fuerza el div clickeable (ver comentario del
-        // componente) y es exactamente el caso que documenta.
+        variant="value"
+        value={price ? formatAmountCompact(money(BigInt(Math.round(price.close)), instrument.currencyCode), { showSign: false }) : "—"}
         onClick={portfolio ? () => router.push(`/investments/${portfolio.id}/positions/${instrument.id}`) : undefined}
-        right={
-          // El `stopPropagation` es necesario: sin él, tocar "actualizar"
-          // también dispara la navegación de la fila (mismo criterio que
-          // `more/rules/page.tsx`).
-          <span onClick={(e) => e.stopPropagation()}>
-            <PriceStatus
-              state={state}
-              ageHours={ageHours}
-              onUpdate={() => setEditing({ instrumentId: instrument.id, symbol: instrument.symbol, currencyCode: instrument.currencyCode, deletable })}
-            />
-          </span>
-        }
       />
     );
   };
@@ -207,22 +158,6 @@ export default function InstrumentsListPage() {
           <ListRow icon="plus" label={t("instrumentsListPage.addInstrument")} variant="action" onClick={() => router.push(`/investments/${portfolio.id}/instruments/new`)} />
         ) : null}
       </div>
-
-      <Sheet open={editing !== null} title={editing ? t("instrumentsListPage.updatePrice", { symbol: editing.symbol }) : ""} onClose={() => setEditing(null)}>
-        {editing ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Input label={t("instrumentsListPage.price", { currency: editing.currencyCode })} value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} autoFocus />
-            <Button disabled={!manualPrice.trim() || saving} onClick={handleSaveManual}>
-              {t("common.save")}
-            </Button>
-            {editing.deletable ? (
-              <Button variant="danger" disabled={deleting} onClick={handleDelete}>
-                {t("instrumentsListPage.removeFromList")}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-      </Sheet>
     </div>
   );
 }

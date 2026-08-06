@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.22 — 6 de agosto de 2026
+
+### Mejorado
+
+- "Instrumentos" ahora se ve como una lista simple de cotizaciones: símbolo, nombre y
+  precio de mercado, sin etiquetas de estado. Cargar un precio a mano o sacar un
+  instrumento de seguimiento se hace desde su detalle.
+
 ## 0.29.21 — 6 de agosto de 2026
 
 ### Arreglado

@@ -1956,9 +1956,7 @@
   "sectionWatchlist": "Watchlist",
   "updatePrice": "Update {symbol}'s price",
   "price": "Price ({currency})",
-  "addInstrument": "Add instrument",
-  "removeFromList": "Remove from list",
-  "removed": "{symbol} removed from the list"
+  "addInstrument": "Add instrument"
  },
  "assetClassesPage": {
   "title": "Asset classes",

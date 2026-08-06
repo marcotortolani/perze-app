@@ -1956,9 +1956,7 @@
   "sectionWatchlist": "En seguimiento",
   "updatePrice": "Actualizar precio de {symbol}",
   "price": "Precio ({currency})",
-  "addInstrument": "Agregar instrumento",
-  "removeFromList": "Eliminar de la lista",
-  "removed": "{symbol} eliminado de la lista"
+  "addInstrument": "Agregar instrumento"
  },
  "assetClassesPage": {
   "title": "Clases de activo",

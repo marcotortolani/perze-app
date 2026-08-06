@@ -6,6 +6,36 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.22] — 2026-08-06
+
+### Cambiado — "Instrumentos" ahora es solo símbolo + precio de mercado, sin badges
+
+Pedido del usuario: quería la lista de "Instrumentos" como una tabla de cotizador (tipo
+Investing) — símbolo, nombre y precio de mercado, sin el badge "Actualizado"/"Manual" por
+fila ni el botón de actualizar/editar individual que traía desde D34/D42.
+
+Se saca `PriceStatus` (badge + botón) de cada fila y se muestra directo el precio cacheado
+(D36) formateado con `<Amount>`/`formatAmountCompact`, sin estado visible. Las dos
+capacidades que vivían en la hoja de edición de esta lista ya estaban duplicadas en el
+detalle del instrumento (I4) desde la pasada anterior — no se perdió nada, se sacó la
+redundancia:
+
+- Cargar precio a mano para un instrumento sin proveedor (I12: FCI, plazo fijo, inmuebles)
+  → ya existía en `InstrumentDetailContent` ("Cargar precio a mano").
+- Sacar un instrumento de seguimiento → ya existía ahí mismo (D39, ícono bookmark).
+
+Con eso, `src/app/(app)/investments/instruments/page.tsx` pierde el estado `editing`, la
+`Sheet` de edición/borrado y sus imports (`Input`, `Button`, `Sheet`, `PriceStatus`,
+`instrumentsRepo`) — el clic en la fila sigue yendo al detalle del instrumento, que es
+donde viven esas dos acciones ahora. `classify()`/`STALE_HOURS` (el cálculo de fresco/viejo
+para el badge) también se van, sin reemplazo: no hay ningún indicador de antigüedad en esta
+pantalla. "Actualizar" en el header sigue igual, refrescando todos los instrumentos con
+proveedor de una vez.
+
+Namespace `instrumentsListPage`: se borran las claves `removeFromList`/`removed`
+(exclusivas de la Sheet que se fue) en los tres idiomas. `updatePrice`/`price` se quedan —
+las sigue usando la Sheet de precio manual de `InstrumentDetailContent`.
+
 ## [0.29.21] — 2026-08-06
 
 ### Corregido — el bloqueo por PIN/biométrico no se activaba al pasar a background
