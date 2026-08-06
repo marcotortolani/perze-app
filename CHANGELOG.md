@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.41] — 2026-08-06
+
+### Nuevo — editar un presupuesto existente
+
+`budgetsRepo.update()` ya existía (lo usaba `archive()`) pero no había pantalla que lo
+llamara para el límite o la categoría — un presupuesto se creaba con un estimado y
+quedaba fijo para siempre, sin forma de ajustarlo cuando la realidad cambiaba. Nueva
+ruta `/budgets/[id]/edit`, mismo layout que crear (`new/page.tsx`) precargado con la
+categoría y el límite vigentes: el keypad arranca mostrando el monto actual como
+placeholder editable (`expr` en `null` hasta la primera tecla, con `s ?? displayExpr` en
+las dos ramas del handler — tanto tipear como borrar parten del valor prefilled, no solo
+backspace) y lo reemplaza recién con la primera tecla tocada. Solo cambian límite y
+categoría; lo ya gastado sigue leyendo `computeBudgetProgress` sobre las transacciones
+reales, esta pantalla no las toca. Botón "Editar presupuesto" agregado junto al de
+eliminar en el detalle (`[id]/page.tsx`).
+
 ## [0.29.40] — 2026-08-06
 
 ### Nuevo — el buscador global ahora incluye movimientos recurrentes

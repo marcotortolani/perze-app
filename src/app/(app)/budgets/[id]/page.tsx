@@ -68,9 +68,14 @@ export default function BudgetDetailPage({ params }: { params: Promise<{ id: str
             <Amount value={money(remaining < 0n ? -remaining : remaining, budget.currencyCode)} size="label" showSign={false} tabular />
           </div>
         </div>
-        <Button variant="danger" fullWidth={false} onClick={handleDelete} style={{ marginTop: 20 }}>
-          {t("budgetsPage.delete")}
-        </Button>
+        <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+          <Button variant="secondary" fullWidth={false} onClick={() => router.push(`/budgets/${budget.id}/edit`)}>
+            {t("budgetsPage.editBudget")}
+          </Button>
+          <Button variant="danger" fullWidth={false} onClick={handleDelete}>
+            {t("budgetsPage.delete")}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.41 — 6 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés editar un presupuesto después de creado, por si el estimado que pusiste
+  cambió con el tiempo.
+
 ## 0.29.40 — 6 de agosto de 2026
 
 ### Nuevo
