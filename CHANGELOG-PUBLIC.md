@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.16 — 6 de agosto de 2026
+
+### Nuevo
+
+- En el detalle de una posición de tu portfolio ahora hay un botón para registrar una compra o
+  venta de ese mismo instrumento, ya con el ticket y el precio de mercado cargados.
+
 ## 0.29.15 — 6 de agosto de 2026
 
 ### Arreglado

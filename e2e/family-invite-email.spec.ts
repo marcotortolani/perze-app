@@ -44,5 +44,8 @@ test("J3 · con email cargado, generar código dispara el envío", async ({ page
 
   await expect(page.getByText("AB2CD3EFGHJ", { exact: true })).toBeVisible();
   await expect(page.getByText("Invitación enviada a ana@example.com")).toBeVisible();
-  expect(sendRequestBody?.inviteId).toBe("11111111-1111-4111-8111-111111111111");
+  // TS narrows `sendRequestBody` a `null` acá porque su única reasignación
+  // vive dentro del closure de `page.route` — no ve que corrió antes de este
+  // punto en runtime. El cast restaura el tipo real sin tocar el chequeo.
+  expect((sendRequestBody as { inviteId: string; locale: string } | null)?.inviteId).toBe("11111111-1111-4111-8111-111111111111");
 });

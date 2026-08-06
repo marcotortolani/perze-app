@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.16] — 2026-08-06
+
+### Agregado — "Registrar operación" desde el detalle de instrumento (I4)
+
+Antes la única forma de cargar una compra/venta era desde el listado de "mi portfolio" y
+elegir el instrumento a mano en la hoja de `trades/new`, aunque ya se estuviera parado en el
+detalle de ese mismo instrumento con su ticket, su moneda y su cotización a la vista.
+
+`InstrumentDetailContent` suma un botón "Registrar operación" que navega a
+`/investments/[portfolioId]/trades/new?instrumentId=<id>`. No se duplicó la pantalla de carga:
+`trades/new/page.tsx` lee `?instrumentId=` con un `useEffect` (antes del `if (!household ||
+!userId) return null`, porque es un hook y tiene que correr siempre) y llama al mismo
+`handleSelectInstrument` que ya usa la hoja de selección manual — mismo camino, mismo
+`priceSnapshotsRepo.refreshFromProvider()` para prellenar el precio de mercado. Un `useRef`
+evita reaplicar el prefill si `instruments` todavía no cargó en el primer render o si el
+usuario después cambia el instrumento a mano.
+
+### Corregido — falso positivo de TypeScript en `family-invite-email.spec.ts`
+
+`npx tsc --noEmit -p .` fallaba en `e2e/family-invite-email.spec.ts:47` con `Property
+'inviteId' does not exist on type 'never'` — no relacionado con este cambio, preexistente
+desde J3 (v0.29.x). Causa: `sendRequestBody` es un `let` de módulo cuya única reasignación
+vive dentro del closure de `page.route(...)`; TypeScript no hace control-flow analysis a
+través de ese límite de función, así que en el punto de uso lo sigue viendo con su tipo
+inicial (`null`), y `?.` sobre un tipo ya reducido a `null` colapsa a `never`. Es un límite
+conocido de TS con variables mutadas solo dentro de callbacks, no un bug del test en sí — se
+resuelve con un cast explícito en el punto de lectura (`(sendRequestBody as {...} | null)?.`),
+sin tocar el comportamiento del test.
+
 ## [0.29.15] — 2026-08-06
 
 ### Agregado — cache persistido de precios: nunca más "$ 0,00" al entrar al portfolio

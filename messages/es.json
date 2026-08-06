@@ -1876,6 +1876,7 @@
  "instrumentDetailPage": {
   "notFound": "No encontramos este instrumento.",
   "setPriceManually": "Cargar precio a mano",
+  "recordTrade": "Registrar operación",
   "unrealized": "no realizado",
   "quantity": "Cantidad",
   "avgPrice": "Precio promedio",

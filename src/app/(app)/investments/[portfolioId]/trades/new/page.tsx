@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, IconButton, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
@@ -49,6 +49,7 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const locale = useLocale() as Locale;
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: instruments = [] } = useInstruments(household?.id);
@@ -66,8 +67,6 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  if (!household || !userId) return null;
-
   // El precio arranca en el valor de mercado del momento, editable — nunca
   // se lo pide "de memoria". Un instrumento sin proveedor (FCI, plazo
   // fijo, inmuebles) deja el campo vacío como siempre, sin sugerencia.
@@ -84,6 +83,27 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
       setPriceLoading(false);
     }
   };
+
+  // I4 — "Registrar operación" desde el detalle de instrumento llega acá con
+  // `?instrumentId=`, ya con ticket y precio de mercado conocidos: se
+  // preselecciona una sola vez, por el mismo camino que elegirlo a mano en
+  // la hoja, para no duplicar el fetch de cotización con otra lógica.
+  // `instruments` puede tardar un tick en cargar, así que el efecto
+  // reintenta hasta encontrarlo; el ref evita re-aplicar el prefill si el
+  // usuario después cambia el instrumento a mano.
+  const prefillApplied = useRef(false);
+  useEffect(() => {
+    if (prefillApplied.current) return;
+    const prefillId = searchParams.get("instrumentId");
+    if (!prefillId) return;
+    const inst = instruments.find((i) => i.id === prefillId);
+    if (!inst) return;
+    prefillApplied.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill único desde el query param, no un loop de sincronización de estado
+    handleSelectInstrument(inst);
+  }, [searchParams, instruments]);
+
+  if (!household || !userId) return null;
 
   const instrument = instruments.find((i) => i.id === instrumentId);
   const account = accounts.find((a) => a.id === accountId);

@@ -1876,6 +1876,7 @@
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",
   "setPriceManually": "Set price by hand",
+  "recordTrade": "Record trade",
   "unrealized": "unrealized",
   "quantity": "Quantity",
   "avgPrice": "Average price",

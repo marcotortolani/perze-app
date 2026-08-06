@@ -141,6 +141,10 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         </div>
       </div>
 
+      <Button variant="secondary" onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}`)}>
+        {t("instrumentDetailPage.recordTrade")}
+      </Button>
+
       <div>
         <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 8 }}>{t("instrumentDetailPage.history")}</div>
         {instrumentTrades.length === 0 ? (
