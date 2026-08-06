@@ -7,6 +7,7 @@ import { Button, Icon, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { createClient } from "@/lib/supabase/client";
 import { profilesRepo, type AccessStatus } from "@/lib/repos/profiles-repo";
+import { getPendingInviteCode } from "@/lib/onboarding/pending-invite";
 import { signOut } from "@/lib/auth/sign-out";
 
 /**
@@ -41,6 +42,15 @@ export default function PendingPage() {
     setEmail(user.email ?? null);
     const access = await profilesRepo.getOwnAccess(user.id);
     if (!access || access.accessStatus === "approved") {
+      // Respaldo del mismo chequeo que ya hacen `/onboarding` y
+      // `/onboarding/verify` antes de llegar acá: si quedó un código de
+      // invitación sin canjear (por ejemplo, una sesión vieja que cayó a
+      // `/pending` antes de que existiera ese chequeo), termina de
+      // canjearlo en vez de crear un household nuevo por default en A11.
+      if (getPendingInviteCode()) {
+        router.replace("/join");
+        return;
+      }
       router.replace("/onboarding/success");
       return;
     }

@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
+import { getPendingInviteCode } from "@/lib/onboarding/pending-invite";
 import { hasSeenWelcome } from "@/lib/onboarding/welcome-flag";
 import { env } from "@/env";
 
@@ -102,6 +103,18 @@ export default function OnboardingAuthPage() {
         // A2 manda). La decisión vivía en el layout del shell, donde quedó
         // como código muerto desde que el gate retiene el render (AC-18).
         if (!fromLink && !searchError && !hasSeenWelcome()) router.replace("/onboarding/welcome");
+        return;
+      }
+
+      // El canje de una invitación no depende de la aprobación del
+      // operador — `/join` es pública y `accept_invite()` solo exige
+      // `auth.uid()`, nada más. Sin este chequeo ANTES del gate de acceso,
+      // un invitado nuevo sin aprobar quedaba varado en `/pending` para
+      // siempre con el código sin canjear: `household_invites.accepted_by`
+      // nunca se llegaba a escribir, así que ni siquiera aparecía como
+      // "usado" para quien lo invitó.
+      if (getPendingInviteCode()) {
+        router.replace("/join");
         return;
       }
 

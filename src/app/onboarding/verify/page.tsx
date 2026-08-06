@@ -10,6 +10,7 @@ import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
+import { getPendingInviteCode } from "@/lib/onboarding/pending-invite";
 
 /** B10 — el mismo cooldown que la Edge Function ya exige del lado servidor (rate limit de `signInWithOtp`); acá es solo para no dejar tocar "Reenviar" en loop y quemar los reintentos sin que el usuario se entere por qué. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -57,6 +58,16 @@ export default function OnboardingVerifyPage() {
       const { error } = await supabase.auth.verifyOtp({ email, token: value, type: "email" });
       if (error) {
         setInvalid(true);
+        return;
+      }
+
+      // El canje de una invitación no depende de la aprobación del
+      // operador (mismo motivo que en `/onboarding` — `/join` es pública y
+      // `accept_invite()` solo exige sesión). Antes que el gate de acceso,
+      // o un invitado nuevo sin aprobar quedaba varado en `/pending` con
+      // el código sin canjear para siempre.
+      if (getPendingInviteCode()) {
+        router.push("/join");
         return;
       }
 

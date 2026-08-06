@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.27.2] — 2026-08-06
+
+### Arreglado — la invitación al household nunca se canjeaba para un invitado sin aprobar
+
+- El gate de acceso controlado (`access_status !== "approved"` → `/pending`) corría **antes** de
+  chequear si había un código de invitación pendiente, en los tres lugares que deciden destino
+  después de verificar sesión: `/onboarding` (link clickeado), `/onboarding/verify` (código
+  tipeado) y `/pending` (al quedar aprobado). Un invitado nuevo, que por diseño siempre entra sin
+  aprobar, quedaba varado en "tu acceso está esperando aprobación" con el código sin canjear —
+  `household_invites.accepted_by` nunca se escribía, así que ni figuraba como usado para quien
+  invitó, y al aprobarlo el sistema le creaba un household propio por default en vez de sumarlo al
+  que lo invitó.
+- El canje de una invitación no depende de la aprobación del operador — `/join` es pública y
+  `accept_invite()` solo exige `auth.uid()` — así que el chequeo del código pendiente pasa a correr
+  primero en los tres lugares.
+
 ## [0.27.1] — 2026-08-06
 
 ### Arreglado — A3 con código ignoraba el household existente y creaba uno nuevo
