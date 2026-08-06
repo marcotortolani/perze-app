@@ -903,6 +903,22 @@ html[data-backdrop-intensity="vivid"] {
 }
 
 /*
+ * Bento genérico de 12 columnas, SIEMPRE grid (a diferencia de
+ * `.account-grid-lg`, que solo es grid desde `lg` y carrusel abajo de
+ * eso) — a diferencia del carrusel de cuentas del home, una pantalla
+ * dedicada de asignación (I9, `/investments/allocation`) no compite por
+ * espacio con el resto del dashboard: se puede mostrar como grid desde
+ * mobile. `grid-column: span N` de cada bloque sale de `bentoLayout()`/
+ * `assignBentoSlots()` en `src/lib/layout/bento.ts`, siempre inline
+ * (valor calculado por render, no una clase fija).
+ */
+@utility bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/*
  * Shell de `(app)/layout.tsx` fijo al viewport, mismo comportamiento en
  * todos los anchos: `<main>` (`.app-shell-main`) es el único contenedor de
  * scroll de la app. `.app-shell-column` necesita `min-height: 0` porque un

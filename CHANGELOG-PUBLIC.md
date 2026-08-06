@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.43 — 6 de agosto de 2026
+
+### Mejorado
+
+- La pantalla de asignación de Inversiones ahora se ve como un bento grid: cada posición
+  es su propio bloque, y el tamaño refleja cuánto pesa dentro de tu cartera. De paso, se
+  corrigió un cálculo que podía mezclar posiciones en distintas monedas sin convertir.
+
 ## 0.29.42 — 6 de agosto de 2026
 
 ### Nuevo

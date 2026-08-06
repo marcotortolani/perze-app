@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.43] — 2026-08-06
+
+### Nuevo/Corregido — `/investments/allocation` rediseñada como bento grid por posición
+
+Reemplaza el `SplitBar` (riel horizontal agrupado por clase de activo) por un bento grid
+de 12 columnas agrupado por **posición**: cada instrumento es su propio bloque, sized por
+peso — el más pesado ocupa el slot más ancho, sin deformar la grilla en tabla. Si dos
+posiciones comparten símbolo pero son instrumentos distintos (una acción y su CEDEAR),
+cada una ya tenía su propio `instrumentId` en `computePositions()`, así que no hizo falta
+mergear nada — cada una sale con su propio bloque solo con usarlo.
+
+El motor del bento (`bentoLayout()`/`assignBentoSlots()`) se extrae de
+`AccountCarousel.tsx` (el carrusel de cuentas del home, que ya lo tenía) a
+`src/lib/layout/bento.ts`, generalizado con un `weightOf` genérico en vez de medir
+`formatAmountCompact(...).length` de un `Money` — así ambas pantallas comparten un solo
+motor probado (148 tests movidos y extendidos) en vez de tener cada una el suyo.
+`AccountCarousel` pasa a llamarlo con su propio `weightOf`, sin cambio de comportamiento.
+
+De paso, dos defectos documentados en `docs/auditoria-visual.md` quedan resueltos como
+consecuencia del rediseño, no a propósito:
+
+- **D4**: `SplitBar` pintaba sus partes con la paleta de datos, prohibida por
+  `charts.css` — ya no se usa acá.
+- **V9**: el `SplitBar` viejo sumaba `quantity * price.close` crudo entre posiciones de
+  **monedas distintas** sin convertir (un CEDEAR en pesos + una acción en dólares no se
+  pueden sumar así) — el bento nuevo convierte cada posición a la moneda base del
+  household antes de comparar pesos, mismo patrón `toBase`/`needs_fx` que
+  `OverviewContent`: sin cotización, la posición se excluye del total y se cuenta con
+  `NeedsFxBanner`; sin precio de mercado, con el mismo aviso propio que `OverviewContent`
+  (D60, nunca el copy de `NeedsFxBanner`, que es específico de FX).
+
 ## [0.29.42] — 2026-08-06
 
 ### Nuevo — editar/eliminar operaciones de inversión y eliminar una posición completa
