@@ -14,6 +14,8 @@ import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useScopeStore } from "@/stores/scope-store";
+import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
@@ -95,11 +97,23 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const isCardPayment = useIsCardPayment(household?.id);
-  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(household?.id);
+  const { data: accountsRaw = [], isLoading: accountsLoading } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: tags = [] } = useTags(household?.id);
   const transactionsQuery = useTransactions(household?.id);
-  const { data: transactions, isLoading: txLoading } = transactionsQuery;
+  const { data: transactionsRaw, isLoading: txLoading } = transactionsQuery;
+  // El switch Personal/Compartido/Todo del header filtra acá — antes se
+  // mostraba en esta pantalla (2+ miembros) sin que nada de abajo lo
+  // leyera. `accounts`/`transactions`, ya filtrados, reemplazan a los
+  // crudos del fetch para TODO lo que sigue (resumen, calendario, lista,
+  // virtualización) sin tocar cada consumidor uno por uno.
+  const scope = useScopeStore((s) => s.scope);
+  const accounts = useMemo(() => accountsRaw.filter((a) => accountMatchesScope(a.visibility, scope)), [accountsRaw, scope]);
+  const scopedAccountIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
+  const transactions = useMemo(
+    () => (transactionsRaw ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
+    [transactionsRaw, scopedAccountIds]
+  );
   const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
   const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags]);
   const tagIdsByTx = useMemo(() => {

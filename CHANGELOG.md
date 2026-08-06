@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.1] — 2026-08-06
+
+### Arreglado — el switch Personal/Compartido/Todo aparecía en pantallas donde no filtraba nada
+
+Se mostraba en CUALQUIER pantalla raíz de tab con 2+ miembros — `/investments`, `/recurring`,
+`/more`, cualquier cuarto slot — sin que esas pantallas leyeran `scope` en absoluto: aparecía,
+prometía filtrar, y no hacía nada. Ahora solo se muestra en las 4 pantallas que de verdad lo
+usan (`SCOPE_AWARE_ROUTES` en `(app)/layout.tsx`): dashboard, movimientos, cuentas y análisis. En
+el resto, el logo (mobile) o el título de la pantalla (desktop) vuelven a ocupar ese lugar, como
+en cualquier otra pantalla de la app.
+
+De paso, se cierra el hueco real: `/transactions`, `/accounts` y `/analytics` no filtraban por
+scope aunque el dashboard sí lo hacía desde la sesión anterior — ahora las tres respetan el
+mismo criterio (`accountMatchesScope`, `visibility` de cada cuenta) para sus cuentas,
+movimientos, patrimonio neto y resúmenes.
+
 ## [0.29.0] — 2026-08-06
 
 ### Agregado — núcleo del bloque I: portfolios múltiples, detalle de instrumento y precios reales

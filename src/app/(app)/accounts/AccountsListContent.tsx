@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Amount, Card, DragRow, EmptyState, ErrorState, Icon, ListRow, Skeleton, SkeletonRow, StatusBadge, usePageHeader } from "@/design-system";
@@ -11,6 +11,8 @@ import { useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useScopeStore } from "@/stores/scope-store";
+import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { money, zero } from "@/lib/money/money";
 import { ACCOUNT_KIND_ICON, ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
@@ -46,14 +48,17 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
   const { data: accounts, isLoading } = accountsQuery;
   const { data: transactions = [] } = useTransactions(household?.id);
   const errorState = useQueryErrorState(accountsQuery, { what: t("accountsPage.list.errorWhat") });
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const scope = useScopeStore((s) => s.scope);
+  const scopedAccounts = useMemo(() => (accounts ?? []).filter((a) => accountMatchesScope(a.visibility, scope)), [accounts, scope]);
+  const scopedAccountIds = useMemo(() => new Set(scopedAccounts.map((a) => a.id)), [scopedAccounts]);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts);
   const invalidateAccounts = useInvalidateAccounts(household?.id);
-  const pendingFxCount = transactions.filter((t) => t.fxRate === null).length;
+  const pendingFxCount = transactions.filter((t) => t.fxRate === null && scopedAccountIds.has(t.accountId)).length;
 
   const baseCurrency = household?.baseCurrency ?? "UYU";
   const bySortOrder = (a: AccountRow, b: AccountRow) => a.sortOrder - b.sortOrder;
-  const active = (accounts ?? []).filter((a) => a.archivedAt === null).sort(bySortOrder);
-  const archived = (accounts ?? []).filter((a) => a.archivedAt !== null);
+  const active = scopedAccounts.filter((a) => a.archivedAt === null).sort(bySortOrder);
+  const archived = scopedAccounts.filter((a) => a.archivedAt !== null);
   const currencies = [...new Set(active.map((a) => a.currencyCode))];
   const simple = currencies.length <= 1;
 

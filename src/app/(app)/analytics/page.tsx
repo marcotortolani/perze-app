@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Card, EmptyState, ErrorState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
@@ -8,6 +9,8 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
+import { useScopeStore } from "@/stores/scope-store";
+import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { closedPeriodsCount, daysOfHistory, daysUntilPeriodCloses, monthsOfHistory, previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { averageDailyExpense, summarizePeriod } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -28,13 +31,24 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const accountsQuery = useAccounts(household?.id);
-  const { data: accounts } = accountsQuery;
+  const { data: accountsRaw } = accountsQuery;
   const transactionsQuery = useTransactions(household?.id);
-  const { data: transactions } = transactionsQuery;
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const { data: transactionsRaw } = transactionsQuery;
+  // El switch Personal/Compartido/Todo del header filtra acá — antes se
+  // mostraba en esta pantalla (2+ miembros) sin que nada de abajo lo
+  // leyera. Mismo patrón que el dashboard: `accounts`/`transactions` ya
+  // filtrados reemplazan a los crudos del fetch para todo lo que sigue.
+  const scope = useScopeStore((s) => s.scope);
+  const accounts = useMemo(() => (accountsRaw ?? []).filter((a) => accountMatchesScope(a.visibility, scope)), [accountsRaw, scope]);
+  const scopedAccountIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
+  const transactions = useMemo(
+    () => (transactionsRaw ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
+    [transactionsRaw, scopedAccountIds]
+  );
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts);
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("analyticsPage.errorWhat") });
 
-  if (!household || !accounts || !transactions) {
+  if (!household || !accountsRaw || !transactionsRaw) {
     return (
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 16 }}>
         <Skeleton width={140} height={16} style={{ margin: "0 auto" }} />

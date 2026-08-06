@@ -32,6 +32,9 @@ function tabForPathname(pathname: string): string {
 /** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
 const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/accounts", "/more", "/more/settings", "/more/categories"]);
 
+/** Las únicas 4 pantallas cuyos datos de verdad se filtran por `scope` (`match-scope.ts`) — ver el comentario junto a `showScope`. */
+const SCOPE_AWARE_ROUTES = new Set(["/", "/transactions", "/accounts", "/analytics"]);
+
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
  * FAB central. Tres slots fijos, uno elegido por el usuario (K3, default
@@ -69,7 +72,13 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   // aparecía para el owner aunque el household tuviera 2+ miembros de
   // verdad — bug real, no solo un caso raro.
   const { data: householdMembers } = useRemoteHouseholdMembers(household?.id);
-  const showScope = (householdMembers?.length ?? 0) > 1;
+  // El switch solo tiene sentido donde de verdad filtra algo — dashboard,
+  // movimientos, cuentas y análisis, las 4 pantallas que ya lo consumen.
+  // Antes se mostraba en CUALQUIER pantalla raíz de tab (`/investments`,
+  // `/recurring`, `/more`, cualquier cuarto slot) con 2+ miembros, sin que
+  // ninguna de esas leyera `scope` — aparecía, prometía filtrar, y no
+  // hacía nada. Coincide con `SCOPE_AWARE_ROUTES` de abajo.
+  const showScope = SCOPE_AWARE_ROUTES.has(pathname) && (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
   const pendingAccessRequests = usePendingAccessRequestsCount();
   const [searchOpen, setSearchOpen] = useState(false);
