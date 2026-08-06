@@ -6,6 +6,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.12] — 2026-08-06
+
+### Agregado — histórico completo en el changelog público, desde el origen del proyecto
+
+`CHANGELOG-PUBLIC.md` solo tenía las últimas versiones (desde 0.29.4). Se completa hacia atrás
+hasta 0.1.0, agrupando ~90 versiones técnicas en ~20 entradas por hito user-facing real (mismo
+criterio ya documentado en el archivo: nada de refactors, RLS, tipos o infraestructura) más una
+sección narrativa "El principio" con el origen del proyecto (basada en `docs/00-producto.md`).
+
+`parsePublicChangelog()` suma soporte para un heading `##` que no matchea el formato de versión — antes
+esas líneas se perdían en silencio (ni error ni contenido, el parser las ignoraba sin más). Ahora
+son una entrada `type: "narrative"` con párrafos de prosa real (líneas consecutivas sin blanco se
+unen en un párrafo, como Markdown estándar), intercalada en su lugar cronológico. Un único heading
+está en una lista de exclusión explícita (`"Cómo escribir una entrada acá"`, las reglas de edición
+del archivo) para que nunca se renderice dentro de la app. `ChangelogContent.tsx` la muestra con el
+mismo tratamiento visual que la cita de `/more/about` (borde izquierdo, cursiva) — prosa
+subordinada al listado de versiones, no un dato de la app.
+
 ## [0.29.11] — 2026-08-06
 
 ### Agregado — changelog público dentro de la app (Más → Acerca de → Novedades)

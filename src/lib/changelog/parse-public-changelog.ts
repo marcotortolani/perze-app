@@ -4,35 +4,80 @@ export interface PublicChangelogGroup {
   items: string[];
 }
 
-export interface PublicChangelogEntry {
+export interface PublicChangelogVersionEntry {
+  type: "version";
   version: string;
   date: string;
   groups: PublicChangelogGroup[];
 }
 
+/** Un `## ` que no es una versión — p. ej. "El principio", el origen del proyecto en prosa. Se muestra en la app como texto, intercalado en su lugar cronológico. */
+export interface PublicChangelogNarrativeEntry {
+  type: "narrative";
+  heading: string;
+  paragraphs: string[];
+}
+
+export type PublicChangelogEntry = PublicChangelogVersionEntry | PublicChangelogNarrativeEntry;
+
+/** Encabezados de `## ` que son instrucciones para quien EDITA el archivo, no contenido para quien lo lee dentro de la app — se descartan del todo, nunca se muestran. */
+const META_HEADINGS = new Set(["Cómo escribir una entrada acá"]);
+
 /**
  * Parser de línea, no un parser de Markdown genérico — `CHANGELOG-PUBLIC.md`
  * tiene un formato fijo y documentado en el propio archivo (`## {version} —
- * {fecha}`, `### {categoría}` opcional, `- {item}`). Todo lo que esté ANTES
- * del primer `## ` (el título del archivo y las reglas de cómo escribir una
- * entrada) se ignora a propósito: esa sección es para quien edita el
- * archivo, no para mostrar dentro de la app.
+ * {fecha}`, `### {categoría}` opcional, `- {item}`, y opcionalmente un `## `
+ * narrativo como "El principio" con párrafos de prosa en vez de items).
  */
 export function parsePublicChangelog(markdown: string): PublicChangelogEntry[] {
   const lines = markdown.split("\n");
   const entries: PublicChangelogEntry[] = [];
   let current: PublicChangelogEntry | null = null;
   let currentGroup: PublicChangelogGroup | null = null;
+  // Prosa de una sección narrativa: líneas consecutivas sin blanco entre
+  // medio son EL MISMO párrafo (convención Markdown estándar) — se
+  // acumulan acá y se unen con un espacio recién al cortar.
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length > 0 && current?.type === "narrative") {
+      current.paragraphs.push(paragraphBuffer.join(" "));
+    }
+    paragraphBuffer = [];
+  };
 
   for (const line of lines) {
     const versionMatch = line.match(/^##\s+(\S+)\s+—\s+(.+)$/);
     if (versionMatch) {
-      current = { version: versionMatch[1]!, date: versionMatch[2]!.trim(), groups: [] };
+      flushParagraph();
+      current = { type: "version", version: versionMatch[1]!, date: versionMatch[2]!.trim(), groups: [] };
       currentGroup = null;
       entries.push(current);
       continue;
     }
+
+    const genericHeadingMatch = line.match(/^##\s+(.+)$/);
+    if (genericHeadingMatch) {
+      flushParagraph();
+      const heading = genericHeadingMatch[1]!.trim();
+      currentGroup = null;
+      if (META_HEADINGS.has(heading)) {
+        current = null; // las líneas de esta sección (reglas de edición) se ignoran hasta el próximo `## `
+      } else {
+        current = { type: "narrative", heading, paragraphs: [] };
+        entries.push(current);
+      }
+      continue;
+    }
+
     if (!current) continue;
+
+    if (current.type === "narrative") {
+      const text = line.trim();
+      if (text) paragraphBuffer.push(text);
+      else flushParagraph();
+      continue;
+    }
 
     const headingMatch = line.match(/^###\s+(.+)$/);
     if (headingMatch) {
@@ -50,6 +95,7 @@ export function parsePublicChangelog(markdown: string): PublicChangelogEntry[] {
       currentGroup.items.push(itemMatch[1]!.trim());
     }
   }
+  flushParagraph();
 
   return entries;
 }

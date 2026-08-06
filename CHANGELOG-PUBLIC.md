@@ -40,6 +40,12 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.12 — 6 de agosto de 2026
+
+### Nuevo
+
+- El historial completo de Novedades, desde la primera versión de Perze hasta hoy.
+
 ## 0.29.11 — 6 de agosto de 2026
 
 ### Nuevo
@@ -89,3 +95,241 @@ inventes de memoria.
 - Crear un instrumento de inversión ahora empieza con un buscador (acciones, CEDEARs, bonos,
   cripto) en vez de pedirte que inventes el símbolo de memoria — cargar a mano sigue disponible
   para lo que el buscador no cubre.
+
+## 0.29.0–0.29.3 — 6 de agosto de 2026
+
+### Nuevo
+
+- Podés tener más de un portfolio de inversión, y ver el detalle de cada instrumento con su
+  historial completo de operaciones.
+- Las cotizaciones de acciones, CEDEARs, bonos y cripto se actualizan contra el mercado real,
+  no a mano.
+
+### Arreglado
+
+- Elegir una cotización distinta (blue, CCL, mayorista) para una moneda ahora funciona incluso
+  si ya habías cargado un valor a mano antes.
+
+## 0.28.0–0.28.8 — 6 de agosto de 2026
+
+### Nuevo
+
+- Landing pública para quien recibe un link de invitación: ahora ve primero de qué se trata
+  Perze, en vez de caer directo en el formulario de registro.
+- Aviso por mail cuando alguien pide acceso a tu instancia o acepta tu invitación al hogar, con
+  un contador visible en la app para las solicitudes pendientes.
+- El inicio sugiere, de a una cosa por vez, ajustes que capaz no conocías (formato de fecha,
+  tema, instalar la app).
+
+### Arreglado
+
+- Sacar a alguien del grupo familiar ahora le corta el acceso real a los datos, no solo a la
+  lista visible.
+- Quien acepta una invitación ahora ve de verdad las cuentas y movimientos del hogar al que se
+  unió.
+- Agregar una moneda nueva, y el filtro Personal/Compartido/Todo, ya no fallaban en silencio.
+
+## 0.27.0–0.27.2 — 6 de agosto de 2026
+
+### Nuevo
+
+- Podés entrar con tu cuenta de Google.
+- Invitar a alguien al grupo familiar ahora manda un mail de verdad, en vez de tener que
+  compartirle el código a mano.
+
+### Arreglado
+
+- El link del mail de invitación no dejaba entrar a quien todavía no había sido aprobado por el
+  administrador de la instancia.
+
+## 0.24.0–0.26.0 — 5 de agosto de 2026
+
+### Nuevo
+
+- Podés canjear una invitación al grupo familiar desde un link o escribiendo el código a mano.
+
+### Arreglado
+
+- Iniciar sesión con contraseña, o reabrir la app ya instalada, a veces te devolvía a la
+  pantalla de login sin motivo.
+- El mapa de calor del calendario ahora distingue un día de gasto chico de un día sin gastos, y
+  respeta los filtros de categoría o cuenta que tengas activos.
+
+## 0.21.0–0.23.0 — 5 de agosto de 2026
+
+### Nuevo
+
+- El calendario de gastos pasa a ser una vista dentro de Movimientos — se abre al toque y
+  comparte los mismos filtros y el buscador de la lista, en vez de ser una pantalla aparte.
+
+### Arreglado
+
+- Cargar un gasto quedaba trabado para siempre en el modo "Probar con datos de ejemplo".
+
+## 0.16.0–0.20.0 — 5 de agosto de 2026
+
+### Nuevo
+
+- Podés crear, editar y borrar tus propias categorías y subcategorías, con más de 100 íconos
+  para elegir — antes solo se podía elegir entre plantillas fijas.
+- Una sección "Archivadas" recupera cualquier categoría que hayas borrado por error.
+- Las reglas de auto-categorización se pueden editar y borrar, no solo apagar.
+
+### Mejorado
+
+- Elegir otra cuenta o movimiento de la lista ya no recarga la pantalla — el cambio es
+  instantáneo, con una transición suave.
+- El calendario de gastos arranca mostrando el mes completo, en vez de una pantalla vacía hasta
+  elegir un día.
+
+### Arreglado
+
+- Categorías duplicadas ("Supermercado" x2, "Transporte" x2) se unifican solas.
+
+## 0.15.0 — 4 de agosto de 2026
+
+### Nuevo
+
+- Los movimientos recurrentes (alquiler, suscripciones) se registran solos en la fecha que
+  corresponde, sin que tengas que cargarlos a mano cada vez.
+- Podés elegir frecuencia semanal, quincenal, mensual o anual, no solo mensual.
+- Un aumento de precio importante en una recurrente se te avisa, con el impacto anual
+  calculado.
+
+## 0.13.0–0.14.0 — 4 de agosto de 2026
+
+### Nuevo
+
+- Pagar una tarjeta de crédito queda vinculado a su resumen del mes, en vez de verse como una
+  transferencia genérica.
+- Si el monto que cargás supera el saldo disponible de la cuenta, la app avisa antes de
+  guardar — no aplica a tarjetas de crédito ni préstamos, que pueden ir en negativo por diseño.
+- Todo gráfico tiene una alternativa en tabla, para quien prefiere ver los números en vez de un
+  dibujo.
+
+### Mejorado
+
+- Borrar un movimiento deslizando ahora pide una confirmación rápida en la misma fila, en vez
+  de borrar directo con un solo gesto.
+
+## 0.12.0 — 4 de agosto de 2026
+
+### Nuevo
+
+- Podés borrar todos los datos del hogar desde Datos y backup, con un resumen de lo que se va a
+  perder antes de confirmar. Solo disponible para quien creó el hogar.
+
+## 0.10.0–0.11.3 — 4 de agosto de 2026
+
+### Nuevo
+
+- Tarjetas de crédito: pagar el resumen desde una transferencia, aviso antes del vencimiento, y
+  tu cumpleaños con un saludo en el inicio.
+- Fondo de puntos sutil, opcional, para el área de contenido.
+
+### Mejorado
+
+- El resumen de cuentas del inicio pasa a un panel visual que se adapta a cuántas cuentas
+  tenés, en vez de un carrusel de una sola fila.
+- El modo privacidad (para difuminar montos en público) ahora cubre todos los números de la
+  pantalla, no solo algunos.
+
+## 0.9.28–0.9.31 — 3 de agosto de 2026
+
+### Nuevo
+
+- Podés ponerle una o más etiquetas a un movimiento, además de la categoría.
+- El selector de categorías muestra las subcategorías (Salud → Farmacia, Transporte → Nafta) y
+  te deja elegir la más específica; también podés editar nombre e ícono de tus categorías
+  propias.
+
+## 0.9.10–0.9.20 — 2 de agosto de 2026
+
+### Nuevo
+
+- Elegís tema claro, oscuro o según el sistema desde Ajustes.
+- El separador decimal y el formato de fecha se configuran desde Ajustes y se aplican en toda
+  la app.
+- Cada cuenta puede tener su propio color, visible en su ícono en toda la app.
+- Instalar la app pasa a un botón único que detecta tu dispositivo.
+
+## 0.9.0–0.9.9 — 2 de agosto de 2026
+
+### Nuevo
+
+- Los cambios que hacés en un dispositivo (el celular, la tablet) ahora aparecen en los demás
+  sin tener que restaurar manualmente — antes solo se traían los datos una vez, al principio.
+- Decir "gasté 2500 en transporte" por voz ya carga el tipo de movimiento y la categoría, no
+  solo el monto.
+
+### Arreglado
+
+- La app instalada en un iPhone con isla dinámica tapaba parte de la barra inferior y del
+  encabezado.
+
+## 0.8.0–0.8.5 — 2 de agosto de 2026
+
+### Nuevo
+
+- Entrar con tu cuenta en un dispositivo nuevo, o reinstalar la app, recupera tus cuentas,
+  movimientos y configuración — antes había que empezar de cero.
+
+### Arreglado
+
+- La sincronización con el servidor no estaba funcionando nunca, para nadie, por un error de
+  permisos; ahora sí.
+
+## 0.6.0–0.7.1 — 2 de agosto de 2026
+
+### Nuevo
+
+- Las cuentas nuevas quedan pendientes de aprobación del administrador de la instancia antes de
+  poder entrar — pensado para instalaciones propias, no abiertas a cualquiera con un mail
+  válido.
+- Podés desbloquear la app con tu huella o reconocimiento facial, además del PIN.
+- Contraseña disponible como alternativa al código por mail para iniciar sesión.
+
+## 0.5.0 — 1 de agosto de 2026
+
+### Arreglado
+
+- El mail para entrar a la app llegaba con un link roto en vez del código de 6 dígitos para
+  escribir a mano.
+- Pegar el código completo desde el mail ahora funciona con un botón "Pegar código".
+- Varios colores de la app no tenían suficiente contraste para leerse bien; corregidos.
+
+## 0.4.0–0.4.1 — 1 de agosto de 2026
+
+### Nuevo
+
+- Perze se conecta a un backend real: tus datos dejan de vivir solo en el teléfono y empiezan a
+  sincronizar. La mayoría de las pantallas del diseño quedan funcionando de punta a punta —
+  presupuestos, metas, recurrentes, deudas, inversiones, grupo familiar, buscador, y una
+  versión para tablet y escritorio con navegación lateral.
+- Podés dividir un gasto entre miembros del hogar, y ver cómo queda saldada cada deuda cruzada.
+
+## 0.2.0 — 28 de julio de 2026
+
+### Nuevo
+
+- Perze se reconstruye de cero sobre un sistema de diseño propio: cargar un gasto en 2 toques,
+  un inicio con tu patrimonio neto y una tira de cuentas, movimientos, cuentas y monedas, y una
+  versión que sigue funcionando sin conexión.
+
+## El principio
+
+Perze nació de una necesidad simple: cargar un gasto en menos de 5 segundos, sin que la app te
+haga pensar. Quien la hace vive entre dos países y varias monedas, así que desde el primer día
+tenía que sentirse natural para eso — no como un caso raro, sino como el uso normal. La primera
+versión fue un prototipo rápido para probar la idea, hecho en un fin de semana. Después se paró
+la escritura de código por completo y se diseñó la app entera, pantalla por pantalla, antes de
+programar una sola línea de la versión de verdad. Todo lo que vino después se construyó sobre
+ese diseño ya cerrado, no al revés.
+
+## 0.1.0–0.1.1 — 30 de mayo de 2026
+
+### Nuevo
+
+- Primera versión funcional: inicio, movimientos multi-moneda y multi-país, inversiones, un
+  asistente de análisis financiero con inteligencia artificial, y escaneo de tickets con la
+  cámara para cargar un gasto automáticamente.
