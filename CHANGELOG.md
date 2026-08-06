@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.15] — 2026-08-06
+
+### Agregado — cache persistido de precios: nunca más "$ 0,00" al entrar al portfolio
+
+A veces entrar a "mi portfolio" no llegaba a cargar/actualizar los valores de mercado a tiempo
+(API lenta, sin red, timing) y esas posiciones se mostraban en `$ 0,00` — el fallback de `value =
+price ? ... : 0n` cuando todavía no había ningún precio. Nuevo `useInstrumentPricesStore`
+(Zustand + `persist`, localStorage) guarda el último precio conocido por instrumento, sobrevive
+recargas y sesiones. Nuevo `useCachedLatestPrices()` envuelve `useLatestPrices()`: mientras la
+consulta real (cache de `price_snapshots` o el refresh en vivo que ya se agregó en D34) no
+resolvió, rellena con el último valor conocido — nunca al revés, un dato fresco siempre gana.
+
+`OverviewContent`, `InstrumentDetailContent` y `/investments/prices` dejan de bloquear el render en
+`pricesQuery.isLoading`: con el cache persistido ya hay algo real para mostrar de entrada, así que
+esperar la consulta ya no tiene sentido — es exactamente el escenario que generaba el "$ 0,00".
+
 ## [0.29.14] — 2026-08-06
 
 ### Agregado — push notifications para invitaciones recibidas, nuevo miembro del hogar y nueva versión

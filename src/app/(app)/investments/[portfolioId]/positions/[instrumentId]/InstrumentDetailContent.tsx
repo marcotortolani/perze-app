@@ -12,6 +12,7 @@ import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
 import { formatDateShort, type Locale } from "@/i18n/formatting";
+import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
 export interface InstrumentDetailContentProps {
   portfolioId: string;
@@ -35,6 +36,9 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const { data: trades } = useTrades(portfolioId);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
+  // D36 — mismo cache persistido que el overview: último precio conocido
+  // mientras la consulta real todavía no resolvió, nunca "$ 0,00".
+  const prices = useCachedLatestPrices(pricesQuery.data);
   const invalidatePrices = useInvalidateLatestPrices(instrumentIds);
 
   const [editingPrice, setEditingPrice] = useState(false);
@@ -45,7 +49,8 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const instrument = instruments?.find((i) => i.id === instrumentId);
   usePageHeader({ title: instrument?.symbol ?? t("nav.investments"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
-  if (!household || !portfolios || !assetClasses || !instruments || !trades || pricesQuery.isLoading) {
+  // `pricesQuery.isLoading` deliberadamente no bloquea (D36, ver `OverviewContent`).
+  if (!household || !portfolios || !assetClasses || !instruments || !trades) {
     return <Skeleton height={280} style={{ marginTop: 16 }} />;
   }
   if (!portfolio || !instrument) {
@@ -53,12 +58,11 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   }
 
   const assetClass = instrument.assetClassId ? assetClasses.find((a) => a.id === instrument.assetClassId) : undefined;
-  const price = pricesQuery.data?.get(instrumentId);
+  const price = prices.get(instrumentId);
   const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
   const position = positions.get(instrumentId);
 
   // Peso en el portfolio: mismo cálculo de valor total que `OverviewContent`, sobre TODAS las posiciones, no solo esta.
-  const prices = pricesQuery.data ?? new Map();
   let portfolioTotalValue = 0n;
   for (const [id, pos] of positions) {
     const p = prices.get(id);

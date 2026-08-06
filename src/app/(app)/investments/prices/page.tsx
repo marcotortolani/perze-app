@@ -10,6 +10,7 @@ import { useInstruments, useInvalidateInstruments, useLatestPrices, usePortfolio
 import { computePositions } from "@/lib/analytics/positions";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
+import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useQueryClient } from "@tanstack/react-query";
 
 const STALE_HOURS = 24;
@@ -47,11 +48,13 @@ export default function PricesStatusPage() {
   const invalidateInstruments = useInvalidateInstruments(household?.id);
   const instrumentIds = useMemo(() => (instruments ?? []).map((i) => i.id), [instruments]);
   const pricesQuery = useLatestPrices(instrumentIds);
+  // D36 — mismo cache persistido que el overview/detalle: último precio
+  // conocido mientras la consulta real todavía no resolvió.
+  const prices = useCachedLatestPrices(pricesQuery.data);
   const [editing, setEditing] = useState<{ instrumentId: string; symbol: string; currencyCode: string; deletable: boolean } | null>(null);
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [liveQuotes, setLiveQuotes] = useState<Map<string, LatestPrice>>(new Map());
   const [refreshing, setRefreshing] = useState(false);
 
   const providerInstrumentIds = useMemo(() => (instruments ?? []).filter((i) => i.priceProvider).map((i) => i.id), [instruments]);
@@ -59,17 +62,21 @@ export default function PricesStatusPage() {
   const refreshAll = useCallback(async () => {
     if (providerInstrumentIds.length === 0) return;
     const results = await Promise.all(providerInstrumentIds.map((id) => priceSnapshotsRepo.refreshFromProvider(id).then((quote) => [id, quote] as const)));
-    const map = new Map<string, LatestPrice>();
-    for (const [id, quote] of results) if (quote) map.set(id, quote);
-    setLiveQuotes(map);
-  }, [providerInstrumentIds]);
+    // Escribe directo en el cache de `useLatestPrices` (mismo criterio que
+    // `OverviewContent`) — el hook de arriba lo persiste solo apenas
+    // cambia, sin un segundo state local para lo mismo.
+    queryClient.setQueryData<Map<string, LatestPrice>>(["latest-prices", [...instrumentIds].sort()], (old) => {
+      const merged = new Map(old ?? []);
+      for (const [id, quote] of results) if (quote) merged.set(id, quote);
+      return merged;
+    });
+  }, [providerInstrumentIds, instrumentIds, queryClient]);
 
   // Live refresh al entrar — ver el comentario de cabecera. `refreshAll` ya
   // está memoizado por `providerInstrumentIds` (no por referencia nueva en
   // cada render), así que este efecto no reintenta en loop.
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch en vivo genuino al entrar a la pantalla, no derivable del render
     refreshAll().catch(() => {
       if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
     });
@@ -105,7 +112,8 @@ export default function PricesStatusPage() {
     ) : undefined,
   });
 
-  if (!household || !portfolios || !trades || !instruments || pricesQuery.isLoading) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  // `pricesQuery.isLoading` deliberadamente no bloquea (D36, ver `OverviewContent`).
+  if (!household || !portfolios || !trades || !instruments) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   if (instruments.length === 0) {
     return (
@@ -147,7 +155,7 @@ export default function PricesStatusPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {instruments.map((instrument) => {
-          const price = liveQuotes.get(instrument.id) ?? pricesQuery.data?.get(instrument.id);
+          const price = prices.get(instrument.id);
           const { state, ageHours } = classify(price?.asOf, price?.provider);
           const held = positions.get(instrument.id);
           const deletable = instrument.householdId === household.id && (!held || held.quantity === 0);

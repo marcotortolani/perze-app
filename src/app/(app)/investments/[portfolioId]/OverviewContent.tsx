@@ -20,6 +20,7 @@ import type { FxResolution } from "@/lib/fx/resolve";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
+import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
 export interface OverviewContentProps {
   portfolioId: string;
@@ -49,6 +50,11 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
   const { data: trades } = useTrades(portfolio?.id);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
+  // D36 — el último valor de mercado conocido (localStorage) rellena el
+  // hueco mientras `pricesQuery` todavía no resolvió o la API falló, para
+  // no mostrar nunca "$ 0,00" por una demora o un corte de red — ver el
+  // comentario del store.
+  const prices = useCachedLatestPrices(pricesQuery.data);
   const queryClient = useQueryClient();
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
@@ -120,13 +126,13 @@ export default function OverviewContent({ portfolioId }: OverviewContentProps) {
     return <Skeleton height={280} style={{ marginTop: 16 }} />;
   }
 
-  if (!trades || pricesQuery.isLoading) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  // `pricesQuery.isLoading` deliberadamente NO bloquea el render acá — con
+  // el cache persistido (D36), la pantalla ya tiene algo real para
+  // mostrar aunque la consulta todavía esté en vuelo.
+  if (!trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
   const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
-  // `pricesQuery.data` ya incluye el precio en vivo — `refreshPrices` lo
-  // escribe directo en este mismo cache (ver el efecto de arriba).
-  const prices = pricesQuery.data ?? new Map();
 
   /**
    * `needs_fx` para posiciones: sin rate no hay forma de sumar esta

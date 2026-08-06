@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.15 — 6 de agosto de 2026
+
+### Arreglado
+
+- Al entrar a "mi portfolio" ya no ves nunca "$ 0,00" en una posición mientras se actualiza el
+  precio — se muestra el último valor conocido hasta que llega el nuevo.
+
 ## 0.29.14 — 6 de agosto de 2026
 
 ### Nuevo
