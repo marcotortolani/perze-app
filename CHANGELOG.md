@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.29] — 2026-08-06
+
+### Corregido — el scope switcher quedaba pegado al borde superior en desktop
+
+Reporte del usuario con captura: en desktop, el segmentado Personal/Compartido/Todo del
+header quedaba a ~10px del borde del viewport. Causa: `.app-shell` solo reserva
+`padding-top: var(--safe-top)` (el inset del notch/isla dinámica, que en desktop vale 0) y
+el `AppHeader` de 56px centra su contenido — sin nada de aire propio, ese centrado deja
+poco margen. Se agrega `padding-top` extra en el breakpoint `lg:` (1024px, mismo que usa
+el resto del shell) — mobile no se toca, ahí el header sí tiene que quedar pegado arriba,
+justo después del safe-area.
+
 ## [0.29.28] — 2026-08-06
 
 ### Corregido — separador de miles y decimal podían quedar iguales ("1,500,00")

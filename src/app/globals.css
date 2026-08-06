@@ -923,6 +923,18 @@ html[data-backdrop-intensity="vivid"] {
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
 }
+
+/* D59 — en desktop `--safe-top` es 0 (no hay notch) y el `AppHeader` de
+   56px con contenido centrado dejaba apenas ~10px arriba del scope
+   switcher (Personal/Compartido/Todo), pegado al borde del viewport. En
+   mobile no se toca: ahí el header sí necesita quedar pegado arriba,
+   inmediatamente después del safe-area. Mismo breakpoint que el resto del
+   shell (`lg:`, 1024px). */
+@media (width >= 64rem) {
+  .app-shell {
+    padding-top: calc(var(--safe-top) + 12px);
+  }
+}
 @utility app-shell-column {
   display: flex;
   flex-direction: column;
