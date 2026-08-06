@@ -1036,6 +1036,30 @@
   "neverSees": "Never sees: your transactions, balances, accounts, or budgets. That restriction lives in the database, not a promise.",
   "noThirdParty": "No third-party analytics: none of this ever leaves this install."
  },
+ "publicAboutPage": {
+  "headline": "Log an expense in under 5 seconds.",
+  "cta": "Enter PERZE",
+  "features": {
+   "localFirst": {
+    "title": "Truly local-first",
+    "body": "Your transactions save to your phone instantly. Syncing never makes you wait."
+   },
+   "multiCurrency": {
+    "title": "Multi-currency without making anything up",
+    "body": "If a rate isn't available, the transaction still saves and says so — never with a made-up exchange rate."
+   },
+   "family": {
+    "title": "Family group, optional",
+    "body": "Share accounts and expenses with whoever you want, account by account. No one sees more than what you choose."
+   },
+   "ownData": {
+    "title": "Your instance, your data",
+    "body": "Open source under the MIT license. Self-hosted: it never leaves your own Supabase project."
+   }
+  },
+  "privacyTitle": "Privacy",
+  "license": "MIT license — open source."
+ },
  "home": {
   "empty": "You haven't added any transactions yet. Log your first expense to see your summary here.",
   "emptyAction": "Add my first expense",

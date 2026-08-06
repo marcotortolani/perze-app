@@ -16,6 +16,7 @@ describe("isPublicPath (B1)", () => {
     expect(isPublicPath("/offline")).toBe(true);
     expect(isPublicPath("/api/fx")).toBe(true);
     expect(isPublicPath("/dev/components")).toBe(true);
+    expect(isPublicPath("/about")).toBe(true);
   });
 
   it("bloquea todo lo demás, incluido lo que arranca parecido a una ruta pública", () => {

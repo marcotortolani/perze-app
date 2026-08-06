@@ -15,9 +15,10 @@ const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
  * ningún dato. `/login`, `/forgot-password` y `/reset-password` ya no hacen
  * falta acá: son stubs de redirect de compatibilidad
  * (docs/mejora-auth-oauth-y-email.md § 0.1) que nunca llegan a mostrar
- * nada sensible.
+ * nada sensible. `/about` es la página pública de marca — cero datos de
+ * usuario, nunca debe pedir PIN.
  */
-const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/pending"];
+const PIN_EXEMPT_PREFIXES = ["/add", "/onboarding", "/join", "/offline", "/api", "/dev", "/auth", "/pending", "/about"];
 
 const EDIT_RECENT_WINDOW_MS = 60_000;
 

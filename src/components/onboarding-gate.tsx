@@ -17,8 +17,9 @@ import { useDbOwnerStore } from "@/stores/db-owner-store";
 // `/reset-password` quedan como stubs de redirect de compatibilidad
 // (CLAUDE.md § convención de rutas) — ya no necesitan estar acá: sin
 // sesión, `proxy.ts` los manda a `/onboarding` antes de que este gate
-// cliente llegue a montarse.
-const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending"];
+// cliente llegue a montarse. `/about` es contenido público de marca —
+// tiene que verse igual con o sin sesión, nunca redirigir.
+const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending", "/about"];
 
 /**
  * Gate del Bloque A: sin household o sin sesión real, cualquier ruta de la

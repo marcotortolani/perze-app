@@ -152,6 +152,26 @@ Sin costo recurrente. Pasos en orden:
    un aviso de "app no verificada" antes de continuar — tolerable en
    desarrollo, no en producción. Es un plazo a planificar, no un paso
    opcional.
+
+   **Si subís un logo**, Google exige verificar que la "Application home
+   page" sea un URL público, sin login, que explique el propósito de la
+   app, con el mismo nombre que la pantalla de consentimiento — y que el
+   dominio esté verificado como tuyo en
+   [Google Search Console](https://search.google.com/search-console) (una
+   propiedad de **dominio**, `tortolani.cc`, cubre cualquier subdominio).
+   `/` no sirve para esto: sin sesión, `proxy.ts` la redirige a
+   `/onboarding` (login) antes de renderizar nada. Para eso existe
+   **`/about`** (`src/app/about/page.tsx`) — página pública, indexable, sin
+   tab bar, con el nombre **"PERZE"** (sin sufijos como "App", para que
+   coincida exacto con el nombre configurado en la pantalla de
+   consentimiento). Configurá "Application home page" **y** "Application
+   privacy policy link" apuntando a `https://tu-dominio.com/about` — trae
+   tanto el propósito de la app como la nota de privacidad en la misma
+   página. Si preferís saltear la verificación de marca (recomendado para
+   un self-host con pocos usuarios conocidos), no subas logo: con scopes
+   básicos y en modo Testing con tus test users cargados, Google no la
+   exige — tus usuarios ven el aviso estándar de "app no verificada" y
+   entran con un click extra.
 5. En Supabase Dashboard → Authentication → Providers → **Google**: pegar el
    client ID y el client secret generados, y habilitar el provider.
 6. En Supabase Dashboard → Authentication → **URL Configuration → Redirect

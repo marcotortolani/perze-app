@@ -1036,6 +1036,30 @@
   "neverSees": "Nunca vê: seus movimentos, saldos, contas nem orçamentos. Essa restrição está no banco de dados, não é uma promessa.",
   "noThirdParty": "Não há analytics de terceiros: nada disso sai desta instalação."
  },
+ "publicAboutPage": {
+  "headline": "Registre um gasto em menos de 5 segundos.",
+  "cta": "Entrar no PERZE",
+  "features": {
+   "localFirst": {
+    "title": "Local-first de verdade",
+    "body": "Seus movimentos são salvos no telefone na hora. A sincronização nunca te faz esperar."
+   },
+   "multiCurrency": {
+    "title": "Multi-moeda sem inventar nada",
+    "body": "Se a cotação não estiver disponível, o movimento é salvo do mesmo jeito e avisa — nunca com uma taxa de câmbio inventada."
+   },
+   "family": {
+    "title": "Grupo familiar, opcional",
+    "body": "Compartilhe contas e gastos com quem quiser, conta por conta. Ninguém vê mais do que você escolher."
+   },
+   "ownData": {
+    "title": "Sua instância, seus dados",
+    "body": "Código aberto sob licença MIT. Autohospedado: nunca sai do seu próprio projeto do Supabase."
+   }
+  },
+  "privacyTitle": "Privacidade",
+  "license": "Licença MIT — código aberto."
+ },
  "home": {
   "empty": "Você ainda não lançou nenhuma movimentação. Registre seu primeiro gasto para ver seu resumo aqui.",
   "emptyAction": "Lançar meu primeiro gasto",
