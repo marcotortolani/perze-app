@@ -96,6 +96,29 @@ describe("fxRepo — overrides manuales scoped por household (A8)", () => {
     expect(afterClear.rate).toBe(rateFromInteger(1300));
   });
 
+  it("D32 — una moneda con solo preferencia (sin override, sin cuenta) queda anclada por listPreferenceCurrencies", async () => {
+    // Repro del bug en vivo: agregar EUR aceptando la cotización sugerida
+    // (sin override) y después limpiar cualquier override previo no debe
+    // dejarla sin ningún rastro — antes `listOverrideCurrencies` era la
+    // ÚNICA fuente de "monedas sin cuenta trackeadas" y una preferencia
+    // sola no contaba. (`listOverrideCurrencies` no se ejercita acá: su
+    // query con `Dexie.minKey`/`maxKey` no corre bajo `fake-indexeddb` —
+    // ver la nota de alcance en `listOverrideCurrencies`.)
+    await fxRepo.setPreference("household-a", "EUR/UYU", "frankfurter", "default");
+
+    expect(await fxRepo.listPreferenceCurrencies("household-a", "UYU")).toEqual(["EUR"]);
+  });
+
+  it("D32 — forgetCurrency borra override y preferencia juntos, sin dejar ningún ancla", async () => {
+    await fxRepo.setManualOverride("household-a", "EUR", "UYU", rateFromInteger(45));
+    await fxRepo.setPreference("household-a", "EUR/UYU", "frankfurter", "default");
+
+    await fxRepo.forgetCurrency("household-a", "EUR", "UYU");
+
+    expect(await fxRepo.getManualOverride("household-a", "EUR", "UYU")).toBeNull();
+    expect(await fxRepo.listPreferenceCurrencies("household-a", "UYU")).toEqual([]);
+  });
+
   it("A8 — un rate 'inherited' para HOY vuelve a consultar /api/fx si hay red", async () => {
     const today = todayIso();
     // Cache local: solo una cotización vieja (heredada), nada de hoy.

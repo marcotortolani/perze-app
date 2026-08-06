@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.9] — 2026-08-06
+
+### Corregido — agregar una moneda sin tocar el rate la marcaba "Custom" y "Estándar" la borraba de la lista
+
+Dos bugs relacionados en `/currencies`. Primero: `handleSaveOverride` era el único botón para
+"agregar una moneda", así que aceptar la cotización sugerida tal cual (sin editarla) igual creaba
+un override manual con `quoteKind: "custom"` — el chip decía "Custom" aunque nadie hubiera tocado
+nada. Ahora, solo para el flujo de agregar (`addedResolution` presente) y solo si el rate final
+coincide con el sugerido, se guarda una preferencia en vez de un override; editar el valor, o
+reabrir una moneda ya existente, sigue guardando "custom" siempre — "Guardar override" ahí significa
+exactamente eso.
+
+Segundo, más grave: `currencies` (la lista visible) salía de `accounts ∪ overrides` — una moneda sin
+cuenta propia (como EUR agregada solo para trackear su cotización) dependía por completo de tener un
+override vigente para aparecer. Elegir "Estándar" en el picker de blue/CCL llama a
+`clearManualOverride`, así que esa moneda desaparecía de la lista entera sin ningún rastro. Con
+USD↔ARS y USD↔UYU no se notaba porque esas monedas ya tienen cuentas que las anclan por otro lado.
+Nuevo `fxRepo.listPreferenceCurrencies()` — las monedas con una preferencia elegida (aunque nunca
+hayan tenido override) también cuentan como ancladas, y `handleSelectQuoteKind` ya guardaba esa
+preferencia junto con limpiar el override, así que el fix es sumar esta tercera fuente al `useMemo`
+de `currencies`.
+
+### Agregado — eliminar una moneda de la lista de tipos de cambio
+
+Nuevo botón (solo si ninguna cuenta usa esa moneda — con una cuenta, la moneda sigue necesitando su
+cotización a la base pase lo que pase) que borra las dos anclas juntas (`fxRepo.forgetCurrency()`):
+el override si lo hay y la preferencia. Dejar cualquiera de las dos viva la resucitaría en la lista
+sola.
+
 ## [0.29.8] — 2026-08-06
 
 ### Agregado — Permisos y visibilidad distingue cuentas homónimas por ícono, moneda y país

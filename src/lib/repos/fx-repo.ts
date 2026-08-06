@@ -93,6 +93,29 @@ export const fxRepo = {
     }
   },
 
+  /** Borra la preferencia — a diferencia de `setPreference(pair, null, null)`, la FILA deja de existir (una fila con nulls igual "ancla" la moneda, ver `listPreferenceCurrencies`). */
+  async clearPreference(householdId: string, currencyPair: string): Promise<void> {
+    await getDb().householdFxPreferences.delete([householdId, currencyPair]);
+    try {
+      await (await fxPreferencesRepoAsync()).clear(householdId, currencyPair);
+    } catch {
+      // sin red o error del servidor: la preferencia local ya se borró.
+    }
+  },
+
+  /**
+   * Monedas con preferencia elegida contra `quote` (blue/CCL/"estándar"),
+   * aunque nunca hayan tenido un override manual ni una cuenta — D32: sin
+   * esto, aceptar la cotización sugerida al agregar una moneda (o volver a
+   * "Estándar" desde un override) la dejaba sin ningún ancla en la lista y
+   * desaparecía apenas se limpiaba el override.
+   */
+  async listPreferenceCurrencies(householdId: string, quote: string): Promise<string[]> {
+    const rows = await getDb().householdFxPreferences.where("householdId").equals(householdId).toArray();
+    const suffix = `/${quote}`;
+    return rows.filter((r) => r.currencyPair.endsWith(suffix)).map((r) => r.currencyPair.slice(0, -suffix.length));
+  },
+
   /**
    * Override manual "con vigencia": se guarda como una cotización más, con
    * `provider: 'manual'`, y gana siempre hasta que se reemplace.
@@ -148,6 +171,15 @@ export const fxRepo = {
    * Monedas con override manual contra `quote` para este household, aunque
    * ninguna cuenta las use — E6 ("Agregar una moneda") las suma a la lista
    * de pares además de las que ya aportan las cuentas.
+   *
+   * Sin test directo: su `.between()` con `Dexie.minKey`/`Dexie.maxKey`
+   * sobre el índice compuesto `[householdId+base+quote]` tira `DataError`
+   * bajo `fake-indexeddb` (la librería de test), sea cual sea el estado de
+   * la tabla — no se pudo reproducir el bug de D32 pasando por acá por esa
+   * razón, ver `fx-repo.test.ts`. Funciona en el browser real (la propia
+   * pantalla de E6 lo usa hoy sin errores reportados); si algún día hay que
+   * tocar esta query, verificar manual en `/currencies`, no solo con
+   * `pnpm test`.
    */
   async listOverrideCurrencies(householdId: string, quote: string): Promise<string[]> {
     const rows = await getDb()
@@ -168,6 +200,18 @@ export const fxRepo = {
     } catch {
       // sin red o error del servidor: el override local ya se limpió.
     }
+  },
+
+  /**
+   * "Eliminar moneda" (D32) — solo tiene sentido para una moneda que
+   * ninguna cuenta usa: si hay una cuenta en esa moneda, la moneda sigue
+   * necesitando una cotización a la base pase lo que pase acá, y el caller
+   * no debe ofrecer esta acción. Borra las dos anclas (override +
+   * preferencia) — dejar cualquiera de las dos viva la resucitaría en la
+   * lista sola.
+   */
+  async forgetCurrency(householdId: string, base: string, quote: string): Promise<void> {
+    await Promise.all([fxRepo.clearManualOverride(householdId, base, quote), fxRepo.clearPreference(householdId, `${base}/${quote}`)]);
   },
 
   /** Cotizaciones de proveedor: globales, sin household (Patrón C) — `householdId: ""`. */

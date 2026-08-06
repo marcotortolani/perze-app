@@ -79,6 +79,7 @@ export default function CurrenciesPage() {
       .syncFromServer(household.id)
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] });
+        queryClient.invalidateQueries({ queryKey: ["fx-preference-currencies", household.id, baseCurrency] });
         queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency] });
       })
       .catch(() => {
@@ -93,11 +94,23 @@ export default function CurrenciesPage() {
     enabled: !!household,
   });
 
+  // D32 — una moneda agregada sin cuenta propia (p. ej. EUR solo para
+  // trackear su cotización) queda anclada acá si el usuario aceptó la
+  // cotización sugerida (sin override, ver `handleSaveOverride`) o si
+  // volvió a "Estándar"/blue/CCL desde un override (`handleSelectQuoteKind`
+  // ya guarda la preferencia, antes solo `listOverrideCurrencies` decidía
+  // quién aparece y esa acción la borraba de la lista sin querer).
+  const preferencesQuery = useQuery({
+    queryKey: ["fx-preference-currencies", household?.id, baseCurrency],
+    queryFn: () => fxRepo.listPreferenceCurrencies(household!.id, baseCurrency),
+    enabled: !!household,
+  });
+
   const currencies = useMemo(() => {
-    const set = new Set([...accounts.map((a) => a.currencyCode), ...(overridesQuery.data ?? [])]);
+    const set = new Set([...accounts.map((a) => a.currencyCode), ...(overridesQuery.data ?? []), ...(preferencesQuery.data ?? [])]);
     set.delete(baseCurrency);
     return [...set].sort();
-  }, [accounts, overridesQuery.data, baseCurrency]);
+  }, [accounts, overridesQuery.data, preferencesQuery.data, baseCurrency]);
 
   const ratesQuery = useQuery({
     queryKey: ["fx-rates", household?.id, baseCurrency, currencies],
@@ -171,7 +184,27 @@ export default function CurrenciesPage() {
     // mercado, no la que tipeé a mano" — así que limpia el override del
     // par, no solo guarda la preferencia.
     await Promise.all([fxRepo.clearManualOverride(household.id, currency, baseCurrency), fxRepo.setPreference(household.id, `${currency}/${baseCurrency}`, provider, quoteKind)]);
-    await queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
+      // D32 — sin esto, una moneda SIN cuenta que solo estaba anclada por
+      // el override que se acaba de limpiar desaparecía de la lista hasta
+      // el próximo refresh manual de la pantalla: la preferencia recién
+      // escrita ya la ancla de nuevo, pero `currencies` (el `useMemo`) no
+      // se entera hasta que este query se refetchea.
+      queryClient.invalidateQueries({ queryKey: ["fx-preference-currencies", household.id, baseCurrency] }),
+    ]);
+  };
+
+  /** D32 — solo para una moneda sin cuenta propia: borra las dos anclas (override + preferencia) y listo, no queda ningún rastro en la lista. */
+  const handleForgetCurrency = async (currency: string) => {
+    if (!household) return;
+    await fxRepo.forgetCurrency(household.id, currency, baseCurrency);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] }),
+      queryClient.invalidateQueries({ queryKey: ["fx-preference-currencies", household.id, baseCurrency] }),
+    ]);
+    closeEditor();
+    toast(t("currenciesPage.currencyRemoved", { code: currency }));
   };
 
   const handleRefresh = async () => {
@@ -280,10 +313,26 @@ export default function CurrenciesPage() {
     // está mostrando, `fx_rate` se guarda siempre canónico
     // (`editingPair → baseCurrency`).
     const canonicalRate = inverted ? invertRate(manualRate) : manualRate;
-    await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, canonicalRate, "custom", userId ?? undefined);
+    // D32 — este mismo botón/sheet sirve para "agregar una moneda"
+    // (`addedResolution` seteado por `handlePickNewCurrency`) Y para editar
+    // una ya existente. Solo en el primer caso tiene sentido preguntar "¿el
+    // usuario tocó algo?": si aceptó la cotización sugerida tal cual, NO es
+    // un override — es la API de siempre, y guardar un override de todos
+    // modos era lo que hacía que el chip mostrara "Custom" en vez de
+    // "Estándar" apenas se agregaba la moneda. Editar una que YA es manual
+    // sigue guardando "custom" siempre, sea cual sea el valor tipeado — acá
+    // "Guardar override" significa eso literalmente.
+    const suggestedRate = addedResolution?.rate;
+    const unchanged = addedResolution !== null && suggestedRate !== null && suggestedRate !== undefined && canonicalRate === roundRateForDisplay(suggestedRate);
+    if (unchanged && addedResolution) {
+      await fxRepo.setPreference(household.id, `${editingPair}/${baseCurrency}`, addedResolution.provider, addedResolution.quoteKind);
+    } else {
+      await fxRepo.setManualOverride(household.id, editingPair, baseCurrency, canonicalRate, "custom", userId ?? undefined);
+    }
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["fx-rates", household.id, baseCurrency, currencies] }),
       queryClient.invalidateQueries({ queryKey: ["fx-override-currencies", household.id, baseCurrency] }),
+      queryClient.invalidateQueries({ queryKey: ["fx-preference-currencies", household.id, baseCurrency] }),
       // Prefijo — ver la nota en `handleRefresh`: cualquier pantalla que ya
       // haya pedido `useSuggestedFxRate` para CUALQUIER par (pagar tarjeta
       // pide `origen → tarjeta`, no necesariamente `x → baseCurrency`)
@@ -291,7 +340,7 @@ export default function CurrenciesPage() {
       queryClient.invalidateQueries({ queryKey: ["fx-suggested-rate"] }),
     ]);
     closeEditor();
-    toast(t("currenciesPage.overrideSaved", { pair: `${editingPair} → ${baseCurrency}` }));
+    toast(unchanged ? t("currenciesPage.currencyAdded", { code: editingPair }) : t("currenciesPage.overrideSaved", { pair: `${editingPair} → ${baseCurrency}` }));
   };
 
   const sheetTitle = editingPair ? `${editingPair} → ${baseCurrency}` : addingCurrency ? t("currenciesPage.addCurrencyTitle") : "";
@@ -554,6 +603,14 @@ export default function CurrenciesPage() {
               <Button variant="primary" onClick={handleSaveOverride}>
                 {t("currenciesPage.saveOverride")}
               </Button>
+              {/* D32 — solo si ninguna cuenta usa esta moneda: con una
+                  cuenta en USD, "eliminar" USD de acá no tendría a dónde
+                  ir — la cuenta igual necesita su cotización a la base. */}
+              {editingPair && addedResolution === null && !accounts.some((a) => a.currencyCode === editingPair) ? (
+                <Button variant="danger" onClick={() => handleForgetCurrency(editingPair)}>
+                  {t("currenciesPage.removeCurrency", { code: editingPair })}
+                </Button>
+              ) : null}
             </div>
           )
         ) : null}

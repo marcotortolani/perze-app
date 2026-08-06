@@ -32,4 +32,11 @@ export const fxPreferencesRepo = {
       });
     if (error) throw error;
   },
+
+  /** D32 — "eliminar moneda": la fila deja de existir, no solo sus valores en null (una fila con nulls igual "ancla" la moneda a la lista). */
+  async clear(householdId: string, currencyPair: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("household_fx_preferences").delete().eq("household_id", householdId).eq("currency_pair", currencyPair);
+    if (error) throw error;
+  },
 };
