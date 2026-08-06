@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.32 — 6 de agosto de 2026
+
+### Nuevo
+
+- El detalle de un instrumento ahora muestra cuándo se actualizó su precio por última vez,
+  con un botón para forzar la actualización cuando quieras.
+
 ## 0.29.31 — 6 de agosto de 2026
 
 ### Mejorado

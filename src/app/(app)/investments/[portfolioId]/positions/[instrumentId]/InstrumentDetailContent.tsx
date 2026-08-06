@@ -1,23 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { computePositions } from "@/lib/analytics/positions";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
-import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
+import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
 import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
-import { formatDateShort, type Locale } from "@/i18n/formatting";
+import { FOREGROUND_REFRESH_MS } from "@/lib/prices/refresh-cadence";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
+import { formatDateShort, formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 
 export interface InstrumentDetailContentProps {
@@ -34,7 +36,9 @@ export interface InstrumentDetailContentProps {
 export default function InstrumentDetailContent({ portfolioId, instrumentId }: InstrumentDetailContentProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
   const { data: assetClasses } = useAssetClasses();
@@ -52,6 +56,8 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const [manualPrice, setManualPrice] = useState("");
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
@@ -95,13 +101,67 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
     }
   };
 
+  // D56 — antes esta pantalla NUNCA pedía el precio en vivo por sí misma:
+  // solo mostraba lo que `OverviewContent`/`instruments/page.tsx` hubieran
+  // cacheado al montarse ellas. Entrar acá por link directo con ese cache
+  // vencido (o nunca escrito) mostraba un precio viejo sin que nada lo
+  // avisara. Mismo criterio de escritura que esas dos pantallas: al cache
+  // de `useLatestPrices` (esta query, para lo que esté montado ahora) y,
+  // vía el efecto de `useCachedLatestPrices` de arriba, al store
+  // persistido (D36) para la próxima visita.
+  const hasPriceProvider = !!instrument?.priceProvider;
+  const refreshPrice = useCallback(async () => {
+    if (!hasPriceProvider) return;
+    const quote = await priceSnapshotsRepo.refreshFromProvider(instrumentId);
+    if (!quote) return;
+    queryClient.setQueryData<Map<string, LatestPrice>>(["latest-prices", [...instrumentIds].sort()], (old) => {
+      const merged = new Map(old ?? []);
+      merged.set(instrumentId, quote);
+      return merged;
+    });
+    setLastRefreshedAt(new Date());
+  }, [hasPriceProvider, instrumentId, instrumentIds, queryClient]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = () => {
+      refreshPrice().catch(() => {
+        if (!cancelled) return; // sin red: la pantalla sigue mostrando el cache.
+      });
+    };
+    run();
+    const interval = setInterval(run, FOREGROUND_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [refreshPrice]);
+
+  const handleRefreshClick = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshPrice();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   usePageHeader({
     title: instrument?.symbol ?? t("nav.investments"),
     onBack: () => router.back(),
     backLabel: t("ds.appHeader.back"),
-    right: canRemoveFromWatchlist ? (
-      <IconButton icon="bookmark" ariaLabel={t("instrumentDetailPage.removeFromWatchlist")} onClick={handleRemoveFromWatchlist} disabled={removing} />
-    ) : undefined,
+    right:
+      instrument?.priceProvider || canRemoveFromWatchlist ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {instrument?.priceProvider ? (
+            <IconButton icon="refresh" ariaLabel={t("currenciesPage.refresh")} onClick={handleRefreshClick} disabled={refreshing} />
+          ) : null}
+          {canRemoveFromWatchlist ? (
+            <IconButton icon="bookmark" ariaLabel={t("instrumentDetailPage.removeFromWatchlist")} onClick={handleRemoveFromWatchlist} disabled={removing} />
+          ) : null}
+        </div>
+      ) : undefined,
   });
 
   // `pricesQuery.isLoading` deliberadamente no bloquea (D36, ver `OverviewContent`).
@@ -218,32 +278,42 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
         ) : null}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.quantity")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>
-            {formatNumber(
-              position?.quantity ?? 0,
-              decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}), ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}) })
-            )}
+      <div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.quantity")}</div>
+            <div className="t-title" style={{ marginTop: 4 }}>
+              {formatNumber(
+                position?.quantity ?? 0,
+                decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}), ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}) })
+              )}
+            </div>
+          </div>
+          <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.avgPrice")}</div>
+            <div className="t-title" style={{ marginTop: 4 }}>
+              {displayAvgPrice !== null ? formatAmountCompact(money(displayAvgPrice, displayCurrency), { showSign: false }) : avgPrice !== null ? t("investmentsPage.pendingFx") : "—"}
+            </div>
+          </div>
+          <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.currentPrice")}</div>
+            <div className="t-title" style={{ marginTop: 4 }}>
+              {displayCurrentPrice !== null ? formatAmountCompact(money(displayCurrentPrice, displayCurrency), { showSign: false }) : price ? t("investmentsPage.pendingFx") : "—"}
+            </div>
+          </div>
+          <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.weight")}</div>
+            <div className="t-title" style={{ marginTop: 4 }}>{weightPct.toFixed(1)}%</div>
           </div>
         </div>
-        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.avgPrice")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>
-            {displayAvgPrice !== null ? formatAmountCompact(money(displayAvgPrice, displayCurrency), { showSign: false }) : avgPrice !== null ? t("investmentsPage.pendingFx") : "—"}
+
+        {/* D56 — mismo criterio que `OverviewContent`: un solo indicador de
+            frescura por pantalla, no un badge por dato. */}
+        {lastRefreshedAt ? (
+          <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 8 }}>
+            {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
           </div>
-        </div>
-        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.currentPrice")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>
-            {displayCurrentPrice !== null ? formatAmountCompact(money(displayCurrentPrice, displayCurrency), { showSign: false }) : price ? t("investmentsPage.pendingFx") : "—"}
-          </div>
-        </div>
-        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 14 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.weight")}</div>
-          <div className="t-title" style={{ marginTop: 4 }}>{weightPct.toFixed(1)}%</div>
-        </div>
+        ) : null}
       </div>
 
       <Button variant="secondary" onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}`)}>

@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.32] — 2026-08-06
+
+### Agregado — refresh en vivo, fecha/hora y botón "Actualizar" en el detalle de instrumento
+
+`InstrumentDetailContent` (I4) nunca pedía el precio en vivo por sí misma — solo mostraba
+lo que `OverviewContent`/`instruments/page.tsx` hubieran cacheado al montarse ellas. Entrar
+acá por link directo (o después de que el cache quedó viejo) mostraba un precio sin que
+nada avisara su antigüedad.
+
+Nuevo `refreshPrice()` (mismo patrón que las otras dos pantallas): pide la cotización real
+para ESTE instrumento, escribe al cache de `useLatestPrices` de esta misma query, y —vía
+el efecto de `useCachedLatestPrices` que ya estaba— al store persistido (D36) para la
+próxima visita. Corre al entrar y cada `FOREGROUND_REFRESH_MS` (D50) mientras la pantalla
+sigue montada. Header suma un ícono de actualizar manual (junto al de "eliminar de
+seguimiento" cuando corresponde — los dos conviven en un wrapper propio, `usePageHeader`
+solo acepta un nodo en `right`) y, debajo de la grilla de cantidad/precio, "Valores de
+mercado, última actualización: {fecha} a las {hora}" — mismo copy que ya usaba
+`OverviewContent`.
+
 ## [0.29.31] — 2026-08-06
 
 ### Agregado — cadencia de refresco de precios, dentro y fuera de inversiones
