@@ -6,6 +6,29 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.27.1] — 2026-08-06
+
+### Arreglado — A3 con código ignoraba el household existente y creaba uno nuevo
+
+- Verificar el código de 6 dígitos hacía `router.push` directo a `/onboarding/country` (A4) sin
+  chequear si el usuario ya tenía un household en el servidor — a diferencia del camino del link
+  clickeado (`/onboarding`), que sí llama a `resolveOnboardingDestination()`. Cualquier reingreso
+  por código (dispositivo o `localStorage` limpio, el caso típico de cerrar sesión para probar algo
+  en dev) mandaba a crear una cuenta nueva en vez de restaurar la existente.
+- Bug preexistente que nunca se disparaba en la práctica: con `NEXT_PUBLIC_AUTH_OTP_CODE` apagado
+  por default, A3 nunca mostraba el input de código. Quedó expuesto recién en la 0.27.0, cuando el
+  código pasó a ser el único camino de A3.
+
+### Arreglado — `robots.txt` y `sitemap.xml` redirigían a `/onboarding`
+
+- No existían: `/robots.txt` caía en `proxy.ts` como cualquier ruta sin sesión y volvía un 307 a
+  `/onboarding`. Un robots.txt que redirige a un login se lee como "todo el sitio requiere sesión" —
+  probablemente la causa de que la verificación de marca de Google Auth Platform siguiera fallando
+  aunque `/about` respondiera bien al pedirla directo. Se agregan ambos (`src/app/robots.ts`,
+  `sitemap.ts`), excluidos del matcher de `proxy.ts`, permitiendo solo `/about`.
+- Se suma `applicationName: "PERZE"` a los metadatos globales — señal explícita de nombre de app
+  que Google compara contra la pantalla de consentimiento OAuth al verificar la marca.
+
 ## [0.27.0] — 2026-08-06
 
 ### Agregado — Google OAuth y Resend con el branding de Perze, de punta a punta
