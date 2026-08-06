@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.40] — 2026-08-06
+
+### Nuevo — el buscador global ahora incluye movimientos recurrentes
+
+`SearchOverlay` indexaba cuentas, categorías, comercios, tags y movimientos, pero
+ninguna `recurring_rule` — buscar "Netflix" no encontraba la suscripción recurrente
+aunque sí encontrara cada cargo ya materializado. Nuevo grupo `"recurring"` en
+`SearchGroup` (`lib/search/rank.ts`), indexado hacia `/recurring/{id}` con el mismo
+monto compacto que ya usa la lista, excluyendo reglas archivadas. Gateado por
+`enabled_modules`: se le pasa `undefined` como `householdId` a `useRecurringRules()`
+cuando el módulo `recurring` está apagado, así el hook nunca dispara la query (no hace
+falta lazy-load del componente entero, es un hook de 20 líneas que ya vivía en el
+bundle del shell vía otras rutas).
+
 ## [0.29.39] — 2026-08-06
 
 ### Corregido — recurrentes: ingresos y gastos se veían idénticos, sin signo ni color

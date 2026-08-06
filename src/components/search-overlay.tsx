@@ -10,6 +10,7 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useTags } from "@/hooks/use-tags";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -40,6 +41,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const { data: categories = [] } = useCategories(household?.id);
   const { data: payees = [] } = usePayees(household?.id);
   const { data: transactions = [] } = useTransactions(household?.id);
+  // Gateado por `enabled_modules` pasando `undefined` cuando el módulo está
+  // apagado — el hook ya trae `enabled: !!householdId`, así que no dispara
+  // ninguna query (`recurringRulesRepo.list` nunca se llama).
+  const { data: recurringRules = [] } = useRecurringRules(household?.enabledModules.includes("recurring") ? household.id : undefined);
   const { data: tags = [] } = useTags(household?.id);
   const { data: transactionTagLinks = [] } = useTransactionTagsFor(transactions.map((tx) => tx.id));
   const ownAccess = useOwnAccess();
@@ -131,8 +136,19 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         keywords: txTagNames.length > 0 ? txTagNames : undefined,
       });
     }
+    for (const r of recurringRules) {
+      if (r.archivedAt !== null) continue;
+      items.push({
+        id: r.id,
+        group: "recurring",
+        title: r.name,
+        meta: formatAmountCompact(money(r.expectedAmount, r.currencyCode), { showSign: false }),
+        href: `/recurring/${r.id}`,
+        icon: "refresh",
+      });
+    }
     return items;
-  }, [accounts, categories, payees, tags, transactions, categoryById, categoryLabel, tagById, tagIdsByTx, t]);
+  }, [accounts, categories, payees, tags, transactions, recurringRules, categoryById, categoryLabel, tagById, tagIdsByTx, t]);
 
   const results = useMemo(() => searchAll(deferredQuery, index), [deferredQuery, index]);
   const filteredActions = useMemo(() => {
@@ -177,6 +193,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   const groups: { key: SearchResult["group"]; label: string }[] = [
     { key: "transactions", label: t("search.transactions") },
+    { key: "recurring", label: t("search.recurring") },
     { key: "accounts", label: t("search.accounts") },
     { key: "categories", label: t("search.categories") },
     { key: "payees", label: t("search.merchants") },

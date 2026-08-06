@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.40 — 6 de agosto de 2026
+
+### Nuevo
+
+- El buscador ahora también encuentra tus movimientos recurrentes, no solo los cargos
+  que ya se registraron.
+
 ## 0.29.39 — 6 de agosto de 2026
 
 ### Mejorado

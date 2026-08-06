@@ -4,7 +4,7 @@
  * antes de llamar acá; esta capa solo puntúa y ordena strings ya
  * etiquetados y ya normalizados.
  */
-export type SearchGroup = "transactions" | "accounts" | "categories" | "payees" | "tags";
+export type SearchGroup = "transactions" | "accounts" | "categories" | "payees" | "tags" | "recurring";
 
 export interface SearchResult {
   id: string;
