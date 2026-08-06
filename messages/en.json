@@ -796,6 +796,7 @@
   "title": "Operator panel",
   "pendingSectionTitle": "Pending requests",
   "pendingEmpty": "No requests waiting for approval.",
+  "pendingLoadError": "We couldn't load the pending requests.",
   "requestedOn": "Requested on {date}",
   "unknownCountry": "No country chosen yet",
   "approve": "Approve",

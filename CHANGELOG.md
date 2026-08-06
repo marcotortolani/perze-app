@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.28.1] — 2026-08-06
+
+### Arreglado — la causa real de "solicitudes pendientes" vacío (el `LEFT JOIN` de 0.28.0 no era)
+
+- El `INNER JOIN` → `LEFT JOIN` de la 0.28.0 fue una mejora legítima, pero no era la causa: la
+  función seguía fallando igual después de aplicarla, confirmado en producción con tres
+  solicitudes reales. La causa real, encontrada recién ahora con el mensaje de error completo del
+  lado del navegador: `42804 — structure of query does not match function result type` — `auth.users.email`
+  es `character varying(255)`, no `text`, y Postgres exige coincidencia exacta de tipo en el
+  `RETURN QUERY` de una función `RETURNS TABLE` (a diferencia de un `SELECT` suelto, donde
+  `varchar`/`text` son intercambiables sin quejarse — por eso correr el mismo `SELECT` a mano
+  nunca mostraba el problema). Cast explícito: `u.email::text`.
+- Este bug es anterior a todo lo demás: estaba en la función desde que se creó
+  (`20260801180000_access_control.sql`) y nunca se había notado porque nadie había llamado a
+  `admin_list_access_requests()` con una fila real de por medio — el operador siempre nace
+  aprobado, así que el panel jamás se había ejercitado con una solicitud pendiente de verdad hasta
+  esta sesión de pruebas.
+- De paso, el panel tragaba cualquier error de esta consulta en silencio y lo mostraba igual que
+  "no hay nada" — un fallo real y una lista genuinamente vacía se veían idénticos. Ahora
+  distingue los dos casos con un `ErrorState` y reintento.
+
 ## [0.28.0] — 2026-08-06
 
 ### Agregado — aviso al operador de una solicitud de acceso nueva

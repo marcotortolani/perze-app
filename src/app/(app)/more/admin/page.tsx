@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, EmptyState, ListRow, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { Button, EmptyState, ErrorState, ListRow, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { useOwnAccess } from "@/hooks/use-own-access";
@@ -40,7 +40,12 @@ export default function AdminPage() {
     if (ownAccess !== undefined && !ownAccess.isAppAdmin) router.replace("/");
   }, [ownAccess, router]);
 
-  const { data: requests, isLoading: loadingRequests } = useQuery({
+  const {
+    data: requests,
+    isLoading: loadingRequests,
+    isError: requestsErrored,
+    refetch: refetchRequests,
+  } = useQuery({
     queryKey: ACCESS_REQUESTS_KEY,
     queryFn: () => adminRepo.listAccessRequests(),
     enabled: ownAccess?.isAppAdmin === true,
@@ -83,6 +88,8 @@ export default function AdminPage() {
           </div>
           {loadingRequests ? (
             <Skeleton height={120} />
+          ) : requestsErrored ? (
+            <ErrorState what={t("adminPage.pendingLoadError")} onRetry={() => refetchRequests()} retryLabel={t("common.retry")} />
           ) : pending.length === 0 ? (
             <EmptyState message={t("adminPage.pendingEmpty")} />
           ) : (

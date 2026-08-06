@@ -796,6 +796,7 @@
   "title": "Painel do operador",
   "pendingSectionTitle": "Solicitações pendentes",
   "pendingEmpty": "Não há solicitações esperando aprovação.",
+  "pendingLoadError": "Não foi possível carregar as solicitações pendentes.",
   "requestedOn": "Solicitado em {date}",
   "unknownCountry": "País ainda não escolhido",
   "approve": "Aprovar",
