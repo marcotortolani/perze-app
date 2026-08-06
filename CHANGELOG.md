@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.20] — 2026-08-06
+
+### Corregido — el mensaje de "no coinciden" quedaba pegado al reingresar el PIN
+
+Reporte del usuario: al activar el bloqueo por PIN (Ajustes → Seguridad), si la confirmación
+no coincidía con el PIN elegido, el mensaje de error se mantenía en pantalla durante todo el
+reintento — daba la sensación de que algo seguía mal aunque el usuario ya estuviera tipeando
+de nuevo desde cero. `handleKey()` en `src/app/(app)/more/security/page.tsx` solo limpiaba
+`mismatch` en la rama de `backspace`; al tipear un dígito nuevo después de un error, el
+mensaje quedaba visible hasta completar los 6 dígitos otra vez. Ahora se limpia apenas se
+toca cualquier tecla, dígito o backspace.
+
 ## [0.29.19] — 2026-08-06
 
 ### Corregido — el changelog público se veía cortado a mitad de frase

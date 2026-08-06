@@ -46,9 +46,13 @@ export default function SecurityPage() {
   };
 
   const handleKey = async (key: string) => {
+    // El mensaje de "no coinciden" se limpia apenas se toca una tecla, no
+    // solo con backspace — antes quedaba pegado en pantalla durante todo
+    // el reintento (el usuario ya estaba tipeando de nuevo y seguía
+    // viendo el error de la vez anterior, como si algo siguiera mal).
+    setMismatch(false);
     if (key === "backspace") {
       setPinDigits((p) => p.slice(0, -1));
-      setMismatch(false);
       return;
     }
     if (pin.length >= PIN_LENGTH) return;

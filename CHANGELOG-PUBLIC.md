@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.20 — 6 de agosto de 2026
+
+### Arreglado
+
+- Al activar el PIN, si te equivocabas al confirmarlo, el aviso de "no coinciden" se quedaba
+  en pantalla mientras lo volvías a escribir. Ya se limpia apenas empezás de nuevo.
+
 ## 0.29.19 — 6 de agosto de 2026
 
 ### Arreglado
