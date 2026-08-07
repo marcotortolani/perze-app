@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { toast } from "sonner";
@@ -15,8 +15,6 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { householdsRepo } from "@/lib/repos/households-repo";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
-import { usePwaStore } from "@/stores/pwa-store";
-import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
 import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref } from "@/stores/format-preferences-store";
 import { setLocale } from "@/i18n/actions";
@@ -87,17 +85,7 @@ export default function SettingsPage() {
   const [closeDaySheetOpen, setCloseDaySheetOpen] = useState(false);
   const [baseCurrencySheetOpen, setBaseCurrencySheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const deferredPrompt = usePwaStore((s) => s.deferredPrompt);
-  const setDeferredPrompt = usePwaStore((s) => s.setDeferredPrompt);
-  const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
-  const [installSheetOpen, setInstallSheetOpen] = useState(false);
-  const [installing, setInstalling] = useState(false);
   usePageHeader({ title: t("morePage.settings"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- lee `navigator`/`matchMedia`, no existe en SSR.
-    setInstallState({ platform: detectInstallPlatform(), standalone: isStandalonePwa() });
-  }, []);
 
   const isMultiCurrency = useMemo(() => new Set((accounts ?? []).map((a) => a.currencyCode)).size > 1, [accounts]);
   const hasTransactions = (transactions?.length ?? 0) > 0;
@@ -181,23 +169,6 @@ export default function SettingsPage() {
     setBackdropIntensitySheetOpen(false);
   };
 
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      if (installing) return;
-      setInstalling(true);
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-        if (choice.outcome === "accepted") toast(t("settingsPage.installAccepted"));
-      } finally {
-        setInstalling(false);
-      }
-      return;
-    }
-    setInstallSheetOpen(true);
-  };
-
   return (
     // `scroll-fade-bottom`: esta pantalla ahora maneja su propio scroll
     // (antes dependía del `<main>` compartido del shell) para poder tener
@@ -275,12 +246,6 @@ export default function SettingsPage() {
             />
             {!isOwnerOrAdmin ? (
               <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
-            ) : null}
-            <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
-            {installState?.standalone ? (
-              <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
-            ) : installState ? (
-              <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
             ) : null}
             <ListRow
               icon="list"
@@ -413,12 +378,6 @@ export default function SettingsPage() {
             />
           ))}
         </div>
-      </Sheet>
-
-      <Sheet open={installSheetOpen} title={t("settingsPage.install")} onClose={() => setInstallSheetOpen(false)}>
-        <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-          {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
-        </p>
       </Sheet>
 
       <Sheet open={decimalSheetOpen} title={t("settingsPage.decimalSeparator")} onClose={() => setDecimalSheetOpen(false)}>

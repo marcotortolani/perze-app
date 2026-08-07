@@ -1,9 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useNavStore } from "@/stores/nav-store";
@@ -12,6 +13,8 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { useOwnAccess } from "@/hooks/use-own-access";
 import { usePendingAccessRequestsCount } from "@/hooks/use-pending-access-requests";
+import { usePwaStore } from "@/stores/pwa-store";
+import { detectInstallPlatform, isStandalonePwa, type InstallPlatform } from "@/lib/pwa/platform";
 import { APP_VERSION } from "@/lib/version";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { exitDemoMode, isDemoModeActive } from "@/lib/demo/demo-mode";
@@ -46,6 +49,33 @@ export default function MorePage() {
   const modules = household?.enabledModules ?? [];
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm" | "signing-out">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
+  const deferredPrompt = usePwaStore((s) => s.deferredPrompt);
+  const setDeferredPrompt = usePwaStore((s) => s.setDeferredPrompt);
+  const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lee `navigator`/`matchMedia`, no existe en SSR.
+    setInstallState({ platform: detectInstallPlatform(), standalone: isStandalonePwa() });
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      if (installing) return;
+      setInstalling(true);
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        setDeferredPrompt(null);
+        if (choice.outcome === "accepted") toast(t("settingsPage.installAccepted"));
+      } finally {
+        setInstalling(false);
+      }
+      return;
+    }
+    setInstallSheetOpen(true);
+  };
 
   const handleSignOutRequest = async () => {
     const count = await countUnsyncedChanges();
@@ -147,6 +177,12 @@ export default function MorePage() {
                 onClick={() => router.push("/more/sync")}
               />
               <ListRow icon="edit" label={t("morePage.settings")} onClick={() => router.push("/more/settings")} />
+              <ListRow icon="plus" label={t("morePage.enableMoreFeatures")} variant="action" onClick={() => router.push("/more/modules")} />
+              {installState?.standalone ? (
+                <ListRow icon="check" label={t("settingsPage.installedAlready")} value="✓" chevron={false} />
+              ) : installState ? (
+                <ListRow icon="install" label={t("settingsPage.install")} disabled={installing} onClick={handleInstall} />
+              ) : null}
               <ListRow icon="install" label={t("morePage.dataAndBackup")} onClick={() => router.push("/more/data")} />
               <ListRow icon="mail" label={t("morePage.about")} onClick={() => router.push("/more/about")} />
               {/* El panel del operador vive DENTRO de Sistema, no en una
@@ -214,6 +250,12 @@ export default function MorePage() {
             {t("common.cancel")}
           </button>
         </div>
+      </Sheet>
+
+      <Sheet open={installSheetOpen} title={t("settingsPage.install")} onClose={() => setInstallSheetOpen(false)}>
+        <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+          {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
+        </p>
       </Sheet>
     </div>
   );

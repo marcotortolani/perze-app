@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.59 — 7 de agosto de 2026
+
+### Mejorado
+
+- "Activar más funciones" e "Instalar app" se mudan de Ajustes al menú principal de Más, un
+  paso más cerca.
+
 ## 0.29.58 — 7 de agosto de 2026
 
 ### Mejorado

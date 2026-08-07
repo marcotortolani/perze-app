@@ -6,6 +6,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.59] — 2026-08-07
+
+### Cambiado — "Enable more features" e "Install app" se mudan de Ajustes a Más
+
+Las dos filas vivían en `/more/settings`, un nivel más adentro de lo necesario para acciones
+que no son preferencias — "activar módulos" y "instalar la PWA" no son un ajuste que se
+configura una vez, son una acción que se dispara. Pasan a la card de Sistema de `/more`, justo
+debajo de "Settings".
+
+Todo el estado de instalación (`usePwaStore`, `detectInstallPlatform`/`isStandalonePwa`, el
+Sheet de la guía por plataforma) se mueve entero a `more/page.tsx` — `settings/page.tsx` deja
+de importar `usePwaStore`/`@/lib/pwa/platform` porque ya no los usa para nada.
+
 ## [0.29.58] — 2026-08-07
 
 ### Cambiado — Más variedad en el picker de ícono de perfil, curada por identidad de persona
