@@ -8,8 +8,9 @@ import { Amount, EmptyState, Icon, NeedsFxBanner, Skeleton, usePageHeader } from
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useLatestPrices, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
+import { useElementSize } from "@/hooks/use-element-size";
 import { computePositions } from "@/lib/analytics/positions";
-import { assignBentoSlots } from "@/lib/layout/bento";
+import { squarify } from "@/lib/layout/treemap";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
@@ -25,14 +26,22 @@ interface AllocationBlock {
   weightPct: number;
 }
 
+/** Bloque angosto o bajo: el rectángulo del treemap no entra ni el nombre de la clase de activo ni el monto completo — se cae a solo símbolo + %. */
+const COMPACT_WIDTH = 88;
+const COMPACT_HEIGHT = 64;
+/** Separación visual entre bloques — se resta del rect del treemap, no se suma al contenedor (el área total sigue siendo la real del dispositivo). */
+const BLOCK_GAP = 6;
+
 /**
- * I9 — asignación por POSICIÓN (no clase de activo, D55): bento grid de
- * 12 columnas, mismo motor que el carrusel de cuentas del home
- * (`src/lib/layout/bento.ts`) — el bloque más pesado ocupa el slot más
- * ancho, sin deformar la grilla en tabla. Cada instrumento es su propio
- * bloque aunque comparta símbolo con otro de distinto tipo (una acción y
- * su CEDEAR son `instrumentId` distintos, `computePositions` ya los
- * separa — no hace falta mergear nada acá).
+ * I9 — asignación por POSICIÓN (no clase de activo, D55): treemap
+ * cuadrado (`src/lib/layout/treemap.ts`) sobre el área real disponible en
+ * pantalla — a diferencia del bento grid anterior (formas de columna
+ * ELEGIDAS de una lista fija, que apilaba filas y necesitaba scroll), acá
+ * el ÁREA de cada bloque es literalmente su porcentaje del total, dentro
+ * de un rectángulo de tamaño fijo (el espacio que queda debajo del
+ * header) que nunca desborda. Cada instrumento es su propio bloque aunque
+ * comparta símbolo con otro de distinto tipo (una acción y su CEDEAR son
+ * `instrumentId` distintos, `computePositions` ya los separa).
  *
  * Reemplaza el `SplitBar` anterior, que sumaba `quantity * price.close`
  * crudo entre posiciones de MONEDAS DISTINTAS sin convertir a la moneda
@@ -53,6 +62,7 @@ export default function AllocationPage() {
   // D36 — mismo cache persistido que el overview/detalle: último precio
   // conocido mientras la consulta real todavía no resolvió.
   const prices = useCachedLatestPrices(pricesQuery.data);
+  const { ref: treemapRef, width: treemapWidth, height: treemapHeight } = useElementSize<HTMLDivElement>();
   usePageHeader({ title: t("allocationPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const instrumentById = useMemo(() => new Map((instruments ?? []).map((i) => [i.id, i])), [instruments]);
@@ -124,8 +134,8 @@ export default function AllocationPage() {
 
   if (blocks.length === 0) return <EmptyState message={t("investmentsPage.noPositions")} />;
 
-  const { gridItems, gridSpans } = assignBentoSlots(blocks, (b) => Number(b.baseValue));
-  const featuredId = gridItems[0]?.instrumentId;
+  const nodes = squarify(blocks, (b) => Number(b.baseValue), treemapWidth, treemapHeight);
+  const featuredId = nodes[0]?.item.instrumentId;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -152,9 +162,17 @@ export default function AllocationPage() {
         </div>
       ) : null}
 
-      <div className="bento-grid" style={{ marginTop: 16 }}>
-        {gridItems.map((block, i) => {
+      {/* Treemap cuadrado (D73) sobre el ÁREA REAL del contenedor —
+          `flex:1, minHeight:0` lo acota al espacio que sobra debajo del
+          header, sin invitar scroll, y `useElementSize` mide ese espacio
+          en píxeles para que `squarify` calcule el layout óptimo contra
+          el tamaño de verdad del dispositivo, no un porcentaje fijo. */}
+      <div ref={treemapRef} style={{ position: "relative", flex: 1, minHeight: 0, marginTop: 16 }}>
+        {nodes.map(({ item: block, rect }) => {
           const featured = block.instrumentId === featuredId;
+          const compact = rect.width < COMPACT_WIDTH || rect.height < COMPACT_HEIGHT;
+          const w = Math.max(0, rect.width - BLOCK_GAP);
+          const h = Math.max(0, rect.height - BLOCK_GAP);
           return (
             <button
               key={block.instrumentId}
@@ -162,24 +180,51 @@ export default function AllocationPage() {
               // master-detail — search param, no ruta propia (ver `[portfolioId]/page.tsx`).
               onClick={() => router.push(`/investments/${portfolio.id}?position=${block.instrumentId}`)}
               style={{
-                gridColumn: `span ${gridSpans[i]}`,
+                position: "absolute",
+                left: rect.x + BLOCK_GAP / 2,
+                top: rect.y + BLOCK_GAP / 2,
+                width: w,
+                height: h,
                 textAlign: "left",
                 cursor: "pointer",
+                overflow: "hidden",
                 background: "var(--surface-1)",
                 borderRadius: "var(--radius-card)",
-                padding: 16,
+                padding: compact ? 8 : 16,
                 border: 0,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: compact ? "center" : "flex-start",
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {block.assetClassName}
+              {!compact ? (
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {block.assetClassName}
+                </div>
+              ) : null}
+              {!compact ? (
+                <div style={{ marginTop: 10 }}>
+                  <Amount value={money(block.baseValue, household.baseCurrency)} size={featured ? "title" : "body"} showSign={false} polarity="neutral" fit fitFloor={0.6} />
+                </div>
+              ) : null}
+              <div
+                style={{
+                  marginTop: compact ? 0 : 6,
+                  fontSize: compact ? 11 : 12,
+                  fontWeight: compact ? 600 : 400,
+                  color: compact ? "var(--text-primary)" : "var(--text-muted)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {compact ? block.symbol : `${block.symbol} · ${formatNumber(block.weightPct, 1)}%`}
               </div>
-              <div style={{ marginTop: 10 }}>
-                <Amount value={money(block.baseValue, household.baseCurrency)} size={featured ? "title" : "body"} showSign={false} polarity="neutral" fit fitFloor={0.7} />
-              </div>
-              <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {block.symbol} · {formatNumber(block.weightPct, 1)}%
-              </div>
+              {compact ? (
+                <div style={{ fontSize: 10, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {formatNumber(block.weightPct, 1)}%
+                </div>
+              ) : null}
             </button>
           );
         })}

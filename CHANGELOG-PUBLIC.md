@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.48 — 6 de agosto de 2026
+
+### Mejorado
+
+- La pantalla de asignación de Inversiones ahora llena la pantalla sin necesidad de hacer
+  scroll, y el tamaño de cada bloque refleja de verdad el porcentaje que representa dentro
+  de tu cartera.
+
 ## 0.29.47 — 6 de agosto de 2026
 
 ### Arreglado

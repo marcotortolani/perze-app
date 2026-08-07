@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.48] — 2026-08-06
+
+### Mejorado — Allocation: de bento grid a treemap cuadrado, área proporcional real sin scroll
+
+D73. El bento grid de `assignBentoSlots` (`src/lib/layout/bento.ts`, D55) elige FORMAS de fila
+de una lista fija de combinaciones de columna (`[5,4,3]`, `[7,5]`, etc.) — el peso de cada
+posición solo decide QUÉ ITEM va al slot más ancho de su fila, nunca el tamaño real del slot. Con
+más de 3-4 posiciones esto apila filas y fuerza scroll, y el "porcentaje" de cada bloque nunca es
+literal: dos posiciones con 40% y 15% podían terminar con anchos de columna casi iguales si caían
+en la misma fila de 3.
+
+Nuevo `src/lib/layout/treemap.ts` con el algoritmo "squarified" (Bruls/Huizing/van Wijk): dado un
+ancho/alto real en píxeles, reparte el área total entre los items de forma que el ÁREA de cada
+rectángulo sea literalmente `peso/pesoTotal * áreaTotal`, minimizando el aspect ratio fila a fila
+para que ningún bloque quede como una tira ilegible. `src/hooks/use-element-size.ts` (nuevo, patrón
+`useScrollOverflow`: callback ref + `ResizeObserver`) mide el contenedor real — nunca un porcentaje
+fijo, el aspect ratio del contenedor cambia el layout óptimo entre mobile y desktop.
+
+`allocation/page.tsx` reescrito: el contenedor del treemap es `flex:1, minHeight:0` dentro de una
+columna `height:100%` — llena exacto el espacio que sobra debajo del header/banners, sin invitar
+scroll, en vez de una `<div className="bento-grid">` de altura libre. Bloques por debajo de
+88×64px (`COMPACT_WIDTH`/`COMPACT_HEIGHT`) caen a una variante compacta (solo símbolo + %) — ni el
+nombre de la clase de activo ni el monto completo entran en un rectángulo así de chico.
+`assignBentoSlots`/`bentoLayout` no se tocan: el carrusel de cuentas del home los sigue usando tal
+cual, ese caso (una fila fija de cards, no un área a llenar) sigue siendo bento, no treemap.
+
 ## [0.29.47] — 2026-08-06
 
 ### Arreglado — Presupuestos no incluían subcategorías, ni en el picker ni en el cálculo de gasto
