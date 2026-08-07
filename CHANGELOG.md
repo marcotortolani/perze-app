@@ -6,6 +6,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.54] — 2026-08-07
+
+### Nuevo — Panel de operador: listado completo de usuarios + deshabilitar/rehabilitar acceso
+
+El panel solo listaba solicitudes `pending` — un usuario ya `approved` no tenía forma de que se
+le corte el acceso después del alta, ni de que se lo devuelva.
+
+Nuevo estado `disabled` (migraciones `20260807130421_access_status_disabled.sql` y
+`20260807130849_admin_metrics_disabled_count.sql`), cuarto valor del `CHECK` de
+`profiles.access_status` — distinto de `rejected` (una solicitud que nunca entró): esta cuenta sí
+tenía acceso y el operador se lo corta a propósito, reversible en cualquier momento con el mismo
+botón. `admin_set_access_status()` y `admin_metrics()` actualizados; `protect_access_columns()` y
+el GUC `perze.access_admin_write` de `20260801180000_access_control.sql` cubren el estado nuevo
+sin cambios — siguen siendo el único camino de escritura.
+
+Nueva sección "Todos los usuarios" en `/more/admin` (`admin_list_access_requests()` ya traía la
+lista completa, la sección de pending solo la filtraba — no hizo falta query nueva): email, fecha
+de registro, última conexión, badge de estado, y "Deshabilitar acceso"/"Habilitar acceso" para
+`approved`/`disabled`. `src/proxy.ts` ya redirigía a `/pending` para cualquier estado distinto de
+`approved`, así que `disabled` cae ahí solo — `/pending` suma un tercer branch de copy/ícono,
+compartiendo el botón "Actualizar" con `pending` (a diferencia de `rejected`, esto es reversible).
+
 ## [0.29.53] — 2026-08-07
 
 ### Nuevo — Ícono de perfil por persona + "Cargado por" en el detalle de un movimiento

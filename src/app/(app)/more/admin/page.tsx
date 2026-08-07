@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, EmptyState, ErrorState, Input, ListRow, Sheet, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { Button, EmptyState, ErrorState, Input, ListRow, Sheet, Skeleton, StatTile, StatusBadge, usePageHeader } from "@/design-system";
 import { adminRepo } from "@/lib/repos/admin-repo";
+import type { AccessStatus } from "@/lib/repos/profiles-repo";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { useOwnAccess } from "@/hooks/use-own-access";
 import { formatNumericDate, type Locale } from "@/i18n/formatting";
@@ -15,6 +16,29 @@ import { APP_VERSION } from "@/lib/version";
 
 const ACCESS_REQUESTS_KEY = ["admin", "access-requests"] as const;
 const METRICS_KEY = ["admin", "metrics"] as const;
+
+const ACCESS_STATUS_TOAST_KEY: Record<AccessStatus, string> = {
+  pending: "adminPage.pendingToast",
+  approved: "adminPage.approvedToast",
+  rejected: "adminPage.rejectedToast",
+  disabled: "adminPage.disabledToast",
+};
+
+const ACCESS_STATUS_MESSAGE_KEY: Record<AccessStatus, string> = {
+  pending: "adminPage.status.pending",
+  approved: "adminPage.status.approved",
+  rejected: "adminPage.status.rejected",
+  disabled: "adminPage.status.disabled",
+};
+
+const ACCESS_STATUS_BADGE_STATUS: Record<AccessStatus, "good" | "warning" | "serious" | "critical"> = {
+  pending: "warning",
+  approved: "good",
+  rejected: "critical",
+  // "serious", no "critical": a diferencia de rechazar una solicitud nueva,
+  // deshabilitar es reversible en cualquier momento con el mismo botón.
+  disabled: "serious",
+};
 
 /**
  * Panel del operador (§3.3) — pantalla nueva, fuera de `enabled_modules`
@@ -61,13 +85,18 @@ export default function AdminPage() {
   });
 
   const pending = (requests ?? []).filter((r) => r.accessStatus === "pending");
+  // Todos los usuarios, más recientes primero — la RPC ya trae la lista
+  // completa (`admin_list_access_requests` no filtra por estado), la
+  // sección de arriba solo recorta a `pending`. `slice()` porque `requests`
+  // ya viene ordenado por `access_requested_at DESC`.
+  const allUsers = [...(requests ?? [])];
 
-  const handleDecide = async (profileId: string, status: "approved" | "rejected") => {
+  const handleDecide = async (profileId: string, status: AccessStatus) => {
     if (acting) return;
     setActing(profileId);
     try {
       await adminRepo.setAccessStatus(profileId, status);
-      toast(status === "approved" ? t("adminPage.approvedToast") : t("adminPage.rejectedToast"));
+      toast(t(ACCESS_STATUS_TOAST_KEY[status] as Parameters<typeof t>[0]));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ACCESS_REQUESTS_KEY }),
         queryClient.invalidateQueries({ queryKey: METRICS_KEY }),
@@ -146,6 +175,51 @@ export default function AdminPage() {
 
         <section>
           <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>
+            {t("adminPage.allUsersSectionTitle")}
+          </div>
+          {loadingRequests ? (
+            <Skeleton height={120} />
+          ) : requestsErrored ? (
+            <ErrorState what={t("adminPage.pendingLoadError")} onRetry={() => refetchRequests()} retryLabel={t("common.retry")} />
+          ) : allUsers.length === 0 ? (
+            <EmptyState message={t("adminPage.allUsersEmpty")} />
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {allUsers.map((user) => (
+                <div key={user.profileId} style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <div className="t-body" style={{ color: "var(--text-primary)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {user.email ?? user.displayName ?? user.profileId}
+                    </div>
+                    <StatusBadge status={ACCESS_STATUS_BADGE_STATUS[user.accessStatus]}>{t(ACCESS_STATUS_MESSAGE_KEY[user.accessStatus] as Parameters<typeof t>[0])}</StatusBadge>
+                  </div>
+                  <div className="t-caption" style={{ color: "var(--text-muted)" }}>
+                    {t("adminPage.registeredOn", { date: formatNumericDate(locale, new Date(user.accessRequestedAt), dateFormat) })}
+                    {" · "}
+                    {user.lastSeenAt ? t("adminPage.lastSeenOn", { date: formatNumericDate(locale, new Date(user.lastSeenAt), dateFormat) }) : t("adminPage.neverConnected")}
+                  </div>
+                  {/* Deshabilitar/habilitar es la ÚNICA acción acá — a
+                      propósito, no un tercer camino para aprobar/rechazar
+                      una solicitud pendiente (eso ya lo resuelve la
+                      sección de arriba, con su propio copy). */}
+                  {user.accessStatus === "approved" || user.accessStatus === "disabled" ? (
+                    <Button
+                      variant={user.accessStatus === "approved" ? "danger" : "secondary"}
+                      disabled={acting === user.profileId}
+                      onClick={() => handleDecide(user.profileId, user.accessStatus === "approved" ? "disabled" : "approved")}
+                      style={{ marginTop: 4 }}
+                    >
+                      {t(user.accessStatus === "approved" ? "adminPage.disable" : "adminPage.enable")}
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>
             {t("adminPage.metricsSectionTitle")}
           </div>
           {loadingMetrics || !metrics ? (
@@ -157,6 +231,7 @@ export default function AdminPage() {
                 <StatTile label={t("adminPage.pendingCount")} value={metrics.pending} size="compact" />
                 <StatTile label={t("adminPage.approvedCount")} value={metrics.approved} size="compact" />
                 <StatTile label={t("adminPage.rejectedCount")} value={metrics.rejected} size="compact" />
+                <StatTile label={t("adminPage.disabledCount")} value={metrics.disabled} size="compact" />
               </div>
 
               <div>

@@ -89,15 +89,23 @@ export default function PendingPage() {
   }
 
   const rejected = status === "rejected";
+  // "disabled" — a diferencia de "rejected" (una solicitud que nunca
+  // llegó a entrar), esta cuenta SÍ tenía acceso y el operador se lo
+  // cortó a propósito, reversible en cualquier momento — por eso comparte
+  // el botón de actualizar con "pending" en vez de quedar sin salida como
+  // "rejected".
+  const disabled = status === "disabled";
+  const titleKey = rejected ? "onboarding.pending.rejectedTitle" : disabled ? "onboarding.pending.disabledTitle" : "onboarding.pending.pendingTitle";
+  const subtitleKey = rejected ? "onboarding.pending.rejectedSubtitle" : disabled ? "onboarding.pending.disabledSubtitle" : "onboarding.pending.pendingSubtitle";
 
   return (
     <ScreenShell style={{ alignItems: "center", justifyContent: "center", padding: "var(--screen-padding)", gap: 20, textAlign: "center" }}>
-      <Icon name={rejected ? "alert" : "clock"} size={48} color={rejected ? "var(--critical)" : "var(--text-secondary)"} />
+      <Icon name={rejected ? "alert" : disabled ? "lock" : "clock"} size={48} color={rejected || disabled ? "var(--critical)" : "var(--text-secondary)"} />
       <h1 className="t-title" style={{ margin: 0 }}>
-        {t(rejected ? "onboarding.pending.rejectedTitle" : "onboarding.pending.pendingTitle")}
+        {t(titleKey)}
       </h1>
       <p className="t-body" style={{ color: "var(--text-secondary)", maxWidth: "36ch" }}>
-        {t(rejected ? "onboarding.pending.rejectedSubtitle" : "onboarding.pending.pendingSubtitle")}
+        {t(subtitleKey)}
       </p>
       {email ? (
         <p className="t-label" style={{ color: "var(--text-muted)" }}>

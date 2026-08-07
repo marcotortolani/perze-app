@@ -10,7 +10,7 @@ export interface Profile {
   birthDate: string | null;
 }
 
-export type AccessStatus = "pending" | "approved" | "rejected";
+export type AccessStatus = "pending" | "approved" | "rejected" | "disabled";
 
 export interface OwnAccess {
   accessStatus: AccessStatus;

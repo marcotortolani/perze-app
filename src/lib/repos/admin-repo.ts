@@ -16,6 +16,7 @@ export interface AdminMetrics {
   pending: number;
   approved: number;
   rejected: number;
+  disabled: number;
   byCountry: Record<string, number>;
   byAgeRange: Record<string, number>;
   activeToday: number;
@@ -57,6 +58,7 @@ export const adminRepo = {
       pending: Number(m.pending ?? 0),
       approved: Number(m.approved ?? 0),
       rejected: Number(m.rejected ?? 0),
+      disabled: Number(m.disabled ?? 0),
       byCountry: (m.byCountry ?? {}) as Record<string, number>,
       byAgeRange: (m.byAgeRange ?? {}) as Record<string, number>,
       activeToday: Number(m.activeToday ?? 0),
