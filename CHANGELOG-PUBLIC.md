@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.74 — 7 de agosto de 2026
+
+### Arreglado
+
+- Al resolver tipos de cambio pendientes en cuentas, ahora se ve la fuente real de la cotización
+  en vez de un texto fijo, y podés escribir la tasa en cualquiera de las dos direcciones (por
+  ejemplo "1 dólar = X pesos" o "1 peso = X dólares"), igual que en Monedas.
+
 ## 0.29.73 — 7 de agosto de 2026
 
 ### Arreglado

@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.74] — 2026-08-07
+
+### Corregido — E8 (`/accounts/resolve-fx`) mostraba una fuente inventada y no tenía el toggle de dirección de `/currencies`
+
+`FxEditor` es compartido entre `/currencies` y `/accounts/resolve-fx`, pero `resolve-fx` solo
+usaba `resolution.rate` de `fxRepo.resolve()` y descartaba `source`/`provider`/`isStale`: el
+`source` de `FxEditor` quedaba `undefined` y el componente caía siempre a su placeholder por
+defecto (`ds.fxEditor.source`, literalmente "DolarApi · oficial"), sin importar si el proveedor
+real era otro o si el usuario ya tenía un override manual para ese par. Ahora `openEditor` guarda
+la `FxResolution` completa y se la pasa a `FxEditor` (`source`, `suggested`, `stale`) igual que
+`/currencies`.
+
+De paso se agregó el mismo toggle de dirección que ya tiene `/currencies`
+(`1 {moneda} = {base}` / `1 {base} = {moneda}`, `SegmentedControl` + `invertRate`): el rate en
+pantalla vive en la dirección mostrada y se invierte a la canónica (`moneda → base`) recién al
+guardar, que es lo único que persiste `setManualOverride` y lo que se propaga a
+`resolvePendingFx`. No se portaron los chips de blue/CCL/tarjeta ni "eliminar moneda de la
+lista": son acciones de gestión general de monedas sin cuenta propia y no aplican acá, donde
+editar un par siempre tiene transacciones reales pendientes detrás.
+
 ## [0.29.73] — 2026-08-07
 
 ### Corregido — "Nuevo recurrente" vuelve adentro de `(app)/`, y la causa real de las 5 rondas: el padding de `<main>` es invisible en páginas que desbordan
