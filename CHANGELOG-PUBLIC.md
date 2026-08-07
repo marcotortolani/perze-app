@@ -40,6 +40,47 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.68 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente" en el celular: ahora la pantalla entera se desliza de forma normal, en
+  vez de tener una zona chica separada que scrolleaba distinto al resto de la app.
+
+## 0.29.67 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente" en el celular: el botón de guardar de verdad ya no queda tapado — el
+  arreglo anterior no era suficiente, ahora el formulario está reorganizado para que el monto,
+  el teclado y "Guardar" siempre estén a la vista.
+
+## 0.29.66 — 7 de agosto de 2026
+
+### Arreglado
+
+- El aire de despeje abajo de varias pantallas (Inicio, Ajustes, Más, Movimientos, Cuentas, y
+  ahora también "Nuevo recurrente") no se estaba aplicando por un detalle técnico — ya se ve
+  bien en todas.
+- "Cargar ahora" en un recurrente manual ahora aparece siempre, no solo cuando ya venció —
+  vos decidís cuándo pagarlo.
+- Los recurrentes ahora se ven en dos grupos separados, automáticos y manuales, para
+  distinguirlos de un vistazo.
+
+## 0.29.65 — 7 de agosto de 2026
+
+### Arreglado
+
+- Un recurrente nuevo podía desaparecer solo, sin dejar rastro, poco después de crearlo.
+- Al tocar "Cargar ahora" en un recurrente vencido a veces se disparaba un error que no paraba
+  de repetirse.
+- Los recurrentes pendientes de carga manual ahora se pueden tocar para ver el detalle y
+  editarlos, en vez de solo tener el botón de cargar.
+- Si cargás a mano un recurrente vencido varios días después de su fecha, ahora se registra con
+  la fecha y la cotización del día en que realmente lo cargaste, no con las del día original.
+- Más aire abajo en la pantalla de "Nuevo recurrente" en el celular, para que el botón de
+  guardar no quede tapado.
+
 ## 0.29.64 — 7 de agosto de 2026
 
 ### Arreglado

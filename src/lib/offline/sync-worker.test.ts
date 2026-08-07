@@ -127,11 +127,30 @@ describe("drainOutbox — BASE-05", () => {
       clientRev: 1,
     });
 
-    const { client } = fakeSupabase({ duplicateTables: new Set(["tags"]) });
+    // El 23505 solo cuenta como éxito si la fila de verdad existe en el
+    // servidor (si no, es un error real mal identificado — ver el test de
+    // abajo, "relanza el error real").
+    const { client } = fakeSupabase({ duplicateTables: new Set(["tags"]), serverRowsById: { "tag-dup": { id: "tag-dup" } } });
     const result = await drainOutbox(client);
 
     expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
     expect(await outbox.count()).toBe(0);
+  });
+
+  it("un 23505 cuya fila NO existe en el servidor se relanza como error real, no se descarta en silencio", async () => {
+    await outbox.enqueue({
+      table: "tags",
+      op: "insert",
+      entityId: "tag-ghost",
+      payload: { id: "tag-ghost", householdId: "hh-1", name: "fantasma", color: null },
+      clientRev: 1,
+    });
+
+    const { client } = fakeSupabase({ duplicateTables: new Set(["tags"]) });
+    const result = await drainOutbox(client);
+
+    expect(result).toEqual({ synced: 0, failed: 1, conflicts: 0 });
+    expect(await outbox.count()).toBe(1); // sigue en la cola, no se pierde en silencio
   });
 
   it("un update sí usa upsert — a esa altura la fila y la membresía ya existen en el servidor", async () => {
@@ -296,6 +315,7 @@ describe("drainOutbox — BASE-05", () => {
       status: "cleared",
       visibility: "household",
       recurringId: null,
+      recurringOccurrenceDate: null,
       installmentGroupId: null,
       installmentNumber: null,
       installmentTotal: null,

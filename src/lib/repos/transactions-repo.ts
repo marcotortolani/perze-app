@@ -23,8 +23,8 @@ async function enqueueTransaction(op: "insert" | "update" | "delete", row: Trans
 
 export type NewTransactionInput = Omit<
   TransactionRow,
-  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev" | "syncState" | "syncError"
-> & { clientRev?: number };
+  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev" | "syncState" | "syncError" | "recurringOccurrenceDate"
+> & { clientRev?: number; recurringOccurrenceDate?: string | null };
 
 export interface TransactionFilters {
   accountId?: string;
@@ -76,10 +76,33 @@ export const transactionsRepo = {
     return rows.sort((a, b) => (a.occurredAt < b.occurredAt ? -1 : 1));
   },
 
+  /**
+   * G1 — qué períodos de cada regla ya tienen movimiento cargado, para que
+   * "Pending to charge" no siga ofreciendo cobrar algo que el usuario ya
+   * saldó. Par mínimo (no la fila entera): esto solo alimenta un filtro de
+   * fechas, no hace falta el resto del movimiento acá.
+   */
+  async listRecurringOccurrences(householdId: string): Promise<{ recurringId: string; occurrenceDate: string }[]> {
+    const rows = await getDb().transactions.where("householdId").equals(householdId).toArray();
+    return rows
+      .filter((t) => t.deletedAt === null && t.recurringId !== null)
+      .map((t) => ({ recurringId: t.recurringId!, occurrenceDate: t.recurringOccurrenceDate ?? t.occurredAt.slice(0, 10) }));
+  },
+
   async create(input: NewTransactionInput): Promise<TransactionRow> {
     const db = getDb();
     const now = nowIso();
-    const row: TransactionRow = { ...input, id: newId(), clientRev: input.clientRev ?? 1, createdAt: now, updatedAt: now, deletedAt: null, syncState: "ok", syncError: null };
+    const row: TransactionRow = {
+      ...input,
+      id: newId(),
+      recurringOccurrenceDate: input.recurringOccurrenceDate ?? null,
+      clientRev: input.clientRev ?? 1,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      syncState: "ok",
+      syncError: null,
+    };
 
     await db.transaction("rw", db.transactions, db.accounts, db.outbox, async () => {
       await db.transactions.add(row);

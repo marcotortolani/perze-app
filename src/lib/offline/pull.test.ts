@@ -171,6 +171,7 @@ function localTx(id: string, updatedAt: string, note: string): TransactionRow {
     status: "cleared",
     visibility: "household",
     recurringId: null,
+    recurringOccurrenceDate: null,
     installmentGroupId: null,
     installmentNumber: null,
     installmentTotal: null,

@@ -3,16 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { useState } from "react";
 import { Amount, Button, Chip, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
-import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useRecurringOccurrences } from "@/hooks/use-transactions";
 import { computeMonthlyCommitted, computeUpcomingCharges } from "@/lib/analytics/recurring-schedule";
-import { chargeRecurringNow } from "@/lib/recurring/materialize";
 import { occurrencesBetween } from "@/lib/recurring/occurrences";
 import { relativeDayLabel } from "@/lib/recurring/format-date-label";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -43,8 +40,7 @@ export default function RecurringPageContent() {
   const userId = useEffectiveUserId();
   const { data: rules } = useRecurringRules(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
-  const invalidateTransactions = useInvalidateTransactions(household?.id);
-  const [chargingId, setChargingId] = useState<string | null>(null);
+  const { data: recurringOccurrences = [] } = useRecurringOccurrences(household?.id);
   const accountFilter = searchParams.get("accountId");
   const currencyFilter = searchParams.get("currency");
 
@@ -76,17 +72,27 @@ export default function RecurringPageContent() {
   const nextRule = next ? rules.find((r) => r.id === next.ruleId) : undefined;
   const nextAccount = nextRule ? accounts.find((a) => a.id === nextRule.accountId) : undefined;
 
-  // Reglas con auto-registro apagado que tienen una ocurrencia vencida sin
-  // cargar — la consecuencia directa de que el switch (decisión del
-  // usuario) ya no es "siempre encendido" como asume el diseño.
-  const pendingManual = rules
-    .filter((r) => !r.autoPost && r.archivedAt === null)
-    .map((r) => ({ rule: r, due: occurrencesBetween(r, r.anchorDate, today).filter((d) => d <= today) }))
-    .filter((p) => p.due.length > 0);
+  // Períodos ya cargados por regla (`recurringOccurrences`, clave
+  // `recurringOccurrenceDate` — no `occurredAt`, que en una carga manual
+  // tardía es la fecha real de pago, no la del período). Alimenta la
+  // fecha que se muestra en la sección "Manuales": el primer período sin
+  // saldar, vencido o futuro — con auto-registro OFF la fecha de la regla
+  // es solo aviso/organización, el usuario decide cuándo pagar.
+  const chargedByRule = new Map<string, Set<string>>();
+  for (const o of recurringOccurrences) {
+    if (!chargedByRule.has(o.recurringId)) chargedByRule.set(o.recurringId, new Set());
+    chargedByRule.get(o.recurringId)!.add(o.occurrenceDate);
+  }
+  const nextUnchargedDate = (rule: (typeof rules)[number]) =>
+    occurrencesBetween(rule, rule.anchorDate, addYears(today, 2)).find((d) => !chargedByRule.get(rule.id)?.has(d)) ?? null;
 
   const accountsWithRules = accounts.filter((a) => rules.some((r) => r.accountId === a.id));
   const currenciesWithRules = [...new Set(rules.map((r) => r.currencyCode))].sort();
   const filteredRules = rules.filter((r) => (!accountFilter || r.accountId === accountFilter) && (!currencyFilter || r.currencyCode === currencyFilter));
+  // La única forma de distinguir a simple vista qué se carga solo de qué
+  // hay que cargar a mano — antes era una sola lista mezclada por fecha.
+  const autoRules = filteredRules.filter((r) => r.autoPost);
+  const manualRules = filteredRules.filter((r) => !r.autoPost);
 
   const setFilter = (key: "accountId" | "currency", value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -98,19 +104,6 @@ export default function RecurringPageContent() {
   const relativeDayText = (dateOnly: string) => {
     const rel = relativeDayLabel(dateOnly, today, locale);
     return rel.kind === "today" ? t("recurringPage.relativeToday") : rel.kind === "tomorrow" ? t("recurringPage.relativeTomorrow") : rel.label;
-  };
-
-  const handleChargeNow = async (ruleId: string, occDate: string) => {
-    const rule = rules.find((r) => r.id === ruleId);
-    if (!rule || chargingId) return;
-    setChargingId(ruleId);
-    try {
-      await chargeRecurringNow(household, userId, rule, occDate);
-      invalidateTransactions();
-      toast(t("recurringPage.autoPosted", { name: rule.name }));
-    } finally {
-      setChargingId(null);
-    }
   };
 
   return (
@@ -166,53 +159,60 @@ export default function RecurringPageContent() {
 
         {filteredRules.length === 0 ? <EmptyState message={t("recurringPage.emptyFiltered")} /> : null}
 
-        <div className="t-caption mt-3 mb-1 text-text-muted">{t("recurringPage.next30Days")}</div>
-        {filteredRules.map((rule) => {
-          const account = accounts.find((a) => a.id === rule.accountId);
-          const ruleUpcoming = upcoming.find((u) => u.ruleId === rule.id);
-          return (
-            <ListRow
-              key={rule.id}
-              label={rule.name}
-              meta={ruleUpcoming ? `${relativeDayText(ruleUpcoming.nextDate.toISOString().slice(0, 10))} · ${account?.name ?? ""}` : t(`recurringPage.frequency.${rule.frequency}`)}
-              variant="value"
-              onClick={() => router.push(`/recurring/${rule.id}`)}
-              value={
-                <Amount
-                  value={money(rule.kind === "expense" ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
-                  size="body"
-                  polarity={rule.kind === "income" ? "positive" : "negative"}
-                  tabular
-                />
-              }
-            />
-          );
-        })}
-
-        {pendingManual.length > 0 ? (
+        {/* Dos secciones por `autoPost`, no una lista mezclada por fecha —
+            es la única forma de saber a simple vista qué se carga solo de
+            qué hay que cargar a mano. */}
+        {autoRules.length > 0 ? (
           <>
-            <div className="t-caption mt-4 mb-1 text-text-muted">{t("recurringPage.pendingCharges")}</div>
-            {pendingManual.map(({ rule, due }) => (
-              <ListRow
-                key={rule.id}
-                label={rule.name}
-                meta={t("recurringPage.chargeNow")}
-                variant="value"
-                onClick={() => handleChargeNow(rule.id, due[0]!)}
-                value={
-                  chargingId === rule.id ? (
-                    "…"
-                  ) : (
+            <div className="t-caption mt-3 mb-1 text-text-muted">{t("recurringPage.sectionAuto")}</div>
+            {autoRules.map((rule) => {
+              const account = accounts.find((a) => a.id === rule.accountId);
+              const ruleUpcoming = upcoming.find((u) => u.ruleId === rule.id);
+              return (
+                <ListRow
+                  key={rule.id}
+                  label={rule.name}
+                  meta={ruleUpcoming ? `${relativeDayText(ruleUpcoming.nextDate.toISOString().slice(0, 10))} · ${account?.name ?? ""}` : t(`recurringPage.frequency.${rule.frequency}`)}
+                  variant="value"
+                  onClick={() => router.push(`/recurring/${rule.id}`)}
+                  value={
                     <Amount
                       value={money(rule.kind === "expense" ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
                       size="body"
                       polarity={rule.kind === "income" ? "positive" : "negative"}
                       tabular
                     />
-                  )
-                }
-              />
-            ))}
+                  }
+                />
+              );
+            })}
+          </>
+        ) : null}
+
+        {manualRules.length > 0 ? (
+          <>
+            <div className="t-caption mt-4 mb-1 text-text-muted">{t("recurringPage.sectionManual")}</div>
+            {manualRules.map((rule) => {
+              const account = accounts.find((a) => a.id === rule.accountId);
+              const nextDate = nextUnchargedDate(rule);
+              return (
+                <ListRow
+                  key={rule.id}
+                  label={rule.name}
+                  meta={nextDate ? `${relativeDayText(nextDate)} · ${account?.name ?? ""}` : t(`recurringPage.frequency.${rule.frequency}`)}
+                  variant="value"
+                  onClick={() => router.push(`/recurring/${rule.id}`)}
+                  value={
+                    <Amount
+                      value={money(rule.kind === "expense" ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
+                      size="body"
+                      polarity={rule.kind === "income" ? "positive" : "negative"}
+                      tabular
+                    />
+                  }
+                />
+              );
+            })}
           </>
         ) : null}
 
@@ -231,4 +231,9 @@ export default function RecurringPageContent() {
       </div>
     </div>
   );
+}
+
+function addYears(iso: string, years: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${y! + years}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }

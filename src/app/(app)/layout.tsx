@@ -33,6 +33,17 @@ function tabForPathname(pathname: string): string {
 /** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
 const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/accounts", "/more", "/more/settings", "/more/categories"]);
 
+/**
+ * `/recurring/new` es `h-full flex-col` con el Keypad+Save pegado al fondo
+ * vía `mt-auto` (sin scroll propio, a diferencia de `OWN_SCROLLER_ROUTES`)
+ * — el padding default de acá abajo no alcanzaba y el FAB "+" de la TabBar
+ * tapaba el botón "Guardar" en mobile. Agregarle el padding DENTRO de esa
+ * caja `h-full` no sirve: esa altura es fija, así que el padding solo le
+ * resta espacio al contenido en vez de sumar aire real contra el FAB. Tiene
+ * que vivir acá, en el contenedor que de verdad reserva el espacio.
+ */
+const DOUBLE_PADDING_ROUTES = new Set(["/recurring/new"]);
+
 /** Las únicas 4 pantallas cuyos datos de verdad se filtran por `scope` (`match-scope.ts`) — ver el comentario junto a `showScope`. */
 const SCOPE_AWARE_ROUTES = new Set(["/", "/transactions", "/accounts", "/analytics"]);
 
@@ -289,7 +300,11 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             pantalla para que lo sume dentro de su propio scroller (ver
             `transactions/page.tsx` y `accounts/page.tsx`), en vez de vivir
             acá afuera donde no hay nada que lo atraviese. */}
-        <main className={`app-shell-main ${OWN_SCROLLER_ROUTES.has(pathname) ? "" : "pb-[calc(var(--block-gap)+18px)]"} lg:pb-6`}>
+        <main
+          className={`app-shell-main ${
+            OWN_SCROLLER_ROUTES.has(pathname) ? "" : DOUBLE_PADDING_ROUTES.has(pathname) ? "pb-[calc(2*var(--block-gap)_+_36px)]" : "pb-[calc(var(--block-gap)_+_18px)]"
+          } lg:pb-6`}
+        >
           {/* `height: 100%` — Movimientos (D1) usa `height: "100%"` en su
               virtualizador y necesita que este contenedor tenga una altura
               definida para resolverlo, no solo `flex: 1` en el ancestro.

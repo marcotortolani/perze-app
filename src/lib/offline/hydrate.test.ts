@@ -87,6 +87,7 @@ const RAW_TX: RawTransaction = {
   status: "cleared",
   visibility: "household",
   recurring_id: null,
+  recurring_occurrence_date: null,
   installment_group_id: null,
   installment_number: null,
   installment_total: null,

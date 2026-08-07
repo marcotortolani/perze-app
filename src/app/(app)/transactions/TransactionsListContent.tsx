@@ -525,7 +525,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
             // `ref` de React solo acepta un valor, así que un callback ref
             // reparte — y tiene que ser `useCallback`, ver su definición.
             ref={scrollerRefCallback}
-            className="pb-[calc(var(--block-gap)+18px)] lg:pb-8"
+            className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8"
             // `paddingRight`: separa el texto/monto de la barra de scroll,
             // que si no queda pegada contra el borde del contenido en
             // desktop. `lg:pb-8` (32px, no 0): aire real al final de la

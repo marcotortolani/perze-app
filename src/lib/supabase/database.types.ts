@@ -2558,6 +2558,7 @@ export type Database = {
           original_rate: number | null
           payee_id: string | null
           recurring_id: string | null
+          recurring_occurrence_date: string | null
           source: string
           status: string
           sync_error: string | null
@@ -2600,6 +2601,7 @@ export type Database = {
           original_rate?: number | null
           payee_id?: string | null
           recurring_id?: string | null
+          recurring_occurrence_date?: string | null
           source?: string
           status?: string
           sync_error?: string | null
@@ -2642,6 +2644,7 @@ export type Database = {
           original_rate?: number | null
           payee_id?: string | null
           recurring_id?: string | null
+          recurring_occurrence_date?: string | null
           source?: string
           status?: string
           sync_error?: string | null

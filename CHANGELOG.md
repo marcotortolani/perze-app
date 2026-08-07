@@ -6,6 +6,99 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.68] — 2026-08-07
+
+### Corregido — "Nuevo recurrente": el scroll interno de la ronda pasada no era lo pedido
+
+La 0.29.67 resolvía el desborde con una región de scroll interna solo para los campos
+(nombre/frecuencia/cuenta/categoría/auto-registro), dejando monto+teclado+Guardar pinneados
+siempre visibles fuera de esa región. Funcionaba, pero el usuario lo rechazó: quiere que la
+página entera scrollee como cualquier otra de `(app)/`, no una sub-región escondida sin
+affordance clara. Se revierte a un layout simple sin `h-full`/`min-h-0`/`overflow-y-auto`
+propios — el contenido fluye de punta a punta y es `<main>` (`app-shell-main`, que ya scrollea
+todo lo demás) el que maneja el desborde. El padding duplicado de `layout.tsx`
+(`DOUBLE_PADDING_ROUTES`) sigue dando la separación contra el FAB al llegar al final del
+scroll. Verificado con `getBoundingClientRect()`: al scrollear `main` hasta el fondo, "Guardar"
+queda con aire libre antes de la TabBar.
+
+## [0.29.67] — 2026-08-07
+
+### Corregido — "Nuevo recurrente" en mobile: el diagnóstico anterior era incorrecto
+
+El fix de `calc()` de la ronda pasada no era el problema real — Tailwind v4 ya normaliza el
+espaciado de `calc()` al compilar (`calc(2*var(--block-gap)+36px)` y la versión con
+`_+_` generan exactamente el mismo `padding-bottom` válido; confirmado leyendo el CSS
+compilado). El usuario reportó que seguía viendo el botón tapado con una captura idéntica a
+antes — inspeccioné el DOM en vivo (`getBoundingClientRect()`) y recién ahí apareció la causa
+real: el contenido de este formulario **ya desbordaba la altura visible en mobile antes de
+tocar nada** (`Save` renderizaba en `y:1020` con el viewport visible terminando en `y:803`).
+Agregar más padding-bottom no crea espacio: solo alarga un contenedor que ya no entra,
+empujando el desborde más abajo — el padding duplicado de la ronda anterior lo empeoraba.
+
+Se revierte el enfoque de padding y se reestructura el formulario: los campos (nombre,
+frecuencia, cuenta, categoría, auto-registro) scrollean en su propia región angosta
+(`overflow-y-auto` + `min-h-0`, la clave que faltaba — un hijo flex vale `min-height: auto`
+por default y nunca cede espacio al resto), mientras el monto + teclado + "Guardar" quedan
+SIEMPRE visibles sin scroll, en vez de empujados con `mt-auto` dentro de una caja que
+desbordaba. Verificado con `getBoundingClientRect()`: `main.scrollHeight` ahora es igual a
+`main.clientHeight` (sin desborde) y `Save` renderiza dentro del viewport visible, lejos del
+FAB.
+
+## [0.29.66] — 2026-08-07
+
+### Corregido — padding roto por `calc()` inválido, "Cargar ahora" condicionado a fecha vencida, y lista de recurrentes sin distinguir automático/manual
+
+- **`calc(var(--block-gap)+18px)` es CSS inválido** — falta el espacio alrededor del `+`, que
+  la spec de `calc()` exige (a diferencia de `*`/`/`). El navegador descarta el valor completo
+  en silencio: ese padding **nunca se aplicó en ningún lado**. No es un bug nuevo de la ronda
+  anterior — encontrado al debuggear el padding de "Nuevo recurrente" con un bloque de color a
+  propósito (gracias al usuario por el método), pero el mismo patrón sin espacio estaba en
+  `(app)/page.tsx`, `more/settings/page.tsx`, `more/page.tsx`, `TransactionsListContent.tsx` y
+  `AccountsListContent.tsx`. Se corrige en los 6 lugares con el escape de espacio de Tailwind
+  (`_`).
+- **"Cargar ahora" solo aparecía si la ocurrencia ya había vencido** (`isDue` exigía
+  `dueOccurrences.length > 0`, calculado solo hasta hoy). Con auto-registro OFF la fecha de la
+  regla es aviso/organización, no una restricción — el usuario decide cuándo pagar. Ahora el
+  botón aparece siempre que haya algún período sin saldar (vencido o futuro, buscado con el
+  mismo horizonte de 2 años que ya usa "Próximas ocurrencias").
+- **La lista de recurrentes no distinguía automáticos de manuales a simple vista** — una sola
+  lista ordenada por fecha. Se separa en dos secciones fijas por `autoPost`, reemplazando la
+  vieja "Próximos 30 días" + "Pendientes de cargar" (que solo mostraba los manuales vencidos).
+
+## [0.29.65] — 2026-08-07
+
+### Corregido — recurrentes: fila que desaparecía en silencio, loop de 409 y fecha/cotización de la carga manual tardía
+
+Cuatro problemas reportados por el usuario probando el bloque de recurrentes, todos con la
+misma raíz o adyacentes:
+
+- **`sync-worker.ts` trataba cualquier `23505` en un insert como "ya sincronizado antes"** sin
+  verificar que la fila realmente existiera en el servidor. Confirmado contra el proyecto real:
+  dos reglas `recurring_rules` creadas por el usuario no tenían rastro ni en el servidor ni en
+  el outbox local — se perdieron en silencio. Ahora, antes de descartar un `23505`, se verifica
+  la fila por `id`; si no existe, se relanza el error real (queda visible en Ajustes → Estado de
+  sincronización en vez de desaparecer).
+- Esa verificación por `id` no cubre la carrera legítima de `transactions_recurring_occurrence_uniq`
+  (cliente y cron materializando la misma ocurrencia con ids distintos — el conflicto es por
+  índice único, no por id duplicado). Antes se detectaba con un `error.message.includes(...)`
+  frágil; cuando PostgREST no formateaba el mensaje igual, cada reintento volvía a chocar con el
+  mismo 409 **para siempre** (el loop que el usuario vio en la consola). Ahora se reconoce por
+  `entry.table === "transactions" && payload.recurringId`, sin depender del texto del error.
+- **"Pending to charge" mostraba un botón de acción en vez de una fila navegable** — sin forma
+  de llegar al detalle para editar la regla. Ahora es una fila igual a las demás (fecha vencida +
+  cuenta) que lleva al detalle, donde ya vive "Cargar ahora".
+- **Carga manual tardía usaba la fecha y la cotización del período programado, no la del día
+  real de pago.** Se agrega `transactions.recurring_occurrence_date` (migración
+  `20260807160000_recurring_occurrence_date.sql`) para desacoplar "qué período salda este
+  movimiento" (idempotencia) de "cuándo ocurrió de verdad" (`occurred_at` + FX). El motor
+  automático no cambia; `chargeRecurringNow` ahora resuelve `occurred_at` y la cotización con la
+  fecha real de carga. De paso, la lista de recurrentes pendientes ahora excluye los períodos ya
+  cargados (antes no lo hacía, aunque el detalle sí).
+
+También: el padding inferior de "Nuevo recurrente" en mobile se había duplicado dentro de un
+contenedor de altura fija (no ganaba aire real, solo exigía scroll) — se movió al contenedor que
+de verdad reserva espacio contra la TabBar/FAB (`(app)/layout.tsx`).
+
 ## [0.29.64] — 2026-08-07
 
 ### Corregido — desactivar el bloqueo por PIN no pedía el PIN

@@ -16,9 +16,22 @@ export function useTransactions(householdId: string | undefined, filters: Transa
   });
 }
 
+/** G1 — pares `{recurringId, occurrenceDate}` ya cargados, para filtrar "Pending to charge" (ver `listRecurringOccurrences`). */
+export function useRecurringOccurrences(householdId: string | undefined) {
+  return useQuery({
+    queryKey: ["recurring-occurrences", householdId ?? ""],
+    queryFn: () => transactionsRepo.listRecurringOccurrences(householdId!),
+    enabled: !!householdId,
+  });
+}
+
 export function useInvalidateTransactions(householdId: string | undefined) {
   const queryClient = useQueryClient();
-  return () => householdId && queryClient.invalidateQueries({ queryKey: ["transactions", householdId], refetchType: "all" });
+  return () => {
+    if (!householdId) return;
+    queryClient.invalidateQueries({ queryKey: ["transactions", householdId], refetchType: "all" });
+    queryClient.invalidateQueries({ queryKey: ["recurring-occurrences", householdId], refetchType: "all" });
+  };
 }
 
 /**

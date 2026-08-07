@@ -7,9 +7,6 @@ import { outbox } from "./outbox";
 import { SYNC_TABLES } from "./sync-config";
 import { detectRevisionConflict } from "./conflict-detection";
 
-/** Nombre del índice único de idempotencia de recurrentes (20260805000000_recurring_v3.sql). */
-const RECURRING_OCCURRENCE_CONSTRAINT = "transactions_recurring_occurrence_uniq";
-
 export interface DrainResult {
   synced: number;
   failed: number;
@@ -166,17 +163,43 @@ async function syncOne(
     // "ya sincronizada por un intento anterior interrumpido" — el payload
     // de un op insert no cambia entre reintentos, así que es un éxito.
     const { error } = await supabase.from(config.supabaseTable).insert(row);
-    if (error && error.code === "23505" && entry.table === "transactions" && error.message.includes(RECURRING_OCCURRENCE_CONSTRAINT)) {
+    if (error && error.code === "23505" && entry.table === "transactions" && payload.recurringId) {
       // Recurrentes v3 — esto NO es "ya sincronizada por un intento
       // anterior" (esa es la rama de abajo, `id` duplicado): es una
       // carrera real entre el motor cliente y el cron, ambos
       // materializando la misma ocurrencia con ids distintos. Esta fila
       // local perdió — se descarta sin reintentar, la del servidor llega
       // en el próximo pull.
+      //
+      // El chequeo NO depende de que `error.message` incluya el nombre
+      // literal de `transactions_recurring_occurrence_uniq` — PostgREST no
+      // siempre lo formatea igual, y cuando no matcheaba esto caía a la
+      // rama genérica de abajo, que verifica por `id` (no lo iba a
+      // encontrar, porque el conflicto es por índice único, no por id
+      // duplicado) y relanzaba el error para siempre: reintento tras
+      // reintento, el mismo 409 sin parar. Cualquier `transactions` con
+      // `recurringId` que choque con 23505 solo puede ser esta carrera —
+      // no hay otro unique constraint en la tabla salvo la PK de `id`.
       await transactionsRepo.discardLocal(entry.entityId);
       return;
     }
-    if (error && error.code !== "23505") throw error;
+    if (error && error.code === "23505") {
+      // La idempotencia asume que el 23505 es "ya sincronizada por un
+      // intento anterior" — pero esa fila tiene que existir de verdad. Sin
+      // esta verificación, cualquier 23505 que NO sea por ese motivo (una
+      // constraint distinta reportando el mismo código, un error mal
+      // identificado) se trataba como éxito y borraba la entrada del
+      // outbox, dejando la fila local sin protección contra la poda del
+      // próximo pull — desaparición silenciosa, sin rastro en ningún lado.
+      const { data: serverRow, error: checkError } = await supabase.from(config.supabaseTable).select("id").eq("id", entry.entityId).maybeSingle();
+      if (checkError) throw checkError;
+      if (!serverRow) {
+        console.error(`[sync] 23505 en insert de ${entry.table}/${entry.entityId} pero la fila no existe en el servidor — no se descarta`, error);
+        throw error;
+      }
+      return;
+    }
+    if (error) throw error;
     return;
   }
 

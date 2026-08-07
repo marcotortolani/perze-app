@@ -242,6 +242,16 @@ export interface TransactionRow {
   visibility: Visibility;
 
   recurringId: string | null;
+  /**
+   * YYYY-MM-DD — qué ocurrencia programada de la regla cubre este
+   * movimiento, SIEMPRE presente cuando `recurringId` no es null, `null`
+   * en cualquier otro caso. Es la clave real de idempotencia contra
+   * duplicados (`transactions_recurring_occurrence_uniq`) — desacoplada
+   * de `occurredAt` porque una carga manual tardía puede registrar el
+   * movimiento con la fecha real de pago (hoy) mientras esta columna
+   * sigue apuntando al período que salda (§ recurrentes, `CLAUDE.md`).
+   */
+  recurringOccurrenceDate: string | null;
   installmentGroupId: string | null;
   installmentNumber: number | null;
   installmentTotal: number | null;

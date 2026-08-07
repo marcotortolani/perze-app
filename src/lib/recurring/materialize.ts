@@ -54,14 +54,17 @@ export async function materializeDueRecurring(household: HouseholdRow, userId: s
     if (occurrences.length === 0) continue;
 
     // Idempotencia contra Dexie, misma clave que el índice único de
-    // Postgres — INCLUYENDO soft-deleted: si el usuario deshizo la carga,
-    // la fecha queda ocupada y no se recrea.
+    // Postgres — `recurringOccurrenceDate`, NUNCA `occurredAt` (una carga
+    // manual tardía registra `occurredAt` con la fecha real de pago, no
+    // con la del período que salda — ver `chargeRecurringNow`). INCLUYE
+    // soft-deleted: si el usuario deshizo la carga, el período queda
+    // ocupado y no se recrea.
     const existing = await db.transactions.where("recurringId").equals(rule.id).toArray();
-    const existingDates = new Set(existing.map((t) => toDateOnly(t.occurredAt)));
+    const existingDates = new Set(existing.map((t) => t.recurringOccurrenceDate ?? toDateOnly(t.occurredAt)));
 
     for (const occDate of occurrences) {
       if (existingDates.has(occDate)) continue;
-      const row = await materializeOne(household, userId, rule, occDate);
+      const row = await materializeOne(household, userId, rule, occDate, occDate);
       created.push(row);
     }
   }
@@ -75,20 +78,28 @@ export async function materializeDueRecurring(household: HouseholdRow, userId: s
  * usuario decide cargar a mano. A diferencia de `materializeDueRecurring`,
  * esto SÍ lo dispara un gesto de usuario — el caller lo envuelve en
  * `createOptimisticMutation()`.
+ *
+ * `occDate` (la fecha programada de la regla) y la fecha real del
+ * movimiento son cosas DISTINTAS acá: con el auto-registro apagado, esa
+ * fecha es un aviso/organización, no un hecho contable — el gasto/ingreso
+ * ocurre administrativamente el día en que el usuario lo carga a mano, así
+ * que `occurredAt` y la cotización usada son de HOY, no de `occDate`.
+ * `occDate` sigue viviendo en `recurringOccurrenceDate` — es el período
+ * que esta carga salda, y ahí vive toda la idempotencia.
  */
-export async function chargeRecurringNow(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string): Promise<TransactionRow> {
-  return materializeOne(household, userId, rule, occDate);
+export async function chargeRecurringNow(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string, todayDateOnly: string): Promise<TransactionRow> {
+  return materializeOne(household, userId, rule, occDate, todayDateOnly);
 }
 
-async function materializeOne(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string): Promise<TransactionRow> {
+async function materializeOne(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string, effectiveDate: string): Promise<TransactionRow> {
   const amount = money(rule.expectedAmount, rule.currencyCode);
-  const fx = await resolveFxForAccountCurrency(household, rule.currencyCode, amount, occDate);
+  const fx = await resolveFxForAccountCurrency(household, rule.currencyCode, amount, effectiveDate);
 
   return transactionsRepo.create({
     householdId: household.id,
     createdBy: userId,
     kind: rule.kind,
-    occurredAt: occurredAtFor(occDate),
+    occurredAt: occurredAtFor(effectiveDate),
     accountId: rule.accountId,
     counterAccountId: null,
     amount: rule.expectedAmount,
@@ -113,6 +124,7 @@ async function materializeOne(household: HouseholdRow, userId: string, rule: Rec
     status: "cleared",
     visibility: "household",
     recurringId: rule.id,
+    recurringOccurrenceDate: occDate,
     installmentGroupId: null,
     installmentNumber: null,
     installmentTotal: null,

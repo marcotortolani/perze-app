@@ -238,6 +238,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       status: p.status,
       visibility: p.visibility,
       recurring_id: p.recurringId,
+      recurring_occurrence_date: p.recurringOccurrenceDate,
       installment_group_id: p.installmentGroupId,
       installment_number: p.installmentNumber,
       installment_total: p.installmentTotal,

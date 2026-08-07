@@ -112,12 +112,25 @@ export default function RecurringRuleDetailPage({
         3,
       )
     : []
-  const dueOccurrences = occurrencesBetween(
-    rule,
-    rule.anchorDate,
-    today,
-  ).filter((d) => !series.some((p) => p.date === d))
-  const isDue = !rule.autoPost && dueOccurrences.length > 0
+  // Clave de idempotencia real: `recurringOccurrenceDate`, no `occurredAt`
+  // (que en `series`/el gráfico es la fecha real de pago — puede ser
+  // posterior al período que salda si se cargó tarde a mano).
+  const chargedDates = new Set(
+    (history ?? [])
+      .filter((tx) => tx.deletedAt === null)
+      .map((tx) => tx.recurringOccurrenceDate ?? tx.occurredAt.slice(0, 10)),
+  )
+  // Con auto-registro OFF la fecha de la regla es solo aviso/organización
+  // — el usuario decide cuándo pagar, antes, durante o después. "Cargar
+  // ahora" tiene que estar disponible siempre que haya algún período sin
+  // saldar, no solo cuando ya venció: se busca el primer período no
+  // cargado hacia adelante (vencido o futuro), con el mismo horizonte de
+  // 2 años que ya usa `upcoming` más abajo.
+  const nextChargeableDate =
+    occurrencesBetween(rule, rule.anchorDate, addYears(today, 2)).find(
+      (d) => !chargedDates.has(d),
+    ) ?? null
+  const isDue = !rule.autoPost && nextChargeableDate !== null
 
   // Ajustes → Formato: toda fecha se muestra con `dateFormat`, nunca ISO
   // crudo — si el usuario lo cambia después, esta pantalla se ajusta sola.
@@ -138,10 +151,10 @@ export default function RecurringRuleDetailPage({
   }
 
   const handleChargeNow = async () => {
-    if (charging || dueOccurrences.length === 0) return
+    if (charging || nextChargeableDate === null) return
     setCharging(true)
     try {
-      await chargeRecurringNow(household, userId, rule, dueOccurrences[0]!)
+      await chargeRecurringNow(household, userId, rule, nextChargeableDate, today)
       invalidateTransactions()
       toast(t('recurringPage.autoPosted', { name: rule.name }))
     } finally {

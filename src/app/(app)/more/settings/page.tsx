@@ -185,7 +185,7 @@ export default function SettingsPage() {
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%" } as CSSProperties}>
       <div
         ref={scrollerRef}
-        className="pb-[calc(var(--block-gap)+18px)] lg:pb-8 scroll-gutter-right"
+        className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8 scroll-gutter-right"
         style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12 }}
       >
         {/* `lg`+: se agrupa por afinidad real en vez de una sola lista

@@ -352,6 +352,7 @@ export interface RawTransaction {
   status: string;
   visibility: string;
   recurring_id: string | null;
+  recurring_occurrence_date: string | null;
   installment_group_id: string | null;
   installment_number: number | null;
   installment_total: number | null;
@@ -395,6 +396,7 @@ export function transactionFromRow(row: RawTransaction): TransactionRow {
     status: row.status as TransactionStatus,
     visibility: row.visibility as Visibility,
     recurringId: row.recurring_id,
+    recurringOccurrenceDate: row.recurring_occurrence_date,
     installmentGroupId: row.installment_group_id,
     installmentNumber: row.installment_number,
     installmentTotal: row.installment_total,

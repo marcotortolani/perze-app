@@ -39,6 +39,7 @@ function fromServerTransaction(server: Record<string, unknown>): TransactionRow 
     status: server.status as TransactionRow["status"],
     visibility: server.visibility as TransactionRow["visibility"],
     recurringId: server.recurring_id as string | null,
+    recurringOccurrenceDate: server.recurring_occurrence_date as string | null,
     installmentGroupId: server.installment_group_id as string | null,
     installmentNumber: server.installment_number as number | null,
     installmentTotal: server.installment_total as number | null,

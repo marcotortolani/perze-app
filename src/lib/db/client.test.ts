@@ -88,6 +88,7 @@ describe("PerzeDatabase — schema abre y hace CRUD básico", () => {
         status: "cleared",
         visibility: "household",
         recurringId: null,
+        recurringOccurrenceDate: null,
         installmentGroupId: null,
         installmentNumber: null,
         installmentTotal: null,
