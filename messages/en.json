@@ -275,7 +275,22 @@
    "cat": "Cat",
    "cloud": "Subscriptions",
    "users": "People",
-   "user": "Person"
+   "user": "Person",
+   "rabbit": "Rabbit",
+   "bird": "Bird",
+   "horse": "Horse",
+   "butterfly": "Butterfly",
+   "alien": "Alien",
+   "robot": "Robot",
+   "ghost": "Ghost",
+   "skull": "Skull",
+   "crown": "Crown",
+   "sunglasses": "Sunglasses",
+   "dice": "Dice",
+   "headphones": "Headphones",
+   "paintBrush": "Paintbrush",
+   "maskHappy": "Mask",
+   "rocket": "Rocket"
   },
   "accountKind": {
    "cash": "Cash",

@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.58 — 7 de agosto de 2026
+
+### Mejorado
+
+- Más opciones de ícono en Perfil (alien, robot, fantasma, conejo, corona y otros) — se sacaron
+  algunos que no decían mucho de vos (una taza de café, un moño de regalo) para sumar variedad
+  que sí funciona como avatar.
+
 ## 0.29.55 — 7 de agosto de 2026
 
 ### Arreglado

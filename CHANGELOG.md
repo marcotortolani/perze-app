@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.58] — 2026-08-07
+
+### Cambiado — Más variedad en el picker de ícono de perfil, curada por identidad de persona
+
+El set tenía 24 íconos y varios no decían nada de quién sos — una taza de café, un moño de
+regalo, confetti, un reloj, una nota musical genérica. Se sacan esos siete (`coffee`, `gift`,
+`confetti`, `watch`, `bag`, `paw`, `music`) y se suman 15 nuevos, todos evaluados contra el mismo
+criterio: tiene que poder leerse como avatar de una persona, no como objeto decorativo —
+`alien`, `robot`, `ghost`, `skull`, `crown`, `sunglasses`, `rabbit`, `bird`, `horse`,
+`butterfly`, `dice`, `headphones`, `paint-brush`, `mask-happy`, `rocket`. `guitar` se mantiene
+como ejemplo de instrumento específico que sí funciona (a diferencia de un ícono de nota
+musical genérica).
+
+`ICONS` (`src/design-system/core/Icon.tsx`) suma los 15 glifos nuevos de Phosphor —única
+librería de íconos del proyecto, sin agregar una dependencia nueva. `PROFILE_ICON_OPTIONS`
+(`src/lib/reference/profile-icons.ts`) pasa de 24 a 31 entradas; los siete sacados siguen
+existiendo en `ICONS` porque los sigue usando `category-icons.ts`, solo dejan de ofrecerse en
+el picker de perfil. Nuevas claves `reference.icon.*` en los tres locales para las 15
+incorporaciones.
+
 ## [0.29.57] — 2026-08-07
 
 ### Cambiado — "Avisar sobre nueva versión" pasa a ser "Generar anuncio", genérico por tipo

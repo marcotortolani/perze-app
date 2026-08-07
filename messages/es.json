@@ -275,7 +275,22 @@
    "cat": "Gato",
    "cloud": "Suscripciones",
    "users": "Personas",
-   "user": "Persona"
+   "user": "Persona",
+   "rabbit": "Conejo",
+   "bird": "Pájaro",
+   "horse": "Caballo",
+   "butterfly": "Mariposa",
+   "alien": "Alien",
+   "robot": "Robot",
+   "ghost": "Fantasma",
+   "skull": "Calavera",
+   "crown": "Corona",
+   "sunglasses": "Anteojos de sol",
+   "dice": "Dados",
+   "headphones": "Auriculares",
+   "paintBrush": "Pincel",
+   "maskHappy": "Máscara",
+   "rocket": "Cohete"
   },
   "accountKind": {
    "cash": "Efectivo",
