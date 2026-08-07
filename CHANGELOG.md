@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.55] — 2026-08-07
+
+### Arreglado — PWA offline: `/add` caía a la pantalla de "sin conexión" tras un cierre completo
+
+Bug real reportado: cerrar la PWA del todo (no solo mandarla a segundo plano) sin conexión y
+abrirla para cargar un gasto mostraba `/offline` en vez de la captura. `/add` nunca estaba
+precacheado — solo `/offline` lo estaba (`src/app/serwist/[path]/route.ts`). El único momento en
+que el navegador pide `/add` como navegación DURA (no la selección blanda dentro de la SPA ya
+abierta, que usa la ruta interceptora del modal) es exactamente el escenario del bug: shortcut de
+la PWA / share target / notificación, después de un kill completo. El runtime cache
+(`NetworkFirst`) solo guarda una ruta DESPUÉS de una navegación dura exitosa con red — la primera
+vez que se dispara esa navegación offline no hay entrada todavía, la red falla, y Serwist cae al
+fallback. `/` (`start_url` del manifest) y `/add` (shortcut + `share_target`) se suman a
+`additionalPrecacheEntries`, mismo tratamiento que ya tenía `/offline`, así que quedan
+disponibles desde el primer arranque sin depender de haber navegado ahí antes con red.
+
+De paso, `NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT` (`src/app/sw.ts`) comparaba
+`request.headers.get("Content-Type")`, un header de RESPUESTA que una navegación GET normal
+nunca manda en la request — la regla nunca matcheaba nada y toda navegación de documento caía en
+el catch-all `others` de `defaultCache` (`NetworkFirst` sin `networkTimeoutSeconds`), el mismo
+problema de "espera a la red sin límite" que este archivo ya había resuelto para RSC pero nunca
+aplicado al documento. Corregido a `request.destination === "document"`, mismo chequeo que ya usa
+el `matcher` del fallback de `/offline`.
+
 ## [0.29.54] — 2026-08-07
 
 ### Nuevo — Panel de operador: listado completo de usuarios + deshabilitar/rehabilitar acceso

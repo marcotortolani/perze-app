@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.55 — 7 de agosto de 2026
+
+### Arreglado
+
+- Cargar un gasto sin conexión ya no falla si cerraste la app del todo antes de reabrirla —
+  antes solo funcionaba offline si la app había quedado abierta en segundo plano.
+
 ## 0.29.53 — 7 de agosto de 2026
 
 ### Nuevo

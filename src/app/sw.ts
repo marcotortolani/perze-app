@@ -87,9 +87,19 @@ const NAVIGATION_RSC_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
   handler: new NetworkFirst({ cacheName: "pages-rsc", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] }),
 };
 
+/**
+ * D78 — el matcher original comparaba `request.headers.get("Content-Type")`,
+ * que es un header de RESPUESTA: una navegación GET normal del navegador
+ * nunca lo manda en la request, así que esta regla jamás matcheaba nada y
+ * toda navegación de documento cayó siempre en el catch-all `others` de
+ * `defaultCache` (`NetworkFirst` SIN `networkTimeoutSeconds`) — el mismo
+ * problema de "espera a la red sin límite" que este archivo ya arregló para
+ * RSC (líneas de arriba), pero nunca aplicado al documento. `request.destination
+ * === "document"` es el chequeo correcto — mismo que ya usa el `matcher` del
+ * fallback de `/offline` más abajo.
+ */
 const NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
-  matcher: ({ request, url: { pathname }, sameOrigin }) =>
-    request.headers.get("Content-Type")?.includes("text/html") === true && sameOrigin && !pathname.startsWith("/api/"),
+  matcher: ({ request, url: { pathname }, sameOrigin }) => request.destination === "document" && sameOrigin && !pathname.startsWith("/api/"),
   handler: new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] }),
 };
 
