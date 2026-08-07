@@ -172,15 +172,24 @@ export const instrumentsRepo = {
 
   /**
    * I12 — sacar un instrumento de la lista de seguimiento. Solo tiene
-   * sentido (y solo lo ofrece la UI) para uno propio del household sin
-   * ninguna operación cargada: uno del catálogo global no es tuyo para
-   * borrar, y uno con operaciones no puede irse sin romper el historial —
-   * la FK de `trades.instrument_id` lo rechazaría igual, pero la UI ya lo
-   * filtra antes de intentarlo.
+   * sentido (y solo lo ofrece la UI) para uno propio del household: uno
+   * del catálogo global no es tuyo para borrar.
+   *
+   * D72 — `trades` no tiene política RLS de `DELETE` (solo soft-delete vía
+   * `deleted_at`), así que sus filas nunca desaparecen de verdad del lado
+   * del cliente. La FK `trades.instrument_id` sigue viéndolas aunque estén
+   * soft-deleted, y borrar el instrumento tirando 409 (antes sin capturar,
+   * lo que además dejaba el `router.back()` del caller sin ejecutarse y el
+   * panel de detalle abierto mostrando la posición ya vaciada). Este 409
+   * puntual (código Postgres `23503`, violación de FK) se traga a
+   * propósito: el instrumento queda en el catálogo del household en vez de
+   * desaparecer, que es el trade-off correcto — su historial de
+   * operaciones (soft-deleted) sigue existiendo y necesita algo a lo que
+   * apuntar. Cualquier otro error sí se propaga.
    */
   async deleteUnused(id: string): Promise<void> {
     const supabase = createClient();
     const { error } = await supabase.from("instruments").delete().eq("id", id);
-    if (error) throw error;
+    if (error && error.code !== "23503") throw error;
   },
 };

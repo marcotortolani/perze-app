@@ -40,6 +40,18 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.47 — 6 de agosto de 2026
+
+### Arreglado
+
+- Un presupuesto en una categoría con subcategorías (por ejemplo "Supermercado") ahora suma
+  también lo gastado en esas subcategorías, y podés elegirlas directamente al crear o editar
+  un presupuesto.
+- En Inversiones, al ver el detalle de una posición al lado de la lista, cada columna ahora
+  scrollea por su cuenta.
+- Eliminar una posición de inversión ya no da error ni deja el panel de detalle mostrando la
+  posición vacía.
+
 ## 0.29.46 — 6 de agosto de 2026
 
 ### Arreglado

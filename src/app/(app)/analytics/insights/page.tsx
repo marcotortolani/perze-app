@@ -35,7 +35,7 @@ export default function InsightsPage() {
     const categoryById = new Map(categories.map((c) => [c.id, c]));
     const activeBudgets = budgets.filter((b) => !b.archivedAt);
     const paceInputs = activeBudgets.map((b) => {
-      const progress = computeBudgetProgress({ categoryId: b.categoryId, amountLimit: b.amountLimit }, transactions, start, end);
+      const progress = computeBudgetProgress({ categoryId: b.categoryId, amountLimit: b.amountLimit }, transactions, start, end, categories);
       return { categoryId: b.categoryId, amountLimit: b.amountLimit, spent: progress.spent };
     });
     const pace = computeBudgetPaceInsights(paceInputs, start, end, now);

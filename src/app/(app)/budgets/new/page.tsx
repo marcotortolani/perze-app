@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, CategoryBubble, Keypad, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
+import type { CategoryRow } from "@/lib/db/schema";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useCategories } from "@/hooks/use-categories";
@@ -29,6 +30,7 @@ export default function NewBudgetPage() {
   const invalidateBudgets = useInvalidateBudgets(household?.id);
 
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [expandedParent, setExpandedParent] = useState<CategoryRow | null>(null);
   const [expr, setExpr] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -42,12 +44,25 @@ export default function NewBudgetPage() {
   useEffect(() => {
     return () => {
       setCategoryId(null);
+      setExpandedParent(null);
       setExpr("");
       setSaving(false);
     };
   }, []);
 
-  const expenseCategories = categories.filter((c) => c.kind === "expense" && c.parentId === null);
+  const expenseCategories = useMemo(() => categories.filter((c) => c.kind === "expense" && c.parentId === null), [categories]);
+  // Un presupuesto en una categoría padre ya suma el gasto de sus
+  // subcategorías (`computeBudgetProgress` + `getCategoryAndDescendantIds`)
+  // — este mapa es solo para el long-press que las despliega acá, para
+  // poder acotar el presupuesto a una subcategoría puntual si hace falta.
+  const childrenOf = useMemo(() => {
+    const map = new Map<string, CategoryRow[]>();
+    for (const c of categories) {
+      if (c.parentId === null) continue;
+      map.set(c.parentId, [...(map.get(c.parentId) ?? []), c]);
+    }
+    return map;
+  }, [categories]);
 
   if (!household || !userId) return null;
 
@@ -89,10 +104,32 @@ export default function NewBudgetPage() {
           <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 10 }}>{t("budgetsPage.category")}</div>
           <div style={{ display: "flex", gap: 16, overflowX: "auto" }}>
             <CategoryBubble icon="wallet" label={t("budgetsPage.wholeHousehold")} selected={categoryId === null} onClick={() => setCategoryId(null)} />
-            {expenseCategories.map((c) => (
-              <CategoryBubble key={c.id} icon={c.icon as IconName} label={categoryLabel(c)} selected={categoryId === c.id} onClick={() => setCategoryId(c.id)} />
-            ))}
+            {expenseCategories.map((c) => {
+              const kids = childrenOf.get(c.id) ?? [];
+              return (
+                <CategoryBubble
+                  key={c.id}
+                  icon={c.icon as IconName}
+                  label={categoryLabel(c)}
+                  selected={categoryId === c.id}
+                  hasChildren={kids.length > 0}
+                  onLongPress={kids.length > 0 ? () => setExpandedParent((p) => (p?.id === c.id ? null : c)) : undefined}
+                  onClick={() => setCategoryId(c.id)}
+                />
+              );
+            })}
           </div>
+          {/* Mantener presionada una categoría con subcategorías las
+              despliega debajo, para acotar el presupuesto a una en
+              particular en vez de a la categoría padre entera (que ya
+              suma el gasto de todas). */}
+          {expandedParent ? (
+            <div style={{ display: "flex", gap: 16, overflowX: "auto", marginTop: 16, paddingLeft: 16, borderLeft: "2px solid var(--border)" }}>
+              {(childrenOf.get(expandedParent.id) ?? []).map((c) => (
+                <CategoryBubble key={c.id} icon={c.icon as IconName} label={categoryLabel(c)} selected={categoryId === c.id} onClick={() => setCategoryId(c.id)} />
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ textAlign: "center" }}>

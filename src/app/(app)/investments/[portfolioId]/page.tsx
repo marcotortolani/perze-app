@@ -20,11 +20,43 @@ const InstrumentDetailContent = dynamic(() => import("./positions/[instrumentId]
   loading: () => <Skeleton height={280} style={{ marginTop: 16 }} />,
 });
 
-/** Mismo `SplitGrid` que `accounts/page.tsx` — ver el comentario largo ahí. */
-function SplitGrid({ left, right, overflowing, detailScrollerRef }: { left: ReactNode; right: ReactNode; overflowing: boolean; detailScrollerRef: (node: HTMLDivElement | null) => void }) {
+/**
+ * Mismo `SplitGrid` que `accounts/page.tsx`, con una diferencia: ahí la
+ * columna izquierda (`AccountsListContent`) ya trae su propio scroller
+ * interno (`height:100%` + `overflow-y:auto`), así que el wrapper de acá le
+ * alcanza con darle una altura definida. `OverviewContent` no tiene ese
+ * scroller propio — es una lista larga de posiciones dentro de un `div`
+ * sin `overflow` — así que sin uno acá el contenido desbordaba la celda del
+ * grid y hacía scrollear a `<main>` entero (el documento), arrastrando la
+ * columna derecha con él en vez de que cada columna scrollee por su cuenta
+ * (bug reportado). El wrapper de la izquierda ahora es scroller propio,
+ * igual que el de la derecha.
+ */
+function SplitGrid({
+  left,
+  right,
+  leftOverflowing,
+  leftScrollerRef,
+  overflowing,
+  detailScrollerRef,
+}: {
+  left: ReactNode;
+  right: ReactNode;
+  leftOverflowing: boolean;
+  leftScrollerRef: (node: HTMLDivElement | null) => void;
+  overflowing: boolean;
+  detailScrollerRef: (node: HTMLDivElement | null) => void;
+}) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(340px,504px)", gap: 32, height: "100%", minHeight: 0 }}>
-      <div style={{ minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>{left}</div>
+      <div className="scroll-fade-bottom" data-scroll-overflow={leftOverflowing} style={{ "--scroll-fade-inset-right": "12px", minWidth: 0, minHeight: 0 } as CSSProperties}>
+        <div
+          ref={leftScrollerRef}
+          style={{ minWidth: 0, height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingRight: 12 }}
+        >
+          {left}
+        </div>
+      </div>
       <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "12px", minWidth: 0, maxWidth: 504, minHeight: 0 } as CSSProperties}>
         <div
           ref={detailScrollerRef}
@@ -88,6 +120,7 @@ export default function PortfolioOverviewPage({ params }: { params: Promise<{ po
   const router = useRouter();
   const searchParams = useSearchParams();
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
+  const { ref: leftScrollerRef, overflowing: leftOverflowing } = useScrollOverflow<HTMLDivElement>();
   const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const { data: household } = useCurrentHousehold();
   const { data: instruments } = useInstruments(household?.id);
@@ -122,6 +155,8 @@ export default function PortfolioOverviewPage({ params }: { params: Promise<{ po
             {detail ?? <EmptyState message={t("instrumentDetailPage.selectPrompt")} />}
           </DetailPanelTransition>
         }
+        leftOverflowing={leftOverflowing}
+        leftScrollerRef={leftScrollerRef}
         overflowing={overflowing}
         detailScrollerRef={detailScrollerRef}
       />

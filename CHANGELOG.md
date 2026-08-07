@@ -6,6 +6,55 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.47] — 2026-08-06
+
+### Arreglado — Presupuestos no incluían subcategorías, ni en el picker ni en el cálculo de gasto
+
+`computeBudgetProgress` (`src/lib/analytics/budget-progress.ts`) comparaba `tx.categoryId`
+contra `budget.categoryId` con igualdad exacta: un presupuesto en "Supermercado" no sumaba el
+gasto de "Almacén"/"Verdulería"/"Carnicería", sus subcategorías. Ahora recibe `categories` y
+resuelve, con el nuevo helper `getCategoryAndDescendantIds` (`src/lib/categories/category-descendants.ts`),
+el set de ids padre+hijos contra el que matchear — dado que la jerarquía tiene exactamente dos
+niveles (raíz → hijos, sin nietos, decisión de producto ya cerrada), un filtro simple alcanza,
+sin recursión. Se resuelve en cada cálculo, no al crear el presupuesto, así que una subcategoría
+agregada después de crear el presupuesto también suma sola. `identifyBudgetAlerts` y los tres
+callers (`BudgetsPageContent`, `budgets/[id]/page.tsx`, `analytics/insights/page.tsx`,
+`use-budget-alerts.ts`) propagan `categories`.
+
+El picker de `budgets/new` y `budgets/[id]/edit` solo listaba categorías raíz
+(`parentId === null`). Ahora reusa el mismo patrón de long-press que `CategoryStep.tsx` (captura
+de transacciones): mantener presionada una categoría con subcategorías las despliega debajo,
+para acotar el presupuesto a una específica en vez de a la categoría padre entera (que ya suma
+todo). Un tap corto sigue seleccionando la categoría general.
+
+### Arreglado — Investments: la columna de la lista no scrolleaba independiente del detalle
+
+`OverviewContent` (columna izquierda del split `/investments/[portfolioId]`) no tenía scroller
+propio — a diferencia de `AccountsListContent`, que sí lo tiene — así que su contenido
+desbordaba la celda del grid y hacía scrollear a `<main>` entero (el documento), arrastrando
+también la columna derecha en vez de que cada una scrollee por su cuenta. El `SplitGrid` local
+de `investments/[portfolioId]/page.tsx` ahora le da a la columna izquierda el mismo wrapper
+scrolleable (`height:100%` + `overflow-y:auto`, con su propio `scroll-fade-bottom`) que ya tenía
+la derecha, en vez de tocar `OverviewContent` — que sigue usándose sin scroller propio en mobile,
+donde el `<main>` de siempre es el único scroller y eso está bien.
+
+### Arreglado — 409 al eliminar una posición de inversión + panel de detalle que quedaba stale
+
+`handleDeletePosition` (`InstrumentDetailContent.tsx`) soft-eliminaba las operaciones y
+llamaba a `instrumentsRepo.deleteUnused(instrument.id)`, que intentaba un `DELETE` real sobre
+`instruments` — la FK de `trades.instrument_id` seguía viendo esas filas soft-deleted
+(`deleted_at` no las hace desaparecer para una foreign key) y Postgres rechazaba el borrado con
+409 (código `23503`). Ese error, sin capturar, saltaba directo al `finally` sin pasar por
+`router.back()`: la posición ya se veía sin operaciones (la lista sí refleja el soft-delete) pero
+el panel de detalle se quedaba abierto, mostrando el instrumento vaciado. `deleteUnused` ahora
+traga puntualmente ese `23503` — el instrumento queda en el catálogo del household (su
+historial, aunque soft-deleted, todavía necesita algo a lo que apuntar) en vez de desaparecer, y
+la ejecución sigue hasta `router.back()`, que cierra el panel como corresponde. De paso,
+`canRemoveFromWatchlist` ("sacar de seguimiento") pasó a exigir cero operaciones activas
+(`instrumentTradeCount === 0`) en vez de solo `position.quantity === 0` — una posición comprada y
+vendida del todo tiene cantidad neta cero pero sí tiene historial, y ese botón intentaba el mismo
+`deleteUnused` contra una FK que también lo iba a rechazar.
+
 ## [0.29.46] — 2026-08-06
 
 ### Arreglado — Evolución de saldo: `opening_balance` no cero se seguía graficando plano antes de `opening_date` (D66b)

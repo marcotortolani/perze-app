@@ -38,7 +38,7 @@ export default function BudgetsPageContent() {
 
   const { start, end } = currentPeriodBounds(household.periodStartDay || 1, new Date());
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const excludedTotal = budgets.reduce((sum, b) => sum + computeBudgetProgress(b, transactions, start, end).excludedCount, 0);
+  const excludedTotal = budgets.reduce((sum, b) => sum + computeBudgetProgress(b, transactions, start, end, categories).excludedCount, 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 8, paddingBottom: 24 }}>
@@ -46,7 +46,7 @@ export default function BudgetsPageContent() {
       <ListRow icon="plus" label={t("budgetsPage.newBudget")} variant="action" onClick={() => router.push("/budgets/new")} />
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {budgets.map((budget) => {
-          const progress = computeBudgetProgress(budget, transactions, start, end);
+          const progress = computeBudgetProgress(budget, transactions, start, end, categories);
           const category = budget.categoryId ? categoryById.get(budget.categoryId) : undefined;
           return (
             <Card key={budget.id} padding={16} style={{ cursor: "pointer" }}>

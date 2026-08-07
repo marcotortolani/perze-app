@@ -82,8 +82,15 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const position = positions.get(instrumentId);
   // Mismo criterio que la hoja de edición de "Instrumentos": solo un
   // instrumento propio del household (no del catálogo global) y sin
-  // posición se puede sacar de seguimiento.
-  const canRemoveFromWatchlist = !!household && !!instrument && instrument.householdId === household.id && (!position || position.quantity === 0);
+  // NINGUNA operación cargada se puede sacar de seguimiento — antes esto
+  // chequeaba `position.quantity === 0`, que también es cierto para una
+  // posición comprada y vendida del todo (cantidad neta cero, pero con
+  // historial de operaciones real). `deleteUnused` intentaba borrar el
+  // instrumento igual y la FK de `trades.instrument_id` lo rechazaba con
+  // 409 (D72), porque esas operaciones seguían ahí sin que este botón las
+  // tocara.
+  const instrumentTradeCount = (trades ?? []).filter((tr) => tr.instrumentId === instrumentId).length;
+  const canRemoveFromWatchlist = !!household && !!instrument && instrument.householdId === household.id && instrumentTradeCount === 0;
 
   // I4/D39 — mismo toggle "moneda original / moneda base" que `OverviewContent`,
   // acá acotado a un solo instrumento en vez de a todas las monedas en

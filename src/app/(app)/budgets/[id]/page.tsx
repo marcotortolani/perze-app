@@ -39,7 +39,7 @@ export default function BudgetDetailPage({ params }: { params: Promise<{ id: str
 
   if (!budget) return <EmptyState message={t("budgetsPage.notFound")} actionLabel={t("budgetsPage.back")} onAction={() => router.push("/budgets")} />;
   const { start, end } = currentPeriodBounds(household.periodStartDay || 1, new Date());
-  const progress = computeBudgetProgress(budget, transactions, start, end);
+  const progress = computeBudgetProgress(budget, transactions, start, end, categories);
   const remaining = budget.amountLimit - progress.spent;
 
   const handleDelete = async () => {
