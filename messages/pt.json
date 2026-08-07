@@ -856,13 +856,30 @@
   "inactive": "Sem atividade recente",
   "appUpdateBroadcast": {
    "sectionTitle": "Notificações",
-   "action": "Avisar sobre nova versão",
+   "action": "Gerar anúncio",
    "actionMeta": "Push para todos os dispositivos inscritos, de todas as casas",
-   "sheetTitle": "Avisar sobre nova versão",
+   "sheetTitle": "Gerar anúncio",
    "warning": "Isso envia um push para todo dispositivo inscrito em todas as casas desta instância. Não pode ser desfeito depois de enviado.",
+   "typeLabel": "Tipo de anúncio",
+   "types": {
+    "newVersion": "Nova versão",
+    "newFeature": "Nova função",
+    "newModule": "Novo módulo",
+    "other": "Outro"
+   },
+   "titles": {
+    "newVersion": "Nova versão disponível",
+    "newFeature": "Nova função disponível",
+    "newModule": "Novo módulo disponível",
+    "other": "Novidades no PERZE"
+   },
+   "defaultBodies": {
+    "newVersion": "PERZE {version} já está pronto.",
+    "newFeature": "Adicionamos algo novo ao PERZE — abra o app para conferir.",
+    "newModule": "Ativamos um módulo novo no PERZE — ative em Mais → Módulos.",
+    "other": ""
+   },
    "bodyLabel": "Mensagem",
-   "title": "Nova versão disponível",
-   "defaultBody": "PERZE {version} já está pronto.",
    "confirm": "Enviar para todos",
    "sending": "Enviando…",
    "sent": "Enviado para {count} dispositivos",

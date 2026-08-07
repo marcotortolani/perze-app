@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.57] — 2026-08-07
+
+### Cambiado — "Avisar sobre nueva versión" pasa a ser "Generar anuncio", genérico por tipo
+
+El único disparador de push del panel de operador solo sabía anunciar una versión nueva. Se
+generaliza a un flujo de anuncio con tipo: `SegmentedControl` con cuatro opciones (Nueva versión,
+Nueva función, Nuevo módulo, Otro), cada una con su propio título y mensaje predeterminado
+editable — igual que antes prellenaba `APP_VERSION` para "Nueva versión", ahora "Nueva función" y
+"Nuevo módulo" traen su propio copy de arranque, y "Otro" arranca vacío. El botón de envío deja el
+`variant="danger"` (dabas la sensación de ser una acción destructiva, cuando es un envío
+irreversible pero no un borrado) por `variant="primary"`.
+
+Es un cambio puramente de cliente: el `kind: "app_update"` que recibe `send-push` no cambia, ni
+la columna de preferencia `profile_notification_preferences.app_updates` — el "tipo" solo decide
+qué título y qué cuerpo por defecto arma la UI antes de mandarlo, no una taxonomía nueva de
+notificaciones del lado servidor.
+
 ## [0.29.56] — 2026-08-07
 
 ### Arreglado — Un operador podía deshabilitarse a sí mismo o a otro operador

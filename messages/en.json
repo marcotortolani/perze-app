@@ -856,13 +856,30 @@
   "inactive": "No recent activity",
   "appUpdateBroadcast": {
    "sectionTitle": "Notifications",
-   "action": "Announce new version",
+   "action": "Generate announcement",
    "actionMeta": "Push to every subscribed device, across all households",
-   "sheetTitle": "Announce new version",
+   "sheetTitle": "Generate announcement",
    "warning": "This sends a push to every subscribed device across all households on this instance. It can't be undone once sent.",
+   "typeLabel": "Announcement type",
+   "types": {
+    "newVersion": "New version",
+    "newFeature": "New feature",
+    "newModule": "New module",
+    "other": "Other"
+   },
+   "titles": {
+    "newVersion": "New version available",
+    "newFeature": "New feature available",
+    "newModule": "New module available",
+    "other": "News from PERZE"
+   },
+   "defaultBodies": {
+    "newVersion": "PERZE {version} is ready.",
+    "newFeature": "We added something new to PERZE — open the app to check it out.",
+    "newModule": "We turned on a new module in PERZE — enable it under More → Modules.",
+    "other": ""
+   },
    "bodyLabel": "Message",
-   "title": "New version available",
-   "defaultBody": "PERZE {version} is ready.",
    "confirm": "Send to everyone",
    "sending": "Sending…",
    "sent": "Sent to {count} devices",
