@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.51] — 2026-08-06
+
+### Arreglado — Detalle de transacción: tipo de cambio ilegible ("1 ARS = 0,000506072874 USD")
+
+`TransactionDetailContent.tsx` armaba el string a mano con `fx_rate` crudo en la dirección
+origen→base literal y `formatRateTrimmed` sin más — que solo saca ceros finales, no decide
+decimales por magnitud ni elige qué moneda va primero. Con un par ARS/USD eso da una tasa
+invertida con 12 decimales. `/currencies` (`src/app/(app)/currencies/page.tsx`) ya resuelve
+exactamente este problema con `roundRateForDisplay` + `invertRate` + `RATE_SCALE`
+(`src/lib/fx/rate.ts`): elige mostrar 1 unidad de la moneda MÁS FUERTE en vez de al revés, y
+redondea a la cantidad de decimales que corresponde a esa magnitud. El detalle de transacción
+ahora reusa el mismo criterio (no el componente `RateRow`, que tiene otra forma pensada para
+una fila de lista, no para esta card) — nunca toca el `fx_rate` guardado, solo decide cómo
+mostrarlo. De paso, el separador decimal pasa a `decimalSeparatorForLocale`, que la versión
+anterior no respetaba.
+
 ## [0.29.50] — 2026-08-06
 
 ### Mejorado — Allocation: rango de color secuencial por peso, mismo que el heatmap de Transactions

@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.51 — 6 de agosto de 2026
+
+### Arreglado
+
+- En el detalle de un gasto, el tipo de cambio usado ahora se muestra igual de claro que en
+  Monedas y tipos de cambio (por ejemplo "1 USD = 1.976 ARS"), en vez de una tasa invertida
+  con montones de decimales.
+
 ## 0.29.50 — 6 de agosto de 2026
 
 ### Mejorado

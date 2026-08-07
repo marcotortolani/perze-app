@@ -20,7 +20,7 @@ import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/dates/today";
-import { formatRateTrimmed, rateFromInteger, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, RATE_SCALE, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
@@ -248,9 +248,26 @@ export function TransactionDetailContent({ id }: { id: string }) {
             {t("transactions.detail.fxRateUsed")}
           </span>
           {transaction.fxRate !== null ? (
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--text-primary)" }}>
-              {`1 ${transaction.currencyCode} = ${formatRateTrimmed(transaction.fxRate)} ${household.baseCurrency}`}
-            </span>
+            (() => {
+              // Mismo criterio que `/currencies` (`roundRateForDisplay` +
+              // `invertRate`): mostrar la dirección donde 1 unidad de la
+              // moneda MÁS FUERTE equivale a varias de la más débil —
+              // "1 USD = 1.520 ARS", nunca "1 ARS = 0,000506072874 USD"
+              // (el fx_rate crudo, sin decidir dirección ni decimales por
+              // magnitud, es justo eso). `fx_rate` se guarda origen→base
+              // y nunca se recalcula (CLAUDE.md) — acá solo se ELIGE cómo
+              // mostrarlo, el valor guardado no se toca.
+              const inverted = transaction.fxRate! < RATE_SCALE;
+              const displayRate = roundRateForDisplay(inverted ? invertRate(transaction.fxRate!) : transaction.fxRate!);
+              const [from, to] = inverted ? [household.baseCurrency, transaction.currencyCode] : [transaction.currencyCode, household.baseCurrency];
+              const [intPart, fracPart = ""] = formatRateTrimmed(displayRate).split(".");
+              const formatted = fracPart ? `${intPart}${decimalSeparatorForLocale(locale)}${fracPart}` : intPart;
+              return (
+                <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 15, color: "var(--text-primary)" }}>
+                  {`1 ${from} = ${formatted} ${to}`}
+                </span>
+              );
+            })()
           ) : (
             <StatusBadge status="neutral">{t("transactions.detail.fxUnresolved")}</StatusBadge>
           )}
