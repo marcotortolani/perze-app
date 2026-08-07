@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.73] — 2026-08-07
+
+### Corregido — "Nuevo recurrente" vuelve adentro de `(app)/`, y la causa real de las 5 rondas: el padding de `<main>` es invisible en páginas que desbordan
+
+La 0.29.71 movió la pantalla a `src/app/recurring/new` (fuera del shell, sin tab bar) apoyándose
+en el `tabs="{{ false }}"` del diseño de G3. El usuario la rechazó: quiere la pantalla **con** la
+tab bar de navegación mobile, scrolleando entera, y con aire libre al final para que el FAB "+"
+no pise "Guardar". Se revierte el movimiento: vuelve `src/app/(app)/recurring/new/page.tsx` (la
+versión de la 0.29.70, con `usePageHeader`, layout de 2 columnas en desktop y flujo normal sin
+`sticky`) y se borra la ruta standalone. El fix de la 0.29.72 (`overscroll-behavior` acotado a
+`:has(.app-shell)`) se conserva: es correcto en general y lo necesitan `/add` y `accounts/new`,
+que sí viven fuera del shell.
+
+Y al verificar en vivo apareció **por qué ninguna ronda de padding funcionó nunca**: el hijo
+directo de `<main>` lleva `height: 100%` (lo necesita el virtualizador de Movimientos para
+resolver su altura), así que en cualquier página más alta que el viewport el contenido
+**desborda ese wrapper**, y el `padding-bottom` de `<main>` — que se dibuja después de la caja
+del wrapper, no después del contenido desbordado — queda enterrado en el medio del scroll,
+invisible al final. Medido: con `pb: 144px` aplicado y computado, "Guardar" terminaba a 1px del
+FAB en el fondo del scroll. Es el mismo fenómeno que el comentario de `layout.tsx` ya documentaba
+para las `OWN_SCROLLER_ROUTES` ("el padding queda como banda fija, no se scrollea a través"), con
+la misma solución que ese comentario prescribe: **el despeje se le pasa a la pantalla**. Se
+elimina `EXTRA_PADDING_ROUTES` del layout (no hacía nada) y el padding vive en el root de la
+página (`pb-10` = 40px, `lg:pb-0` porque en desktop no hay tab bar), donde sí forma parte del
+contenido que scrollea. Se probó primero con 144px y 80px y se bajó a 40px a ojo del usuario —
+era más aire del que usa el resto de la app. Verificado con `getBoundingClientRect()` al fondo
+del scroll: "Guardar" queda con aire libre real antes del FAB.
+
+Aparte: se elimina el worktree residual `.claude/worktrees/calendar-mobile-scroll` (limpio, con
+su commit ya en `main`) — su `.next/` compilado hacía fallar `pnpm lint` con ~2800 errores.
+
 ## [0.29.72] — 2026-08-07
 
 ### Corregido — "Nuevo recurrente" no scrolleaba después de sacarla de `(app)/`

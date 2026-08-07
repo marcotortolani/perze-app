@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.73 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente" recupera la barra de navegación de abajo: la pantalla scrollea entera y al
+  final queda espacio libre para que el botón "+" no tape el de guardar.
+
 ## 0.29.72 — 7 de agosto de 2026
 
 ### Arreglado
