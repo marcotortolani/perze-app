@@ -6,6 +6,22 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.49] — 2026-08-06
+
+### Documentación — Paso a paso para activar Finnhub
+
+`docs/self-hosting.md` tenía la configuración de Finnhub repartida en dos menciones de paso
+(el secret de la Edge Function `daily-price-sync` dentro de la § 1, y `FINNHUB_API_KEY` como
+comentario en `.env.example`), sin un lugar único que explicara los dos lugares donde carga
+la misma key, por qué son sistemas de secretos separados, y cómo verificar que quedó bien
+configurada. Nueva sección "Activar Finnhub" que consolida las dos menciones existentes en un
+paso a paso: cuenta en finnhub.io → cargar la key en la app (`.env.local`/plataforma de
+deploy) y en el secret de la Edge Function (`supabase secrets set`) → verificar buscando un
+ticker de EE.UU. que Data912 no tiene → qué pasa si falta uno de los dos (degradación
+silenciosa, nunca un error). De paso, `MD028` (blockquotes consecutivos separados por una
+línea en blanco) en la sección de Vault, que `markdownlint-cli2` ya señalaba antes de este
+cambio.
+
 ## [0.29.48] — 2026-08-06
 
 ### Mejorado — Allocation: de bento grid a treemap cuadrado, área proporcional real sin scroll

@@ -51,17 +51,8 @@ deploy de este repo Next.js.
    ```
 
    Data912 (mercado argentino) y CoinGecko (crypto) no necesitan key. Para acciones/ETFs de
-   EE.UU. (Finnhub, NYSE/NASDAQ) hace falta una cuenta gratis en [finnhub.io](https://finnhub.io/)
-   y cargar el secret **acá también** — es un lugar separado de `FINNHUB_API_KEY` en
-   `.env.local`/tu plataforma de deploy, aunque el valor sea el mismo (esta Edge Function no lee
-   `.env`, corre en Deno):
-
-   ```bash
-   supabase secrets set FINNHUB_API_KEY=...
-   ```
-
-   Sin este secret, la búsqueda de instrumentos y las cotizaciones en vivo simplemente no
-   incluyen resultados de Finnhub — el resto del módulo funciona igual.
+   EE.UU. (Finnhub, NYSE/NASDAQ) hace falta una `FINNHUB_API_KEY` — ver el paso a paso completo
+   en la § "Activar Finnhub" más abajo.
 
 6. Los cron jobs de `20260801160000_cron_engines.sql` (materializar recurrentes, cerrar
    resúmenes de tarjeta vencidos, purgar `audit_log`, podar `push_subscriptions`) quedan
@@ -80,7 +71,7 @@ deploy de este repo Next.js.
    > Postgres (llamadas por `pg_cron`), no en la app ni en una Edge Function — no tienen
    > acceso a `.env`. Vault es el lugar donde Supabase guarda secretos que un `SECURITY
    > DEFINER` puede leer sin que RLS ni un cliente autenticado los vea nunca.
-
+   >
    > **Ojo con qué "service_role key" es:** en un proyecto que ya migró al sistema de API
    > keys nuevo de Supabase (Settings → API muestra `sb_secret_...` en vez del JWT legacy),
    > `perze_service_role_key` tiene que ser el `sb_secret_...`, no el JWT legacy — un Edge
@@ -121,6 +112,54 @@ cp .env.example .env.local
 Completá `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` desde
 **Settings → API** en el dashboard de tu proyecto. Las demás son opcionales — ver los
 comentarios de `.env.example`.
+
+## Activar Finnhub (cotizaciones de acciones/ETFs de EE.UU.)
+
+Opcional, y el módulo de inversiones funciona igual sin esto: Data912 (mercado argentino,
+CEDEARs) y CoinGecko (crypto) no necesitan ninguna key. Finnhub es el segundo proveedor de
+cotizaciones — cubre acciones y ETFs de **NYSE/NASDAQ** (no otras bolsas), tanto para el
+buscador de instrumentos como para el precio en vivo del detalle de una posición.
+
+1. **Creá una cuenta gratis** en [finnhub.io](https://finnhub.io/register) y copiá tu API key
+   desde el dashboard (**Overview → API key**, es una key sola, sin distinguir dev/prod). El
+   free tier alcanza para uso personal: 60 llamadas/minuto.
+
+2. **Cargá la key en DOS lugares separados** — comparten el mismo valor, pero son dos sistemas
+   de secretos distintos que no se leen entre sí:
+
+   - **La app (Next.js)**, para el buscador de instrumentos (`/api/instruments/search`) y el
+     precio en vivo (`/api/prices`): en `.env.local` para desarrollo, o como variable de
+     entorno en tu plataforma de deploy (Vercel, Docker, etc.) — mismo lugar que
+     `NEXT_PUBLIC_SUPABASE_URL`.
+
+     ```bash
+     # .env.local
+     FINNHUB_API_KEY=tu_key_de_finnhub
+     ```
+
+   - **La Edge Function `daily-price-sync`**, que corre en Deno y no lee `.env.local` —
+     necesita su propio secret de Supabase:
+
+     ```bash
+     supabase secrets set FINNHUB_API_KEY=tu_key_de_finnhub
+     ```
+
+     Si todavía no desplegaste la función (paso 5 de la § 1 de arriba), hacelo primero:
+     `supabase functions deploy daily-price-sync`.
+
+3. **Verificá que funciona** sin esperar al cron diario: entrá a Inversiones → cualquier
+   portfolio → "Registrar operación" → buscador de instrumento, y escribí un ticker de EE.UU.
+   que Data912 no tiene (por ejemplo `MSFT` o `SPY`). Si aparece en los resultados, la key de
+   la app está bien cargada. El precio en vivo del detalle de una posición ya existente
+   (botón "Actualizar") confirma lo mismo del lado de `/api/prices`.
+
+4. **Qué pasa si te olvidás de un lugar o no configurás nada de esto**: ningún error visible.
+   Sin la key de la app, el buscador y el precio en vivo simplemente no traen resultados de
+   Finnhub — Data912/CoinGecko siguen funcionando. Sin el secret de la Edge Function, el cron
+   diario de precios sigue actualizando todo lo demás y las posiciones en NYSE/NASDAQ quedan
+   con el precio manual o el último conocido, sin romper nada. `createFinnhubProvider()`/
+   `searchFinnhubInstruments()` (`src/lib/prices/providers/finnhub.ts`) están escritos para
+   devolver vacío, nunca para tirar una excepción, cuando falta la key.
 
 ## 3. Desarrollo local
 
