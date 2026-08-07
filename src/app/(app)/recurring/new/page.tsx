@@ -316,11 +316,10 @@ export default function NewRecurringRulePage() {
             />
           </div>
 
-          <div className="text-center font-mono text-[32px]">
-            {account?.currencyCode ?? household.baseCurrency} {expr || "0"}
-          </div>
-
           <div className="flex flex-col gap-2">
+            <div className="text-center font-mono text-[32px]">
+              {account?.currencyCode ?? household.baseCurrency} {expr || "0"}
+            </div>
             <Keypad
               onKey={(k) =>
                 setExpr((s) =>

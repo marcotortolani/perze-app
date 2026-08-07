@@ -40,6 +40,20 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.70 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente" en el celular: más aire todavía al final de la pantalla para que el
+  botón de guardar no se tape con el "+".
+
+## 0.29.69 — 7 de agosto de 2026
+
+### Nuevo
+
+- Los recurrentes que cargás a mano (auto-registro apagado) ahora te avisan: un día antes, el
+  día que vencen, y al día siguiente si todavía no lo cargaste.
+
 ## 0.29.68 — 7 de agosto de 2026
 
 ### Arreglado

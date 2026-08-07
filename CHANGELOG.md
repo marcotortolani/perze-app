@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.70] — 2026-08-07
+
+### Corregido — "Nuevo recurrente": se revierte el `sticky` de la ronda pasada
+
+El usuario rechazó explícitamente el enfoque `sticky` (bloque de monto+teclado+Guardar fijo
+cerca del fondo): quiere la página scrolleando entera, como venía pidiendo desde la primera
+ronda, con más aire libre al final — no contenido pinneado. Se revierte a flujo normal sin
+`sticky` ni contenedor propio, y se vuelve a agregar el padding extra al final del scroll de
+`<main>` (renombrado `EXTRA_PADDING_ROUTES`), esta vez más generoso —
+`calc(var(--fab-size) + 2*var(--block-gap) + 32px)` = 144px, con el tamaño real del FAB en la
+fórmula en vez de un múltiplo arbitrario del espaciado— para dejar margen de sobra contra
+cualquier variación de viewport entre dispositivos. Verificado con `getBoundingClientRect()`
+tras forzar el scroll al fondo: "Guardar" con 64px libres antes del borde del viewport.
+
+## [0.29.69] — 2026-08-07
+
+### Nuevo — recordatorios de recurrentes con auto-registro OFF
+
+`dispatch_due_notifications()` (migración `20260807170000`) suma tres avisos por ocurrencia
+de una regla manual, cada uno con su propia clave de dedup (`recurring_manual_reminder` +
+`occurrence_date` + `phase`): el día previo, el día exacto, y el día posterior si todavía no
+se cargó — excluyendo cualquier ocurrencia que ya tenga movimiento (`recurring_occurrence_date`,
+no `occurred_at`). Mismo `kind` de push que el aviso reactivo existente (`recurring_reminders`,
+la misma preferencia de usuario), corre en el mismo cron ya programado (`perze-dispatch-notifications`,
+09:15 UTC) — no hace falta un job nuevo. Verificada la lógica de selección contra el proyecto
+real antes de aplicar (sin disparar pushes de prueba).
+
 ## [0.29.68] — 2026-08-07
 
 ### Corregido — "Nuevo recurrente": el scroll interno de la ronda pasada no era lo pedido

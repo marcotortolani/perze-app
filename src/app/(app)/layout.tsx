@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AppHeader, PageHeaderContext, samePageHeaderConfig, Sheet, Sidebar, TabBar, type PageHeaderConfig, type TabItem, type SidebarNavGroup } from "@/design-system";
+import {
+  AppHeader,
+  PageHeaderContext,
+  samePageHeaderConfig,
+  Sheet,
+  Sidebar,
+  TabBar,
+  type PageHeaderConfig,
+  type TabItem,
+  type SidebarNavGroup,
+} from "@/design-system";
 import { countUnsyncedChanges, signOut } from "@/lib/auth/sign-out";
 import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
@@ -27,25 +37,38 @@ const ROUTE_TO_TAB: [string, string][] = [
 ];
 function tabForPathname(pathname: string): string {
   if (pathname === "/") return "home";
-  return ROUTE_TO_TAB.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
+  return (
+    ROUTE_TO_TAB.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? ""
+  );
 }
 
 /** Pantallas con scroller propio (`height: "100%"` interno) — ver la nota junto a `<main>`. */
-const OWN_SCROLLER_ROUTES = new Set(["/", "/transactions", "/accounts", "/more", "/more/settings", "/more/categories"]);
+const OWN_SCROLLER_ROUTES = new Set([
+  "/",
+  "/transactions",
+  "/accounts",
+  "/more",
+  "/more/settings",
+  "/more/categories",
+]);
 
 /**
- * `/recurring/new` es `h-full flex-col` con el Keypad+Save pegado al fondo
- * vía `mt-auto` (sin scroll propio, a diferencia de `OWN_SCROLLER_ROUTES`)
- * — el padding default de acá abajo no alcanzaba y el FAB "+" de la TabBar
- * tapaba el botón "Guardar" en mobile. Agregarle el padding DENTRO de esa
- * caja `h-full` no sirve: esa altura es fija, así que el padding solo le
- * resta espacio al contenido en vez de sumar aire real contra el FAB. Tiene
- * que vivir acá, en el contenedor que de verdad reserva el espacio.
+ * `/recurring/new` — el FAB "+" sobresale `18px` por arriba de la tab bar
+ * a propósito (`transform: translateY(-18px)`, `TabBar.tsx`), así que el
+ * padding default de acá abajo no alcanza y el botón "Guardar" queda
+ * tapado al final del scroll. La página scrollea entera (`<main>`, sin
+ * ningún contenedor propio ni `sticky`) — esto solo agranda el aire al
+ * final de ESE scroll para que el FAB nunca llegue a pisar el botón.
  */
-const DOUBLE_PADDING_ROUTES = new Set(["/recurring/new"]);
+const EXTRA_PADDING_ROUTES = new Set(["/recurring/new"]);
 
 /** Las únicas 4 pantallas cuyos datos de verdad se filtran por `scope` (`match-scope.ts`) — ver el comentario junto a `showScope`. */
-const SCOPE_AWARE_ROUTES = new Set(["/", "/transactions", "/accounts", "/analytics"]);
+const SCOPE_AWARE_ROUTES = new Set([
+  "/",
+  "/transactions",
+  "/accounts",
+  "/analytics",
+]);
 
 /**
  * Shell de la app: header de 56px + contenido + tab bar de 64px con el
@@ -60,7 +83,13 @@ const SCOPE_AWARE_ROUTES = new Set(["/", "/transactions", "/accounts", "/analyti
  */
 const SCOPE_ORDER = ["personal", "household", "all"] as const;
 
-export default function AppShellLayout({ children, modal }: { children: React.ReactNode; modal: React.ReactNode }) {
+export default function AppShellLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -70,7 +99,8 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const setScope = useScopeStore((s) => s.setScope);
   const pending = usePendingMutations();
   const online = useOnlineStatus();
-  const { data: household, isLoading: householdLoading } = useCurrentHousehold();
+  const { data: household, isLoading: householdLoading } =
+    useCurrentHousehold();
   // D50 — montado una sola vez para todo el shell autenticado, no solo
   // /investments: mantiene el portfolio razonablemente al día aunque el
   // usuario esté en otra parte de la app (ver el comentario del hook).
@@ -94,7 +124,8 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   // `/recurring`, `/more`, cualquier cuarto slot) con 2+ miembros, sin que
   // ninguna de esas leyera `scope` — aparecía, prometía filtrar, y no
   // hacía nada. Coincide con `SCOPE_AWARE_ROUTES` de abajo.
-  const showScope = SCOPE_AWARE_ROUTES.has(pathname) && (householdMembers?.length ?? 0) > 1;
+  const showScope =
+    SCOPE_AWARE_ROUTES.has(pathname) && (householdMembers?.length ?? 0) > 1;
   const budgetAlerts = useBudgetAlerts();
   const pendingAccessRequests = usePendingAccessRequestsCount();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -104,14 +135,18 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   // `usePageHeader` (ver `page-header-context.tsx`) en vez de renderizar su
   // propio `<AppHeader>` — el layout es el único lugar donde el componente
   // se instancia.
-  const [pageHeader, setPageHeaderState] = useState<PageHeaderConfig | null>(null);
+  const [pageHeader, setPageHeaderState] = useState<PageHeaderConfig | null>(
+    null,
+  );
   // `usePageHeader` registra en CADA render de cada página (necesario: ver la
   // nota larga en `page-header-context.tsx`), así que sin este descarte el
   // layout entero volvía a renderizar en cada render de cualquier pantalla.
   // Que eso no terminara en "Maximum update depth exceeded" dependía de un
   // bail-out de React, no de nada que estuviera escrito acá.
   const setPageHeader = useCallback((next: PageHeaderConfig | null) => {
-    setPageHeaderState((prev) => (samePageHeaderConfig(prev, next) ? prev : next));
+    setPageHeaderState((prev) =>
+      samePageHeaderConfig(prev, next) ? prev : next,
+    );
   }, []);
 
   // Mismo flujo que `/more`: si hay cambios sin sincronizar se avisa antes
@@ -157,7 +192,10 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const desktopNav = useMemo(() => buildDesktopNav({ enabledModules: household?.enabledModules ?? [] }), [household?.enabledModules]);
+  const desktopNav = useMemo(
+    () => buildDesktopNav({ enabledModules: household?.enabledModules ?? [] }),
+    [household?.enabledModules],
+  );
   const navGroups = useMemo<SidebarNavGroup[]>(
     () =>
       desktopNav.map((group) => ({
@@ -167,12 +205,22 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         // diferencia de los `Record<Kind, string> as const satisfies ...`
         // que sí lo hacen, ver `account-kind-labels.ts`) — cast explícito,
         // no un `as any` general.
-        caption: group.captionKey ? t(group.captionKey as Parameters<typeof t>[0]) : undefined,
-        items: group.items.map((item) => ({ id: item.id, route: item.route, icon: item.icon, label: t(item.labelKey as Parameters<typeof t>[0]) })),
+        caption: group.captionKey
+          ? t(group.captionKey as Parameters<typeof t>[0])
+          : undefined,
+        items: group.items.map((item) => ({
+          id: item.id,
+          route: item.route,
+          icon: item.icon,
+          label: t(item.labelKey as Parameters<typeof t>[0]),
+        })),
       })),
-    [desktopNav, t]
+    [desktopNav, t],
   );
-  const activeDesktopId = useMemo(() => activeNavId(pathname, desktopNav), [pathname, desktopNav]);
+  const activeDesktopId = useMemo(
+    () => activeNavId(pathname, desktopNav),
+    [pathname, desktopNav],
+  );
 
   // AC-6 (`docs/auditoria-acceso.md`) — acá había un segundo redirect sobre
   // `household === null` que duplicaba al de `OnboardingGate` y decidía
@@ -185,9 +233,33 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   if (!householdLoading && household === null) return null;
 
   const fourthTabRoute: Record<string, { path: string; item: TabItem }> = {
-    analytics: { path: "/analytics", item: { id: "analytics", label: t("nav.analysis"), icon: "chart", href: "/analytics" } },
-    accounts: { path: "/accounts", item: { id: "accounts", label: t("nav.accounts"), icon: "wallet", href: "/accounts" } },
-    investments: { path: "/investments", item: { id: "investments", label: t("nav.investments"), icon: "invest", href: "/investments" } },
+    analytics: {
+      path: "/analytics",
+      item: {
+        id: "analytics",
+        label: t("nav.analysis"),
+        icon: "chart",
+        href: "/analytics",
+      },
+    },
+    accounts: {
+      path: "/accounts",
+      item: {
+        id: "accounts",
+        label: t("nav.accounts"),
+        icon: "wallet",
+        href: "/accounts",
+      },
+    },
+    investments: {
+      path: "/investments",
+      item: {
+        id: "investments",
+        label: t("nav.investments"),
+        icon: "invest",
+        href: "/investments",
+      },
+    },
     budgets: {
       path: "/budgets",
       item: {
@@ -195,14 +267,26 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
         label: t("nav.budgets"),
         icon: "target",
         href: "/budgets",
-        ...(budgetAlerts.length > 0 ? { badge: budgetAlerts.length, badgeLabel: t("ds.tabBar.budgetAlertsBadge", { count: budgetAlerts.length }) } : {}),
+        ...(budgetAlerts.length > 0
+          ? {
+              badge: budgetAlerts.length,
+              badgeLabel: t("ds.tabBar.budgetAlertsBadge", {
+                count: budgetAlerts.length,
+              }),
+            }
+          : {}),
       },
     },
   };
   const fourth = fourthTabRoute[fourthTab] ?? fourthTabRoute.analytics!;
   const tabs: TabItem[] = [
     { id: "home", label: t("nav.homeShort"), icon: "squares-four", href: "/" },
-    { id: "movements", label: t("nav.movementsShort"), icon: "list", href: "/transactions" },
+    {
+      id: "movements",
+      label: t("nav.movementsShort"),
+      icon: "list",
+      href: "/transactions",
+    },
     { id: "add", label: "", icon: "plus", fab: true, href: "/add" },
     fourth.item,
     {
@@ -214,12 +298,19 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
       // para cualquier otro) ve acá cuántas solicitudes de acceso están
       // esperando, sin tener que entrar a "Más" para enterarse.
       ...(pendingAccessRequests > 0
-        ? { badge: pendingAccessRequests, badgeLabel: t("ds.tabBar.accessRequestsBadge", { count: pendingAccessRequests }) }
+        ? {
+            badge: pendingAccessRequests,
+            badgeLabel: t("ds.tabBar.accessRequestsBadge", {
+              count: pendingAccessRequests,
+            }),
+          }
         : {}),
     },
   ];
 
-  const activeTab = tabForPathname(pathname) || (pathname.startsWith(fourth.path) ? fourth.item.id : "");
+  const activeTab =
+    tabForPathname(pathname) ||
+    (pathname.startsWith(fourth.path) ? fourth.item.id : "");
 
   const scopeLabels: Record<(typeof SCOPE_ORDER)[number], string> = {
     personal: t("nav.scope.personal"),
@@ -229,7 +320,9 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
   const scopeOptions = SCOPE_ORDER.map((id) => scopeLabels[id]);
   const scopeLabel = scopeLabels[scope];
   const handleScopeChange = (label: string) => {
-    const id = SCOPE_ORDER.find((candidate) => scopeLabels[candidate] === label);
+    const id = SCOPE_ORDER.find(
+      (candidate) => scopeLabels[candidate] === label,
+    );
     if (id) setScope(id);
   };
 
@@ -288,7 +381,13 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             onSearch={() => setSearchOpen(true)}
             searchExpanded={searchOpen}
             searchLabel={t("ds.appHeader.search")}
-            syncState={!online ? "offline" : pending && pending > 0 ? "syncing" : "synced"}
+            syncState={
+              !online
+                ? "offline"
+                : pending && pending > 0
+                  ? "syncing"
+                  : "synced"
+            }
             pending={pending ?? 0}
           />
         </div>
@@ -302,7 +401,11 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
             acá afuera donde no hay nada que lo atraviese. */}
         <main
           className={`app-shell-main ${
-            OWN_SCROLLER_ROUTES.has(pathname) ? "" : DOUBLE_PADDING_ROUTES.has(pathname) ? "pb-[calc(2*var(--block-gap)_+_36px)]" : "pb-[calc(var(--block-gap)_+_18px)]"
+            OWN_SCROLLER_ROUTES.has(pathname)
+              ? ""
+              : EXTRA_PADDING_ROUTES.has(pathname)
+                ? "pb-[calc(var(--fab-size)_+_2*var(--block-gap)_+_32px)]"
+                : "pb-[calc(var(--block-gap)_+_18px)]"
           } lg:pb-6`}
         >
           {/* `height: 100%` — Movimientos (D1) usa `height: "100%"` en su
@@ -313,7 +416,9 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
               todo el viewport (`inset: 0` contra el initial containing
               block) — no lo cambiamos acá para no correr esa regresión. */}
           <div className="mx-auto w-full" style={{ maxWidth, height: "100%" }}>
-            <PageHeaderContext.Provider value={setPageHeader}>{children}</PageHeaderContext.Provider>
+            <PageHeaderContext.Provider value={setPageHeader}>
+              {children}
+            </PageHeaderContext.Provider>
           </div>
         </main>
         <div className="lg:hidden" style={{ flexShrink: 0 }}>
@@ -323,22 +428,46 @@ export default function AppShellLayout({ children, modal }: { children: React.Re
       {modal}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      <Sheet open={signOutSheet === "confirm"} title={t("morePage.signOutConfirmTitle")} onClose={() => setSignOutSheet("none")} height={260}>
+      <Sheet
+        open={signOutSheet === "confirm"}
+        title={t("morePage.signOutConfirmTitle")}
+        onClose={() => setSignOutSheet("none")}
+        height={260}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+          <p
+            className="t-body"
+            style={{ margin: 0, color: "var(--text-secondary)" }}
+          >
             {t("morePage.signOutUnsyncedWarning", { count: unsyncedCount })}
           </p>
           <button
             type="button"
             onClick={doSignOut}
-            style={{ background: "var(--critical)", color: "var(--primary-on-fill)", border: 0, borderRadius: "var(--radius-button)", height: 56, cursor: "pointer", fontSize: 17, fontWeight: 600 }}
+            style={{
+              background: "var(--critical)",
+              color: "var(--primary-on-fill)",
+              border: 0,
+              borderRadius: "var(--radius-button)",
+              height: 56,
+              cursor: "pointer",
+              fontSize: 17,
+              fontWeight: 600,
+            }}
           >
             {t("morePage.signOutConfirmAction")}
           </button>
           <button
             type="button"
             onClick={() => setSignOutSheet("none")}
-            style={{ background: "none", border: 0, cursor: "pointer", fontSize: 15, color: "var(--text-secondary)", padding: 8 }}
+            style={{
+              background: "none",
+              border: 0,
+              cursor: "pointer",
+              fontSize: 15,
+              color: "var(--text-secondary)",
+              padding: 8,
+            }}
           >
             {t("common.cancel")}
           </button>
