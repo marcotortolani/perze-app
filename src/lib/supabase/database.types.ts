@@ -1120,6 +1120,7 @@ export type Database = {
           color: string | null
           display_name: string | null
           household_id: string
+          icon: string
           joined_at: string | null
           left_at: string | null
           profile_id: string
@@ -1131,6 +1132,7 @@ export type Database = {
           color?: string | null
           display_name?: string | null
           household_id: string
+          icon?: string
           joined_at?: string | null
           left_at?: string | null
           profile_id: string
@@ -1142,6 +1144,7 @@ export type Database = {
           color?: string | null
           display_name?: string | null
           household_id?: string
+          icon?: string
           joined_at?: string | null
           left_at?: string | null
           profile_id?: string
@@ -1835,6 +1838,7 @@ export type Database = {
           country: string | null
           default_household_id: string | null
           display_name: string | null
+          icon: string
           id: string
           is_app_admin: boolean
           last_seen_at: string | null
@@ -1852,6 +1856,7 @@ export type Database = {
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null
+          icon?: string
           id: string
           is_app_admin?: boolean
           last_seen_at?: string | null
@@ -1869,6 +1874,7 @@ export type Database = {
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null
+          icon?: string
           id?: string
           is_app_admin?: boolean
           last_seen_at?: string | null

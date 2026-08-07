@@ -64,6 +64,7 @@ export async function seedDemoHousehold(): Promise<{ householdId: string }> {
       role: "owner",
       displayName: "Vos",
       color: "var(--primary-fill)",
+      icon: "user",
       joinedAt: nowIso(),
     });
 

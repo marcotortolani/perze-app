@@ -4,6 +4,8 @@ export interface Profile {
   id: string;
   displayName: string | null;
   avatarUrl: string | null;
+  /** Ícono elegido por la persona (`IconName`, Phosphor) — mismo dato que `household_members.icon` sincroniza para que el resto del household lo vea. */
+  icon: string;
   country: string | null;
   birthDate: string | null;
 }
@@ -24,9 +26,9 @@ export interface OwnAccess {
 export const profilesRepo = {
   async getOwn(userId: string): Promise<Profile | null> {
     const supabase = createClient();
-    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url, country, birth_date").eq("id", userId).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url, icon, country, birth_date").eq("id", userId).maybeSingle();
     if (error) throw error;
-    return data ? { id: data.id, displayName: data.display_name, avatarUrl: data.avatar_url, country: data.country, birthDate: data.birth_date } : null;
+    return data ? { id: data.id, displayName: data.display_name, avatarUrl: data.avatar_url, icon: data.icon, country: data.country, birthDate: data.birth_date } : null;
   },
 
   /**
@@ -71,6 +73,18 @@ export const profilesRepo = {
   async updateBirthDate(userId: string, birthDate: string | null): Promise<void> {
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", userId);
+    if (error) throw error;
+  },
+
+  /**
+   * Ícono de perfil — un trigger en `profiles` (`sync_household_member_identity`,
+   * `20260807120000_profile_icon.sql`) propaga el cambio a `household_members.icon`
+   * de todos los households donde participa, así el resto del hogar lo ve sin
+   * que este repo tenga que tocar esa tabla.
+   */
+  async updateIcon(userId: string, icon: string): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.from("profiles").update({ icon }).eq("id", userId);
     if (error) throw error;
   },
 

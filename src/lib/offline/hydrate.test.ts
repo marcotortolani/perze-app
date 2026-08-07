@@ -168,9 +168,10 @@ describe("householdFromRow / memberFromRow / payeeFromRow", () => {
     expect(h.createdBy).toBe("");
     expect(h.enabledModules).toEqual(["family"]);
 
-    const m = memberFromRow({ household_id: "h1", profile_id: "u1", role: "owner", display_name: null, color: null, status: "active", joined_at: null });
+    const m = memberFromRow({ household_id: "h1", profile_id: "u1", role: "owner", display_name: null, color: null, icon: null, status: "active", joined_at: null });
     expect(m.displayName).toBe("");
     expect(m.color).toBe("var(--primary-fill)");
+    expect(m.icon).toBe("user");
     expect(typeof m.joinedAt).toBe("string");
 
     const p = payeeFromRow({ id: "p1", household_id: "h1", name: "Devoto", default_category_id: null, default_account_id: null, logo_url: null, aliases: null, client_rev: 1 });

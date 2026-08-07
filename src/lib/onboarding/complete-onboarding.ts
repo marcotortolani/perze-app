@@ -87,6 +87,7 @@ export async function completeOnboarding({ userId, countryCode, currencyCode, us
         role: "owner",
         displayName: displayName?.trim() ?? "",
         color: "var(--primary-fill)",
+        icon: "user",
         joinedAt: nowIso(),
       });
 

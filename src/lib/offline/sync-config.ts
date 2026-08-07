@@ -86,6 +86,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       role: p.role,
       display_name: p.displayName,
       color: p.color,
+      icon: p.icon,
       status: "active",
       joined_at: p.joinedAt,
     }),

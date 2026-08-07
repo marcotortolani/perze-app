@@ -274,7 +274,8 @@
    "dog": "Perro",
    "cat": "Gato",
    "cloud": "Suscripciones",
-   "users": "Personas"
+   "users": "Personas",
+   "user": "Persona"
   },
   "accountKind": {
    "cash": "Efectivo",
@@ -542,6 +543,8 @@
    "toAccount": "Hacia {account}",
    "cardStatement": "Resumen de la tarjeta",
    "date": "Fecha",
+   "createdBy": "Cargado por",
+   "unknownMember": "Miembro desconocido",
    "payee": "Comercio",
    "note": "Nota",
    "fxRateUsed": "Tipo de cambio usado",
@@ -991,6 +994,7 @@
   "country": "País",
   "countryUnset": "Sin elegir",
   "countrySheetTitle": "Elegí tu país",
+  "icon": "Ícono",
   "theme": "Tema",
   "themeSheetTitle": "Elegí el tema",
   "themeOptions": {

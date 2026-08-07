@@ -138,6 +138,7 @@ export interface RawMember {
   role: string;
   display_name: string | null;
   color: string | null;
+  icon: string | null;
   status: string;
   joined_at: string | null;
 }
@@ -149,6 +150,7 @@ export function memberFromRow(row: RawMember): HouseholdMemberRow {
     role: row.role as HouseholdRole,
     displayName: row.display_name ?? "",
     color: row.color ?? "var(--primary-fill)",
+    icon: row.icon ?? "user",
     joinedAt: row.joined_at ?? nowIso(),
   };
 }

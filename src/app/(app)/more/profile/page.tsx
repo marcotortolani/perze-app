@@ -5,11 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, Input, ListRow, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
+import { Button, Icon, Input, ListRow, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
+import type { IconName } from "@/design-system/core/Icon";
 import { useEffectiveUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ageFromBirthDate } from "@/lib/analytics/age";
+import { ProfileIconPicker } from "@/features/profile/ProfileIconPicker";
 
 /**
  * K2 — perfil: solo datos de la persona (nombre, email, fecha de
@@ -35,6 +37,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [countrySheetOpen, setCountrySheetOpen] = useState(false);
   const [countryPending, setCountryPending] = useState(false);
+  const [iconSheetOpen, setIconSheetOpen] = useState(false);
+  const [iconPending, setIconPending] = useState(false);
   usePageHeader({ title: t("profilePage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   if (profileQuery.isLoading || !userId) return <Skeleton height={400} style={{ marginTop: 16 }} />;
@@ -57,6 +61,21 @@ export default function ProfilePage() {
       profileQuery.refetch();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSelectIcon = async (icon: IconName) => {
+    if (iconPending || icon === profileQuery.data?.icon) {
+      setIconSheetOpen(false);
+      return;
+    }
+    setIconPending(true);
+    try {
+      await profilesRepo.updateIcon(userId, icon);
+      await profileQuery.refetch();
+      setIconSheetOpen(false);
+    } finally {
+      setIconPending(false);
     }
   };
 
@@ -107,6 +126,14 @@ export default function ProfilePage() {
               disabled={countryPending}
               onClick={() => setCountrySheetOpen(true)}
             />
+            <ListRow
+              icon="edit"
+              label={t("profilePage.icon")}
+              value={<Icon name={(profileQuery.data?.icon as IconName) ?? "user"} size={20} color="var(--text-secondary)" />}
+              variant="value"
+              disabled={iconPending}
+              onClick={() => setIconSheetOpen(true)}
+            />
           </div>
         </div>
 
@@ -128,6 +155,10 @@ export default function ProfilePage() {
             />
           ))}
         </div>
+      </Sheet>
+
+      <Sheet open={iconSheetOpen} title={t("profilePage.icon")} onClose={() => setIconSheetOpen(false)} height={420}>
+        <ProfileIconPicker value={(profileQuery.data?.icon as IconName) ?? "user"} onChange={handleSelectIcon} />
       </Sheet>
     </div>
   );

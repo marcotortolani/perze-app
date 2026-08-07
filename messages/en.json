@@ -274,7 +274,8 @@
    "dog": "Dog",
    "cat": "Cat",
    "cloud": "Subscriptions",
-   "users": "People"
+   "users": "People",
+   "user": "Person"
   },
   "accountKind": {
    "cash": "Cash",
@@ -542,6 +543,8 @@
    "toAccount": "To {account}",
    "cardStatement": "Card statement",
    "date": "Date",
+   "createdBy": "Logged by",
+   "unknownMember": "Unknown member",
    "payee": "Merchant",
    "note": "Note",
    "fxRateUsed": "Exchange rate used",
@@ -991,6 +994,7 @@
   "country": "Country",
   "countryUnset": "Not set",
   "countrySheetTitle": "Choose your country",
+  "icon": "Icon",
   "theme": "Theme",
   "themeSheetTitle": "Choose the theme",
   "themeOptions": {

@@ -5,6 +5,7 @@ export interface RemoteHouseholdMember {
   role: "owner" | "admin" | "member" | "viewer";
   displayName: string | null;
   color: string | null;
+  icon: string | null;
   status: "active" | "invited" | "former";
   joinedAt: string | null;
 }
@@ -39,7 +40,7 @@ export async function listRemoteHouseholdMembers(householdId: string): Promise<R
   // historial de quién cargó qué), pero tampoco debe listarse como activo.
   const { data, error } = await supabase
     .from("household_members")
-    .select("profile_id, role, display_name, color, status, joined_at")
+    .select("profile_id, role, display_name, color, icon, status, joined_at")
     .eq("household_id", householdId)
     .neq("status", "former");
   if (error) throw error;
@@ -48,6 +49,7 @@ export async function listRemoteHouseholdMembers(householdId: string): Promise<R
     role: row.role as RemoteHouseholdMember["role"],
     displayName: row.display_name,
     color: row.color,
+    icon: row.icon,
     status: row.status as RemoteHouseholdMember["status"],
     joinedAt: row.joined_at,
   }));

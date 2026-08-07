@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.53 — 7 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés elegir un ícono que te represente en tu Perfil, y ese ícono aparece junto a tu
+  nombre en Grupo familiar — antes todos los miembros compartían el mismo ícono genérico.
+- En el detalle de un movimiento (con más de una persona en tu grupo familiar) ahora se ve
+  quién lo cargó.
+
 ## 0.29.52 — 6 de agosto de 2026
 
 ### Arreglado

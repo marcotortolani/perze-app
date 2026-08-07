@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, Icon, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
@@ -86,7 +87,11 @@ export default function FamilyPageContent() {
         {members.map((m) => (
         <ListRow
           key={m.profileId}
-          icon="users"
+          // K2b — ícono elegido por cada persona en su perfil, sincronizado
+          // acá vía `household_members.icon` (`useRemoteHouseholdMembers`).
+          // Antes todos compartían el mismo glifo genérico "users", sin
+          // forma de diferenciarse a simple vista.
+          icon={(m.icon as IconName | null) ?? "user"}
           /* Tu propia fila se rotula con el idioma de la app, no con el
              `display_name` guardado: esa columna es una copia denormalizada
              pensada para que TE VEAN LOS DEMÁS, y los households creados

@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.53] — 2026-08-07
+
+### Nuevo — Ícono de perfil por persona + "Cargado por" en el detalle de un movimiento
+
+Con más de un miembro en el household, todos compartían el mismo ícono genérico ("users") en
+Familia, y un movimiento no decía quién lo había cargado.
+
+Migración `20260807120000_profile_icon.sql`: `profiles.icon` (identidad de la cuenta, igual que
+`display_name`) sincronizado a `household_members.icon` con el mismo trigger que ya sincroniza
+`display_name` (generalizado a `sync_household_member_identity`, cubre las dos columnas) —
+`profiles_select` es self-only por RLS, así que el resto del household solo puede leer la copia
+denormalizada. `accept_invite()` puebla `icon` al aceptar, igual que ya hacía con el nombre.
+
+Set curado de 24 íconos (`src/lib/reference/profile-icons.ts`) — deliberadamente distinto del set
+de categorías (rubros de gasto, no identidad de persona): usuario, animales, hobbies, objetos
+personales. `ProfileIconPicker` (`src/features/profile/`) es el mismo grid de 44px/`aria-pressed`
+que ya usa el picker de categorías, sin agrupar por tema ni buscador — con 24 íconos entra entero
+en una sola grilla. Nueva fila "Ícono" en Perfil, aplica al tocar (mismo patrón que "País").
+
+`FamilyPageContent` ya no fija `icon="users"` — usa el ícono real de cada miembro
+(`useRemoteHouseholdMembers`). `TransactionDetailContent` suma una fila "Cargado por" que resuelve
+`transaction.createdBy` (ya existía en el schema, poblado desde D1, solo faltaba mostrarlo) contra
+`useHouseholdMembers` (Dexie, funciona offline) — solo se muestra con más de un miembro activo, un
+household de una sola persona no necesita que le digan "cargado por vos".
+
 ## [0.29.52] — 2026-08-06
 
 ### Arreglado — More (mobile): el módulo sacado del 4to tab desaparecía, y el que quedó puesto se duplicaba

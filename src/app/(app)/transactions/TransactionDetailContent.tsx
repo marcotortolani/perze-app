@@ -12,6 +12,8 @@ import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
 import { useTags } from "@/hooks/use-tags";
 import { useTagIdsForTransaction } from "@/hooks/use-transaction-tags";
+import { useHouseholdMembers } from "@/hooks/use-household-members";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { isCreditCardAccount } from "@/lib/analytics/card-cycle";
@@ -57,6 +59,8 @@ export function TransactionDetailContent({ id }: { id: string }) {
   const { data: payees = [] } = usePayees(household?.id);
   const { data: tags = [] } = useTags(household?.id);
   const { data: tagIds = [] } = useTagIdsForTransaction(id);
+  const { data: members = [] } = useHouseholdMembers(household?.id);
+  const userId = useEffectiveUserId();
   const { data: transaction, isLoading } = useTransaction(id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
@@ -234,6 +238,16 @@ export function TransactionDetailContent({ id }: { id: string }) {
           variant="value"
         />
         <ListRow icon="calendar" label={new Date(transaction.occurredAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })} meta={t("transactions.detail.date")} variant="value" />
+        {/* K2b — quién cargó el movimiento. Solo con más de un miembro
+            activo: en un household de una sola persona "cargado por vos"
+            es ruido, no información (presupuesto de ruido de CLAUDE.md). */}
+        {members.length > 1
+          ? (() => {
+              const creator = members.find((m) => m.profileId === transaction.createdBy);
+              const label = transaction.createdBy === userId ? t("familyPage.you") : creator?.displayName?.trim() || t("transactions.detail.unknownMember");
+              return <ListRow icon={(creator?.icon as IconName | undefined) ?? "user"} label={label} meta={t("transactions.detail.createdBy")} variant="value" />;
+            })()
+          : null}
         {tagNames.length > 0 ? <ListRow icon="tag" label={tagNames.join(", ")} meta={t("transactions.detail.tags")} variant="value" /> : null}
         {payee ? <ListRow icon="tag" label={payee.name} meta={t("transactions.detail.payee")} variant="value" /> : null}
         {transaction.note ? <ListRow icon="edit" label={transaction.note} meta={t("transactions.detail.note")} variant="value" /> : null}

@@ -36,6 +36,8 @@ export interface HouseholdMemberRow {
   role: HouseholdRole;
   displayName: string;
   color: string;
+  /** Ícono elegido por la persona (`IconName`) — copia denormalizada de `profiles.icon`, sincronizada por trigger; `profiles_select` es self-only y esto es lo que el resto del household puede leer. */
+  icon: string;
   joinedAt: string;
 }
 
@@ -43,6 +45,8 @@ export interface ProfileRow {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  /** Ícono elegido por la persona (`IconName`, Phosphor) — identidad de la cuenta, igual que `displayName`. */
+  icon: string;
   locale: string;
   timezone: string | null;
   defaultHouseholdId: string | null;
