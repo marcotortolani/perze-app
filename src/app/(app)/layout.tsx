@@ -52,16 +52,6 @@ const OWN_SCROLLER_ROUTES = new Set([
   "/more/categories",
 ]);
 
-/**
- * `/recurring/new` — el FAB "+" sobresale `18px` por arriba de la tab bar
- * a propósito (`transform: translateY(-18px)`, `TabBar.tsx`), así que el
- * padding default de acá abajo no alcanza y el botón "Guardar" queda
- * tapado al final del scroll. La página scrollea entera (`<main>`, sin
- * ningún contenedor propio ni `sticky`) — esto solo agranda el aire al
- * final de ESE scroll para que el FAB nunca llegue a pisar el botón.
- */
-const EXTRA_PADDING_ROUTES = new Set(["/recurring/new"]);
-
 /** Las únicas 4 pantallas cuyos datos de verdad se filtran por `scope` (`match-scope.ts`) — ver el comentario junto a `showScope`. */
 const SCOPE_AWARE_ROUTES = new Set([
   "/",
@@ -399,15 +389,7 @@ export default function AppShellLayout({
             pantalla para que lo sume dentro de su propio scroller (ver
             `transactions/page.tsx` y `accounts/page.tsx`), en vez de vivir
             acá afuera donde no hay nada que lo atraviese. */}
-        <main
-          className={`app-shell-main ${
-            OWN_SCROLLER_ROUTES.has(pathname)
-              ? ""
-              : EXTRA_PADDING_ROUTES.has(pathname)
-                ? "pb-[calc(var(--fab-size)_+_2*var(--block-gap)_+_32px)]"
-                : "pb-[calc(var(--block-gap)_+_18px)]"
-          } lg:pb-6`}
-        >
+        <main className={`app-shell-main ${OWN_SCROLLER_ROUTES.has(pathname) ? "" : "pb-[calc(var(--block-gap)_+_18px)]"} lg:pb-6`}>
           {/* `height: 100%` — Movimientos (D1) usa `height: "100%"` en su
               virtualizador y necesita que este contenedor tenga una altura
               definida para resolverlo, no solo `flex: 1` en el ancestro.

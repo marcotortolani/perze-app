@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.71 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente": encontramos la causa real de que el botón de guardar quedara tapado — la
+  pantalla no debía tener la barra de navegación de abajo, y por eso se sacó del todo. Ahora es
+  una pantalla de carga simple, sin nada que se le pueda superponer.
+
 ## 0.29.70 — 7 de agosto de 2026
 
 ### Arreglado

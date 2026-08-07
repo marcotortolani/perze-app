@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.71] — 2026-08-07
+
+### Corregido — "Nuevo recurrente" vivía adentro de `(app)/` por error: la causa raíz de las 4 rondas anteriores
+
+Cuatro rondas seguidas (0.29.67 a 0.29.70) intentaron resolver el botón "Guardar" tapado por
+el FAB "+" ajustando padding, `sticky`, y el tamaño del hueco — todas atacando el síntoma. La
+causa raíz apareció al comparar `/recurring` (funciona) contra `/recurring/new` (no funciona)
+y volver a mirar el diseño: `docs/design/bloque-fg-presupuestos.html`, las cuatro variantes de
+estado de G3 ("Crear recurrente"), llevan `tabs="{{ false }}"` — **el diseño nunca tuvo tab
+bar acá**. El proyecto ya tiene la convención para esto (`CLAUDE.md` § convención de rutas):
+un flujo de pantalla completa vive *fuera* de `(app)/`, como `/add` y `accounts/new`. Esta
+pantalla se había implementado *adentro*, heredando una tab bar y un FAB (`translateY(-18px)`,
+sobresale a propósito por encima de la barra) que el diseño no pedía — cada parche de padding
+estaba compensando algo que nunca debió estar ahí.
+
+Se mueve `src/app/(app)/recurring/new/page.tsx` → `src/app/recurring/new/page.tsx`, con
+`ScreenShell` (mismo patrón que `AccountFormFlow`) en vez del shell de `(app)/`: header propio
+(`IconButton` + título), sin `usePageHeader` (no hay contexto de layout fuera de `(app)/`), una
+sola columna (se saca el layout de 2 columnas con `ZMark`, que era específico del shell ancho —
+`AccountFormFlow` tampoco lo tiene). Sin tab bar, no hay FAB con el que superponerse: se
+revierte todo el padding/sticky especial de `(app)/layout.tsx` para esta ruta, que ya no hace
+falta. Verificado en vivo: `document.querySelector('nav')` es `null` en `/recurring/new`, el
+botón "Guardar" queda con aire libre real hasta el borde del viewport, y el flujo completo
+(navegar desde "Nuevo recurrente" en la lista, volver con el botón de atrás) funciona igual
+que antes.
+
 ## [0.29.70] — 2026-08-07
 
 ### Corregido — "Nuevo recurrente": se revierte el `sticky` de la ronda pasada
