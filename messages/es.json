@@ -1473,6 +1473,13 @@
    "mdy": "Mes/día/año",
    "ymd": "Año-mes-día"
   },
+  "weekStart": "Inicio de semana",
+  "weekStartOptions": {
+   "monday": "Lunes",
+   "sunday": "Domingo",
+   "mondayPreview": "Lun, mar, mié, jue, vie, sáb, dom",
+   "sundayPreview": "Dom, lun, mar, mié, jue, vie, sáb"
+  },
   "backdrop": "Fondo de puntos",
   "backdropHint": "Una textura sutil de puntos detrás del contenido, con menos presencia cerca de los bordes de la pantalla. No aparece en encabezados, menús ni ventanas.",
   "backdropDensity": "Separación de los puntos",

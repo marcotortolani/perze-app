@@ -6,6 +6,24 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.60] — 2026-08-07
+
+### Nuevo — Ajustes → Formato: qué día arranca la semana
+
+Antes había DOS grillas semanales inconsistentes entre sí, ninguna configurable: el calendario
+de movimientos (`monthGrid`/`weekdayAnchors`, `features/movements/calendar-scope.ts`) arrancaba
+lunes; el calendario de recurrentes (`design-system/charts/MonthCalendar.tsx`, compartido con
+presupuestos) tenía el domingo hardcodeado en el cálculo de `leadingBlanks`. Un tercer lugar, el
+resumen semanal (`analytics/weekly/page.tsx`), tenía su propio `startOfWeek()` con lunes fijo
+para decidir qué transacciones cuentan como "esta semana".
+
+Nuevo `weekStart` en `useFormatPreferencesStore` (`"monday" | "sunday"`, default `"monday"` —
+conserva el comportamiento de `WEEK_STARTS_ON` que ya tenía `calendar-scope.ts`), con
+`useWeekStartsOn()` devolviendo directo el `0 | 1` de `Date.getDay()` que consumen
+`monthGrid`/`weekdayAnchors` y el nuevo prop obligatorio `weekStartsOn` de `MonthCalendar`. Las
+tres pantallas pasan a leer la misma preferencia — mismo criterio que
+`useDateFormatPreference()`: un ajuste, todas las pantallas lo reflejan solas.
+
 ## [0.29.59] — 2026-08-07
 
 ### Cambiado — "Enable more features" e "Install app" se mudan de Ajustes a Más

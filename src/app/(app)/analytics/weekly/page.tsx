@@ -10,18 +10,12 @@ import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { computeWeeklySummary } from "@/lib/analytics/weekly-summary";
+import { weekdayAnchors } from "@/features/movements/calendar-scope";
+import { useWeekStartsOn } from "@/stores/format-preferences-store";
 import { formatAmountCompact } from "@/lib/money/format";
 import { formatDateShort } from "@/i18n/formatting";
 import { money } from "@/lib/money/money";
 import type { Locale } from "@/i18n/formatting";
-
-function startOfWeek(date: Date): Date {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = d.getDay(); // 0 = domingo
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diffToMonday);
-  return d;
-}
 
 /** H11 — resumen semanal: tres datos y una comparación contra la semana anterior. */
 export default function WeeklySummaryPage() {
@@ -34,15 +28,16 @@ export default function WeeklySummaryPage() {
   const { data: categories } = useCategories(household?.id);
   const { data: payees } = usePayees(household?.id);
   const categoryLabel = useCategoryLabel();
+  const weekStartsOn = useWeekStartsOn();
 
   const summary = useMemo(() => {
     if (!transactions) return null;
     const now = new Date();
-    const weekStart = startOfWeek(now);
+    const weekStart = weekdayAnchors(now, weekStartsOn)[0]!;
     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
     const prevWeekStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
     return { weekStart, weekEnd, ...computeWeeklySummary(transactions, weekStart, weekEnd, prevWeekStart, weekStart) };
-  }, [transactions]);
+  }, [transactions, weekStartsOn]);
 
   if (!household || !transactions || !categories || !payees || !summary) return <Skeleton height={220} style={{ marginTop: 16 }} />;
 

@@ -16,7 +16,7 @@ import { householdsRepo } from "@/lib/repos/households-repo";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
 import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
-import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref } from "@/stores/format-preferences-store";
+import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref, type WeekStartPref } from "@/stores/format-preferences-store";
 import { setLocale } from "@/i18n/actions";
 import { routing } from "@/i18n/routing";
 import { applyThemePreference } from "@/lib/theme/apply-theme";
@@ -28,6 +28,11 @@ import { BACKDROP_DENSITIES, BACKDROP_INTENSITIES } from "@/lib/backdrop/constan
 
 const DECIMAL_SEPARATOR_OPTIONS: DecimalSeparatorPref[] = ["locale", "comma", "period"];
 const DATE_FORMAT_OPTIONS: DateFormatPref[] = ["locale", "dmy", "mdy", "ymd"];
+const WEEK_START_OPTIONS: WeekStartPref[] = ["monday", "sunday"];
+const WEEK_START_PREVIEW: Record<WeekStartPref, string> = {
+  monday: "settingsPage.weekStartOptions.mondayPreview",
+  sunday: "settingsPage.weekStartOptions.sundayPreview",
+};
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
 const LANGUAGE_MESSAGE_KEY = {
   es: "morePage.languageNames.es",
@@ -60,8 +65,11 @@ export default function SettingsPage() {
   const setDecimalSeparatorPref = useFormatPreferencesStore((s) => s.setDecimalSeparator);
   const dateFormatPref = useFormatPreferencesStore((s) => s.dateFormat);
   const setDateFormatPref = useFormatPreferencesStore((s) => s.setDateFormat);
+  const weekStartPref = useFormatPreferencesStore((s) => s.weekStart);
+  const setWeekStartPref = useFormatPreferencesStore((s) => s.setWeekStart);
   const [decimalSheetOpen, setDecimalSheetOpen] = useState(false);
   const [dateFormatSheetOpen, setDateFormatSheetOpen] = useState(false);
+  const [weekStartSheetOpen, setWeekStartSheetOpen] = useState(false);
   const localeDecimalSeparator = numberLocaleForUiLocale(locale) === "en-US" ? "." : ",";
   const storedThemePreference = useThemePreference();
   const [themeOverride, setThemeOverride] = useState<ThemePreference | null>(null);
@@ -218,6 +226,13 @@ export default function SettingsPage() {
               value={formatNumericDate(locale, new Date(), dateFormatPref)}
               variant="value"
               onClick={() => setDateFormatSheetOpen(true)}
+            />
+            <ListRow
+              icon="calendar"
+              label={t("settingsPage.weekStart")}
+              value={t(`settingsPage.weekStartOptions.${weekStartPref}`)}
+              variant="value"
+              onClick={() => setWeekStartSheetOpen(true)}
             />
           </div>
 
@@ -412,6 +427,24 @@ export default function SettingsPage() {
               onClick={() => {
                 setDateFormatPref(pref);
                 setDateFormatSheetOpen(false);
+              }}
+            />
+          ))}
+        </div>
+      </Sheet>
+
+      <Sheet open={weekStartSheetOpen} title={t("settingsPage.weekStart")} onClose={() => setWeekStartSheetOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {WEEK_START_OPTIONS.map((pref) => (
+            <ListRow
+              key={pref}
+              label={t(`settingsPage.weekStartOptions.${pref}`)}
+              meta={t(WEEK_START_PREVIEW[pref] as Parameters<typeof t>[0])}
+              variant="value"
+              value={pref === weekStartPref ? "✓" : undefined}
+              onClick={() => {
+                setWeekStartPref(pref);
+                setWeekStartSheetOpen(false);
               }}
             />
           ))}

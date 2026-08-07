@@ -10,7 +10,7 @@ import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { occurredAtFor, occurrencesBetween } from "@/lib/recurring/occurrences";
 import { money } from "@/lib/money/money";
 import { formatMonthYearHeading, formatNumericDate, type Locale } from "@/i18n/formatting";
-import { useDateFormatPreference } from "@/stores/format-preferences-store";
+import { useDateFormatPreference, useWeekStartsOn } from "@/stores/format-preferences-store";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -31,6 +31,7 @@ export function RecurringMonthCalendar() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const dateFormat = useDateFormatPreference();
+  const weekStartsOn = useWeekStartsOn();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: rules } = useRecurringRules(household?.id);
@@ -86,7 +87,7 @@ export function RecurringMonthCalendar() {
           <Icon name="chevron" size={20} />
         </button>
       </div>
-      <MonthCalendar month={month} marks={marks} value={selectedDate ?? undefined} onSelect={setSelectedDate} />
+      <MonthCalendar month={month} marks={marks} value={selectedDate ?? undefined} onSelect={setSelectedDate} weekStartsOn={weekStartsOn} />
 
       {selectedDate ? (
         <div className="mt-5">

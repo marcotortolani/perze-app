@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.60 — 7 de agosto de 2026
+
+### Nuevo
+
+- Ajustes → Formato ahora tiene "Inicio de semana" (lunes o domingo), que se aplica a todos los
+  calendarios de la app — antes el de Movimientos y el de Recurrentes ni siquiera arrancaban el
+  mismo día entre sí.
+
 ## 0.29.59 — 7 de agosto de 2026
 
 ### Mejorado

@@ -1473,6 +1473,13 @@
    "mdy": "Month/day/year",
    "ymd": "Year-month-day"
   },
+  "weekStart": "Week starts on",
+  "weekStartOptions": {
+   "monday": "Monday",
+   "sunday": "Sunday",
+   "mondayPreview": "Mon, Tue, Wed, Thu, Fri, Sat, Sun",
+   "sundayPreview": "Sun, Mon, Tue, Wed, Thu, Fri, Sat"
+  },
   "backdrop": "Dotted background",
   "backdropHint": "A subtle dot texture behind the content, fading out near the edges of the screen. It never appears in headers, menus, or sheets.",
   "backdropDensity": "Dot spacing",

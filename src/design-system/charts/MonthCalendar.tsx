@@ -17,6 +17,8 @@ export interface MonthCalendarProps {
   marks?: MonthCalendarMark[] | undefined;
   value?: string | undefined;
   onSelect?: ((date: string) => void) | undefined;
+  /** `Date.getDay()` — 0 = domingo, 1 = lunes. Nunca hardcodeado acá: viene de `useWeekStartsOn()` (Ajustes → Formato). */
+  weekStartsOn: 0 | 1;
   style?: CSSProperties | undefined;
 }
 
@@ -25,17 +27,20 @@ function pad(n: number): string {
 }
 
 /** LIB-04: grilla de mes con celdas de 44px — presupuestos (G1) y calendario de movimientos (D5). */
-export function MonthCalendar({ month, marks = [], value, onSelect, style }: MonthCalendarProps) {
+export function MonthCalendar({ month, marks = [], value, onSelect, weekStartsOn, style }: MonthCalendarProps) {
   const locale = useLocale() as Locale;
   const [yStr, mStr] = month.split("-");
   const y = Number(yStr);
   const m = Number(mStr);
   const first = new Date(y, m - 1, 1);
   const daysInMonth = new Date(y, m, 0).getDate();
-  const leadingBlanks = first.getDay();
+  const leadingBlanks = (first.getDay() - weekStartsOn + 7) % 7;
   const levelByDate = new Map(marks.map((mk) => [mk.date, mk.level]));
 
-  const weekdayLabels = Array.from({ length: 7 }, (_, i) => formatWeekdayNarrow(locale, new Date(2024, 0, i + 7)));
+  // Enero 2024 arranca un lunes (1/1/2024) — `+7` corre el ancla a la
+  // segunda semana del mes para no pisar el primer día del año, `+weekStartsOn`
+  // desliza el punto de partida entre lunes (1) y domingo (0).
+  const weekdayLabels = Array.from({ length: 7 }, (_, i) => formatWeekdayNarrow(locale, new Date(2024, 0, weekStartsOn + i + 7)));
 
   const cells: (string | null)[] = [...Array(leadingBlanks).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => `${y}-${pad(m)}-${pad(i + 1)}`)];
 

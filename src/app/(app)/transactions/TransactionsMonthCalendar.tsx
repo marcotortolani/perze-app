@@ -8,6 +8,7 @@ import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { todayIso } from "@/lib/dates/today";
 import { expenseTotalsByDay, heatMixPercent, isFutureDay, monthGrid, noonUtc, shiftMonth, weekdayAnchors } from "@/features/movements/calendar-scope";
+import { useWeekStartsOn } from "@/stores/format-preferences-store";
 import type { TransactionRow as TransactionRecord } from "@/lib/db/schema";
 
 /**
@@ -57,9 +58,10 @@ export function TransactionsMonthCalendar({
 }: TransactionsMonthCalendarProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const weekStartsOn = useWeekStartsOn();
 
   const totalsByDay = useMemo(() => expenseTotalsByDay(transactions), [transactions]);
-  const cells = useMemo(() => monthGrid(month), [month]);
+  const cells = useMemo(() => monthGrid(month, { weekStartsOn }), [month, weekStartsOn]);
   const today = todayIso();
 
   // El máximo del MES visible, no de toda la historia: si se normalizara
@@ -75,7 +77,7 @@ export function TransactionsMonthCalendar({
     return Math.max(1, max);
   }, [totalsByDay, month]);
 
-  const dowLabels = useMemo(() => weekdayAnchors(new Date()).map((d) => formatWeekdayNarrow(locale, d)), [locale]);
+  const dowLabels = useMemo(() => weekdayAnchors(new Date(), weekStartsOn).map((d) => formatWeekdayNarrow(locale, d)), [locale, weekStartsOn]);
   const monthHeading = formatMonthYearHeading(locale, noonUtc(`${month}-01`));
 
   return (
