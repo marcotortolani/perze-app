@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.46] — 2026-08-06
+
+### Arreglado — Evolución de saldo: `opening_balance` no cero se seguía graficando plano antes de `opening_date` (D66b)
+
+D66 (0.29.37) sacó la dependencia de `currentBalance` stale, pero asumía `opening_balance =
+0`. Una cuenta que arranca con saldo real (dinero que ya existía antes de empezar a usar la
+app) seguía mostrando ese valor como una recta plana durante los 90 días completos de la
+ventana, aunque la cuenta se haya creado hace 4 días — mismo bug de fondo que D66, con un
+valor distinto de cero. `computeAccountEvolution` (`src/lib/analytics/account-evolution.ts`)
+ahora recibe `account.openingDate` y omite todo punto anterior a esa fecha: antes de
+`opening_date` la cuenta no existía, no es que valiera `opening_balance`. El punto exacto de
+`opening_date` se fuerza aunque no caiga en el muestreo semanal (`i % 7 === 0`), para que el
+salto de "no existía" a `opening_balance` sea visible y no quede escondido hasta el próximo
+múltiplo de 7. Cuentas viejas sin `opening_date` poblada mantienen el comportamiento anterior,
+a falta de una fecha real de corte.
+
+### Arreglado — Gráfico de evolución de tarjeta de crédito: la curva bajaba en vez de subir con el consumo
+
+`computeAccountEvolution` ya invertía el signo para tarjetas de crédito (consumo positivo en
+vez de saldo negativo crudo), pensado para que la TABLA se lea bien. El gráfico de línea
+consumía el mismo array y heredaba esa inversión, pero para una curva "cero abajo, consumo
+sube" necesita el signo contrario: con el valor ya invertido para la tabla, la línea arrancaba
+en 0 y bajaba a negativo según se gastaba, que se lee al revés de lo esperado.
+`AccountDetailContent.tsx` ahora aplica un segundo `*-1` solo al array que recibe
+`<LineChart>`, sin tocar el que alimenta `<DataList>` — dos consumidores del mismo cálculo,
+cada uno con la lectura que le corresponde.
+
 ## [0.29.45] — 2026-08-06
 
 ### Nuevo — Finnhub como proveedor de cotizaciones de EE.UU. (NYSE/NASDAQ)

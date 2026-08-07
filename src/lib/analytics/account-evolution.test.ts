@@ -99,3 +99,39 @@ describe("D66 — computeAccountEvolution no depende de currentBalance", () => {
     expect(today.value).toBe(10_000);
   });
 });
+
+describe("D66b — opening_balance no cero no es opening_balance de siempre", () => {
+  it("no grafica ningún punto anterior a opening_date: la cuenta no existía, no valía opening_balance", () => {
+    // Caso real reportado: la cuenta se creó el 2026-08-02 con
+    // opening_balance $120.000 (dinero que ya existía en otro lado antes
+    // de empezar a usar la app) — mostrar $120.000 plano desde hace 90
+    // días (mucho antes de que la cuenta existiera) es tan fabricado como
+    // el bug original de D66, solo que con un valor distinto de cero.
+    const acc = account({ openingBalance: 120_000_00n, openingDate: "2026-08-02" });
+    const transactions: EvolutionTransaction[] = [
+      tx({ kind: "income", amount: 1_200_000_00n, occurredAt: "2026-08-02T12:00:00.000Z" }),
+    ];
+    const now = new Date("2026-08-06T20:00:00.000Z");
+
+    const points = computeAccountEvolution({ account: acc, transactions, windowDays: 90, now });
+
+    for (const p of points) {
+      expect(p.isoDate >= "2026-08-02").toBe(true);
+    }
+    // El primer punto es el día de arranque, YA con el ingreso del mismo
+    // día aplicado (mismo criterio que "hoy": los movimientos del propio
+    // día se ven reflejados, no el instante justo antes de ellos).
+    expect(points[0]!.isoDate).toBe("2026-08-02");
+    expect(points[0]!.value).toBe(1_320_000);
+  });
+
+  it("sin opening_date (cuentas viejas sin esa columna poblada), no trunca — mismo comportamiento que antes", () => {
+    const acc = account({ openingBalance: 120_000_00n, openingDate: null });
+    const now = new Date("2026-08-06T20:00:00.000Z");
+
+    const points = computeAccountEvolution({ account: acc, transactions: [], windowDays: 90, now });
+
+    expect(points[0]!.isoDate < "2026-08-02").toBe(true);
+    expect(points[0]!.value).toBe(120_000);
+  });
+});

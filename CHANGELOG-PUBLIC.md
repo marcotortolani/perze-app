@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.46 — 6 de agosto de 2026
+
+### Arreglado
+
+- En una cuenta que arrancó con un saldo inicial (no cero), el gráfico de evolución ya no
+  muestra ese saldo como si hubiera existido siempre — ahora arranca desde el día real en
+  que creaste la cuenta.
+- En las tarjetas de crédito, el gráfico de evolución ahora sube cuando gastás más y baja
+  cuando pagás, en vez de mostrarse al revés.
+
 ## 0.29.45 — 6 de agosto de 2026
 
 ### Nuevo

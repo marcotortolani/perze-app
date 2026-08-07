@@ -13,7 +13,7 @@ export interface EvolutionPoint {
 export type EvolutionTransaction = TransactionForEffects & { occurredAt: string };
 
 export interface ComputeAccountEvolutionInput {
-  account: Pick<AccountRow, "id" | "kind" | "openingBalance" | "currencyCode">;
+  account: Pick<AccountRow, "id" | "kind" | "openingBalance" | "openingDate" | "currencyCode">;
   /** Todas las transacciones donde la cuenta participa (lado `accountId` o `counterAccountId`), sin filtrar por ventana. */
   transactions: readonly EvolutionTransaction[];
   windowDays: number;
@@ -29,6 +29,16 @@ export interface ComputeAccountEvolutionInput {
  * anteriores a la primera transacción real (D66). Sumar los efectos desde
  * `opening_balance` usa solo la lista local de transacciones — siempre al
  * día — y nunca depende de ese campo sincronizado.
+ *
+ * D66b — `opening_balance` no es cero: una cuenta puede arrancar con un
+ * saldo real (dinero que ya existía en otro lado antes de empezar a
+ * usar la app). Pero esa cifra solo es válida DESDE `opening_date` — antes
+ * de esa fecha la cuenta directamente no existía, así que graficar una
+ * recta plana en `opening_balance` para todo el resto de la ventana de 90
+ * días (aunque la cuenta se haya creado hace 4 días) fabrica un dato: no
+ * es que el saldo fuera ese, es que no hay saldo porque no había cuenta.
+ * Sin `opening_date` (cuentas viejas migradas sin esa columna poblada) se
+ * mantiene el comportamiento anterior, a falta de una fecha real de corte.
  */
 export function computeAccountEvolution({ account, transactions, windowDays, now }: ComputeAccountEvolutionInput): EvolutionPoint[] {
   const windowStartIso = daysAgoIso(windowDays, now);
@@ -64,7 +74,16 @@ export function computeAccountEvolution({ account, transactions, windowDays, now
     d.setDate(d.getDate() - i);
     const iso = d.toISOString().slice(0, 10);
     running += deltaByDay.get(iso) ?? 0n;
-    if (i % 7 === 0 || i === 0) {
+    // La cuenta no existía antes de `opening_date` — ese punto no es un
+    // saldo real, es la ausencia de cuenta. Se omite en vez de graficar
+    // `opening_balance` como si hubiera estado ahí todo el tiempo.
+    if (account.openingDate && iso < account.openingDate) continue;
+    // `iso === openingDate` fuerza el punto exacto de arranque aunque no
+    // caiga en el muestreo semanal — sin esto, el primer punto visible
+    // podía ser varios días después del arranque real (hasta el próximo
+    // múltiplo de 7), escondiendo el salto real de "no existía" a
+    // `opening_balance`.
+    if (i % 7 === 0 || i === 0 || iso === account.openingDate) {
       points.push({ isoDate: iso, value: sign * toMajorUnitsUnsafe(money(running, account.currencyCode as CurrencyCode)) });
     }
   }

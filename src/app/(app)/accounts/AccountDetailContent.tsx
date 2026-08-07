@@ -175,7 +175,21 @@ export function AccountDetailContent({ id }: { id: string }) {
             />
           }
         >
-          <LineChart data={evolution} formatValue={(v) => formatAmountCompact(money(fromMajorUnitsUnsafe(v, account.currencyCode), account.currencyCode), { showSign: false })} />
+          {/* Tarjeta de crédito: `evolution` ya viene invertida (D66,
+              `computeAccountEvolution`) para que la TABLA lea bien —
+              "cero, después el consumo real acumulado" en vez del saldo
+              negativo crudo. El GRÁFICO de línea es otro consumidor con
+              otra necesidad: ahí "cero abajo, el consumo sube" es la
+              lectura intuitiva de una deuda, y una curva que arranca en 0
+              y baja a un valor negativo (que es lo que da graficar
+              `evolution` tal cual, con el signo ya invertido para la
+              tabla) se lee al revés. Un segundo `*-1` sobre esos mismos
+              puntos, solo para el gráfico, deja el consumo positivo y
+              subiendo — la tabla no se toca. */}
+          <LineChart
+            data={isCreditCard ? evolution.map((p) => ({ ...p, value: -p.value })) : evolution}
+            formatValue={(v) => formatAmountCompact(money(fromMajorUnitsUnsafe(v, account.currencyCode), account.currencyCode), { showSign: false })}
+          />
         </ChartCard>
       ) : null}
 
