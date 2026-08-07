@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.61] — 2026-08-07
+
+### Cambiado — Ajustes separado en Datos vs. Visual
+
+`/more/settings` mezclaba en la misma columna cosas que cambian un cálculo (moneda base,
+cotizaciones, separador decimal, formato de fecha, inicio de semana, día de cierre) con cosas
+puramente estéticas (idioma, tema, cuarto acceso del tab bar, fondo de puntos) — el criterio de
+agrupación anterior era "regional/moneda" vs "app y apariencia", que dejaba idioma del lado
+"regional" cuando en realidad no toca ningún cálculo. Dos secciones con encabezado propio,
+Datos y Visual, mismo criterio que separa el resto de la app entre lo que cambia un número y
+lo que solo cambia cómo se ve.
+
 ## [0.29.60] — 2026-08-07
 
 ### Nuevo — Ajustes → Formato: qué día arranca la semana

@@ -189,11 +189,64 @@ export default function SettingsPage() {
         style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12 }}
       >
         {/* `lg`+: se agrupa por afinidad real en vez de una sola lista
-            plana de 12 filas — regional/moneda a la izquierda, app y
-            apariencia a la derecha. Cada fila se queda con su nota/caption
+            plana de 12 filas — Datos a la izquierda (todo lo que cambia CÓMO
+            se leen/calculan los números y fechas de esta instancia), Visual
+            a la derecha (idioma, tema, el resto de apariencia — nada de eso
+            toca un cálculo). Cada fila se queda con su nota/caption
             condicional pegada abajo, como ya estaba. */}
         <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <section>
+            <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>{t("settingsPage.dataSection")}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <ListRow
+                icon="wallet"
+                label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
+                value={household.baseCurrency}
+                variant="value"
+                onClick={() => setBaseCurrencySheetOpen(true)}
+              />
+              {hasTransactions ? (
+                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
+              ) : null}
+              {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
+              <ListRow
+                icon="globe"
+                label={t("settingsPage.decimalSeparator")}
+                value={decimalSeparatorExample(decimalSeparatorPref, localeDecimalSeparator)}
+                variant="value"
+                onClick={() => setDecimalSheetOpen(true)}
+              />
+              <ListRow
+                icon="calendar"
+                label={t("settingsPage.dateFormat")}
+                value={formatNumericDate(locale, new Date(), dateFormatPref)}
+                variant="value"
+                onClick={() => setDateFormatSheetOpen(true)}
+              />
+              <ListRow
+                icon="calendar"
+                label={t("settingsPage.weekStart")}
+                value={t(`settingsPage.weekStartOptions.${weekStartPref}`)}
+                variant="value"
+                onClick={() => setWeekStartSheetOpen(true)}
+              />
+              <ListRow
+                icon="calendar"
+                label={t("settingsPage.closeDay")}
+                value={String(household.periodStartDay)}
+                variant="value"
+                disabled={!isOwnerOrAdmin}
+                onClick={() => isOwnerOrAdmin && setCloseDaySheetOpen(true)}
+              />
+              {!isOwnerOrAdmin ? (
+                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
+              ) : null}
+            </div>
+          </section>
+
+          <section>
+            <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>{t("settingsPage.visualSection")}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <ListRow
               icon="globe"
               label={t("morePage.language")}
@@ -202,41 +255,6 @@ export default function SettingsPage() {
               disabled={localePending}
               onClick={() => setLanguageSheetOpen(true)}
             />
-            <ListRow
-              icon="wallet"
-              label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
-              value={household.baseCurrency}
-              variant="value"
-              onClick={() => setBaseCurrencySheetOpen(true)}
-            />
-            {hasTransactions ? (
-              <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
-            ) : null}
-            {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
-            <ListRow
-              icon="globe"
-              label={t("settingsPage.decimalSeparator")}
-              value={decimalSeparatorExample(decimalSeparatorPref, localeDecimalSeparator)}
-              variant="value"
-              onClick={() => setDecimalSheetOpen(true)}
-            />
-            <ListRow
-              icon="calendar"
-              label={t("settingsPage.dateFormat")}
-              value={formatNumericDate(locale, new Date(), dateFormatPref)}
-              variant="value"
-              onClick={() => setDateFormatSheetOpen(true)}
-            />
-            <ListRow
-              icon="calendar"
-              label={t("settingsPage.weekStart")}
-              value={t(`settingsPage.weekStartOptions.${weekStartPref}`)}
-              variant="value"
-              onClick={() => setWeekStartSheetOpen(true)}
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <ListRow
               icon="eye"
               label={t("profilePage.theme")}
@@ -251,17 +269,6 @@ export default function SettingsPage() {
               variant="value"
               onClick={() => setTabSheetOpen(true)}
             />
-            <ListRow
-              icon="calendar"
-              label={t("settingsPage.closeDay")}
-              value={String(household.periodStartDay)}
-              variant="value"
-              disabled={!isOwnerOrAdmin}
-              onClick={() => isOwnerOrAdmin && setCloseDaySheetOpen(true)}
-            />
-            {!isOwnerOrAdmin ? (
-              <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
-            ) : null}
             <ListRow
               icon="list"
               label={t("settingsPage.backdrop")}
@@ -284,7 +291,8 @@ export default function SettingsPage() {
                 />
               </>
             ) : null}
-          </div>
+            </div>
+          </section>
         </div>
       </div>
 

@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.61 — 7 de agosto de 2026
+
+### Mejorado
+
+- Ajustes se reorganiza en dos secciones: Datos (moneda, cotizaciones, formatos, cierre de
+  período) y Visual (idioma, tema, apariencia).
+
 ## 0.29.60 — 7 de agosto de 2026
 
 ### Nuevo

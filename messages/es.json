@@ -1437,6 +1437,8 @@
   "categoryDeletedWithChildren": "\"{name}\" y sus {count, plural, one {# subcategoría} other {# subcategorías}}, borradas"
  },
  "settingsPage": {
+  "dataSection": "Datos",
+  "visualSection": "Visual",
   "yourCurrency": "Tu moneda",
   "baseCurrency": "Moneda base",
   "fourthTab": "Cuarto acceso del menú",

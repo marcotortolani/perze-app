@@ -1437,6 +1437,8 @@
   "categoryDeletedWithChildren": "\"{name}\" e suas {count, plural, one {# subcategoria} other {# subcategorias}}, excluídas"
  },
  "settingsPage": {
+  "dataSection": "Dados",
+  "visualSection": "Visual",
   "yourCurrency": "Sua moeda",
   "baseCurrency": "Moeda base",
   "fourthTab": "Quarto atalho do menu",
