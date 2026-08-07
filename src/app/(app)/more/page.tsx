@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { useNavStore } from "@/stores/nav-store";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
@@ -41,6 +42,7 @@ export default function MorePage() {
   const { conflicts } = useConflicts(household?.id);
   const ownAccess = useOwnAccess();
   const pendingAccessRequests = usePendingAccessRequestsCount();
+  const fourthTab = useNavStore((s) => s.fourthTab);
   const modules = household?.enabledModules ?? [];
   const [signOutSheet, setSignOutSheet] = useState<"none" | "confirm" | "signing-out">("none");
   const [unsyncedCount, setUnsyncedCount] = useState(0);
@@ -99,12 +101,21 @@ export default function MorePage() {
           <section>
             <div style={CAPTION_STYLE}>{t("morePage.money")}</div>
             <Card padding="4px 16px">
-              <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} />
-              {modules.includes("budgets") ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
+              {/* Analysis/Accounts/Investments/Budgets son los cuatro
+                  candidatos al 4to slot del tab bar (`FourthTab`,
+                  `nav-store.ts`). El que está puesto ahí no se repite acá,
+                  y el que se sacó SIEMPRE tiene que reaparecer — antes
+                  Accounts/Investments/Budgets se mostraban sin chequear
+                  `fourthTab` (se duplicaban) y Analysis no tenía fila
+                  propia en ningún lado (desaparecía del todo al dejar de
+                  ser el 4to tab). */}
+              {fourthTab !== "analytics" ? <ListRow icon="chart" label={t("nav.analysis")} onClick={() => router.push("/analytics")} /> : null}
+              {fourthTab !== "accounts" ? <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} /> : null}
+              {modules.includes("budgets") && fourthTab !== "budgets" ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
               {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => router.push("/goals")} /> : null}
               {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}
               {modules.includes("debts") ? <ListRow icon="handshake" label={t("morePage.debts")} onClick={() => router.push("/debts")} /> : null}
-              {modules.includes("investments") ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
+              {modules.includes("investments") && fourthTab !== "investments" ? <ListRow icon="invest" label={t("nav.investments")} onClick={() => router.push("/investments")} /> : null}
               <ListRow icon="square-half" label={t("morePage.categories")} onClick={() => router.push("/more/categories")} />
               <ListRow icon="tag" label={t("morePage.tagsAndPayees")} onClick={() => router.push("/more/tags")} />
               <ListRow icon="refresh" label={t("morePage.rules")} onClick={() => router.push("/more/rules")} />

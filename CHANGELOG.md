@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.52] — 2026-08-06
+
+### Arreglado — More (mobile): el módulo sacado del 4to tab desaparecía, y el que quedó puesto se duplicaba
+
+El tab bar tiene 4 candidatos posibles para su 4ta posición (`FourthTab` en `nav-store.ts`:
+analytics/accounts/investments/budgets). El menú "More" (`src/app/(app)/more/page.tsx`) tenía
+filas fijas e incondicionales para Accounts/Investments/Budgets que no chequeaban si ese módulo
+ya estaba en el tab bar — así que elegirlo como 4to tab lo duplicaba (tab bar + More). Analysis
+no tenía ninguna fila propia en More — su única puerta de entrada era el tab bar, así que en
+cuanto dejaba de ser el 4to tab desaparecía del todo, no reaparecía en ningún lado. Ahora las
+cuatro filas candidatas leen `fourthTab` (`useNavStore`) y se ocultan exactamente cuando esa es
+la elegida — el que se saca del tab bar siempre reaparece en More, el que queda puesto nunca se
+repite. Se agregó la fila de Analysis, que no existía.
+
 ## [0.29.51] — 2026-08-06
 
 ### Arreglado — Detalle de transacción: tipo de cambio ilegible ("1 ARS = 0,000506072874 USD")

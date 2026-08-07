@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.52 — 6 de agosto de 2026
+
+### Arreglado
+
+- En el menú "Más" de mobile, cambiar qué función ocupa la cuarta posición de la barra de
+  navegación (en Ajustes) ya no hace que esa función desaparezca del menú ni que la anterior
+  quede duplicada.
+
 ## 0.29.51 — 6 de agosto de 2026
 
 ### Arreglado
