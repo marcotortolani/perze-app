@@ -811,6 +811,9 @@
  },
  "adminPage": {
   "title": "Panel del operador",
+  "manageUsers": "Gestionar usuarios",
+  "manageUsersMeta": "Solicitudes pendientes y listado completo",
+  "usersPageTitle": "Usuarios",
   "pendingSectionTitle": "Solicitudes pendientes",
   "pendingEmpty": "No hay solicitudes esperando aprobación.",
   "pendingLoadError": "No pudimos cargar las solicitudes pendientes.",

@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.56] — 2026-08-07
+
+### Arreglado — Un operador podía deshabilitarse a sí mismo o a otro operador
+
+Bug real reportado: `mjtorto@gmail.com`, con `is_app_admin = true`, se veía a sí mismo en "Todos
+los usuarios" con el botón "Deshabilitar acceso" disponible — y nada del lado servidor lo
+impedía salvo el caso de auto-modificación, que `admin_set_access_status()` ya bloqueaba.
+Ningún operador debería poder deshabilitar a otro operador, ni verse a sí mismo con esa opción.
+
+Cerrado en las dos puntas (migración `20260807141354_admin_protect_admin_rows.sql`):
+`admin_list_access_requests()` ahora devuelve `is_app_admin` por fila, y el cliente
+(`AdminUsersPage`) oculta el botón cuando `isAppAdmin` es `true` — self o no. Del lado servidor,
+`admin_set_access_status()` rechaza cualquier intento de cambiar el estado de una fila con
+`is_app_admin = true`, por si se invoca la RPC a mano. `CREATE OR REPLACE FUNCTION` no admite
+agregar una columna a un `RETURNS TABLE` — la migración usa `DROP FUNCTION` + `CREATE FUNCTION`
+y vuelve a otorgar el `GRANT` que el `DROP` se lleva puesto.
+
+De paso, un segundo bug encontrado al verificar el fix manualmente: `admin_list_access_requests()`
+nunca había funcionado — `auth.users.email` es `character varying(255)`, y `RETURN QUERY` exige
+coincidencia exacta de tipo contra `RETURNS TABLE`, no solo asignabilidad. PostgREST devolvía
+42804 en cada llamada y "Todos los usuarios" jamás cargó una fila. Corregido con un cast
+explícito (`u.email::text`) en la migración `20260807142556_admin_list_access_requests_email_cast.sql`.
+
+### Cambiado — Listado de usuarios separado del panel de métricas
+
+"Solicitudes pendientes" y "Todos los usuarios" se mudan de `/more/admin` a una pantalla nueva,
+`/more/admin/users`, con un link de acceso ("Gestionar usuarios") desde el panel. `/more/admin`
+queda solo con Métricas, Actividad, Por país, Por rango etario y Notificaciones — mezclar
+acciones sobre cuentas con las métricas de la instancia hacía la pantalla más larga de lo que
+tenía que ser.
+
 ## [0.29.55] — 2026-08-07
 
 ### Arreglado — PWA offline: `/add` caía a la pantalla de "sin conexión" tras un cierre completo

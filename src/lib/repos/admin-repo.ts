@@ -9,6 +9,8 @@ export interface AccessRequest {
   accessStatus: AccessStatus;
   accessRequestedAt: string;
   lastSeenAt: string | null;
+  /** Operador de la instancia — nunca se ofrece deshabilitar a otro operador ni a uno mismo, ver `admin_set_access_status()`. */
+  isAppAdmin: boolean;
 }
 
 export interface AdminMetrics {
@@ -45,6 +47,7 @@ export const adminRepo = {
       accessStatus: row.access_status as AccessStatus,
       accessRequestedAt: row.access_requested_at,
       lastSeenAt: row.last_seen_at,
+      isAppAdmin: row.is_app_admin,
     }));
   },
 

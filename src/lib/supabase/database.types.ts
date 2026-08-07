@@ -2814,6 +2814,7 @@ export type Database = {
           country: string
           display_name: string
           email: string
+          is_app_admin: boolean
           last_seen_at: string
           profile_id: string
         }[]

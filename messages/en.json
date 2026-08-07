@@ -811,6 +811,9 @@
  },
  "adminPage": {
   "title": "Operator panel",
+  "manageUsers": "Manage users",
+  "manageUsersMeta": "Pending requests and full list",
+  "usersPageTitle": "Users",
   "pendingSectionTitle": "Pending requests",
   "pendingEmpty": "No requests waiting for approval.",
   "pendingLoadError": "We couldn't load the pending requests.",
