@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.72 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Nuevo recurrente" había quedado sin poder deslizarse hacia abajo en el celular después del
+  cambio anterior — ya se puede scrollear normal.
+
 ## 0.29.71 — 7 de agosto de 2026
 
 ### Arreglado

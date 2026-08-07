@@ -6,6 +6,23 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.72] — 2026-08-07
+
+### Corregido — "Nuevo recurrente" no scrolleaba después de sacarla de `(app)/`
+
+Efecto secundario de la 0.29.71: `overscroll-behavior: none` estaba en `html, body` sin
+condición (para evitar que el scroll de `.app-shell-main` rebote el documento en PWA
+standalone), mientras que el `overflow: hidden` que lo acompaña sí estaba acotado a
+`:has(.app-shell)`. Mientras "Nuevo recurrente" vivió adentro de `(app)/`, nunca importó —
+ahí el documento no scrollea nunca, así que la propiedad no tenía nada que romper. Al moverla
+a `ScreenShell` (0.29.71), pasó a depender del scroll nativo del documento, y algunas
+versiones de WebKit tratan `overscroll-behavior: none` en `<body>` como "no hay nada legítimo
+que scrollear acá" en vez de solo "no rebotes en el límite" — bloqueando el gesto táctil por
+completo, aunque el scroll programático (`window.scrollTo`) seguía funcionando (por eso no lo
+agarré probando en Chrome desktop). Se mueve `overscroll-behavior: none` adentro de la regla
+`:has(.app-shell)`, junto al `overflow: hidden` que ya estaba ahí — ambos existen por el mismo
+motivo y tienen el mismo alcance real.
+
 ## [0.29.71] — 2026-08-07
 
 ### Corregido — "Nuevo recurrente" vivía adentro de `(app)/` por error: la causa raíz de las 4 rondas anteriores

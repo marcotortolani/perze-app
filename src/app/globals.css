@@ -640,24 +640,27 @@ html[data-backdrop-intensity="vivid"] {
   body {
     margin: 0;
     padding: 0;
-    /* PWA en standalone (iOS "black-translucent"): sin esto, el gesto de
-       scroll dentro de `.app-shell-main` también rebota el documento
-       entero — arrastra el header y el tab bar, que son hermanos en
-       flujo del scroller, no contenido suyo. `.app-shell` ya scrollea su
-       propio contenido con `overflow-y: auto`, así que el documento en sí
-       no tiene nada legítimo que scrollear. */
-    overscroll-behavior: none;
   }
   /* Acotado a rutas con el shell de `(app)/` (`:has(.app-shell)`): ahí el
      documento nunca debe scrollear — `.app-shell` ya tiene su
      `height: 100dvh; overflow: hidden` y su propio scroller interno. Las
      pantallas full-screen fuera de ese grupo (onboarding, `/add`,
      `ScreenShell`) siguen usando el scroll nativo del documento como
-     siempre. */
+     siempre.
+     `overscroll-behavior: none` va ACÁ ADENTRO, no suelto en `html, body`
+     de arriba — es para que el gesto de scroll de `.app-shell-main` no
+     rebote el documento entero (PWA standalone, iOS "black-translucent");
+     un problema que solo existe cuando `.app-shell` está en la página.
+     Suelto e incondicional rompía el scroll táctil nativo en las
+     pantallas de `ScreenShell` (confirmado en `/recurring/new`): algunas
+     versiones de WebKit tratan `overscroll-behavior: none` en `<body>`
+     como "no hay nada que scrollear acá", no solo "no rebotes en el
+     límite" — y esas pantallas SÍ tienen algo legítimo que scrollear. */
   html:has(.app-shell),
   body:has(.app-shell) {
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
   }
   body {
     background: var(--page);
