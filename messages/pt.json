@@ -1546,6 +1546,8 @@
   "confirmPrompt": "Repita para confirmar",
   "mismatch": "Não confere — tente de novo",
   "pinSet": "PIN ativado",
+  "disablePrompt": "Digite seu PIN para desativá-lo",
+  "pinDisabled": "PIN desativado",
   "biometricLock": "Desbloqueio biométrico",
   "biometricLockDescription": "Usar Face ID, digital ou outro sensor do dispositivo em vez do PIN",
   "biometricEnabled": "Desbloqueio biométrico ativado",

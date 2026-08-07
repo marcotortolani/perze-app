@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.64 — 7 de agosto de 2026
+
+### Arreglado
+
+- Ahora hace falta el PIN para desactivar el bloqueo por PIN — antes cualquiera con tu
+  teléfono desbloqueado podía apagar la protección sin conocerlo.
+
 ## 0.29.62 — 7 de agosto de 2026
 
 ### Arreglado

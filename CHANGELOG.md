@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.64] — 2026-08-07
+
+### Corregido — desactivar el bloqueo por PIN no pedía el PIN
+
+Apagar el switch de "Bloqueo por PIN" en `/more/security` llamaba `disable()` directo, sin
+verificar nada — cualquiera con el teléfono desbloqueado podía sacar la protección sin conocer
+el PIN. Se agrega un cuarto paso al flujo (`"disable"`, junto a `"create"`/`"confirm"`) que pide
+el PIN vigente y solo llama `disable()` si `usePinStore().verify()` da `true`. Reusa el mismo
+`PinKeypad` y el mismo criterio de bloqueo de `PinGate`/`LockScreen` — 3 intentos errados
+seguidos disparan la espera de 30s ya existente en el store (`lockoutSecondsRemaining()`),
+nunca borra nada.
+
 ## [0.29.63] — 2026-08-07
 
 ### Corregido — "By age range" en el panel de operador no mostraba nada

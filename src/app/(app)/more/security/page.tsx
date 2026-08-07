@@ -20,13 +20,18 @@ export default function SecurityPage() {
   const enabled = usePinStore((s) => s.enabled);
   const setPin = usePinStore((s) => s.setPin);
   const disable = usePinStore((s) => s.disable);
+  const verify = usePinStore((s) => s.verify);
+  const lockedUntil = usePinStore((s) => s.lockedUntil);
+  const lockoutSecondsRemaining = usePinStore((s) => s.lockoutSecondsRemaining);
   const biometricEnabled = usePinStore((s) => s.biometricEnabled);
   const enableBiometric = usePinStore((s) => s.enableBiometric);
   const disableBiometric = usePinStore((s) => s.disableBiometric);
-  const [step, setStep] = useState<"idle" | "create" | "confirm">("idle");
+  const [step, setStep] = useState<"idle" | "create" | "confirm" | "disable">("idle");
   const [firstPin, setFirstPin] = useState("");
   const [pin, setPinDigits] = useState("");
   const [mismatch, setMismatch] = useState(false);
+  const [disableError, setDisableError] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [biometricSupported, setBiometricSupported] = useState(false);
   const [enrollingBiometric, setEnrollingBiometric] = useState(false);
   usePageHeader({ title: t("securityPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
@@ -35,22 +40,42 @@ export default function SecurityPage() {
     void isBiometricAvailable().then(setBiometricSupported);
   }, []);
 
+  // Mismo criterio de espera que `PinGate`/`LockScreen`: mientras dura el
+  // bloqueo de 3 intentos, el keypad no dibuja teclas — el tick solo corre
+  // durante el paso de desactivación, no todo el tiempo que la pantalla
+  // está montada. El valor inicial se lee al entrar a este paso (en
+  // `handleToggle`), no acá, para no llamar `setState` de forma síncrona
+  // dentro del cuerpo del efecto.
+  useEffect(() => {
+    if (step !== "disable") return;
+    const interval = setInterval(() => setLockoutSeconds(lockoutSecondsRemaining()), 1000);
+    return () => clearInterval(interval);
+  }, [step, lockedUntil, lockoutSecondsRemaining]);
+
   const handleToggle = (on: boolean) => {
     if (on) {
       setStep("create");
       setPinDigits("");
       setMismatch(false);
     } else {
-      disable();
+      // No cualquiera con el teléfono desbloqueado puede apagar la
+      // protección: hace falta el PIN correcto, mismo gate que pedirlo
+      // desbloquea la app — `disable()` recién se llama si `verify()` da ok.
+      setStep("disable");
+      setPinDigits("");
+      setDisableError(false);
+      setLockoutSeconds(lockoutSecondsRemaining());
     }
   };
 
   const handleKey = async (key: string) => {
-    // El mensaje de "no coinciden" se limpia apenas se toca una tecla, no
-    // solo con backspace — antes quedaba pegado en pantalla durante todo
-    // el reintento (el usuario ya estaba tipeando de nuevo y seguía
-    // viendo el error de la vez anterior, como si algo siguiera mal).
+    if (step === "disable" && lockoutSeconds > 0) return;
+    // El mensaje de "no coinciden"/"incorrecto" se limpia apenas se toca
+    // una tecla, no solo con backspace — antes quedaba pegado en pantalla
+    // durante todo el reintento (el usuario ya estaba tipeando de nuevo y
+    // seguía viendo el error de la vez anterior, como si algo siguiera mal).
     setMismatch(false);
+    setDisableError(false);
     if (key === "backspace") {
       setPinDigits((p) => p.slice(0, -1));
       return;
@@ -59,6 +84,21 @@ export default function SecurityPage() {
     const next = pin + key;
     setPinDigits(next);
     if (next.length !== PIN_LENGTH) return;
+
+    if (step === "disable") {
+      const ok = await verify(next);
+      if (ok) {
+        disable();
+        setStep("idle");
+        setPinDigits("");
+        toast(t("securityPage.pinDisabled"));
+      } else {
+        setDisableError(true);
+        setPinDigits("");
+        setLockoutSeconds(lockoutSecondsRemaining());
+      }
+      return;
+    }
 
     if (step === "create") {
       setFirstPin(next);
@@ -123,10 +163,17 @@ export default function SecurityPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
             <p className="t-body" style={{ margin: 0, color: "var(--text-primary)", textAlign: "center" }}>
-              {step === "create" ? t("securityPage.createPrompt") : t("securityPage.confirmPrompt")}
+              {step === "create" ? t("securityPage.createPrompt") : step === "confirm" ? t("securityPage.confirmPrompt") : t("securityPage.disablePrompt")}
             </p>
             {mismatch ? <p style={{ margin: 0, fontSize: 13, color: "var(--critical)" }}>{t("securityPage.mismatch")}</p> : null}
-            <PinKeypad length={pin.length} maxLength={PIN_LENGTH} onKey={handleKey} style={{ width: "100%", maxWidth: 320 }} />
+            {step === "disable" && lockoutSeconds > 0 ? (
+              <p style={{ margin: 0, fontSize: 13, color: "var(--critical)", textAlign: "center", maxWidth: "32ch" }}>{t("ds.lockScreen.lockedOut", { seconds: lockoutSeconds })}</p>
+            ) : step === "disable" && disableError ? (
+              <p style={{ margin: 0, fontSize: 13, color: "var(--critical)" }}>{t("ds.lockScreen.wrongPin")}</p>
+            ) : null}
+            {step === "disable" && lockoutSeconds > 0 ? null : (
+              <PinKeypad length={pin.length} maxLength={PIN_LENGTH} onKey={handleKey} style={{ width: "100%", maxWidth: 320 }} />
+            )}
           </div>
         )}
       </div>

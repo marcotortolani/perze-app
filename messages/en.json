@@ -1546,6 +1546,8 @@
   "confirmPrompt": "Enter it again to confirm",
   "mismatch": "Doesn't match — try again",
   "pinSet": "PIN turned on",
+  "disablePrompt": "Enter your PIN to turn it off",
+  "pinDisabled": "PIN turned off",
   "biometricLock": "Biometric unlock",
   "biometricLockDescription": "Use Face ID, fingerprint, or another device sensor instead of the PIN",
   "biometricEnabled": "Biometric unlock turned on",
