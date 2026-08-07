@@ -1939,7 +1939,9 @@
   "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar."
  },
  "allocationPage": {
-  "title": "Asignación"
+  "title": "Asignación",
+  "intensityLess": "Menos peso",
+  "intensityMore": "Más peso"
  },
  "performancePage": {
   "title": "Rendimiento",

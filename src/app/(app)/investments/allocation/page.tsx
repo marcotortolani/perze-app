@@ -11,6 +11,7 @@ import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useElementSize } from "@/hooks/use-element-size";
 import { computePositions } from "@/lib/analytics/positions";
 import { squarify } from "@/lib/layout/treemap";
+import { heatMixPercent } from "@/features/movements/calendar-scope";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
@@ -136,6 +137,12 @@ export default function AllocationPage() {
 
   const nodes = squarify(blocks, (b) => Number(b.baseValue), treemapWidth, treemapHeight);
   const featuredId = nodes[0]?.item.instrumentId;
+  // Mismo rango secuencial que el heatmap del calendario de Transactions
+  // (`heatMixPercent` + `color-mix(in srgb, var(--data-1) X%, var(--surface-1))`,
+  // `TransactionsMonthCalendar.tsx`) — acá el "total del mes" de ese
+  // heatmap es el peso del bloque más grande del portfolio, así que la
+  // posición más pesada siempre toca el techo de intensidad.
+  const maxBaseValue = Math.max(...blocks.map((b) => Number(b.baseValue)));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -173,6 +180,7 @@ export default function AllocationPage() {
           const compact = rect.width < COMPACT_WIDTH || rect.height < COMPACT_HEIGHT;
           const w = Math.max(0, rect.width - BLOCK_GAP);
           const h = Math.max(0, rect.height - BLOCK_GAP);
+          const mixPercent = heatMixPercent(block.baseValue, maxBaseValue);
           return (
             <button
               key={block.instrumentId}
@@ -188,7 +196,7 @@ export default function AllocationPage() {
                 textAlign: "left",
                 cursor: "pointer",
                 overflow: "hidden",
-                background: "var(--surface-1)",
+                background: mixPercent > 0 ? `color-mix(in srgb, var(--data-1) ${Math.round(mixPercent)}%, var(--surface-1))` : "var(--surface-1)",
                 borderRadius: "var(--radius-card)",
                 padding: compact ? 8 : 16,
                 border: 0,
@@ -197,8 +205,15 @@ export default function AllocationPage() {
                 justifyContent: compact ? "center" : "flex-start",
               }}
             >
+              {/* Mismo techo de intensidad (70%) que el heatmap del
+                  calendario — ahí ya se probó que `--text-primary` se lee
+                  bien contra el `--data-1` más saturado, así que las tres
+                  líneas del bloque usan ese mismo token en vez de
+                  secundario/muted (que perdían contraste a intensidad
+                  alta). La jerarquía entre líneas queda en tamaño/peso, no
+                  en gris. */}
               {!compact ? (
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {block.assetClassName}
                 </div>
               ) : null}
@@ -212,7 +227,7 @@ export default function AllocationPage() {
                   marginTop: compact ? 0 : 6,
                   fontSize: compact ? 11 : 12,
                   fontWeight: compact ? 600 : 400,
-                  color: compact ? "var(--text-primary)" : "var(--text-muted)",
+                  color: "var(--text-primary)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -221,13 +236,27 @@ export default function AllocationPage() {
                 {compact ? block.symbol : `${block.symbol} · ${formatNumber(block.weightPct, 1)}%`}
               </div>
               {compact ? (
-                <div style={{ fontSize: 10, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 10, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {formatNumber(block.weightPct, 1)}%
                 </div>
               ) : null}
             </button>
           );
         })}
+      </div>
+
+      {/* Leyenda — mismo motivo que la del calendario: un heatmap sin
+          escala no se puede leer, el color codifica el peso dentro del
+          portfolio y no hay forma de saber qué significa un tono
+          intermedio sin esto. */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, marginTop: 12, flexShrink: 0 }}>
+        <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+          {t("allocationPage.intensityLess")}
+        </span>
+        <div aria-hidden="true" style={{ width: 64, height: 8, borderRadius: 4, background: "linear-gradient(90deg, var(--surface-1), var(--data-1))" }} />
+        <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+          {t("allocationPage.intensityMore")}
+        </span>
       </div>
     </div>
   );

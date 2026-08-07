@@ -1939,7 +1939,9 @@
   "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."
  },
  "allocationPage": {
-  "title": "Allocation"
+  "title": "Allocation",
+  "intensityLess": "Less weight",
+  "intensityMore": "More weight"
  },
  "performancePage": {
   "title": "Performance",

@@ -211,6 +211,19 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
 
   const instrumentTrades = trades.filter((tr) => tr.instrumentId === instrumentId).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
 
+  // D61b — mismo patrón que Transactions (D1): la fecha vive en la cabecera
+  // del grupo del día, no repetida en cada fila. Antes iba adentro del
+  // `meta` de cada operación junto con cantidad × precio y esa línea
+  // envolvía a dos renglones en vez de uno — `instrumentTrades` ya viene
+  // ordenado desc por `executedAt`, así que agrupar consecutivos alcanza.
+  const tradesByDay: { day: string; trades: typeof instrumentTrades }[] = [];
+  for (const tr of instrumentTrades) {
+    const day = tr.executedAt.slice(0, 10);
+    const lastGroup = tradesByDay[tradesByDay.length - 1];
+    if (lastGroup && lastGroup.day === day) lastGroup.trades.push(tr);
+    else tradesByDay.push({ day, trades: [tr] });
+  }
+
   const handleSaveManual = async () => {
     if (!manualPrice.trim() || saving) return;
     setSaving(true);
@@ -394,32 +407,41 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
           <EmptyState message={t("instrumentDetailPage.noHistory")} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {instrumentTrades.map((tr) => (
-              // D54 — mismo gesto que Transactions (D1): swipe izquierda
-              // borra (con su propia confirmación en la fila), swipe
-              // derecha edita. El tap normal en la fila sigue sin hacer
-              // nada acá — a diferencia de Transactions, esta lista no
-              // tiene un detalle propio por operación, solo editar/borrar.
-              <SwipeableRow
-                key={tr.id}
-                onSwipeLeftCommit={() => handleDeleteTrade(tr.id)}
-                onSwipeRightCommit={() => router.push(`/investments/${portfolioId}/trades/${tr.id}/edit`)}
-                confirmLabel={t("instrumentDetailPage.confirmDeleteTrade")}
-                confirmActionLabel={t("common.delete")}
-              >
-                <ListRow
-                  icon={tr.kind === "buy" ? "plus" : "minus"}
-                  label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
-                  // D61 — mismo formato de fecha que Transactions (día abreviado
-                  // a 3 letras) y precio unitario SIN abreviar: `formatAmountCompact`
-                  // redondeaba a "K"/"M" un precio en pesos de varios dígitos
-                  // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
-                  // que esta línea existe para mostrar completo.
-                  meta={`${formatDateMedium(locale, new Date(tr.executedAt))} · ${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
-                  variant="value"
-                  value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
-                />
-              </SwipeableRow>
+            {tradesByDay.map(({ day, trades: dayTrades }) => (
+              <div key={day}>
+                {/* D61b — cabecera de día, mismo patrón que Transactions
+                    (D1): la fecha vive acá, una sola vez por grupo, no
+                    repetida en cada fila. */}
+                <div style={{ padding: "16px 0 6px" }}>
+                  <span className="t-label" style={{ color: "var(--text-secondary)" }}>{formatDateMedium(locale, new Date(dayTrades[0]!.executedAt))}</span>
+                </div>
+                {dayTrades.map((tr) => (
+                  // D54 — mismo gesto que Transactions (D1): swipe izquierda
+                  // borra (con su propia confirmación en la fila), swipe
+                  // derecha edita. El tap normal en la fila sigue sin hacer
+                  // nada acá — a diferencia de Transactions, esta lista no
+                  // tiene un detalle propio por operación, solo editar/borrar.
+                  <SwipeableRow
+                    key={tr.id}
+                    onSwipeLeftCommit={() => handleDeleteTrade(tr.id)}
+                    onSwipeRightCommit={() => router.push(`/investments/${portfolioId}/trades/${tr.id}/edit`)}
+                    confirmLabel={t("instrumentDetailPage.confirmDeleteTrade")}
+                    confirmActionLabel={t("common.delete")}
+                  >
+                    <ListRow
+                      icon={tr.kind === "buy" ? "plus" : "minus"}
+                      label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
+                      // D61 — precio unitario SIN abreviar: `formatAmountCompact`
+                      // redondeaba a "K"/"M" un precio en pesos de varios dígitos
+                      // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
+                      // que esta línea existe para mostrar completo.
+                      meta={`${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
+                      variant="value"
+                      value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                    />
+                  </SwipeableRow>
+                ))}
+              </div>
             ))}
           </div>
         )}

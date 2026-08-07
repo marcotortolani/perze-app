@@ -1939,7 +1939,9 @@
   "savedPendingFx": "Salvo sem cotação — resolve sozinho ao reconectar."
  },
  "allocationPage": {
-  "title": "Alocação"
+  "title": "Alocação",
+  "intensityLess": "Menos peso",
+  "intensityMore": "Mais peso"
  },
  "performancePage": {
   "title": "Rendimento",

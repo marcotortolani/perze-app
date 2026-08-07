@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.50 — 6 de agosto de 2026
+
+### Mejorado
+
+- En Asignación de Inversiones, cada bloque ahora se pinta más o menos intenso según su peso
+  en la cartera — el mismo tipo de escala de color que ya usa el calendario de Movimientos.
+- En el historial de operaciones de una posición, la fecha ahora aparece una sola vez por
+  día en vez de repetirse en cada operación, para que la cantidad y el precio entren en una
+  sola línea.
+
 ## 0.29.48 — 6 de agosto de 2026
 
 ### Mejorado

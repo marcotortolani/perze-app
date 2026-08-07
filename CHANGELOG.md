@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.50] — 2026-08-06
+
+### Mejorado — Allocation: rango de color secuencial por peso, mismo que el heatmap de Transactions
+
+El treemap de D73 pintaba todos los bloques con el mismo `--surface-1` plano — el tamaño ya
+codificaba el peso, pero nada distinguía visualmente una posición del 40% de una del 5% más allá
+del área. Ahora reusa `heatMixPercent` (`src/features/movements/calendar-scope.ts`, la misma
+función que ya usa `TransactionsMonthCalendar` para el heatmap del calendario) para mezclar
+`--data-1` sobre `--surface-1` en `color-mix()`, con el peso del bloque más grande del portfolio
+como "máximo" en vez del máximo del mes. Mismo techo de intensidad (70%) y misma escala no lineal
+(raíz cuadrada, para no aplastar contra el piso las posiciones chicas). Las tres líneas de texto
+de cada bloque pasan de `text-secondary`/`text-muted` a `text-primary` — a esa intensidad los
+grises perdían contraste contra el violeta, y la jerarquía entre líneas queda en tamaño/peso en
+vez de en gris. Nueva leyenda al pie (mismo patrón que la del calendario: "menos peso" ·
+degradado · "más peso"), porque un heatmap sin escala no se puede leer.
+
+### Arreglado — Historial de operaciones de una posición: la fecha volvía a envolver la fila a dos líneas
+
+D61 ya había acortado la fecha a 3 letras, pero seguía viviendo adentro del mismo `meta` que la
+cantidad y el precio unitario ("jue, 6 ago · 14 × AR$ 24.661,00") — con un precio de varios
+dígitos esa línea seguía sin entrar y envolvía a dos renglones. Mismo patrón que ya usa
+Transactions (D1): la fecha pasa a ser la cabecera del grupo de operaciones de ESE día
+(`instrumentTrades`, ya ordenado desc por `executedAt`, se agrupa por día consecutivo), y cada
+fila de operación queda solo con cantidad × precio unitario.
+
 ## [0.29.49] — 2026-08-06
 
 ### Documentación — Paso a paso para activar Finnhub
