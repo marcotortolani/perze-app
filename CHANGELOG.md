@@ -6,6 +6,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.63] — 2026-08-07
+
+### Corregido — "By age range" en el panel de operador no mostraba nada
+
+Reporte del usuario con captura: la sección quedaba vacía pese a que los usuarios aprobados
+tenían `birth_date` cargado (confirmado en `/more/profile`). Causa: `admin_metrics()` había
+perdido el bucket `byAgeRange` — `20260807130849_admin_metrics_disabled_count.sql` (que sumó
+el conteo `disabled`) se escribió `CREATE OR REPLACE` a partir de una copia de la función
+anterior a `20260803010000_admin_age_ranges.sql`, y el reemplazo pisó esa columna en silencio.
+Se restaura `byAgeRange` junto con `disabled` en la misma función.
+
 ## [0.29.62] — 2026-08-07
 
 ### Corregido — el scope switcher también quedaba pegado al borde superior en mobile
