@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.62 — 7 de agosto de 2026
+
+### Arreglado
+
+- El selector Personal/Compartido/Todo ya no queda pegado al borde superior de la pantalla en
+  el celular.
+
 ## 0.29.61 — 7 de agosto de 2026
 
 ### Mejorado

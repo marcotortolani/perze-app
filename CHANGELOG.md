@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.62] — 2026-08-07
+
+### Corregido — el scope switcher también quedaba pegado al borde superior en mobile
+
+D59 (v0.29.29) había arreglado esto solo para desktop (`lg:`, 1024px) porque en ese momento
+"en mobile `--safe-top` ya deja el aire justo del notch". Reporte del usuario con captura: en
+mobile el segmentado Personal/Compartido/Todo seguía pegado, apenas debajo de la isla
+dinámica — `--safe-top` absorbe el notch pero no deja ningún margen propio arriba del
+`AppHeader`, el mismo problema que ya se había diagnosticado para desktop. Se saca el
+`@media (width >= 64rem)` que limitaba el fix: los `+12px` de aire van siempre, en cualquier
+ancho.
+
 ## [0.29.61] — 2026-08-07
 
 ### Cambiado — Ajustes separado en Datos vs. Visual

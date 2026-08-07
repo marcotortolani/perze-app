@@ -934,22 +934,17 @@ html[data-backdrop-intensity="vivid"] {
   overflow: hidden;
   /* Isla dinámica/notch — `viewport-fit: cover` + `black-translucent` hacen
      que `100dvh` cubra la pantalla entera, así que el inset superior se
-     absorbe acá, una sola vez, en vez de en cada `AppHeader`. */
-  padding-top: var(--safe-top);
+     absorbe acá, una sola vez, en vez de en cada `AppHeader`. D59/D87 — el
+     `AppHeader` de 56px con contenido centrado no deja aire propio arriba
+     del scope switcher (Personal/Compartido/Todo): en desktop `--safe-top`
+     vale 0 y quedaba pegado al borde del viewport; en mobile `--safe-top`
+     absorbe el notch pero no deja margen propio arriba del header, así que
+     el mismo pegoteo aparecía ahí también, apenas debajo de la isla
+     dinámica. Los +12px van siempre, en cualquier ancho — antes solo se
+     sumaban en `lg:` (1024px) y mobile quedaba con el bug sin arreglar. */
+  padding-top: calc(var(--safe-top) + 12px);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
-}
-
-/* D59 — en desktop `--safe-top` es 0 (no hay notch) y el `AppHeader` de
-   56px con contenido centrado dejaba apenas ~10px arriba del scope
-   switcher (Personal/Compartido/Todo), pegado al borde del viewport. En
-   mobile no se toca: ahí el header sí necesita quedar pegado arriba,
-   inmediatamente después del safe-area. Mismo breakpoint que el resto del
-   shell (`lg:`, 1024px). */
-@media (width >= 64rem) {
-  .app-shell {
-    padding-top: calc(var(--safe-top) + 12px);
-  }
 }
 @utility app-shell-column {
   display: flex;
