@@ -6,6 +6,46 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.91] — 2026-08-08
+
+### Arreglado — saneamiento de los stores persistidos: versión/migración, TTL de precios y logout
+
+Revisando `localStorage` en DevTools surgió la pregunta de si convenía unificar las 16 keys
+(`perze-*` y `perze:*`) por dominio. La respuesta quedó documentada en el plan de esta rama: no,
+porque 11 de esas keys son el `name` de un `persist()` de Zustand y la granularidad la impone el
+store, no una decisión de diseño — unificarlas obligaría a fusionar stores con consumidores
+disjuntos o a reescribir el storage sobre un engine propio, y además empeoraría el costo real:
+`perze-instrument-prices` se reescribe cada 5–20 minutos, y meterlo en la misma key que los
+ajustes reserializaría preferencias que casi nunca cambian en cada refresh de precios. Lo que la
+revisión sí destapó, y que este release corrige, son cuatro defectos reales:
+
+- **Fuga de precios entre cuentas.** `perze-instrument-prices` no se limpiaba en el logout
+  (`sign-out.ts`): los últimos precios vistos por un usuario sobrevivían al login del siguiente en
+  el mismo navegador. Ahora se limpia junto con el resto del estado de cuenta, igual que
+  `perze:pendingInvite` (un código de invitación de otra persona colgado del navegador).
+- **Crecimiento sin techo.** `setPrices` hacía merge y nunca podaba — un precio con `asOf` de
+  meses atrás se seguía mostrando como "último conocido", justo el tipo de número engañoso que el
+  store (D36) existe para evitar. Se agrega `prunePrices()`: descarta toda entrada más vieja que
+  `PRICE_CACHE_MAX_AGE_DAYS` (30 días) o con `asOf` no parseable, tanto al escribir como al
+  rehidratar.
+- **Cero `version`/`migrate` en los 11 stores de Zustand persistidos.** Sin ellos, el día que
+  cambiara la forma de un draft o de una preferencia, una PWA ya instalada iba a rehidratar una
+  forma vieja sin fallar ruidosamente — el modo de falla más caro de este proyecto. Se agrega
+  `src/lib/stores/persist-sanitize.ts`, que generaliza el saneamiento defensivo que ya existía en
+  `getStoredBackdropPreference()`: cada store bumpea a `version: 1` con un `sanitize()` propio que
+  valida su forma y cae a defaults explícitos ante un valor corrupto. `pin-store` es el caso
+  especial: `pinHash`/`pinSalt` no se regeneran ahí —son datos opacos con su propia migración
+  legacy adentro de `verify()`— solo se valida que sean `string | null`.
+- **Dos convenciones de nombre conviviendo.** `perze:sawWelcome` → `perze-saw-welcome` y
+  `perze:pendingInvite` → `perze-pending-invite` (con trasvase automático desde el nombre viejo, una
+  sola vez, para no perder el flag ni una invitación a mitad de un signup); `perze:pinUnlocked` →
+  `perze-pin-unlocked` y `perze:chunkRecovery` → `perze-chunk-recovery` (sin trasvase: son
+  `sessionStorage` de vida corta, el peor caso es un desbloqueo de más).
+
+Suite completa 989/989, `pnpm lint` y `pnpm build` limpios. Verificación manual del riesgo real del
+bump de versión (que un usuario instalado no pierda PIN/ajustes/scope al pasar de `version: 0` a
+`1`) documentada en el plan de la rama.
+
 ## [0.29.90] — 2026-08-08
 
 ### Arreglado — los 2 tests de `/api/prices` que caducaban con el calendario

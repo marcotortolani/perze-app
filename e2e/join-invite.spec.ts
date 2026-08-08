@@ -22,7 +22,7 @@ test.describe("/join · canjear una invitación", () => {
     await page.goto("/join?invite=AB2CD3EFGHJ");
     await page.getByRole("button", { name: "Crear mi cuenta" }).click();
     await page.waitForURL(/\/onboarding/);
-    const stored = await page.evaluate(() => window.localStorage.getItem("perze:pendingInvite"));
+    const stored = await page.evaluate(() => window.localStorage.getItem("perze-pending-invite"));
     expect(stored).toBe("AB2CD3EFGHJ");
   });
 

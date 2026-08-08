@@ -12,7 +12,9 @@
  * sobrevivir a un viaje de ida y vuelta por el mail. Mismo criterio que
  * `welcome-flag.ts`.
  */
-export const PENDING_INVITE_KEY = "perze:pendingInvite";
+export const PENDING_INVITE_KEY = "perze-pending-invite";
+/** Nombre viejo (convención `perze:*`, unificada a `perze-*`) — se lee una sola vez para no perder una invitación a mitad de un signup. */
+const LEGACY_PENDING_INVITE_KEY = "perze:pendingInvite";
 
 export function setPendingInviteCode(code: string): void {
   if (typeof window !== "undefined") window.localStorage.setItem(PENDING_INVITE_KEY, code);
@@ -20,9 +22,19 @@ export function setPendingInviteCode(code: string): void {
 
 export function getPendingInviteCode(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(PENDING_INVITE_KEY);
+  const current = window.localStorage.getItem(PENDING_INVITE_KEY);
+  if (current !== null) return current;
+  const legacy = window.localStorage.getItem(LEGACY_PENDING_INVITE_KEY);
+  if (legacy !== null) {
+    window.localStorage.setItem(PENDING_INVITE_KEY, legacy);
+    window.localStorage.removeItem(LEGACY_PENDING_INVITE_KEY);
+    return legacy;
+  }
+  return null;
 }
 
 export function clearPendingInviteCode(): void {
-  if (typeof window !== "undefined") window.localStorage.removeItem(PENDING_INVITE_KEY);
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(PENDING_INVITE_KEY);
+  window.localStorage.removeItem(LEGACY_PENDING_INVITE_KEY);
 }

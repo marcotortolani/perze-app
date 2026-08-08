@@ -26,7 +26,7 @@ import { env } from "@/env";
  * — si la recarga no arregló nada, no se insiste (eso sería recrear el
  * loop que se intenta evitar).
  */
-const CHUNK_RECOVERY_KEY = "perze:chunkRecovery";
+const CHUNK_RECOVERY_KEY = "perze-chunk-recovery";
 const CHUNK_RECOVERY_WINDOW_MS = 5 * 60_000;
 
 function looksLikeChunkError(message: string): boolean {

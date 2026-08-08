@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AccountKind } from "@/lib/db/schema";
+import { nullableStringOr, sanitizedPersist, stringOr } from "@/lib/stores/persist-sanitize";
 
 /**
  * Borrador de onboarding (Bloque A) — decisiones que se van tomando entre
@@ -45,6 +46,31 @@ function emptyDraft(): OnboardingDraft {
   };
 }
 
+const USAGES = ["solo", "pareja", "familia"] as const;
+const ACCOUNT_KINDS = ["cash", "checking", "savings", "credit_card", "wallet", "broker", "loan", "receivable", "other"] as const;
+
+/** Unión nullable: a diferencia de `oneOf()`, acá `null` es un valor válido del dominio, no un fallback de corrupción. */
+function nullableOneOf<T extends string>(allowed: readonly T[], value: unknown): T | null {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : null;
+}
+
+function sanitize(persisted: unknown): { draft: OnboardingDraft } {
+  const p = ((persisted ?? {}) as Record<string, unknown>).draft as Record<string, unknown> | undefined;
+  const d = p ?? {};
+  const empty = emptyDraft();
+  return {
+    draft: {
+      email: stringOr(empty.email)(d.email),
+      usage: nullableOneOf(USAGES, d.usage),
+      countryCode: stringOr(empty.countryCode)(d.countryCode),
+      currencyCode: stringOr(empty.currencyCode)(d.currencyCode),
+      accountPreset: nullableStringOr()(d.accountPreset),
+      accountKind: nullableOneOf(ACCOUNT_KINDS, d.accountKind),
+      pendingBalanceAccountId: nullableStringOr()(d.pendingBalanceAccountId),
+    },
+  };
+}
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
@@ -52,7 +78,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       setField: (key, value) => set((s) => ({ draft: { ...s.draft, [key]: value } })),
       reset: () => set({ draft: emptyDraft() }),
     }),
-    { name: "perze-onboarding" }
+    { name: "perze-onboarding", version: 1, ...sanitizedPersist<OnboardingState, { draft: OnboardingDraft }>(sanitize) }
   )
 );
 

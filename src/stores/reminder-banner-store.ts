@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { boolOr, nullableStringOr, sanitizedPersist } from "@/lib/stores/persist-sanitize";
 
 /**
  * El objetivo es contarle al usuario cosas que puede ajustar a su gusto
@@ -22,6 +23,16 @@ interface ReminderBannerState {
   dismissForToday: (isoDate: string) => void;
 }
 
+type PersistedReminderBanner = Pick<ReminderBannerState, "dismissedForever" | "lastDismissedOn">;
+
+function sanitize(persisted: unknown): PersistedReminderBanner {
+  const p = (persisted ?? {}) as Record<string, unknown>;
+  return {
+    dismissedForever: boolOr(false)(p.dismissedForever),
+    lastDismissedOn: nullableStringOr()(p.lastDismissedOn),
+  };
+}
+
 export const useReminderBannerStore = create<ReminderBannerState>()(
   persist(
     (set) => ({
@@ -30,6 +41,6 @@ export const useReminderBannerStore = create<ReminderBannerState>()(
       lastDismissedOn: null,
       dismissForToday: (isoDate) => set({ lastDismissedOn: isoDate }),
     }),
-    { name: "perze-reminder-banner" }
+    { name: "perze-reminder-banner", version: 1, ...sanitizedPersist<ReminderBannerState, PersistedReminderBanner>(sanitize) }
   )
 );

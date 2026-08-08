@@ -15,6 +15,14 @@ describe("pendingInviteCode", () => {
     clearPendingInviteCode();
     expect(getPendingInviteCode()).toBeNull();
   });
+
+  it("trasvasa un código guardado bajo el nombre viejo `perze:pendingInvite`", () => {
+    window.localStorage.setItem("perze:pendingInvite", "AB2CD3EFGHJ");
+
+    expect(getPendingInviteCode()).toBe("AB2CD3EFGHJ");
+    expect(window.localStorage.getItem(PENDING_INVITE_KEY)).toBe("AB2CD3EFGHJ");
+    expect(window.localStorage.getItem("perze:pendingInvite")).toBeNull();
+  });
 });
 
 describe("resolveOnboardingDestination", () => {

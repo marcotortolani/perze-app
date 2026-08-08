@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { constantTimeEqual, generateSalt, hashPin, hashPinLegacy } from "@/lib/security/pin-hash";
+import { boolOr, nullableNumberOr, nullableStringOr, sanitizedPersist } from "@/lib/stores/persist-sanitize";
 
 /** 3 intentos errados = 30s de espera — nunca borrado de datos (CLAUDE.md § PIN). */
 const LOCKOUT_AFTER_ATTEMPTS = 3;
@@ -29,6 +30,30 @@ interface PinState {
   biometricCredentialId: string | null;
   enableBiometric: (credentialId: string) => void;
   disableBiometric: () => void;
+}
+
+type PersistedPin = Pick<
+  PinState,
+  "enabled" | "pinHash" | "pinSalt" | "failedAttempts" | "lockedUntil" | "biometricEnabled" | "biometricCredentialId"
+>;
+
+/**
+ * `pinHash`/`pinSalt` no se regeneran acá — son datos opacos y ya tienen su
+ * propia migración legacy (sin sal → con sal) adentro de `verify()`. Este
+ * saneamiento solo evita que un valor corrupto (no string, no null) los
+ * deje en un tipo que rompa `constantTimeEqual`/`hashPin` más adelante.
+ */
+function sanitize(persisted: unknown): PersistedPin {
+  const p = (persisted ?? {}) as Record<string, unknown>;
+  return {
+    enabled: boolOr(false)(p.enabled),
+    pinHash: nullableStringOr()(p.pinHash),
+    pinSalt: nullableStringOr()(p.pinSalt),
+    failedAttempts: typeof p.failedAttempts === "number" && Number.isFinite(p.failedAttempts) ? p.failedAttempts : 0,
+    lockedUntil: nullableNumberOr()(p.lockedUntil),
+    biometricEnabled: boolOr(false)(p.biometricEnabled),
+    biometricCredentialId: nullableStringOr()(p.biometricCredentialId),
+  };
 }
 
 export const usePinStore = create<PinState>()(
@@ -101,6 +126,7 @@ export const usePinStore = create<PinState>()(
     }),
     {
       name: "perze-pin",
+      version: 1,
       // B8 — antes `partialize` solo guardaba `enabled`/`pinHash`:
       // `failedAttempts`/`lockedUntil` vivían solo en memoria y un F5 (o
       // cerrar y volver a abrir la pestaña) anulaba el lockout de 30s a
@@ -114,6 +140,7 @@ export const usePinStore = create<PinState>()(
         biometricEnabled: state.biometricEnabled,
         biometricCredentialId: state.biometricCredentialId,
       }),
+      ...sanitizedPersist<PinState, PersistedPin>(sanitize),
     }
   )
 );

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { oneOf, sanitizedPersist } from "@/lib/stores/persist-sanitize";
 
 export type NetWorthDisplayCurrency = "base" | "usd";
 
@@ -9,12 +10,23 @@ interface NetWorthCurrencyState {
   setDisplayCurrency: (value: NetWorthDisplayCurrency) => void;
 }
 
+const DISPLAY_CURRENCIES = ["base", "usd"] as const;
+
+function sanitize(persisted: unknown): { displayCurrency: NetWorthDisplayCurrency } {
+  const p = (persisted ?? {}) as Record<string, unknown>;
+  return { displayCurrency: oneOf(DISPLAY_CURRENCIES, "base")(p.displayCurrency) };
+}
+
 export const useNetWorthCurrencyStore = create<NetWorthCurrencyState>()(
   persist(
     (set) => ({
       displayCurrency: "base",
       setDisplayCurrency: (value) => set({ displayCurrency: value }),
     }),
-    { name: "perze-net-worth-currency" }
+    {
+      name: "perze-net-worth-currency",
+      version: 1,
+      ...sanitizedPersist<NetWorthCurrencyState, { displayCurrency: NetWorthDisplayCurrency }>(sanitize),
+    }
   )
 );

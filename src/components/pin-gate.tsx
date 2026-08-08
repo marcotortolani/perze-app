@@ -8,7 +8,7 @@ import { usePinStore } from "@/stores/pin-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { verifyBiometric } from "@/lib/security/webauthn";
 
-const UNLOCKED_SESSION_KEY = "perze:pinUnlocked";
+const UNLOCKED_SESSION_KEY = "perze-pin-unlocked";
 
 function readSessionUnlocked(): boolean {
   return typeof window !== "undefined" && window.sessionStorage.getItem(UNLOCKED_SESSION_KEY) === "1";

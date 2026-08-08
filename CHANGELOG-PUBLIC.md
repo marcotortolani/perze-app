@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.91 — 8 de agosto de 2026
+
+### Arreglado
+
+- Al cerrar sesión, las últimas cotizaciones de inversión que habías visto ya no quedan guardadas
+  en el dispositivo — si otra persona inicia sesión ahí después, no ve tus precios.
+
 ## 0.29.89 — 8 de agosto de 2026
 
 ### Nuevo

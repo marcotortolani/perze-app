@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { oneOf, sanitizedPersist } from "@/lib/stores/persist-sanitize";
 
 /** `"locale"` = derivar del idioma de la app (comportamiento de siempre). Nunca toca cómo se guarda un monto/fecha — solo cómo se muestra. */
 export type DecimalSeparatorPref = "locale" | "comma" | "period";
@@ -16,6 +17,21 @@ interface FormatPreferencesState {
   setWeekStart: (value: WeekStartPref) => void;
 }
 
+type PersistedFormatPreferences = Pick<FormatPreferencesState, "decimalSeparator" | "dateFormat" | "weekStart">;
+
+const DECIMAL_SEPARATORS = ["locale", "comma", "period"] as const;
+const DATE_FORMATS = ["locale", "dmy", "mdy", "ymd"] as const;
+const WEEK_STARTS = ["monday", "sunday"] as const;
+
+function sanitize(persisted: unknown): PersistedFormatPreferences {
+  const p = (persisted ?? {}) as Record<string, unknown>;
+  return {
+    decimalSeparator: oneOf(DECIMAL_SEPARATORS, "locale")(p.decimalSeparator),
+    dateFormat: oneOf(DATE_FORMATS, "locale")(p.dateFormat),
+    weekStart: oneOf(WEEK_STARTS, "monday")(p.weekStart),
+  };
+}
+
 export const useFormatPreferencesStore = create<FormatPreferencesState>()(
   persist(
     (set) => ({
@@ -26,7 +42,11 @@ export const useFormatPreferencesStore = create<FormatPreferencesState>()(
       setDateFormat: (value) => set({ dateFormat: value }),
       setWeekStart: (value) => set({ weekStart: value }),
     }),
-    { name: "perze-format-preferences" }
+    {
+      name: "perze-format-preferences",
+      version: 1,
+      ...sanitizedPersist<FormatPreferencesState, PersistedFormatPreferences>(sanitize),
+    }
   )
 );
 
