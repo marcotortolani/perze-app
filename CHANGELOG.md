@@ -6,6 +6,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.83] — 2026-08-08
+
+### Agregado — sección "Investing" en el dashboard del home
+
+Nueva sección en el home, gateada por `enabled_modules.includes('investments')` y por tener al
+menos una posición real (`hasPositions`) — un household con el módulo prendido pero sin ninguna
+operación cargada no muestra nada acá. Mismo lenguaje visual que Patrimonio neto: valor actual,
+delta vs. hace 7 días (flecha + monto + color) y sparkline de 14 días.
+
+La serie histórica sale de `price_snapshots` (el cron `daily-price-sync` que ya corre, sin nada
+nuevo que sincronizar) — `computeInvestmentsTrend` reconstruye el valor día a día con
+carry-forward de precio (`nearestPriceOnOrBefore`, mismo criterio que `inherited` en FX) para
+fines de semana/feriados sin snapshot nuevo. Dos simplificaciones documentadas en el propio
+código, no datos inventados: la cantidad se mantiene fija en la de HOY para toda la ventana (no
+hay `portfolio_snapshots` poblada para reconstruir el histórico real), y la conversión a moneda
+base usa la cotización de HOY, no una histórica por día. El cálculo puro
+(`investments-trend-math.ts`) queda separado de la orquestación async con repos
+(`investments-trend.ts`) para que sus tests no necesiten las env vars de Supabase — mismo
+criterio que separa `lib/` de `lib/repos/` en el resto del proyecto.
+
+Nuevo `priceSnapshotsRepo.historyFor()` (serie completa desde una fecha, no solo el último
+precio). De paso, un bug de arrastre que este trabajo dejó visible: el sparkline de Patrimonio
+neto del home solo excluía `transfer` del cálculo diario — un `adjustment` o el `investing`
+agregado en la versión anterior caían en el `else` y se contaban como gasto. Corregido a filtrar
+explícitamente por `expense`/`income`. También se llevó el ícono/label/meta de una transacción
+`investing` (agregado antes solo en `/transactions`) a la lista de "Recent transactions" del
+home, que es un componente aparte con su propia lógica duplicada.
+
 ## [0.29.82] — 2026-08-08
 
 ### Corregido — scroll fantasma en el sidebar de escritorio

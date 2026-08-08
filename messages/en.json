@@ -1209,6 +1209,8 @@
   "vsLastWeek": "vs. last week",
   "excludedAccounts": "{count} account(s) without an exchange rate, excluded from the total.",
   "netWorthUsdPending": "USD rate not available today — showing in {currency}.",
+  "investing": "Investing",
+  "investingExcluded": "{count} position(s) without a known price or rate, excluded.",
   "creditCards": "Credit cards",
   "creditCardCycleMeta": "Accumulated spend this cycle",
   "spentThisPeriod": "Spent this period",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDayValue, nearestPriceOnOrBefore } from "./investments-trend";
+import { computeDayValue, nearestPriceOnOrBefore } from "./investments-trend-math";
 
 describe("nearestPriceOnOrBefore", () => {
   const history = [

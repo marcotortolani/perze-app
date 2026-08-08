@@ -40,6 +40,19 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.83 — 8 de agosto de 2026
+
+### Nuevo
+
+- El home ahora tiene una sección de Inversiones (si tenés el módulo activado y al menos una
+  posición cargada): cuánto vale tu cartera hoy, cuánto cambió en la última semana y un gráfico
+  de su evolución.
+
+### Arreglado
+
+- El gráfico de tendencia del patrimonio neto en el home ya no contaba las compras/ventas de
+  inversión ni las conciliaciones de saldo como si fueran gastos.
+
 ## 0.29.82 — 8 de agosto de 2026
 
 ### Arreglado

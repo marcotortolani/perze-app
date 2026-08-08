@@ -28,6 +28,33 @@ export const priceSnapshotsRepo = {
     return latest;
   },
 
+  /**
+   * H-dashboard — serie histórica para el sparkline de "Investing" del
+   * home: a diferencia de `latestFor` (un valor por instrumento), acá
+   * hace falta la serie completa desde `sinceDate` para reconstruir el
+   * valor de la posición día a día (`computeDayValue`/
+   * `nearestPriceOnOrBefore`, que hacen carry-forward de fines de
+   * semana/feriados sin snapshot nuevo).
+   */
+  async historyFor(instrumentIds: string[], sinceDate: string): Promise<Map<string, { asOf: string; close: number }[]>> {
+    if (instrumentIds.length === 0) return new Map();
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("price_snapshots")
+      .select("instrument_id, close, as_of")
+      .in("instrument_id", instrumentIds)
+      .gte("as_of", sinceDate)
+      .order("as_of", { ascending: true });
+    if (error) throw error;
+    const history = new Map<string, { asOf: string; close: number }[]>();
+    for (const row of data ?? []) {
+      const list = history.get(row.instrument_id) ?? [];
+      list.push({ asOf: row.as_of, close: row.close });
+      history.set(row.instrument_id, list);
+    }
+    return history;
+  },
+
   /** I12 — precio cargado a mano cuando ningún proveedor lo trae. Queda como snapshot con `provider: 'manual'`, igual que cualquier otra fuente. */
   async setManual(instrumentId: string, close: number, currencyCode: string): Promise<void> {
     const supabase = createClient();

@@ -43,6 +43,7 @@ import { useTags } from "@/hooks/use-tags";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
+import { useInvestmentsTrend } from "@/hooks/use-investments-trend";
 import { useNetWorthInCurrency } from "@/hooks/use-net-worth-in-currency";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
 import { useConflicts } from "@/hooks/use-conflicts";
@@ -160,7 +161,9 @@ export default function HomePage() {
     () => (transactions ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
     [transactions, scopedAccountIds]
   );
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts, household?.enabledModules.includes("investments"));
+  const investmentsEnabled = household?.enabledModules.includes("investments") ?? false;
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts, investmentsEnabled);
+  const investmentsTrend = useInvestmentsTrend(household?.id, household?.baseCurrency, investmentsEnabled);
   const netWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.displayCurrency);
   const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
   const wantsUsd = netWorthDisplayCurrency === "usd" && household?.baseCurrency !== "USD";
@@ -243,8 +246,13 @@ export default function HomePage() {
   const heroTrendMoney: Money[] = [];
   for (let i = 13; i >= 0; i--) {
     const [start, end] = dayBounds(now, i);
+    // Solo expense/income mueven este sparkline — antes filtraba únicamente
+    // `transfer`, así que un `adjustment` o un `investing` (compra/venta de
+    // instrumento) caía en el `else` de abajo y se contaba como gasto. Con
+    // `investing` recién agregado (Bloque I) ese bug se volvía visible de
+    // nuevo cada vez que alguien cargara una operación.
     const dayTransactions = allTransactions.filter(
-      (t) => t.kind !== "transfer" && t.amountBase !== null && t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString(),
+      (t) => (t.kind === "expense" || t.kind === "income") && t.amountBase !== null && t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString(),
     );
     const dayNet = sum(
       baseCurrency,
@@ -407,6 +415,44 @@ export default function HomePage() {
         ) : null}
       </section>
 
+      {/* "Investing" — solo con el módulo prendido Y al menos una posición
+          real (`hasPositions`): un household que activó el módulo pero
+          nunca cargó una operación no tiene nada que mostrar acá, mismo
+          criterio que "apagar un módulo oculta" pero a la inversa (prendido
+          sin uso real tampoco ocupa espacio). Mismo patrón visual que el
+          patrimonio neto de arriba — valor, delta vs. semana pasada,
+          sparkline — para que se lean como la misma familia de dato. */}
+      {investmentsEnabled && investmentsTrend.data?.hasPositions ? (
+        (() => {
+          const values = investmentsTrend.data!.values;
+          const current = values.at(-1) ?? 0n;
+          const weekAgo = values.at(-8) ?? current;
+          const delta = current - weekAgo;
+          const investingDeltaPolarity = delta >= 0n ? "positive" : "negative";
+          const investingDeltaArrow = delta >= 0n ? "↑" : "↓";
+          return (
+            <section style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              <span className="t-caption" style={{ color: "var(--text-muted)", letterSpacing: ".08em", textTransform: "uppercase" }}>
+                {t("home.investing")}
+              </span>
+              <CountUp value={current} currency={baseCurrency} size="hero" fit showSign={false} polarity="neutral" privacy={privacy} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <PrivacyBlur active={privacy}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: investingDeltaPolarity === "positive" ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
+                    {investingDeltaArrow} {formatAmountCompact(money(delta < 0n ? -delta : delta, baseCurrency), { showSign: false })}
+                  </span>
+                </PrivacyBlur>
+                <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t("home.vsLastWeek")}</span>
+              </div>
+              <Sparkline values={values.map((v) => toMajorUnitsUnsafe(money(v, baseCurrency)))} width={140} height={32} color={investingDeltaPolarity === "positive" ? "var(--data-1)" : "var(--money-negative-emphasis)"} />
+              {investmentsTrend.data!.excludedCount > 0 ? (
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("home.investingExcluded", { count: investmentsTrend.data!.excludedCount })}</span>
+              ) : null}
+            </section>
+          );
+        })()
+      ) : null}
+
       {/* `flexShrink: 0`: sin esto colapsaba a 0px de alto. `overflowX: "auto"`
           en el propio carrusel hace que el navegador coaccione
           `overflow-y` a `auto` también (misma regla CSSOM que ya rompía
@@ -532,37 +578,32 @@ export default function HomePage() {
             const tagNames = tagNamesByTx.get(tx.id) ?? [];
             const categoryOrTransfer = category
               ? categoryLabel(category)
-              : reconciliation
-                ? t("home.reconciliation")
-                : cardPayment
-                  ? t("home.cardPayment")
-                  : tx.kind === "transfer"
-                    ? t("home.transfer")
-                    : undefined;
-            const meta = [account?.name, tagNames.length > 0 ? tagNames.join(", ") : categoryOrTransfer].filter(Boolean).join(" · ");
-            const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" || reconciliation ? "neutral" : "negative";
+              : tx.kind === "investing"
+                ? (tx.note ?? t("transactions.list.investing"))
+                : reconciliation
+                  ? t("home.reconciliation")
+                  : cardPayment
+                    ? t("home.cardPayment")
+                    : tx.kind === "transfer"
+                      ? t("home.transfer")
+                      : undefined;
+            const meta = tx.kind === "investing" ? (account?.name ?? "") : [account?.name, tagNames.length > 0 ? tagNames.join(", ") : categoryOrTransfer].filter(Boolean).join(" · ");
+            const polarity = tx.kind === "income" ? "positive" : tx.kind === "transfer" || reconciliation || tx.kind === "investing" ? "neutral" : "negative";
             const secondary = tx.currencyCode !== baseCurrency && tx.amountBase !== null ? formatAmountCompact(money(tx.amountBase, baseCurrency), { showSign: false }) : undefined;
             return (
               <SwipeableRow
                 key={tx.id}
-                onSwipeRightCommit={() => router.push(`/transactions/${tx.id}/edit`)}
-                onSwipeLeftCommit={() => deleteTransaction(tx.id)}
+                // `investing`: ni editar ni borrar suceden acá — las dos
+                // viven en Inversiones, sobre el trade (mismo criterio que
+                // `/transactions`).
+                onSwipeRightCommit={tx.kind === "investing" ? undefined : () => router.push(`/transactions/${tx.id}/edit`)}
+                onSwipeLeftCommit={tx.kind === "investing" ? undefined : () => deleteTransaction(tx.id)}
                 confirmLabel={t("transactions.list.confirmDelete")}
                 confirmActionLabel={t("transactions.list.confirmDeleteAction")}
               >
                 <TransactionRow
-                  icon={(category?.icon as IconName) ?? (reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
-                  merchant={
-                    category
-                      ? categoryLabel(category)
-                      : reconciliation
-                        ? t("home.reconciliation")
-                        : cardPayment
-                          ? t("home.cardPayment")
-                          : tx.kind === "transfer"
-                            ? t("home.transfer")
-                            : t("home.movement")
-                  }
+                  icon={(category?.icon as IconName) ?? (tx.kind === "investing" ? "trend" : reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                  merchant={categoryOrTransfer ?? t("home.movement")}
                   meta={meta || undefined}
                   value={money(tx.kind === "expense" ? -tx.amount : tx.amount, tx.currencyCode)}
                   secondary={secondary}

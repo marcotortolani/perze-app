@@ -1209,6 +1209,8 @@
   "vsLastWeek": "vs. semana pasada",
   "excludedAccounts": "{count} cuenta(s) sin tipo de cambio, excluida(s) del total.",
   "netWorthUsdPending": "Cotización a USD no disponible hoy — mostrando en {currency}.",
+  "investing": "Inversiones",
+  "investingExcluded": "{count} posición(es) sin precio o cotización, excluida(s).",
   "creditCards": "Tarjetas de crédito",
   "creditCardCycleMeta": "Gasto acumulado del ciclo",
   "spentThisPeriod": "Gastado este período",
