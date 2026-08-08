@@ -6,6 +6,163 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.79] — 2026-08-08
+
+### Agregado — mostrar y filtrar por el recurrente de origen en un movimiento
+
+Un movimiento generado por un recurrente mostraba categoría y cuenta, pero no qué regla lo
+originó — con dos recurrentes de la misma categoría (dos alquileres, dos suscripciones) no había
+forma de distinguirlos ni de filtrarlos. Se evaluó resolverlo con un tag automático (tomar el
+nombre de la regla como tag, crearlo si no existe) y se descartó: cada movimiento ya tiene
+`recurringId`, un FK real seteado siempre por `materializeOne()`
+(`src/lib/recurring/materialize.ts`) — un tag se desincroniza si la regla se renombra, colisiona
+si dos reglas comparten nombre, y ensucia una lista de tags que es 100% de autoría del usuario.
+Se expone el vínculo que ya existe en vez de duplicarlo.
+
+Nuevo hook `useRecurringRule(id)` (`src/hooks/use-recurring-rules.ts`), mismo patrón que
+`useTransaction(id)` — a diferencia de `useRecurringRules()`/`.list()`, no filtra por
+`archivedAt`: un movimiento viejo de una regla ya archivada sigue mostrando su nombre.
+`TransactionDetailContent.tsx` suma un `ListRow` "Recurrente" (ícono `clock`, tappable a
+`/recurring/{id}`) junto a categoría/cuenta/fecha; de paso, "Convertir en recurrente" deja de
+ofrecerse en un movimiento que YA viene de una regla (invitaba a crear una segunda regla
+duplicada para el mismo gasto).
+
+Filtro por recurrente en `/transactions`: `MovementsFilters` suma `recurringIds: string[]`
+(`MovementsFiltersSheet.tsx`, `filter-predicate.ts`, `TransactionsListContent.tsx`) — mismo
+patrón línea a línea que ya usan cuentas/categorías/tags ahí, sin map auxiliar (a diferencia de
+tags, `recurringId` es escalar en la fila). El heatmap del calendario lo hereda gratis porque
+comparte el mismo predicado.
+
+Búsqueda global (`search-overlay.tsx`): el nombre del recurrente entra a las `keywords` de un
+movimiento, mismo criterio D30 que ya usan los nombres de tags (puntúa sin mostrarse en la fila).
+
+De paso, la lista de movimientos repetía la categoría dos veces sin aportar nada ("Housing" como
+título y "Itaú · Housing" como subtítulo) — `buildMeta()` en `TransactionsListContent.tsx` ahora
+prioriza el nombre del recurrente ahí (mismo orden que ya tenía: tags primero, si hay; si no,
+recurrente; si no, categoría), evitando la repetición y mostrando algo que sí distingue el
+movimiento sin tener que abrir el detalle.
+
+## [0.29.78] — 2026-08-07
+
+### Agregado — preview editable de tasa/monto al cargar un recurrente manual con respaldo en otra moneda
+
+Caso real encontrado probando: "Cargar ahora" convirtió UYU 39.200 a USD 982,46 con la
+cotización resuelta automáticamente, pero el banco descontó USD 1.000,00 de verdad. No había
+forma de corregir eso sin ir a Movimientos a editar el monto a mano — lo que además nunca
+corregía la cotización guardada (`original_rate` quedaba con la vieja).
+
+`resolveChargeAccount()` y `chargeRecurringNow()` (`src/lib/recurring/materialize.ts`) ganan un
+parámetro opcional `rateOverride: ScaledRate | null` — si viene definido, se usa tal cual y NUNCA
+se vuelve a resolver por su cuenta (mismo criterio WYSIWYG que `counterFxRateOverride` en
+`save-transaction.ts`/`pay-card.ts`). Nueva función pura `needsFxPreview(rule, primaryAccount,
+fallbackAccount)` — espeja las condiciones de `resolveChargeAccount()` sin llamar a `fxRepo`,
+para decidir ANTES de tocar nada si hace falta mostrar la preview.
+
+Nuevo componente `src/app/(app)/recurring/[id]/ChargeFallbackPreviewSheet.tsx` — mismo patrón
+de `Sheet` con vista de teclado que ya usa `/accounts/resolve-fx` (`FxEditor` + slider ±5% +
+teclado para la tasa), sumando un segundo campo editable: el monto final convertido en la
+cuenta de respaldo. Editar el monto "hacia atrás" infiere la tasa real con `rateFromAmounts()`
+(mismo mecanismo que `PayCardSheet.focusCardField()`) — el monto de la regla nunca se toca acá,
+solo la tasa y el monto convertido, siempre derivados uno del otro, nunca un monto suelto
+desincronizado.
+
+`recurring/[id]/page.tsx`: "Cargar ahora" solo abre la preview cuando `needsFxPreview()` da
+`true` (respaldo en juego + otra moneda) — para cualquier otro caso (cuenta principal, o
+respaldo en la misma moneda) sigue siendo un solo tap, sin fricción extra. Tests nuevos en
+`materialize.test.ts` para el override (con y sin cotización automática disponible) y para
+`needsFxPreview`.
+
+La preview también suma el toggle de dirección que ya usa `/accounts/resolve-fx` y `/currencies`
+(`SegmentedControl`, "1 X = Y" / "1 Y = X"): arranca mostrando la moneda ancla más legible — si
+USD participa, siempre es "1 USD = X" (`rateNumeratorIsSource` en `PayCardSheet`, mismo
+criterio) — y el usuario puede invertir en cualquier momento. `rateOverride`/`effectiveRate`
+siguen viviendo siempre en la dirección canónica (`rule.currencyCode → fallbackAccount.currencyCode`)
+por dentro; `inverted` es puramente de presentación.
+
+## [0.29.77] — 2026-08-07
+
+### Corregido — "Cargar ahora" dejaba encadenar cargas de meses futuros tocando el botón varias veces
+
+Prueba en vivo: tocar "Cargar ahora" repetidas veces en un recurrente manual creó 3 movimientos —
+uno por cada período (mes actual + 2 futuros), todos con `occurredAt` de hoy. No era un problema
+de idempotencia (el índice único `(recurringId, recurringOccurrenceDate)` siguió funcionando: cada
+tap cargó un período DISTINTO) sino de diseño: `isDue` solo pedía que quedara algún período sin
+saldar dentro del horizonte de 2 años, así que el botón habilitaba precargar cualquier cantidad de
+meses futuros sin ningún aviso de que cada tap ya había disparado un movimiento real.
+
+Se agrega `isChargeDue()` (`src/lib/recurring/occurrences.ts`, con tests) — "Cargar ahora" pasa a
+requerir `nextChargeableDate <= today`: solo lo vencido o lo que vence hoy. Ponerse al día con
+varios períodos atrasados en la misma visita sigue andando igual (todos son `<= today`); lo que se
+cierra es la posibilidad de pre-pagar meses que todavía no llegaron. Decisión de producto
+confirmada con el usuario tras ver el caso real.
+
+### Corregido — key duplicada en `BarChart` cuando dos puntos caen en el mismo día
+
+`src/design-system/charts/BarChart.tsx` usaba `d.label` (el texto formateado, p. ej. "Aug 7") como
+`key` de React en las barras y en las etiquetas — con las tres cargas del bug anterior, las tres
+cayeron el mismo día calendario y React tiraba "Encountered two children with the same key" en
+consola. `key={i}` (el índice, ya usado para la posición del slot) en vez del label — cualquier
+gráfico con dos puntos que formateen al mismo texto corto queda cubierto, no solo este caso.
+
+## [0.29.76] — 2026-08-07
+
+### Corregido — "Cargar ahora" quedaba con estado viejo hasta salir y volver a entrar a la pantalla
+
+`useInvalidateTransactions()` (`src/hooks/use-transactions.ts`) invalidaba `transactions` y
+`recurring-occurrences`, pero no `["recurring-rule-history", recurringId]`
+(`use-recurring-rule-history.ts`) — la query que alimenta `chargedDates`, `nextChargeableDate` e
+"Upcoming occurrences" en `recurring/[id]/page.tsx`. Resultado: después de tocar "Cargar ahora" el
+movimiento se creaba bien (visible en Movimientos), pero la pantalla del recurrente seguía
+mostrando la ocurrencia recién cargada como pendiente hasta refrescar a mano. Se agrega
+`invalidateQueries({ queryKey: ["recurring-rule-history"] })` sin el segundo elemento de la key —
+por prefijo, alcanza a cualquier regla, no solo a la que originó la mutación (deshacer o borrar un
+movimiento ligado a un recurrente también lo dispara).
+
+De paso, "Upcoming occurrences" mostraba la grilla cruda del calendario
+(`nextOccurrenceAfter` + `occurrencesBetween`, sin filtrar contra `chargedDates`), así que un
+período cargado por adelantado seguía apareciendo ahí como si el recordatorio siguiera vigente.
+Ahora arranca en `nextChargeableDate` (mismo criterio que ya usa el botón, incluye atrasos) y
+filtra por las mismas `chargedDates`.
+
+También el toast de "Cargar ahora" reusaba `recurringPage.autoPosted` ("se cargó solo") — copy
+del motor automático, incorrecta para una acción que el usuario acaba de disparar a mano. Nueva
+clave `recurringPage.charged` ("{name} cargado").
+
+Mismo bug, un nivel más arriba: `computeUpcomingCharges()` (`src/lib/analytics/recurring-schedule.ts`)
+calculaba el "Next: ..." de `/recurring` con la grilla cruda del calendario, sin mirar
+`chargedByRule` — un recurrente manual cargado por adelantado seguía apareciendo como "próximo:
+mañana" aunque ya estuviera pago. Ahora acepta un `chargedByRule` opcional (mismo mapa que ya
+arma `RecurringPageContent.tsx` para la sección "Manuales") y lo usa para saltear períodos ya
+saldados. Tests nuevos en `recurring-schedule.test.ts`.
+
+## [0.29.75] — 2026-08-07
+
+### Agregado — cuenta de respaldo para "Cargar ahora" en recurrentes manuales
+
+`recurring_rules` suma `fallback_account_id` (nullable, `CHECK` de que no sea la misma que
+`account_id` — migración `20260807214830_recurring_fallback_account.sql`). Resuelve el caso real
+de un recurrente manual (`auto_post = false`) cuya cuenta principal casi siempre está en cero (el
+alquiler en UYU, por ejemplo): antes "Cargar ahora" siempre posteaba ahí y dejaba la cuenta en
+negativo.
+
+`resolveChargeAccount()` (`src/lib/recurring/materialize.ts`), nueva, decide dónde termina el
+movimiento: la principal, salvo que sea un gasto (`kind = 'expense'`) sin fondos suficientes
+(`currentBalance - expectedAmount < 0`) y la regla tenga respaldo configurado — ahí se usa el
+respaldo, convertido a SU moneda con la cotización del día efectivo si hace falta (regla cerrada
+de `CLAUDE.md`, "SON DOS CONVERSIONES, NO UNA": el monto de la regla va a `original_*`, la segunda
+conversión a la moneda base sigue igual que siempre vía `resolveFxForAccountCurrency`). Sin
+cotización disponible para esa primera conversión, el respaldo NO se aplica — se carga en la
+principal, nunca un movimiento en $0 que no mueve la plata real. Un solo salto, sin cadena; solo
+lo consume `chargeRecurringNow` (gesto de usuario) — el motor automático server-side
+(`materialize_recurring_transactions()`) no la mira, porque sin usuario presente no hay a quién
+avisarle que la plata salió de otro lado.
+
+UI: campo opcional "Cuenta de respaldo" en `recurring/new` y `recurring/[id]/edit`, visible solo
+cuando `!autoPost && kind === 'expense'`; el detalle (`recurring/[id]`) la muestra si existe y el
+toast de "Cargar ahora" distingue los tres desenlaces (cargado normal · cargado en el respaldo ·
+cargado en la principal por falta de cotización). Tests en
+`src/lib/recurring/materialize.test.ts`.
+
 ## [0.29.74] — 2026-08-07
 
 ### Corregido — E8 (`/accounts/resolve-fx`) mostraba una fuente inventada y no tenía el toggle de dirección de `/currencies`

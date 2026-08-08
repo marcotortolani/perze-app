@@ -16,6 +16,7 @@ import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useRecurringRule } from "@/hooks/use-recurring-rules";
 import { isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
@@ -62,6 +63,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
   const { data: members = [] } = useHouseholdMembers(household?.id);
   const userId = useEffectiveUserId();
   const { data: transaction, isLoading } = useTransaction(id);
+  const { data: recurringRule } = useRecurringRule(transaction?.recurringId ?? undefined);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
   const decimalSeparator = decimalSeparatorForLocale(locale);
@@ -237,6 +239,15 @@ export function TransactionDetailContent({ id }: { id: string }) {
           meta={counterAccount ? t("transactions.detail.toAccount", { account: counterAccount.name }) : t("transactions.detail.account")}
           variant="value"
         />
+        {transaction.recurringId ? (
+          <ListRow
+            icon="clock"
+            label={recurringRule?.name ?? "—"}
+            meta={t("transactions.detail.recurringRule")}
+            variant="value"
+            onClick={() => router.push(`/recurring/${transaction.recurringId}`)}
+          />
+        ) : null}
         <ListRow icon="calendar" label={new Date(transaction.occurredAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })} meta={t("transactions.detail.date")} variant="value" />
         {/* K2b — quién cargó el movimiento. Solo con más de un miembro
             activo: en un household de una sola persona "cargado por vos"
@@ -321,7 +332,13 @@ export function TransactionDetailContent({ id }: { id: string }) {
           <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
         ) : null}
         <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
-        <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
+        {/* "Convertir en recurrente" no tiene sentido para un movimiento que
+            YA viene de un recurrente — el `ListRow` de arriba ya lleva a esa
+            regla. Ofrecerla igual invitaba a crear una segunda regla
+            duplicada para el mismo gasto. */}
+        {transaction.recurringId === null ? (
+          <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
+        ) : null}
         {transaction.kind !== "transfer" && transaction.kind !== "adjustment" ? (
           <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
         ) : null}

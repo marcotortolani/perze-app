@@ -48,6 +48,26 @@ describe("computeUpcomingCharges", () => {
     const result = computeUpcomingCharges(rules, now, 7);
     expect(result).toHaveLength(1);
   });
+
+  it("un período ya cargado por adelantado (`chargedByRule`) no vuelve a aparecer como próximo", () => {
+    const now = new Date(2026, 7, 7); // 7/8/2026
+    const rules = [rule({ id: "a", anchorDate: "2026-08-08", dayOfMonth: 8 })];
+    const chargedByRule = new Map([["a", new Set(["2026-08-08"])]]);
+
+    const result = computeUpcomingCharges(rules, now, 40, chargedByRule);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.nextDate.toISOString().slice(0, 10)).toBe("2026-09-08");
+  });
+
+  it("sin `chargedByRule`, se comporta como antes (grilla cruda)", () => {
+    const now = new Date(2026, 7, 7);
+    const rules = [rule({ id: "a", anchorDate: "2026-08-08", dayOfMonth: 8 })];
+
+    const result = computeUpcomingCharges(rules, now, 30);
+
+    expect(result[0]!.nextDate.toISOString().slice(0, 10)).toBe("2026-08-08");
+  });
 });
 
 // `computeMonthlyCommitted` es async (necesita resolver FX) — se prueba en

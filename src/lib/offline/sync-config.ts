@@ -258,6 +258,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       deleted_at: p.deletedAt,
       client_rev: p.clientRev,
       source: p.source,
+      trade_id: p.tradeId,
     }),
   },
 
@@ -313,6 +314,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       kind: p.kind,
       category_id: p.categoryId,
       account_id: p.accountId,
+      fallback_account_id: p.fallbackAccountId,
       expected_amount: bigintToString(p.expectedAmount),
       currency_code: p.currencyCode,
       frequency: p.frequency,

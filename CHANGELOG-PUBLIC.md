@@ -40,6 +40,46 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.79 — 8 de agosto de 2026
+
+### Nuevo
+
+- Un movimiento generado por un recurrente ahora muestra a qué recurrente pertenece, tanto en el
+  detalle como en la lista (sin repetir la categoría dos veces), y podés filtrar y buscar
+  movimientos por recurrente.
+
+## 0.29.78 — 7 de agosto de 2026
+
+### Nuevo
+
+- Cuando "Cargar ahora" en un recurrente manual va a caer en la cuenta de respaldo en otra
+  moneda, ahora se muestra antes una pantalla para revisar y corregir la cotización o el monto
+  final — por si lo que descontó el banco fue distinto a lo que el sistema calculó.
+
+## 0.29.77 — 7 de agosto de 2026
+
+### Arreglado
+
+- "Cargar ahora" en un recurrente manual ya no se puede disparar por error para meses que todavía
+  no llegaron: ahora solo carga lo vencido o lo que vence hoy, para que tocar el botón varias veces
+  no termine registrando pagos futuros sin querer.
+
+## 0.29.76 — 7 de agosto de 2026
+
+### Arreglado
+
+- Al tocar "Cargar ahora" en un recurrente manual, la pantalla ahora refleja al instante que ese
+  período ya quedó pagado — antes seguía apareciendo como pendiente hasta salir y volver a entrar,
+  y hasta el resumen de arriba de la lista de recurrentes seguía anunciándolo como "próximo".
+
+## 0.29.75 — 7 de agosto de 2026
+
+### Nuevo
+
+- Los recurrentes manuales (con auto-registro apagado) ahora pueden tener una cuenta de respaldo:
+  si al tocar "Cargar ahora" la cuenta principal no tiene fondos suficientes, el gasto se registra
+  en la de respaldo en vez de dejarla en negativo, convertido a su moneda si hace falta.
+
 ## 0.29.74 — 7 de agosto de 2026
 
 ### Arreglado

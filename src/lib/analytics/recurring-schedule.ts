@@ -24,13 +24,22 @@ export interface UpcomingCharge {
  * día según el huso — D10). `nextDate` se construye con `occurredAtFor`
  * (mediodía UTC) para que cualquier formateo posterior por zona horaria
  * local siga cayendo en el día calendario correcto.
+ *
+ * `chargedByRule` (opcional): períodos ya saldados por regla —
+ * `recurringOccurrenceDate`, la misma clave que usa
+ * `RecurringPageContent.tsx` para "Manuales". Sin esto, una regla manual
+ * cargada por adelantado (`chargeRecurringNow` antes de la fecha
+ * programada) seguía apareciendo acá como "próximo" hasta que la fecha de
+ * la regla pasaba de verdad — el auto-registro no lo sufre porque nunca
+ * materializa antes de tiempo, pero "Cargar ahora" sí puede.
  */
-export function computeUpcomingCharges(rules: readonly RecurringRuleInput[], now: Date, horizonDays: number): UpcomingCharge[] {
+export function computeUpcomingCharges(rules: readonly RecurringRuleInput[], now: Date, horizonDays: number, chargedByRule?: ReadonlyMap<string, ReadonlySet<string>>): UpcomingCharge[] {
   const fromIso = localDateOnly(now);
   const toIso = localDateOnly(new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000));
   return rules
     .flatMap((rule) => {
-      const [first] = occurrencesBetween(rule, fromIso, toIso);
+      const charged = chargedByRule?.get(rule.id);
+      const first = occurrencesBetween(rule, fromIso, toIso).find((d) => !charged?.has(d));
       if (!first) return [];
       return [{ ruleId: rule.id, nextDate: new Date(occurredAtFor(first)) }];
     })

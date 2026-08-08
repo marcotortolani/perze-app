@@ -15,6 +15,19 @@ export function useRecurringRules(householdId: string | undefined) {
   });
 }
 
+/**
+ * Una sola regla por id, sin filtrar por `archivedAt` (a diferencia de
+ * `useRecurringRules`/`.list()`) — un movimiento viejo de una regla ya
+ * archivada tiene que poder seguir mostrando su nombre en el detalle.
+ */
+export function useRecurringRule(id: string | undefined) {
+  return useQuery({
+    queryKey: ["recurring-rule", id ?? ""],
+    queryFn: () => recurringRulesRepo.get(id ?? ""),
+    enabled: !!id,
+  });
+}
+
 export function useInvalidateRecurringRules(householdId: string | undefined) {
   const queryClient = useQueryClient();
   return () => householdId && queryClient.invalidateQueries({ queryKey: recurringRulesKey(householdId), refetchType: "all" });

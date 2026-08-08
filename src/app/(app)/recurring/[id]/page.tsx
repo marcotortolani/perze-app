@@ -37,11 +37,13 @@ import {
   RECURRING_HISTORY_MIN_POINTS,
 } from '@/lib/analytics/recurring-history'
 import {
+  isChargeDue,
   nextOccurrenceAfter,
   occurredAtFor,
   occurrencesBetween,
 } from '@/lib/recurring/occurrences'
-import { chargeRecurringNow } from '@/lib/recurring/materialize'
+import { chargeRecurringNow, needsFxPreview } from '@/lib/recurring/materialize'
+import type { ScaledRate } from '@/lib/fx/rate'
 import { todayIso } from '@/lib/repos/ids'
 import {
   formatDateShort,
@@ -49,6 +51,7 @@ import {
   type Locale,
 } from '@/i18n/formatting'
 import { useDateFormatPreference } from '@/stores/format-preferences-store'
+import { ChargeFallbackPreviewSheet } from './ChargeFallbackPreviewSheet'
 
 // C15/auditoría: importar `BarChart` directo de su archivo, no del barrel.
 const BarChart = dynamic(
@@ -79,6 +82,7 @@ export default function RecurringRuleDetailPage({
 
   const [showTable, setShowTable] = useState(false)
   const [charging, setCharging] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
   const rule = rules?.find((r) => r.id === id)
   usePageHeader({
     ...(rule ? { title: rule.name } : {}),
@@ -98,6 +102,9 @@ export default function RecurringRuleDetailPage({
     )
 
   const account = accounts.find((a) => a.id === rule.accountId)
+  const fallbackAccount = rule.fallbackAccountId
+    ? accounts.find((a) => a.id === rule.fallbackAccountId)
+    : undefined
   const category = rule.categoryId
     ? categories.find((c) => c.id === rule.categoryId)
     : undefined
@@ -105,13 +112,6 @@ export default function RecurringRuleDetailPage({
   const series = amountSeries(history ?? [])
   const increase = detectPriceIncrease(series, rule.frequency)
   const today = todayIso()
-  const firstUpcoming = nextOccurrenceAfter(rule, today)
-  const upcoming = firstUpcoming
-    ? occurrencesBetween(rule, firstUpcoming, addYears(firstUpcoming, 2)).slice(
-        0,
-        3,
-      )
-    : []
   // Clave de idempotencia real: `recurringOccurrenceDate`, no `occurredAt`
   // (que en `series`/el gráfico es la fecha real de pago — puede ser
   // posterior al período que salda si se cargó tarde a mano).
@@ -121,16 +121,28 @@ export default function RecurringRuleDetailPage({
       .map((tx) => tx.recurringOccurrenceDate ?? tx.occurredAt.slice(0, 10)),
   )
   // Con auto-registro OFF la fecha de la regla es solo aviso/organización
-  // — el usuario decide cuándo pagar, antes, durante o después. "Cargar
-  // ahora" tiene que estar disponible siempre que haya algún período sin
-  // saldar, no solo cuando ya venció: se busca el primer período no
-  // cargado hacia adelante (vencido o futuro), con el mismo horizonte de
-  // 2 años que ya usa `upcoming` más abajo.
+  // — el usuario decide cuándo pagar, así que se busca el primer período
+  // no cargado hacia adelante (vencido o futuro), con el mismo horizonte
+  // de 2 años que ya usa `upcoming` más abajo. `nextChargeableDate` puede
+  // caer en el futuro (nada vencido todavía); el gate de "Cargar ahora"
+  // vive en `isDue`, no acá.
   const nextChargeableDate =
     occurrencesBetween(rule, rule.anchorDate, addYears(today, 2)).find(
       (d) => !chargedDates.has(d),
     ) ?? null
-  const isDue = !rule.autoPost && nextChargeableDate !== null
+  const isDue = isChargeDue(rule.autoPost, nextChargeableDate, today)
+  // "Próximas ocurrencias" tiene que reflejar lo que TODAVÍA falta saldar,
+  // no la grilla cruda del calendario — si no, un período ya cargado a
+  // mano (con "Cargar ahora", antes de que venza) seguía apareciendo acá
+  // como si el recordatorio siguiera vigente. Arranca en
+  // `nextChargeableDate` (mismo criterio que el botón: incluye atrasos) y
+  // filtra por las mismas `chargedDates`, no solo por fecha.
+  const firstUpcoming = nextChargeableDate ?? nextOccurrenceAfter(rule, today)
+  const upcoming = firstUpcoming
+    ? occurrencesBetween(rule, firstUpcoming, addYears(firstUpcoming, 2))
+        .filter((d) => !chargedDates.has(d))
+        .slice(0, 3)
+    : []
 
   // Ajustes → Formato: toda fecha se muestra con `dateFormat`, nunca ISO
   // crudo — si el usuario lo cambia después, esta pantalla se ajusta sola.
@@ -150,16 +162,45 @@ export default function RecurringRuleDetailPage({
     invalidateRules()
   }
 
-  const handleChargeNow = async () => {
-    if (charging || nextChargeableDate === null) return
+  // Preview editable de tasa/monto (`ChargeFallbackPreviewSheet`) solo
+  // cuando el pago va a caer en el respaldo con otra moneda — ahí la
+  // cotización resuelta es una estimación que puede no coincidir con lo
+  // que el banco/casa de cambio dio de verdad. Para cualquier otro caso
+  // (cuenta principal, o respaldo en la misma moneda) sigue siendo un
+  // solo tap, sin fricción extra.
+  const confirmCharge = async (rateOverride?: ScaledRate) => {
+    if (charging || !isDue || nextChargeableDate === null) return
     setCharging(true)
     try {
-      await chargeRecurringNow(household, userId, rule, nextChargeableDate, today)
+      const result = await chargeRecurringNow(
+        household,
+        userId,
+        rule,
+        nextChargeableDate,
+        today,
+        rateOverride,
+      )
       invalidateTransactions()
-      toast(t('recurringPage.autoPosted', { name: rule.name }))
+      if (result.usedFallback) {
+        toast(t('recurringPage.chargedToFallback', { name: rule.name }))
+      } else if (result.fallbackSkippedNoRate) {
+        toast(t('recurringPage.fallbackSkippedNoRate', { name: rule.name }))
+      } else {
+        toast(t('recurringPage.charged', { name: rule.name }))
+      }
+      setPreviewOpen(false)
     } finally {
       setCharging(false)
     }
+  }
+
+  const handleChargeNow = () => {
+    if (charging || !isDue) return
+    if (account && fallbackAccount && needsFxPreview(rule, account, fallbackAccount)) {
+      setPreviewOpen(true)
+      return
+    }
+    void confirmCharge()
   }
 
   const handleArchive = async () => {
@@ -316,6 +357,15 @@ export default function RecurringRuleDetailPage({
             {account ? `${account.name} · ${account.currencyCode}` : '—'}
             {category ? ` · ${categoryLabel(category)}` : ''}
           </div>
+          {fallbackAccount ? (
+            <div
+              style={{ marginTop: 2, color: 'var(--text-secondary)', fontSize: 13 }}
+            >
+              {t('recurringPage.fallbackAccount')}
+              {': '}
+              {fallbackAccount.name} · {fallbackAccount.currencyCode}
+            </div>
+          ) : null}
         </button>
 
         <div
@@ -386,6 +436,19 @@ export default function RecurringRuleDetailPage({
           aria-label={t('app.name')}
         />
       </div>
+
+      {fallbackAccount ? (
+        <ChargeFallbackPreviewSheet
+          open={previewOpen}
+          household={household}
+          rule={rule}
+          fallbackAccount={fallbackAccount}
+          locale={locale}
+          saving={charging}
+          onClose={() => setPreviewOpen(false)}
+          onConfirm={(rate) => void confirmCharge(rate)}
+        />
+      ) : null}
     </div>
   )
 }

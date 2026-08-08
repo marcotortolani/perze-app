@@ -433,7 +433,8 @@
     "last30": "Last 30 days"
    },
    "kindAll": "All",
-   "tags": "Tags"
+   "tags": "Tags",
+   "recurring": "Recurring"
   },
   "editFlow": {
    "title": "Edit transaction",
@@ -557,6 +558,7 @@
    "account": "Account",
    "toAccount": "To {account}",
    "cardStatement": "Card statement",
+   "recurringRule": "Recurring",
    "date": "Date",
    "createdBy": "Logged by",
    "unknownMember": "Unknown member",
@@ -1726,6 +1728,14 @@
   "autoPosted": "{name} posted itself",
   "autoPostedMany": "{count} recurring charges posted themselves",
   "undo": "Undo",
+  "charged": "{name} charged",
+  "fallbackAccount": "Backup account",
+  "fallbackPreviewTitle": "Confirm charge",
+  "fallbackPreviewDebited": "Debited from {name}",
+  "fallbackAccountHint": "Only used if the main account can't cover it on the day you charge it",
+  "fallbackAccountNone": "None",
+  "chargedToFallback": "{name} was charged to the backup account — the main one didn't have funds",
+  "fallbackSkippedNoRate": "{name} was charged to the main account — no exchange rate to convert to the backup",
   "amountHistory": "Amount over time",
   "amountHistoryEmpty": "Not enough history yet.",
   "priceIncrease": "Increased {pct}%",
@@ -1990,7 +2000,8 @@
   "fixedIncomeSection": "Fixed income (optional)",
   "maturityDate": "Maturity date",
   "couponRate": "Annual coupon rate (%)",
-  "couponFrequency": "Payments per year"
+  "couponFrequency": "Payments per year",
+  "variantOf": "USD variant (CCL/MEP) of {symbol}"
  },
  "newTradePage": {
   "buy": "Buy",
@@ -2001,6 +2012,7 @@
   "quantity": "Quantity",
   "decreaseQuantity": "Subtract one unit",
   "increaseQuantity": "Add one unit",
+  "availableToSell": "Available: {quantity} {symbol}",
   "unitPrice": "Unit price",
   "unitPriceInCurrency": "Unit price ({currency})",
   "loadingPrice": "Looking up market price…",
@@ -2037,6 +2049,20 @@
   "updatePrice": "Update {symbol}'s price",
   "price": "Price ({currency})",
   "addInstrument": "Add instrument"
+ },
+ "assetClassLabels": {
+  "acciones": "Stocks",
+  "cedears": "CEDEARs",
+  "bonosSoberanos": "Sovereign bonds",
+  "ons": "Corporate notes",
+  "letras": "Treasury bills",
+  "fci": "Mutual funds",
+  "plazoFijo": "Fixed-term deposit",
+  "crypto": "Crypto",
+  "etfs": "ETFs",
+  "inmuebles": "Real estate",
+  "efectivo": "Cash",
+  "otros": "Other"
  },
  "assetClassesPage": {
   "title": "Asset classes",

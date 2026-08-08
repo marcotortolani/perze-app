@@ -67,17 +67,14 @@ export default function RecurringPageContent() {
   }
 
   const today = todayIso();
-  const upcoming = computeUpcomingCharges(rules, new Date(), 30);
-  const next = upcoming[0];
-  const nextRule = next ? rules.find((r) => r.id === next.ruleId) : undefined;
-  const nextAccount = nextRule ? accounts.find((a) => a.id === nextRule.accountId) : undefined;
 
   // Períodos ya cargados por regla (`recurringOccurrences`, clave
   // `recurringOccurrenceDate` — no `occurredAt`, que en una carga manual
   // tardía es la fecha real de pago, no la del período). Alimenta la
-  // fecha que se muestra en la sección "Manuales": el primer período sin
-  // saldar, vencido o futuro — con auto-registro OFF la fecha de la regla
-  // es solo aviso/organización, el usuario decide cuándo pagar.
+  // fecha que se muestra en la sección "Manuales" Y el "Next: ..." de
+  // arriba: el primer período sin saldar, vencido o futuro — con
+  // auto-registro OFF la fecha de la regla es solo aviso/organización, el
+  // usuario decide cuándo pagar (y puede adelantarse a la fecha programada).
   const chargedByRule = new Map<string, Set<string>>();
   for (const o of recurringOccurrences) {
     if (!chargedByRule.has(o.recurringId)) chargedByRule.set(o.recurringId, new Set());
@@ -85,6 +82,11 @@ export default function RecurringPageContent() {
   }
   const nextUnchargedDate = (rule: (typeof rules)[number]) =>
     occurrencesBetween(rule, rule.anchorDate, addYears(today, 2)).find((d) => !chargedByRule.get(rule.id)?.has(d)) ?? null;
+
+  const upcoming = computeUpcomingCharges(rules, new Date(), 30, chargedByRule);
+  const next = upcoming[0];
+  const nextRule = next ? rules.find((r) => r.id === next.ruleId) : undefined;
+  const nextAccount = nextRule ? accounts.find((a) => a.id === nextRule.accountId) : undefined;
 
   const accountsWithRules = accounts.filter((a) => rules.some((r) => r.accountId === a.id));
   const currenciesWithRules = [...new Set(rules.map((r) => r.currencyCode))].sort();

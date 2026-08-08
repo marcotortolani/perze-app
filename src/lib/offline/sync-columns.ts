@@ -27,10 +27,10 @@ export const GOALS_COLUMNS =
   "id, household_id, name, icon, color, target_amount::text, currency_code, target_date, account_id, archived_at, created_by, created_at, updated_at, client_rev";
 
 export const RECURRING_RULES_COLUMNS =
-  "id, household_id, name, kind, category_id, account_id, expected_amount::text, currency_code, frequency, anchor_date, day_of_month, auto_post, end_date, archived_at, created_by, created_at, updated_at, client_rev";
+  "id, household_id, name, kind, category_id, account_id, fallback_account_id, expected_amount::text, currency_code, frequency, anchor_date, day_of_month, auto_post, end_date, archived_at, created_by, created_at, updated_at, client_rev";
 
 export const RULES_COLUMNS =
   "id, household_id, name, priority, match, actions, is_active, hit_count, created_by, created_at, updated_at, deleted_at, client_rev";
 
 export const TRANSACTIONS_COLUMNS =
-  "id, household_id, created_by, kind, occurred_at, account_id, counter_account_id, amount::text, currency_code, original_amount::text, original_currency, original_rate::text, fx_rate::text, fx_source, fx_provider, fx_quote_kind, fx_resolved_at, amount_base::text, counter_amount::text, counter_currency_code, counter_fx_rate::text, category_id, payee_id, note, attachments, location, status, visibility, recurring_id, recurring_occurrence_date, installment_group_id, installment_number, installment_total, created_at, updated_at, deleted_at, client_rev, source";
+  "id, household_id, created_by, kind, occurred_at, account_id, counter_account_id, amount::text, currency_code, original_amount::text, original_currency, original_rate::text, fx_rate::text, fx_source, fx_provider, fx_quote_kind, fx_resolved_at, amount_base::text, counter_amount::text, counter_currency_code, counter_fx_rate::text, category_id, payee_id, note, attachments, location, status, visibility, recurring_id, recurring_occurrence_date, installment_group_id, installment_number, installment_total, created_at, updated_at, deleted_at, client_rev, source, trade_id";

@@ -55,6 +55,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const tagById = useMemo(() => new Map(tags.map((tg) => [tg.id, tg])), [tags]);
+  const recurringRuleById = useMemo(() => new Map(recurringRules.map((r) => [r.id, r])), [recurringRules]);
   const tagIdsByTx = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const link of transactionTagLinks) {
@@ -121,6 +122,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       const category = tx.categoryId ? categoryById.get(tx.categoryId) : undefined;
       const title = category ? categoryLabel(category) : (tx.note ?? t("search.noNote"));
       const txTagNames = (tagIdsByTx.get(tx.id) ?? []).map((tagId) => tagById.get(tagId)?.name).filter((name): name is string => !!name);
+      // El recurrente que originó este movimiento también puntúa sin
+      // mostrarse en la fila, mismo criterio que los tags (D30) — "Alquiler"
+      // tiene que encontrar el gasto de Housing que generó esa regla,
+      // aunque la categoría no diga "Alquiler" en ningún lado.
+      const recurringRuleName = tx.recurringId ? recurringRuleById.get(tx.recurringId)?.name : undefined;
+      const txKeywords = [...txTagNames, ...(recurringRuleName ? [recurringRuleName] : [])];
       items.push({
         id: tx.id,
         group: "transactions",
@@ -130,10 +137,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         href: `/transactions?tx=${tx.id}`,
         icon: (category?.icon as string) ?? "cart",
         sortKey: tx.occurredAt,
-        // D30 — un movimiento con la categoría "Cliente" y el tag "Reembolsable"
-        // antes solo se encontraba por categoría; los tags puntúan sin
-        // mostrarse en la fila (ya se ven al abrir el detalle).
-        keywords: txTagNames.length > 0 ? txTagNames : undefined,
+        keywords: txKeywords.length > 0 ? txKeywords : undefined,
       });
     }
     for (const r of recurringRules) {
@@ -148,7 +152,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       });
     }
     return items;
-  }, [accounts, categories, payees, tags, transactions, recurringRules, categoryById, categoryLabel, tagById, tagIdsByTx, t]);
+  }, [accounts, categories, payees, tags, transactions, recurringRules, categoryById, categoryLabel, tagById, tagIdsByTx, recurringRuleById, t]);
 
   const results = useMemo(() => searchAll(deferredQuery, index), [deferredQuery, index]);
   const filteredActions = useMemo(() => {

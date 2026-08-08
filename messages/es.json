@@ -433,7 +433,8 @@
     "last30": "Últimos 30 días"
    },
    "kindAll": "Todo",
-   "tags": "Etiquetas"
+   "tags": "Etiquetas",
+   "recurring": "Recurrentes"
   },
   "editFlow": {
    "title": "Editar movimiento",
@@ -557,6 +558,7 @@
    "account": "Cuenta",
    "toAccount": "Hacia {account}",
    "cardStatement": "Resumen de la tarjeta",
+   "recurringRule": "Recurrente",
    "date": "Fecha",
    "createdBy": "Cargado por",
    "unknownMember": "Miembro desconocido",
@@ -1726,6 +1728,14 @@
   "autoPosted": "{name} se cargó solo",
   "autoPostedMany": "{count} recurrentes se cargaron solos",
   "undo": "Deshacer",
+  "charged": "{name} cargado",
+  "fallbackAccount": "Cuenta de respaldo",
+  "fallbackPreviewTitle": "Confirmar cargo",
+  "fallbackPreviewDebited": "Se descuenta de {name}",
+  "fallbackAccountHint": "Se usa solo si la cuenta principal no alcanza el día de la carga",
+  "fallbackAccountNone": "Ninguna",
+  "chargedToFallback": "{name} se cargó en la cuenta de respaldo — la principal no tenía fondos",
+  "fallbackSkippedNoRate": "{name} se cargó en la cuenta principal — faltó cotización para convertir al respaldo",
   "amountHistory": "Monto mes a mes",
   "amountHistoryEmpty": "Todavía no hay suficiente historial.",
   "priceIncrease": "Aumentó {pct}%",
@@ -1990,7 +2000,8 @@
   "fixedIncomeSection": "Renta fija (opcional)",
   "maturityDate": "Fecha de vencimiento",
   "couponRate": "Tasa de cupón anual (%)",
-  "couponFrequency": "Pagos por año"
+  "couponFrequency": "Pagos por año",
+  "variantOf": "Variante USD (CCL/MEP) de {symbol}"
  },
  "newTradePage": {
   "buy": "Compra",
@@ -2001,6 +2012,7 @@
   "quantity": "Cantidad",
   "decreaseQuantity": "Restar una unidad",
   "increaseQuantity": "Sumar una unidad",
+  "availableToSell": "Disponible: {quantity} {symbol}",
   "unitPrice": "Precio unitario",
   "unitPriceInCurrency": "Precio unitario ({currency})",
   "loadingPrice": "Buscando precio de mercado…",
@@ -2037,6 +2049,20 @@
   "updatePrice": "Actualizar precio de {symbol}",
   "price": "Precio ({currency})",
   "addInstrument": "Agregar instrumento"
+ },
+ "assetClassLabels": {
+  "acciones": "Acciones",
+  "cedears": "CEDEARs",
+  "bonosSoberanos": "Bonos soberanos",
+  "ons": "ONs",
+  "letras": "Letras",
+  "fci": "FCI",
+  "plazoFijo": "Plazo fijo",
+  "crypto": "Cripto",
+  "etfs": "ETFs",
+  "inmuebles": "Inmuebles",
+  "efectivo": "Efectivo",
+  "otros": "Otros"
  },
  "assetClassesPage": {
   "title": "Clases de activo",

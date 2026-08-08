@@ -68,6 +68,9 @@ export default function NewRecurringRulePage() {
   const [name, setName] = useState('')
   const [kind, setKind] = useState<'expense' | 'income'>('expense')
   const [accountId, setAccountId] = useState<string | null>(null)
+  const [fallbackAccountId, setFallbackAccountId] = useState<string | null>(
+    null,
+  )
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [frequency, setFrequency] = useState<RecurringFrequency>('monthly')
   const [dayOfMonth, setDayOfMonth] = useState('1')
@@ -76,9 +79,9 @@ export default function NewRecurringRulePage() {
   )
   const [expr, setExpr] = useState('')
   const [autoPost, setAutoPost] = useState(true)
-  const [sheet, setSheet] = useState<'none' | 'account' | 'category' | 'month'>(
-    'none',
-  )
+  const [sheet, setSheet] = useState<
+    'none' | 'account' | 'fallbackAccount' | 'category' | 'month'
+  >('none')
   const [saving, setSaving] = useState(false)
   const [prefilledFromOrigin, setPrefilledFromOrigin] = useState(false)
   usePageHeader({
@@ -99,6 +102,7 @@ export default function NewRecurringRulePage() {
       setName('')
       setKind('expense')
       setAccountId(null)
+      setFallbackAccountId(null)
       setCategoryId(null)
       setFrequency('monthly')
       setDayOfMonth('1')
@@ -123,6 +127,9 @@ export default function NewRecurringRulePage() {
   if (!household || !userId) return null
 
   const account = accounts.find((a) => a.id === accountId)
+  const fallbackAccount = accounts.find((a) => a.id === fallbackAccountId)
+  const showFallbackAccount =
+    !autoPost && kind === 'expense' && accountId !== null
   const category = categories.find((c) => c.id === categoryId)
   const day = Math.min(31, Math.max(1, Number(dayOfMonth) || 1))
   const isDayBased = frequency === 'monthly' || frequency === 'yearly'
@@ -157,6 +164,7 @@ export default function NewRecurringRulePage() {
         kind,
         categoryId,
         accountId: accountId!,
+        fallbackAccountId: showFallbackAccount ? fallbackAccountId : null,
         expectedAmount: amount.amount,
         currencyCode: account.currencyCode,
         frequency,
@@ -197,7 +205,7 @@ export default function NewRecurringRulePage() {
        tab bar) pueda pisar "Guardar" — 144px y 80px se probaron primero y
        se bajaron a pedido: era más aire del que usa el resto de la app.
        `lg:pb-0` porque en desktop la tab bar no existe. */
-    <div className="flex flex-col pb-10 lg:pb-0">
+    <div className="flex flex-col pb-10">
       {/* `lg`+: el formulario queda a la izquierda tal cual estaba — la
           columna del grid ya da un ancho parecido a `--content-max-width` —
           y la derecha pasa a llevar el `ZMark` en vez de quedar vacía.
@@ -292,6 +300,26 @@ export default function NewRecurringRulePage() {
                 : t('goalsPage.chooseAccount')}
             </div>
           </button>
+
+          {showFallbackAccount ? (
+            <button
+              type="button"
+              onClick={() => setSheet('fallbackAccount')}
+              className="rounded-card border-0 bg-surface-2 p-3.5 text-left cursor-pointer"
+            >
+              <div className="t-caption text-text-muted">
+                {t('recurringPage.fallbackAccount')}
+              </div>
+              <div className="mt-0.5 text-[15px] text-text-primary">
+                {fallbackAccount
+                  ? `${fallbackAccount.name} · ${fallbackAccount.currencyCode}`
+                  : t('recurringPage.fallbackAccountNone')}
+              </div>
+              <div className="mt-0.5 text-[13px] text-text-secondary">
+                {t('recurringPage.fallbackAccountHint')}
+              </div>
+            </button>
+          ) : null}
 
           <button
             type="button"
@@ -411,10 +439,39 @@ export default function NewRecurringRulePage() {
               meta={a.currencyCode}
               onClick={() => {
                 setAccountId(a.id)
+                if (a.id === fallbackAccountId) setFallbackAccountId(null)
                 setSheet('none')
               }}
             />
           ))}
+        </div>
+      </Sheet>
+      <Sheet
+        open={sheet === 'fallbackAccount'}
+        title={t('recurringPage.fallbackAccount')}
+        onClose={() => setSheet('none')}
+      >
+        <div className="flex flex-col">
+          <ListRow
+            label={t('recurringPage.fallbackAccountNone')}
+            onClick={() => {
+              setFallbackAccountId(null)
+              setSheet('none')
+            }}
+          />
+          {accounts
+            .filter((a) => a.id !== accountId)
+            .map((a) => (
+              <ListRow
+                key={a.id}
+                label={a.name}
+                meta={a.currencyCode}
+                onClick={() => {
+                  setFallbackAccountId(a.id)
+                  setSheet('none')
+                }}
+              />
+            ))}
         </div>
       </Sheet>
       <Sheet

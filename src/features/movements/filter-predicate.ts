@@ -24,6 +24,7 @@ export function matchesNonDateFilters(
   if (filters.kind !== "all" && tx.kind !== filters.kind) return false;
   if (filters.accountIds.length > 0 && !filters.accountIds.includes(tx.accountId)) return false;
   if (filters.categoryIds.length > 0 && (!tx.categoryId || !filters.categoryIds.includes(tx.categoryId))) return false;
+  if (filters.recurringIds.length > 0 && (!tx.recurringId || !filters.recurringIds.includes(tx.recurringId))) return false;
   if (filters.tagIds.length > 0) {
     const txTagIds = tagIdsByTx.get(tx.id) ?? [];
     if (!filters.tagIds.some((id) => txTagIds.includes(id))) return false;

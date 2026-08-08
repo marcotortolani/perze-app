@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthlyEquivalent, nextOccurrenceAfter, occurredAtFor, occurrencesBetween, occurrencesPerYear, type OccurrenceRule } from "./occurrences";
+import { isChargeDue, monthlyEquivalent, nextOccurrenceAfter, occurredAtFor, occurrencesBetween, occurrencesPerYear, type OccurrenceRule } from "./occurrences";
 import vectors from "./__fixtures__/occurrence-vectors.json";
 
 describe("occurrencesBetween — vectores compartidos con el espejo SQL", () => {
@@ -55,5 +55,27 @@ describe("monthlyEquivalent / occurrencesPerYear", () => {
     expect(occurrencesPerYear("weekly")).toBe(52);
     expect(occurrencesPerYear("biweekly")).toBe(26);
     expect(monthlyEquivalent(1000n, "weekly")).toBe((1000n * 52n) / 12n);
+  });
+});
+
+describe("isChargeDue — cuándo se ofrece 'Cargar ahora'", () => {
+  it("vencido: debido", () => {
+    expect(isChargeDue(false, "2026-08-01", "2026-08-08")).toBe(true);
+  });
+
+  it("vence hoy: debido", () => {
+    expect(isChargeDue(false, "2026-08-08", "2026-08-08")).toBe(true);
+  });
+
+  it("todavía no llegó: NO debido, aunque falte un solo día", () => {
+    expect(isChargeDue(false, "2026-08-09", "2026-08-08")).toBe(false);
+  });
+
+  it("sin ningún período pendiente (regla terminada): NO debido", () => {
+    expect(isChargeDue(false, null, "2026-08-08")).toBe(false);
+  });
+
+  it("auto-registro ON: nunca debido, aunque haya algo vencido", () => {
+    expect(isChargeDue(true, "2026-08-01", "2026-08-08")).toBe(false);
   });
 });

@@ -18,6 +18,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
+import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
@@ -56,10 +57,20 @@ const SELECTION_BLEED = 12;
  * categoría (que el ícono + el título ya cubren); sin etiquetas, sigue
  * mostrando la categoría como siempre.
  */
-function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[], reconciliationLabel: string): string {
+/**
+ * `recurringRuleName`: el título de la fila ya es la categoría (`merchant`
+ * más arriba en el JSX) — repetirla acá abajo ("Itaú · Housing" con el
+ * título ya diciendo "Housing") no suma información y encima obliga a
+ * abrir el detalle para enterarse de qué recurrente es. Con el vínculo
+ * disponible se prioriza el nombre de la regla, que sí distingue "2do
+ * Nuevo Alquiler" de cualquier otro gasto con la misma categoría. Mismo
+ * orden de prioridad que ya tenía `categoryLabel`: los tags (más
+ * específicos, pueden ser varios) siguen ganando si existen.
+ */
+function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[], reconciliationLabel: string, recurringRuleName: string | undefined): string {
   if (tx.kind === "transfer") return account ? `${account.name} · ${transferLabel}` : transferLabel;
   if (tx.kind === "adjustment") return account ? `${account.name} · ${reconciliationLabel}` : reconciliationLabel;
-  const secondary = tagNames.length > 0 ? tagNames.join(", ") : categoryLabel;
+  const secondary = tagNames.length > 0 ? tagNames.join(", ") : (recurringRuleName ?? categoryLabel);
   return [account?.name, secondary].filter(Boolean).join(" · ");
 }
 
@@ -100,6 +111,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   const { data: accountsRaw = [], isLoading: accountsLoading } = useAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: tags = [] } = useTags(household?.id);
+  const { data: rules = [] } = useRecurringRules(household?.id);
   const transactionsQuery = useTransactions(household?.id);
   const { data: transactionsRaw, isLoading: txLoading } = transactionsQuery;
   // El switch Personal/Compartido/Todo del header filtra acá — antes se
@@ -116,6 +128,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   );
   const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
   const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags]);
+  const recurringRuleById = useMemo(() => new Map(rules.map((rule) => [rule.id, rule])), [rules]);
   const tagIdsByTx = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const link of transactionTagLinks ?? []) {
@@ -700,7 +713,8 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
                               item.tx.categoryId ? (categoryById.has(item.tx.categoryId) ? categoryLabel(categoryById.get(item.tx.categoryId)!) : undefined) : undefined,
                               isCardPayment(item.tx) ? t("transactions.list.cardPayment") : t("transactions.list.transfer"),
                               tagNamesByTx.get(item.tx.id) ?? [],
-                              t("transactions.list.reconciliation")
+                              t("transactions.list.reconciliation"),
+                              item.tx.recurringId ? recurringRuleById.get(item.tx.recurringId)?.name : undefined
                             )}
                             value={money(item.tx.kind === "expense" ? -item.tx.amount : item.tx.amount, item.tx.currencyCode)}
                             secondary={
@@ -749,6 +763,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
         accounts={accounts}
         categories={categories}
         tags={tags}
+        rules={rules}
         resultCount={filtered.length}
         dateOwnedByCalendar={calendarOpen}
       />

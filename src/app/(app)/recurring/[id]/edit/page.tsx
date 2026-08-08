@@ -86,12 +86,15 @@ export default function EditRecurringRulePage({
   const [accountIdOverride, setAccountIdOverride] = useState<string | null>(
     null,
   )
+  const [fallbackAccountIdOverride, setFallbackAccountIdOverride] = useState<
+    string | null | undefined
+  >(undefined)
   const [categoryIdOverride, setCategoryIdOverride] = useState<
     string | null | undefined
   >(undefined)
   const [autoPostOverride, setAutoPostOverride] = useState<boolean | null>(null)
   const [sheet, setSheet] = useState<
-    'none' | 'account' | 'category' | 'amount' | 'month'
+    'none' | 'account' | 'fallbackAccount' | 'category' | 'amount' | 'month'
   >('none')
   const [saving, setSaving] = useState(false)
   const rule = rules?.find((r) => r.id === id)
@@ -116,6 +119,7 @@ export default function EditRecurringRulePage({
       setYearlyMonthOverride(null)
       setExpr(null)
       setAccountIdOverride(null)
+      setFallbackAccountIdOverride(undefined)
       setCategoryIdOverride(undefined)
       setAutoPostOverride(null)
       setSheet('none')
@@ -138,10 +142,18 @@ export default function EditRecurringRulePage({
   const displayName = name ?? rule.name
   const displayDay = dayOfMonth ?? String(rule.dayOfMonth ?? 1)
   const accountId = accountIdOverride ?? rule.accountId
+  const fallbackAccountId =
+    fallbackAccountIdOverride === undefined
+      ? rule.fallbackAccountId
+      : fallbackAccountIdOverride
   const categoryId =
     categoryIdOverride === undefined ? rule.categoryId : categoryIdOverride
   const autoPost = autoPostOverride ?? rule.autoPost
   const account = accounts.find((a) => a.id === accountId)
+  const fallbackAccount = fallbackAccountId
+    ? accounts.find((a) => a.id === fallbackAccountId)
+    : undefined
+  const showFallbackAccount = !autoPost && rule.kind === 'expense'
   const category = categoryId
     ? categories.find((c) => c.id === categoryId)
     : undefined
@@ -199,6 +211,7 @@ export default function EditRecurringRulePage({
         anchorDate,
         dayOfMonth: isDayBased ? day : null,
         accountId,
+        fallbackAccountId: showFallbackAccount ? (fallbackAccountId ?? null) : null,
         categoryId: categoryId ?? null,
         expectedAmount: amount,
         autoPost,
@@ -328,6 +341,26 @@ export default function EditRecurringRulePage({
           </div>
         </button>
 
+        {showFallbackAccount ? (
+          <button
+            type="button"
+            onClick={() => setSheet('fallbackAccount')}
+            className="rounded-card border-0 bg-surface-2 p-3.5 text-left cursor-pointer"
+          >
+            <div className="t-caption text-text-muted">
+              {t('recurringPage.fallbackAccount')}
+            </div>
+            <div className="mt-0.5 text-[15px] text-text-primary">
+              {fallbackAccount
+                ? `${fallbackAccount.name} · ${fallbackAccount.currencyCode}`
+                : t('recurringPage.fallbackAccountNone')}
+            </div>
+            <div className="mt-0.5 text-[13px] text-text-secondary">
+              {t('recurringPage.fallbackAccountHint')}
+            </div>
+          </button>
+        ) : null}
+
         <button
           type="button"
           onClick={() => setSheet('category')}
@@ -455,10 +488,39 @@ export default function EditRecurringRulePage({
               meta={a.currencyCode}
               onClick={() => {
                 setAccountIdOverride(a.id)
+                if (a.id === fallbackAccountId) setFallbackAccountIdOverride(null)
                 setSheet('none')
               }}
             />
           ))}
+        </div>
+      </Sheet>
+      <Sheet
+        open={sheet === 'fallbackAccount'}
+        title={t('recurringPage.fallbackAccount')}
+        onClose={() => setSheet('none')}
+      >
+        <div className="flex flex-col">
+          <ListRow
+            label={t('recurringPage.fallbackAccountNone')}
+            onClick={() => {
+              setFallbackAccountIdOverride(null)
+              setSheet('none')
+            }}
+          />
+          {accounts
+            .filter((a) => a.id !== accountId)
+            .map((a) => (
+              <ListRow
+                key={a.id}
+                label={a.name}
+                meta={a.currencyCode}
+                onClick={() => {
+                  setFallbackAccountIdOverride(a.id)
+                  setSheet('none')
+                }}
+              />
+            ))}
         </div>
       </Sheet>
       <Sheet

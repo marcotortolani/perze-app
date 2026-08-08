@@ -42,11 +42,15 @@ export function BarChart({ data = [], height = 130, color = "var(--data-1)", gri
       })}
       {data.map((d, i) => {
         const bh = (d.value / max) * (base - 20);
-        return <rect key={d.label} x={i * slot + (slot - barW) / 2} y={base - bh} width={barW} height={bh} rx="var(--bar-radius)" fill={d.color ?? color} />;
+        // `i`, no `d.label`: dos puntos pueden formatear al mismo label
+        // corto (dos cargas el mismo día calendario, p. ej.) — una key
+        // repetida le hace perder a React la identidad de una de las dos
+        // barras ("Encountered two children with the same key").
+        return <rect key={i} x={i * slot + (slot - barW) / 2} y={base - bh} width={barW} height={bh} rx="var(--bar-radius)" fill={d.color ?? color} />;
       })}
       <line x1="0" y1={base} x2={w} y2={base} stroke="var(--border)" strokeWidth="1" />
       {data.map((d, i) => (
-        <text key={d.label} x={i * slot + slot / 2} y={base + 14} fontSize="9" fill="var(--text-muted)" textAnchor="middle" fontFamily="var(--font-sans)">
+        <text key={i} x={i * slot + slot / 2} y={base + 14} fontSize="9" fill="var(--text-muted)" textAnchor="middle" fontFamily="var(--font-sans)">
           {d.label}
         </text>
       ))}

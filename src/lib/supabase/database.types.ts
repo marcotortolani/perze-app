@@ -1949,6 +1949,7 @@ export type Database = {
           detected: boolean
           end_date: string | null
           expected_amount: number
+          fallback_account_id: string | null
           frequency: string
           household_id: string
           id: string
@@ -1971,6 +1972,7 @@ export type Database = {
           detected?: boolean
           end_date?: string | null
           expected_amount: number
+          fallback_account_id?: string | null
           frequency?: string
           household_id: string
           id: string
@@ -1993,6 +1995,7 @@ export type Database = {
           detected?: boolean
           end_date?: string | null
           expected_amount?: number
+          fallback_account_id?: string | null
           frequency?: string
           household_id?: string
           id?: string
@@ -2029,6 +2032,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "recurring_rules_fallback_account_id_fkey"
+            columns: ["fallback_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_rules_household_id_fkey"
@@ -2563,6 +2573,7 @@ export type Database = {
           status: string
           sync_error: string | null
           sync_state: string
+          trade_id: string | null
           updated_at: string
           visibility: string
         }
@@ -2606,6 +2617,7 @@ export type Database = {
           status?: string
           sync_error?: string | null
           sync_state?: string
+          trade_id?: string | null
           updated_at?: string
           visibility?: string
         }
@@ -2649,6 +2661,7 @@ export type Database = {
           status?: string
           sync_error?: string | null
           sync_state?: string
+          trade_id?: string | null
           updated_at?: string
           visibility?: string
         }
@@ -2721,6 +2734,13 @@ export type Database = {
             columns: ["recurring_id"]
             isOneToOne: false
             referencedRelation: "recurring_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
             referencedColumns: ["id"]
           },
         ]
@@ -2918,6 +2938,7 @@ export type Database = {
         Returns: string[]
       }
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
+      trigger_daily_inflation_sync: { Args: never; Returns: undefined }
       trigger_daily_price_sync: { Args: never; Returns: undefined }
     }
     Enums: {

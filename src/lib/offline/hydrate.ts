@@ -361,6 +361,7 @@ export interface RawTransaction {
   deleted_at: string | null;
   client_rev: number;
   source: string;
+  trade_id: string | null;
 }
 
 export function transactionFromRow(row: RawTransaction): TransactionRow {
@@ -405,6 +406,7 @@ export function transactionFromRow(row: RawTransaction): TransactionRow {
     deletedAt: row.deleted_at,
     clientRev: row.client_rev,
     source: row.source as TransactionSource,
+    tradeId: row.trade_id,
     // La fila existe en el servidor, así que su último sync fue exitoso por
     // definición — `sync_state` remoto puede traer un 'conflict' viejo de
     // otro dispositivo, pero para ESTE dispositivo no hay nada pendiente.
@@ -486,6 +488,7 @@ export interface RawRecurringRule {
   kind: string;
   category_id: string | null;
   account_id: string;
+  fallback_account_id: string | null;
   expected_amount: string;
   currency_code: string;
   frequency: string;
@@ -508,6 +511,7 @@ export function recurringRuleFromRow(row: RawRecurringRule): RecurringRuleRow {
     kind: row.kind as "expense" | "income",
     categoryId: row.category_id,
     accountId: row.account_id,
+    fallbackAccountId: row.fallback_account_id ?? null,
     expectedAmount: bigOf(row.expected_amount),
     currencyCode: row.currency_code,
     frequency: row.frequency as RecurringRuleRow["frequency"],

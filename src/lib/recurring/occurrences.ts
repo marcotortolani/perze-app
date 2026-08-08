@@ -136,3 +136,19 @@ export function monthlyEquivalent(amount: bigint, frequency: RecurringFrequency)
   const perYear = BigInt(occurrencesPerYear(frequency));
   return (amount * perYear) / 12n;
 }
+
+/**
+ * "Cargar ahora" (`recurring/[id]/page.tsx`) solo se ofrece para lo
+ * vencido o lo que vence HOY — nunca para un período que todavía no
+ * llegó. Antes no había este tope: con auto-registro OFF cualquier
+ * período sin saldar dentro del horizonte de 2 años habilitaba el botón,
+ * así que tocarlo varias veces seguidas encadenaba cargas de meses
+ * futuros uno atrás de otro, sin que nada en pantalla avisara que ya se
+ * habían generado. Precargar con anticipación deja de estar permitido a
+ * cambio de que el botón no pueda dispararse por accidente más allá de lo
+ * que hoy corresponde pagar — ponerse al día con varios períodos
+ * atrasados sigue andando igual, porque esos SÍ son `<= today`.
+ */
+export function isChargeDue(autoPost: boolean, nextChargeableDate: string | null, today: string): boolean {
+  return !autoPost && nextChargeableDate !== null && nextChargeableDate <= today;
+}

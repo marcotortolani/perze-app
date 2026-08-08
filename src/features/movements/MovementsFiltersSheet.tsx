@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button, Chip, Sheet, Switch } from "@/design-system";
-import type { AccountRow, CategoryRow, TagRow } from "@/lib/db/schema";
+import type { AccountRow, CategoryRow, RecurringRuleRow, TagRow } from "@/lib/db/schema";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 
 export type DatePreset = "all" | "this-month" | "last-month" | "last-7" | "last-30";
@@ -14,11 +14,12 @@ export interface MovementsFilters {
   accountIds: string[];
   categoryIds: string[];
   tagIds: string[];
+  recurringIds: string[];
   onlyPending: boolean;
 }
 
 export function defaultMovementsFilters(): MovementsFilters {
-  return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], tagIds: [], onlyPending: false };
+  return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], tagIds: [], recurringIds: [], onlyPending: false };
 }
 
 /**
@@ -34,6 +35,7 @@ export function countActiveFilters(f: MovementsFilters, dateOwnedByCalendar = fa
   if (f.accountIds.length > 0) n += 1;
   if (f.categoryIds.length > 0) n += 1;
   if (f.tagIds.length > 0) n += 1;
+  if (f.recurringIds.length > 0) n += 1;
   if (f.onlyPending) n += 1;
   return n;
 }
@@ -46,6 +48,7 @@ export interface MovementsFiltersSheetProps {
   accounts: AccountRow[];
   categories: CategoryRow[];
   tags: TagRow[];
+  rules: RecurringRuleRow[];
   resultCount: number;
   /**
    * Oculta la sección de período. Con el calendario abierto el rango sale de
@@ -68,7 +71,7 @@ function toggle<T>(list: T[], value: T): T[] {
  * dibuja debajo de categorías, y solo si el household ya tiene alguna —
  * sin eso, la sección quedaría siempre vacía.
  */
-export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, tags, resultCount, dateOwnedByCalendar = false }: MovementsFiltersSheetProps) {
+export function MovementsFiltersSheet({ open, onClose, filters, onChange, accounts, categories, tags, rules, resultCount, dateOwnedByCalendar = false }: MovementsFiltersSheetProps) {
   const t = useTranslations();
   const categoryLabel = useCategoryLabel();
 
@@ -160,6 +163,21 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
               {tags.map((tag) => (
                 <Chip key={tag.id} icon="tag" selected={filters.tagIds.includes(tag.id)} onClick={() => onChange({ ...filters, tagIds: toggle(filters.tagIds, tag.id) })}>
                   {tag.name}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {rules.length > 0 ? (
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
+              {t("movements.filters.recurring")}
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {rules.map((rule) => (
+                <Chip key={rule.id} icon="clock" selected={filters.recurringIds.includes(rule.id)} onClick={() => onChange({ ...filters, recurringIds: toggle(filters.recurringIds, rule.id) })}>
+                  {rule.name}
                 </Chip>
               ))}
             </div>

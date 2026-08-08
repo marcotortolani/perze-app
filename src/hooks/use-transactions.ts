@@ -31,6 +31,13 @@ export function useInvalidateTransactions(householdId: string | undefined) {
     if (!householdId) return;
     queryClient.invalidateQueries({ queryKey: ["transactions", householdId], refetchType: "all" });
     queryClient.invalidateQueries({ queryKey: ["recurring-occurrences", householdId], refetchType: "all" });
+    // Sin `recurringId` acá — se invalida sin el segundo elemento de la key
+    // (`use-recurring-rule-history.ts`) a propósito: por prefijo alcanza a
+    // CUALQUIER regla, no solo la que originó esta mutación. Antes, "Cargar
+    // ahora" (`recurring/[id]/page.tsx`) dejaba `chargedDates`/`upcoming`
+    // con el estado viejo hasta salir y volver a entrar a la pantalla —
+    // mismo bug para deshacer o borrar un movimiento ligado a un recurrente.
+    queryClient.invalidateQueries({ queryKey: ["recurring-rule-history"], refetchType: "all" });
   };
 }
 

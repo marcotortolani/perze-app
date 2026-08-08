@@ -179,7 +179,8 @@ export interface PayeeRow {
   clientRev: number;
 }
 
-export type TransactionKind = "expense" | "income" | "transfer" | "adjustment";
+/** `investing` — settlement de una compra/venta de instrumento (Bloque I). Excluida de presupuestos y "gasto por categoría", igual que `transfer`/`adjustment`; el signo va en `amount` (negativo compra, positivo venta), no en el `kind`. */
+export type TransactionKind = "expense" | "income" | "transfer" | "adjustment" | "investing";
 export type FxSourceValue = "identity" | "api" | "manual" | "inherited" | "pending";
 export type TransactionStatus = "cleared" | "pending" | "scheduled" | "void";
 export type TransactionSource = "manual" | "voice" | "import" | "recurring" | "rule";
@@ -237,6 +238,8 @@ export interface TransactionRow {
   note: string | null;
   attachments: Attachment[];
   location: { lat: number; lng: number; label: string } | null;
+  /** Trade que originó este movimiento (Bloque I, `kind: 'investing'`) — `null` para el resto. */
+  tradeId: string | null;
 
   status: TransactionStatus;
   visibility: Visibility;
@@ -442,6 +445,8 @@ export interface RecurringRuleRow {
   kind: "expense" | "income";
   categoryId: string | null;
   accountId: string;
+  /** Cuenta alternativa para "Cargar ahora" cuando la principal no alcanza — ver `src/lib/recurring/materialize.ts`. Solo la usan los recurrentes manuales; el motor automático la ignora. */
+  fallbackAccountId: string | null;
   expectedAmount: bigint;
   currencyCode: string;
   frequency: RecurringFrequency;
