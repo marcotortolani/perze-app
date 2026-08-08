@@ -1180,8 +1180,11 @@
   "license": "MIT license — open source."
  },
  "landingPage": {
+  "eyebrow": "Personal finance",
   "headline": "Your money, in focus.",
   "subtitle": "Log an expense in under 5 seconds. Multi-account, multi-currency, multi-country — local-first, and yours.",
+  "heroStatValue": "< 5 s",
+  "heroStatLabel": "per expense logged",
   "cta": "Get started",
   "features": {
    "fast": {

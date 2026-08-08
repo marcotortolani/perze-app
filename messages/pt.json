@@ -1180,8 +1180,11 @@
   "license": "Licença MIT — código aberto."
  },
  "landingPage": {
+  "eyebrow": "Finanças pessoais",
   "headline": "Suas finanças, em foco.",
   "subtitle": "Lance um gasto em menos de 5 segundos. Multi-conta, multi-moeda, multi-país — local-first, e seu.",
+  "heroStatValue": "< 5 s",
+  "heroStatLabel": "por gasto lançado",
   "cta": "Começar",
   "features": {
    "fast": {

@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.85] — 2026-08-08
+
+### Cambiado — rediseño de `/start` (landing pública)
+
+La landing (`src/app/start/page.tsx`) tenía un layout genérico: todo centrado, sin cifra héroe,
+tres bloques de features apilados. Rediseño editorial alineado a la izquierda de punta a punta —
+nada se centra ni horizontal ni verticalmente. El contenido fluye top-down; el CTA queda anclado
+a los últimos ~200px con un spacer `flex: 1`, como pide `02-design-system.md` § 4.
+
+Agrega una cifra héroe real (`< 5 s`, en `t-hero-xl`) que retoma literalmente la métrica que
+define todo el producto (`CLAUDE.md`, primera línea) en vez de dejar la pantalla sin ninguna
+cifra protagonista. La lista de features pasa de tres bloques centrados a una lista numerada
+(01/02/03) con hairlines, mismo copy que ya existía. Suma `ZMark` (la marca que ya usan los
+estados vacíos, `EmptyState`) como textura de identidad grande y recortada en la esquina superior
+derecha — no es un ícono decorativo nuevo, es la marca existente a otra escala, con `--zmark-ink`
+sin tocar. Entrada con `PageEnter` (respeta `prefers-reduced-motion` y el ajuste de intensidad).
+
+3 keys nuevas de i18n (`landingPage.eyebrow`, `.heroStatValue`, `.heroStatLabel`) en `es`/`en`/`pt`.
+No toca `/about`, que sigue centrada a propósito (es la superficie de verificación de OAuth).
+
 ## [0.29.84] — 2026-08-08
 
 ### Agregado — saldo del período en el resumen gastado/ingresado del home

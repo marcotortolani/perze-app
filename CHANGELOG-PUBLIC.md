@@ -40,6 +40,12 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.85 — 8 de agosto de 2026
+
+### Mejorado
+
+- Rediseñamos la página de bienvenida que ves antes de entrar a Perze — más clara y directa.
+
 ## 0.29.84 — 8 de agosto de 2026
 
 ### Nuevo

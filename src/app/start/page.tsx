@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Logo } from "@/design-system";
+import { Logo, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
+import { PageEnter } from "@/components/motion/PageEnter";
 
 /** Título/descripción propios — es la superficie que se ve al compartir el link, no la genérica del root layout. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,6 +25,18 @@ export async function generateMetadata(): Promise<Metadata> {
  * que coincidir — `PUBLIC_PREFIXES`, `EXEMPT_PREFIXES` (`OnboardingGate`),
  * `PIN_EXEMPT_PREFIXES` (`PinGate`) — o alguna redirige antes de que esto
  * llegue a pintar.
+ *
+ * A diferencia de `/about` (bloque de texto centrado, es la superficie de
+ * verificación de OAuth y no vale la pena diferenciarla), acá el layout es
+ * editorial y alineado a la izquierda de punta a punta: título arriba,
+ * contenido fluye top-down, CTA anclado a los últimos 200px con un spacer
+ * — nada se centra verticalmente. La única cifra héroe de la pantalla es
+ * el "< 5 s" que retoma el métrica que define todo el producto (ver
+ * CLAUDE.md, primera línea): "la app se juzga por cargar un gasto en
+ * menos de 5 segundos". El resto de la marca (`ZMark`, tamaño gigante y
+ * recortado en la esquina) es la misma textura de identidad que usan los
+ * estados vacíos, solo que a mayor escala — no es un ícono decorativo
+ * nuevo.
  *
  * El fondo de puntos es decorativo y SIEMPRE se pinta acá, sin pasar por
  * `data-backdrop` (opt-in, apagado por default en toda la app — un
@@ -52,57 +65,105 @@ export default async function StartPage() {
           pointerEvents: "none",
           backgroundImage: "radial-gradient(circle, var(--dot-ink) var(--dot-size), transparent var(--dot-size))",
           backgroundSize: "var(--dot-gap) var(--dot-gap)",
-          WebkitMaskImage: "radial-gradient(ellipse 90% 70% at 50% 40%, #000 35%, transparent 100%)",
-          maskImage: "radial-gradient(ellipse 90% 70% at 50% 40%, #000 35%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 55% at 78% 8%, #000 0%, transparent 70%)",
+          maskImage: "radial-gradient(ellipse 80% 55% at 78% 8%, #000 0%, transparent 70%)",
         }}
       />
-      <ScreenShell background="transparent" style={{ padding: "64px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 48, position: "relative", zIndex: 1 }}>
-        <div style={{ textAlign: "center", marginTop: "auto" }}>
-          <Logo size={22} />
-          <h1 className="t-hero-xl" style={{ margin: "20px 0 0" }}>
-            {t("landingPage.headline")}
-          </h1>
-          <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 16, maxWidth: "38ch", marginInline: "auto" }}>
-            {t("landingPage.subtitle")}
-          </p>
-        </div>
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          top: -32,
+          right: -44,
+          zIndex: 0,
+          pointerEvents: "none",
+          transform: "rotate(-8deg)",
+          opacity: 0.6,
+        }}
+      >
+        <ZMark size={62} gap={18} />
+      </div>
 
-        <Link
-          href="/onboarding/welcome"
-          style={{
-            display: "block",
-            textAlign: "center",
-            height: "var(--primary-button-height)",
-            lineHeight: "var(--primary-button-height)",
-            borderRadius: "var(--radius-button)",
-            background: "var(--primary-fill)",
-            color: "var(--primary-on-fill)",
-            fontWeight: 600,
-            fontSize: 16,
-            textDecoration: "none",
-          }}
-        >
-          {t("landingPage.cta")}
-        </Link>
+      <ScreenShell
+        background="transparent"
+        style={{ padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1, minHeight: "100svh" }}
+      >
+        <PageEnter style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Logo size={20} />
+            <Link href="/about" className="t-caption" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+              {t("landingPage.aboutLink")}
+            </Link>
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: "auto" }}>
-          {features.map((feature) => (
-            <div key={feature.title} style={{ textAlign: "center" }}>
-              <h2 className="t-label" style={{ margin: 0, color: "var(--text-primary)" }}>
-                {feature.title}
-              </h2>
-              <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 4 }}>
-                {feature.body}
-              </p>
-            </div>
-          ))}
-        </div>
+          <div style={{ marginTop: 56 }}>
+            <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {t("landingPage.eyebrow")}
+            </p>
+            <h1 className="t-hero-xl" style={{ margin: "12px 0 0", maxWidth: "11ch" }}>
+              {t("landingPage.headline")}
+            </h1>
+            <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 16, maxWidth: "34ch" }}>
+              {t("landingPage.subtitle")}
+            </p>
+          </div>
 
-        <p className="t-caption" style={{ textAlign: "center", margin: 0, color: "var(--text-muted)" }}>
-          <Link href="/about" style={{ color: "var(--text-muted)" }}>
-            {t("landingPage.aboutLink")}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 40 }}>
+            <span className="t-hero-xl" style={{ lineHeight: 1 }}>
+              {t("landingPage.heroStatValue")}
+            </span>
+            <span className="t-caption" style={{ color: "var(--text-muted)", maxWidth: "12ch" }}>
+              {t("landingPage.heroStatLabel")}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 40 }}>
+            {features.map((feature, i) => (
+              <div
+                key={feature.title}
+                style={{
+                  display: "flex",
+                  gap: 16,
+                  padding: "16px 0",
+                  borderTop: i === 0 ? "1px solid var(--border)" : undefined,
+                  borderBottom: "1px solid var(--border)",
+                }}
+              >
+                <span className="t-caption" style={{ color: "var(--text-muted)", flexShrink: 0, paddingTop: 2 }}>
+                  {`0${i + 1}`}
+                </span>
+                <div>
+                  <p className="t-body" style={{ margin: 0, fontWeight: 500, color: "var(--text-primary)" }}>
+                    {feature.title}
+                  </p>
+                  <p className="t-body" style={{ margin: "2px 0 0", color: "var(--text-secondary)" }}>
+                    {feature.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ flex: 1, minHeight: 24 }} />
+
+          <Link
+            href="/onboarding/welcome"
+            style={{
+              display: "block",
+              textAlign: "center",
+              height: "var(--primary-button-height)",
+              lineHeight: "var(--primary-button-height)",
+              borderRadius: "var(--radius-button)",
+              background: "var(--primary-fill)",
+              color: "var(--primary-on-fill)",
+              fontWeight: 600,
+              fontSize: 16,
+              textDecoration: "none",
+            }}
+          >
+            {t("landingPage.cta")}
           </Link>
-        </p>
+        </PageEnter>
       </ScreenShell>
     </>
   );
