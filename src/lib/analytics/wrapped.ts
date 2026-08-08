@@ -1,8 +1,14 @@
+import { classifyCashFlow } from "./cash-flow";
+
 /**
  * H12 — Wrapped del semestre. Solo se ofrece con 6 períodos cerrados (el
  * propio diseño lo declara: "el wrapped sólo se ofrece con 6 meses
  * cumplidos"). Una cifra por frame, sin gráficos — así que no hay mínimo
  * de historial de gráfico en juego, el gate es sobre la cifra en sí.
+ *
+ * `totalIncome`/`totalExpense` incluyen ventas y compras de instrumentos
+ * (`cash-flow.ts`) — el ranking de comercios (`topPayee`) sigue restringido
+ * a `kind === "expense"`, un trade no tiene payee.
  */
 
 export interface WrappedTransactionInput {
@@ -36,20 +42,21 @@ export function computeWrappedSummary(transactions: readonly WrappedTransactionI
   const byPayee = new Map<string, { payeeId: string; visits: number; total: bigint }>();
 
   for (const tx of inPeriod) {
-    if (tx.kind !== "income" && tx.kind !== "expense") continue;
+    const { bucket, magnitude } = classifyCashFlow(tx);
+    if (bucket === "structural") continue; // transfer/adjustment, o el placeholder needs_capture_fx
     transactionCount += 1;
     activeDays.add(new Date(tx.occurredAt).toDateString());
-    if (tx.amountBase === null) {
+    if (bucket === "needsFx") {
       excludedCount += 1;
       continue;
     }
-    if (tx.kind === "income") totalIncome += tx.amountBase;
+    if (bucket === "inflow") totalIncome += magnitude;
     else {
-      totalExpense += tx.amountBase;
-      if (tx.payeeId) {
+      totalExpense += magnitude;
+      if (tx.kind === "expense" && tx.payeeId) {
         const entry = byPayee.get(tx.payeeId) ?? { payeeId: tx.payeeId, visits: 0, total: 0n };
         entry.visits += 1;
-        entry.total += tx.amountBase;
+        entry.total += magnitude;
         byPayee.set(tx.payeeId, entry);
       }
     }

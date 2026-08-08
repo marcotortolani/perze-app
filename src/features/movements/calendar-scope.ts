@@ -1,4 +1,5 @@
 import type { TransactionRow as TransactionRecord } from "@/lib/db/schema";
+import { classifyConsumption } from "@/lib/analytics/cash-flow";
 import type { DatePreset } from "./MovementsFiltersSheet";
 
 /**
@@ -187,9 +188,10 @@ export function noonUtc(day: string): Date {
 export function expenseTotalsByDay(transactions: Pick<TransactionRecord, "kind" | "amountBase" | "occurredAt">[]): Map<string, bigint> {
   const totals = new Map<string, bigint>();
   for (const tx of transactions) {
-    if (tx.kind !== "expense" || tx.amountBase === null) continue;
+    const { bucket, magnitude } = classifyConsumption(tx);
+    if (bucket !== "outflow") continue;
     const day = dayKeyOf(tx.occurredAt);
-    totals.set(day, (totals.get(day) ?? 0n) + tx.amountBase);
+    totals.set(day, (totals.get(day) ?? 0n) + magnitude);
   }
   return totals;
 }

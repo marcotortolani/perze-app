@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardCycle, cardPaymentSources, cycleExpenseTotal, expectedDueAmount, isCreditCardAccount } from "./card-cycle";
+import { cardCycle, cardPaymentSources, cycleExpenseTotal, expectedDueAmount, isCreditCardAccount, tradeSettlementAccounts } from "./card-cycle";
 import type { AccountRow } from "@/lib/db/schema";
 
 function account(overrides: Partial<AccountRow>): AccountRow {
@@ -51,6 +51,31 @@ describe("cardPaymentSources", () => {
   });
 });
 
+describe("tradeSettlementAccounts", () => {
+  it("excludes credit cards and archived accounts", () => {
+    const checking = account({ id: "acc-checking", kind: "checking" });
+    const card = account({ id: "card-1", kind: "credit_card" });
+    const broker = account({ id: "acc-broker", kind: "broker" });
+    const archived = account({ id: "acc-archived", kind: "savings", archivedAt: "2026-01-01T00:00:00.000Z" });
+    const result = tradeSettlementAccounts([checking, card, broker, archived], null);
+    expect(result.map((a) => a.id).sort()).toEqual(["acc-broker", "acc-checking"]);
+  });
+
+  it("keeps a legacy trade's current account visible even if it's a credit card", () => {
+    const checking = account({ id: "acc-checking", kind: "checking" });
+    const card = account({ id: "card-1", kind: "credit_card" });
+    const result = tradeSettlementAccounts([checking, card], "card-1");
+    expect(result.map((a) => a.id).sort()).toEqual(["acc-checking", "card-1"]);
+  });
+
+  it("does not resurrect an archived account just because it's not the current one", () => {
+    const archived = account({ id: "acc-archived", kind: "savings", archivedAt: "2026-01-01T00:00:00.000Z" });
+    const checking = account({ id: "acc-checking", kind: "checking" });
+    const result = tradeSettlementAccounts([archived, checking], "acc-checking");
+    expect(result.map((a) => a.id)).toEqual(["acc-checking"]);
+  });
+});
+
 describe("cardCycle", () => {
   it("statementDay 31 in February clamps to the last real day", () => {
     // Ciclo de referencia en marzo, statementDay 31 → el cierre anterior
@@ -99,6 +124,24 @@ describe("cycleExpenseTotal", () => {
       closingExclusive
     );
     expect(total).toBe(1000n - 100n - 50n);
+  });
+
+  it("a legacy investing settlement on a card increases debt like an adjustment (buy negative → subtracting adds to the debt)", () => {
+    const total = cycleExpenseTotal(
+      [{ kind: "investing", amount: -800n, occurredAt: "2026-06-20T00:00:00.000Z" }],
+      periodStart,
+      closingExclusive
+    );
+    expect(total).toBe(800n);
+  });
+
+  it("a legacy investing sell on a card reduces debt", () => {
+    const total = cycleExpenseTotal(
+      [{ kind: "investing", amount: 300n, occurredAt: "2026-06-20T00:00:00.000Z" }],
+      periodStart,
+      closingExclusive
+    );
+    expect(total).toBe(-300n);
   });
 
   it("ignores deleted and out-of-window transactions", () => {

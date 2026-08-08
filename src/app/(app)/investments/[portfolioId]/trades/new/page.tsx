@@ -21,6 +21,7 @@ import { money } from "@/lib/money/money";
 import { decimalsFor, decimalsForQuantity } from "@/lib/money/decimals";
 import { formatNumber } from "@/lib/money/format";
 import { computePositions } from "@/lib/analytics/positions";
+import { tradeSettlementAccounts } from "@/lib/analytics/card-cycle";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
@@ -243,6 +244,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         instrumentSymbol: instrument.symbol,
         accountId: account.id,
         accountCurrency: account.currencyCode,
+        accountKind: account.kind,
       });
 
       invalidateTrades();
@@ -344,7 +346,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       </Sheet>
       <Sheet open={sheet === "account"} title={t("newTradePage.settlementAccount")} onClose={() => setSheet("none")}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {accounts.map((a) => (
+          {tradeSettlementAccounts(accounts, null).map((a) => (
             <ListRow key={a.id} label={a.name} meta={a.currencyCode} onClick={() => { setAccountId(a.id); setSheet("none"); }} />
           ))}
         </div>

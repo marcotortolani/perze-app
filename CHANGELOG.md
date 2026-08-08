@@ -6,6 +6,58 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.0] — 2026-08-08
+
+### Arreglado — inversiones cuentan en el flujo de caja del período, tarjetas fuera de la liquidación de trades
+
+Reportado por el usuario contra una captura de `/transactions`: dos operaciones de inversión
+listadas en el día, y la tira de arriba mostrando `INGRESOS US$ 0,00 · GASTOS US$ 0,00 · BALANCE
++US$ 0,00`. El comentario de cabecera de `supabase/migrations/20260808000000_investing_transactions.sql`
+declaraba esa exclusión a propósito (`investing` sumado a la lista de `transfer`/`adjustment`
+porque comprar un activo no es consumo) — **esa decisión queda revertida**. El SQL no se toca (es
+append-only y ya está pusheado); esto es una corrección de la capa de agregación, no del schema.
+
+Comprar o vender un instrumento es plata real que sale o entra de la misma cuenta que financia el
+resto del mes: si en agosto entraron US$ 3.000 y se consumieron todos, no hay con qué invertir, y
+un agregado que no lo refleje muestra una liquidez que no existe. Pero sigue sin ser consumo, así
+que la distinción no desaparece — se separan dos preguntas que antes respondía la misma variable
+`kind`: ¿movió liquidez? (sí, incluida la inversión) vs. ¿fue consumo? (no).
+
+- **Nuevo helper canónico `src/lib/analytics/cash-flow.ts`** (`classifyCashFlow`,
+  `classifyConsumption`, `cashFlowNetBase`) — el único lugar que traduce `kind` a inflow/outflow.
+  Reemplaza 12+ reimplementaciones inline del mismo `if (kind === "expense") ... else ...`, que es
+  la causa raíz de tres bugs reales que aparecieron al auditar el código:
+  - `period-summary.ts` metía `investing` en el `else` → sumaba a **ingresos**, y como el monto es
+    negativo en una compra, *restaba* de los ingresos.
+  - `analytics/net-worth/page.tsx` lo contaba como **gasto** con el signo invertido (doble error).
+  - `transactions/history/page.tsx` lo descartaba en silencio del neto mensual y no lo contaba en
+    `excluded` tampoco.
+- **Agregados que ahora incluyen inversión** (vía `classifyCashFlow`): la tira de período y el
+  total del día en `/transactions`, `period-summary.ts`, `money-flow.ts` (con nodo propio "Inversión"
+  en el Sankey, sin caer en la categoría `__none`), `weekly-summary.ts`, `wrapped.ts`, el sparkline
+  de 14 días y los totales del período del home.
+- **Agregados que siguen siendo solo consumo** (vía `classifyConsumption`, sin cambio de
+  comportamiento, migrados por consistencia): `budget-progress.ts`, el mapa de calor del calendario
+  (`calendar-scope.ts`), gasto por categoría (`analytics/categories/page.tsx`).
+- **Rename acotado "Gastos" → "Egresos"**, solo donde ahora se suma consumo + inversión
+  (`transactions.list.outflows`, `home.outflowThisPeriod`) — presupuestos, categorías y el mapa de
+  calor siguen diciendo "Gastos" porque siguen midiendo solo consumo.
+- **Filtro nuevo "Inversiones"** en `/transactions` (`MovementsFiltersSheet`, `KindFilter`), con su
+  whitelist de deep-link `?kind=investing`.
+- **Tarjetas de crédito excluidas de la liquidación de un trade** — reportado en el mismo mensaje:
+  los pickers de `trades/new` y `trades/[tradeId]/edit` listaban todas las cuentas sin filtrar, ni
+  siquiera las archivadas. Nuevo `tradeSettlementAccounts()` en `card-cycle.ts` (reusa
+  `isCreditCardAccount`, mismo patrón que `cardPaymentSources`), más una guarda en la capa lógica
+  (`SettlementError` en `create-settlement-transaction.ts`, mismo criterio que `PayCardError`) para
+  que `tradesRepo.create` no pueda aceptar una tarjeta aunque alguien se salte la UI. Un trade viejo
+  que ya apunta a una tarjeta mantiene esa cuenta visible al editar (no se puede volver a elegir una
+  tarjeta, pero tampoco queda en un callejón sin salida) con aviso explícito.
+
+Suite completa 1021/1021, `pnpm lint` y `pnpm build` limpios. El e2e nuevo
+(`e2e/investing-in-period-totals.spec.ts`) queda con `skip`, mismo motivo que los otros dos tests de
+inversiones existentes: los repos de inversiones pegan directo a Supabase sin Dexie/outbox, así que
+`/investments` no tiene camino de demo — confirmado corriendo el test contra el dev server.
+
 ## [0.29.93] — 2026-08-08
 
 ### Arreglado — en producción no había service worker, y nada lo avisaba

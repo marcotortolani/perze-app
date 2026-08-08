@@ -18,6 +18,7 @@ import { convert } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
 import { decimalsFor } from "@/lib/money/decimals";
+import { isCreditCardAccount, tradeSettlementAccounts } from "@/lib/analytics/card-cycle";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
 const KINDS: TradeKind[] = ["buy", "sell"];
@@ -78,7 +79,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const qty = Number(quantity.replace(",", "."));
   const unitPrice = Number(price.replace(",", "."));
   const grossAmount = Number.isFinite(qty) && Number.isFinite(unitPrice) ? Math.round(qty * unitPrice * 10 ** decimalsFor(trade.currencyCode)) : 0;
-  const canSave = !!account && qty > 0 && unitPrice > 0;
+  const canSave = !!account && !isCreditCardAccount(account) && qty > 0 && unitPrice > 0;
 
   const openQuantityKeypad = () => {
     setKeypadDigits(toKeypadDigits(qty || 0, decimalSeparator));
@@ -148,6 +149,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
         instrumentSymbol: instrument?.symbol ?? trade.instrumentId,
         accountId: account.id,
         accountCurrency: account.currencyCode,
+        accountKind: account.kind,
       });
 
       invalidateTrades();
@@ -180,6 +182,11 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
             <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
           </button>
+          {account && isCreditCardAccount(account) ? (
+            // Trade viejo, de antes de esta regla — se puede seguir editando
+            // cantidad/precio, pero hay que elegir otra cuenta para guardar.
+            <p className="t-caption" style={{ color: "var(--critical)" }}>{t("newTradePage.creditCardNotAllowed")}</p>
+          ) : null}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.quantity")}</div>
@@ -217,7 +224,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
 
       <Sheet open={sheet === "account"} title={t("newTradePage.settlementAccount")} onClose={() => setSheet("none")}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {accounts.map((a) => (
+          {tradeSettlementAccounts(accounts, trade.settlementAccountId).map((a) => (
             <ListRow key={a.id} label={a.name} meta={a.currencyCode} onClick={() => { setAccountIdOverride(a.id); setSheet("none"); }} />
           ))}
         </div>

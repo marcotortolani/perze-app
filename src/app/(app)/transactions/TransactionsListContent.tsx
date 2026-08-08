@@ -24,6 +24,7 @@ import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { add, money, subtract, zero } from "@/lib/money/money";
+import { cashFlowNetBase, classifyCashFlow } from "@/lib/analytics/cash-flow";
 import { formatAmountCompact } from "@/lib/money/format";
 import { usePendingMutations } from "@/lib/offline";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
@@ -274,11 +275,14 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
     [nonDateFiltered, from, to]
   );
 
-  // Ingresos/Gastos/Balance son el resumen del PERÍODO, no de lo que se ve
+  // Ingresos/Egresos/Balance son el resumen del PERÍODO, no de lo que se ve
   // en la lista — solo respetan el rango de fecha (mismo concepto que
-  // "gastado este período" del home). Los demás filtros (tipo, cuenta,
+  // "egresos del período" del home). Los demás filtros (tipo, cuenta,
   // categoría, pendientes) narrowean qué se MUESTRA en la lista, y no
   // tienen por qué vaciar "ingresos" a 0 cuando el filtro activo es "gasto".
+  //
+  // "Egresos" incluye compras de instrumentos, no solo consumo — es toda la
+  // liquidez que salió de las cuentas (`src/lib/analytics/cash-flow.ts`).
   const dateFiltered = useMemo(() => {
     if (!transactions) return [];
     return transactions.filter((t) => {
@@ -292,10 +296,9 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   let periodIncome = zero(baseCurrency);
   let periodExpense = zero(baseCurrency);
   for (const t of dateFiltered) {
-    if (t.kind === "transfer" || t.amountBase === null) continue;
-    const m = money(t.amountBase, baseCurrency);
-    if (t.kind === "income") periodIncome = add(periodIncome, m);
-    else if (t.kind === "expense") periodExpense = add(periodExpense, m);
+    const { bucket, magnitude } = classifyCashFlow(t);
+    if (bucket === "inflow") periodIncome = add(periodIncome, money(magnitude, baseCurrency));
+    else if (bucket === "outflow") periodExpense = add(periodExpense, money(magnitude, baseCurrency));
   }
   const periodBalance = subtract(periodIncome, periodExpense);
 
@@ -317,7 +320,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
     const result: ListItem[] = [];
     for (const day of days) {
       const dayTx = byDay.get(day)!;
-      const dayTotal = dayTx.reduce((s, t) => (t.kind === "transfer" || t.kind === "investing" || t.amountBase === null ? s : s + (t.kind === "income" ? t.amountBase : -t.amountBase)), 0n);
+      const dayTotal = dayTx.reduce((s, t) => s + cashFlowNetBase(t), 0n);
       result.push({ type: "header", date: day, total: dayTotal, currency: baseCurrency, count: dayTx.length });
       for (const t of dayTx) result.push({ type: "row", tx: t });
     }

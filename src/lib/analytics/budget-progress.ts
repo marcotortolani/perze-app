@@ -1,4 +1,5 @@
 import { getCategoryAndDescendantIds } from "@/lib/categories/category-descendants";
+import { classifyConsumption } from "@/lib/analytics/cash-flow";
 import type { CategoryRow } from "@/lib/db/schema";
 
 /**
@@ -50,11 +51,12 @@ export function computeBudgetProgress(
     const occurred = new Date(tx.occurredAt);
     if (occurred < periodStart || occurred >= periodEnd) continue;
     if (matchingIds !== null && (tx.categoryId === null || !matchingIds.has(tx.categoryId))) continue;
-    if (tx.amountBase === null) {
+    const { bucket, magnitude } = classifyConsumption(tx);
+    if (bucket === "needsFx") {
       excludedCount += 1;
       continue;
     }
-    spent += tx.amountBase;
+    spent += magnitude;
   }
 
   const progress = budget.amountLimit > 0n ? Number(spent) / Number(budget.amountLimit) : 0;

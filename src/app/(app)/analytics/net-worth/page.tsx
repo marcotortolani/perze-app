@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { Sparkline } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -10,6 +10,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
+import { classifyCashFlow } from "@/lib/analytics/cash-flow";
 
 const DAYS = 30;
 
@@ -34,12 +35,18 @@ export default function NetWorthAnalyticsPage() {
   const baseCurrency = household.baseCurrency;
   let running = 0n;
   const trend: number[] = [];
+  let excludedCount = 0;
   for (let i = DAYS - 1; i >= 0; i--) {
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
     const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
-    const dayNet = transactions
-      .filter((tx) => tx.kind !== "transfer" && tx.amountBase !== null && new Date(tx.occurredAt) >= start && new Date(tx.occurredAt) < end)
-      .reduce((s, tx) => s + (tx.kind === "income" ? tx.amountBase! : -tx.amountBase!), 0n);
+    const dayTransactions = transactions.filter((tx) => new Date(tx.occurredAt) >= start && new Date(tx.occurredAt) < end);
+    let dayNet = 0n;
+    for (const tx of dayTransactions) {
+      const { bucket, magnitude } = classifyCashFlow(tx);
+      if (bucket === "needsFx") excludedCount += 1;
+      else if (bucket === "inflow") dayNet += magnitude;
+      else if (bucket === "outflow") dayNet -= magnitude;
+    }
     running += dayNet;
     trend.push(Number(running));
   }
@@ -48,6 +55,7 @@ export default function NetWorthAnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <NeedsFxBanner count={excludedCount} />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile label={t("netWorthAnalyticsPage.current")} value={formatAmountCompact(netWorth.data?.netWorth ?? money(0n, baseCurrency), { showSign: false })} />
         <div>

@@ -660,6 +660,22 @@ portfolio_snapshots (                        -- para TWR y gráficos históricos
 
 El `price_provider` es una columna por instrumento, no un supuesto global. Y siempre se puede ingresar precio a mano — sin eso, no sirve para ONs poco líquidas ni para un departamento.
 
+**`settlement_account_id` mueve saldo de verdad, vía una transacción propia — no queda solo
+documentado acá.** Comprar o vender genera una fila en `transactions` con un quinto
+`kind = 'investing'` (`transactions_kind_check` amplía la lista de arriba en § 2.5;
+`amount_sign` permite negativo para este `kind`, igual que `adjustment`) y `trades.id` en la
+columna `transaction_id`. El signo viaja en el propio `amount`: negativo en una compra (plata que
+sale de la cuenta de liquidación), positivo en una venta — nunca se infiere con un join a `trades`
+en cada cálculo de saldo. `recompute_account_balance` ya lo suma con signo.
+
+`kind = 'investing'` **cuenta como flujo de caja pero no como consumo** — la distinción vive en
+`src/lib/analytics/cash-flow.ts` (`classifyCashFlow` vs. `classifyConsumption`), el único mapper
+`kind → signo`. Ingresos/Egresos del período, el flujo de dinero (H4) y el patrimonio neto (H5)
+incluyen las compras y ventas de instrumentos; presupuestos, gasto por categoría y el mapa de calor
+del calendario los excluyen, porque comprar un activo no es gasto. La cuenta de liquidación nunca
+puede ser una tarjeta de crédito (`tradeSettlementAccounts()` en `card-cycle.ts`, con guarda
+espejo en la capa lógica) — liquidar una operación con una tarjeta no tiene sentido en este modelo.
+
 ### 2.9 Sistema
 
 ```sql

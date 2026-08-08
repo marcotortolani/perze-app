@@ -26,20 +26,40 @@ export interface MoneyFlowResult {
 const MAX_CATEGORIES_PER_SIDE = 5;
 
 /**
- * H4 — Sankey ingresos → cuentas → destinos. Solo `income`/`expense` con
- * `amountBase` resuelto entran al flujo (needs_fx no se puede convertir a
- * una unidad común, así que sumarlo daría un número sin significado — el
- * conteo excluido se devuelve aparte, nunca el monto).
+ * H4 — Sankey ingresos → cuentas → destinos. `income`/`expense` con
+ * `amountBase` resuelto entran al flujo, y también `investing`: una compra
+ * es una salida (cuenta → nodo "Inversiones", columna 2, igual que un
+ * gasto) y una venta es una entrada (nodo "Inversiones" → cuenta, columna
+ * 0, igual que un ingreso) — nunca se agrupan bajo la categoría `__none`,
+ * llevan su propio nodo siempre visible, nunca colapsado en "Otros".
+ * needs_fx no se puede convertir a una unidad común, así que sumarlo daría
+ * un número sin significado — el conteo excluido se devuelve aparte, nunca
+ * el monto.
  */
 export function computeMoneyFlow(
   transactions: MoneyFlowTransaction[],
-  labels: { categoryLabel: (id: string) => string; accountLabel: (id: string) => string; otherIncome: string; otherExpense: string }
+  labels: { categoryLabel: (id: string) => string; accountLabel: (id: string) => string; otherIncome: string; otherExpense: string; investing: string }
 ): MoneyFlowResult {
   let excludedCount = 0;
   const incomeByCategory = new Map<string, Map<string, bigint>>(); // category -> account -> value
   const expenseByCategory = new Map<string, Map<string, bigint>>(); // account -> category -> value
+  const investingBuyByAccount = new Map<string, bigint>(); // account -> value (cuenta -> nodo inversión)
+  const investingSellByAccount = new Map<string, bigint>(); // account -> value (nodo inversión -> cuenta)
 
   for (const tx of transactions) {
+    if (tx.kind === "investing") {
+      if (tx.amountBase === null) {
+        excludedCount++;
+        continue;
+      }
+      if (tx.amountBase < 0n) {
+        investingBuyByAccount.set(tx.accountId, (investingBuyByAccount.get(tx.accountId) ?? 0n) - tx.amountBase);
+      } else if (tx.amountBase > 0n) {
+        investingSellByAccount.set(tx.accountId, (investingSellByAccount.get(tx.accountId) ?? 0n) + tx.amountBase);
+      }
+      // amountBase === 0n: placeholder de needs_capture_fx, no es un movimiento real todavía.
+      continue;
+    }
     if (tx.kind !== "income" && tx.kind !== "expense") continue;
     if (tx.amountBase === null) {
       excludedCount++;
@@ -103,6 +123,21 @@ export function computeMoneyFlow(
         nodes.set(nodeId, { id: nodeId, label: keepExpense.has(category) ? (category === "__none" ? labels.otherExpense : labels.categoryLabel(category)) : labels.otherExpense, column: 2 });
       }
       links.push({ source: `account:${accountId}`, target: nodeId, value: Number(value) });
+    }
+  }
+
+  if (investingBuyByAccount.size > 0) {
+    nodes.set("investing:out", { id: "investing:out", label: labels.investing, column: 2 });
+    for (const [accountId, value] of investingBuyByAccount) {
+      accountIds.add(accountId);
+      links.push({ source: `account:${accountId}`, target: "investing:out", value: Number(value) });
+    }
+  }
+  if (investingSellByAccount.size > 0) {
+    nodes.set("investing:in", { id: "investing:in", label: labels.investing, column: 0 });
+    for (const [accountId, value] of investingSellByAccount) {
+      accountIds.add(accountId);
+      links.push({ source: "investing:in", target: `account:${accountId}`, value: Number(value) });
     }
   }
 

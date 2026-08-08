@@ -16,6 +16,19 @@ export function cardPaymentSources(accounts: readonly AccountRow[], card: Pick<A
   return accounts.filter((a) => a.id !== card.id && a.archivedAt === null && !isCreditCardAccount(a));
 }
 
+/**
+ * Cuentas elegibles como liquidación de un trade: no archivadas, y nunca una
+ * tarjeta de crédito — no se puede liquidar la compra de un instrumento con
+ * una tarjeta en este modelo. `currentAccountId` es la salida para un trade
+ * VIEJO que ya quedó apuntando a una tarjeta (de antes de esta regla): esa
+ * cuenta se mantiene visible y seleccionable al editar, para no dejar la
+ * edición en un callejón sin salida — pero una vez que se elige otra, no se
+ * puede volver a una tarjeta.
+ */
+export function tradeSettlementAccounts(accounts: readonly AccountRow[], currentAccountId: string | null): AccountRow[] {
+  return accounts.filter((a) => a.id === currentAccountId || (a.archivedAt === null && !isCreditCardAccount(a)));
+}
+
 export interface CardCycle {
   periodStart: string; // YYYY-MM-DD
   periodEnd: string;
@@ -89,6 +102,12 @@ export interface CycleExpenseInput {
  * ignora (los pagos van a `paid_amount`, no a `statement_balance`). Nunca
  * usa `amount_base` — el saldo de una cuenta de tarjeta ya está en su
  * propia moneda (CLAUDE.md § dinero, "dos conversiones, no una").
+ *
+ * `investing` espeja a `adjustment` (`total -= tx.amount`): el monto ya
+ * lleva el signo (negativo en una compra), así que restarlo aumenta la
+ * deuda igual que un gasto. Solo puede aparecer acá por una liquidación
+ * vieja que quedó apuntando a una tarjeta — desde `tradeSettlementAccounts`
+ * ninguna liquidación nueva puede elegir una tarjeta como cuenta.
  */
 export function cycleExpenseTotal(transactions: readonly CycleExpenseInput[], periodStart: string, closingDateExclusive: string): bigint {
   let total = 0n;
@@ -97,7 +116,7 @@ export function cycleExpenseTotal(transactions: readonly CycleExpenseInput[], pe
     if (tx.occurredAt < periodStart || tx.occurredAt >= closingDateExclusive) continue;
     if (tx.kind === "expense") total += tx.amount;
     else if (tx.kind === "income") total -= tx.amount;
-    else if (tx.kind === "adjustment") total -= tx.amount;
+    else if (tx.kind === "adjustment" || tx.kind === "investing") total -= tx.amount;
   }
   return total;
 }

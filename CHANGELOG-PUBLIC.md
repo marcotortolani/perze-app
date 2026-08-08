@@ -40,6 +40,22 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.0 — 8 de agosto de 2026
+
+### Nuevo
+
+- En Movimientos ahora podés filtrar para ver solo tus operaciones de inversión.
+
+### Mejorado
+
+- Comprar o vender un instrumento ahora cuenta en los ingresos y egresos del período — antes esos
+  movimientos quedaban afuera de la tira de resumen aunque aparecieran listados.
+
+### Arreglado
+
+- Una tarjeta de crédito ya no se puede elegir como cuenta para liquidar una compra o venta de
+  instrumentos.
+
 ## 0.29.93 — 8 de agosto de 2026
 
 ### Arreglado
