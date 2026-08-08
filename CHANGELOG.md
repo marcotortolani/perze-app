@@ -6,6 +6,43 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.94] — 2026-08-08
+
+### Arreglado — cambiar la moneda base corrompía en silencio todo el histórico
+
+PR 4 del plan de multi-household (`necesito-hacerte-unas-consultas`) — `Más → Ajustes → Moneda
+base` reescribía `households.base_currency` con un `householdsRepo.update()` liso, sin tocar un
+solo `amount_base`: todo lo histórico quedaba congelado contra la base VIEJA pero rotulado con
+la nueva, y patrimonio/presupuestos/análisis empezaban a leer y mostrar esos números como si
+fueran de la moneda nueva. Cero error visible. Es además el prerrequisito del caso cruzado de
+"sumar una cuenta al grupo" cuando los dos hogares tienen bases distintas (PR 5).
+
+- **Migración `20260808110000_change_base_currency_refx.sql`** — dos RPCs `SECURITY DEFINER`
+  (`preflight_change_base_currency` de solo lectura, `change_household_base_currency` que
+  ejecuta), ambas restringidas a `is_household_admin`. La regla cerrada es "un `fx_rate`
+  resuelto nunca se recalcula" (CLAUDE.md), y `resolvePendingFx()` ya la hace cumplir al pie de
+  la letra (se niega a pisar un `fxRate` no nulo) — así que la función no recalcula nada: los
+  movimientos ya resueltos contra la base vieja se **descartan** a `pending` (nunca un valor
+  inventado), entrando al mismo flujo de resolución que cualquier `needs_fx` legítimo (E8,
+  manual). Única excepción, y no es una invención: un movimiento cuya moneda YA ES la base
+  nueva tiene una conversión exacta y trivial (rate = 1) — alcanza incluso a uno que estaba
+  `pending`, que se resuelve gratis. Alcance: `transactions` (+ `transaction_splits`/
+  `transaction_shares`, tocados a mano porque ningún trigger existente cubre "el padre vuelve
+  de resuelto a pending") y `settlements`. `trades`/`portfolios` quedan afuera a propósito:
+  `portfolios.base_currency` es un campo propio, independiente del household.
+- **`src/lib/repos/change-base-currency-repo.ts`** — va directo a Supabase, no por el outbox: la
+  operación toca potencialmente miles de filas de golpe y `transaction_splits`/`shares` ni
+  siquiera tienen espejo en Dexie. `apply()` fuerza un `pullFromRemote()` inmediato después de
+  la RPC — sin eso, Dexie mostraría `fx_rate`/`amount_base` viejos hasta el próximo tick del
+  sync loop.
+- **UI**: el picker de moneda base ahora corre un preflight antes de aplicar — si hay algo real
+  que cambia, confirma con los números reales (cuántos se resuelven solos, cuántos quedan
+  pendientes de cotización) en vez de una advertencia genérica. Es la excepción a "reversible,
+  no confirmable", igual que sacar a un miembro del hogar. Restringido a owner/admin, mismo
+  criterio que "día de cierre".
+- pgTAP `26_change_base_currency.sql` — 19 aserciones: identidad exacta, descarte a pending,
+  propagación a hijos, aislamiento cross-household, y el permiso de admin.
+
 ## [0.29.91] — 2026-08-08
 
 ### Arreglado — saneamiento de los stores persistidos: versión/migración, TTL de precios y logout

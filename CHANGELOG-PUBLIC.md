@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.94 — 8 de agosto de 2026
+
+### Arreglado
+
+- Cambiar la moneda base en Ajustes ahora te avisa antes cuántos movimientos se resuelven solos y
+  cuántos van a quedar pendientes de cotización, en vez de mezclar en silencio números de las dos
+  monedas en tu patrimonio y tus análisis.
+
 ## 0.29.91 — 8 de agosto de 2026
 
 ### Arreglado

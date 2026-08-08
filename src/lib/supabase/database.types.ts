@@ -2880,6 +2880,10 @@ export type Database = {
           period_start: string
         }[]
       }
+      change_household_base_currency: {
+        Args: { p_household_id: string; p_new_base_currency: string }
+        Returns: Json
+      }
       clamped_date: {
         Args: { p_day: number; p_month: number; p_year: number }
         Returns: string
@@ -2917,6 +2921,10 @@ export type Database = {
         }[]
       }
       open_card_statements: { Args: never; Returns: undefined }
+      preflight_change_base_currency: {
+        Args: { p_household_id: string; p_new_base_currency: string }
+        Returns: Json
+      }
       prune_push_subscriptions: { Args: never; Returns: undefined }
       purge_audit_log: { Args: never; Returns: undefined }
       purge_household_step: {
