@@ -6,6 +6,115 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.92] — 2026-08-08
+
+### Arreglado — cargar un movimiento sin conexión, con la PWA cerrada, de verdad
+
+Reporte: "con la app instalada, sin internet y después de cerrarla del todo, no puedo cargar un
+gasto". La auditoría encontró que la mitad del camino ya estaba construida —`/add` no hace un solo
+fetch a Supabase para renderizar (household, cuentas, categorías y tags salen de Dexie), y D78 ya
+precacheaba `/add`— pero cinco defectos rompían la cadena, y el más grave no era de PWA sino de
+identidad.
+
+- **La identidad se degradaba sin red (el que causaba el síntoma).** `useCurrentUserId()` corría
+  `getUser()` en paralelo y, ante cualquier `error`, escribía `null` en el cache — y offline
+  `getUser()` falla SIEMPRE (`AuthRetryableFetchError`). Peor: con el access token vencido (o sea,
+  cualquier arranque en frío al día siguiente) `getSession()` intenta refrescar, falla y también
+  devuelve `null`; se verificó en `@supabase/auth-js@2.111.0`, que solo preserva la sesión si
+  `expires_at * 1000 > Date.now()`. La cadena resultante era: `userId = null` → `DbOwnerSync` deja
+  activa la base Dexie anónima (vacía) en vez de `perze-<uid>` → sin household → `OnboardingGate`
+  redirige a `/onboarding` → esa ruta no está precacheada → el service worker sirve `/offline`.
+  Ahora un error de red no es un veredicto (`isAuthRetryableFetchError` **o**
+  `navigator.onLine === false` → no se toca el cache), y cuando `getSession()` devuelve `null` se
+  cae al nuevo `src/lib/auth/persisted-session.ts`, que lee el `user.id` de la cookie
+  `sb-<ref>-auth-token` que `@supabase/ssr` ya escribe. Se eligió la cookie y **no** una key nueva
+  de localStorage a propósito: un espejo de la identidad es una segunda fuente de verdad que se
+  desincroniza (un `signOut()` que olvide limpiarla, un navegador que borre cookies pero no
+  localStorage); la cookie *es* la credencial, así que identidad y credencial viven o mueren
+  juntas. No amplía ningún acceso: RLS sigue exigiendo `auth.uid()` real por fila.
+- **El precache estaba envenenado.** El service worker se instala en la primera visita, que es
+  `/start` o `/onboarding`, o sea SIN sesión. `proxy.ts` redirigía `/add` y `/` a `/onboarding`, y
+  `PrecacheStrategy.copyRedirectedCacheableResponsesPlugin` copia las respuestas redirigidas *a
+  propósito*: el HTML de onboarding quedaba guardado **bajo la clave `/add`**, y `PrecacheRoute`
+  —que se registra antes que todo `runtimeCaching`— lo servía cache-first, por encima de la red,
+  hasta el próximo deploy. No se puede filtrar desde el service worker: si un `cacheWillUpdate`
+  rechaza la respuesta, `_handleInstall` tira `bad-precaching-response` y falla la instalación
+  entera. La única salida es que el servidor no redirija, así que `/add` pasa a `PUBLIC_PREFIXES`
+  (`lib/auth/public-paths.ts`) — es `"use client"` sin un solo dato de servidor, y `CLAUDE.md` ya
+  declara la captura pre-auth. Se verificó en un build real: antes `/add` daba 307, ahora 200.
+- **`/` sale del precache y se reemplaza por un warm-up.** `/` no puede ser público (sin sesión el
+  proxy lo manda a `/start`, y eso es producto), así que tampoco puede precachearse honestamente:
+  guardaría la landing bajo la clave del home. Se saca de `additionalPrecacheEntries` y en su lugar
+  `src/components/pages-cache-warmup.tsx` le manda `WARM_HOME` al service worker una vez por carga,
+  ya con sesión y con red; el SW lo resuelve con la misma instancia de `NetworkFirst` que usa para
+  navegaciones, así que hereda `DISCARD_REDIRECTS` sin repetir la regla. Se hace dentro del SW
+  porque el nombre real del cache lleva prefijo y sufijo de Serwist (`serwist-pages-<scope>`).
+- **El share target no matcheaba el precache.** `PrecacheRoute` ignora por defecto solo `utm_*` y
+  `fbclid`, así que `/add?title=…&note=…&url=…` no encontraba la entrada `/add` y caía al runtime →
+  offline, miss → `/offline`. Se agrega `precacheOptions.ignoreURLParametersMatching` en `sw.ts`
+  con los parámetros del `share_target` más `prefill*`. Los dos defaults hay que repetirlos: pasar
+  la opción reemplaza el default, no lo extiende.
+- **`/add` exento de `OnboardingGate`, con guard propio.** El gate redirige incondicionalmente, y
+  esa política es la correcta para las otras 40 pantallas pero no para la captura: sin red, mandar
+  a `/onboarding` termina en `/offline`. El guard nuevo vive en `src/app/add/page.tsx` y es
+  asimétrico — con red redirige igual que antes; sin red muestra un estado explicativo. La
+  duplicación de la tríada del gate es deliberada y está comentada: meter `navigator.onLine` dentro
+  del gate lo aplicaría a toda la app.
+
+### Mejorado — `/offline` deja de ser un callejón sin salida
+
+Pasa a client component con dos acciones: **"Cargar un movimiento"** como primaria (navegación
+dura a `/add`, no `router.push` — un push blando pediría el payload RSC y esperaría los 3 s de
+`networkTimeoutSeconds` antes de caer al fallback MPA; la dura pega directo contra `PrecacheRoute`)
+y "Recargar la app" como secundaria. Debajo del primario, la caption de que el movimiento queda en
+cola. Es el único lugar donde ese aviso va *antes* de guardar: dentro de la captura ya lo da el
+toast `capture.savedOffline` después del hecho, y un banner permanente ahí gastaría presupuesto de
+ruido en la pantalla donde menos sobra, además de sembrar la duda de si guardar funciona.
+
+### Arreglado — el household de demo no podía guardar un gasto
+
+Destapado al volverse determinista la resolución de la cuenta por defecto. Los 34 gastos
+verosímiles del seed reparten ~$U 3.200 entre las tres cuentas de liquidez, pero "Efectivo" abría
+en $U 800 y "Mercado Pago" en $U 3.500: las dos terminaban en negativo apenas corría el seed. Como
+"Efectivo" es la cuenta por defecto de la captura y `CaptureFlow` bloquea el guardado con "Saldo
+insuficiente" en cuentas de liquidez, quien entraba al demo, tocaba "+" y tipeaba un monto no podía
+guardar nada. Saldos iniciales a $U 8.000 y $U 9.000. Esto explica además por qué
+`e2e/expense-2-taps.spec.ts` venía fallando de forma intermitente.
+
+### Tests
+
+- `src/lib/auth/persisted-session.test.ts` — cookie única, cookie chunked **llegando desordenada**
+  (el caso que se rompe si se concatena por orden de aparición en `document.cookie`), corte en el
+  primer índice faltante, base64 corrupto, JSON sin `user.id`, y cookie de otro proyecto.
+- `src/hooks/use-current-user.test.tsx` — un test por renglón de la matriz de estados. El de
+  "sesión `null` + cookie + `AuthRetryableFetchError` → uid" es el de regresión del bug reportado.
+  Los mocks de `getUser()` resuelven en un macrotask a propósito: un `mockResolvedValue` resuelve
+  en el microtask siguiente y le gana a la escritura en cache de React Query, así que los tests
+  medían la carrera del mock en vez del comportamiento real.
+- `e2e/pwa-offline-add.spec.ts` + proyecto `mobile-chromium-pwa` en `playwright.config.ts`, con un
+  segundo `webServer` que corre `next build && next start`. Es obligatorio: en dev el service
+  worker no se registra, y la escotilla `NEXT_PUBLIC_ENABLE_SW_IN_DEV=1` probaría el bug de dev
+  (Turbopack renombra los chunks en cada arranque), no el fix. Cuatro casos: arranque en frío sin
+  red, share target sin red, guardar offline y que sobreviva a otro arranque, y que `/offline` no
+  vuelva sobre sí misma. Se verificó que el del share target **falla** si se revierte
+  `ignoreURLParametersMatching`, o sea que no es un assert vacío.
+
+### Pendiente, para abrir aparte
+
+- La fila de demo "Cena en Buenos Aires" pone `amount: 350_000n` con `currencyCode: "ARS"` sobre
+  una cuenta **UYU**. `CLAUDE.md` cierra que `amount`/`currency_code` van siempre en la moneda de
+  la cuenta y que lo extranjero va en `original_amount`/`original_currency`. No se tocó acá para no
+  cambiar en el mismo release cuáles datos de demo existen, pero es una violación de invariante.
+- `signOut()` hace `getDb().delete()` incondicional asumiendo que el caller ya consultó
+  `countUnsyncedChanges()`. Con este cambio la ventana de "hay cosas en el outbox" se ensancha
+  mucho (todo lo cargado offline con token vencido): hay que verificar que la pantalla que dispara
+  el logout de verdad lo consulte antes de confirmar.
+- Cuatro e2e siguen en rojo y ya lo estaban antes de esta rama (`expense-foreign-currency`,
+  `offline-no-duplicates`, `onboarding-first-expense` y el "borrar un movimiento" de
+  `navigation-replace`) — se verificó corriéndolos contra el commit base.
+
+---
+
 ## [0.29.91] — 2026-08-08
 
 ### Arreglado — saneamiento de los stores persistidos: versión/migración, TTL de precios y logout

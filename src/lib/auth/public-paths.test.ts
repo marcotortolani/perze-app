@@ -18,13 +18,17 @@ describe("isPublicPath (B1)", () => {
     expect(isPublicPath("/dev/components")).toBe(true);
     expect(isPublicPath("/about")).toBe(true);
     expect(isPublicPath("/start")).toBe(true);
+    // La captura es pre-auth por decisión de producto, y además tiene que
+    // poder precachearse sin que el proxy la redirija (ver el comentario
+    // largo en `public-paths.ts`).
+    expect(isPublicPath("/add")).toBe(true);
   });
 
   it("bloquea todo lo demás, incluido lo que arranca parecido a una ruta pública", () => {
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/accounts")).toBe(false);
     expect(isPublicPath("/transactions/123/edit")).toBe(false);
-    expect(isPublicPath("/add")).toBe(false);
+    expect(isPublicPath("/added")).toBe(false);
     // Reversión de la solución de transición de contraseñas
     // (docs/mejora-auth-oauth-y-email.md § 0.1): estos stubs de
     // compatibilidad ya no son públicos — sin sesión, `proxy.ts` los manda

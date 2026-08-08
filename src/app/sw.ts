@@ -98,9 +98,11 @@ const NAVIGATION_RSC_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
  * === "document"` es el chequeo correcto — mismo que ya usa el `matcher` del
  * fallback de `/offline` más abajo.
  */
+const PAGES_HTML_STRATEGY = new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] });
+
 const NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT: RuntimeCaching = {
   matcher: ({ request, url: { pathname }, sameOrigin }) => request.destination === "document" && sameOrigin && !pathname.startsWith("/api/"),
-  handler: new NetworkFirst({ cacheName: "pages", networkTimeoutSeconds: 3, plugins: [DISCARD_REDIRECTS] }),
+  handler: PAGES_HTML_STRATEGY,
 };
 
 /**
@@ -128,6 +130,28 @@ const SUPABASE_NETWORK_ONLY: RuntimeCaching = {
  */
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
+  /**
+   * El `share_target` del manifest entra por `/add?title=…&note=…&url=…`, y
+   * la entrada precacheada es `/add` a secas: sin esto, `PrecacheRoute` no
+   * matchea (su default solo ignora `utm_*` y `fbclid`), la navegación cae
+   * al runtime, offline no hay nada guardado bajo esa URL con query y
+   * termina en el fallback `/offline` — compartir algo a PERZE sin
+   * conexión no cargaría nada.
+   *
+   * Los dos primeros hay que repetirlos: pasar la opción REEMPLAZA el
+   * default, no lo extiende. Los otros son los del `share_target` de
+   * `src/app/manifest.ts` más los `prefill*` que lee `CaptureFlow`. **Este
+   * array y el `share_target` del manifest se mueven juntos**: un
+   * parámetro nuevo allá que no aparezca acá vuelve a romper el caso
+   * offline, y en silencio.
+   *
+   * No afecta a la app: solo cambia cómo `PrecacheRoute` genera candidatos
+   * para BUSCAR en el precache. La URL real no se toca, así que
+   * `useSearchParams()` sigue leyendo los mismos valores.
+   */
+  precacheOptions: {
+    ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^title$/, /^note$/, /^text$/, /^url$/, /^prefill/],
+  },
   skipWaiting: false,
   clientsClaim: false,
   navigationPreload: true,
@@ -151,8 +175,36 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
+/**
+ * Warm-up de `/` — el `start_url` del manifest, o sea lo que se abre al
+ * tocar el ícono de la PWA.
+ *
+ * `/` no puede ir en `additionalPrecacheEntries` (ver el comentario largo
+ * en `src/app/serwist/[path]/route.ts`): el precache se instala sin sesión
+ * y guardaría la redirección a `/start` bajo la clave `/`, cache-first,
+ * hasta el próximo deploy. Este camino no tiene ese problema porque lo
+ * dispara el cliente **cuando ya hay sesión** (`pages-cache-warmup.tsx`),
+ * así que lo que se guarda es el home de verdad.
+ *
+ * Se hace acá adentro y no en el cliente por dos razones: el nombre real
+ * del cache lleva el prefijo y el sufijo de Serwist (`serwist-pages-<scope>`),
+ * que desde la página habría que adivinar; y reusando la misma instancia
+ * de estrategia se hereda `DISCARD_REDIRECTS` — si la respuesta viniera
+ * redirigida igual, no se guarda, sin repetir esa regla en dos lados.
+ */
+async function warmHomeCache(event: ExtendableMessageEvent): Promise<void> {
+  const request = new Request("/", { credentials: "same-origin", headers: { Accept: "text/html" } });
+  try {
+    await PAGES_HTML_STRATEGY.handle({ event, request, url: new URL(request.url) });
+  } catch {
+    // Best-effort puro: si no hay red o el servidor falla, la app sigue
+    // igual que hoy. Nada de esto puede romper una pestaña abierta.
+  }
+}
+
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
+  if (event.data === "WARM_HOME") event.waitUntil(warmHomeCache(event));
 });
 
 /**

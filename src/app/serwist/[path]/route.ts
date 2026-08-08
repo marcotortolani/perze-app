@@ -25,9 +25,9 @@ const revision =
  * compila on-demand con esbuild en vez de un archivo estático, que es la
  * única forma que soporta bajo Turbopack (ver comentario en `next.config.ts`).
  *
- * D78 — `/` (`start_url` del manifest) y `/add` (shortcut de la PWA +
- * `share_target`, `src/app/manifest.ts`) van precacheados junto con
- * `/offline`, no solo dejados al runtime cache. El runtime cache
+ * D78 — `/add` (shortcut de la PWA + `share_target`,
+ * `src/app/manifest.ts`) va precacheado junto con `/offline`, no solo
+ * dejado al runtime cache. El runtime cache
  * (`NAVIGATION_HTML_NETWORK_FIRST_WITH_TIMEOUT` en `sw.ts`) solo guarda una
  * ruta DESPUÉS de una navegación dura exitosa con red — y el único momento
  * en que el navegador pide `/add` como navegación dura (no una selección
@@ -38,11 +38,28 @@ const revision =
  * caso reportado: "cerré la app del todo, sin internet, quiero cargar un
  * gasto". Precachear la respuesta de navegación de antemano rompe esa
  * dependencia de "tuvo que haber navegado ahí antes con red".
+ *
+ * **`/` NO puede estar acá, aunque sea el `start_url`, y no hay que
+ * volver a agregarlo.** El service worker se instala en la primera visita,
+ * que es `/start` o `/onboarding`, o sea SIN sesión: el precache pide `/`,
+ * `proxy.ts` lo redirige a `/start`, y Serwist guarda esa redirección bajo
+ * la clave `/` — su `copyRedirectedCacheableResponsesPlugin` copia las
+ * respuestas redirigidas a propósito. A partir de ahí, `PrecacheRoute` (que
+ * se registra ANTES que todo `runtimeCaching`) sirve la landing como si
+ * fuera el home, cache-first, por encima de la red, hasta el próximo
+ * deploy. Tampoco se puede filtrar desde el service worker: si un
+ * `cacheWillUpdate` rechaza la respuesta, `_handleInstall` tira
+ * `bad-precaching-response` y falla la instalación entera.
+ *
+ * `/add` sí puede estar porque se hizo pública en `lib/auth/public-paths.ts`
+ * (ver ahí las tres razones) — nunca redirige, así que lo que se guarda es
+ * lo que se pidió. Para `/` la respuesta es
+ * `src/components/pages-cache-warmup.tsx`: el mismo HTML, pero pedido desde
+ * el cliente ya con sesión y guardado en el cache de runtime.
  */
 export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } = createSerwistRoute({
   additionalPrecacheEntries: [
     { url: "/offline", revision },
-    { url: "/", revision },
     { url: "/add", revision },
   ],
   swSrc: "src/app/sw.ts",

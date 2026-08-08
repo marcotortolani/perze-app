@@ -108,7 +108,15 @@ export async function seedDemoHousehold(): Promise<{ householdId: string }> {
       institutionId: null,
       countryCode: "UY",
       currencyCode: "UYU",
-      openingBalance: 80_000n,
+      // $U 8.000. Los 34 gastos verosímiles de más abajo reparten ~$U 3.200
+      // por cuenta entre las tres de liquidez, así que con el saldo inicial
+      // anterior ($U 800) esta cuenta quedaba en NEGATIVO apenas terminaba el
+      // seed. No es cosmético: "Efectivo" es la cuenta por defecto de la
+      // captura, y `CaptureFlow` bloquea el guardado con "Saldo insuficiente"
+      // en cuentas de liquidez — o sea que quien entraba al demo, tocaba "+"
+      // y tipeaba un monto, no podía guardar NADA. Justo el camino que la app
+      // existe para hacer rápido.
+      openingBalance: 800_000n,
       openingDate: daysAgoIso(60).slice(0, 10),
       creditLimit: null,
       statementDay: null,
@@ -172,12 +180,14 @@ export async function seedDemoHousehold(): Promise<{ householdId: string }> {
     const wallet = await accountsRepo.create({
       householdId: household.id,
       ownerId: USER_ID,
+      // Mismo motivo que "Efectivo": $U 3.500 no aguantaba su tercio de los
+      // 34 gastos sembrados y la cuenta terminaba en rojo.
       name: "Mercado Pago",
       kind: "wallet",
       institutionId: null,
       countryCode: "UY",
       currencyCode: "UYU",
-      openingBalance: 350_000n,
+      openingBalance: 900_000n,
       openingDate: daysAgoIso(60).slice(0, 10),
       creditLimit: null,
       statementDay: null,

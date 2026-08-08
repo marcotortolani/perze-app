@@ -19,7 +19,15 @@ import { useDbOwnerStore } from "@/stores/db-owner-store";
 // sesión, `proxy.ts` los manda a `/onboarding` antes de que este gate
 // cliente llegue a montarse. `/about` es contenido público de marca —
 // tiene que verse igual con o sin sesión, nunca redirigir.
-const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending", "/about", "/start"];
+// `/add` — la captura no puede pasar por este gate porque su política de
+// rescate es la opuesta: sin conexión, redirigir a `/onboarding` manda a una
+// ruta que no está precacheada, así que el service worker termina sirviendo
+// `/offline` y la persona se queda sin poder cargar un gasto. La protección
+// no desapareció, se mudó a `src/app/add/page.tsx`, que expulsa igual cuando
+// hay red y explica en vez de redirigir cuando no la hay. El chequeo de
+// `navigator.onLine` no puede vivir acá: valdría para las 40 pantallas, y en
+// todas las demás redirigir está bien.
+const EXEMPT_PREFIXES = ["/onboarding", "/dev", "/api", "/offline", "/auth", "/join", "/pending", "/about", "/start", "/add"];
 
 /**
  * Gate del Bloque A: sin household o sin sesión real, cualquier ruta de la

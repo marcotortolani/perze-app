@@ -413,7 +413,8 @@
    "useThis": "Usar isto",
    "startListening": "Começar a escutar"
   },
-  "savedOffline": "Salvo no telefone. Sai assim que reconectar."
+  "savedOffline": "Salvo no telefone. Sai assim que reconectar.",
+  "noLocalDataOffline": "Este dispositivo ainda não tem os dados da sua conta e não há conexão para buscá-los. Conecte uma vez e você vai poder lançar gastos sem internet."
  },
  "movements": {
   "filters": {
@@ -1328,7 +1329,11 @@
   }
  },
  "offlinePage": {
-  "message": "Sem conexão — essa tela ainda não foi carregada uma vez. As que você já visitou continuam funcionando."
+  "title": "Sem conexão",
+  "message": "Essa tela ainda não foi carregada uma vez. As que você já visitou continuam funcionando.",
+  "addTransaction": "Lançar um movimento",
+  "queueNotice": "Fica salvo no telefone e sincroniza sozinho quando a conexão voltar.",
+  "reload": "Recarregar o app"
  },
  "notFoundPage": {
   "title": "Página não encontrada",

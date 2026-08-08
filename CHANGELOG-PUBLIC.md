@@ -40,6 +40,21 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.92 — 8 de agosto de 2026
+
+### Arreglado
+
+- Ahora podés cargar un gasto, un ingreso o una transferencia sin internet, aunque hayas cerrado la
+  app del todo y la vuelvas a abrir desde el ícono, desde el atajo o compartiendo algo a Perze.
+  Queda guardado en el teléfono y se sincroniza solo cuando vuelve la conexión.
+- La pantalla de "sin conexión" dejó de ser un callejón sin salida: desde ahí podés cargar un
+  movimiento directamente, o reintentar por si era un corte momentáneo.
+
+### Mejorado
+
+- En los datos de ejemplo, el efectivo y Mercado Pago ya no arrancan en negativo, así que se puede
+  probar a cargar un gasto sin que la app avise que no te alcanza el saldo.
+
 ## 0.29.91 — 8 de agosto de 2026
 
 ### Arreglado

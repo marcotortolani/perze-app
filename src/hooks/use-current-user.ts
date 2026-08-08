@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { readPersistedSessionUserId } from "@/lib/auth/persisted-session";
 import { isDemoModeActive } from "@/lib/demo/demo-mode";
 import { DEMO_USER_ID } from "@/lib/demo-user";
 
@@ -37,6 +39,14 @@ export const currentUserKey = ["auth", "user"] as const;
  * El aviso de seguridad de Supabase sobre no confiar en `getSession()`
  * aplica a decisiones de autorización — acá es solo la señal de "pinta el
  * shell o no"; la barrera real sigue siendo RLS server-side en cada query.
+ *
+ * Y el tri-estado tiene que decir la verdad **sin conexión**, porque de él
+ * cuelga toda la cadena que decide si se puede cargar un gasto: `userId` →
+ * `DbOwnerSync` (qué base Dexie se abre) → household → `OnboardingGate`. Un
+ * `null` falso offline no muestra un error, redirige a `/onboarding`, que
+ * sin red no existe: el service worker cae en `/offline` y la persona se
+ * queda sin poder cargar nada. Por eso ninguna de las dos ramas de abajo
+ * castiga la falta de red — ver los comentarios en el `queryFn`.
  */
 export function useCurrentUserId(): string | null | undefined {
   const queryClient = useQueryClient();
@@ -58,9 +68,31 @@ export function useCurrentUserId(): string | null | undefined {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const optimisticId = session?.user?.id ?? null;
+      // Sin conexión y con el access token ya vencido (o sea: cualquier
+      // arranque en frío de la PWA al día siguiente), `getSession()`
+      // intenta refrescar, el refresh no llega a ningún lado y devuelve
+      // `null` — aunque la sesión guardada siga siendo perfectamente
+      // válida. Ahí la cookie es la que sabe quién sos: ver
+      // `readPersistedSessionUserId()` para por qué eso no es una decisión
+      // de autorización y por qué no se espeja en localStorage.
+      const optimisticId = session?.user?.id ?? readPersistedSessionUserId();
 
       void supabase.auth.getUser().then(({ data: { user }, error }) => {
+        // Un fallo de RED no es un veredicto sobre la sesión. Antes
+        // cualquier `error` degradaba el id a `null`, y offline `getUser()`
+        // falla SIEMPRE (`AuthRetryableFetchError`): la app se
+        // autoexpulsaba a `/onboarding` justo cuando no podía llegar ahí,
+        // y el service worker terminaba sirviendo `/offline`. Se chequean
+        // las dos cosas a propósito: `isAuthRetryableFetchError` cubre el
+        // fallo de fetch tal como lo tipa auth-js hoy, y `navigator.onLine`
+        // cubre cualquier envoltorio distinto que una versión futura pueda
+        // devolver sin que este archivo se entere.
+        const offline = typeof navigator !== "undefined" && !navigator.onLine;
+        if (error && (isAuthRetryableFetchError(error) || offline)) return;
+
+        // Un error que NO es de red sí es un veredicto (401/403 de un token
+        // revocado, sesión ausente): se degrada igual que siempre y la
+        // cadena de expulsión funciona como antes.
         const confirmedId = error ? null : (user?.id ?? null);
         if (confirmedId !== optimisticId) {
           queryClient.setQueryData(currentUserKey, confirmedId);
