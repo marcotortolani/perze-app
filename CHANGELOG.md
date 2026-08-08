@@ -273,6 +273,25 @@ ataque de más de lo necesario.
   visible, no puede con un `provider` real, y (nuevo, cubre el fix de arriba) no puede leer ni
   escribir el precio manual de un instrumento privado de otro household.
 
+## [0.30.2] — 2026-08-08
+
+### Arreglado — la hidratación sin scope mezclaba households en el mismo Dexie
+
+PR 2 del plan de multi-household (`necesito-hacerte-unas-consultas`): en `hydrateFromRemote()`,
+el modo completo (sin `householdId`, el camino de `/onboarding/restore` en un dispositivo
+nuevo) resolvía el household activo DESPUÉS de bajar las tablas hijas, y el helper `scoped()`
+era un no-op mientras tanto — así que cuentas, movimientos, presupuestos y el resto de las diez
+tablas hijas de TODOS los households del usuario se bajaban mezcladas a las mismas tablas de
+Dexie, filtradas recién en cada query de pantalla. Es el prerrequisito directo del household
+switcher: sin este fix, restaurar en un dispositivo nuevo con dos households ya dejaba el Dexie
+local con ambos hogares entreverados.
+
+`activeHouseholdId` se resuelve ahora antes de armar el filtro, y `scoped()` siempre filtra por
+`household_id` — nunca no-op. La tabla `households` sigue sin scopear en modo completo (esa
+lista completa es la que el switcher necesita); solo las tablas hijas quedan acotadas al
+household activo. Los household_members de los hogares inactivos no quedan locales — no rompe
+nada, `FamilyPageContent` ya los lee remoto.
+
 ## [0.29.91] — 2026-08-08
 
 ### Arreglado — saneamiento de los stores persistidos: versión/migración, TTL de precios y logout

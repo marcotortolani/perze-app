@@ -62,8 +62,14 @@ import type {
  *   `deletedAt` (los repos locales ya saben filtrarlas). La única excepción
  *   es `households`, que no tiene `deletedAt` local — ahí sí se filtra.
  * - Modo completo (sin `householdId`): solo corre con la base local vacía —
- *   nunca pisa un dispositivo con ediciones pendientes en el outbox.
- *   Modo scoped (`householdId`, para `/join`): solo toca ese household.
+ *   nunca pisa un dispositivo con ediciones pendientes en el outbox. Baja
+ *   la LISTA de todos los households del usuario (households no se scopea
+ *   nunca — la necesita el switcher), pero las tablas hijas solo del
+ *   household activo (`profiles.default_household_id`, o el más viejo si
+ *   no hay preferencia) — antes bajaba las hijas de TODOS los households
+ *   mezcladas en las mismas tablas de Dexie, filtradas recién en cada query
+ *   de pantalla. Modo scoped (`householdId`, para `/join` y el switcher):
+ *   baja SOLO ese household, sin tocar el resto de la base local.
  */
 
 /** `name` → `i18nKey` para reconstruir la clave de traducción que Postgres no tiene (igual que el backfill v2 de Dexie, pero sobre las DOS plantillas). */
@@ -608,7 +614,33 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
     return { households: 0, transactions: 0, activeHouseholdId: null };
   }
 
-  const scoped = <Q extends { eq: (col: string, v: string) => Q }>(q: Q): Q => (scopedId ? q.eq("household_id", scopedId) : q);
+  // Household activo: el scoped si lo hay; si no, `profiles.default_household_id`
+  // (AC-3 — ahora se escribe al cerrar A11) y como último recurso el más viejo.
+  // Se resuelve ACÁ, antes de bajar las tablas hijas, porque `scoped` lo usa
+  // como scope por defecto — ver la nota de `scopeId` abajo.
+  let activeHouseholdId = scopedId;
+  if (!activeHouseholdId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase.from("profiles").select("default_household_id").eq("id", user.id).maybeSingle();
+      const preferred = profile?.default_household_id ?? null;
+      if (preferred && households.some((h) => h.id === preferred)) activeHouseholdId = preferred;
+    }
+    activeHouseholdId ??= [...households].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0]!.id;
+  }
+
+  // Household del que se bajan las tablas hijas: el scoped si lo hay, si no
+  // el activo recién resuelto. Antes `scoped` era un no-op cuando `scopedId`
+  // era null — el modo completo (`/onboarding/restore`) bajaba las tablas
+  // hijas de TODOS los households del usuario mezcladas en las mismas
+  // tablas de Dexie, y recién después elegía uno activo. Ahora siempre
+  // filtra: el modo completo solo hidrata datos del household activo; los
+  // demás quedan en la lista de `households` (sin scopear, ver arriba) pero
+  // sin sus hijas — el switcher los hidrata bajo demanda vía modo scoped.
+  const scopeId = activeHouseholdId;
+  const scoped = <Q extends { eq: (col: string, v: string) => Q }>(q: Q): Q => q.eq("household_id", scopeId);
 
   const [rawMembers, rawAccounts, rawCategories, rawTags, rawPayees, rawBudgets, rawGoals, rawRecurring, rawRules] = await Promise.all([
     fetchPaged((f, t) => scoped(supabase.from("household_members").select(HOUSEHOLD_MEMBERS_COLUMNS).order("household_id").order("profile_id")).range(f, t)),
@@ -634,21 +666,6 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   const recurringRules = rawRecurring.map(recurringRuleFromRow);
   const rules = rawRules.map(ruleFromRow);
   const transactions = rawTransactions.map(transactionFromRow);
-
-  // Household activo: el scoped si lo hay; si no, `profiles.default_household_id`
-  // (AC-3 — ahora se escribe al cerrar A11) y como último recurso el más viejo.
-  let activeHouseholdId = scopedId;
-  if (!activeHouseholdId) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase.from("profiles").select("default_household_id").eq("id", user.id).maybeSingle();
-      const preferred = profile?.default_household_id ?? null;
-      if (preferred && households.some((h) => h.id === preferred)) activeHouseholdId = preferred;
-    }
-    activeHouseholdId ??= [...households].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0]!.id;
-  }
 
   await withoutOutbox(async () => {
     await db.transaction(
