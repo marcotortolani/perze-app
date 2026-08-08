@@ -1,21 +1,26 @@
 import type { NextConfig } from "next";
-import { withSerwist } from "@serwist/turbopack";
 import createNextIntlPlugin from "next-intl/plugin";
 
 /**
- * `@serwist/next` (el paquete "clásico") compila el service worker con
- * webpack — no corre nada bajo Turbopack, ni en dev ni en `next build`
- * (Turbopack es el bundler por defecto acá, ver `AGENTS.md`), así que con
- * ese paquete el build nunca generaba `public/sw.js` de verdad. `@serwist/
- * turbopack` sirve el worker compilado on-demand desde una route handler
- * (`src/app/serwist/[path]/route.ts`) en vez de un archivo estático — por
- * eso el service worker se registra contra `/serwist/sw.js`, no `/sw.js`
- * (ver `src/components/service-worker-register.tsx`).
+ * El service worker NO se genera desde acá: lo compila `scripts/build-sw.mjs`
+ * como paso encadenado del script `build`, y sale a `public/sw.js`.
+ *
+ * Hubo dos intentos antes. `@serwist/next` (el paquete "clásico") compila con
+ * webpack y no corre nada bajo Turbopack, así que nunca generaba el archivo.
+ * `@serwist/turbopack` lo servía desde una route handler que lo compilaba
+ * on-demand — y ahí está el motivo de que ya no se use: esa ruta se apoyaba
+ * en `dynamic = "force-static"` para prerenderizarse, pero **`cacheComponents`
+ * (abajo) ignora esa directiva**, así que quedaba como función serverless y en
+ * Vercel devolvía 500. El detalle completo está en `scripts/build-sw.mjs`.
  */
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  // Ojo si algún día algo tiene que prerenderizarse con `export const
+  // dynamic = "force-static"`: con este flag encendido esa directiva se
+  // ignora y la ruta queda dinámica, sin ningún error que lo avise. Ya
+  // costó el service worker entero en producción (ver `scripts/build-sw.mjs`).
   cacheComponents: true,
   experimental: {
     // Fase 5 del plan de fluidez de navegación — `@phosphor-icons/react`
@@ -32,4 +37,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist(withNextIntl(nextConfig));
+export default withNextIntl(nextConfig);

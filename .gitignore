@@ -48,3 +48,6 @@ next-env.d.ts
 
 src/app-old
 perze-design
+# Service worker generado por scripts/build-sw.mjs en cada build
+public/sw.js
+public/sw.js.map

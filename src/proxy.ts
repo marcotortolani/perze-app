@@ -181,6 +181,16 @@ export const config = {
      * exactamente el error que bloqueaba la verificación aunque `/about`
      * respondiera bien al pedirla directo.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons|splash|serwist|api|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * `sw.js` (y su sourcemap) es el service worker, generado por
+     * `scripts/build-sw.mjs` en `public/`. Sin esta exclusión el proxy lo
+     * trata como una navegación más: sin sesión devuelve un 307 a
+     * `/onboarding`, o sea que el navegador recibe HTML donde espera
+     * JavaScript y el registro falla. Y como el registro falla en silencio
+     * (`service-worker-register.tsx`), no habría PWA sin un solo error
+     * visible — que es exactamente el modo de falla que ya costó una
+     * versión entera.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|icons|splash|sw.js|sw.js.map|api|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

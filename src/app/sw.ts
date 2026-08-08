@@ -11,6 +11,11 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 /**
+ * Este archivo es la FUENTE del service worker, no el que se sirve: lo
+ * bundlea `scripts/build-sw.mjs` al final del build y sale a `public/sw.js`.
+ * `@serwist/turbopack` quedó solo como dependencia de desarrollo, por su
+ * `defaultCache` — su route handler ya no se usa (devolvía 500 en Vercel).
+ *
  * `defaultCache` (`@serwist/turbopack/worker`) ya trae estrategias razonables
  * para lo que Next.js sirve: NetworkFirst para navegaciones/RSC, CacheFirst
  * para fonts/imágenes/JS/CSS con hash. Encima de eso: `/offline` como
@@ -180,7 +185,7 @@ serwist.addEventListeners();
  * tocar el ícono de la PWA.
  *
  * `/` no puede ir en `additionalPrecacheEntries` (ver el comentario largo
- * en `src/app/serwist/[path]/route.ts`): el precache se instala sin sesión
+ * en `scripts/build-sw.mjs`): el precache se instala sin sesión
  * y guardaría la redirección a `/start` bajo la clave `/`, cache-first,
  * hasta el próximo deploy. Este camino no tiene ese problema porque lo
  * dispara el cliente **cuando ya hay sesión** (`pages-cache-warmup.tsx`),

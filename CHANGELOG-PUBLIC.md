@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.93 — 8 de agosto de 2026
+
+### Arreglado
+
+- El soporte offline no estaba funcionando en la app publicada: aunque la app quedaba instalada, no
+  guardaba nada para usar sin conexión. Ahora sí. Si venías teniendo problemas para cargar gastos
+  sin internet, esta es la versión que lo resuelve de punta a punta.
+
 ## 0.29.92 — 8 de agosto de 2026
 
 ### Arreglado

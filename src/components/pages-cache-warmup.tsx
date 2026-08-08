@@ -14,7 +14,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
  * redirige `/` a `/start` — Serwist guardaría la landing bajo la clave del
  * home y la serviría cache-first por encima de la red hasta el próximo
  * deploy (el detalle completo está en
- * `src/app/serwist/[path]/route.ts`). Pedirlo desde acá invierte el orden:
+ * `scripts/build-sw.mjs`). Pedirlo desde acá invierte el orden:
  * primero hay sesión, después se guarda, así que lo que queda en el cache
  * es el home de verdad.
  *

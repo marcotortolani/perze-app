@@ -8,8 +8,11 @@ import { env } from "@/env";
 /**
  * Serwist no inyecta el registro solo (a diferencia de `next-pwa`) — sin
  * este componente el service worker nunca se activaba, con ningún paquete.
- * La URL es `/serwist/sw.js` (la route handler de `@serwist/turbopack`,
- * ver `src/app/serwist/[path]/route.ts`), no `/sw.js`.
+ * La URL es `/sw.js`: un archivo estático que genera `scripts/build-sw.mjs`
+ * al final del build. Antes era `/serwist/sw.js`, una route handler que lo
+ * compilaba on-demand y que en producción devolvía 500 — o sea que **no
+ * había service worker en absoluto**, y este `.catch()` de abajo se lo
+ * tragaba en silencio. Ver `scripts/build-sw.mjs`.
  *
  * C18/auditoría: `sw.ts` ya no hace `skipWaiting` solo — cuando hay un
  * service worker nuevo esperando, esto lo detecta (`updatefound` +
@@ -135,8 +138,18 @@ export function ServiceWorkerRegister() {
       });
     };
 
+    // Registro viejo en `/serwist/sw.js`: en producción nunca llegó a
+    // existir (la ruta devolvía 500), pero sí puede haber quedado uno en un
+    // navegador que corrió la app en local con el SW encendido. Dos
+    // registros con scope `/` se pisan entre sí, así que el viejo se saca.
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        if (registration.active?.scriptURL.includes("/serwist/sw.js")) void registration.unregister();
+      }
+    });
+
     navigator.serviceWorker
-      .register("/serwist/sw.js", { scope: "/" })
+      .register("/sw.js", { scope: "/" })
       .then((registration) => {
         offerUpdate(registration);
         registration.addEventListener("updatefound", () => {
@@ -149,9 +162,16 @@ export function ServiceWorkerRegister() {
           });
         });
       })
-      .catch(() => {
-        // Sin red en el primer registro, navegador viejo, etc. — la app
-        // sigue andando igual, solo sin el offline fallback del SW.
+      .catch((error: unknown) => {
+        // La app sigue andando igual (es local-first), pero SIN service
+        // worker no hay precache, ni fallback offline, ni arranque en frío
+        // sin red. Antes esto se tragaba en silencio, y así fue como
+        // `/serwist/sw.js` estuvo devolviendo 500 en producción durante
+        // versiones sin que nada lo delatara: la PWA simplemente no existía
+        // y la única señal era que "offline no anda". Un `console.error` no
+        // le sirve al usuario, pero es la diferencia entre diagnosticarlo en
+        // dos minutos abriendo la consola y no encontrarlo nunca.
+        console.error("[perze/sw] no se pudo registrar el service worker: la app queda sin precache ni soporte offline.", error);
       });
 
     return () => {

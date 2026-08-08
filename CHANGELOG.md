@@ -6,6 +6,74 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.93] — 2026-08-08
+
+### Arreglado — en producción no había service worker, y nada lo avisaba
+
+Al probar la v0.29.92 en el celular no apareció el toast de "nueva versión". El toast no estaba
+roto: no tenía nada que anunciar. `GET https://perze.tortolani.cc/serwist/sw.js` devolvía **500**,
+y los logs de runtime de Vercel daban la causa exacta:
+
+```text
+Error: Cannot find module '/var/task/node_modules/next/dist/server/config.js'
+  imported from /var/task/.next/server/chunks/[root-of-the-server]__02zbz1n._.js
+  code: 'ERR_MODULE_NOT_FOUND'
+```
+
+La cadena completa, que tiene tres eslabones y ninguno falla ruidosamente:
+
+1. **`cacheComponents: true` ignora `export const dynamic = "force-static"`.** La route handler de
+   `@serwist/turbopack` la declaraba justamente para prerenderizarse en el build. Se verificó
+   quitando el flag y rebuildeando: sin él la ruta sale como `● /serwist/[path]` con
+   `/serwist/sw.js` y `/serwist/sw.js.map` como archivos estáticos; con él sale como `ƒ`. Next no
+   emite ninguna advertencia.
+2. **Como función, la ruta recompila el worker en cada cold start**, y para eso `@serwist/turbopack`
+   hace `import("next/dist/server/config.js")` marcado `/* webpackIgnore: true */` — invisible para
+   el tracer, así que nunca entra al bundle de la función. Y no es solo ese módulo: cargar la
+   config de Next implica leer `next.config.ts` y sus imports dentro de la lambda.
+3. **`navigator.serviceWorker.register()` rechazaba y el `.catch()` se lo tragaba en silencio**, con
+   un comentario que lo justificaba para el caso "sin red en el primer registro". O sea: cero
+   precache, cero fallback offline, cero PWA — y la única señal externa era "offline no anda".
+
+**El arreglo: el service worker vuelve a ser un artefacto estático del build.** Nuevo
+`scripts/build-sw.mjs`, encadenado al script `build` (`next build && node scripts/build-sw.mjs`),
+que arma el manifest con `getManifest()` de `@serwist/build` y bundlea `src/app/sw.ts` con esbuild
+a `public/sw.js`. Reproduce exactamente lo que hacía el wrapper —mismos globs sobre
+`.next/static/**` y `public/**`, mismo `dontCacheBustURLsMatching`, mismas transformaciones de URL,
+mismas entradas adicionales `/offline` y `/add`— y el archivo generado sale idéntico byte a byte
+al que producía la ruta (54.602 bytes, 193 entradas). Se elimina `src/app/serwist/[path]/route.ts`
+y el registro pasa a `/sw.js`.
+
+**Lo que se evaluó y se descartó:** sacar `cacheComponents`. Arregla la ruta, pero se midió el
+costo — 108 rutas pierden su shell prerenderizado (`◐` → `ƒ`). No se paga eso por un archivo.
+
+Cambios de acompañamiento, cada uno tapando un agujero que este mismo bug dejó ver:
+
+- **`sw.js` y `sw.js.map` excluidos del matcher de `proxy.ts`.** Sin eso el proxy trata al worker
+  como una navegación: sin sesión devuelve 307 a `/onboarding`, o sea HTML donde el navegador
+  espera JavaScript, y el registro vuelve a fallar. Mismo modo de falla, otra puerta.
+- **El fallo de registro ahora hace `console.error`.** No le sirve al usuario, pero es la
+  diferencia entre diagnosticarlo abriendo la consola y no encontrarlo nunca.
+- **Se desregistra el service worker viejo de `/serwist/sw.js`** si quedó alguno de una corrida
+  local: dos registros con scope `/` se pisan.
+- **`public/sw.js` y `public/sw.js.map` van al `.gitignore`** — son artefactos de build.
+- **Nota en `next.config.ts`** sobre que `cacheComponents` anula `force-static` en silencio, al
+  lado del flag, para que el próximo que necesite prerenderizar algo no pierda una tarde.
+- `@serwist/turbopack` queda solo como `devDependency`, por su `defaultCache`; se deja de usar su
+  `withSerwist` y su route handler. Se agrega `@serwist/build` como dependencia directa (era
+  transitiva, y pnpm no la expone).
+
+### Pendiente de verificar en el deploy
+
+Que Vercel recoja `public/sw.js` cuando lo escribe un paso posterior a `next build` dentro del
+mismo comando. Se intentó validar local con `vercel build` —que produce el Build Output API exacto
+que se despliega— pero falla con `Failed to collect page data for /robots.txt`, un problema del
+build del CLI y no del código (`pnpm build` pasa limpio). Se verifica curleando `/sw.js` en
+producción apenas termine el deploy; el riesgo de intentarlo es nulo, porque hoy no hay service
+worker en producción de todas formas.
+
+---
+
 ## [0.29.92] — 2026-08-08
 
 ### Arreglado — cargar un movimiento sin conexión, con la PWA cerrada, de verdad
