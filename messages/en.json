@@ -522,6 +522,7 @@
   "list": {
    "filters": "Filters",
    "calendar": "Calendar",
+   "history": "History",
    "cancel": "Cancel",
    "income": "Income",
    "expenses": "Expenses",
@@ -544,6 +545,13 @@
    "categorizeComingSoon": "Bulk categorizing isn't available yet.",
    "errorWhat": "We couldn't load your movements.",
    "dayCount": "{count, plural, one {# transaction} other {# transactions}}"
+  },
+  "history": {
+   "title": "History",
+   "year": "Year",
+   "chooseYear": "Choose year",
+   "empty": "No transactions saved yet.",
+   "back": "Back to transactions"
   },
   "detail": {
    "selectPrompt": "Pick a transaction from the list to see its detail here.",

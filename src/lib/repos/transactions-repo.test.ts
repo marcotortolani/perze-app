@@ -196,3 +196,43 @@ describe("transactionsRepo — mantiene el saldo de cuenta sin trigger de Postgr
     });
   });
 });
+
+describe("transactionsRepo.yearRange — para /transactions/history", () => {
+  beforeEach(() => {
+    resetDbForTests(`perze-test-yearrange-${crypto.randomUUID()}`);
+  });
+
+  afterEach(async () => {
+    const { getDb } = await import("../db/client");
+    await getDb().delete();
+  });
+
+  it("household sin movimientos: null", async () => {
+    expect(await transactionsRepo.yearRange(HOUSEHOLD)).toBeNull();
+  });
+
+  it("un solo movimiento: min y max son el mismo año", async () => {
+    const account = await accountsRepo.create(baseAccount());
+    await transactionsRepo.create(baseTx({ accountId: account.id, occurredAt: "2026-03-10T12:00:00.000Z" }));
+
+    expect(await transactionsRepo.yearRange(HOUSEHOLD)).toEqual({ minYear: 2026, maxYear: 2026 });
+  });
+
+  it("varios años: min y max son el más viejo y el más nuevo, sin importar el orden de creación", async () => {
+    const account = await accountsRepo.create(baseAccount());
+    await transactionsRepo.create(baseTx({ accountId: account.id, occurredAt: "2026-07-20T12:00:00.000Z" }));
+    await transactionsRepo.create(baseTx({ accountId: account.id, occurredAt: "2023-01-05T12:00:00.000Z" }));
+    await transactionsRepo.create(baseTx({ accountId: account.id, occurredAt: "2025-11-30T12:00:00.000Z" }));
+
+    expect(await transactionsRepo.yearRange(HOUSEHOLD)).toEqual({ minYear: 2023, maxYear: 2026 });
+  });
+
+  it("no se confunde entre households distintos", async () => {
+    const account = await accountsRepo.create(baseAccount());
+    await transactionsRepo.create(baseTx({ accountId: account.id, occurredAt: "2026-01-01T12:00:00.000Z" }));
+    const otherAccount = await accountsRepo.create(baseAccount({ householdId: "hh-2" }));
+    await transactionsRepo.create(baseTx({ householdId: "hh-2", accountId: otherAccount.id, occurredAt: "2020-01-01T12:00:00.000Z" }));
+
+    expect(await transactionsRepo.yearRange(HOUSEHOLD)).toEqual({ minYear: 2026, maxYear: 2026 });
+  });
+});

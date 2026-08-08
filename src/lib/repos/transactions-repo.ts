@@ -64,6 +64,25 @@ export const transactionsRepo = {
     return (await getDb().transactions.get(id)) ?? null;
   },
 
+  /**
+   * Primer y último año con movimientos — para `/transactions/history`, que
+   * necesita saber qué años ofrecer sin traer el historial completo a JS.
+   * Dos lecturas puntuales sobre el índice `[householdId+occurredAt]`
+   * (`.first()`/`.last()`, cada una un cursor que se abre por un extremo),
+   * no un scan de la tabla — mismo índice que ya usa `list()` para acotar
+   * por rango. `null` si la household todavía no tiene ningún movimiento.
+   */
+  async yearRange(householdId: string): Promise<{ minYear: number; maxYear: number } | null> {
+    const db = getDb();
+    const range = db.transactions.where("[householdId+occurredAt]").between([householdId, ""], [householdId, "￿"]);
+    // `.clone()`: una `Collection` de Dexie se consume al resolverse — hace
+    // falta una instancia propia por cada lectura, si no la segunda ve la
+    // colección ya recorrida.
+    const [first, last] = await Promise.all([range.first(), range.clone().last()]);
+    if (!first || !last) return null;
+    return { minYear: Number(first.occurredAt.slice(0, 4)), maxYear: Number(last.occurredAt.slice(0, 4)) };
+  },
+
   /** Movimientos con `fxRate === null` — el estado `needs_fx` (doc 01 § 2.5). */
   async listNeedingFx(householdId: string): Promise<TransactionRow[]> {
     const rows = await getDb().transactions.where("householdId").equals(householdId).toArray();

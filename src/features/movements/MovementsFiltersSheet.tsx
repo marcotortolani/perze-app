@@ -19,7 +19,11 @@ export interface MovementsFilters {
 }
 
 export function defaultMovementsFilters(): MovementsFilters {
-  return { datePreset: "all", kind: "all", accountIds: [], categoryIds: [], tagIds: [], recurringIds: [], onlyPending: false };
+  // "this-month", no "all": abrir `/transactions` sin acotar escaneaba y
+  // filtraba TODO el historial de la household en cada visita, cuando la
+  // gran mayoría de las aperturas solo quieren ver el mes en curso — ver
+  // `/transactions/history` para navegar meses/años anteriores.
+  return { datePreset: "this-month", kind: "all", accountIds: [], categoryIds: [], tagIds: [], recurringIds: [], onlyPending: false };
 }
 
 /**

@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.80 — 8 de agosto de 2026
+
+### Nuevo
+
+- Movimientos ahora abre directo en el mes en curso, para que cargue más rápido a medida que se
+  acumula historial. Para ver meses o años anteriores, hay un botón nuevo "Historial" que deja
+  elegir año y mes.
+
 ## 0.29.79 — 8 de agosto de 2026
 
 ### Nuevo

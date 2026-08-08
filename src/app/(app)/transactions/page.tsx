@@ -13,6 +13,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { defaultMovementsFilters, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
+import { monthRange } from "@/features/movements/calendar-scope";
 import { MovementsListContent } from "./TransactionsListContent";
 import { TransactionDetailContent } from "./TransactionDetailContent";
 import { TransactionsDetailEmpty } from "./TransactionsDetailEmpty";
@@ -128,7 +129,12 @@ export default function MovementsPage() {
   const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const calendarView = useCalendarView();
   const { data: household } = useCurrentHousehold();
-  const { data: transactions } = useTransactions(household?.id);
+  // Acotado al mes que el calendario está mostrando — es lo único que el
+  // heatmap necesita (`heatmapTransactions` más abajo), no el historial
+  // completo de la household. Se calcula siempre, esté el calendario
+  // abierto o no: es barato (un mes) y evita agregar un toggle `enabled`.
+  const heatmapMonthRange = monthRange(calendarView.scope.month);
+  const { data: transactions } = useTransactions(household?.id, heatmapMonthRange);
 
   const txId = searchParams.get("tx");
 
@@ -160,8 +166,14 @@ export default function MovementsPage() {
       const nextTagIds = tagIdParam && !f.tagIds.includes(tagIdParam) ? [tagIdParam] : f.tagIds;
       const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
       const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
-      if (nextCategoryIds === f.categoryIds && nextTagIds === f.tagIds && nextKind === f.kind && nextOnlyPending === f.onlyPending) return f;
-      return { ...f, categoryIds: nextCategoryIds, tagIds: nextTagIds, kind: nextKind, onlyPending: nextOnlyPending };
+      // El default de `/transactions` es "este mes" (evita traer el
+      // historial completo en la apertura normal), pero un deep link a una
+      // categoría/tag/pendientes específica desde el buscador o el home
+      // quiere decir "mostrame TODO lo que coincide", no solo este mes —
+      // si no, tocar una categoría desde el buscador global escondería sus
+      // movimientos de otros meses sin ningún aviso.
+      if (nextCategoryIds === f.categoryIds && nextTagIds === f.tagIds && nextKind === f.kind && nextOnlyPending === f.onlyPending && f.datePreset === "all") return f;
+      return { ...f, categoryIds: nextCategoryIds, tagIds: nextTagIds, kind: nextKind, onlyPending: nextOnlyPending, datePreset: "all" };
     });
   }, [categoryIdParam, tagIdParam, kindParam, pendingFxParam]);
 

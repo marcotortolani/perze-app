@@ -70,3 +70,12 @@ export function useTransaction(id: string | undefined) {
     enabled: !!id,
   });
 }
+
+/** `/transactions/history` — qué años ofrecer en el selector, sin traer el historial completo. */
+export function useTransactionYearRange(householdId: string | undefined) {
+  return useQuery({
+    queryKey: ["transaction-year-range", householdId ?? ""],
+    queryFn: () => transactionsRepo.yearRange(householdId ?? ""),
+    enabled: !!householdId,
+  });
+}

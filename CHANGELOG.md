@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.80] — 2026-08-08
+
+### Agregado — `/transactions` abre acotado a "este mes" + `/transactions/history` para el resto
+
+`/transactions` siempre traía TODO el historial de movimientos de la household desde Dexie
+(`useTransactions(household?.id)` sin filtros, en dos lugares — la lista y el heatmap del
+calendario de `page.tsx`) y recién filtraba por fecha en JS, sobre el array completo. El repo ya
+soportaba una consulta acotada por rango vía el índice compuesto `[householdId+occurredAt]`
+(`transactionsRepo.list()`) pero nada la usaba — el `from`/`to` que ya se calculaba
+(`periodStartFor`) se aplicaba solo como `.filter()` posterior. Con un mes de datos no se nota;
+con años de historial, cada apertura escanea y filtra todo cada vez.
+
+- **`defaultMovementsFilters()`** (`MovementsFiltersSheet.tsx`): `datePreset: "all"` →
+  `"this-month"`.
+- **`TransactionsListContent.tsx`**: el cálculo de `{ from, to }` se movió a ANTES de
+  `useTransactions`, que ahora lo recibe (`useTransactions(household?.id, { from, to })`) —
+  acota la consulta real, no solo lo que se renderiza. Con `datePreset: "all"` elegido a mano
+  sigue sin acotar, igual que siempre.
+- **`page.tsx`**: la segunda consulta sin acotar (para el heatmap del calendario) pasa a acotarse
+  a `monthRange(calendarView.scope.month)` — el heatmap solo necesita el mes visible, nunca el
+  historial completo.
+- **Deep links** (`?category=`/`?tag=`/`?kind=`/`?pending=`, del buscador global y del home):
+  ahora fuerzan `datePreset: "all"` al sembrar el filtro — si no, tocar una categoría desde el
+  buscador mostraría solo sus movimientos de este mes, escondiendo el resto sin aviso. El deep
+  link de "período" del home (`?from=`/`?to=` explícitos) no se ve afectado: ya le ganaba al
+  preset antes de este cambio.
+
+**Nueva página `/transactions/history`** — navegador año → mes para el historial completo, sin
+reimplementar la lista: elegir un mes hace `router.push('/transactions?from=&to=')`, el mismo
+mecanismo que ya usaba el deep link de "período" del home, así que el mes elegido se ve con el
+100% de la funcionalidad real (swipe, detalle, filtros, resumen). Botón de entrada en
+`/transactions`, junto a "Filtros"/"Calendario".
+
+- `transactionsRepo.yearRange()` (`src/lib/repos/transactions-repo.ts`, con tests): primer y
+  último año con movimientos, vía dos lecturas puntuales (`.first()`/`.last()`) sobre el índice
+  `[householdId+occurredAt]` — no un scan completo.
+- `useTransactionYearRange()` (`use-transactions.ts`).
+- La página agrupa el año elegido (una sola consulta acotada) por mes en JS usando
+  `monthOfDay(dayKeyOf(...))` — mismo criterio de día/mes LOCAL que el resto de la pantalla,
+  nunca un slice de UTC. Un mes sin movimientos se muestra en cero, no tappable. `NeedsFxBanner`
+  si el año tiene movimientos sin cotización resuelta (nunca se suman como si valieran cero).
+
 ## [0.29.79] — 2026-08-08
 
 ### Agregado — mostrar y filtrar por el recurrente de origen en un movimiento

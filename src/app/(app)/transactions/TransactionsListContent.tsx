@@ -112,7 +112,23 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   const { data: categories = [] } = useCategories(household?.id);
   const { data: tags = [] } = useTags(household?.id);
   const { data: rules = [] } = useRecurringRules(household?.id);
-  const transactionsQuery = useTransactions(household?.id);
+  // Home ("gastado"/"ingresado este período") linkea acá con el rango del
+  // período del household ya resuelto — `from`/`to` puentean el sistema de
+  // presets (que no conoce el `periodStartDay` del household) en vez de
+  // forzar un preset nuevo solo para este deep link. Se calcula ACÁ, antes
+  // de `useTransactions`, para que el rango acote la consulta real a Dexie
+  // (índice `[householdId+occurredAt]`) — antes se traía TODO el historial
+  // y este mismo rango se aplicaba recién después, como un `.filter()` en
+  // JS sobre el total.
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+  const now = new Date();
+  const { from, to } = fromParam ? { from: fromParam, to: toParam ?? undefined } : periodStartFor(filters.datePreset, now);
+  // `exactOptionalPropertyTypes`: `{ from, to }` a secas asignaría
+  // `undefined` explícito a una clave opcional, que el compilador rechaza
+  // aunque el VALOR sea válido — se arma condicionalmente en vez de pasar
+  // las claves siempre presentes.
+  const transactionsQuery = useTransactions(household?.id, { ...(from !== undefined && { from }), ...(to !== undefined && { to }) });
   const { data: transactionsRaw, isLoading: txLoading } = transactionsQuery;
   // El switch Personal/Compartido/Todo del header filtra acá — antes se
   // mostraba en esta pantalla (2+ miembros) sin que nada de abajo lo
@@ -217,13 +233,10 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   // acá ya filtrados en vez de en una lista sin filtrar — ver `SearchOverlay`.
   const categoryIdParam = searchParams.get("category");
   const payeeIdParam = searchParams.get("payee");
-  // Home ("gastado"/"ingresado este período") linkea acá con el tipo y el
-  // rango del período del household ya resueltos — `from`/`to` puentean el
-  // sistema de presets (que no conoce el `periodStartDay` del household)
-  // en vez de forzar un preset nuevo solo para este deep link.
+  // Home ("gastado"/"ingresado este período") linkea acá con el tipo del
+  // período — el rango (`from`/`to`) ya se resolvió más arriba, antes de
+  // `useTransactions`.
   const kindParam = searchParams.get("kind");
-  const fromParam = searchParams.get("from");
-  const toParam = searchParams.get("to");
   // Home ("Tenés N movimientos sin tipo de cambio resuelto") linkea acá
   // con `?pending=1` — reusa `filters.onlyPending`, que ya filtra por
   // `fxRate === null` (el nombre del campo es viejo, de antes de que
@@ -237,9 +250,6 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
 
   const accountById = useMemo(() => new Map(accounts.map((a: AccountRow) => [a.id, a])), [accounts]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-
-  const now = new Date();
-  const { from, to } = fromParam ? { from: fromParam, to: toParam ?? undefined } : periodStartFor(filters.datePreset, now);
 
   /**
    * Todo menos el rango de fecha. Es lo que alimenta el heatmap del
@@ -481,6 +491,28 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
         >
           <Icon name="calendar" size={16} color={calendarOpen ? "var(--text-primary)" : "var(--text-secondary)"} />
           <span style={{ fontSize: 13, color: calendarOpen ? "var(--text-primary)" : "var(--text-secondary)" }}>{t("transactions.list.calendar")}</span>
+        </button>
+        {/* Acceso al historial completo — el default de acá arriba es "este
+            mes" (evita traer todo el historial en la apertura normal), así
+            que hace falta una salida explícita para ir más atrás sin pasar
+            por el sheet de filtros. Navega a `/transactions/history`, que
+            elige año → mes y entrega a esta misma lista ya acotada. */}
+        <button
+          type="button"
+          onClick={() => router.push("/transactions/history")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-2)",
+            border: 0,
+            borderRadius: "var(--radius-chip)",
+            padding: "8px 14px",
+            cursor: "pointer",
+          }}
+        >
+          <Icon name="list" size={16} color="var(--text-secondary)" />
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.history")}</span>
         </button>
         {/* El alcance del día vive acá y no en la franja de totales: en
             escritorio la franja está en la otra columna, y el chip tiene que

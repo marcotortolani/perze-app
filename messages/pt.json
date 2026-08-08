@@ -522,6 +522,7 @@
   "list": {
    "filters": "Filtros",
    "calendar": "Calendário",
+   "history": "Histórico",
    "cancel": "Cancelar",
    "income": "Receitas",
    "expenses": "Gastos",
@@ -544,6 +545,13 @@
    "categorizeComingSoon": "Categorizar em lote ainda não está disponível.",
    "errorWhat": "Não conseguimos carregar seus movimentos.",
    "dayCount": "{count, plural, one {# movimento} other {# movimentos}}"
+  },
+  "history": {
+   "title": "Histórico",
+   "year": "Ano",
+   "chooseYear": "Escolher ano",
+   "empty": "Ainda não há movimentos salvos.",
+   "back": "Voltar aos movimentos"
   },
   "detail": {
    "selectPrompt": "Escolha um movimento da lista para ver o detalhe aqui.",
