@@ -682,6 +682,12 @@
    "skip": "Saltear",
    "next": "Siguiente",
    "start": "Empezar",
+   "demoSaved": "Guardado",
+   "demoAccounts": {
+    "salary": "Cuenta sueldo",
+    "savings": "Ahorros",
+    "trip": "Viaje"
+   },
    "slides": {
     "one": {
      "title": "Cargar un gasto: cinco segundos.",

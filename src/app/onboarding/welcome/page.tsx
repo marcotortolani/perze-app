@@ -9,6 +9,9 @@ import { ScreenShell } from "@/components/screen-shell";
 import { useMotionIntensity } from "@/components/motion";
 import { duration } from "@/lib/motion/springs";
 import { markWelcomeSeen } from "@/lib/onboarding/welcome-flag";
+import { KeypadDemo, CurrencyDemo, ModulesDemo } from "./OnboardingDemos";
+
+const DEMOS = { one: KeypadDemo, two: CurrencyDemo, three: ModulesDemo } as const;
 
 /** Distancia (px) o velocidad (px/s) a partir de la cual el arrastre cuenta
  *  como cambio de slide. Por debajo, el slide vuelve a su lugar. */
@@ -75,6 +78,7 @@ export default function OnboardingWelcomePage() {
     two: { title: t("onboarding.welcome.slides.two.title"), subtitle: t("onboarding.welcome.slides.two.subtitle"), demo: t("onboarding.welcome.slides.two.demo") },
     three: { title: t("onboarding.welcome.slides.three.title"), subtitle: t("onboarding.welcome.slides.three.subtitle"), demo: t("onboarding.welcome.slides.three.demo") },
   }[slide];
+  const Demo = DEMOS[slide];
 
   // `height` y no solo el `minHeight: 100svh` que ya pone `ScreenShell`: con
   // un mínimo sin techo, el contenedor crece con el contenido y los
@@ -145,7 +149,12 @@ export default function OnboardingWelcomePage() {
                 {copy.subtitle}
               </p>
               <div style={{ flex: "0 1 40px", minHeight: 16 }} />
+              {/* El contenido real de la demo va `aria-hidden` adentro
+                  (ver `OnboardingDemos.tsx`): lo que hay que anunciar ya
+                  está en el título/subtítulo de arriba, en texto real. */}
               <div
+                role="img"
+                aria-label={copy.demo}
                 style={{
                   background: "var(--surface-1)",
                   borderRadius: "var(--radius-card)",
@@ -153,14 +162,11 @@ export default function OnboardingWelcomePage() {
                   minHeight: 140,
                   maxHeight: 280,
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13,
-                  color: "var(--text-muted)",
                   userSelect: "none",
+                  overflow: "hidden",
                 }}
               >
-                {copy.demo}
+                <Demo />
               </div>
             </motion.div>
           </AnimatePresence>

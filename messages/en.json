@@ -682,6 +682,12 @@
    "skip": "Skip",
    "next": "Next",
    "start": "Get started",
+   "demoSaved": "Saved",
+   "demoAccounts": {
+    "salary": "Salary account",
+    "savings": "Savings",
+    "trip": "Trip"
+   },
    "slides": {
     "one": {
      "title": "Log an expense: five seconds.",

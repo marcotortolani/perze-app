@@ -26,14 +26,14 @@ export async function generateMetadata(): Promise<Metadata> {
  * `PIN_EXEMPT_PREFIXES` (`PinGate`) — o alguna redirige antes de que esto
  * llegue a pintar.
  *
- * A diferencia de `/about` (bloque de texto centrado, es la superficie de
- * verificación de OAuth y no vale la pena diferenciarla), acá el layout es
- * editorial y alineado a la izquierda de punta a punta: título arriba,
- * contenido fluye top-down, CTA anclado a los últimos 200px con un spacer
- * — nada se centra verticalmente. La única cifra héroe de la pantalla es
- * el "< 5 s" que retoma el métrica que define todo el producto (ver
- * CLAUDE.md, primera línea): "la app se juzga por cargar un gasto en
- * menos de 5 segundos". El resto de la marca (`ZMark`, tamaño gigante y
+ * Mismo lenguaje visual que `/about` (unificado a pedido — antes `/about`
+ * era un bloque de texto centrado, ya no): editorial y alineado a la
+ * izquierda de punta a punta, título arriba, contenido fluye top-down, CTA
+ * anclado a los últimos 200px con un spacer — nada se centra verticalmente.
+ * La única cifra héroe de la pantalla es el "< 5 s" que retoma la métrica
+ * que define todo el producto (ver CLAUDE.md, primera línea): "la app se
+ * juzga por cargar un gasto en menos de 5 segundos" — exclusiva de acá,
+ * `/about` no la repite. El resto de la marca (`ZMark`, tamaño gigante y
  * recortado en la esquina) es la misma textura de identidad que usan los
  * estados vacíos, solo que a mayor escala — no es un ícono decorativo
  * nuevo.
@@ -84,9 +84,20 @@ export default async function StartPage() {
         <ZMark size={62} gap={18} />
       </div>
 
+      {/* `height`, no `minHeight`: un mínimo sin techo hace que este nodo
+          RECALCULE su alto en cada evento de resize/scroll (la barra de
+          Safari mobile se esconde/aparece y `100svh` cambia con ella),
+          además de sumarse al `min-height: 100svh` que ya trae `body`
+          (`globals.css`) y al que ya pone el wrapper de `ScreenShell` — tres
+          fuentes de verdad independientes recalculando el mismo número es
+          lo que se sentía como un doble scroll. Con `height` fijo hay una
+          sola cuenta: el spacer de abajo (`flex:1`) reparte lo que sobra
+          UNA vez, y si el contenido no entra, el documento (no este nodo)
+          es el único que scrollea — mismo patrón ya probado en
+          `onboarding/welcome/page.tsx`. */}
       <ScreenShell
         background="transparent"
-        style={{ padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1, minHeight: "100svh" }}
+        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
       >
         <PageEnter style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

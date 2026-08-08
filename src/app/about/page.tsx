@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Logo } from "@/design-system";
+import { Logo, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
+import { PageEnter } from "@/components/motion/PageEnter";
 import { APP_VERSION } from "@/lib/version";
 
 /**
@@ -18,6 +19,13 @@ import { APP_VERSION } from "@/lib/version";
  * por locale, no necesita ningún hook — se sirve completo en el primer
  * response, sin depender de que el crawler ejecute JS.
  *
+ * Mismo lenguaje visual que `/start` (editorial, alineado a la izquierda,
+ * `ZMark` de fondo, CTA anclado a los últimos 200px con `height` fijo en
+ * vez de `minHeight` — ver el comentario largo en `start/page.tsx` sobre
+ * por qué `height` y no `minHeight` evita el doble-scroll). Antes era un
+ * bloque de texto centrado; se unificó a pedido, ya no hace falta
+ * diferenciarla de `/start` para la verificación de OAuth.
+ *
  * Ruta pública: agregada a `PUBLIC_PREFIXES` (`src/lib/auth/public-paths.ts`),
  * `EXEMPT_PREFIXES` (`OnboardingGate`) y `PIN_EXEMPT_PREFIXES` (`PinGate`) —
  * las tres allowlists tienen que coincidir o alguna redirige antes de que
@@ -32,78 +40,106 @@ export default async function AboutPage() {
     { title: t("publicAboutPage.features.family.title"), body: t("publicAboutPage.features.family.body") },
     { title: t("publicAboutPage.features.ownData.title"), body: t("publicAboutPage.features.ownData.body") },
   ];
+  const privacyLines = [t("privacyNotice.who"), t("privacyNotice.sees"), t("privacyNotice.neverSees"), t("privacyNotice.noThirdParty")];
 
   return (
-    <ScreenShell style={{ padding: "48px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 40 }}>
-      <div style={{ textAlign: "center" }}>
-        <Logo size={22} />
-        <h1 className="t-hero" style={{ margin: "16px 0 0" }}>
-          {t("publicAboutPage.headline")}
-        </h1>
-        <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 12 }}>
-          {t("app.description")}
-        </p>
+    <>
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          backgroundImage: "radial-gradient(circle, var(--dot-ink) var(--dot-size), transparent var(--dot-size))",
+          backgroundSize: "var(--dot-gap) var(--dot-gap)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 55% at 78% 8%, #000 0%, transparent 70%)",
+          maskImage: "radial-gradient(ellipse 80% 55% at 78% 8%, #000 0%, transparent 70%)",
+        }}
+      />
+      <div aria-hidden style={{ position: "fixed", top: -32, right: -44, zIndex: 0, pointerEvents: "none", transform: "rotate(-8deg)", opacity: 0.6 }}>
+        <ZMark size={62} gap={18} />
       </div>
 
-      <Link
-        href="/onboarding"
-        style={{
-          display: "block",
-          textAlign: "center",
-          height: "var(--primary-button-height)",
-          lineHeight: "var(--primary-button-height)",
-          borderRadius: "var(--radius-button)",
-          background: "var(--primary-fill)",
-          color: "var(--primary-on-fill)",
-          fontWeight: 600,
-          fontSize: 16,
-          textDecoration: "none",
-        }}
+      <ScreenShell
+        background="transparent"
+        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
       >
-        {t("publicAboutPage.cta")}
-      </Link>
+        <PageEnter style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+          <Logo size={20} />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {features.map((feature) => (
-          <div key={feature.title}>
-            <h2 className="t-label" style={{ margin: 0, color: "var(--text-primary)" }}>
-              {feature.title}
-            </h2>
-            <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 4 }}>
-              {feature.body}
+          <div style={{ marginTop: 56 }}>
+            <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {t("landingPage.eyebrow")}
+            </p>
+            <h1 className="t-hero-xl" style={{ margin: "12px 0 0", maxWidth: "12ch" }}>
+              {t("publicAboutPage.headline")}
+            </h1>
+            <p className="t-body" style={{ color: "var(--text-secondary)", marginTop: 16, maxWidth: "34ch" }}>
+              {t("app.description")}
             </p>
           </div>
-        ))}
-      </div>
 
-      <div>
-        <h2 className="t-label" style={{ margin: 0, color: "var(--text-primary)" }}>
-          {t("publicAboutPage.privacyTitle")}
-        </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
-          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-            {t("privacyNotice.who")}
-          </p>
-          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-            {t("privacyNotice.sees")}
-          </p>
-          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-            {t("privacyNotice.neverSees")}
-          </p>
-          <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
-            {t("privacyNotice.noThirdParty")}
-          </p>
-        </div>
-      </div>
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 40 }}>
+            {features.map((feature, i) => (
+              <div
+                key={feature.title}
+                style={{ display: "flex", gap: 16, padding: "16px 0", borderTop: i === 0 ? "1px solid var(--border)" : undefined, borderBottom: "1px solid var(--border)" }}
+              >
+                <span className="t-caption" style={{ color: "var(--text-muted)", flexShrink: 0, paddingTop: 2 }}>
+                  {`0${i + 1}`}
+                </span>
+                <div>
+                  <p className="t-body" style={{ margin: 0, fontWeight: 500, color: "var(--text-primary)" }}>
+                    {feature.title}
+                  </p>
+                  <p className="t-body" style={{ margin: "2px 0 0", color: "var(--text-secondary)" }}>
+                    {feature.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-      <div style={{ marginTop: "auto", paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-        <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>
-          {t("aboutPage.versionLine", { version: APP_VERSION })}
-        </p>
-        <p className="t-caption" style={{ margin: "4px 0 0", color: "var(--text-muted)" }}>
-          {t("publicAboutPage.license")}
-        </p>
-      </div>
-    </ScreenShell>
+          <div style={{ marginTop: 32 }}>
+            <p className="t-label" style={{ margin: 0, color: "var(--text-primary)" }}>
+              {t("publicAboutPage.privacyTitle")}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+              {privacyLines.map((line) => (
+                <p key={line} className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minHeight: 24 }} />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Link
+              href="/onboarding"
+              style={{
+                display: "block",
+                textAlign: "center",
+                height: "var(--primary-button-height)",
+                lineHeight: "var(--primary-button-height)",
+                borderRadius: "var(--radius-button)",
+                background: "var(--primary-fill)",
+                color: "var(--primary-on-fill)",
+                fontWeight: 600,
+                fontSize: 16,
+                textDecoration: "none",
+              }}
+            >
+              {t("publicAboutPage.cta")}
+            </Link>
+            <p className="t-caption" style={{ textAlign: "center", margin: 0, color: "var(--text-muted)" }}>
+              {t("aboutPage.versionLine", { version: APP_VERSION })} · {t("publicAboutPage.license")}
+            </p>
+          </div>
+        </PageEnter>
+      </ScreenShell>
+    </>
   );
 }

@@ -682,6 +682,12 @@
    "skip": "Pular",
    "next": "Próximo",
    "start": "Começar",
+   "demoSaved": "Salvo",
+   "demoAccounts": {
+    "salary": "Conta salário",
+    "savings": "Poupança",
+    "trip": "Viagem"
+   },
    "slides": {
     "one": {
      "title": "Registrar um gasto: cinco segundos.",

@@ -40,6 +40,21 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.87 — 8 de agosto de 2026
+
+### Nuevo
+
+- Las tres pantallas de bienvenida ahora muestran una animación de lo que describen (cargar un
+  gasto, tus cuentas en varias monedas, prender módulos) en vez de un espacio vacío.
+
+### Mejorado
+
+- La pantalla "Sobre Perze" tiene el mismo diseño que la de bienvenida ahora.
+
+### Arreglado
+
+- La pantalla de bienvenida pública a veces scrolleaba mal en el celular. Ya no.
+
 ## 0.29.86 — 8 de agosto de 2026
 
 ### Arreglado

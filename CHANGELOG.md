@@ -6,6 +6,46 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.87] — 2026-08-08
+
+### Agregado — demos animadas en los 3 slides de onboarding (A1)
+
+Los tres slides de `onboarding/welcome` (`docs/design/bloque-a-onboarding.html` marca cada card
+como "Demo de X en loop, 3 s") mostraban un placeholder de texto en vez del demo. Nuevo archivo
+`src/app/onboarding/welcome/OnboardingDemos.tsx` con tres componentes decorativos, `aria-hidden`
+en bloque (lo que cuenta ya está en título/subtítulo, en texto real): `KeypadDemo` tipea un monto
+dígito a dígito y "guarda"; `CurrencyDemo` resalta tres cuentas en monedas distintas; `ModulesDemo`
+prende los switches de módulos opcionales uno a uno. Recrean el lenguaje visual de
+`Keypad`/`CurrencyChip`/`Switch` con marcado propio, no los componentes interactivos — un
+`<button>` real dentro de un loop que nadie puede tocar sería un trap de foco.
+
+Bug real encontrado y corregido en el camino: Motion (`animate={{backgroundColor: ...}}`) no
+sabe interpolar entre dos strings `var(--token)` — la primera vez que lo intenta se queda pegado
+en el último valor que sí pudo aplicar (una tecla del keypad quedaba violeta para siempre). Los
+tres demos cambiaron a `transition` CSS plano para color/box-shadow, mismo patrón que ya usaba
+`KeypadKey`; `Motion` queda solo para transforms numéricos reales (`x`, `scale`, `opacity`).
+
+3 keys nuevas de i18n (`onboarding.welcome.demoSaved`, `.demoAccounts.{salary,savings,trip}`) en
+`es`/`en`/`pt` — los labels de módulos reusan `morePage.budgets/goals/family` y `nav.investments`
+en vez de duplicarlos.
+
+### Arreglado — doble scroll en `/start`
+
+`ScreenShell` ya pone `min-height: 100svh` en su wrapper, y `body` (`globals.css`) lo vuelve a
+poner globalmente — el `style` de `/start` sumaba una TERCERA capa independiente del mismo
+`minHeight: 100svh` en el div interno. Tres cálculos de `100svh` recalculando por separado en
+cada resize (la barra de Safari mobile se esconde/aparece) es la receta del "doble scroll" que
+se sentía en el celular. Cambiado a `height: calc(100svh - var(--safe-top))` (definido, no un
+mínimo sin techo) — mismo patrón ya probado en `onboarding/welcome/page.tsx`, que lo documenta
+en un comentario largo por la misma razón.
+
+### Cambiado — `/about` unificada al mismo lenguaje visual que `/start`
+
+Era un bloque de texto centrado; ahora comparte la maqueta editorial de `/start` (dot backdrop,
+`ZMark` de fondo, hero alineado a la izquierda, CTA anclado a los últimos 200px). Los 4 features
+y el bloque de privacidad pasan a lista numerada con hairlines. Sin cifra héroe propia (el "< 5 s"
+queda exclusivo de `/start`). Mismo fix de `height` que `/start` para el scroll.
+
 ## [0.29.86] — 2026-08-08
 
 ### Arreglado — badge de filtros activos en movimientos contaba el default
