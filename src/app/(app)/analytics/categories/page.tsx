@@ -14,6 +14,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { previousClosedPeriodBounds } from "@/lib/analytics/history";
+import { classifyConsumption } from "@/lib/analytics/cash-flow";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
@@ -32,10 +33,12 @@ export default function CategoriesAnalyticsPage() {
     const { start, end } = previousClosedPeriodBounds(household.periodStartDay || 1, new Date());
     const byCategory = new Map<string, bigint>();
     for (const tx of transactions) {
-      if (tx.kind !== "expense" || tx.amountBase === null || !tx.categoryId) continue;
+      if (!tx.categoryId) continue;
       const occurred = new Date(tx.occurredAt);
       if (occurred < start || occurred >= end) continue;
-      byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0n) + tx.amountBase);
+      const { bucket, magnitude } = classifyConsumption(tx);
+      if (bucket !== "outflow") continue;
+      byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0n) + magnitude);
     }
     const categoryById = new Map(categories.map((c) => [c.id, c]));
     const sorted = [...byCategory.entries()]

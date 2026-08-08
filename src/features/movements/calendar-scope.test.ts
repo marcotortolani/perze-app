@@ -252,4 +252,13 @@ describe("expenseTotalsByDay", () => {
     ]);
     expect(totals.get("2026-08-04")).toBe(1250n);
   });
+
+  it("no pinta el mapa de calor con compras/ventas de instrumentos — no son consumo", () => {
+    const totals = expenseTotalsByDay([
+      tx("expense", 1000n, localMidnightIso(2026, 7, 4)),
+      tx("investing", -5000n, localMidnightIso(2026, 7, 4)),
+      tx("investing", 800n, localMidnightIso(2026, 7, 4)),
+    ]);
+    expect(totals.get("2026-08-04")).toBe(1000n);
+  });
 });

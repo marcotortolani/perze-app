@@ -48,4 +48,18 @@ describe("computeWeeklySummary", () => {
     const result = computeWeeklySummary(txs, weekStart, weekEnd, prevWeekStart, prevWeekEnd);
     expect(result.biggestCategoryChange).toEqual({ categoryId: "food", delta: 1900n });
   });
+
+  it("counts a buy as part of the week's outflow, a sell does not reduce it, and neither pollutes top payee/category", () => {
+    const txs: WeeklyTransactionInput[] = [
+      { kind: "expense", occurredAt: new Date(2026, 6, 14).toISOString(), amountBase: 1000n, payeeId: "disco", categoryId: "food" },
+      { kind: "investing", occurredAt: new Date(2026, 6, 15).toISOString(), amountBase: -800n, payeeId: null, categoryId: null },
+      { kind: "investing", occurredAt: new Date(2026, 6, 16).toISOString(), amountBase: 300n, payeeId: null, categoryId: null },
+    ];
+    const result = computeWeeklySummary(txs, weekStart, weekEnd, prevWeekStart, prevWeekEnd);
+    expect(result.total).toBe(1800n);
+    expect(result.topPayee?.payeeId).toBe("disco");
+    // el delta de categoría es solo del gasto real de "food" — las filas de
+    // inversión tienen categoryId null y caen en "__none", que se ignora.
+    expect(result.biggestCategoryChange).toEqual({ categoryId: "food", delta: 1000n });
+  });
 });

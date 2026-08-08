@@ -1,4 +1,10 @@
-/** H11 — resumen semanal: tres datos y una comparación, todo excluyendo `needs_fx`. */
+import { classifyCashFlow } from "./cash-flow";
+
+/**
+ * H11 — resumen semanal: tres datos y una comparación, todo excluyendo
+ * `needs_fx`. `total` es toda la salida de liquidez de la semana — consumo
+ * más compras de instrumentos, una venta no la reduce (`cash-flow.ts`).
+ */
 
 export interface WeeklyTransactionInput {
   kind: "expense" | "income" | "transfer" | "adjustment" | "investing";
@@ -46,11 +52,11 @@ export function computeWeeklySummary(
 ): WeeklySummary {
   const inWeek = transactions.filter((tx) => {
     const occurred = new Date(tx.occurredAt);
-    return tx.kind === "expense" && occurred >= weekStart && occurred < weekEnd;
+    return occurred >= weekStart && occurred < weekEnd;
   });
   const inPrevWeek = transactions.filter((tx) => {
     const occurred = new Date(tx.occurredAt);
-    return tx.kind === "expense" && occurred >= prevWeekStart && occurred < prevWeekEnd;
+    return occurred >= prevWeekStart && occurred < prevWeekEnd;
   });
 
   let total = 0n;
@@ -60,34 +66,37 @@ export function computeWeeklySummary(
   const byCategoryThisWeek = new Map<string, bigint>();
 
   for (const tx of inWeek) {
-    if (tx.amountBase === null) {
+    const { bucket, magnitude } = classifyCashFlow(tx);
+    if (bucket === "needsFx") {
       excludedCount += 1;
       continue;
     }
-    total += tx.amountBase;
+    if (bucket !== "outflow") continue;
+    total += magnitude;
 
     const key = dateKey(tx.occurredAt);
     const day = byDay.get(key) ?? { dateIso: new Date(tx.occurredAt).toISOString(), total: 0n, count: 0 };
-    day.total += tx.amountBase;
+    day.total += magnitude;
     day.count += 1;
     byDay.set(key, day);
 
     if (tx.payeeId) {
       const payee = byPayee.get(tx.payeeId) ?? { payeeId: tx.payeeId, visits: 0, total: 0n };
       payee.visits += 1;
-      payee.total += tx.amountBase;
+      payee.total += magnitude;
       byPayee.set(tx.payeeId, payee);
     }
 
     const categoryKey = tx.categoryId ?? "__none";
-    byCategoryThisWeek.set(categoryKey, (byCategoryThisWeek.get(categoryKey) ?? 0n) + tx.amountBase);
+    byCategoryThisWeek.set(categoryKey, (byCategoryThisWeek.get(categoryKey) ?? 0n) + magnitude);
   }
 
   const byCategoryPrevWeek = new Map<string, bigint>();
   for (const tx of inPrevWeek) {
-    if (tx.amountBase === null) continue;
+    const { bucket, magnitude } = classifyCashFlow(tx);
+    if (bucket !== "outflow") continue;
     const categoryKey = tx.categoryId ?? "__none";
-    byCategoryPrevWeek.set(categoryKey, (byCategoryPrevWeek.get(categoryKey) ?? 0n) + tx.amountBase);
+    byCategoryPrevWeek.set(categoryKey, (byCategoryPrevWeek.get(categoryKey) ?? 0n) + magnitude);
   }
 
   const allCategories = new Set([...byCategoryThisWeek.keys(), ...byCategoryPrevWeek.keys()]);

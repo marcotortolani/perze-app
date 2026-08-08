@@ -45,4 +45,17 @@ describe("computeWrappedSummary", () => {
     const txs: WrappedTransactionInput[] = [{ kind: "income", occurredAt: new Date(2025, 0, 1).toISOString(), amountBase: 1000n, payeeId: null }];
     expect(computeWrappedSummary(txs, periodStart, periodEnd).transactionCount).toBe(0);
   });
+
+  it("counts a buy as expense and a sell as income, without polluting topPayee", () => {
+    const txs: WrappedTransactionInput[] = [
+      { kind: "investing", occurredAt: new Date(2026, 1, 1).toISOString(), amountBase: -800n, payeeId: null },
+      { kind: "investing", occurredAt: new Date(2026, 1, 2).toISOString(), amountBase: 300n, payeeId: null },
+      { kind: "expense", occurredAt: new Date(2026, 1, 3).toISOString(), amountBase: 100n, payeeId: "disco" },
+    ];
+    const result = computeWrappedSummary(txs, periodStart, periodEnd);
+    expect(result.totalExpense).toBe(900n);
+    expect(result.totalIncome).toBe(300n);
+    expect(result.transactionCount).toBe(3);
+    expect(result.topPayee).toEqual({ payeeId: "disco", visits: 1, total: 100n });
+  });
 });

@@ -84,6 +84,21 @@ describe("computeBudgetProgress", () => {
     expect(result.spent).toBe(3_500n);
   });
 
+  it("no cuenta compras/ventas de instrumentos como gasto del presupuesto", () => {
+    const result = computeBudgetProgress(
+      { categoryId: null, amountLimit: 10_000n },
+      [
+        { kind: "expense", categoryId: "groceries", amountBase: 1_000n, occurredAt: "2026-07-10" },
+        { kind: "investing", categoryId: null, amountBase: -5_000n, occurredAt: "2026-07-10" },
+      ],
+      periodStart,
+      periodEnd,
+      []
+    );
+    expect(result.spent).toBe(1_000n);
+    expect(result.excludedCount).toBe(0);
+  });
+
   it("un presupuesto en una subcategoría específica no suma el resto de sus hermanas ni el padre", () => {
     const categories = [
       { id: "groceries", parentId: null },

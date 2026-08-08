@@ -164,7 +164,7 @@ export default function MovementsPage() {
     setFilters((f) => {
       const nextCategoryIds = categoryIdParam && !f.categoryIds.includes(categoryIdParam) ? [categoryIdParam] : f.categoryIds;
       const nextTagIds = tagIdParam && !f.tagIds.includes(tagIdParam) ? [tagIdParam] : f.tagIds;
-      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
+      const nextKind = kindParam === "expense" || kindParam === "income" || kindParam === "investing" || kindParam === "transfer" || kindParam === "adjustment" ? kindParam : f.kind;
       const nextOnlyPending = pendingFxParam === "1" ? true : f.onlyPending;
       // El default de `/transactions` es "este mes" (evita traer el
       // historial completo en la apertura normal), pero un deep link a una

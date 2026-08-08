@@ -27,6 +27,7 @@ import {
   monthRange,
 } from '@/features/movements/calendar-scope'
 import { add, money, subtract, zero } from '@/lib/money/money'
+import { classifyCashFlow } from '@/lib/analytics/cash-flow'
 import type { Locale } from '@/i18n/formatting'
 
 function monthName(locale: Locale, month1: number): string {
@@ -101,9 +102,10 @@ export default function TransactionsHistoryPage() {
 
   // Un bucket por mes — cantidad de movimientos y neto en moneda base,
   // mismo criterio que el resumen de período de `TransactionsListContent`:
-  // las transferencias no suman ni restan (no son gasto ni ingreso), y un
-  // movimiento sin cotización resuelta se EXCLUYE del neto (nunca se suma
-  // como si valiera cero) pero sí cuenta para el conteo del mes.
+  // transferencias y adjustments no suman ni restan, compras/ventas de
+  // instrumentos sí (`src/lib/analytics/cash-flow.ts`), y un movimiento sin
+  // cotización resuelta se EXCLUYE del neto (nunca se suma como si valiera
+  // cero) pero sí cuenta para el conteo del mes.
   const { months, excludedCount } = useMemo(() => {
     const byMonth = new Map<
       number,
@@ -118,14 +120,14 @@ export default function TransactionsHistoryPage() {
       const bucket = byMonth.get(monthIndex)
       if (!bucket) continue
       bucket.count += 1
-      if (tx.kind === 'transfer') continue
-      if (tx.amountBase === null) {
+      const flow = classifyCashFlow(tx)
+      if (flow.bucket === 'needsFx') {
         excluded += 1
         continue
       }
-      const amt = money(tx.amountBase, baseCurrency)
-      if (tx.kind === 'income') bucket.net = add(bucket.net, amt)
-      else if (tx.kind === 'expense') bucket.net = subtract(bucket.net, amt)
+      const amt = money(flow.magnitude, baseCurrency)
+      if (flow.bucket === 'inflow') bucket.net = add(bucket.net, amt)
+      else if (flow.bucket === 'outflow') bucket.net = subtract(bucket.net, amt)
     }
     return { months: byMonth, excludedCount: excluded }
   }, [yearTransactions, baseCurrency])

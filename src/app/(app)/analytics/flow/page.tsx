@@ -47,6 +47,7 @@ export default function MoneyFlowPage() {
       accountLabel: (id) => accountById.get(id)?.name ?? id,
       otherIncome: t("moneyFlowPage.otherIncome"),
       otherExpense: t("moneyFlowPage.otherExpense"),
+      investing: t("transactions.list.investing"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, categories, accounts, transactions, closedPeriods]);

@@ -225,7 +225,11 @@ Esto es lo que le da profundidad al producto. Ordenado por nivel de sofisticaci�
 ### Nivel 1 — Salud financiera básica
 
 - **Patrimonio neto** (activos − pasivos) y su serie temporal
-- **Cashflow mensual**: ingresos − gastos − transferencias internas
+- **Cashflow mensual**: ingresos − egresos − transferencias internas. **"Egresos" incluye compras
+  de instrumentos, "Gastos" no** (`src/lib/analytics/cash-flow.ts`): comprar acciones es plata real
+  que sale de la misma cuenta que financia el resto del mes, así que cuenta en el cashflow y en la
+  tira de período — pero no es consumo, así que no cuenta en presupuestos, gasto por categoría ni
+  en el mapa de calor del calendario, que siguen midiendo "Gastos" en el sentido estricto.
 - **Tasa de ahorro** (%) mensual y promedio móvil 3/6/12 meses
 - **Safe to spend**: cuánto te queda por día hasta fin de período, considerando recurrentes pendientes
 - **Runway / colchón**: meses que sobrevivís con el efectivo actual al gasto promedio

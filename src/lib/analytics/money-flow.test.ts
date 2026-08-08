@@ -6,6 +6,7 @@ const labels = {
   accountLabel: (id: string) => `acc:${id}`,
   otherIncome: "Otros ingresos",
   otherExpense: "Otros gastos",
+  investing: "Inversiones",
 };
 
 describe("computeMoneyFlow", () => {
@@ -64,5 +65,36 @@ describe("computeMoneyFlow", () => {
     ];
     const result = computeMoneyFlow(txs, labels);
     expect(result.links).toEqual([{ source: "account:a1", target: "expense:food", value: 150 }]);
+  });
+
+  it("routes a buy (negative amount) as account → investing, in column 2", () => {
+    const txs: MoneyFlowTransaction[] = [{ kind: "investing", accountId: "a1", categoryId: null, amountBase: -800n }];
+    const result = computeMoneyFlow(txs, labels);
+    expect(result.links).toEqual([{ source: "account:a1", target: "investing:out", value: 800 }]);
+    expect(result.nodes.find((n) => n.id === "investing:out")).toEqual({ id: "investing:out", label: "Inversiones", column: 2 });
+  });
+
+  it("routes a sell (positive amount) as investing → account, in column 0", () => {
+    const txs: MoneyFlowTransaction[] = [{ kind: "investing", accountId: "a1", categoryId: null, amountBase: 200n }];
+    const result = computeMoneyFlow(txs, labels);
+    expect(result.links).toEqual([{ source: "investing:in", target: "account:a1", value: 200 }]);
+    expect(result.nodes.find((n) => n.id === "investing:in")).toEqual({ id: "investing:in", label: "Inversiones", column: 0 });
+  });
+
+  it("does not group investing rows under the __none/'other' category node", () => {
+    const txs: MoneyFlowTransaction[] = [{ kind: "investing", accountId: "a1", categoryId: null, amountBase: -800n }];
+    const result = computeMoneyFlow(txs, labels);
+    expect(result.nodes.some((n) => n.id.includes("__none") || n.id === "expense:__other")).toBe(false);
+  });
+
+  it("counts a needs_fx investing row without including it, and ignores the needs_capture_fx placeholder (0n)", () => {
+    const txs: MoneyFlowTransaction[] = [
+      { kind: "investing", accountId: "a1", categoryId: null, amountBase: null },
+      { kind: "investing", accountId: "a1", categoryId: null, amountBase: 0n },
+    ];
+    const result = computeMoneyFlow(txs, labels);
+    expect(result.excludedCount).toBe(1);
+    expect(result.links).toEqual([]);
+    expect(result.nodes).toEqual([]);
   });
 });

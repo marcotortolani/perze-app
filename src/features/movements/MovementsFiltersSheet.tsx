@@ -6,7 +6,7 @@ import type { AccountRow, CategoryRow, RecurringRuleRow, TagRow } from "@/lib/db
 import { useCategoryLabel } from "@/hooks/use-category-label";
 
 export type DatePreset = "all" | "this-month" | "last-month" | "last-7" | "last-30";
-export type KindFilter = "all" | "expense" | "income" | "transfer" | "adjustment";
+export type KindFilter = "all" | "expense" | "income" | "investing" | "transfer" | "adjustment";
 
 export interface MovementsFilters {
   datePreset: DatePreset;
@@ -95,6 +95,7 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
     { id: "all", label: t("movements.filters.kindAll") },
     { id: "expense", label: t("capture.kind.expense") },
     { id: "income", label: t("capture.kind.income") },
+    { id: "investing", label: t("transactions.list.investing") },
     { id: "transfer", label: t("capture.kind.transfer") },
     { id: "adjustment", label: t("transactions.list.reconciliation") },
   ];

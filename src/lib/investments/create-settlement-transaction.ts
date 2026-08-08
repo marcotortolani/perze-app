@@ -1,10 +1,12 @@
-import type { HouseholdRow } from "@/lib/db/schema";
+import type { AccountKind, HouseholdRow } from "@/lib/db/schema";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
 import { money } from "@/lib/money/money";
 import { computeSettlementAmount } from "./settlement-transaction";
+
+export class SettlementError extends Error {}
 
 export interface SettlementTransactionInput {
   household: HouseholdRow;
@@ -16,6 +18,7 @@ export interface SettlementTransactionInput {
   instrumentSymbol: string;
   accountId: string;
   accountCurrency: string;
+  accountKind: AccountKind;
 }
 
 /**
@@ -24,9 +27,19 @@ export interface SettlementTransactionInput {
  * `trades/[tradeId]/edit`: el alta y la edición resuelven exactamente la
  * misma cadena de FX, así que un trade editado no puede quedar con una
  * transacción vieja calculada distinto.
+ *
+ * Mensaje en inglés técnico a propósito, como `PayCardError`
+ * (`src/features/cards/pay-card.ts`): es un invariante de programación —
+ * `tradeSettlementAccounts` ya filtra las tarjetas del picker antes de que
+ * el usuario pueda llegar acá — no un mensaje que el usuario tenga que leer
+ * traducido. La única forma legítima de llegar con `accountKind ===
+ * 'credit_card'` es reeditando un trade viejo sin cambiar de cuenta; la UI
+ * de edición ya avisa con `newTradePage.creditCardNotAllowed`.
  */
 export async function createSettlementTransaction(input: SettlementTransactionInput): Promise<void> {
-  const { household, userId, tradeId, netAmount, instrumentCurrency, instrumentSymbol, accountId, accountCurrency } = input;
+  const { household, userId, tradeId, netAmount, instrumentCurrency, instrumentSymbol, accountId, accountCurrency, accountKind } = input;
+
+  if (accountKind === "credit_card") throw new SettlementError("settlement account cannot be a credit_card account");
 
   let conversionRate: bigint | null = null;
   if (instrumentCurrency !== accountCurrency) {

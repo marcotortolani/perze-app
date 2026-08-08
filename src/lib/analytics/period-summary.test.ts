@@ -41,6 +41,38 @@ describe("summarizePeriod", () => {
     const result = summarizePeriod([{ kind: "expense", amountBase: 500n, occurredAt: "2026-07-10" }], from, to);
     expect(result.savingsRatePct).toBeNull();
   });
+
+  it("counts a buy as outflow and a sell as inflow, without touching expenseTotal/incomeTotal", () => {
+    const result = summarizePeriod(
+      [
+        { kind: "income", amountBase: 3000n, occurredAt: "2026-07-05" },
+        { kind: "investing", amountBase: -800n, occurredAt: "2026-07-10" }, // compra
+        { kind: "investing", amountBase: 200n, occurredAt: "2026-07-15" }, // venta
+      ],
+      from,
+      to
+    );
+    // regresión: una compra ya no puede caer en el `else` y restar de los ingresos
+    expect(result.incomeTotal).toBe(3000n);
+    expect(result.expenseTotal).toBe(0n);
+    expect(result.outflowTotal).toBe(800n);
+    expect(result.inflowTotal).toBe(3200n);
+    expect(result.cashflow).toBe(2400n);
+  });
+
+  it("no cuenta el placeholder needs_capture_fx (amountBase 0n) como flujo ni como excluido", () => {
+    const result = summarizePeriod([{ kind: "investing", amountBase: 0n, occurredAt: "2026-07-10" }], from, to);
+    expect(result.inflowTotal).toBe(0n);
+    expect(result.outflowTotal).toBe(0n);
+    expect(result.excludedCount).toBe(0);
+  });
+
+  it("excludes a needs_fx investing row from cashflow and counts it once, not twice", () => {
+    const result = summarizePeriod([{ kind: "investing", amountBase: null, occurredAt: "2026-07-10" }], from, to);
+    expect(result.excludedCount).toBe(1);
+    expect(result.inflowTotal).toBe(0n);
+    expect(result.outflowTotal).toBe(0n);
+  });
 });
 
 describe("averageDailyExpense", () => {

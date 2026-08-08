@@ -37,6 +37,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { ageFromBirthDate, isBirthdayToday } from "@/lib/analytics/age";
+import { cashFlowNetBase, classifyCashFlow } from "@/lib/analytics/cash-flow";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
@@ -54,7 +55,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { useNetWorthCurrencyStore } from "@/stores/net-worth-currency-store";
-import { abs, add, compare, money, sum, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
+import { abs, add, compare, money, subtract, toMajorUnitsUnsafe, zero } from "@/lib/money/money";
 import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
@@ -181,13 +182,14 @@ export default function HomePage() {
   let expenseThisPeriod = zero(baseCurrencyForPeriod);
   let incomeThisPeriod = zero(baseCurrencyForPeriod);
   for (const tx of scopedTransactions) {
-    if (tx.occurredAt < periodStart || tx.kind === "transfer" || tx.amountBase === null) continue;
-    const m = money(tx.amountBase, baseCurrencyForPeriod);
-    if (tx.kind === "expense") {
-      expenseThisPeriod = add(expenseThisPeriod, m);
-      if (tx.categoryId) spendByCategory.set(tx.categoryId, (spendByCategory.get(tx.categoryId) ?? 0n) + tx.amountBase);
-    } else if (tx.kind === "income") {
-      incomeThisPeriod = add(incomeThisPeriod, m);
+    if (tx.occurredAt < periodStart) continue;
+    const { bucket, magnitude } = classifyCashFlow(tx);
+    if (bucket === "outflow") {
+      expenseThisPeriod = add(expenseThisPeriod, money(magnitude, baseCurrencyForPeriod));
+      // El desglose por categoría es solo consumo — un trade no tiene categoría.
+      if (tx.kind === "expense" && tx.categoryId) spendByCategory.set(tx.categoryId, (spendByCategory.get(tx.categoryId) ?? 0n) + magnitude);
+    } else if (bucket === "inflow") {
+      incomeThisPeriod = add(incomeThisPeriod, money(magnitude, baseCurrencyForPeriod));
     }
   }
   const expenseThisPeriodUsd = useNetWorthInCurrency(household?.id, expenseThisPeriod, wantsUsd ? "USD" : null);
@@ -259,18 +261,12 @@ export default function HomePage() {
   const heroTrendMoney: Money[] = [];
   for (let i = 13; i >= 0; i--) {
     const [start, end] = dayBounds(now, i);
-    // Solo expense/income mueven este sparkline — antes filtraba únicamente
-    // `transfer`, así que un `adjustment` o un `investing` (compra/venta de
-    // instrumento) caía en el `else` de abajo y se contaba como gasto. Con
-    // `investing` recién agregado (Bloque I) ese bug se volvía visible de
-    // nuevo cada vez que alguien cargara una operación.
-    const dayTransactions = allTransactions.filter(
-      (t) => (t.kind === "expense" || t.kind === "income") && t.amountBase !== null && t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString(),
-    );
-    const dayNet = sum(
-      baseCurrency,
-      dayTransactions.map((t) => money(t.kind === "income" ? t.amountBase! : -t.amountBase!, baseCurrency)),
-    );
+    // Movió liquidez: expense/income y también investing (compra/venta de
+    // instrumento) — nunca transfer/adjustment ni needs_fx
+    // (`src/lib/analytics/cash-flow.ts`).
+    const dayTransactions = allTransactions.filter((t) => t.occurredAt >= start.toISOString() && t.occurredAt < end.toISOString());
+    const dayNetBase = dayTransactions.reduce((s, t) => s + cashFlowNetBase(t), 0n);
+    const dayNet = money(dayNetBase, baseCurrency);
     runningNet = add(runningNet, dayNet);
     heroTrendMoney.push(runningNet);
   }
@@ -515,11 +511,14 @@ export default function HomePage() {
       <section style={{ display: "flex", gap: 24 }}>
         <button
           type="button"
-          onClick={() => router.push(`/transactions?kind=expense&from=${encodeURIComponent(periodStart)}`)}
+          // Sin `kind=expense`: el total de acá incluye compras/ventas de
+          // instrumentos (`cash-flow.ts`), y ese filtro dejaría afuera
+          // justo lo que hizo cambiar la cifra.
+          onClick={() => router.push(`/transactions?from=${encodeURIComponent(periodStart)}`)}
           style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
           <StatTile
-            label={t("home.spentThisPeriod")}
+            label={t("home.outflowThisPeriod")}
             value={
               <PrivacyBlur active={privacy} style={{ display: "block", width: "100%" }}>
                 <FitStatValue text={formatAmountCompact(wantsUsd && expenseThisPeriodUsd.data ? expenseThisPeriodUsd.data : expenseThisPeriod, { showSign: false })} />
@@ -529,7 +528,9 @@ export default function HomePage() {
         </button>
         <button
           type="button"
-          onClick={() => router.push(`/transactions?kind=income&from=${encodeURIComponent(periodStart)}`)}
+          // Mismo motivo que el botón de egresos: una venta de instrumentos
+          // suma acá y el filtro `kind=income` la dejaría afuera.
+          onClick={() => router.push(`/transactions?from=${encodeURIComponent(periodStart)}`)}
           style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: 0, padding: 0, cursor: "pointer" }}
         >
           <StatTile
