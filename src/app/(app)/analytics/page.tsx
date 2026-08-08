@@ -45,7 +45,7 @@ export default function AnalyticsPage() {
     () => (transactionsRaw ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
     [transactionsRaw, scopedAccountIds]
   );
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts, household?.enabledModules.includes("investments"));
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("analyticsPage.errorWhat") });
 
   if (!household || !accountsRaw || !transactionsRaw) {

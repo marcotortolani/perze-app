@@ -70,6 +70,7 @@ const SELECTION_BLEED = 12;
 function buildMeta(tx: TransactionRecord, account: AccountRow | undefined, categoryLabel: string | undefined, transferLabel: string, tagNames: string[], reconciliationLabel: string, recurringRuleName: string | undefined): string {
   if (tx.kind === "transfer") return account ? `${account.name} · ${transferLabel}` : transferLabel;
   if (tx.kind === "adjustment") return account ? `${account.name} · ${reconciliationLabel}` : reconciliationLabel;
+  if (tx.kind === "investing") return account?.name ?? "";
   const secondary = tagNames.length > 0 ? tagNames.join(", ") : (recurringRuleName ?? categoryLabel);
   return [account?.name, secondary].filter(Boolean).join(" · ");
 }
@@ -316,7 +317,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
     const result: ListItem[] = [];
     for (const day of days) {
       const dayTx = byDay.get(day)!;
-      const dayTotal = dayTx.reduce((s, t) => (t.kind === "transfer" || t.amountBase === null ? s : s + (t.kind === "income" ? t.amountBase : -t.amountBase)), 0n);
+      const dayTotal = dayTx.reduce((s, t) => (t.kind === "transfer" || t.kind === "investing" || t.amountBase === null ? s : s + (t.kind === "income" ? t.amountBase : -t.amountBase)), 0n);
       result.push({ type: "header", date: day, total: dayTotal, currency: baseCurrency, count: dayTx.length });
       for (const t of dayTx) result.push({ type: "row", tx: t });
     }
@@ -710,8 +711,12 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
                   ) : (
                     <SwipeableRow
                       disabled={!!selection}
-                      onSwipeLeftCommit={() => handleDelete(item.tx)}
-                      onSwipeRightCommit={() => router.push(`/transactions/${item.tx.id}/edit`)}
+                      // `investing`: ni editar ni borrar suceden acá — las
+                      // dos viven en Inversiones, sobre el trade (ver el
+                      // detalle de la transacción). Sin los dos callbacks,
+                      // el swipe en cualquier dirección no hace nada.
+                      onSwipeLeftCommit={item.tx.kind === "investing" ? undefined : () => handleDelete(item.tx)}
+                      onSwipeRightCommit={item.tx.kind === "investing" ? undefined : () => router.push(`/transactions/${item.tx.id}/edit`)}
                       onLongPress={() => setSelection(new Set([item.tx.id]))}
                       confirmLabel={t("transactions.list.confirmDelete")}
                       confirmActionLabel={t("transactions.list.confirmDeleteAction")}
@@ -727,17 +732,19 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
                         ) : null}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <TransactionRow
-                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "adjustment" ? "circle-half-tilt" : isCardPayment(item.tx) ? "credit-card" : item.tx.kind === "transfer" ? "refresh" : "cart")}
+                            icon={(categoryById.get(item.tx.categoryId ?? "")?.icon as IconName) ?? (item.tx.kind === "investing" ? "trend" : item.tx.kind === "adjustment" ? "circle-half-tilt" : isCardPayment(item.tx) ? "credit-card" : item.tx.kind === "transfer" ? "refresh" : "cart")}
                             merchant={
                               (item.tx.categoryId ? categoryById.get(item.tx.categoryId) : undefined)
                                 ? categoryLabel(categoryById.get(item.tx.categoryId!)!)
-                                : item.tx.kind === "adjustment"
-                                  ? t("transactions.list.reconciliation")
-                                  : isCardPayment(item.tx)
-                                    ? t("transactions.list.cardPayment")
-                                    : item.tx.kind === "transfer"
-                                      ? t("transactions.list.transfer")
-                                      : t("transactions.list.movement")
+                                : item.tx.kind === "investing"
+                                  ? (item.tx.note ?? t("transactions.list.investing"))
+                                  : item.tx.kind === "adjustment"
+                                    ? t("transactions.list.reconciliation")
+                                    : isCardPayment(item.tx)
+                                      ? t("transactions.list.cardPayment")
+                                      : item.tx.kind === "transfer"
+                                        ? t("transactions.list.transfer")
+                                        : t("transactions.list.movement")
                             }
                             meta={buildMeta(
                               item.tx,
@@ -754,7 +761,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
                                 ? formatAmountCompact(money(item.tx.amountBase, baseCurrency), { showSign: false })
                                 : undefined
                             }
-                            polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" || item.tx.kind === "adjustment" ? "neutral" : "negative"}
+                            polarity={item.tx.kind === "income" ? "positive" : item.tx.kind === "transfer" || item.tx.kind === "adjustment" || item.tx.kind === "investing" ? "neutral" : "negative"}
                             syncIssue={item.tx.syncState === "ok" ? undefined : item.tx.syncState}
                             onClick={() => (selection ? toggleSelected(item.tx.id) : openTransaction(item.tx.id))}
                           />

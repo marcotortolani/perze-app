@@ -6,9 +6,12 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, EmptyState, IconButton, Keypad, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useInstruments, useInvalidateTrades, useTrades } from "@/hooks/use-investments";
+import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
+import { resyncSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
@@ -45,10 +48,12 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const userId = useEffectiveUserId();
   const { data: instruments = [] } = useInstruments(household?.id);
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: trades } = useTrades(portfolioId);
   const invalidateTrades = useInvalidateTrades(portfolioId);
+  const invalidateTransactions = useInvalidateTransactions(household?.id);
   usePageHeader({ title: t("instrumentDetailPage.editTrade"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const trade = trades?.find((tr) => tr.id === tradeId);
@@ -61,7 +66,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  if (!household || !trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
+  if (!household || !userId || !trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
   if (!trade) return <EmptyState message={t("instrumentDetailPage.tradeNotFound")} />;
 
   const instrument = instruments.find((i) => i.id === trade.instrumentId);
@@ -131,7 +136,22 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
         fxRate,
         fxSource,
       });
+
+      // La transacción de settlement vieja se descarta y se recrea entera
+      // con los valores nuevos — mismo criterio que `recompute_account_balance`.
+      await resyncSettlementTransaction({
+        household,
+        userId,
+        tradeId: trade.id,
+        netAmount,
+        instrumentCurrency: trade.currencyCode,
+        instrumentSymbol: instrument?.symbol ?? trade.instrumentId,
+        accountId: account.id,
+        accountCurrency: account.currencyCode,
+      });
+
       invalidateTrades();
+      invalidateTransactions();
       toast(t("instrumentDetailPage.tradeUpdated"));
       // `back()`, no `replace`/`push` — el detalle del instrumento ya está
       // en el historial justo debajo.

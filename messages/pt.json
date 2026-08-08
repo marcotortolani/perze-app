@@ -535,6 +535,7 @@
    "cardPayment": "Pagamento de cartão",
    "reconciliation": "Conciliação",
    "movement": "Movimentação",
+   "investing": "Investimento",
    "deleted": "Movimentação excluída",
    "undo": "Desfazer",
    "confirmDelete": "Excluir movimentação?",
@@ -586,6 +587,8 @@
    "split": "Dividir em categorias",
    "splitComingSoon": "Dividir uma movimentação ainda não está disponível.",
    "delete": "Excluir",
+   "investingManagedElsewhere": "Essa operação se edita ou exclui em Investimentos, não aqui.",
+   "viewInInvestments": "Ver em Investimentos",
    "fxSource": {
     "identity": "Mesma moeda",
     "manual": "Ajuste manual",

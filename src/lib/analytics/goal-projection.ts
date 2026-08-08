@@ -38,7 +38,7 @@ export function projectArrivalDate(saved: bigint, target: bigint, monthlyRate: b
  * días, la sugerencia que ofrece la pantalla de nueva meta cuando el
  * usuario no sabe cuánto poner.
  */
-export function computeThreeMonthCushion(transactions: readonly { kind: "expense" | "income" | "transfer" | "adjustment"; amountBase: bigint | null; occurredAt: string }[], now: Date): bigint {
+export function computeThreeMonthCushion(transactions: readonly { kind: "expense" | "income" | "transfer" | "adjustment" | "investing"; amountBase: bigint | null; occurredAt: string }[], now: Date): bigint {
   const start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
   const summary = summarizePeriod(transactions, start, now);
   const dailyAvg = averageDailyExpense(summary.expenseTotal, 90);

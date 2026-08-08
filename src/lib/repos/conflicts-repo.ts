@@ -48,6 +48,7 @@ function fromServerTransaction(server: Record<string, unknown>): TransactionRow 
     deletedAt: server.deleted_at as string | null,
     clientRev: server.client_rev as number,
     source: server.source as TransactionRow["source"],
+    tradeId: server.trade_id as string | null,
     syncState: "ok",
     syncError: null,
   };

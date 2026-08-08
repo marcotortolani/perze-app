@@ -47,14 +47,30 @@ export function computeNetWorth(params: {
   accounts: readonly NetWorthAccountInput[];
   baseCurrency: string;
   convert: (amount: Money, toCurrency: string) => Money | null;
+  /**
+   * Valor de mercado de las posiciones de inversión (todos los portfolios),
+   * YA convertido a moneda base por el caller (`computeInvestmentsValue`) —
+   * el mismo criterio de esta función no aplica dos veces. `undefined`
+   * cuando el módulo de inversiones está apagado: sin esto, comprar un
+   * instrumento bajaba el efectivo de la cuenta sin que el activo comprado
+   * apareciera en ningún lado, y el patrimonio neto quedaba peor que antes
+   * de mover la cuenta de liquidación de verdad.
+   */
+  investmentsValue?: bigint;
 }): NetWorthResult {
-  const { accounts, baseCurrency, convert } = params;
+  const { accounts, baseCurrency, convert, investmentsValue } = params;
 
   let total = zero(baseCurrency);
   let assets = zero(baseCurrency);
   let liabilities = zero(baseCurrency);
   let included = 0;
   const excludedAccountIds: string[] = [];
+
+  if (investmentsValue !== undefined) {
+    const investmentsMoney = money(investmentsValue, baseCurrency);
+    total = add(total, investmentsMoney);
+    assets = add(assets, investmentsMoney);
+  }
 
   for (const account of accounts) {
     if (!account.includeInNetWorth) continue;

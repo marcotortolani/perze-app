@@ -8,15 +8,19 @@ import { Button, IconButton, Keypad, ListRow, SegmentedControl, Sheet, usePageHe
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
-import { useInstruments, useInvalidateTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidateTrades, useTrades } from "@/hooks/use-investments";
+import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
+import { createSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
-import { decimalsFor } from "@/lib/money/decimals";
+import { decimalsFor, decimalsForQuantity } from "@/lib/money/decimals";
+import { formatNumber } from "@/lib/money/format";
+import { computePositions } from "@/lib/analytics/positions";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
@@ -72,8 +76,11 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const { data: instruments = [] } = useInstruments(household?.id);
+  const { data: assetClasses = [] } = useAssetClasses();
   const { data: accounts = [] } = useAccounts(household?.id);
+  const { data: existingTrades = [] } = useTrades(portfolioId);
   const invalidateTrades = useInvalidateTrades(portfolioId);
+  const invalidateTransactions = useInvalidateTransactions(household?.id);
   usePageHeader({ title: t("investmentsPage.recordTrade"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const [kind, setKind] = useState<TradeKind>("buy");
@@ -132,7 +139,26 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   // fijo (ARS/USD tienen 2 decimales hoy, pero un crypto con más no).
   const grossAmount =
     Number.isFinite(qty) && Number.isFinite(unitPrice) && instrument ? Math.round(qty * unitPrice * 10 ** decimalsFor(instrument.currencyCode)) : 0;
-  const canSave = !!instrument && !!account && qty > 0 && unitPrice > 0;
+  // Vender más de lo que se tiene no es un error visible en `computePositions`:
+  // una posición que queda en cantidad <= 0 se BORRA (se interpreta como
+  // "cerrada"), así que una venta de más hace desaparecer la posición entera
+  // en vez de fallar ruidosamente — hay que cortarlo acá, antes de guardar.
+  const heldQuantity = instrument ? (computePositions(existingTrades).get(instrument.id)?.quantity ?? 0) : 0;
+  const exceedsHeldQuantity = kind === "sell" && !!instrument && qty > heldQuantity;
+  const canSave = !!instrument && !!account && qty > 0 && unitPrice > 0 && !exceedsHeldQuantity;
+  const quantityDecimals = instrument
+    ? decimalsForQuantity({
+        symbol: instrument.symbol,
+        ...(assetClasses.find((a) => a.id === instrument.assetClassId)?.name ? { assetClass: assetClasses.find((a) => a.id === instrument.assetClassId)!.name } : {}),
+        ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}),
+      })
+    : 0;
+  const formatQuantity = (n: number) => formatNumber(n, quantityDecimals);
+  // Mismo cálculo que `exceedsHeldQuantity`, pero sobre lo que se está
+  // tipeando en el keypad TODAVÍA no confirmado (`keypadDigits`) — para
+  // avisar dentro del modal sin tener que cerrarlo primero.
+  const keypadQty = sheet === "quantity" && keypadDigits !== null ? (parseKeypadDecimal(keypadDigits, decimalSeparator) ?? 0) : 0;
+  const keypadExceedsHeldQuantity = kind === "sell" && !!instrument && keypadQty > heldQuantity;
 
   // ±1 unidad, nunca negativo — un CEDEAR fraccionario ("0.5") sigue
   // pudiendo tipearse a mano por el teclado, el stepper es para el caso
@@ -186,7 +212,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         }
       }
 
-      await tradesRepo.create({
+      const trade = await tradesRepo.create({
         portfolioId,
         instrumentId: instrument.id,
         createdBy: userId,
@@ -202,7 +228,25 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         fxRate,
         fxSource,
       });
+
+      // Settlement — el bug reportado: antes `settlementAccountId` era
+      // puramente informativo, nunca movía la cuenta ni dejaba rastro en
+      // Transacciones. `kind: "investing"` (no una categoría — `categories.kind`
+      // solo admite expense/income) ya está excluido de presupuestos y
+      // "gasto por categoría", igual que transfer/adjustment.
+      await createSettlementTransaction({
+        household,
+        userId,
+        tradeId: trade.id,
+        netAmount,
+        instrumentCurrency: instrument.currencyCode,
+        instrumentSymbol: instrument.symbol,
+        accountId: account.id,
+        accountCurrency: account.currencyCode,
+      });
+
       invalidateTrades();
+      invalidateTransactions();
       toast(fxSource === "pending" ? t("newTradePage.savedPendingFx") : t("newTradePage.saved"));
       // `back()`, no `replace`/`push` — la lista ya está en el historial
       // justo debajo. `replace("/investments")` duplicaba esa misma
@@ -253,6 +297,14 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
               </button>
               <IconButton icon="plus" ariaLabel={t("newTradePage.increaseQuantity")} onClick={() => adjustQuantity(1)} />
             </div>
+            {/* "Los errores proponen la corrección, no la nombran" (CLAUDE.md):
+                el máximo vendible se muestra siempre que hay instrumento
+                elegido en modo venta, no solo cuando ya te pasaste. */}
+            {kind === "sell" && instrument ? (
+              <p className="t-caption" style={{ textAlign: "center", color: exceedsHeldQuantity ? "var(--critical)" : "var(--text-muted)", margin: 0 }}>
+                {t("newTradePage.availableToSell", { quantity: formatQuantity(heldQuantity), symbol: instrument.symbol })}
+              </p>
+            ) : null}
           </div>
 
           {/* Precio: siempre por teclado numérico (no tiene sentido un
@@ -300,8 +352,19 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
 
       <Sheet open={sheet === "quantity" || sheet === "price"} title={sheet === "quantity" ? t("newTradePage.quantity") : t("newTradePage.unitPrice")} onClose={cancelKeypad}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32, color: "var(--text-primary)" }}>
-            {keypadDigits || "0"}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32, color: keypadExceedsHeldQuantity ? "var(--critical)" : "var(--text-primary)" }}>
+              {keypadDigits || "0"}
+            </div>
+            {/* Mismo aviso que el campo cerrado (CLAUDE.md: la corrección se
+                propone, no se nombra después de cerrar el modal) — acá
+                adentro, en vivo mientras se tipea, para no tener que cerrar,
+                enterarse del error y volver a abrir. */}
+            {sheet === "quantity" && kind === "sell" && instrument ? (
+              <p className="t-caption" style={{ textAlign: "center", color: keypadExceedsHeldQuantity ? "var(--critical)" : "var(--text-muted)", margin: 0 }}>
+                {t("newTradePage.availableToSell", { quantity: formatQuantity(heldQuantity), symbol: instrument.symbol })}
+              </p>
+            ) : null}
           </div>
           <Keypad
             operators={false}
@@ -312,7 +375,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
             <Button variant="secondary" onClick={cancelKeypad} style={{ flex: 1 }}>
               {t("currenciesPage.keypadCancel")}
             </Button>
-            <Button variant="primary" onClick={commitKeypad} style={{ flex: 1 }}>
+            <Button variant="primary" disabled={keypadExceedsHeldQuantity} onClick={commitKeypad} style={{ flex: 1 }}>
               {t("currenciesPage.keypadDone")}
             </Button>
           </div>

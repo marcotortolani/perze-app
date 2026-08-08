@@ -175,6 +175,7 @@ function localTx(id: string, updatedAt: string, note: string): TransactionRow {
     installmentGroupId: null,
     installmentNumber: null,
     installmentTotal: null,
+    tradeId: null,
     createdAt: updatedAt,
     updatedAt,
     deletedAt: null,

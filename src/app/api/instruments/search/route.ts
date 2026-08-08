@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { searchData912Instruments } from "@/lib/prices/providers/data912";
 import { searchFinnhubInstruments } from "@/lib/prices/providers/finnhub";
+import { searchArgentinaDatosFci } from "@/lib/prices/providers/argentinadatos";
 import { SYMBOL_TO_COINGECKO_ID } from "@/lib/prices/coingecko-symbols";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,10 @@ export interface InstrumentSearchResult {
   priceProvider: string;
   providerSymbol: string;
   close: number | null;
+  /** Nombre completo del instrumento — solo Finnhub lo trae; Data912 no tiene este dato en ninguna de sus 5 categorías. */
+  name: string | null;
+  /** Ticker base cuando este resultado es la variante dólar-cable/MEP de otro CEDEAR de la misma búsqueda (Data912, sufijo D/C) — nunca un instrumento distinto aunque el ticker coincida con uno real de otra bolsa. */
+  variantOf: string | null;
 }
 
 export async function GET(request: Request) {
@@ -41,21 +46,27 @@ export async function GET(request: Request) {
   }
   const query = parsed.data.q.trim().toUpperCase();
 
-  const [data912Results, cryptoMatches, finnhubResults] = await Promise.all([
+  const [data912Results, cryptoMatches, finnhubResults, fciResults] = await Promise.all([
     searchData912Instruments(query).catch(() => []),
     Promise.resolve(Object.keys(SYMBOL_TO_COINGECKO_ID).filter((symbol) => symbol.includes(query))),
     // `searchFinnhubInstruments` ya devuelve `[]` sin `FINNHUB_API_KEY` —
     // el `.catch` es solo por si la API responde con error de verdad.
     searchFinnhubInstruments(query).catch(() => []),
+    searchArgentinaDatosFci(query).catch(() => []),
   ]);
 
   const results: InstrumentSearchResult[] = [
-    ...data912Results.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: r.currencyCode, priceProvider: "data912", providerSymbol: r.symbol, close: r.close })),
-    ...cryptoMatches.map((symbol): InstrumentSearchResult => ({ symbol, assetClass: "Crypto", currencyCode: "USD", priceProvider: "coingecko", providerSymbol: SYMBOL_TO_COINGECKO_ID[symbol]!, close: null })),
+    ...data912Results.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: r.currencyCode, priceProvider: "data912", providerSymbol: r.symbol, close: r.close, name: null, variantOf: r.variantOf })),
+    ...cryptoMatches.map((symbol): InstrumentSearchResult => ({ symbol, assetClass: "Crypto", currencyCode: "USD", priceProvider: "coingecko", providerSymbol: SYMBOL_TO_COINGECKO_ID[symbol]!, close: null, name: null, variantOf: null })),
     // I10 — acciones/ETFs de EE.UU. (NYSE/NASDAQ), siempre en USD: Finnhub
     // no cotiza acá (su `/search` no trae precio), así que `close` queda
     // `null` como el resto de los proveedores que tampoco lo traen.
-    ...finnhubResults.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: "USD", priceProvider: "finnhub", providerSymbol: r.symbol, close: null })),
+    ...finnhubResults.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: r.assetClass, currencyCode: "USD", priceProvider: "finnhub", providerSymbol: r.symbol, close: null, name: r.name, variantOf: null })),
+    // I10 — FCI (ArgentinaDatos/CAFCI): el nombre del fondo ES el símbolo,
+    // no hay ticker. `close` queda `null` como Finnhub — el catálogo
+    // (`/fondos`) no trae el VCP de hoy, solo metadata; el precio en vivo
+    // sale de `fetchPrice` (categoría `/ultimo`), igual que el resto.
+    ...fciResults.map((r): InstrumentSearchResult => ({ symbol: r.symbol, assetClass: "FCI", currencyCode: r.currencyCode, priceProvider: "argentinadatos-fci", providerSymbol: r.symbol, close: null, name: r.name, variantOf: null })),
   ];
 
   return NextResponse.json({ results }, { headers: NO_STORE_HEADERS });

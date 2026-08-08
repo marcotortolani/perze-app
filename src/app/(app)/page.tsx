@@ -160,7 +160,7 @@ export default function HomePage() {
     () => (transactions ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
     [transactions, scopedAccountIds]
   );
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts, household?.enabledModules.includes("investments"));
   const netWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.displayCurrency);
   const setNetWorthDisplayCurrency = useNetWorthCurrencyStore((s) => s.setDisplayCurrency);
   const wantsUsd = netWorthDisplayCurrency === "usd" && household?.baseCurrency !== "USD";

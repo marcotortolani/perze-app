@@ -6,11 +6,13 @@ import { useTranslations } from "next-intl";
 import { Button, DragRow, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInvalidateAssetClasses } from "@/hooks/use-investments";
+import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { instrumentsRepo, type AssetClass } from "@/lib/repos/instruments-repo";
 
 /** I8 — clases de activo: CRUD con orden. Las plantillas globales se editan por clonado (Patrón C), nunca se mutan directo. */
 export default function AssetClassesPage() {
   const t = useTranslations();
+  const assetClassLabel = useAssetClassLabel();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: assetClasses } = useAssetClasses();
@@ -36,7 +38,10 @@ export default function AssetClassesPage() {
 
   const openEdit = (assetClass: AssetClass) => {
     setEditing(assetClass);
-    setEditingName(assetClass.name);
+    // Prellenar con el nombre traducido, no el canónico en español: si el
+    // usuario guarda sin tocar el campo, su copia clonada queda en el
+    // idioma de la app en vez de heredar el español de la plantilla.
+    setEditingName(assetClassLabel(assetClass) ?? assetClass.name);
   };
 
   const handleSaveEdit = async () => {
@@ -84,8 +89,8 @@ export default function AssetClassesPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ paddingTop: 12, display: "flex", flexDirection: "column", paddingBottom: 24 }}>
         {sorted.map((assetClass, index) => (
-          <DragRow key={assetClass.id} id={assetClass.id} index={index} onReorder={handleReorder} dragLabel={t("assetClassesPage.reorder", { name: assetClass.name })}>
-            <ListRow label={assetClass.name} meta={assetClass.householdId === null ? t("assetClassesPage.global") : undefined} onClick={() => openEdit(assetClass)} />
+          <DragRow key={assetClass.id} id={assetClass.id} index={index} onReorder={handleReorder} dragLabel={t("assetClassesPage.reorder", { name: assetClassLabel(assetClass) ?? assetClass.name })}>
+            <ListRow label={assetClassLabel(assetClass) ?? assetClass.name} meta={assetClass.householdId === null ? t("assetClassesPage.global") : undefined} onClick={() => openEdit(assetClass)} />
           </DragRow>
         ))}
         <ListRow icon="plus" label={t("assetClassesPage.newClass")} variant="action" onClick={() => setCreating(true)} />

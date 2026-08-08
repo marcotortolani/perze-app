@@ -67,6 +67,8 @@ export interface Data912SearchResult {
   assetClass: string;
   currencyCode: "ARS" | "USD";
   close: number;
+  /** Ticker sin el sufijo D/C cuando `detectVariantOf` lo identificó como su variante dólar-cable/MEP — nunca un símbolo real distinto, para que la UI pueda etiquetar la relación en vez de dejar que el usuario adivine por el nombre. */
+  variantOf: string | null;
 }
 
 /**
@@ -86,12 +88,14 @@ export interface Data912SearchResult {
  * es en pesos): el sufijo solo es tal si el símbolo SIN esa última letra
  * existe como otro instrumento en la misma categoría — ahí sí es la
  * variante dólar de ese otro. Heurística estructural, no un patrón de
- * texto fijo.
+ * texto fijo. Devuelve el ticker base (`"YPFD"`) cuando `symbol` es su
+ * variante dólar, `null` si no.
  */
-function detectCurrency(symbol: string, symbolsInCategory: ReadonlySet<string>): "ARS" | "USD" {
+function detectVariantOf(symbol: string, symbolsInCategory: ReadonlySet<string>): string | null {
   const suffix = symbol.at(-1);
-  if (suffix !== "D" && suffix !== "C") return "ARS";
-  return symbolsInCategory.has(symbol.slice(0, -1)) ? "USD" : "ARS";
+  if (suffix !== "D" && suffix !== "C") return null;
+  const base = symbol.slice(0, -1);
+  return symbolsInCategory.has(base) ? base : null;
 }
 
 /**
@@ -111,7 +115,10 @@ export async function searchData912Instruments(query: string, fetchImpl: typeof 
       const symbolsInCategory = new Set(entries.map((e) => e.symbol));
       return entries
         .filter((e) => e.symbol.includes(needle))
-        .map((e): Data912SearchResult => ({ symbol: e.symbol, category, assetClass: DATA912_CATEGORY_ASSET_CLASS[category], currencyCode: detectCurrency(e.symbol, symbolsInCategory), close: e.c }));
+        .map((e): Data912SearchResult => {
+          const variantOf = detectVariantOf(e.symbol, symbolsInCategory);
+          return { symbol: e.symbol, category, assetClass: DATA912_CATEGORY_ASSET_CLASS[category], currencyCode: variantOf !== null ? "USD" : "ARS", close: e.c, variantOf };
+        });
     })
   );
   return results.flat().sort((a, b) => a.symbol.localeCompare(b.symbol));

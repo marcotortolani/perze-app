@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Amount, EmptyState, Icon, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useLatestPrices, usePortfolioFromParam, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useElementSize } from "@/hooks/use-element-size";
 import { computePositions } from "@/lib/analytics/positions";
@@ -51,6 +52,7 @@ const BLOCK_GAP = 6;
  */
 export default function AllocationPage() {
   const t = useTranslations();
+  const assetClassLabel = useAssetClassLabel();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { data: portfolios } = usePortfolios(household?.id);
@@ -127,7 +129,7 @@ export default function AllocationPage() {
     return {
       instrumentId,
       symbol: instrument.symbol,
-      assetClassName: assetClass?.name ?? t("investmentsPage.otherAssetClass"),
+      assetClassName: assetClassLabel(assetClass) ?? t("investmentsPage.otherAssetClass"),
       baseValue,
       weightPct: totalValue > 0n ? (Number(baseValue) / Number(totalValue)) * 100 : 0,
     };

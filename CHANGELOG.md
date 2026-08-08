@@ -6,6 +6,46 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.81] — 2026-08-08
+
+### Corregido — comprar/vender una inversión no movía el saldo de la cuenta de liquidación
+
+`trades.settlement_account_id` era informativo: hacer un trade nunca tocaba
+`accounts.current_balance` ni dejaba un movimiento — comprar una acción hacía "desaparecer" la
+plata sin que ninguna cuenta reflejara la salida, y vender la hacía "aparecer" de la nada. La
+otra cara del mismo bug: el patrimonio neto sumaba el efectivo pero no el valor de mercado de las
+posiciones, así que comprar un activo bajaba el patrimonio en vez de mantenerlo.
+
+Se agrega un 5º `kind` de transacción, `'investing'`, y `transactions.trade_id` (FK al trade que
+la generó) — el trade espeja su `net_amount` (signo invertido) como un movimiento real en la
+cuenta de liquidación, resuelto igual que un `adjustment` tanto en `recompute_account_balance`
+(servidor) como en `computeTransactionEffects` (cliente). `src/lib/investments/` nuevo agrupa el
+cálculo y el alta/resync/borrado/restauración de esa transacción — crear o editar un trade la
+crea o la resincroniza; borrar el instrumento la borra con el mismo undo simétrico que el resto
+de la app. Patrimonio neto (`useNetWorth`) suma ahora el valor de mercado de las posiciones
+(`computeInvestmentsValue`), no solo el efectivo.
+
+De paso, un segundo bug relacionado: vender más cantidad de la que se tiene hacía desaparecer la
+posición en `computePositions` en vez de rechazar la venta — el teclado de cantidad en el flujo
+de venta ahora valida en vivo contra lo efectivamente tenido.
+
+Un movimiento `investing` se trata como `transfer`/`adjustment` en toda la UI de transacciones:
+polaridad neutra, excluido de presupuestos/resumen de período/semanal/wrapped/proyección de
+metas (los agregados ya excluían cualquier `kind` no contemplado explícitamente), sin editar ni
+borrar desde la lista de movimientos — la edición redirige al editor del trade, que es la fuente
+real de verdad para ese movimiento.
+
+Nombres de clase de activo pasan a salir de `useAssetClassLabel()` (nuevo hook) en vez de texto
+suelto, para que salgan traducidos donde sea que se muestren.
+
+### Agregado — sincronización diaria de índice de inflación (ARS)
+
+`daily-inflation-sync` (Edge Function nueva) + migración de cron, alimentando `price_index` vía
+ArgentinaDatos/BCRA — mismo patrón que `daily-price-sync`, que de paso suma una rama para FCIs
+(`argentinadatos-fci`, nuevo proveedor de precios/búsqueda). Documentado en
+`docs/self-hosting.md`. Solo ARS por ahora — households en otra moneda base no reciben ajuste
+(decisión conocida, no un bug).
+
 ## [0.29.80] — 2026-08-08
 
 ### Agregado — `/transactions` abre acotado a "este mes" + `/transactions/history` para el resto

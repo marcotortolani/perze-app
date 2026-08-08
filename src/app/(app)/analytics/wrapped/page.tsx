@@ -31,7 +31,7 @@ export default function WrappedPage() {
   const { data: accounts } = useAccounts(household?.id);
   const { data: transactions } = useTransactions(household?.id);
   const { data: payees } = usePayees(household?.id);
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? [], household?.enabledModules.includes("investments"));
   const [frame, setFrame] = useState(0);
 
   const firstOccurredAt = (transactions ?? []).reduce<string | undefined>((min, tx) => (min === undefined || tx.occurredAt < min ? tx.occurredAt : min), undefined);

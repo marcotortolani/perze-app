@@ -26,7 +26,7 @@ export default function NetWorthAnalyticsPage() {
   const { data: household } = useCurrentHousehold();
   const { data: accounts } = useAccounts(household?.id);
   const { data: transactions } = useTransactions(household?.id);
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? []);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? [], household?.enabledModules.includes("investments"));
 
   if (!household || !accounts || !transactions) return <Skeleton height={200} style={{ marginTop: 16 }} />;
 

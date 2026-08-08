@@ -79,6 +79,28 @@ describe("computeTransactionEffects", () => {
       })
     ).toEqual([{ accountId: "a1", delta: -300n }]);
   });
+
+  it("investing aplica el delta tal cual — negativo en una compra, positivo en una venta", () => {
+    expect(
+      computeTransactionEffects({
+        kind: "investing",
+        amount: -50000n, // compra
+        accountId: "a1",
+        counterAccountId: null,
+        counterAmount: null,
+      })
+    ).toEqual([{ accountId: "a1", delta: -50000n }]);
+
+    expect(
+      computeTransactionEffects({
+        kind: "investing",
+        amount: 20000n, // venta
+        accountId: "a1",
+        counterAccountId: null,
+        counterAmount: null,
+      })
+    ).toEqual([{ accountId: "a1", delta: 20000n }]);
+  });
 });
 
 describe("reverseEffects", () => {

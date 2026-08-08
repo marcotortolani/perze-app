@@ -8,7 +8,9 @@ import { Button, Icon, Input, ListRow, Sheet, Skeleton, usePageHeader, ZMark } f
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidateInstruments } from "@/hooks/use-investments";
+import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
+import { assetClassLabelKey } from "@/lib/investments/asset-class-labels";
 import { useCurrencies } from "@/hooks/use-currencies";
 import type { InstrumentSearchResult } from "@/app/api/instruments/search/route";
 
@@ -29,6 +31,7 @@ const FIXED_INCOME_CLASS_NAMES = new Set(["Bonos soberanos", "ONs", "Letras", "P
 export default function NewInstrumentPage({ params }: { params: Promise<{ portfolioId: string }> }) {
   use(params);
   const t = useTranslations();
+  const assetClassLabel = useAssetClassLabel();
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
@@ -93,7 +96,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
         await instrumentsRepo.create({
           householdId: household.id,
           symbol: result.symbol,
-          name: result.symbol,
+          name: result.name ?? result.symbol,
           assetClassId: assetClass?.id ?? null,
           currencyCode: result.currencyCode,
           createdBy: userId,
@@ -161,11 +164,13 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
               ) : (
                 results.map((r) => {
                   const alreadyHave = existingInstruments.some((i) => i.symbol === r.symbol && i.priceProvider === r.priceProvider);
+                  const resultAssetClassLabel = t(`assetClassLabels.${assetClassLabelKey(r.assetClass) ?? "acciones"}`);
+                  const metaParts = [r.name && r.name !== r.symbol ? r.name : null, r.variantOf ? t("newInstrumentPage.variantOf", { symbol: r.variantOf }) : `${resultAssetClassLabel} · ${r.currencyCode}`].filter(Boolean);
                   return (
                     <ListRow
                       key={`${r.priceProvider}-${r.symbol}`}
                       label={r.symbol}
-                      meta={`${r.assetClass} · ${r.currencyCode}`}
+                      meta={metaParts.join(" · ")}
                       variant="navigation"
                       onClick={() => handlePickResult(r)}
                       right={alreadyHave ? <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.alreadyHave")}</span> : undefined}
@@ -212,7 +217,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
 
           <button type="button" onClick={() => setSheetOpen("assetClass")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newInstrumentPage.assetClass")}</div>
-            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{selectedAssetClass?.name ?? t("newInstrumentPage.chooseAssetClass")}</div>
+            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{assetClassLabel(selectedAssetClass) ?? t("newInstrumentPage.chooseAssetClass")}</div>
           </button>
 
           <button type="button" onClick={() => setSheetOpen("currency")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
@@ -242,7 +247,7 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
       <Sheet open={sheetOpen === "assetClass"} title={t("newInstrumentPage.assetClass")} onClose={() => setSheetOpen("none")}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {assetClasses.map((ac) => (
-            <ListRow key={ac.id} label={ac.name} onClick={() => { setAssetClassId(ac.id); setSheetOpen("none"); }} />
+            <ListRow key={ac.id} label={assetClassLabel(ac) ?? ac.name} onClick={() => { setAssetClassId(ac.id); setSheetOpen("none"); }} />
           ))}
         </div>
       </Sheet>

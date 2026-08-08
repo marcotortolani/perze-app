@@ -17,6 +17,26 @@ describe("computeNetWorth", () => {
     expect(result.included).toBe(2);
   });
 
+  it("suma investmentsValue como activo, ya en moneda base", () => {
+    const result = computeNetWorth({
+      accounts: [{ id: "a1", currentBalance: 100_000n, currencyCode: "UYU", includeInNetWorth: true }],
+      baseCurrency: "UYU",
+      convert: () => null,
+      investmentsValue: 50_000n,
+    });
+    expect(result.netWorth).toEqual(money(150_000n, "UYU"));
+    expect(result.assets).toEqual(money(150_000n, "UYU"));
+  });
+
+  it("sin investmentsValue (módulo apagado), no cambia nada — mismo comportamiento que antes", () => {
+    const result = computeNetWorth({
+      accounts: [{ id: "a1", currentBalance: 100_000n, currencyCode: "UYU", includeInNetWorth: true }],
+      baseCurrency: "UYU",
+      convert: () => null,
+    });
+    expect(result.netWorth).toEqual(money(100_000n, "UYU"));
+  });
+
   it("convierte cuentas en otra moneda a la moneda base", () => {
     const rate = rateFromInteger(1000); // 1 USD = 1000 UYU... base sería UYU
     const result = computeNetWorth({

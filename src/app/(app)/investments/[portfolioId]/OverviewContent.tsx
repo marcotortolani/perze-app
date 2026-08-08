@@ -10,6 +10,7 @@ import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
@@ -49,6 +50,7 @@ export interface OverviewContentProps {
  */
 export default function OverviewContent({ portfolioId, ownsHeader = true }: OverviewContentProps) {
   const t = useTranslations();
+  const assetClassLabel = useAssetClassLabel();
   const locale = useLocale() as Locale;
   const dateFormat = useDateFormatPreference();
   const router = useRouter();
@@ -250,7 +252,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
   }
 
   const slices = [...byAssetClass.entries()].map(([acId, value]) => ({
-    label: acId === "__other" ? t("investmentsPage.otherAssetClass") : (assetClassById.get(acId)?.name ?? acId),
+    label: acId === "__other" ? t("investmentsPage.otherAssetClass") : (assetClassLabel(assetClassById.get(acId)) ?? acId),
     value,
   }));
 
@@ -383,7 +385,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
               <PositionRow
                 key={position.instrumentId}
                 symbol={instrument.symbol}
-                assetClass={assetClass?.name ?? t("investmentsPage.otherAssetClass")}
+                assetClass={assetClassLabel(assetClass) ?? t("investmentsPage.otherAssetClass")}
                 quantity={formatNumber(
                   position.quantity,
                   decimalsForQuantity({

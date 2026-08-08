@@ -9,9 +9,12 @@ import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedContro
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useInvalidateTransactions } from "@/hooks/use-transactions";
+import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { tradesRepo } from "@/lib/repos/trades-repo";
+import { deleteSettlementTransaction, restoreSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
 import { priceSnapshotsRepo, type LatestPrice } from "@/lib/repos/price-snapshots-repo";
 import { formatAmount, formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { decimalsForQuantity } from "@/lib/money/decimals";
@@ -45,6 +48,7 @@ export interface InstrumentDetailContentProps {
  */
 export default function InstrumentDetailContent({ portfolioId, instrumentId }: InstrumentDetailContentProps) {
   const t = useTranslations();
+  const assetClassLabel = useAssetClassLabel();
   const locale = useLocale() as Locale;
   const dateFormat = useDateFormatPreference();
   const router = useRouter();
@@ -62,6 +66,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const invalidatePrices = useInvalidateLatestPrices(instrumentIds);
   const invalidateInstruments = useInvalidateInstruments(household?.id);
   const invalidateTrades = useInvalidateTrades(portfolioId);
+  const invalidateTransactions = useInvalidateTransactions(household?.id);
 
   const [editingPrice, setEditingPrice] = useState(false);
   const [manualPrice, setManualPrice] = useState("");
@@ -244,14 +249,18 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   // sería redundante.
   const handleDeleteTrade = async (tradeId: string) => {
     await tradesRepo.softDelete(tradeId);
+    const deletedTransactionId = await deleteSettlementTransaction(tradeId);
     invalidateTrades();
+    invalidateTransactions();
     toast(t("instrumentDetailPage.tradeDeleted"), {
       duration: 5000,
       action: {
         label: t("common.undo"),
         onClick: async () => {
           await tradesRepo.restore(tradeId);
+          if (deletedTransactionId) await restoreSettlementTransaction(deletedTransactionId);
           invalidateTrades();
+          invalidateTransactions();
         },
       },
     });
@@ -267,7 +276,9 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
     setDeletingPosition(true);
     try {
       await Promise.all(instrumentTrades.map((tr) => tradesRepo.softDelete(tr.id)));
+      await Promise.all(instrumentTrades.map((tr) => deleteSettlementTransaction(tr.id)));
       invalidateTrades();
+      invalidateTransactions();
       // Después de borrar todas las operaciones, la posición queda en 0 —
       // mismo criterio que "sacar de seguimiento" del header: solo se
       // limpia del catálogo si es propio del household, nunca uno global.
@@ -296,7 +307,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
             el símbolo tiene que estar acá para no perder la identidad del
             instrumento. */}
         <div className="t-label" style={{ color: "var(--text-primary)" }}>{instrument.symbol}</div>
-        <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 2 }}>{assetClass?.name ?? t("investmentsPage.otherAssetClass")}</div>
+        <div className="t-caption" style={{ color: "var(--text-muted)", marginTop: 2 }}>{assetClassLabel(assetClass) ?? t("investmentsPage.otherAssetClass")}</div>
         <div className="t-hero" style={{ margin: "8px 0 0" }}>
           {heldWithoutPrice ? (
             <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>

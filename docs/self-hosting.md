@@ -52,15 +52,29 @@ deploy de este repo Next.js.
 
    Data912 (mercado argentino) y CoinGecko (crypto) no necesitan key. Para acciones/ETFs de
    EE.UU. (Finnhub, NYSE/NASDAQ) hace falta una `FINNHUB_API_KEY` — ver el paso a paso completo
-   en la § "Activar Finnhub" más abajo.
+   en la § "Activar Finnhub" más abajo. `price_provider = 'argentinadatos-fci'` (FCI) tampoco
+   necesita key — mismo `daily-price-sync` de arriba, no hace falta un deploy aparte.
+
+   Y, si vas a usar el ajuste por inflación (H7 — "gasto en pesos de hoy"), la Edge Function que
+   carga `price_index` (sin esto queda vacía para siempre, igual criterio que `fx_rates`):
+
+   ```bash
+   supabase functions deploy daily-inflation-sync
+   ```
+
+   Fuente: ArgentinaDatos (BCRA), sin key, solo pesos argentinos (`currency_code = 'ARS'`) —
+   households en otra moneda base ven H7 sin ajuste hasta que haya otra fuente. La serie
+   histórica arranca en enero de 1992 (Plan de Convertibilidad) a propósito: componer la serie
+   completa desde 1943 desborda `numeric(24,12)` — la inflación acumulada de Argentina desde
+   entonces es ~3,85×10¹⁸ — ver el comentario de `MIN_PERIOD` en el código de la función.
 
 6. Los cron jobs de `20260801160000_cron_engines.sql` (materializar recurrentes, cerrar
    resúmenes de tarjeta vencidos, purgar `audit_log`, podar `push_subscriptions`) quedan
-   activos apenas se aplica la migración — no necesitan ningún paso más. Los dos que además
-   llaman a una Edge Function (`daily-fx-sync` y el disparador de notificaciones hacia
-   `send-push`) sí necesitan que registres dos secrets en **Vault** (Settings → Vault en el
-   dashboard, o `select vault.create_secret(...)` por SQL) — sin ellos, esos dos cron jobs
-   corren igual pero salen en silencio sin hacer nada, no fallan:
+   activos apenas se aplica la migración — no necesitan ningún paso más. Los que además llaman
+   a una Edge Function (`daily-fx-sync`, `daily-inflation-sync` de `20260807220000_inflation_sync_cron.sql`,
+   y el disparador de notificaciones hacia `send-push`) sí necesitan que registres dos secrets
+   en **Vault** (Settings → Vault en el dashboard, o `select vault.create_secret(...)` por SQL)
+   — sin ellos, esos cron jobs corren igual pero salen en silencio sin hacer nada, no fallan:
 
    | Nombre del secret            | Valor                                                    |
    | ----------------------------- | --------------------------------------------------------- |

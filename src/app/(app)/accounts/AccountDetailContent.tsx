@@ -274,21 +274,23 @@ export function AccountDetailContent({ id }: { id: string }) {
             return (
               <TransactionRow
                 key={tx.id}
-                icon={(category?.icon as IconName) ?? (reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
+                icon={(category?.icon as IconName) ?? (tx.kind === "investing" ? "trend" : reconciliation ? "circle-half-tilt" : cardPayment ? "credit-card" : tx.kind === "transfer" ? "refresh" : "cart")}
                 merchant={
                   category
                     ? categoryLabel(category)
-                    : reconciliation
-                      ? t("transactions.list.reconciliation")
-                      : cardPayment
-                        ? t("transactions.list.cardPayment")
-                        : tx.kind === "transfer"
-                          ? t("transactions.list.transfer")
-                          : t("transactions.list.movement")
+                    : tx.kind === "investing"
+                      ? (tx.note ?? t("transactions.list.investing"))
+                      : reconciliation
+                        ? t("transactions.list.reconciliation")
+                        : cardPayment
+                          ? t("transactions.list.cardPayment")
+                          : tx.kind === "transfer"
+                            ? t("transactions.list.transfer")
+                            : t("transactions.list.movement")
                 }
                 meta={formatNumericDate(locale, new Date(tx.occurredAt), dateFormat)}
                 value={displayValue}
-                polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" || tx.kind === "adjustment" ? "neutral" : "negative"}
+                polarity={tx.kind === "income" ? "positive" : tx.kind === "transfer" || tx.kind === "adjustment" || tx.kind === "investing" ? "neutral" : "negative"}
                 onClick={() => router.push(`/transactions?tx=${tx.id}`)}
               />
             );

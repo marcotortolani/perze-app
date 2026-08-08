@@ -51,7 +51,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
   const scope = useScopeStore((s) => s.scope);
   const scopedAccounts = useMemo(() => (accounts ?? []).filter((a) => accountMatchesScope(a.visibility, scope)), [accounts, scope]);
   const scopedAccountIds = useMemo(() => new Set(scopedAccounts.map((a) => a.id)), [scopedAccounts]);
-  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts);
+  const netWorth = useNetWorth(household?.id, household?.baseCurrency, scopedAccounts, household?.enabledModules.includes("investments"));
   const invalidateAccounts = useInvalidateAccounts(household?.id);
   const pendingFxCount = transactions.filter((t) => t.fxRate === null && scopedAccountIds.has(t.accountId)).length;
 

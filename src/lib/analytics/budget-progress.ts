@@ -15,7 +15,7 @@ export interface BudgetProgressInput {
 }
 
 export interface BudgetTransactionInput {
-  kind: "expense" | "income" | "transfer" | "adjustment";
+  kind: "expense" | "income" | "transfer" | "adjustment" | "investing";
   categoryId: string | null;
   amountBase: bigint | null;
   occurredAt: string;

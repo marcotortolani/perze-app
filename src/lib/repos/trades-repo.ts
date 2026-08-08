@@ -87,6 +87,14 @@ function fromRow(row: TradeRow): Trade {
 }
 
 export const tradesRepo = {
+  /** Detalle de transacción (`kind: 'investing'`) → editar el trade, no la transacción: hace falta `portfolioId` para armar esa URL y la fila de settlement no lo tiene. */
+  async get(id: string): Promise<Trade | null> {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("trades").select(SELECT_COLUMNS).eq("id", id).is("deleted_at", null).maybeSingle<TradeRow>();
+    if (error) throw error;
+    return data ? fromRow(data) : null;
+  },
+
   async listForPortfolio(portfolioId: string): Promise<Trade[]> {
     const supabase = createClient();
     const { data, error } = await supabase

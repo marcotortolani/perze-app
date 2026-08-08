@@ -535,6 +535,7 @@
    "cardPayment": "Card payment",
    "reconciliation": "Reconciliation",
    "movement": "Transaction",
+   "investing": "Investment",
    "deleted": "Transaction deleted",
    "undo": "Undo",
    "confirmDelete": "Delete transaction?",
@@ -586,6 +587,8 @@
    "split": "Split by category",
    "splitComingSoon": "Splitting a transaction isn't available yet.",
    "delete": "Delete",
+   "investingManagedElsewhere": "This trade is edited or deleted from Investments, not here.",
+   "viewInInvestments": "View in Investments",
    "fxSource": {
     "identity": "Same currency",
     "manual": "Manual override",

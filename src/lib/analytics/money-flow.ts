@@ -1,5 +1,5 @@
 export interface MoneyFlowTransaction {
-  kind: "income" | "expense" | "transfer" | "adjustment";
+  kind: "income" | "expense" | "transfer" | "adjustment" | "investing";
   accountId: string;
   categoryId: string | null;
   amountBase: bigint | null;

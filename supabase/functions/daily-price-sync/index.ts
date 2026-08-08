@@ -8,11 +8,12 @@
 //
 // Mismos proveedores que `src/lib/prices/providers/*.ts` del cliente,
 // portados a Deno: Data912 (mercado argentino — acciones, CEDEARs, bonos,
-// ONs, letras, sin key), CoinGecko (crypto) y Finnhub (acciones/ETFs de
-// EE.UU., NYSE/NASDAQ). Un instrumento sin `price_provider` (FCI, plazo
-// fijo, inmuebles, cualquier cosa sin cobertura) queda sin cotización
-// automática — el precio a mano sigue siendo el camino de primera clase
-// para esos, no un fallback.
+// ONs, letras, sin key), CoinGecko (crypto), Finnhub (acciones/ETFs de
+// EE.UU., NYSE/NASDAQ) y ArgentinaDatos/CAFCI (FCI, sin key). Un
+// instrumento sin `price_provider` (plazo fijo, inmuebles, un FCI que no
+// aparece en el catálogo de CAFCI, cualquier cosa sin cobertura) queda sin
+// cotización automática — el precio a mano sigue siendo el camino de
+// primera clase para esos, no un fallback.
 //
 // Deploy: `supabase functions deploy daily-price-sync`
 // Usa `SUPABASE_SERVICE_ROLE_KEY`, que Supabase ya inyecta a toda Edge
@@ -24,6 +25,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const DATA912_CATEGORIES = ["arg_stocks", "arg_cedears", "arg_bonds", "arg_corp", "arg_notes"];
+// `src/lib/prices/providers/argentinadatos.ts` — mismas 6 categorías, mismo criterio de "buscar hasta encontrar".
+const FCI_CATEGORIES = ["mercadoDinero", "rentaFija", "rentaVariable", "rentaMixta", "retornoTotal", "otros"];
 
 interface PriceSnapshotInsert {
   instrument_id: string;
@@ -67,6 +70,32 @@ async function fetchCoinGeckoPrices(instruments: Array<{ id: string; provider_sy
     const price = data[instrument.provider_symbol]?.usd;
     if (price === undefined) continue;
     rows.push({ instrument_id: instrument.id, as_of: today, provider: "coingecko", close: price, currency_code: instrument.currency_code });
+  }
+  return rows;
+}
+
+/**
+ * FCI, vía ArgentinaDatos/CAFCI: `fondo` (nombre completo) es el
+ * `provider_symbol` — no hay ticker. Cada categoría trae el catálogo
+ * entero del día (`/ultimo`), igual que Data912 con sus 5 categorías; una
+ * categoría caída no tira abajo el resto, se reintenta mañana.
+ */
+async function fetchArgentinaDatosFciPrices(instruments: Array<{ id: string; provider_symbol: string; currency_code: string }>): Promise<PriceSnapshotInsert[]> {
+  if (instruments.length === 0) return [];
+  const bySymbol = new Map(instruments.map((i) => [i.provider_symbol, i]));
+
+  const rows: PriceSnapshotInsert[] = [];
+  for (const category of FCI_CATEGORIES) {
+    if (bySymbol.size === 0) break;
+    const res = await fetch(`https://api.argentinadatos.com/v1/finanzas/fci/${category}/ultimo`);
+    if (!res.ok) continue;
+    const entries = (await res.json()) as Array<{ fondo: string; fecha: string; vcp: number }>;
+    for (const entry of entries) {
+      const instrument = bySymbol.get(entry.fondo);
+      if (!instrument) continue;
+      rows.push({ instrument_id: instrument.id, as_of: entry.fecha, provider: "argentinadatos-fci", close: entry.vcp, currency_code: instrument.currency_code });
+      bySymbol.delete(entry.fondo);
+    }
   }
   return rows;
 }
@@ -120,14 +149,15 @@ Deno.serve(async () => {
   const data912Instruments = all.filter((i) => i.price_provider === "data912");
   const coinGeckoInstruments = all.filter((i) => i.price_provider === "coingecko");
   const finnhubInstruments = all.filter((i) => i.price_provider === "finnhub");
+  const fciInstruments = all.filter((i) => i.price_provider === "argentinadatos-fci");
 
   // Finnhub no va en el mismo `Promise.all`: es secuencial por dentro
   // (rate limit, ver `fetchFinnhubPrices`) y correrlo en paralelo con los
-  // otros dos no lo acelera — Data912/CoinGecko ya terminan mucho antes.
-  const [data912Rows, coinGeckoRows] = await Promise.all([fetchData912Prices(data912Instruments), fetchCoinGeckoPrices(coinGeckoInstruments)]);
+  // otros no lo acelera — el resto ya termina mucho antes.
+  const [data912Rows, coinGeckoRows, fciRows] = await Promise.all([fetchData912Prices(data912Instruments), fetchCoinGeckoPrices(coinGeckoInstruments), fetchArgentinaDatosFciPrices(fciInstruments)]);
   const finnhubRows = await fetchFinnhubPrices(finnhubInstruments);
 
-  const rows = [...data912Rows, ...coinGeckoRows, ...finnhubRows];
+  const rows = [...data912Rows, ...coinGeckoRows, ...finnhubRows, ...fciRows];
   if (rows.length === 0) {
     return new Response(JSON.stringify({ upserted: 0 }), { headers: { "Content-Type": "application/json" } });
   }

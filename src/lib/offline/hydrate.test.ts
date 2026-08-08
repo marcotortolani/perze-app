@@ -91,6 +91,7 @@ const RAW_TX: RawTransaction = {
   installment_group_id: null,
   installment_number: null,
   installment_total: null,
+  trade_id: null,
   created_at: "2026-07-01T12:00:00Z",
   updated_at: "2026-07-01T12:00:00Z",
   deleted_at: null,

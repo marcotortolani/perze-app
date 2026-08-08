@@ -30,6 +30,10 @@ export function computeTransactionEffects(tx: TransactionForEffects): BalanceEff
     case "adjustment":
       // `amount` ya trae el signo del ajuste (doc § 2.5).
       return [{ accountId: tx.accountId, delta: tx.amount }];
+    case "investing":
+      // Mismo criterio que `adjustment`: el signo ya viaja en `amount`
+      // (negativo compra, positivo venta) — ver `recompute_account_balance`.
+      return [{ accountId: tx.accountId, delta: tx.amount }];
     case "transfer": {
       if (!tx.counterAccountId) {
         throw new Error("Una transferencia necesita counterAccountId");

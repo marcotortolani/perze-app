@@ -319,6 +319,7 @@ describe("drainOutbox — BASE-05", () => {
       installmentGroupId: null,
       installmentNumber: null,
       installmentTotal: null,
+      tradeId: null,
       createdAt: "2026-07-20T12:00:00.000Z",
       updatedAt: "2026-07-20T12:00:00.000Z",
       deletedAt: null,

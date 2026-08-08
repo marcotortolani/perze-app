@@ -1,7 +1,7 @@
 /** H11 — resumen semanal: tres datos y una comparación, todo excluyendo `needs_fx`. */
 
 export interface WeeklyTransactionInput {
-  kind: "expense" | "income" | "transfer" | "adjustment";
+  kind: "expense" | "income" | "transfer" | "adjustment" | "investing";
   occurredAt: string;
   amountBase: bigint | null;
   payeeId: string | null;

@@ -17,6 +17,7 @@ import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAfterTransactionWrite, useTransaction } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useRecurringRule } from "@/hooks/use-recurring-rules";
+import { useTrade } from "@/hooks/use-investments";
 import { isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolvePendingFx } from "@/features/movements/resolve-pending-fx";
@@ -64,6 +65,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
   const userId = useEffectiveUserId();
   const { data: transaction, isLoading } = useTransaction(id);
   const { data: recurringRule } = useRecurringRule(transaction?.recurringId ?? undefined);
+  const { data: linkedTrade } = useTrade(transaction?.tradeId);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const deleteTransaction = useDeleteTransactionWithUndo(household?.id);
   const decimalSeparator = decimalSeparatorForLocale(locale);
@@ -103,7 +105,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
   const category = transaction.categoryId ? categories.find((c) => c.id === transaction.categoryId) : undefined;
   const payee = transaction.payeeId ? payees.find((p) => p.id === transaction.payeeId) : undefined;
   const tagNames = tagIds.map((tagId) => tags.find((tag) => tag.id === tagId)?.name).filter((name): name is string => !!name);
-  const polarity = transaction.kind === "income" ? "positive" : transaction.kind === "transfer" || transaction.kind === "adjustment" ? "neutral" : "negative";
+  const polarity = transaction.kind === "income" ? "positive" : transaction.kind === "transfer" || transaction.kind === "adjustment" || transaction.kind === "investing" ? "neutral" : "negative";
   const signedAmount = transaction.kind === "expense" ? -transaction.amount : transaction.amount;
 
   const handleDelete = async () => {
@@ -209,7 +211,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
             <Amount value={money(transaction.kind === "expense" ? -transaction.amountBase : transaction.amountBase, household.baseCurrency)} size="body" polarity={polarity} tabular />
           </div>
         ) : null}
-        {transaction.kind === "transfer" || transaction.kind === "adjustment" ? (
+        {transaction.kind === "transfer" || transaction.kind === "adjustment" || transaction.kind === "investing" ? (
           <div style={{ marginTop: 8 }}>
             <StatusBadge status="neutral">{t("transactions.detail.notIncludedInTotal")}</StatusBadge>
           </div>
@@ -218,17 +220,19 @@ export function TransactionDetailContent({ id }: { id: string }) {
 
       <div>
         <ListRow
-          icon={(category?.icon as IconName) ?? (transaction.kind === "adjustment" ? "target" : cardPayment ? "credit-card" : "cart")}
+          icon={(category?.icon as IconName) ?? (transaction.kind === "investing" ? "trend" : transaction.kind === "adjustment" ? "target" : cardPayment ? "credit-card" : "cart")}
           label={
             category
               ? categoryLabel(category)
-              : transaction.kind === "adjustment"
-                ? t("transactions.list.reconciliation")
-                : cardPayment
-                  ? t("transactions.list.cardPayment")
-                  : transaction.kind === "transfer"
-                    ? t("transactions.list.transfer")
-                    : t("transactions.detail.noCategory")
+              : transaction.kind === "investing"
+                ? (transaction.note ?? t("transactions.list.investing"))
+                : transaction.kind === "adjustment"
+                  ? t("transactions.list.reconciliation")
+                  : cardPayment
+                    ? t("transactions.list.cardPayment")
+                    : transaction.kind === "transfer"
+                      ? t("transactions.list.transfer")
+                      : t("transactions.detail.noCategory")
           }
           meta={t("transactions.detail.category")}
           variant="value"
@@ -328,21 +332,48 @@ export function TransactionDetailContent({ id }: { id: string }) {
             sentido para un ajuste ni para una transferencia — no hay con
             quién repartir "el ajuste de $500" o "la transferencia entre
             mis propias cuentas". */}
-        {transaction.kind !== "adjustment" ? (
-          <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
-        ) : null}
-        <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
-        {/* "Convertir en recurrente" no tiene sentido para un movimiento que
-            YA viene de un recurrente — el `ListRow` de arriba ya lleva a esa
-            regla. Ofrecerla igual invitaba a crear una segunda regla
-            duplicada para el mismo gasto. */}
-        {transaction.recurringId === null ? (
-          <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
-        ) : null}
-        {transaction.kind !== "transfer" && transaction.kind !== "adjustment" ? (
-          <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
-        ) : null}
-        <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
+        {/* `investing` (settlement de un trade): el editor genérico tampoco
+            sabe representarla (mismo motivo que `adjustment` arriba —
+            categoría y monto/moneda no son cosas que se editen acá, se
+            derivan del trade), así que "Editar" entra directo a
+            `trades/[tradeId]/edit`, la única fuente de verdad. Sin
+            `linkedTrade` (todavía cargando, o el trade se borró) no hay
+            adónde mandar — la fila directamente no se ofrece. */}
+        {/* `investing` (settlement de un trade) no ofrece Editar, Duplicar,
+            Convertir en recurrente, Dividir ni Borrar en esta pantalla —
+            ninguna de las cinco sabe qué hacer con una fila que existe
+            porque un trade la generó (`tradeId`), no porque alguien la
+            haya tipeado: editar el monto/la fecha/la cuenta acá la
+            desincroniza del trade, y borrarla deja el trade sin
+            settlement, huérfano. Las dos acciones reales (editar/borrar)
+            viven en Inversiones, sobre el trade — acá solo el link para
+            llegar ahí. */}
+        {transaction.kind === "investing" ? (
+          <>
+            <p className="t-caption" style={{ color: "var(--text-muted)", margin: "4px 0" }}>{t("transactions.detail.investingManagedElsewhere")}</p>
+            {linkedTrade ? (
+              <ListRow icon="trend" label={t("transactions.detail.viewInInvestments")} onClick={() => router.push(`/investments/${linkedTrade.portfolioId}?position=${linkedTrade.instrumentId}`)} />
+            ) : null}
+          </>
+        ) : (
+          <>
+            {transaction.kind !== "adjustment" ? (
+              <ListRow icon="edit" label={t("transactions.detail.edit")} onClick={() => router.push(`/transactions/${transaction.id}/edit`)} />
+            ) : null}
+            <ListRow icon="refresh" label={t("transactions.detail.duplicate")} onClick={handleDuplicate} />
+            {/* "Convertir en recurrente" no tiene sentido para un movimiento
+                que YA viene de un recurrente — el `ListRow` de arriba ya
+                lleva a esa regla. Ofrecerla igual invitaba a crear una
+                segunda regla duplicada para el mismo gasto. */}
+            {transaction.recurringId === null ? (
+              <ListRow icon="clock" label={t("transactions.detail.recurring")} onClick={() => router.push(`/recurring/new?fromTransaction=${transaction.id}`)} />
+            ) : null}
+            {transaction.kind !== "transfer" && transaction.kind !== "adjustment" ? (
+              <ListRow icon="chart" label={t("transactions.detail.split")} onClick={() => router.push(`/transactions/${transaction.id}/split`)} />
+            ) : null}
+            <ListRow icon="trash" label={t("transactions.detail.delete")} destructive onClick={handleDelete} />
+          </>
+        )}
       </div>
 
       <Sheet

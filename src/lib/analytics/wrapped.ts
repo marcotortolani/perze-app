@@ -6,7 +6,7 @@
  */
 
 export interface WrappedTransactionInput {
-  kind: "expense" | "income" | "transfer" | "adjustment";
+  kind: "expense" | "income" | "transfer" | "adjustment" | "investing";
   occurredAt: string;
   amountBase: bigint | null;
   payeeId: string | null;

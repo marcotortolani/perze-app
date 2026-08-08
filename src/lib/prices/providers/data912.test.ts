@@ -45,16 +45,20 @@ describe("data912 provider", () => {
 });
 
 describe("searchData912Instruments — D52 (moneda por sufijo D/C, no por texto fijo)", () => {
-  it("YPFD (ticker real, sin sufijo) es ARS; YPFDD (YPFD + sufijo D) es USD", async () => {
+  it("YPFD (ticker real, sin sufijo) es ARS; YPFDD (YPFD + sufijo D) es USD y declara variantOf", async () => {
     const results = await searchData912Instruments("YPF", fakeFetchYpf());
     const ypfd = results.find((r) => r.symbol === "YPFD");
     const ypfdd = results.find((r) => r.symbol === "YPFDD");
     expect(ypfd?.currencyCode).toBe("ARS");
+    expect(ypfd?.variantOf).toBeNull();
     expect(ypfdd?.currencyCode).toBe("USD");
+    expect(ypfdd?.variantOf).toBe("YPFD");
   });
 
   it("un símbolo que termina en D pero sin base en la misma categoría queda ARS (no dispara falso positivo)", async () => {
     const results = await searchData912Instruments("ALUA", fakeFetch());
-    expect(results.find((r) => r.symbol === "ALUA")?.currencyCode).toBe("ARS");
+    const alua = results.find((r) => r.symbol === "ALUA");
+    expect(alua?.currencyCode).toBe("ARS");
+    expect(alua?.variantOf).toBeNull();
   });
 });

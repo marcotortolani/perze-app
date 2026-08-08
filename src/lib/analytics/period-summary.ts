@@ -6,7 +6,7 @@
  */
 
 export interface PeriodTransactionInput {
-  kind: "expense" | "income" | "transfer" | "adjustment";
+  kind: "expense" | "income" | "transfer" | "adjustment" | "investing";
   amountBase: bigint | null;
   occurredAt: string;
 }

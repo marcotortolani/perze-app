@@ -23,8 +23,8 @@ async function enqueueTransaction(op: "insert" | "update" | "delete", row: Trans
 
 export type NewTransactionInput = Omit<
   TransactionRow,
-  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev" | "syncState" | "syncError" | "recurringOccurrenceDate"
-> & { clientRev?: number; recurringOccurrenceDate?: string | null };
+  "id" | "createdAt" | "updatedAt" | "deletedAt" | "clientRev" | "syncState" | "syncError" | "recurringOccurrenceDate" | "tradeId"
+> & { clientRev?: number; recurringOccurrenceDate?: string | null; tradeId?: string | null };
 
 export interface TransactionFilters {
   accountId?: string;
@@ -95,6 +95,12 @@ export const transactionsRepo = {
     return rows.sort((a, b) => (a.occurredAt < b.occurredAt ? -1 : 1));
   },
 
+  /** Bloque I — la transacción de settlement que un trade generó (si alguna), para mantenerla en sync al editar/borrar el trade. Sin índice Dexie propio: son pocas filas por household, un scan filtrado alcanza. */
+  async findByTradeId(tradeId: string): Promise<TransactionRow | null> {
+    const row = await getDb().transactions.filter((t) => t.tradeId === tradeId && t.deletedAt === null).first();
+    return row ?? null;
+  },
+
   /**
    * G1 — qué períodos de cada regla ya tienen movimiento cargado, para que
    * "Pending to charge" no siga ofreciendo cobrar algo que el usuario ya
@@ -115,6 +121,7 @@ export const transactionsRepo = {
       ...input,
       id: newId(),
       recurringOccurrenceDate: input.recurringOccurrenceDate ?? null,
+      tradeId: input.tradeId ?? null,
       clientRev: input.clientRev ?? 1,
       createdAt: now,
       updatedAt: now,

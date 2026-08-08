@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.81 — 8 de agosto de 2026
+
+### Arreglado
+
+- Comprar o vender una inversión ahora sí descuenta o acredita la cuenta que usaste para
+  pagar/cobrar, y el patrimonio neto suma el valor de tus posiciones — antes la plata quedaba sin
+  reflejarse en ningún lado.
+- Vender más cantidad de la que tenés de un instrumento ya no hace que la posición desaparezca:
+  el teclado te avisa si te pasás.
+
 ## 0.29.80 — 8 de agosto de 2026
 
 ### Nuevo

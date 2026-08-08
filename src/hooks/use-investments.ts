@@ -45,6 +45,15 @@ export function useTrades(portfolioId: string | undefined) {
   });
 }
 
+/** Un trade suelto por id — para la transacción de settlement (`kind: 'investing'`), que solo conoce `tradeId` y necesita `portfolioId` para armar el link de "editar" hacia `trades/[tradeId]/edit`. */
+export function useTrade(tradeId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["trade", tradeId ?? ""],
+    queryFn: () => tradesRepo.get(tradeId!),
+    enabled: !!tradeId,
+  });
+}
+
 export function useInvalidateTrades(portfolioId: string | undefined) {
   const queryClient = useQueryClient();
   return () => portfolioId && queryClient.invalidateQueries({ queryKey: ["trades", portfolioId], refetchType: "all" });

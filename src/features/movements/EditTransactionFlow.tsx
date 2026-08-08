@@ -88,7 +88,12 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
 
   useEffect(() => {
     reset();
-    setField("kind", transaction.kind === "adjustment" ? "expense" : transaction.kind);
+    // `investing` (settlement de un trade) no es un `CaptureKind` editable a
+    // mano — igual que `adjustment`, cae a "expense" en el picker. Editar el
+    // MONTO de una fila `investing` desde acá la desincroniza de su trade;
+    // bloquear ese caso puntual queda pendiente (`TransactionDetailContent`
+    // debería no ofrecer "editar" cuando `tradeId !== null`).
+    setField("kind", transaction.kind === "adjustment" || transaction.kind === "investing" ? "expense" : transaction.kind);
     // `amountToExpression`, no `formatAmount`: el buffer del teclado tiene
     // que ser la expresión CRUDA que se tipearía a mano (sin separador de
     // miles, sin ceros de relleno) — `formatAmount` es para MOSTRAR, no
