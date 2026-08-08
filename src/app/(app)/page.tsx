@@ -193,6 +193,19 @@ export default function HomePage() {
   const expenseThisPeriodUsd = useNetWorthInCurrency(household?.id, expenseThisPeriod, wantsUsd ? "USD" : null);
   const incomeThisPeriodUsd = useNetWorthInCurrency(household?.id, incomeThisPeriod, wantsUsd ? "USD" : null);
 
+  // Saldo del período: superávit o déficit entre lo que entró y lo que
+  // salió esta vez — no una tendencia vs. otro período, así que no lleva
+  // "vs. semana pasada" como el patrimonio neto/investing de abajo.
+  // Convierte a USD solo si las DOS conversiones ya llegaron: mezclar una
+  // en USD con la otra en base rompe `subtract` (CurrencyMismatchError)
+  // antes de que el usuario vea nada.
+  const periodSurplusReady = wantsUsd && expenseThisPeriodUsd.data && incomeThisPeriodUsd.data;
+  const periodSurplus = subtract(
+    periodSurplusReady ? incomeThisPeriodUsd.data! : incomeThisPeriod,
+    periodSurplusReady ? expenseThisPeriodUsd.data! : expenseThisPeriod,
+  );
+  const periodSurplusCmp = compare(periodSurplus, zero(periodSurplus.currency));
+
   const budgetAlerts = useBudgetAlerts();
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const privacy = usePrivacyStore((s) => s.privacyMode);
@@ -498,6 +511,7 @@ export default function HomePage() {
           izquierda, junto al grid de cuentas) porque ahí competía por ancho
           con el grid en vez de tener su propia fila cómoda. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <section style={{ display: "flex", gap: 24 }}>
         <button
           type="button"
@@ -528,6 +542,14 @@ export default function HomePage() {
           />
         </button>
       </section>
+      {periodSurplusCmp !== 0 ? (
+        <PrivacyBlur active={privacy}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: periodSurplusCmp > 0 ? "var(--money-positive)" : "var(--money-negative-emphasis)" }}>
+            {periodSurplusCmp > 0 ? "↑" : "↓"} {formatAmountCompact(abs(periodSurplus), { showSign: false })}
+          </span>
+        </PrivacyBlur>
+      ) : null}
+      </div>
 
       {!insightDismissed ? (
         budgetAlerts.length > 0 ? (

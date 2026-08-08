@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.84 — 8 de agosto de 2026
+
+### Nuevo
+
+- Debajo de lo gastado e ingresado en el período, ahora ves de un vistazo si vas positivo o
+  negativo: una flecha con el monto de la diferencia, sin tener que restar a ojo.
+
 ## 0.29.83 — 8 de agosto de 2026
 
 ### Nuevo

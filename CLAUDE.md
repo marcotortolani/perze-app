@@ -112,6 +112,8 @@ La cadena de resolución tiene exactamente cuatro pasos y no hay un quinto: over
 
 **Polaridad del dinero: nunca verde/rojo** — falla en daltonismo (ΔE 6.5). Ingresos en aqua, gastos en **texto neutro primario**. El naranja solo para destacar un gasto puntual o dentro de un gráfico. Siempre con codificación secundaria: signo, flecha y posición. El color nunca porta el significado solo.
 
+**Excepción cerrada: el home es la única pantalla con verde/rojo, y solo en sus indicadores de variación.** Patrimonio neto, investing y el saldo gastado/ingresado del período usan `--money-positive` (verde) y `--money-negative-emphasis` (rojo) con flecha arriba/abajo — nunca ninguna sin la otra. Es la excepción a la regla de arriba porque ahí la lectura tiene que ser instantánea, sin pararse a interpretar un signo: es la única pantalla que el usuario mira para saber "¿cómo vengo" en un vistazo, antes de decidir si entra a ver el detalle. **Fuera del home, la regla de arriba manda sin excepción**: lo positivo se puede marcar en verde, pero lo negativo queda siempre en texto neutro — nunca rojo. No repliques el patrón completo (verde+rojo) en ninguna otra pantalla sin volver a abrir esta discusión.
+
 **El logotipo no aparece dentro de la app.** Vive en el splash, el README y "acerca de". Adentro, el único violeta lo ocupa la acción primaria.
 
 **Sin `<select>` nativo. Sin `<input type="number">` para montos.** Ningún target menor a 44×44. El botón primario mide 56–64 px, ancho completo, en los últimos 200 px de la pantalla.

@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.84] — 2026-08-08
+
+### Agregado — saldo del período en el resumen gastado/ingresado del home
+
+Debajo de "Spent this period"/"Income this period" ahora se muestra el superávit o déficit del
+período (`income − expense`, ambos ya en moneda base): flecha arriba + verde si sobró, flecha
+abajo + rojo si se pasó, nada si son exactamente iguales. No es una tendencia vs. otro período —
+por eso no lleva "vs. last week" como el patrimonio neto/investing de al lado — sino la diferencia
+entre las dos cifras que ya están en pantalla, para no obligar a restar a ojo. Convierte a USD
+solo cuando las dos conversiones (`expenseThisPeriodUsd`/`incomeThisPeriodUsd`) ya resolvieron;
+si una quedó pendiente, calcula en moneda base para no mezclar monedas en un `subtract` (tiraría
+`CurrencyMismatchError`).
+
+Se evaluaron y descartaron tres alternativas sin verde/rojo (delta en texto, micro-barra
+comparativa, `StatusBadge`) a favor de reusar el lenguaje visual que el usuario ya reconoce de
+Patrimonio neto/Investing. Como esto contradice la regla de polaridad ("nunca verde/rojo"),
+`CLAUDE.md` § Interfaz suma una excepción cerrada y acotada al home: fuera de esa pantalla, la
+regla original sigue sin excepciones (positivo puede ir en verde, negativo siempre queda neutro,
+nunca rojo).
+
 ## [0.29.83] — 2026-08-08
 
 ### Agregado — sección "Investing" en el dashboard del home
