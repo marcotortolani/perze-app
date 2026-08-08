@@ -6,6 +6,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.86] — 2026-08-08
+
+### Arreglado — badge de filtros activos en movimientos contaba el default
+
+`countActiveFilters` (`src/features/movements/MovementsFiltersSheet.tsx`) comparaba el preset de
+fecha contra `"all"`, así que el default `"this-month"` (fijado en `defaultMovementsFilters()`)
+ya venía contando como filtro activo apenas se abría la pantalla — el badge verde se prendía sin
+que el usuario tocara nada. Ahora compara contra `"this-month"`: el badge queda apagado en el
+estado por defecto y se enciende recién al elegir cualquier otro preset, incluido "Todo".
+
+De paso, reordena `DATE_PRESETS` en el sheet: "Este mes" pasa a ser la primera opción (coincide
+con el default) y "Todo" queda última.
+
 ## [0.29.85] — 2026-08-08
 
 ### Cambiado — rediseño de `/start` (landing pública)

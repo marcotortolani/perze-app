@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.86 — 8 de agosto de 2026
+
+### Arreglado
+
+- El indicador de filtros en Movimientos ya no se prendía solo por tener "Este mes" seleccionado
+  (que es el filtro por defecto). Ahora solo se prende cuando elegís otro rango de fechas.
+
 ## 0.29.85 — 8 de agosto de 2026
 
 ### Mejorado

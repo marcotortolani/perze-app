@@ -31,10 +31,14 @@ export function defaultMovementsFilters(): MovementsFilters {
  * el mes o el día elegido en la grilla, que se escribe en los params
  * `from`/`to` y le gana al preset (ver `calendar-scope.ts`). Contar el preset
  * ahí sería contar un filtro que no está haciendo nada.
+ *
+ * El preset cuenta como activo cuando no es "this-month", que es el default
+ * de `defaultMovementsFilters()` — no "all". Contar "all" como inactivo
+ * mostraría el badge encendido apenas se abre la pantalla.
  */
 export function countActiveFilters(f: MovementsFilters, dateOwnedByCalendar = false): number {
   let n = 0;
-  if (!dateOwnedByCalendar && f.datePreset !== "all") n += 1;
+  if (!dateOwnedByCalendar && f.datePreset !== "this-month") n += 1;
   if (f.kind !== "all") n += 1;
   if (f.accountIds.length > 0) n += 1;
   if (f.categoryIds.length > 0) n += 1;
@@ -80,11 +84,11 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
   const categoryLabel = useCategoryLabel();
 
   const DATE_PRESETS: Array<{ id: DatePreset; label: string }> = [
-    { id: "all", label: t("movements.filters.date.all") },
     { id: "this-month", label: t("movements.filters.date.thisMonth") },
     { id: "last-month", label: t("movements.filters.date.lastMonth") },
     { id: "last-7", label: t("movements.filters.date.last7") },
     { id: "last-30", label: t("movements.filters.date.last30") },
+    { id: "all", label: t("movements.filters.date.all") },
   ];
 
   const KIND_PRESETS: Array<{ id: KindFilter; label: string }> = [
