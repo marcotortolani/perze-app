@@ -40,6 +40,19 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.6 — 8 de agosto de 2026
+
+### Mejorado
+
+- Cuando hay una versión nueva, el aviso para actualizar ahora aparece al volver a la app, sin que
+  tengas que cerrarla del todo y abrirla de nuevo.
+
+### Arreglado
+
+- Si la app tenía un problema para cargar una parte de sí misma justo cuando estabas sin conexión,
+  antes se limpiaba sola y te dejaba sin poder cargar movimientos hasta volver a tener internet.
+  Ahora sin conexión no toca nada y podés seguir cargando gastos.
+
 ## 0.30.5 — 8 de agosto de 2026
 
 ### Nuevo

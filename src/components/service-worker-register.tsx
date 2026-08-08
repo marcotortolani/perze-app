@@ -4,6 +4,17 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { env } from "@/env";
+import { shouldCheckForUpdate } from "@/lib/pwa/update-check";
+
+/**
+ * Cuándo fue el último chequeo de actualización, para el piso de tiempo de
+ * `shouldCheckForUpdate`. Variable de módulo y no `localStorage` a
+ * propósito: solo tiene que sobrevivir mientras viva el documento, y una
+ * recarga —que es lo que la resetea— ya dispara el chequeo del navegador
+ * por su cuenta. Una key persistida sería estado nuevo que limpiar en el
+ * logout y una fuente más de desincronización, a cambio de nada.
+ */
+let lastUpdateCheckAt: number | null = null;
 
 /**
  * Serwist no inyecta el registro solo (a diferencia de `next-pwa`) — sin
@@ -37,6 +48,20 @@ function looksLikeChunkError(message: string): boolean {
 }
 
 async function recoverFromStaleCache(trigger: string): Promise<void> {
+  // **Nunca sin conexión.** Esta función borra TODO el Cache Storage y
+  // recarga. Con red eso es una recuperación: se vuelve a bajar lo que
+  // haga falta. Sin red es la destrucción de la única copia que hay —
+  // adiós precache, adiós `/add`, adiós poder cargar un gasto— y encima el
+  // reload cae en `/offline`, que es exactamente el estado que la app
+  // promete que nunca va a pasar (`CLAUDE.md`: cargar un movimiento no
+  // puede depender de internet). Y offline es JUSTO cuando más probable es
+  // que un import dinámico falle, así que sin esta guarda el disparador y
+  // el peor momento coinciden.
+  if (!navigator.onLine) {
+    console.warn("[perze/sw] chunk que no carga sin conexión: NO se toca el cache. Borrarlo ahora dejaría la app sin nada offline. Disparado por:", trigger);
+    return;
+  }
+
   const last = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) ?? 0);
   if (Date.now() - last < CHUNK_RECOVERY_WINDOW_MS) return;
   window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
@@ -126,10 +151,24 @@ export function ServiceWorkerRegister() {
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
+    let currentRegistration: ServiceWorkerRegistration | null = null;
+
     const offerUpdate = (registration: ServiceWorkerRegistration) => {
       const waiting = registration.waiting;
       if (!waiting) return;
+      // Solo con red. Aceptar el toast dispara `SKIP_WAITING` →
+      // `controllerchange` → `reload()`, y una recarga sin conexión depende
+      // de que `/` esté en el cache de runtime (lo pone
+      // `pages-cache-warmup.tsx`, que puede no haber corrido todavía). Si
+      // no está, tocar "actualizar" te manda a `/offline`. Sin red no hay
+      // ningún apuro por actualizar: se vuelve a ofrecer al reconectar,
+      // desde el listener de `online` de más abajo.
+      if (!navigator.onLine) return;
       toast(t("pwa.updateAvailable"), {
+        // Mismo `id` siempre: `offerUpdate` se llama desde tres lugares
+        // (el registro, `updatefound` y al reconectar) y sin esto se
+        // apilarían tres toasts idénticos e infinitos.
+        id: "sw-update",
         duration: Infinity,
         action: {
           label: t("pwa.updateNow"),
@@ -137,6 +176,39 @@ export function ServiceWorkerRegister() {
         },
       });
     };
+
+    /**
+     * El navegador solo vuelve a pedir el script del service worker en una
+     * navegación real, y PERZE es una SPA: moverse entre pestañas o abrir un
+     * movimiento son navegaciones blandas del router, que no cuentan. Con la
+     * PWA viviendo en segundo plano, eso significaba que una versión nueva
+     * podía tardar días en aparecer — la única forma confiable era cerrar la
+     * app del todo y volver a abrirla.
+     *
+     * Volver a primer plano sí es un buen momento para preguntar, con el
+     * piso de `UPDATE_CHECK_MIN_INTERVAL_MS` para que cambiar de app diez
+     * veces seguidas no dispare diez requests.
+     */
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!shouldCheckForUpdate({ now: Date.now(), lastCheckAt: lastUpdateCheckAt, online: navigator.onLine })) return;
+      lastUpdateCheckAt = Date.now();
+      void navigator.serviceWorker
+        .getRegistration()
+        .then((registration) => registration?.update())
+        .catch(() => {
+          // Un chequeo que falla no es un problema: se reintenta al
+          // siguiente foco. El registro en sí ya se loguea aparte.
+        });
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    // Al recuperar la conexión: si quedó un service worker esperando y el
+    // toast no se ofreció por estar offline, es el momento de ofrecerlo.
+    const onOnline = () => {
+      if (currentRegistration) offerUpdate(currentRegistration);
+    };
+    window.addEventListener("online", onOnline);
 
     // Registro viejo en `/serwist/sw.js`: en producción nunca llegó a
     // existir (la ruta devolvía 500), pero sí puede haber quedado uno en un
@@ -151,6 +223,11 @@ export function ServiceWorkerRegister() {
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
+        currentRegistration = registration;
+        // El propio `register()` ya le preguntó al servidor por el script,
+        // así que este momento cuenta como chequeo: sin esto, el primer
+        // `visibilitychange` dispararía otro pedido al pedo.
+        lastUpdateCheckAt = Date.now();
         offerUpdate(registration);
         registration.addEventListener("updatefound", () => {
           const installing = registration.installing;
@@ -178,6 +255,8 @@ export function ServiceWorkerRegister() {
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onRejection);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("online", onOnline);
     };
   }, [t]);
 

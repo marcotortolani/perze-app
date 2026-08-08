@@ -191,11 +191,16 @@ serwist.addEventListeners();
  * dispara el cliente **cuando ya hay sesión** (`pages-cache-warmup.tsx`),
  * así que lo que se guarda es el home de verdad.
  *
- * Se hace acá adentro y no en el cliente por dos razones: el nombre real
- * del cache lleva el prefijo y el sufijo de Serwist (`serwist-pages-<scope>`),
- * que desde la página habría que adivinar; y reusando la misma instancia
- * de estrategia se hereda `DISCARD_REDIRECTS` — si la respuesta viniera
- * redirigida igual, no se guarda, sin repetir esa regla en dos lados.
+ * Se hace acá adentro y no en el cliente para reusar la misma instancia de
+ * estrategia: así hereda `DISCARD_REDIRECTS` sin repetir esa regla en dos
+ * lados — si la respuesta viniera redirigida igual, no se guarda.
+ *
+ * (Desde el cliente también se podría: `cacheName: "pages"` se usa TAL CUAL,
+ * sin prefijo ni sufijo, porque `cacheNames.getRuntimeName()` devuelve el
+ * nombre provisto y solo compone `serwist-runtime-<scope>` cuando no se le
+ * da ninguno. Es lo que aprovecha `purgeNavigationCaches()` en
+ * `src/lib/pwa/navigation-caches.ts`. El precache sí lleva prefijo, porque
+ * ese nombre no lo elige nadie.)
  */
 async function warmHomeCache(event: ExtendableMessageEvent): Promise<void> {
   const request = new Request("/", { credentials: "same-origin", headers: { Accept: "text/html" } });

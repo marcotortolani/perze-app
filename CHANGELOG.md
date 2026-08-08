@@ -6,6 +6,76 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.6] — 2026-08-08
+
+### Arreglado — la recuperación por chunk roto podía borrar la capacidad offline entera
+
+`recoverFromStaleCache()` (`service-worker-register.tsx`, AC-16) borra TODO el Cache Storage y
+recarga, y se disparaba ante cualquier error de carga de chunk sin mirar si había conexión. Con red
+eso es una recuperación: se vuelve a bajar lo que falte. **Sin red es la destrucción de la única
+copia que hay** — se va el precache, se va `/add`, y el reload aterriza en `/offline`. Es decir: la
+app se autoinflige exactamente el estado que `CLAUDE.md` dice que nunca puede pasar, cargar un
+movimiento no puede depender de internet.
+
+Y el disparador coincide con el peor momento: `Failed to fetch dynamically imported module` es
+justamente el error típico de estar sin conexión. Ahora, si `navigator.onLine` es falso, no se toca
+nada y se registra el motivo en consola.
+
+### Nuevo — la app avisa de una versión nueva al volver a primer plano
+
+El navegador solo vuelve a pedir el script del service worker en una navegación real, y PERZE es
+una SPA: cambiar de pestaña o abrir un movimiento son navegaciones blandas del router y no cuentan.
+Resumir la PWA desde segundo plano tampoco. Consecuencia práctica: con la app viviendo en segundo
+plano, una versión nueva podía tardar días en aparecer, y la única forma confiable de verla era
+cerrar la app del todo y volver a abrirla — que fue exactamente lo que pasó al probar la v0.29.93 en
+un celular.
+
+Ahora se chequea al volver a primer plano (`visibilitychange`), con tres guardas:
+
+- **Piso de dos horas** entre chequeos (`src/lib/pwa/update-check.ts`), para que cambiar de app diez
+  veces seguidas no dispare diez requests. No es un valor conservador por las dudas: si hay versión
+  nueva, instalarla baja el precache entero (~6,5 MB), y con datos móviles eso se nota. Encontrar la
+  actualización rápido no es un objetivo del producto — quien la necesite ya mismo cierra la app y
+  la vuelve a abrir, que es un camino que el usuario ya conoce.
+- **Nada sin conexión**: un `registration.update()` offline solo puede fallar, y desde la v0.29.93 el
+  fallo de registro se loguea, así que ese ruido taparía errores reales.
+- **El toast solo se ofrece con red.** Aceptarlo dispara `SKIP_WAITING` → `controllerchange` →
+  `reload()`, y una recarga sin conexión depende de que `/` esté en el cache de runtime (lo pone
+  `pages-cache-warmup.tsx`, que puede no haber corrido). Si no está, tocar "actualizar" te manda a
+  `/offline`. Se vuelve a ofrecer solo al reconectar, desde un listener de `online`.
+
+El toast lleva `id: "sw-update"` porque `offerUpdate()` ahora se llama desde tres lugares (el
+registro, `updatefound` y la reconexión) y si no se apilarían tres toasts idénticos y sin duración.
+
+La marca de "último chequeo" vive en una variable de módulo, **no en `localStorage`**: solo tiene que
+sobrevivir lo que viva el documento, y una recarga —lo único que la resetea— ya dispara el chequeo
+del navegador por su cuenta. Una key persistida sería estado nuevo que limpiar en el logout a cambio
+de nada.
+
+### Decisión tomada, para que no la "arreglen" después
+
+**El borrador de captura se pierde en una recarga, y se acepta.** `capture-draft-store` es un
+`create()` de Zustand sin `persist`, así que aceptar la actualización con un monto a medio tipear lo
+descarta. Son tres datos (monto, cuenta, categoría) y se vuelven a poner en segundos; persistirlo
+tampoco es gratis, porque el store guarda un `bigint` (`counterFxRateOverride`) que JSON no
+serializa. Si algún día se persiste, que sea por el caso real —Android matando la PWA en segundo
+plano, que es mucho más frecuente— y no por este.
+
+### Verificado en dispositivo
+
+El flujo offline completo, probado en el celular con la v0.29.93: modo avión, cargar gastos, quedan
+en cola, cerrar la app por completo, reabrir, cargar más gastos, restaurar la conexión y sincronizar
+todo. Cierra el reporte que abrió esta serie de versiones.
+
+### Tests
+
+`src/lib/pwa/update-check.test.ts` — la decisión de chequear se extrajo a `shouldCheckForUpdate()`,
+una función pura, para poder testearla sin montar React ni simular eventos: primer chequeo, dentro
+del piso, justo en el límite, pasado el piso, y offline (que nunca chequea, ni siquiera la primera
+vez).
+
+---
+
 ## [0.30.5] — 2026-08-08
 
 ### Nuevo — sumar una cuenta al grupo familiar, con su historial
