@@ -654,7 +654,16 @@
    "unarchive": "Unarchive",
    "unarchived": "Account restored",
    "transactionsTitle": "Transactions in this account",
-   "noTransactions": "No transactions yet."
+   "noTransactions": "No transactions yet.",
+   "moveToHousehold": "Add to group",
+   "moveToHouseholdSheetTitle": "Choose which household to add it to",
+   "moveConfirmTitle": "Add to {household}",
+   "moveConfirmBody": "{count, plural, =0 {This account has no transactions.} one {# transaction moves with the account, with its full history.} other {# transactions move with the account, with their full history.}}",
+   "moveConfirmNewEntities": "The destination household had no categories, payees, or tags with those names — {total, plural, one {# new one gets} other {# new ones get}} created so the history doesn't end up unclassified.",
+   "moveConfirmFxWarning": "The destination household uses {to}, different from your {from}: already-resolved movements need a rate again.",
+   "moveConfirmAction": "Add account",
+   "moved": "Account added to {household}.",
+   "moveError": "We couldn't move the account. Try again."
   },
   "reconcile": {
    "back": "Back",

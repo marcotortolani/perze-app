@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, DataList, EmptyState, ListRow, ProgressBar, Skeleton, TransactionRow } from "@/design-system";
+import { Amount, Button, DataList, EmptyState, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const LineChart = dynamic(() => import("@/design-system/charts/LineChart").then((m) => m.LineChart), { ssr: false });
@@ -32,6 +33,8 @@ import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import type { Locale } from "@/i18n/formatting";
+import { useHouseholdsList } from "@/hooks/use-households-list";
+import { moveAccountsRepo, type MovePreflight } from "@/lib/repos/move-accounts-repo";
 
 const EVOLUTION_DAYS = 90;
 
@@ -79,6 +82,13 @@ export function AccountDetailContent({ id }: { id: string }) {
   const accountRecurringCount = recurringRules.filter((r) => r.accountId === id).length;
   const isCardPayment = useIsCardPayment(household?.id);
   const [payCardSheetOpen, setPayCardSheetOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { data: households } = useHouseholdsList();
+  const otherHouseholds = (households ?? []).filter((h) => h.id !== household?.id);
+  const [moveSheetOpen, setMoveSheetOpen] = useState(false);
+  const [movePreflighting, setMovePreflighting] = useState(false);
+  const [moveConfirm, setMoveConfirm] = useState<{ targetHouseholdId: string; targetName: string; preflight: MovePreflight } | null>(null);
+  const [moveApplying, setMoveApplying] = useState(false);
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
@@ -131,6 +141,50 @@ export function AccountDetailContent({ id }: { id: string }) {
     await Promise.all([invalidateAccounts(), invalidateAccount()]);
     router.back();
     toast(t("accountsPage.detail.unarchived"));
+  };
+
+  /**
+   * "Sumar cuenta al grupo" (PR 5 del plan de multi-household) — mueve
+   * ESTA cuenta con todo su historial a otro household del usuario. Un
+   * preflight primero: si la cuenta tiene una transferencia sin cerrar, es
+   * de inversión, o el household destino la rechaza por permiso, la RPC
+   * tira una excepción con el motivo exacto (nunca "algo salió mal") y acá
+   * se muestra tal cual — son mensajes ya pensados para la persona, no
+   * para debug ("Hay transferencias con Banco — sumalas juntas").
+   */
+  const handlePickHousehold = async (targetHouseholdId: string, targetName: string) => {
+    if (movePreflighting) return;
+    setMovePreflighting(true);
+    try {
+      const preflight = await moveAccountsRepo.preflight([account.id], targetHouseholdId);
+      setMoveSheetOpen(false);
+      setMoveConfirm({ targetHouseholdId, targetName, preflight });
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t("accountsPage.detail.moveError"));
+    } finally {
+      setMovePreflighting(false);
+    }
+  };
+
+  const confirmMove = async () => {
+    if (!moveConfirm || moveApplying) return;
+    setMoveApplying(true);
+    try {
+      await moveAccountsRepo.apply([account.id], household.id, moveConfirm.targetHouseholdId);
+      // Mueve la cuenta a OTRO household: prácticamente todos los
+      // agregados de los dos hogares cambiaron (saldos, patrimonio,
+      // presupuestos, categorías nuevas). Mismo criterio que el household
+      // switcher y el cambio de moneda base — se limpia todo el cache en
+      // vez de intentar invalidar cada key una por una.
+      queryClient.clear();
+      toast(t("accountsPage.detail.moved", { household: moveConfirm.targetName }));
+      setMoveConfirm(null);
+      router.back();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : t("accountsPage.detail.moveError"));
+    } finally {
+      setMoveApplying(false);
+    }
   };
 
   // "Pagar tarjeta" en vez de "Transferir": técnicamente es la misma
@@ -243,6 +297,9 @@ export function AccountDetailContent({ id }: { id: string }) {
         ) : (
           <ListRow icon="refresh" label={t("accountsPage.detail.transfer")} onClick={() => router.push("/add")} />
         )}
+        {household.enabledModules.includes("family") && otherHouseholds.length > 0 && account.archivedAt === null ? (
+          <ListRow icon="users" label={t("accountsPage.detail.moveToHousehold")} disabled={movePreflighting} onClick={() => setMoveSheetOpen(true)} />
+        ) : null}
         {account.archivedAt !== null ? (
           <ListRow icon="undo" label={t("accountsPage.detail.unarchive")} onClick={handleUnarchive} />
         ) : (
@@ -318,6 +375,52 @@ export function AccountDetailContent({ id }: { id: string }) {
           }}
         />
       ) : null}
+
+      <Sheet open={moveSheetOpen} title={t("accountsPage.detail.moveToHouseholdSheetTitle")} onClose={() => (movePreflighting ? null : setMoveSheetOpen(false))}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {otherHouseholds.map((h) => (
+            <ListRow key={h.id} icon="users" label={h.name} disabled={movePreflighting} onClick={() => handlePickHousehold(h.id, h.name)} />
+          ))}
+        </div>
+      </Sheet>
+
+      {/* Excepción a "reversible, no confirmable" (CLAUDE.md) — mover una
+          cuenta es confirmable e irreversible, igual que sacar a un
+          miembro o cambiar la moneda base. Confirma con los números
+          reales del preflight. */}
+      <Sheet
+        open={!!moveConfirm}
+        title={moveConfirm ? t("accountsPage.detail.moveConfirmTitle", { household: moveConfirm.targetName }) : undefined}
+        onClose={() => (moveApplying ? null : setMoveConfirm(null))}
+      >
+        {moveConfirm ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+              {t("accountsPage.detail.moveConfirmBody", { count: moveConfirm.preflight.transactionCount })}
+            </p>
+            {moveConfirm.preflight.newCategories + moveConfirm.preflight.newPayees + moveConfirm.preflight.newTags > 0 ? (
+              <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>
+                {t("accountsPage.detail.moveConfirmNewEntities", {
+                  total: moveConfirm.preflight.newCategories + moveConfirm.preflight.newPayees + moveConfirm.preflight.newTags,
+                })}
+              </p>
+            ) : null}
+            {moveConfirm.preflight.baseCurrencyMismatch ? (
+              <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>
+                {t("accountsPage.detail.moveConfirmFxWarning", { from: moveConfirm.preflight.sourceBaseCurrency, to: moveConfirm.preflight.targetBaseCurrency })}
+              </p>
+            ) : null}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Button variant="primary" disabled={moveApplying} onClick={confirmMove}>
+                {t("accountsPage.detail.moveConfirmAction")}
+              </Button>
+              <Button variant="ghost" disabled={moveApplying} onClick={() => setMoveConfirm(null)}>
+                {t("common.cancel")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Sheet>
     </div>
   );
 }

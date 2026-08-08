@@ -654,7 +654,16 @@
    "unarchive": "Desarchivar",
    "unarchived": "Cuenta restaurada",
    "transactionsTitle": "Movimientos de esta cuenta",
-   "noTransactions": "Todavía no hay movimientos."
+   "noTransactions": "Todavía no hay movimientos.",
+   "moveToHousehold": "Sumar al grupo",
+   "moveToHouseholdSheetTitle": "Elegí a qué hogar sumarla",
+   "moveConfirmTitle": "Sumar a {household}",
+   "moveConfirmBody": "{count, plural, =0 {Esta cuenta no tiene movimientos.} one {Se mueve # movimiento con la cuenta, con su historial completo.} other {Se mueven # movimientos con la cuenta, con su historial completo.}}",
+   "moveConfirmNewEntities": "El hogar destino no tenía categorías, comercios o tags con esos nombres — se crean {total, plural, one {# nuevo} other {# nuevos}} para que el historial no quede sin clasificar.",
+   "moveConfirmFxWarning": "El hogar destino usa {to}, distinto de tu {from}: los movimientos ya resueltos quedan pendientes de cotización otra vez.",
+   "moveConfirmAction": "Sumar cuenta",
+   "moved": "Cuenta sumada a {household}.",
+   "moveError": "No pudimos mover la cuenta. Probá de nuevo."
   },
   "reconcile": {
    "back": "Volver",

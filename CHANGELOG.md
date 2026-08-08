@@ -6,6 +6,50 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.5] — 2026-08-08
+
+### Nuevo — sumar una cuenta al grupo familiar, con su historial
+
+PR 5 (el último) del plan de multi-household (`necesito-hacerte-unas-consultas`) — hasta ahora
+no había forma de que alguien con su propio household y movimientos se sumara a un grupo
+familiar sin perder ese historial: aceptar una invitación solo daba de alta la membresía
+(PR 3, household switcher), pero las cuentas se quedaban invisibles en el hogar personal.
+
+- **Migración `20260808120000_move_accounts_to_household.sql`** — dos RPCs `SECURITY DEFINER`
+  (`preflight_move_accounts` de solo lectura, `move_accounts_to_household` que ejecuta).
+  Alcance real: solo `accounts`, `transactions` y los satélites que referencian una cuenta
+  (`recurring_rules`, `goals`, `debts`) cambian de `household_id` — todo lo demás
+  (`account_balance_snapshots`, `card_statements`, `transaction_splits/shares/tags`,
+  `debt_schedule`) hereda por `EXISTS` sobre el padre y no se toca.
+- **`enforce_immutable_columns()` gana una escapatoria acotada**: una variable de sesión
+  transaccional que lleva el PAR exacto (household de origen, household de destino)
+  autorizado por la RPC — no un flag suelto, así que no alcanza para mover una fila arbitraria
+  a un household distinto del que la RPC ya validó. Verificado con un test explícito: un
+  `UPDATE` directo fuera de la RPC sigue rechazado.
+- **Categorías, payees, tags e instituciones se matchean por nombre o se clonan** — nunca se
+  mueve la fila original (`categories_immutable`/etc. siguen protegiendo su `household_id`).
+  Las categorías respetan la cadena de ancestros (padre antes que hijo). Devuelve cuántas
+  entidades nuevas creó, para que la confirmación las muestre.
+- **Precondiciones que fallan con el motivo exacto**: cuentas de todos los household distinto
+  al de origen, sin permiso (dueño de las cuentas o admin del origen, y poder escribir en el
+  destino), cuentas de inversión (`kind='broker'` o referenciadas por `portfolios`/`trades`),
+  transferencias sin cerrar (hay que sumar las dos cuentas juntas), o movimientos ya
+  liquidados entre miembros (`settlements`).
+- **Monedas base distintas**: mismo criterio que `change_household_base_currency` (PR 4) —
+  los movimientos ya resueltos se descartan a `pending`, nunca se recalculan; los que ya
+  están en la moneda destino se resuelven gratis a identidad. Reescrito acá (no se llama a
+  esa función) porque necesita estar scopeado al set de transacciones movidas, no al
+  household entero.
+- **UI**: `AccountDetailContent.tsx` gana "Sumar al grupo" (solo con el módulo `family`
+  encendido y más de un household). Preflight antes de confirmar — la excepción a "reversible,
+  no confirmable", igual que sacar a un miembro o cambiar la moneda base.
+- pgTAP `27_move_accounts.sql` — 24 aserciones contra el proyecto remoto de desarrollo: camino
+  feliz completo, las cuatro precondiciones que deben fallar, aislamiento cross-household, y
+  que el trigger de inmutabilidad sigue protegiendo fuera de la RPC.
+- **Fuera de alcance, a propósito**: mover portfolios/inversiones, mover varias cuentas de
+  distintos households a la vez, seleccionar más de una cuenta desde la UI en un solo paso
+  (hoy es una por una, con el error de transferencia guiando a sumar la otra), y deshacer.
+
 ## [0.30.4] — 2026-08-08
 
 ### Arreglado — cambiar la moneda base corrompía en silencio todo el histórico

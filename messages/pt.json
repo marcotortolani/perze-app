@@ -654,7 +654,16 @@
    "unarchive": "Desarquivar",
    "unarchived": "Conta restaurada",
    "transactionsTitle": "Movimentações desta conta",
-   "noTransactions": "Ainda não há movimentações."
+   "noTransactions": "Ainda não há movimentações.",
+   "moveToHousehold": "Somar ao grupo",
+   "moveToHouseholdSheetTitle": "Escolha a qual lar somá-la",
+   "moveConfirmTitle": "Somar a {household}",
+   "moveConfirmBody": "{count, plural, =0 {Esta conta não tem movimentações.} one {# movimentação vai junto com a conta, com o histórico completo.} other {# movimentações vão juntas com a conta, com o histórico completo.}}",
+   "moveConfirmNewEntities": "O lar de destino não tinha categorias, comerciantes ou tags com esses nomes — {total, plural, one {# novo é} other {# novos são}} criados para o histórico não ficar sem classificação.",
+   "moveConfirmFxWarning": "O lar de destino usa {to}, diferente do seu {from}: as movimentações já resolvidas voltam a precisar de cotação.",
+   "moveConfirmAction": "Somar conta",
+   "moved": "Conta somada a {household}.",
+   "moveError": "Não conseguimos mover a conta. Tente de novo."
   },
   "reconcile": {
    "back": "Voltar",

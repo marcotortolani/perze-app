@@ -60,8 +60,11 @@ describe("router.back() en vez de router.replace(url)/router.push(url) al volver
     // selección con search param dentro de `/accounts` — los dos `back()` de
     // archivar/desarchivar viven ahora en `AccountDetailContent.tsx`.
     // `[id]/page.tsx` quedó como un redirect de compatibilidad y por eso ya
-    // no está en esta lista (su `router.replace` es correcto ahí).
-    { label: "accounts/AccountDetailContent.tsx — archivar/desarchivar", path: "src/app/(app)/accounts/AccountDetailContent.tsx", expectedBackCalls: 2 },
+    // no está en esta lista (su `router.replace` es correcto ahí). El
+    // tercero es de `confirmMove()` (PR 5, "sumar cuenta al grupo"): la
+    // cuenta deja de pertenecer al household activo, así que el detalle no
+    // tiene nada que seguir mostrando y vuelve a la lista igual que archivar.
+    { label: "accounts/AccountDetailContent.tsx — archivar/desarchivar", path: "src/app/(app)/accounts/AccountDetailContent.tsx", expectedBackCalls: 3 },
     { label: "accounts/[id]/reconcile/page.tsx — confirmar", path: "src/app/(app)/accounts/[id]/reconcile/page.tsx", expectedBackCalls: 2 },
     { label: "accounts/[id]/edit/page.tsx — cerrar y guardar", path: "src/app/accounts/[id]/edit/page.tsx", expectedBackCalls: 2 },
     { label: "goals/[id]/page.tsx — borrar", path: "src/app/(app)/goals/[id]/page.tsx", expectedBackCalls: 2 },
