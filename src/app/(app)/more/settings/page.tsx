@@ -2,17 +2,19 @@
 
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
+import { Button, ListRow, Sheet, Skeleton, Switch, usePageHeader } from "@/design-system";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useHouseholdMembers } from "@/hooks/use-household-members";
 import { useTransactions } from "@/hooks/use-transactions";
 import { householdsRepo } from "@/lib/repos/households-repo";
+import { changeBaseCurrencyRepo, type BaseCurrencyPreflight } from "@/lib/repos/change-base-currency-repo";
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
 import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -92,7 +94,10 @@ export default function SettingsPage() {
   const [tabSheetOpen, setTabSheetOpen] = useState(false);
   const [closeDaySheetOpen, setCloseDaySheetOpen] = useState(false);
   const [baseCurrencySheetOpen, setBaseCurrencySheetOpen] = useState(false);
+  const [baseCurrencyConfirm, setBaseCurrencyConfirm] = useState<{ currency: string; preflight: BaseCurrencyPreflight } | null>(null);
+  const [applyingBaseCurrency, setApplyingBaseCurrency] = useState(false);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
   usePageHeader({ title: t("morePage.settings"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const isMultiCurrency = useMemo(() => new Set((accounts ?? []).map((a) => a.currencyCode)).size > 1, [accounts]);
@@ -121,19 +126,53 @@ export default function SettingsPage() {
     }
   };
 
+  /**
+   * PR 4 del plan de multi-household — ya no es un `householdsRepo.update()`
+   * directo (eso reescribía `base_currency` sin tocar un solo `amount_base`,
+   * dejando todo el histórico congelado contra la base vieja pero rotulado
+   * con la nueva). Siempre pasa por la RPC de re-resolución
+   * (`change-base-currency-repo.ts`), aunque no haya nada que resolver —
+   * un solo camino, sin duplicar la lógica de permiso/auditoría en dos
+   * lugares. Con preflight: solo se confirma con una hoja aparte cuando de
+   * verdad hay algo que va a cambiar (movimientos que se resuelven o que
+   * quedan pendientes) — es la excepción a "reversible, no confirmable",
+   * igual que sacar a un miembro del hogar.
+   */
   const handleBaseCurrency = async (currency: string) => {
-    if (currency === household.baseCurrency) {
-      setBaseCurrencySheetOpen(false);
-      return;
-    }
+    setBaseCurrencySheetOpen(false);
+    if (currency === household.baseCurrency) return;
     setSaving(true);
     try {
-      await householdsRepo.update(household.id, { baseCurrency: currency });
-      invalidateHousehold();
-      setBaseCurrencySheetOpen(false);
-      toast(t("settingsPage.baseCurrencyChanged", { currency }));
+      const preflight = await changeBaseCurrencyRepo.preflight(household.id, currency);
+      const hasImpact = preflight.identityCount + preflight.resetCount + preflight.settlementsIdentityCount + preflight.settlementsResetCount > 0;
+      if (!hasImpact) {
+        await changeBaseCurrencyRepo.apply(household.id, currency);
+        invalidateHousehold();
+        queryClient.clear();
+        toast(t("settingsPage.baseCurrencyChanged", { currency }));
+        return;
+      }
+      setBaseCurrencyConfirm({ currency, preflight });
+    } catch {
+      toast(t("settingsPage.baseCurrencyError"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const confirmBaseCurrencyChange = async () => {
+    if (!baseCurrencyConfirm || applyingBaseCurrency) return;
+    setApplyingBaseCurrency(true);
+    try {
+      await changeBaseCurrencyRepo.apply(household.id, baseCurrencyConfirm.currency);
+      invalidateHousehold();
+      queryClient.clear();
+      toast(t("settingsPage.baseCurrencyChanged", { currency: baseCurrencyConfirm.currency }));
+      setBaseCurrencyConfirm(null);
+    } catch {
+      toast(t("settingsPage.baseCurrencyError"));
+    } finally {
+      setApplyingBaseCurrency(false);
     }
   };
 
@@ -203,9 +242,12 @@ export default function SettingsPage() {
                 label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
                 value={household.baseCurrency}
                 variant="value"
-                onClick={() => setBaseCurrencySheetOpen(true)}
+                disabled={!isOwnerOrAdmin}
+                onClick={() => isOwnerOrAdmin && setBaseCurrencySheetOpen(true)}
               />
-              {hasTransactions ? (
+              {!isOwnerOrAdmin ? (
+                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyRestricted")}</p>
+              ) : hasTransactions ? (
                 <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
               ) : null}
               {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
@@ -351,6 +393,35 @@ export default function SettingsPage() {
             />
           ))}
         </div>
+      </Sheet>
+
+      {/* Excepción a "reversible, no confirmable" (CLAUDE.md) — cambiar la
+          moneda base es confirmable e irreversible: descarta la resolución
+          de cotización de movimientos pasados. Confirma con los números
+          reales del preflight, no con una advertencia genérica. */}
+      <Sheet
+        open={!!baseCurrencyConfirm}
+        title={baseCurrencyConfirm ? t("settingsPage.baseCurrencyConfirmTitle", { currency: baseCurrencyConfirm.currency }) : undefined}
+        onClose={() => (applyingBaseCurrency ? null : setBaseCurrencyConfirm(null))}
+      >
+        {baseCurrencyConfirm ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+              {t("settingsPage.baseCurrencyConfirmBody", {
+                resolvedCount: baseCurrencyConfirm.preflight.identityCount + baseCurrencyConfirm.preflight.settlementsIdentityCount,
+                pendingCount: baseCurrencyConfirm.preflight.resetCount + baseCurrencyConfirm.preflight.settlementsResetCount,
+              })}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Button variant="primary" disabled={applyingBaseCurrency} onClick={confirmBaseCurrencyChange}>
+                {t("settingsPage.baseCurrencyConfirmAction")}
+              </Button>
+              <Button variant="ghost" disabled={applyingBaseCurrency} onClick={() => setBaseCurrencyConfirm(null)}>
+                {t("common.cancel")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Sheet>
 
       <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)}>

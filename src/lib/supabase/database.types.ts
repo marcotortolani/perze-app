@@ -2880,6 +2880,14 @@ export type Database = {
           period_start: string
         }[]
       }
+      change_household_base_currency: {
+        Args: { p_household_id: string; p_new_base_currency: string }
+        Returns: Json
+      }
+      check_move_accounts_preconditions: {
+        Args: { p_account_ids: string[]; p_target_household_id: string }
+        Returns: string
+      }
       clamped_date: {
         Args: { p_day: number; p_month: number; p_year: number }
         Returns: string
@@ -2916,7 +2924,19 @@ export type Database = {
           occurred_at: string
         }[]
       }
+      move_accounts_to_household: {
+        Args: { p_account_ids: string[]; p_target_household_id: string }
+        Returns: Json
+      }
       open_card_statements: { Args: never; Returns: undefined }
+      preflight_change_base_currency: {
+        Args: { p_household_id: string; p_new_base_currency: string }
+        Returns: Json
+      }
+      preflight_move_accounts: {
+        Args: { p_account_ids: string[]; p_target_household_id: string }
+        Returns: Json
+      }
       prune_push_subscriptions: { Args: never; Returns: undefined }
       purge_audit_log: { Args: never; Returns: undefined }
       purge_household_step: {
