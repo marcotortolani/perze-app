@@ -97,7 +97,7 @@ export default async function StartPage() {
           `onboarding/welcome/page.tsx`. */}
       <ScreenShell
         background="transparent"
-        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
+        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(32px + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
       >
         <PageEnter style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -157,23 +157,32 @@ export default async function StartPage() {
 
           <div style={{ flex: 1, minHeight: 24 }} />
 
-          <Link
-            href="/onboarding/welcome"
-            style={{
-              display: "block",
-              textAlign: "center",
-              height: "var(--primary-button-height)",
-              lineHeight: "var(--primary-button-height)",
-              borderRadius: "var(--radius-button)",
-              background: "var(--primary-fill)",
-              color: "var(--primary-on-fill)",
-              fontWeight: 600,
-              fontSize: 16,
-              textDecoration: "none",
-            }}
-          >
-            {t("landingPage.cta")}
-          </Link>
+          {/* `paddingBottom` en este nodo (no solo en el padding del
+              `ScreenShell`): si el contenido de arriba llegara a exceder el
+              `height` fijo del contenedor (locale más largo, fuente más
+              grande), el padding-bottom del contenedor queda en el borde de
+              SU propia caja — no después del contenido que se desborda. El
+              único lugar donde este aire está garantizado siempre, entre o
+              fuera del `height`, es acá, en el último hijo real. */}
+          <div style={{ paddingBottom: "calc(8px + env(safe-area-inset-bottom))" }}>
+            <Link
+              href="/onboarding/welcome"
+              style={{
+                display: "block",
+                textAlign: "center",
+                height: "var(--primary-button-height)",
+                lineHeight: "var(--primary-button-height)",
+                borderRadius: "var(--radius-button)",
+                background: "var(--primary-fill)",
+                color: "var(--primary-on-fill)",
+                fontWeight: 600,
+                fontSize: 16,
+                textDecoration: "none",
+              }}
+            >
+              {t("landingPage.cta")}
+            </Link>
+          </div>
         </PageEnter>
       </ScreenShell>
     </>

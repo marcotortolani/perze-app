@@ -63,7 +63,7 @@ export default async function AboutPage() {
 
       <ScreenShell
         background="transparent"
-        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
+        style={{ height: "calc(100svh - var(--safe-top))", padding: "24px var(--screen-padding) calc(32px + env(safe-area-inset-bottom))", position: "relative", zIndex: 1 }}
       >
         <PageEnter style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <Logo size={20} />
@@ -116,7 +116,14 @@ export default async function AboutPage() {
 
           <div style={{ flex: 1, minHeight: 24 }} />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* `paddingBottom` en este nodo (no solo en el padding del
+              `ScreenShell`): cuando el contenido de arriba (4 features +
+              privacidad) excede el `height` fijo del contenedor, el
+              padding-bottom del contenedor queda en el borde de SU propia
+              caja — no después del contenido que se desborda. El único
+              lugar donde este aire está garantizado siempre, entre o fuera
+              del `height`, es acá, en el último hijo real. */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: "calc(8px + env(safe-area-inset-bottom))" }}>
             <Link
               href="/onboarding"
               style={{

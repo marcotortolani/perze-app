@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.88] — 2026-08-08
+
+### Arreglado — contenido pegado al borde inferior en `/start` y `/about`
+
+El `paddingBottom` del `ScreenShell` (`calc(var(--screen-padding) + env(safe-area-inset-bottom))`)
+solo se aplica al borde de SU PROPIA caja. Con `height` fijo (`calc(100svh - var(--safe-top))`,
+el fix de doble-scroll de v0.29.87) y contenido que excede esa altura —el caso de `/about`, con
+4 features + el bloque de privacidad—, ese padding queda en el medio del documento, no después
+del contenido real: el botón/footer terminaban pegados al borde real de la pantalla sin aire.
+Se movió `paddingBottom: calc(8px + env(safe-area-inset-bottom))` al ÚLTIMO hijo real (el bloque
+del CTA) en las dos pantallas — ahí el aire está garantizado exista o no overflow. En `/start`
+además se subió el padding del `ScreenShell` de `--screen-padding` (20px) a 32px fijos, más
+generoso para la zona del pulgar.
+
 ## [0.29.87] — 2026-08-08
 
 ### Agregado — demos animadas en los 3 slides de onboarding (A1)

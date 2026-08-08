@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.88 — 8 de agosto de 2026
+
+### Arreglado
+
+- En las pantallas de bienvenida y "Sobre Perze", el botón de abajo ya no queda pegado al borde
+  de la pantalla.
+
 ## 0.29.87 — 8 de agosto de 2026
 
 ### Nuevo
