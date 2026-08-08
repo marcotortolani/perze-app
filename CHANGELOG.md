@@ -6,6 +6,90 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.3] — 2026-08-08
+
+### Nuevo — household switcher
+
+PR 3 del plan de multi-household (`necesito-hacerte-unas-consultas`) — hasta ahora la app era
+efectivamente mono-household: `meta.currentHouseholdId` en Dexie no tenía ninguna UI para
+cambiar, aunque el schema (RLS vía `current_households()`, PK compuesta de
+`household_members`) siempre soportó que un usuario pertenezca a más de uno. Quien aceptaba una
+invitación de grupo familiar teniendo su propio household quedaba con dos, veía uno, y el otro
+desaparecía para siempre — hueco que la auditoría de aislamiento por household del PR 1 dejó
+anotado.
+
+- **`src/lib/repos/households-remote.ts`** — lista de TODOS los households del usuario, no solo
+  el activo (Dexie no los tiene completos hasta que cada uno se hidrata). `households-repo.ts`
+  suma `listLocal()` como fallback offline.
+- **`HouseholdSwitcherSheet`**, compartido entre `/more` (arriba de todo, visible en mobile y
+  desktop) y `/family` (junto a "Invitar" — el punto de entrada natural justo después de
+  aceptar una invitación). Fuera del camino caliente a propósito: no vive en `/`, `/add` ni el
+  tab bar, así que no toca la métrica de los 5 segundos. El switch nunca es accidental — tap
+  explícito en una fila, ninguna otra superficie.
+- El cambio en sí (`useSwitchHousehold`): hidrata el household destino solo si no está al día
+  (mismo watermark que usa el pull incremental — evita re-bajar 11 tablas en cada switch),
+  activa local y remoto, y limpia **todo** el cache de queries (`queryClient.clear()`, no
+  invalidación selectiva) porque buena parte de las keys de la app no llevan `householdId`.
+- `["households", "mine"]` se agrega a `NEVER_TOUCHED_BY_PULL` — no es una tabla que
+  `pullFromRemote` sincronice.
+
+## [0.30.2] — 2026-08-08
+
+### Arreglado — la hidratación sin scope mezclaba households en el mismo Dexie
+
+PR 2 del plan de multi-household (`necesito-hacerte-unas-consultas`): en `hydrateFromRemote()`,
+el modo completo (sin `householdId`, el camino de `/onboarding/restore` en un dispositivo
+nuevo) resolvía el household activo DESPUÉS de bajar las tablas hijas, y el helper `scoped()`
+era un no-op mientras tanto — así que cuentas, movimientos, presupuestos y el resto de las diez
+tablas hijas de TODOS los households del usuario se bajaban mezcladas a las mismas tablas de
+Dexie, filtradas recién en cada query de pantalla. Es el prerrequisito directo del household
+switcher: sin este fix, restaurar en un dispositivo nuevo con dos households ya dejaba el Dexie
+local con ambos hogares entreverados.
+
+`activeHouseholdId` se resuelve ahora antes de armar el filtro, y `scoped()` siempre filtra por
+`household_id` — nunca no-op. La tabla `households` sigue sin scopear en modo completo (esa
+lista completa es la que el switcher necesita); solo las tablas hijas quedan acotadas al
+household activo. Los household_members de los hogares inactivos no quedan locales — no rompe
+nada, `FamilyPageContent` ya los lee remoto.
+
+## [0.30.1] — 2026-08-08
+
+### Arreglado — endurecimiento de RLS: precios manuales de instrumentos, funciones de cron y `households`
+
+Auditoría de aislamiento por household — encontró la única fuga real de lectura/escritura
+cruzada del esquema, más tres endurecimientos que no filtran datos pero amplían la superficie de
+ataque de más de lo necesario.
+
+- **`price_snapshots` — fuga real.** `price_snapshots_select` era `USING (true)` desde que la
+  tabla era solo dato de mercado global; `20260806090000_investment_prices_infra.sql` habilitó
+  después precios manuales sobre instrumentos con `household_id` propio, y la policy de SELECT
+  quedó abierta: cualquier autenticado leía la valuación manual que otro household cargó para un
+  inmueble, un plazo fijo o una ON. `price_snapshots_manual_update` no tenía scope alguno —
+  cualquiera podía reescribir el precio manual de cualquiera. Ambas policies quedan acotadas al
+  household del instrumento (o `NULL` si es catálogo compartido).
+- **9 funciones de cron `SECURITY DEFINER` sin `REVOKE`.** `materialize_recurring_transactions`,
+  `dispatch_due_notifications`, `close_overdue_card_statements`, `purge_audit_log`,
+  `prune_push_subscriptions`, `compute_fx_monthly_averages` y los tres `trigger_daily_*_sync`
+  eran invocables por cualquier `authenticated` vía PostgREST y corren sobre todos los
+  households. Ninguna filtra datos (todas devuelven `void`), pero cualquiera podía dispararlas.
+  `REVOKE EXECUTE FROM PUBLIC, anon, authenticated` — pg_cron sigue funcionando porque los jobs
+  corren como el rol que los agendó (el dueño), mismo patrón ya aplicado a
+  `open_card_statements()`.
+- **`households.created_by` mutable.** `households` no estaba en ninguno de los 21 triggers de
+  `20260801130000_immutability_triggers.sql`. Se agrega `households_immutable` sobre `id` y
+  `created_by` — `base_currency` queda deliberadamente afuera, porque cambiarla es una función
+  real de producto (pendiente de su propia RPC de re-resolución de FX, no de un bloqueo).
+- **`send-push` y el reenvío de invitación por mail no filtraban `status='active'`.** Un miembro
+  removido (`'former'`) seguía pasando la autorización y podía mandar push al household del que
+  lo echaron, o los destinatarios incluían miembros removidos/invitados. Mismo hueco en
+  `api/emails/invite`. Se agrega el filtro en los tres puntos — el precedente correcto ya
+  existía en `notify-invite-accepted`.
+- **`16_investments_rls.sql` estaba en rojo.** Su última aserción decía "ningún autenticado
+  puede insertar en `price_snapshots`", invariante que `20260806090000` eliminó. Reescrito con
+  las aserciones reales: un autenticado puede cargar un precio manual sobre un instrumento
+  visible, no puede con un `provider` real, y (nuevo, cubre el fix de arriba) no puede leer ni
+  escribir el precio manual de un instrumento privado de otro household.
+
 ## [0.30.0] — 2026-08-08
 
 ### Arreglado — inversiones cuentan en el flujo de caja del período, tarjetas fuera de la liquidación de trades
@@ -234,63 +318,6 @@ guardar nada. Saldos iniciales a $U 8.000 y $U 9.000. Esto explica además por q
   `navigation-replace`) — se verificó corriéndolos contra el commit base.
 
 ---
-
-## [0.30.1] — 2026-08-08
-
-### Arreglado — endurecimiento de RLS: precios manuales de instrumentos, funciones de cron y `households`
-
-Auditoría de aislamiento por household — encontró la única fuga real de lectura/escritura
-cruzada del esquema, más tres endurecimientos que no filtran datos pero amplían la superficie de
-ataque de más de lo necesario.
-
-- **`price_snapshots` — fuga real.** `price_snapshots_select` era `USING (true)` desde que la
-  tabla era solo dato de mercado global; `20260806090000_investment_prices_infra.sql` habilitó
-  después precios manuales sobre instrumentos con `household_id` propio, y la policy de SELECT
-  quedó abierta: cualquier autenticado leía la valuación manual que otro household cargó para un
-  inmueble, un plazo fijo o una ON. `price_snapshots_manual_update` no tenía scope alguno —
-  cualquiera podía reescribir el precio manual de cualquiera. Ambas policies quedan acotadas al
-  household del instrumento (o `NULL` si es catálogo compartido).
-- **9 funciones de cron `SECURITY DEFINER` sin `REVOKE`.** `materialize_recurring_transactions`,
-  `dispatch_due_notifications`, `close_overdue_card_statements`, `purge_audit_log`,
-  `prune_push_subscriptions`, `compute_fx_monthly_averages` y los tres `trigger_daily_*_sync`
-  eran invocables por cualquier `authenticated` vía PostgREST y corren sobre todos los
-  households. Ninguna filtra datos (todas devuelven `void`), pero cualquiera podía dispararlas.
-  `REVOKE EXECUTE FROM PUBLIC, anon, authenticated` — pg_cron sigue funcionando porque los jobs
-  corren como el rol que los agendó (el dueño), mismo patrón ya aplicado a
-  `open_card_statements()`.
-- **`households.created_by` mutable.** `households` no estaba en ninguno de los 21 triggers de
-  `20260801130000_immutability_triggers.sql`. Se agrega `households_immutable` sobre `id` y
-  `created_by` — `base_currency` queda deliberadamente afuera, porque cambiarla es una función
-  real de producto (pendiente de su propia RPC de re-resolución de FX, no de un bloqueo).
-- **`send-push` y el reenvío de invitación por mail no filtraban `status='active'`.** Un miembro
-  removido (`'former'`) seguía pasando la autorización y podía mandar push al household del que
-  lo echaron, o los destinatarios incluían miembros removidos/invitados. Mismo hueco en
-  `api/emails/invite`. Se agrega el filtro en los tres puntos — el precedente correcto ya
-  existía en `notify-invite-accepted`.
-- **`16_investments_rls.sql` estaba en rojo.** Su última aserción decía "ningún autenticado
-  puede insertar en `price_snapshots`", invariante que `20260806090000` eliminó. Reescrito con
-  las aserciones reales: un autenticado puede cargar un precio manual sobre un instrumento
-  visible, no puede con un `provider` real, y (nuevo, cubre el fix de arriba) no puede leer ni
-  escribir el precio manual de un instrumento privado de otro household.
-
-## [0.30.2] — 2026-08-08
-
-### Arreglado — la hidratación sin scope mezclaba households en el mismo Dexie
-
-PR 2 del plan de multi-household (`necesito-hacerte-unas-consultas`): en `hydrateFromRemote()`,
-el modo completo (sin `householdId`, el camino de `/onboarding/restore` en un dispositivo
-nuevo) resolvía el household activo DESPUÉS de bajar las tablas hijas, y el helper `scoped()`
-era un no-op mientras tanto — así que cuentas, movimientos, presupuestos y el resto de las diez
-tablas hijas de TODOS los households del usuario se bajaban mezcladas a las mismas tablas de
-Dexie, filtradas recién en cada query de pantalla. Es el prerrequisito directo del household
-switcher: sin este fix, restaurar en un dispositivo nuevo con dos households ya dejaba el Dexie
-local con ambos hogares entreverados.
-
-`activeHouseholdId` se resuelve ahora antes de armar el filtro, y `scoped()` siempre filtra por
-`household_id` — nunca no-op. La tabla `households` sigue sin scopear en modo completo (esa
-lista completa es la que el switcher necesita); solo las tablas hijas quedan acotadas al
-household activo. Los household_members de los hogares inactivos no quedan locales — no rompe
-nada, `FamilyPageContent` ya los lee remoto.
 
 ## [0.29.91] — 2026-08-08
 

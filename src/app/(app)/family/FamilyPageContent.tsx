@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, Icon, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
+import { HouseholdSwitcherSheet } from "@/components/household-switcher-sheet";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
@@ -33,6 +34,7 @@ export default function FamilyPageContent() {
   usePageHeader({ title: t("morePage.family"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [householdSwitcherOpen, setHouseholdSwitcherOpen] = useState(false);
 
   if (!household || !members || !invites) {
     return <Skeleton height={200} style={{ marginTop: 16 }} />;
@@ -79,6 +81,10 @@ export default function FamilyPageContent() {
   return (
       <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
         <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
+        {/* Quien acaba de aceptar una invitación cae acá a buscar "volver a
+            lo mío" — el switcher vive también en /more, pero este es el
+            punto de entrada natural justo después de unirse a un grupo. */}
+        <ListRow icon="users" label={t("householdSwitcher.rowLabel")} value={household.name} onClick={() => setHouseholdSwitcherOpen(true)} />
         <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
         <ListRow icon="handshake" label={t("settlePage.title")} onClick={() => router.push("/family/settle")} />
         <ListRow icon="chart" label={t("comparePage.title")} onClick={() => router.push("/family/compare")} />
@@ -142,6 +148,7 @@ export default function FamilyPageContent() {
           </div>
         ) : null}
       </Sheet>
+      <HouseholdSwitcherSheet open={householdSwitcherOpen} onClose={() => setHouseholdSwitcherOpen(false)} />
       </div>
   );
 }

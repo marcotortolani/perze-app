@@ -59,7 +59,10 @@ import type { BudgetRow, CategorizationRuleRow, CategoryRow, GoalRow, OutboxEntr
 const OVERLAP_MS = 5_000;
 const EPOCH = new Date(0).toISOString();
 
-function watermarkKeyFor(householdId: string): string {
+// Exportado — el household switcher (PR 3) lo usa para decidir si un
+// household ya tiene un pull incremental corrido y puede saltear el
+// hydrate completo al cambiar a él.
+export function watermarkKeyFor(householdId: string): string {
   return `pullWatermark:${householdId}`;
 }
 

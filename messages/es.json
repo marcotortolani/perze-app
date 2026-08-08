@@ -845,6 +845,13 @@
   "signOutUnsyncedWarning": "{count, plural, one {Tenés # cambio que todavía no se subió al servidor.} other {Tenés # cambios que todavía no se subieron al servidor.}} Si cerrás sesión ahora, se pierden.",
   "signOutConfirmAction": "Cerrar sesión igual"
  },
+ "householdSwitcher": {
+  "rowLabel": "Hogar",
+  "sheetTitle": "Cambiar de hogar",
+  "empty": "No encontramos ningún hogar para esta cuenta.",
+  "switched": "Cambiaste de hogar.",
+  "switchError": "No pudimos cambiar de hogar. Probá de nuevo."
+ },
  "adminPage": {
   "title": "Panel del operador",
   "manageUsers": "Gestionar usuarios",
