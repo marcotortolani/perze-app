@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.96 — 8 de agosto de 2026
+
+### Nuevo
+
+- Si ya usabas Perze por tu cuenta y te sumaste a un grupo familiar, ahora podés sumar tus
+  cuentas al hogar familiar sin perder el historial — cada movimiento se va con la cuenta. Lo
+  que no sumes se queda intacto en tu hogar personal.
+
 ## 0.29.92 — 8 de agosto de 2026
 
 ### Arreglado
