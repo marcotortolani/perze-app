@@ -144,6 +144,7 @@ Deno.serve(async (req) => {
         .select("profile_id")
         .eq("household_id", householdId)
         .eq("profile_id", caller.id)
+        .eq("status", "active")
         .maybeSingle();
       if (membershipError) return internalError("membership check", membershipError);
       if (!callerMembership) {
@@ -164,7 +165,11 @@ Deno.serve(async (req) => {
   let targetProfileIds: string[];
 
   if (householdId) {
-    const { data: members, error: membersError } = await admin.from("household_members").select("profile_id").eq("household_id", householdId);
+    const { data: members, error: membersError } = await admin
+      .from("household_members")
+      .select("profile_id")
+      .eq("household_id", householdId)
+      .eq("status", "active");
     if (membersError) return internalError("list members", membersError);
 
     const column = HOUSEHOLD_PREFERENCE_COLUMN[kind as (typeof HOUSEHOLD_KINDS)[number]];

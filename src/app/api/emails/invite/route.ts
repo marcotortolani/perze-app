@@ -82,6 +82,7 @@ export async function POST(request: Request) {
     .select("role")
     .eq("household_id", invite.household_id)
     .eq("profile_id", user.id)
+    .eq("status", "active")
     .maybeSingle();
   if (membershipError) return jsonError("INTERNAL_ERROR", 500);
   if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {

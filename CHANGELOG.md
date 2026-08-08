@@ -6,6 +6,44 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.92] — 2026-08-08
+
+### Arreglado — endurecimiento de RLS: precios manuales de instrumentos, funciones de cron y `households`
+
+Auditoría de aislamiento por household — encontró la única fuga real de lectura/escritura
+cruzada del esquema, más tres endurecimientos que no filtran datos pero amplían la superficie de
+ataque de más de lo necesario.
+
+- **`price_snapshots` — fuga real.** `price_snapshots_select` era `USING (true)` desde que la
+  tabla era solo dato de mercado global; `20260806090000_investment_prices_infra.sql` habilitó
+  después precios manuales sobre instrumentos con `household_id` propio, y la policy de SELECT
+  quedó abierta: cualquier autenticado leía la valuación manual que otro household cargó para un
+  inmueble, un plazo fijo o una ON. `price_snapshots_manual_update` no tenía scope alguno —
+  cualquiera podía reescribir el precio manual de cualquiera. Ambas policies quedan acotadas al
+  household del instrumento (o `NULL` si es catálogo compartido).
+- **9 funciones de cron `SECURITY DEFINER` sin `REVOKE`.** `materialize_recurring_transactions`,
+  `dispatch_due_notifications`, `close_overdue_card_statements`, `purge_audit_log`,
+  `prune_push_subscriptions`, `compute_fx_monthly_averages` y los tres `trigger_daily_*_sync`
+  eran invocables por cualquier `authenticated` vía PostgREST y corren sobre todos los
+  households. Ninguna filtra datos (todas devuelven `void`), pero cualquiera podía dispararlas.
+  `REVOKE EXECUTE FROM PUBLIC, anon, authenticated` — pg_cron sigue funcionando porque los jobs
+  corren como el rol que los agendó (el dueño), mismo patrón ya aplicado a
+  `open_card_statements()`.
+- **`households.created_by` mutable.** `households` no estaba en ninguno de los 21 triggers de
+  `20260801130000_immutability_triggers.sql`. Se agrega `households_immutable` sobre `id` y
+  `created_by` — `base_currency` queda deliberadamente afuera, porque cambiarla es una función
+  real de producto (pendiente de su propia RPC de re-resolución de FX, no de un bloqueo).
+- **`send-push` y el reenvío de invitación por mail no filtraban `status='active'`.** Un miembro
+  removido (`'former'`) seguía pasando la autorización y podía mandar push al household del que
+  lo echaron, o los destinatarios incluían miembros removidos/invitados. Mismo hueco en
+  `api/emails/invite`. Se agrega el filtro en los tres puntos — el precedente correcto ya
+  existía en `notify-invite-accepted`.
+- **`16_investments_rls.sql` estaba en rojo.** Su última aserción decía "ningún autenticado
+  puede insertar en `price_snapshots`", invariante que `20260806090000` eliminó. Reescrito con
+  las aserciones reales: un autenticado puede cargar un precio manual sobre un instrumento
+  visible, no puede con un `provider` real, y (nuevo, cubre el fix de arriba) no puede leer ni
+  escribir el precio manual de un instrumento privado de otro household.
+
 ## [0.29.91] — 2026-08-08
 
 ### Arreglado — saneamiento de los stores persistidos: versión/migración, TTL de precios y logout
