@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.82 — 8 de agosto de 2026
+
+### Arreglado
+
+- El menú lateral en escritorio ya no muestra una barra de scroll de mentira cuando todas las
+  opciones entran cómodas en pantalla.
+
 ## 0.29.81 — 8 de agosto de 2026
 
 ### Arreglado

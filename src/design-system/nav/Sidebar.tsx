@@ -185,7 +185,7 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onS
         // el último ítem (o el botón de cerrar sesión) quede pegado contra
         // el borde real del scroller — el mismo que consume el fade de
         // `scroll-fade-bottom` de arriba.
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 24, padding: "0 16px 32px" }}
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 16, padding: "0 16px 24px" }}
       >
         {groups ? (
           groups.map((group) => (

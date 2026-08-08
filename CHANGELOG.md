@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.82] — 2026-08-08
+
+### Corregido — scroll fantasma en el sidebar de escritorio
+
+`<nav>` (`Sidebar.tsx`) mostraba scrollbar aunque el contenido entrara con aire de sobra: el
+presupuesto vertical (gap de 24px entre grupos + 32px de padding-bottom) dejaba el alto real del
+contenido apenas unos px por encima del alto disponible en resoluciones de escritorio comunes,
+así que `overflow-y: auto` activaba un scroll de un puñado de píxeles — imperceptible como
+contenido pero visible como scrollbar. Gap de grupos a 16px y padding-bottom a 24px (mismo grid de
+4px), suficiente margen para que el caso común no dispare el scroll sin comprimir visualmente la
+lista.
+
 ## [0.29.81] — 2026-08-08
 
 ### Corregido — comprar/vender una inversión no movía el saldo de la cuenta de liquidación
