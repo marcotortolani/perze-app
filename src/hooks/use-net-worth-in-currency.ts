@@ -24,7 +24,7 @@ export function useNetWorthInCurrency(householdId: string | undefined, amount: M
     // no se acumulen bajo el default largo del resto de la app.
     gcTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Money | null> => {
-      const resolution = await fxRepo.resolve({ householdId: householdId!, base: amount!.currency, quote: targetCurrency!, date: todayIso() });
+      const resolution = await fxRepo.resolve({ householdId: householdId!, base: amount!.currency, quote: targetCurrency!, date: todayIso(), liveRecalc: true });
       if (!resolution.rate) return null;
       return convert(amount!, targetCurrency!, resolution.rate);
     },

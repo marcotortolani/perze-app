@@ -210,6 +210,28 @@ export const transactionsRepo = {
     });
   },
 
+  /**
+   * Contraparte de `discardLocal` cuando la fila SÍ existe en el servidor:
+   * la versión del servidor reemplaza a la local y su efecto de saldo se
+   * aplica optimistamente. Sin esto, descartar una mutación `update` cuya
+   * fila remota no cambió desde el último pull la haría desaparecer del
+   * dispositivo — su `updated_at` quedó debajo del watermark y ningún pull
+   * la vuelve a pedir. El saldo autoritativo llega igual en el próximo
+   * `refreshAccounts`; el bump acá es para que offline no quede un saldo
+   * que excluye una fila que la lista sí muestra.
+   */
+  async adoptServerRow(row: TransactionRow): Promise<void> {
+    const db = getDb();
+    await db.transaction("rw", db.transactions, db.accounts, async () => {
+      await db.transactions.put(row);
+      if (row.deletedAt === null) {
+        for (const [accountId, delta] of mergeEffectsByAccount(computeTransactionEffects(row))) {
+          await bumpBalance(accountId, delta);
+        }
+      }
+    });
+  },
+
   /** Deshacer el borrado — reaplica el efecto original. */
   async restore(id: string): Promise<void> {
     const db = getDb();

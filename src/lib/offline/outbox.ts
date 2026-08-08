@@ -105,6 +105,14 @@ export const outbox = {
         lastError: error,
         nextAttemptAt: null,
       });
+      // Una entrada muerta deja de bloquear el saldo (`blockingAccountIds`
+      // solo cuenta estados activos), así que la fila local sigue visible
+      // pero el saldo ya no la incluye — marcarla `rejected` es lo que
+      // permite a la lista señalar ese desfasaje en vez de mostrarlo mudo.
+      // Mismo patrón que `recordConflict` en `sync-worker.ts`.
+      if (row?.table === "transactions") {
+        await getDb().transactions.update(row.entityId, { syncState: "rejected", syncError: error });
+      }
       return;
     }
     await getDb().outbox.update(id, {
@@ -144,6 +152,34 @@ export const outbox = {
    */
   async retryAllDead(): Promise<number> {
     return getDb().outbox.where("status").equals("dead").modify({ status: "pending", nextAttemptAt: null });
+  },
+
+  /**
+   * Descarte manual (pantalla de diagnóstico en Más) — saca una entrada
+   * `"failed"`/`"dead"`/`"conflict"` de la cola para siempre, sin
+   * reintentar. Solo borra la fila del outbox: no toca la fila de la
+   * entidad ni su efecto local (eso lo resuelve el caller, ver
+   * `outbox-actions.ts` para `transactions`).
+   */
+  async discard(id: number): Promise<void> {
+    await getDb().outbox.delete(id);
+  },
+
+  /**
+   * Limpia la(s) entrada(s) `"conflict"` de una entidad ya resuelta desde
+   * `conflicts-repo.ts` (`keepLocal`/`keepServer`). Sin esto, la entrada
+   * original que disparó el conflicto queda huérfana en el outbox para
+   * siempre — nada la vuelve a tocar (`listPending` la ignora, es
+   * terminal), así que sigue apareciendo en el diagnóstico como si el
+   * conflicto siguiera abierto.
+   */
+  async clearConflict(table: string, entityId: string): Promise<void> {
+    const stale = await getDb()
+      .outbox.where("entityId")
+      .equals(entityId)
+      .filter((e) => e.table === table && e.status === "conflict")
+      .toArray();
+    if (stale.length) await getDb().outbox.bulkDelete(stale.map((e) => e.id!));
   },
 };
 

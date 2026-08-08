@@ -3,6 +3,7 @@ import { createClient } from "../supabase/client";
 import { getDb } from "../db/client";
 import { withoutOutbox } from "./outbox";
 import { fetchKeyset, fetchPaged, type KeysetCursor } from "./paging";
+import { fxRepo } from "../repos/fx-repo";
 import {
   ACCOUNTS_COLUMNS,
   BUDGETS_COLUMNS,
@@ -68,12 +69,39 @@ async function blockedEntityIds(candidateIds: string[], table: string): Promise<
   return new Set(entries.filter((e) => e.table === table).map((e) => e.entityId));
 }
 
-async function hasPendingOutboxFor(table: string): Promise<boolean> {
-  const count = await getDb()
+/**
+ * Cuentas cuyo saldo local no hay que pisar todavía: solo las que tienen una
+ * entrada de `transactions` en un estado ACTIVO (`pending`/`syncing`/
+ * `failed` en backoff) — una escritura de verdad en camino al servidor.
+ * `conflict` y `dead` son terminales: no van a resolverse solas, y su
+ * mutación nunca llegó al servidor, así que el saldo remoto es el correcto
+ * y hay que dejar que lo pise. Antes esto era un booleano por household
+ * completo (`hasPendingOutboxFor`): un solo conflicto en UNA cuenta
+ * congelaba el saldo de TODAS las cuentas del household para siempre, en
+ * cualquier dispositivo con esa entrada atascada.
+ */
+async function blockingAccountIds(): Promise<Set<string>> {
+  const entries = await getDb()
     .outbox.toCollection()
-    .filter((e: OutboxEntryRow) => e.table === table)
-    .count();
-  return count > 0;
+    .filter((e: OutboxEntryRow) => e.table === "transactions")
+    .toArray();
+  const isActive = (e: OutboxEntryRow) => e.status === "pending" || e.status === "syncing" || e.status === "failed";
+  // Para cada entidad con al menos una entrada activa se bloquean las
+  // cuentas de TODAS sus entradas (también las viejas de la misma cola):
+  // una edición pendiente que movió el movimiento de cuenta A a B solo
+  // lleva B en su payload, pero el saldo optimista de A también se ajustó
+  // y el del servidor todavía no. Si el insert ya sincronizó y solo queda
+  // el update, la cuenta vieja no figura en ningún payload — ese caso se
+  // corrige solo en el pull siguiente al push.
+  const activeEntities = new Set(entries.filter(isActive).map((e) => e.entityId));
+  const ids = new Set<string>();
+  for (const entry of entries) {
+    if (!activeEntities.has(entry.entityId)) continue;
+    const payload = entry.payload as { accountId?: string; counterAccountId?: string | null } | null;
+    if (payload?.accountId) ids.add(payload.accountId);
+    if (payload?.counterAccountId) ids.add(payload.counterAccountId);
+  }
+  return ids;
 }
 
 // ---------------------------------------------------------------------------
@@ -132,9 +160,11 @@ async function refreshAccounts(householdId: string): Promise<{ count: number; pr
   const rawAccounts = await fetchPaged<RawAccount>((f, t) => supabase.from("accounts").select(ACCOUNTS_COLUMNS).eq("household_id", householdId).order("id").range(f, t));
   let rows = rawAccounts.map(accountFromRow);
 
-  if (await hasPendingOutboxFor("transactions")) {
+  const blocked = await blockingAccountIds();
+  if (blocked.size > 0) {
     const localById = new Map((await db.accounts.where("householdId").equals(householdId).toArray()).map((a) => [a.id, a]));
     rows = rows.map((r) => {
+      if (!blocked.has(r.id)) return r;
       const local = localById.get(r.id);
       return local ? { ...r, currentBalance: local.currentBalance } : r;
     });
@@ -298,6 +328,16 @@ export interface PullResult {
 export async function pullFromRemote(householdId: string): Promise<PullResult> {
   const tx = await pullTransactions(householdId);
   await refreshHousehold(householdId);
+  try {
+    // Overrides manuales y preferencia de cotización (blue/CCL/oficial) del
+    // household — sin esto, "qué tipo de cambio se está eligiendo" solo se
+    // propagaba a otro dispositivo si alguien abría `/currencies` ahí. Va
+    // en el mismo tick que el resto del pull, no en el camino de guardar un
+    // gasto — no compite con el objetivo de <5s.
+    await fxRepo.syncFromServer(householdId);
+  } catch {
+    // Sin red o error del servidor: las cotizaciones/overrides locales quedan como estaban.
+  }
   const members = await refreshMembers(householdId);
   const accounts = await refreshAccounts(householdId);
   const categories = await refreshCategories(householdId);

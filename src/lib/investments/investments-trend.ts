@@ -77,7 +77,7 @@ export async function computeInvestmentsTrend(householdId: string, baseCurrency:
     Promise.all(
       [...new Set(trendPositions.map((p) => p.currencyCode))]
         .filter((c) => c !== baseCurrency)
-        .map(async (currency) => [currency, (await fxRepo.resolve({ householdId, base: currency, quote: baseCurrency, date: todayIso() })).rate] as const)
+        .map(async (currency) => [currency, (await fxRepo.resolve({ householdId, base: currency, quote: baseCurrency, date: todayIso(), liveRecalc: true })).rate] as const)
     ),
   ]);
   const rateByCurrency = new Map(rates);

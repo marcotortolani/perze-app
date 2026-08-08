@@ -18,6 +18,29 @@ const fxPreferencesRepoAsync = () => import("./fx-preferences-repo").then((m) =>
 
 const MANUAL_PROVIDER = "manual";
 
+/**
+ * Antes, una vez que un dispositivo cacheaba la cotización de HOY
+ * (`source: "api"`), nunca más volvía a pedirla a `/api/fx` ese mismo día
+ * — así que si el proveedor la corregía más tarde, dos dispositivos que la
+ * cacharon en momentos distintos del día quedaban mostrando montos en base
+ * distintos para el mismo saldo real, sin forma de notarlo. Revalidar cada
+ * 15 minutos no compite con el objetivo de <5s de captura: solo se activa
+ * cuando el caller pasa `liveRecalc: true` (patrimonio neto, saldos
+ * consolidados) — `resolve()` para GUARDAR un movimiento (rate que se
+ * congela) sigue sirviendo del cache de hoy sin round-trip extra.
+ */
+const FX_REFRESH_TTL_MS = 15 * 60_000;
+
+/**
+ * Último intento de revalidación por TTL, por par — si `/api/fx` no
+ * resolvió (proveedor caído, fin de semana), `fetchedAt` no se actualiza y
+ * sin esta marca cada recálculo repetiría el round-trip completo.
+ */
+const liveRefetchAttemptedAt = new Map<string, number>();
+
+/** Push de override que falló sin red — `syncFromServer` lo re-empuja y mientras tanto NO pisa ese par con el valor viejo del servidor. */
+const overridePushKey = (householdId: string, base: string, quote: string) => `fxOverridePush:${householdId}|${base}|${quote}`;
+
 function toRecord(row: FxRateRow): FxRateRecord {
   return {
     base: row.base,
@@ -161,8 +184,12 @@ export const fxRepo = {
     if (createdBy) {
       try {
         await (await fxOverridesRepoAsync()).setOverride(householdId, base, quote, rate, createdBy);
+        await getDb().meta.delete(overridePushKey(householdId, base, quote));
       } catch {
-        // sin red o error del servidor: el override local ya está aplicado.
+        // Sin red o error del servidor: el override local ya está aplicado.
+        // Queda anotado para que `syncFromServer` lo re-empuje en el próximo
+        // pull — sin esto, el pull pisaría este override con el del servidor.
+        await getDb().meta.put({ key: overridePushKey(householdId, base, quote), value: { rate: rate.toString(), createdBy } });
       }
     }
   },
@@ -197,8 +224,12 @@ export const fxRepo = {
     await getDb().fxRates.bulkDelete(manualKeys);
     try {
       await (await fxOverridesRepoAsync()).clearOverride(householdId, base, quote);
+      await getDb().meta.delete(overridePushKey(householdId, base, quote));
     } catch {
-      // sin red o error del servidor: el override local ya se limpió.
+      // Sin red o error del servidor: el override local ya se limpió. Igual
+      // que en `setManualOverride`, queda pendiente para el próximo pull —
+      // si no, `syncFromServer` resucitaría el override recién borrado.
+      await getDb().meta.put({ key: overridePushKey(householdId, base, quote), value: { clear: true } });
     }
   },
 
@@ -233,9 +264,27 @@ export const fxRepo = {
    */
   async syncFromServer(householdId: string): Promise<void> {
     const [overridesRepo, preferencesRepo] = await Promise.all([fxOverridesRepoAsync(), fxPreferencesRepoAsync()]);
+
+    // Primero re-empujar los overrides cuyo push original falló sin red —
+    // y no pisar localmente los pares que sigan pendientes: el valor local
+    // es más nuevo que el que tiene el servidor.
+    const pendingPushes = await getDb().meta.where("key").startsWith(`fxOverridePush:${householdId}|`).toArray();
+    const stillPending = new Set<string>();
+    for (const pendingPush of pendingPushes) {
+      const [, base, quote] = pendingPush.key.slice("fxOverridePush:".length).split("|");
+      const value = pendingPush.value as { rate?: string; createdBy?: string; clear?: boolean };
+      try {
+        if (value.clear) await overridesRepo.clearOverride(householdId, base!, quote!);
+        else await overridesRepo.setOverride(householdId, base!, quote!, BigInt(value.rate!), value.createdBy!);
+        await getDb().meta.delete(pendingPush.key);
+      } catch {
+        stillPending.add(`${base}|${quote}`);
+      }
+    }
+
     const [overrides, preferences] = await Promise.all([overridesRepo.listActive(householdId), preferencesRepo.listForHousehold(householdId)]);
     await Promise.all([
-      ...overrides.map((o) => putManualOverrideLocal(householdId, o.baseCurrency, o.quoteCurrency, o.rate, "custom")),
+      ...overrides.filter((o) => !stillPending.has(`${o.baseCurrency}|${o.quoteCurrency}`)).map((o) => putManualOverrideLocal(householdId, o.baseCurrency, o.quoteCurrency, o.rate, "custom")),
       ...preferences.map((p) => getDb().householdFxPreferences.put({ householdId, currencyPair: p.currencyPair, preferredProvider: p.preferredProvider, preferredQuoteKind: p.preferredQuoteKind })),
     ]);
   },
@@ -252,8 +301,18 @@ export const fxRepo = {
     date: string;
     /** Botón "Actualizar" de E6: pega a `/api/fx` aunque el cache ya tenga la cotización de hoy. El override manual sigue ganando igual — esto nunca lo pisa. */
     forceRefresh?: boolean;
+    /**
+     * Para pantallas que recalculan un agregado EN VIVO (patrimonio neto,
+     * saldos consolidados) y no para congelar el rate de un movimiento: se
+     * permite revalidar una cotización de hoy contra el servidor si el
+     * cache tiene más de `FX_REFRESH_TTL_MS`. Deliberadamente `false` por
+     * default — el camino de captura (`save-transaction.ts` y afines)
+     * necesita servir del cache al instante, nunca agregar un round-trip
+     * extra a los <5s de guardar un gasto.
+     */
+    liveRecalc?: boolean;
   }): Promise<FxResolution> {
-    const { householdId, base, quote, date, forceRefresh = false } = params;
+    const { householdId, base, quote, date, forceRefresh = false, liveRecalc = false } = params;
     if (base === quote) {
       return resolveFxRate({ base, quote, date, ratesForPair: [] });
     }
@@ -285,7 +344,25 @@ export const fxRepo = {
     // conexión — se sigue prefiriendo el cache si ya tiene la cotización
     // de hoy (`resolution.source === "api"`), pero un `inherited` para la
     // fecha de hoy vale la pena refrescar.
-    const shouldRefetch = forceRefresh || resolution.source === "pending" || (resolution.source === "inherited" && date === todayIso());
+    const todayCacheAgeMs =
+      resolution.source === "api" && resolution.asOf === date
+        ? (() => {
+            const match = cachedRows.find((r) => r.asOf === date && r.provider === resolution.provider && r.quoteKind === resolution.quoteKind);
+            return match ? Date.now() - new Date(match.fetchedAt).getTime() : null;
+          })()
+        : null;
+    const ttlKey = `${householdId}|${base}|${quote}|${date}`;
+    const ttlRefetch =
+      liveRecalc &&
+      todayCacheAgeMs !== null &&
+      todayCacheAgeMs > FX_REFRESH_TTL_MS &&
+      Date.now() - (liveRefetchAttemptedAt.get(ttlKey) ?? 0) > FX_REFRESH_TTL_MS;
+    const shouldRefetch = forceRefresh || resolution.source === "pending" || (resolution.source === "inherited" && date === todayIso()) || ttlRefetch;
+    // Cuando el ÚNICO motivo del refetch es el TTL ya hay una cotización de
+    // hoy servible: el timeout es corto para que una red colgada (portal
+    // cautivo, `onLine` mintiendo) no deje el patrimonio neto en skeleton.
+    const ttlOnly = ttlRefetch && !forceRefresh && resolution.source === "api";
+    if (ttlOnly) liveRefetchAttemptedAt.set(ttlKey, Date.now());
     if (shouldRefetch && isOnline) {
       try {
         const url = new URL("/api/fx", typeof window !== "undefined" ? window.location.origin : "http://localhost");
@@ -296,7 +373,9 @@ export const fxRepo = {
         if (preference.preferredProvider) url.searchParams.set("provider", preference.preferredProvider);
         if (preference.preferredQuoteKind) url.searchParams.set("quoteKind", preference.preferredQuoteKind);
 
-        const res = await fetch(url.toString());
+        // Acotado siempre: si expira, cae al catch y se sirve lo local
+        // (cache o `pending`) — el guardado nunca se bloquea (CLAUDE.md).
+        const res = await fetch(url.toString(), { signal: AbortSignal.timeout(ttlOnly ? 4_000 : 10_000) });
         if (res.ok) {
           const data = (await res.json()) as {
             rate: string | null;
@@ -333,12 +412,19 @@ export const fxRepo = {
           if (freshRecords.length > 0) await fxRepo.cacheQuotes(freshRecords);
 
           if (resolvedRecord) {
+            // Un record fresco con la misma identidad (asOf+provider+
+            // quoteKind) que uno cacheado lo REEMPLAZA para esta resolución
+            // — sin el filtro, el viejo ganaba el empate y el caller recibía
+            // el rate desactualizado aunque el cache de Dexie ya tuviera el
+            // corregido (recién visible en el próximo resolve).
+            const identity = (r: FxRateRecord) => `${r.base}|${r.quote}|${r.asOf}|${r.provider}|${r.quoteKind}`;
+            const freshIdentities = new Set(freshRecords.map(identity));
             resolution = resolveFxRate({
               base,
               quote,
               date,
               manualOverride,
-              ratesForPair: [...cachedRows.map(toRecord), ...freshRecords],
+              ratesForPair: [...cachedRows.map(toRecord).filter((r) => !freshIdentities.has(identity(r))), ...freshRecords],
               preferredProvider: preference.preferredProvider,
               preferredQuoteKind: preference.preferredQuoteKind,
             });

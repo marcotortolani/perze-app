@@ -382,7 +382,7 @@ describe("pullFromRemote", () => {
 
   it("excepción de accounts.currentBalance: con transactions pendientes en el outbox, el saldo local no se pisa", async () => {
     await getDb().accounts.add(localAccount({ currentBalance: 5_000n }));
-    await outbox.enqueue({ table: "transactions", op: "insert", entityId: "tx-nueva", payload: {}, clientRev: 1 });
+    await outbox.enqueue({ table: "transactions", op: "insert", entityId: "tx-nueva", payload: { accountId: "acc-1" }, clientRev: 1 });
 
     currentFakeSupabase = makeFakeSupabase({
       households: [],

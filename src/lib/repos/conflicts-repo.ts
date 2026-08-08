@@ -1,14 +1,15 @@
 import { getDb } from "../db/client";
 import type { ConflictRecordRow, TransactionRow } from "../db/schema";
 import { outbox } from "../offline/outbox";
+import { transactionsRepo } from "./transactions-repo";
 import { nowIso } from "./ids";
 
 function bigintOrNull(value: unknown): bigint | null {
   return value === null || value === undefined ? null : BigInt(value as string);
 }
 
-/** El servidor guarda `transactions` en snake_case con bigint como string — la vuelta exacta de `sync-config.ts#toRow`. */
-function fromServerTransaction(server: Record<string, unknown>): TransactionRow {
+/** El servidor guarda `transactions` en snake_case con bigint como string — la vuelta exacta de `sync-config.ts#toRow`. Exportada para el fallback offline del descarte (`outbox-actions.ts`). */
+export function fromServerTransaction(server: Record<string, unknown>): TransactionRow {
   return {
     id: server.id as string,
     householdId: server.household_id as string,
@@ -75,6 +76,10 @@ export const conflictsRepo = {
     // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
     await db.transaction("rw", db.transactions, db.outbox, db.conflicts, async () => {
       await db.transactions.put(updated);
+      // La entrada vieja que disparó este conflicto sigue en `"conflict"` —
+      // hay que sacarla antes de encolar la nueva, si no queda una
+      // huérfana para siempre (ver `outbox.clearConflict`).
+      await outbox.clearConflict("transactions", conflict.entityId);
       await outbox.enqueue({ table: "transactions", op: "update", entityId: conflict.entityId, payload: updated, clientRev: nextRev });
       await db.conflicts.delete(conflict.id);
     });
@@ -84,7 +89,15 @@ export const conflictsRepo = {
   async keepServer(conflict: ConflictRecordRow): Promise<void> {
     const db = getDb();
     const serverRow = fromServerTransaction(conflict.serverPayload);
-    await db.transactions.put(serverRow);
-    await db.conflicts.delete(conflict.id);
+    await db.transaction("rw", db.transactions, db.accounts, db.outbox, db.conflicts, async () => {
+      // discardLocal + adoptServerRow y no un `put` directo: la edición
+      // local ya movió el saldo optimistamente, y el put no lo devolvía —
+      // la cuenta quedaba desfasada por el delta de la edición hasta el
+      // próximo pull (offline: indefinidamente).
+      await transactionsRepo.discardLocal(conflict.entityId);
+      await transactionsRepo.adoptServerRow(serverRow);
+      await outbox.clearConflict("transactions", conflict.entityId);
+      await db.conflicts.delete(conflict.id);
+    });
   },
 };

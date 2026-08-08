@@ -140,6 +140,52 @@ describe("fxRepo — overrides manuales scoped por household (A8)", () => {
     expect(resolution.rate).toBe(rateFromInteger(1200));
   });
 
+  describe("liveRecalc — TTL de revalidación intradía para agregados en vivo", () => {
+    const cacheToday = (fetchedAt: string) =>
+      fxRepo.cacheQuotes([{ base: "USD", quote: "ARS", asOf: todayIso(), provider: "dolarapi", quoteKind: "oficial", rate: rateFromInteger(1000), fetchedAt }]);
+
+    const stubFetch = () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ rate: formatRate(rateFromInteger(1200)), source: "api", provider: "dolarapi", quoteKind: "oficial", asOf: todayIso(), isStale: false }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubGlobal("navigator", { onLine: true });
+      return fetchMock;
+    };
+
+    it("una cotización de hoy con más de 15 min se revalida contra /api/fx", async () => {
+      await cacheToday(new Date(Date.now() - 20 * 60_000).toISOString());
+      const fetchMock = stubFetch();
+
+      const resolution = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: todayIso(), liveRecalc: true });
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(resolution.rate).toBe(rateFromInteger(1200));
+    });
+
+    it("con cache fresco (<15 min) no hay round-trip, aun con liveRecalc", async () => {
+      await cacheToday(new Date(Date.now() - 60_000).toISOString());
+      const fetchMock = stubFetch();
+
+      const resolution = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: todayIso(), liveRecalc: true });
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(resolution.rate).toBe(rateFromInteger(1000));
+    });
+
+    it("sin liveRecalc (camino de captura), la cotización de hoy se sirve del cache sin importar su edad", async () => {
+      await cacheToday(new Date(Date.now() - 20 * 60_000).toISOString());
+      const fetchMock = stubFetch();
+
+      const resolution = await fxRepo.resolve({ householdId: "household-a", base: "USD", quote: "ARS", date: todayIso() });
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(resolution.source).toBe("api");
+      expect(resolution.rate).toBe(rateFromInteger(1000));
+    });
+  });
+
   describe("getManualOverride — encuentra el par guardado al revés", () => {
     it("un override guardado como base→quote también sirve para quote→base, invertido", async () => {
       // `/currencies` guarda SIEMPRE en una única dirección canónica

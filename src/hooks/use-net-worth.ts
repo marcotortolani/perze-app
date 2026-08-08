@@ -37,7 +37,7 @@ export function useNetWorth(householdId: string | undefined, baseCurrency: strin
       const rates = new Map<string, bigint | null>();
       await Promise.all(
         currencies.map(async (currency) => {
-          const resolution = await fxRepo.resolve({ householdId: householdId!, base: currency, quote: baseCurrency!, date });
+          const resolution = await fxRepo.resolve({ householdId: householdId!, base: currency, quote: baseCurrency!, date, liveRecalc: true });
           rates.set(currency, resolution.rate);
         })
       );

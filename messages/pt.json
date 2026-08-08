@@ -956,7 +956,10 @@
   "retry": "Tentar de novo agora",
   "retried": "Na fila para a próxima tentativa.",
   "retryAll": "Tentar todas de novo ({count})",
-  "retriedAll": "{count} entradas de volta na fila"
+  "retriedAll": "{count} entradas de volta na fila",
+  "discard": "Descartar",
+  "discarded": "Descartada.",
+  "discardBusy": "Está sincronizando agora — aguarde um momento e tente de novo."
  },
  "notificationsPage": {
   "title": "Notificações",

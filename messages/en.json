@@ -956,7 +956,10 @@
   "retry": "Retry now",
   "retried": "Queued for the next attempt.",
   "retryAll": "Retry all ({count})",
-  "retriedAll": "{count} entries back in the queue"
+  "retriedAll": "{count} entries back in the queue",
+  "discard": "Discard",
+  "discarded": "Discarded.",
+  "discardBusy": "It's syncing right now — wait a moment and try again."
  },
  "notificationsPage": {
   "title": "Notifications",

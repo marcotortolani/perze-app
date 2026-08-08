@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { Button, EmptyState, StatusBadge, usePageHeader } from "@/design-system";
 import { getDb } from "@/lib/db/client";
 import { outbox } from "@/lib/offline/outbox";
+import { discardOutboxEntry, undoDiscardOutboxEntry } from "@/lib/offline/outbox-actions";
 import type { OutboxEntryRow, OutboxStatus } from "@/lib/db/schema";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useConflicts } from "@/hooks/use-conflicts";
@@ -54,6 +55,7 @@ export default function SyncPage() {
   const [resolving, setResolving] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
   const [retryingAll, setRetryingAll] = useState(false);
+  const [discarding, setDiscarding] = useState<number | null>(null);
   usePageHeader({ title: t("syncDiagnosticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
@@ -84,6 +86,38 @@ export default function SyncPage() {
       toast(t("syncDiagnosticsPage.retried"));
     } finally {
       setRetrying(null);
+    }
+  };
+
+  const handleDiscard = async (entry: OutboxEntryRow) => {
+    if (discarding !== null || entry.id === undefined) return;
+    setDiscarding(entry.id);
+    try {
+      const snapshot = await discardOutboxEntry(entry);
+      invalidateTransactions();
+      await refresh();
+      if (!snapshot) {
+        // El sync-worker tomó la entrada entre el render y el tap — no se
+        // descartó nada y anunciarlo sería mentir.
+        toast(t("syncDiagnosticsPage.discardBusy"));
+        return;
+      }
+      // Reversible, no confirmable (CLAUDE.md): mismo patrón de deshacer
+      // que `useDeleteTransactionWithUndo` — para un insert dead, esta es
+      // la única copia del movimiento que existe.
+      toast(t("syncDiagnosticsPage.discarded"), {
+        duration: 5000,
+        action: {
+          label: t("transactions.list.undo"),
+          onClick: async () => {
+            await undoDiscardOutboxEntry(snapshot);
+            invalidateTransactions();
+            await refresh();
+          },
+        },
+      });
+    } finally {
+      setDiscarding(null);
     }
   };
 
@@ -173,10 +207,17 @@ export default function SyncPage() {
                     {entry.lastError}
                   </div>
                 ) : null}
-                {entry.status === "dead" ? (
-                  <Button variant="secondary" disabled={retrying === entry.id} onClick={() => handleRetry(entry)}>
-                    {t("syncDiagnosticsPage.retry")}
-                  </Button>
+                {entry.status === "dead" || entry.status === "failed" || entry.status === "conflict" ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {entry.status !== "conflict" ? (
+                      <Button variant="secondary" disabled={retrying === entry.id} onClick={() => handleRetry(entry)} style={{ flex: 1 }}>
+                        {t("syncDiagnosticsPage.retry")}
+                      </Button>
+                    ) : null}
+                    <Button variant="secondary" disabled={discarding === entry.id} onClick={() => handleDiscard(entry)} style={{ flex: 1 }}>
+                      {t("syncDiagnosticsPage.discard")}
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             ))

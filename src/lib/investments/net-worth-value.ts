@@ -33,7 +33,7 @@ export async function computeInvestmentsValue(householdId: string, baseCurrency:
   const resolveRate = async (currency: string): Promise<bigint | null> => {
     if (currency === baseCurrency) return null; // sin conversión, se usa el valor tal cual
     if (rateCache.has(currency)) return rateCache.get(currency)!;
-    const resolution = await fxRepo.resolve({ householdId, base: currency, quote: baseCurrency, date: todayIso() });
+    const resolution = await fxRepo.resolve({ householdId, base: currency, quote: baseCurrency, date: todayIso(), liveRecalc: true });
     rateCache.set(currency, resolution.rate);
     return resolution.rate;
   };

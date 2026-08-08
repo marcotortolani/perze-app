@@ -40,6 +40,26 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.89 — 8 de agosto de 2026
+
+### Nuevo
+
+- En Más → Estado de sincronización ahora podés descartar una entrada atascada que no vale la
+  pena reintentar — con unos segundos para deshacer si te arrepentís.
+
+### Mejorado
+
+- Las cotizaciones que elegís o cargás a mano ahora se actualizan solas entre tus dispositivos,
+  sin tener que entrar a la pantalla de monedas en cada uno.
+
+### Arreglado
+
+- Los saldos de las cuentas ya no quedan distintos entre dispositivos cuando una sincronización
+  se atasca — al resolver o descartar el problema, el saldo vuelve solo al valor real.
+- Un movimiento que el servidor rechazó ahora queda marcado en la lista, en vez de verse como
+  uno más.
+- Una cotización cargada a mano sin conexión ya no se pierde al volver la señal.
+
 ## 0.29.88 — 8 de agosto de 2026
 
 ### Arreglado

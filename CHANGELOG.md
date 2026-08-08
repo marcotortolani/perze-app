@@ -6,6 +6,60 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.89] — 2026-08-08
+
+### Arreglado — saldos divergentes entre dispositivos por outbox atascado, y descarte de entradas
+
+Causa raíz de la divergencia reportada (saldos distintos en el celular vs localhost contra el
+mismo backend): el guard que protege el `currentBalance` optimista durante el pull
+(`hasPendingOutboxFor`) era un booleano por household completo y contaba también entradas
+terminales (`conflict`/`dead`), que nunca se resuelven solas — una sola entrada atascada
+congelaba el saldo local de TODAS las cuentas del household en ese dispositivo, indefinidamente.
+Ahora `blockingAccountIds()` (`pull.ts`) bloquea solo las cuentas afectadas por entradas ACTIVAS
+(`pending`/`syncing`/`failed`), uniendo los payloads de todas las entradas de cada entidad para
+cubrir también la edición que mueve un movimiento de una cuenta a otra.
+
+El resto de la cadena, salido del fix más una revisión multi-agente (`/code-review` high, 10
+hallazgos confirmados, todos aplicados):
+
+- `keepLocal()`/`keepServer()` limpian la entrada `conflict` original del outbox
+  (`outbox.clearConflict`) en la misma transacción Dexie — antes quedaba huérfana para siempre.
+  `keepServer()` además revierte el efecto optimista local y adopta la fila del servidor con su
+  delta de saldo (`discardLocal` + `adoptServerRow`): el `put` directo dejaba la cuenta desfasada
+  por el delta de la edición hasta el próximo pull (offline: indefinidamente).
+- Descarte manual en Más → Estado de sincronización: botón "Descartar" para
+  `failed`/`dead`/`conflict`, "Reintentar" extendido a `failed`. `discardOutboxEntry()` (nuevo
+  `outbox-actions.ts`, módulo aparte para no ciclar imports con `transactions-repo`): claim
+  atómico que aborta si el sync-worker ya tomó la entrada, descarta TODAS las entradas hermanas
+  de la entidad (una `pending` sobreviviente re-empujaría lo descartado), revierte el saldo
+  optimista, re-adopta la versión del servidor (fetch puntual, porque el watermark ya pasó su
+  `updated_at`; sin red cae al `serverPayload` del conflicto) y borra la fila espejo de
+  `db.conflicts`. El toast ofrece "Deshacer" 5 s con snapshot completo (fila local + efecto de
+  saldo + entradas + conflictos) — reversible, no confirmable.
+- Al pasar una entrada a `dead`, la transacción local se marca `syncState: 'rejected'` — la
+  lista ya renderiza `syncIssue`, así "fila visible pero saldo que no la cuenta" queda
+  señalizado en vez de mudo.
+- FX entre dispositivos: `fxRepo.syncFromServer()` corre en cada `pullFromRemote()`
+  (best-effort) — overrides y preferencia blue/CCL se propagan sin pasar por `/currencies`. Un
+  push de override que falló sin red queda anotado en `db.meta` y se re-empuja en el próximo
+  pull, sin que el pull pise el valor local más nuevo (mismo tratamiento para borrar un override
+  offline).
+- FX intradía: `resolve({ liveRecalc: true })` en los agregados en vivo (`useNetWorth`,
+  `useNetWorthInCurrency`, valor y tendencia de investing, allocation) revalida contra `/api/fx`
+  una cotización de hoy con más de 15 min — con `AbortSignal.timeout` (4 s en ese camino, 10 s
+  en el resto) y cooldown de 15 min por par si el proveedor no resuelve, para no colgar el
+  patrimonio neto en una red muerta ni repetir el round-trip en cada recálculo. El camino de
+  captura (rate congelado) no cambia.
+- Bug preexistente corregido en `resolve()`: tras un refetch, el record fresco con la misma
+  identidad (`asOf`+`provider`+`quoteKind`) que uno cacheado ahora lo REEMPLAZA en la resolución
+  devuelta — antes el viejo ganaba el empate y el caller recibía el rate desactualizado aunque
+  Dexie ya tuviera el corregido (afectaba también al botón "Actualizar" de E6).
+- Tests: 7 nuevos (`outbox-actions.test.ts`: descarte de insert/update dead, sin fila remota,
+  conflicto + espejo, claim vs `syncing`, hermanas, deshacer; `fx-repo.test.ts`: TTL revalida /
+  cache fresco / captura intacta). Suite 963/965 — las 2 que fallan son de `/api/prices`,
+  preexistentes y ajenas a este cambio: fechas hardcodeadas en los fixtures, documentado en
+  `docs/pendiente-tests-api-prices.md` para resolver aparte.
+
 ## [0.29.88] — 2026-08-08
 
 ### Arreglado — contenido pegado al borde inferior en `/start` y `/about`

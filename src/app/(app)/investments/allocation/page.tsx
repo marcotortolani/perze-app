@@ -78,7 +78,7 @@ export default function AllocationPage() {
     queryFn: async () => {
       const entries = await Promise.all(
         heldCurrencies.map(async (currency) => {
-          const resolution = await fxRepo.resolve({ householdId: household!.id, base: currency, quote: household!.baseCurrency, date: todayIso() });
+          const resolution = await fxRepo.resolve({ householdId: household!.id, base: currency, quote: household!.baseCurrency, date: todayIso(), liveRecalc: true });
           return [currency, resolution] as const;
         })
       );
