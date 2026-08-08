@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 /**
  * D45 — mismo patrón de mock que `/api/fx/route.test.ts`: cada `.from(table)`
@@ -40,16 +40,42 @@ vi.mock("@/lib/prices/providers/coingecko", () => ({ createCoinGeckoPriceProvide
 
 const INSTRUMENT_ID = "11111111-1111-4111-8111-111111111111";
 
+/**
+ * La ruta decide "¿este snapshot es de hoy?" contra el reloj real
+ * (`new Date().toISOString().slice(0, 10)`, decisión deliberada de D10: es
+ * fecha de mercado del servidor, no calendario del usuario — ver la nota de
+ * `/api/fx/route.ts`). Con fixtures de fecha literal, los tests envejecían y
+ * fallaban al día siguiente de escribirlos.
+ *
+ * Se ancla el reloj en vez de seguirlo: los fixtures quedan legibles y las
+ * aserciones no dependen de cuándo corre la suite. Se falsea **solo `Date`**
+ * — con los timers completos falseados, cualquier `await` que dependa de la
+ * cola de macrotareas quedaría colgado.
+ *
+ * `T12:00:00Z` a propósito: a mediodía UTC el día calendario es el mismo en
+ * cualquier huso realista, así que la corrida no cambia de resultado entre
+ * las 21:00 y las 00:00 de Uruguay.
+ */
+const FIXTURE_TODAY = "2026-08-06";
+
 describe("GET /api/prices (D45)", () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date(`${FIXTURE_TODAY}T12:00:00.000Z`) });
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it("un snapshot 'manual' de hoy NO tapa la cotización real de un instrumento con proveedor", async () => {
-    fetchPriceMock.mockResolvedValue({ close: 33560, asOf: "2026-08-06" });
+    fetchPriceMock.mockResolvedValue({ close: 33560, asOf: FIXTURE_TODAY });
     const { createClient } = await import("@/lib/supabase/server");
     vi.mocked(createClient).mockResolvedValue(
       makeSupabaseMock({
         user: { id: "u1" },
         tableResults: {
           instruments: { data: { id: INSTRUMENT_ID, price_provider: "data912", provider_symbol: "TSLAm", currency_code: "ARS" }, error: null },
-          price_snapshots: { data: [{ as_of: "2026-08-06", provider: "manual", close: 150 }], error: null },
+          price_snapshots: { data: [{ as_of: FIXTURE_TODAY, provider: "manual", close: 150 }], error: null },
         },
       }) as never
     );
@@ -68,7 +94,7 @@ describe("GET /api/prices (D45)", () => {
         user: { id: "u1" },
         tableResults: {
           instruments: { data: { id: INSTRUMENT_ID, price_provider: "data912", provider_symbol: "TSLAm", currency_code: "ARS" }, error: null },
-          price_snapshots: { data: [{ as_of: "2026-08-06", provider: "data912", close: 33560 }], error: null },
+          price_snapshots: { data: [{ as_of: FIXTURE_TODAY, provider: "data912", close: 33560 }], error: null },
         },
       }) as never
     );
@@ -88,7 +114,7 @@ describe("GET /api/prices (D45)", () => {
         user: { id: "u1" },
         tableResults: {
           instruments: { data: { id: INSTRUMENT_ID, price_provider: null, provider_symbol: null, currency_code: "ARS" }, error: null },
-          price_snapshots: { data: [{ as_of: "2026-08-06", provider: "manual", close: 1500 }], error: null },
+          price_snapshots: { data: [{ as_of: FIXTURE_TODAY, provider: "manual", close: 1500 }], error: null },
         },
       }) as never
     );

@@ -6,6 +6,35 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.90] — 2026-08-08
+
+### Arreglado — los 2 tests de `/api/prices` que caducaban con el calendario
+
+Los fixtures de `src/app/api/prices/route.test.ts` declaraban el snapshot con `as_of:
+"2026-08-06"` literal, que era "hoy" cuando se escribieron. La ruta decide si un snapshot es de
+hoy comparándolo contra el reloj real, así que desde el 7 de agosto el snapshot dejó de contar
+como cache: el test del cache del mismo proveedor veía la llamada a la API que esperaba no ver, y
+el del instrumento sin proveedor recibía `isStale: true`.
+
+Se ancla el reloj en vez de seguirlo — `vi.useFakeTimers({ toFake: ["Date"], now:
+"2026-08-06T12:00:00Z" })` en un `beforeAll`, con los fixtures colgados de la misma constante
+`FIXTURE_TODAY`. Seguir la fecha real (`as_of: todayIso()`) también daba verde, pero deja el test
+sin fecha fija que aserta y vuelve a acoplarlo al reloj de la corrida. Dos detalles del anclaje:
+se falsea **solo `Date`** —con los timers completos falseados cualquier `await` sobre la cola de
+macrotareas quedaría colgado, el problema ya anotado en `outbox.test.ts`— y el ancla es mediodía
+UTC, para que el día calendario sea el mismo en cualquier huso (verificado corriendo la suite con
+`TZ=Pacific/Kiritimati` y `TZ=Pacific/Midway`).
+
+`route.ts` **no se tocó**: su `serverTodayIso()` con `toISOString().slice(0, 10)` no es el bug de
+huso que `CLAUDE.md` prohíbe, es la misma decisión deliberada que documenta `/api/fx/route.ts` —
+corre en el servidor, sin conocer la zona del usuario, y responde una pregunta de fecha de
+mercado, no de calendario personal. Usar la zona del proceso servidor ahí sería tan arbitrario
+como UTC.
+
+Suite completa 965/965. `docs/pendiente-tests-api-prices.md` se elimina: era la nota de este
+pendiente y queda cerrada acá (la referencia en la entrada de 0.29.89 apunta a un archivo que ya
+no existe, a propósito — esa entrada es el registro de lo que pasó en ese release).
+
 ## [0.29.89] — 2026-08-08
 
 ### Arreglado — saldos divergentes entre dispositivos por outbox atascado, y descarte de entradas
