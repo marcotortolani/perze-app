@@ -28,6 +28,9 @@ import type { PullResult } from "./pull";
  */
 const NEVER_TOUCHED_BY_PULL: readonly (readonly unknown[])[] = [
   ["household", "current"],
+  // Household switcher (PR 3) — lista remota de TODOS los households del
+  // usuario, no una tabla que `pullFromRemote` sincronice.
+  ["households", "mine"],
   ["auth"],
   ["asset-classes"],
   ["portfolios"],

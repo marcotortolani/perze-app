@@ -12,6 +12,18 @@ export const householdsRepo = {
     return getDb().households.get(id);
   },
 
+  /**
+   * Household switcher, fallback offline — la lista remota
+   * (`households-remote.ts`) es la fuente principal (Dexie puede no tener
+   * TODOS los households del usuario hasta que cada uno se hidrata), pero
+   * sin red esto es lo único disponible. Después del fix de `hydrate.ts`
+   * (PR 2), `households` local siempre trae la lista completa aunque las
+   * tablas hijas solo estén hidratadas para el household activo.
+   */
+  async listLocal(): Promise<HouseholdRow[]> {
+    return getDb().households.toArray();
+  },
+
   async create(input: NewHouseholdInput): Promise<HouseholdRow> {
     const db = getDb();
     const now = nowIso();

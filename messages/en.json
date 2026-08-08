@@ -843,6 +843,13 @@
   "signOutUnsyncedWarning": "{count, plural, one {You have # change that hasn't uploaded to the server yet.} other {You have # changes that haven't uploaded to the server yet.}} Signing out now will lose them.",
   "signOutConfirmAction": "Sign out anyway"
  },
+ "householdSwitcher": {
+  "rowLabel": "Household",
+  "sheetTitle": "Switch household",
+  "empty": "We couldn't find any household for this account.",
+  "switched": "Switched household.",
+  "switchError": "We couldn't switch households. Try again."
+ },
  "adminPage": {
   "title": "Operator panel",
   "manageUsers": "Manage users",

@@ -843,6 +843,13 @@
   "signOutUnsyncedWarning": "{count, plural, one {Você tem # alteração que ainda não foi enviada ao servidor.} other {Você tem # alterações que ainda não foram enviadas ao servidor.}} Se sair agora, elas se perdem.",
   "signOutConfirmAction": "Sair mesmo assim"
  },
+ "householdSwitcher": {
+  "rowLabel": "Lar",
+  "sheetTitle": "Trocar de lar",
+  "empty": "Não encontramos nenhum lar para esta conta.",
+  "switched": "Você trocou de lar.",
+  "switchError": "Não conseguimos trocar de lar. Tente de novo."
+ },
  "adminPage": {
   "title": "Painel do operador",
   "manageUsers": "Gerenciar usuários",

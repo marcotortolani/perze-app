@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.29.93] — 2026-08-08
+
+### Nuevo — household switcher
+
+PR 3 del plan de multi-household (`necesito-hacerte-unas-consultas`) — hasta ahora la app era
+efectivamente mono-household: `meta.currentHouseholdId` en Dexie no tenía ninguna UI para
+cambiar, aunque el schema (RLS vía `current_households()`, PK compuesta de
+`household_members`) siempre soportó que un usuario pertenezca a más de uno. Quien aceptaba una
+invitación de grupo familiar teniendo su propio household quedaba con dos, veía uno, y el otro
+desaparecía para siempre — hueco que la auditoría de aislamiento por household del PR 1 dejó
+anotado.
+
+- **`src/lib/repos/households-remote.ts`** — lista de TODOS los households del usuario, no solo
+  el activo (Dexie no los tiene completos hasta que cada uno se hidrata). `households-repo.ts`
+  suma `listLocal()` como fallback offline.
+- **`HouseholdSwitcherSheet`**, compartido entre `/more` (arriba de todo, visible en mobile y
+  desktop) y `/family` (junto a "Invitar" — el punto de entrada natural justo después de
+  aceptar una invitación). Fuera del camino caliente a propósito: no vive en `/`, `/add` ni el
+  tab bar, así que no toca la métrica de los 5 segundos. El switch nunca es accidental — tap
+  explícito en una fila, ninguna otra superficie.
+- El cambio en sí (`useSwitchHousehold`): hidrata el household destino solo si no está al día
+  (mismo watermark que usa el pull incremental — evita re-bajar 11 tablas en cada switch),
+  activa local y remoto, y limpia **todo** el cache de queries (`queryClient.clear()`, no
+  invalidación selectiva) porque buena parte de las keys de la app no llevan `householdId`.
+- `["households", "mine"]` se agrega a `NEVER_TOUCHED_BY_PULL` — no es una tabla que
+  `pullFromRemote` sincronice.
+
 ## [0.29.92] — 2026-08-08
 
 ### Arreglado — la hidratación sin scope mezclaba households en el mismo Dexie

@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.29.93 — 8 de agosto de 2026
+
+### Nuevo
+
+- Si formás parte de más de un hogar (por ejemplo, tu cuenta personal y un grupo familiar al
+  que te sumaste), ahora podés cambiar entre ellos desde Más o desde Grupo familiar.
+
 ## 0.29.91 — 8 de agosto de 2026
 
 ### Arreglado

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
+import { HouseholdSwitcherSheet } from "@/components/household-switcher-sheet";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useNavStore } from "@/stores/nav-store";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
@@ -54,6 +55,7 @@ export default function MorePage() {
   const [installState, setInstallState] = useState<{ platform: InstallPlatform; standalone: boolean } | null>(null);
   const [installSheetOpen, setInstallSheetOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [householdSwitcherOpen, setHouseholdSwitcherOpen] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- lee `navigator`/`matchMedia`, no existe en SSR.
@@ -114,6 +116,18 @@ export default function MorePage() {
         className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8 scroll-gutter-right"
         style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 20, paddingTop: 8 }}
       >
+      {/* Household switcher — arriba de todo, visible en mobile y desktop
+          por igual (fuera de la columna `lg:hidden` de abajo). No en el tab
+          bar ni en el camino de `/`, `/add`: cambiar de hogar es una acción
+          rara y deliberada, no parte del flujo de cargar un gasto. */}
+      {household ? (
+        <section>
+          <Card padding="4px 16px">
+            <ListRow icon="users" label={t("householdSwitcher.rowLabel")} value={household.name} onClick={() => setHouseholdSwitcherOpen(true)} />
+          </Card>
+        </section>
+      ) : null}
+
       {/* En `lg`+ esta página es la de SISTEMA y nada más: DINERO y PERSONAS
           ya están en el sidebar, al costado, y repetirlos acá era mostrar dos
           veces lo mismo en la misma pantalla. En móvil no hay sidebar y esta
@@ -257,6 +271,8 @@ export default function MorePage() {
           {t(`settingsPage.installGuide.${installState?.platform ?? "other"}`)}
         </p>
       </Sheet>
+
+      <HouseholdSwitcherSheet open={householdSwitcherOpen} onClose={() => setHouseholdSwitcherOpen(false)} />
     </div>
   );
 }
