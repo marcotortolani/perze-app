@@ -1882,6 +1882,9 @@
   "noEstimate": "Suma solo las cuotas ya comprometidas. No estima consumos nuevos."
  },
  "familyPage": {
+  "householdName": "Nombre del hogar",
+  "householdNameSheetTitle": "Cambiar el nombre del hogar",
+  "householdNameRestricted": "Solo el dueño o un administrador puede cambiar el nombre del hogar.",
   "empty": "Todavía sos el único miembro. Invitá a alguien para compartir cuentas y gastos.",
   "invite": "Invitar a alguien",
   "members": "Miembros",

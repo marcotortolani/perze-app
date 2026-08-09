@@ -1882,6 +1882,9 @@
   "noEstimate": "Only adds up what's already committed. Doesn't estimate new spending."
  },
  "familyPage": {
+  "householdName": "Household name",
+  "householdNameSheetTitle": "Change the household name",
+  "householdNameRestricted": "Only the owner or an admin can change the household name.",
   "empty": "You're still the only member. Invite someone to share accounts and expenses.",
   "invite": "Invite someone",
   "members": "Members",

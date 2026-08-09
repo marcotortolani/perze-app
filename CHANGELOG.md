@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.7] — 2026-08-09
+
+### Nuevo — nombre del hogar editable, desde Grupo familiar en vez de Ajustes
+
+`households.name` quedaba fijo en "Mi hogar" desde la creación: `householdsRepo.update()` ya
+soportaba el campo, solo faltaba la UI. La primera versión la puso en Ajustes, pero es el lugar
+equivocado — es información de identidad del hogar, no una preferencia de formato, y con más de
+un household en juego (switcher de PR 3) queda perdida ahí. Ahora el lápiz vive en la fila
+"Household" de `/family` (`FamilyPageContent.tsx`), justo donde ya se selecciona/mira el hogar
+activo — mismo `Sheet` de un solo `Input`, gateado a `owner`/`admin`.
+
+### Arreglado — "Exchange rates" era imposible de encontrar dentro de Ajustes
+
+Vivía como una fila condicional (solo con más de una moneda en uso) enterrada en la sección
+Datos de `/more/settings`, sin relación visual con el resto de las pantallas de dinero. Se movió
+al grupo DINERO: en móvil, a `/more` antes de Presupuestos; en escritorio, al sidebar
+(`buildDesktopNav()`, grupo `money`) en la misma posición. La condición de multi-moneda se
+mantiene — no aparece si el hogar solo usa una.
+
+---
+
 ## [0.30.6] — 2026-08-08
 
 ### Arreglado — la recuperación por chunk roto podía borrar la capacidad offline entera

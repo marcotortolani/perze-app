@@ -21,7 +21,7 @@ export interface NavGroup {
  * puedan divergir. Los módulos apagados directamente no aparecen — mismos
  * predicados que `more/page.tsx`.
  */
-export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[] {
+export function buildDesktopNav(input: { enabledModules: string[]; isMultiCurrency?: boolean }): NavGroup[] {
   const modules = input.enabledModules;
   const groups: NavGroup[] = [
     {
@@ -37,6 +37,7 @@ export function buildDesktopNav(input: { enabledModules: string[] }): NavGroup[]
       id: "money",
       captionKey: "ds.sidebar.money",
       items: [
+        ...(input.isMultiCurrency ? [{ id: "currencies", route: "/currencies", icon: "refresh" as IconName, labelKey: "settingsPage.fxSources" }] : []),
         ...(modules.includes("budgets") ? [{ id: "budgets", route: "/budgets", icon: "target" as IconName, labelKey: "morePage.budgets" }] : []),
         ...(modules.includes("goals") ? [{ id: "goals", route: "/goals", icon: "flag" as IconName, labelKey: "morePage.goals" }] : []),
         ...(modules.includes("recurring") ? [{ id: "recurring", route: "/recurring", icon: "refresh" as IconName, labelKey: "morePage.recurring" }] : []),

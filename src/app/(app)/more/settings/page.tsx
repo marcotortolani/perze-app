@@ -250,7 +250,6 @@ export default function SettingsPage() {
               ) : hasTransactions ? (
                 <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
               ) : null}
-              {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
               <ListRow
                 icon="globe"
                 label={t("settingsPage.decimalSeparator")}

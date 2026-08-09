@@ -40,6 +40,18 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.7 — 9 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés cambiarle el nombre a tu hogar desde Grupo familiar, tocando el lápiz junto al
+  nombre.
+
+### Mejorado
+
+- Movimos "Tipos de cambio" de Ajustes al grupo de Dinero, junto al resto de las pantallas de
+  cuentas y presupuestos, para que sea más fácil de encontrar.
+
 ## 0.30.6 — 8 de agosto de 2026
 
 ### Mejorado
