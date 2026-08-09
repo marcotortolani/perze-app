@@ -1883,8 +1883,9 @@
  },
  "familyPage": {
   "householdName": "Nome do lar",
-  "householdNameSheetTitle": "Trocar o nome do lar",
-  "householdNameRestricted": "Só o dono ou um administrador pode trocar o nome do lar.",
+  "householdIcon": "Ícone do lar",
+  "householdNameSheetTitle": "Editar o lar",
+  "householdNameRestricted": "Só o dono ou um administrador pode editar o lar.",
   "empty": "Você ainda é o único membro. Convide alguém para compartilhar contas e gastos.",
   "invite": "Convidar alguém",
   "members": "Membros",

@@ -44,8 +44,8 @@ inventes de memoria.
 
 ### Nuevo
 
-- Ahora podés cambiarle el nombre a tu hogar desde Grupo familiar, tocando el lápiz junto al
-  nombre.
+- Ahora podés cambiarle el nombre y el ícono a tu hogar: tocá "Household name" dentro de Grupo
+  familiar.
 
 ### Mejorado
 
