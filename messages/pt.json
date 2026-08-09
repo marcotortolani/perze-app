@@ -1882,6 +1882,10 @@
   "noEstimate": "Soma só as parcelas já comprometidas. Não estima gastos novos."
  },
  "familyPage": {
+  "householdName": "Nome do lar",
+  "householdIcon": "Ícone do lar",
+  "householdNameSheetTitle": "Editar o lar",
+  "householdNameRestricted": "Só o dono ou um administrador pode editar o lar.",
   "empty": "Você ainda é o único membro. Convide alguém para compartilhar contas e gastos.",
   "invite": "Convidar alguém",
   "members": "Membros",

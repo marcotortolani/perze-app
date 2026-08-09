@@ -1,12 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
 import { HouseholdSwitcherSheet } from "@/components/household-switcher-sheet";
+import { useAccounts } from "@/hooks/use-accounts";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useNavStore } from "@/stores/nav-store";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
@@ -43,6 +44,8 @@ export default function MorePage() {
   const { ref: scrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
+  const { data: accounts } = useAccounts(household?.id);
+  const isMultiCurrency = useMemo(() => new Set((accounts ?? []).map((a) => a.currencyCode)).size > 1, [accounts]);
   const { conflicts } = useConflicts(household?.id);
   const ownAccess = useOwnAccess();
   const pendingAccessRequests = usePendingAccessRequestsCount();
@@ -155,6 +158,7 @@ export default function MorePage() {
                   ser el 4to tab). */}
               {fourthTab !== "analytics" ? <ListRow icon="chart" label={t("nav.analysis")} onClick={() => router.push("/analytics")} /> : null}
               {fourthTab !== "accounts" ? <ListRow icon="wallet" label={t("morePage.accounts")} onClick={() => router.push("/accounts")} /> : null}
+              {isMultiCurrency ? <ListRow icon="refresh" label={t("settingsPage.fxSources")} onClick={() => router.push("/currencies")} /> : null}
               {modules.includes("budgets") && fourthTab !== "budgets" ? <ListRow icon="target" label={t("morePage.budgets")} onClick={() => router.push("/budgets")} /> : null}
               {modules.includes("goals") ? <ListRow icon="flag" label={t("morePage.goals")} onClick={() => router.push("/goals")} /> : null}
               {modules.includes("recurring") ? <ListRow icon="refresh" label={t("morePage.recurring")} onClick={() => router.push("/recurring")} /> : null}

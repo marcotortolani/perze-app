@@ -4,14 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, Icon, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Button, EmptyState, Icon, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
-import { HouseholdSwitcherSheet } from "@/components/household-switcher-sheet";
-import { useCurrentHousehold } from "@/hooks/use-current-household";
+import { HouseholdIconPicker } from "@/features/household/HouseholdIconPicker";
+import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { markHouseholdMemberFormer } from "@/lib/repos/household-members-remote";
+import { householdsRepo } from "@/lib/repos/households-repo";
 import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
 import { computeNetBalances } from "@/lib/analytics/settle-up";
 
@@ -28,13 +29,17 @@ export default function FamilyPageContent() {
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
+  const invalidateHousehold = useInvalidateHousehold();
   const { data: members } = useRemoteHouseholdMembers(household?.id);
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
   const { data: invites } = useInvites(household?.id);
   usePageHeader({ title: t("morePage.family"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [householdSwitcherOpen, setHouseholdSwitcherOpen] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [iconDraft, setIconDraft] = useState<IconName>("users");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   if (!household || !members || !invites) {
     return <Skeleton height={200} style={{ marginTop: 16 }} />;
@@ -43,6 +48,33 @@ export default function FamilyPageContent() {
   const pendingInvites = invites.filter((i) => i.acceptedBy === null && i.revokedAt === null);
   const myRole = members.find((m) => m.profileId === userId)?.role;
   const canRemove = myRole === "owner" || myRole === "admin";
+  const householdIcon = (household.settings?.icon as IconName | undefined) ?? "users";
+
+  const handleOpenEditSheet = () => {
+    setNameDraft(household.name);
+    setIconDraft(householdIcon);
+    setEditSheetOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    const trimmed = nameDraft.trim();
+    if (savingEdit) return;
+    const patch: { name?: string; settings?: Record<string, unknown> } = {};
+    if (trimmed && trimmed !== household.name) patch.name = trimmed;
+    if (iconDraft !== householdIcon) patch.settings = { ...household.settings, icon: iconDraft };
+    if (Object.keys(patch).length === 0) {
+      setEditSheetOpen(false);
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await householdsRepo.update(household.id, patch);
+      invalidateHousehold();
+      setEditSheetOpen(false);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   // J10: un miembro que se va liquida o condona antes — nunca se lo saca
   // con saldo pendiente, así que se chequea el neto antes de tocar `status`.
@@ -81,10 +113,23 @@ export default function FamilyPageContent() {
   return (
       <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 8, paddingBottom: 24 }}>
         <ListRow icon="plus" label={t("familyPage.invite")} variant="action" onClick={() => router.push("/family/invite")} />
-        {/* Quien acaba de aceptar una invitación cae acá a buscar "volver a
-            lo mío" — el switcher vive también en /more, pero este es el
-            punto de entrada natural justo después de unirse a un grupo. */}
-        <ListRow icon="users" label={t("householdSwitcher.rowLabel")} value={household.name} onClick={() => setHouseholdSwitcherOpen(true)} />
+        {/* Editar nombre e ícono del hogar vive acá, no en Ajustes: es
+            identidad del hogar, no una preferencia de formato, y este es el
+            punto donde ya se está mirando el hogar activo. Tocar la fila
+            abre el editor directo — mismo patrón que tags/payees y perfil,
+            sin un ícono de lápiz aparte que compita por el tap. Cambiar de
+            hogar (para quien tiene más de uno) sigue disponible desde /more. */}
+        <ListRow
+          icon={householdIcon}
+          label={t("familyPage.householdName")}
+          value={household.name}
+          variant="value"
+          disabled={!canRemove}
+          onClick={() => canRemove && handleOpenEditSheet()}
+        />
+        {!canRemove ? (
+          <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("familyPage.householdNameRestricted")}</p>
+        ) : null}
         <ListRow icon="lock" label={t("permissionsPage.title")} onClick={() => router.push("/family/permissions")} />
         <ListRow icon="handshake" label={t("settlePage.title")} onClick={() => router.push("/family/settle")} />
         <ListRow icon="chart" label={t("comparePage.title")} onClick={() => router.push("/family/compare")} />
@@ -148,7 +193,18 @@ export default function FamilyPageContent() {
           </div>
         ) : null}
       </Sheet>
-      <HouseholdSwitcherSheet open={householdSwitcherOpen} onClose={() => setHouseholdSwitcherOpen(false)} />
+      <Sheet open={editSheetOpen} title={t("familyPage.householdNameSheetTitle")} onClose={() => (savingEdit ? null : setEditSheetOpen(false))} height={340}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("familyPage.householdIcon")}</div>
+            <HouseholdIconPicker value={iconDraft} onChange={setIconDraft} />
+          </div>
+          <Input label={t("familyPage.householdName")} value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} autoFocus />
+          <Button disabled={!nameDraft.trim() || savingEdit} onClick={handleSaveEdit}>
+            {t("common.save")}
+          </Button>
+        </div>
+      </Sheet>
       </div>
   );
 }

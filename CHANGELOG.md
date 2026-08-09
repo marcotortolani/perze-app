@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.7] — 2026-08-09
+
+### Nuevo — nombre e ícono del hogar editables, desde Grupo familiar en vez de Ajustes
+
+`households.name` quedaba fijo en "Mi hogar" desde la creación y no tenía forma de diferenciar
+un hogar de otro a simple vista. La primera versión de este cambio lo puso en Ajustes con un
+ícono de lápiz aparte para abrir el editor — dos correcciones en el camino: Ajustes es el lugar
+equivocado (es identidad del hogar, no una preferencia de formato, y con más de un household en
+juego queda perdida ahí), y un ícono de lápiz de ~32px como único gatillo de edición viola el
+mínimo de 44×44 de `CLAUDE.md` — en un teléfono real el tap fallaba y cascaba al `onClick` de la
+fila entera (el switcher), leyéndose como "no es editable". Ahora la fila "Household name" de
+`/family` (`FamilyPageContent.tsx`) abre el editor completo con solo tocarla — mismo patrón que
+tags/payees y perfil, sin gatillo secundario — y el editor suma un `HouseholdIconPicker` (mismo
+grid de 44px que `ProfileIconPicker`, set curado en `household-icons.ts`, sin emojis, íconos
+Phosphor) guardado en `households.settings.icon` (jsonb existente, sin migración). Gateado a
+`owner`/`admin` de punta a punta. Cambiar de hogar (para quien tiene más de uno) sigue en `/more`.
+
+### Arreglado — "Exchange rates" era imposible de encontrar dentro de Ajustes
+
+Vivía como una fila condicional (solo con más de una moneda en uso) enterrada en la sección
+Datos de `/more/settings`, sin relación visual con el resto de las pantallas de dinero. Se movió
+al grupo DINERO: en móvil, a `/more` antes de Presupuestos; en escritorio, al sidebar
+(`buildDesktopNav()`, grupo `money`) en la misma posición. La condición de multi-moneda se
+mantiene — no aparece si el hogar solo usa una.
+
+---
+
 ## [0.30.6] — 2026-08-08
 
 ### Arreglado — la recuperación por chunk roto podía borrar la capacidad offline entera

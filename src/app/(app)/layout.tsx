@@ -19,6 +19,7 @@ import { useNavStore } from "@/stores/nav-store";
 import { useScopeStore } from "@/stores/scope-store";
 import { usePendingMutations } from "@/lib/offline";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
@@ -91,6 +92,8 @@ export default function AppShellLayout({
   const online = useOnlineStatus();
   const { data: household, isLoading: householdLoading } =
     useCurrentHousehold();
+  const { data: accounts } = useAccounts(household?.id);
+  const isMultiCurrency = useMemo(() => new Set((accounts ?? []).map((a) => a.currencyCode)).size > 1, [accounts]);
   // D50 — montado una sola vez para todo el shell autenticado, no solo
   // /investments: mantiene el portfolio razonablemente al día aunque el
   // usuario esté en otra parte de la app (ver el comentario del hook).
@@ -183,8 +186,8 @@ export default function AppShellLayout({
   }, []);
 
   const desktopNav = useMemo(
-    () => buildDesktopNav({ enabledModules: household?.enabledModules ?? [] }),
-    [household?.enabledModules],
+    () => buildDesktopNav({ enabledModules: household?.enabledModules ?? [], isMultiCurrency }),
+    [household?.enabledModules, isMultiCurrency],
   );
   const navGroups = useMemo<SidebarNavGroup[]>(
     () =>
