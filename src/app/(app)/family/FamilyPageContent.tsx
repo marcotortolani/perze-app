@@ -193,7 +193,7 @@ export default function FamilyPageContent() {
           </div>
         ) : null}
       </Sheet>
-      <Sheet open={editSheetOpen} title={t("familyPage.householdNameSheetTitle")} onClose={() => (savingEdit ? null : setEditSheetOpen(false))} height={520}>
+      <Sheet open={editSheetOpen} title={t("familyPage.householdNameSheetTitle")} onClose={() => (savingEdit ? null : setEditSheetOpen(false))} height={340}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("familyPage.householdIcon")}</div>
