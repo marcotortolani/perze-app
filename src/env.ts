@@ -26,6 +26,14 @@ export const env = createEnv({
     // ofrecen resultados de Finnhub (`createFinnhubProvider`/
     // `searchFinnhubInstruments` devuelven vacío en vez de romper).
     FINNHUB_API_KEY: z.string().min(1).optional(),
+    // Secreto compartido entre la Edge Function que calcula los resúmenes
+    // mensuales y la ruta de Next que los renderiza y manda
+    // (`docs/resumen-mensual-por-mail.md`). Es el único límite entre esa
+    // ruta y un relay de mail abierto: sin él la ruta no atiende a nadie,
+    // que es el comportamiento correcto en un self-host que todavía no
+    // configuró los resúmenes. Opcional por eso mismo — su ausencia apaga
+    // la funcionalidad, nunca rompe el build.
+    MONTHLY_SUMMARY_SECRET: z.string().min(1).optional(),
   },
   client: {
     // Para `metadataBase` (og:image, apple-touch-icon absolutos) — sin
