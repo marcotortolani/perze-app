@@ -6,6 +6,57 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.16] — 2026-08-10
+
+### Docs — diseño de "cierre de período" (`docs/cierre-de-periodo.md`)
+
+Idea aprobada en principio el 10/08 (mismo día), diseñada en detalle esta sesión, sin
+implementar todavía. Investigado contra el código real antes de decidir, no contra lo que el
+documento suponía — tres hallazgos cambiaron el diseño:
+
+- `account_balance_snapshots` solo guarda `balance` en moneda de cuenta (sin `amount_base`), así
+  que el lock puede ser angosto: protege el libro mayor, nunca `fx_rate`/`amount_base`. Resuelve
+  de raíz el caso borde que el documento marcaba como "el más incómodo" — completar un `pending`
+  nunca choca con un período cerrado.
+- El mecanismo para bloquear una columna sin que RLS lo vea (`WITH CHECK` no tiene `OLD`) ya
+  existe: `enforce_immutable_columns()`. El cierre reutiliza el mismo patrón de trigger en vez de
+  inventar uno nuevo.
+- `household_period_start()` (Postgres, con clamp de fin de mes) y `periodStart()`
+  (`src/lib/analytics/history.ts`, sin clamp) podían divergir — no explotable hoy porque
+  `CLOSE_DAYS` limita a 1-28, pero el cierre depende de que cliente y servidor coincidan en qué
+  período es cuál. Corregido antes de construir nada encima (ver Fix debajo).
+
+Decisiones cerradas: lock angosto sobre el libro mayor; flag `households.period_lock_enabled` por
+hogar, apagado por defecto; 7 días de gracia fijos en v1; un `INSERT` tardío del outbox nunca se
+rechaza (la UI simplemente no ofrece fechas de un período cerrado, así que un insert que aterriza
+ahí solo puede ser sync demorado, nunca una elección deliberada).
+
+### Fix — `periodStart()` del cliente no clampeaba el día de cierre como el servidor
+
+`src/lib/analytics/history.ts` construía la fecha de inicio de período con
+`new Date(year, month, periodStartDay)`, que en un mes corto rueda al mes siguiente en vez de
+clampear al último día — divergencia silenciosa con `household_period_start()` (Postgres), que sí
+clampea. No era explotable hoy (`CLOSE_DAYS` en `/more/settings` limita a 1-28), pero el cierre de
+período necesita que las dos coincidan siempre. Ahora `periodStart()` clampea igual, con test de
+regresión para un `periodStartDay` fuera del rango actual.
+
+### Fix — el botón de los mails quedaba con el texto corrido hacia arriba
+
+`EmailButton.tsx` centraba con `height`+`lineHeight` en el `<a>` exterior, pero el `Button` de
+`@react-email/components` calcula el centrado real (`mso-text-raise`) a partir de `padding` — sin
+`padding`, el `<span>` interno que envuelve el texto queda con `vertical-align: baseline` en vez
+de centrado. Afecta a los cuatro mails que usan este botón: resumen mensual/anual, invitación,
+magic link y recovery. `pnpm email:export` regenerado — los dos de Auth (`magic_link.html`,
+`recovery.html`) hay que volver a pegarlos a mano en el Dashboard de Supabase (plan free rechaza
+`config push` de templates).
+
+### Fix — "Perze" en minúscula-mixta en el CTA del resumen mensual/anual
+
+`cta` y `annualSubject` de `emails.monthlySummary` en los tres idiomas decían "Perze" en vez de
+"PERZE" — inconsistente con el resto de la app (p. ej. "Entrar a PERZE" en `auth`).
+
+---
+
 ## [0.30.15] — 2026-08-10
 
 ### Arreglado
@@ -32,6 +83,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
   viviera únicamente en `/onboarding/success` (A11), justo antes de crear el household — que ya
   tenía el chequeo correcto puesto. Se sacaron los dos gates tempranos; ahora A4-A6 se completan
   siempre, sin importar el estado de aprobación, y recién A11 frena si todavía no está aprobado.
+
+---
 
 ## [0.30.13] — 2026-08-10
 

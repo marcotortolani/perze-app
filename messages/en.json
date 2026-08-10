@@ -1975,7 +1975,7 @@
  },
  "emails": {
   "monthlySummary": {
-  "annualSubject": "Your year in Perze: {period}",
+  "annualSubject": "Your year in PERZE: {period}",
   "annualPreview": "How your year went: {period}",
   "annualTitle": "Your year in review",
   "annualNoComparison": "This is your first full year, so there's nothing to compare against yet.",
@@ -2000,7 +2000,7 @@
    "investingTitle": "Investments",
    "invested": "Invested",
    "divested": "Sold",
-   "cta": "See the detail in Perze",
+   "cta": "See the detail in PERZE",
    "unsubscribeHint": "You can stop receiving this summary from More → Notifications."
   },
   "invite": {

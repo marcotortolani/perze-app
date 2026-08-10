@@ -1975,7 +1975,7 @@
  },
  "emails": {
   "monthlySummary": {
-  "annualSubject": "Tu año en Perze: {period}",
+  "annualSubject": "Tu año en PERZE: {period}",
   "annualPreview": "Cómo te fue en {period}",
   "annualTitle": "Tu resumen del año",
   "annualNoComparison": "Es tu primer año completo, así que todavía no hay con qué comparar.",
@@ -2000,7 +2000,7 @@
    "investingTitle": "Inversiones",
    "invested": "Invertiste",
    "divested": "Vendiste",
-   "cta": "Ver el detalle en Perze",
+   "cta": "Ver el detalle en PERZE",
    "unsubscribeHint": "Podés dejar de recibir este resumen desde Más → Notificaciones."
   },
   "invite": {

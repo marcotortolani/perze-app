@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.16 — 10 de agosto de 2026
+
+### Arreglado
+
+- El botón de los mails (resumen, invitación, ingreso y recuperación de cuenta) tenía el texto
+  corrido hacia arriba en vez de centrado — ya se ve bien.
+
 ## 0.30.15 — 10 de agosto de 2026
 
 ### Arreglado

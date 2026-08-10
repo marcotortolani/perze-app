@@ -21,9 +21,25 @@ export function monthsOfHistory(firstTransactionIso: string | undefined, now: Da
   return Math.max(0, now.getDate() >= first.getDate() ? months : months - 1);
 }
 
+function lastDayOfMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Espejo de `household_period_start()` (`supabase/migrations/20260810190000_monthly_summary_schedule.sql`):
+ * mismo clamp al último día del mes. La UI hoy solo ofrece `período_start_day` 1-28
+ * (`CLOSE_DAYS` en `/more/settings`), así que "31 en febrero" no se puede producir todavía —
+ * el clamp está acá para que el día que esa lista se amplíe, esto no empiece a devolver
+ * fechas del mes siguiente en silencio, y para que cliente y servidor nunca diverjan en
+ * qué período es cuál (necesario para el cierre de período).
+ */
 function periodStart(date: Date, periodStartDay: number): Date {
-  const start = new Date(date.getFullYear(), date.getMonth(), periodStartDay);
-  if (date.getDate() < periodStartDay) start.setMonth(start.getMonth() - 1);
+  const clampedDay = (year: number, month: number) => Math.min(Math.max(periodStartDay, 1), lastDayOfMonth(year, month));
+  const start = new Date(date.getFullYear(), date.getMonth(), clampedDay(date.getFullYear(), date.getMonth()));
+  if (date.getDate() < start.getDate()) {
+    const prevMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+    start.setFullYear(prevMonth.getFullYear(), prevMonth.getMonth(), clampedDay(prevMonth.getFullYear(), prevMonth.getMonth()));
+  }
   return start;
 }
 

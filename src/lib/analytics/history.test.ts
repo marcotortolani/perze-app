@@ -44,3 +44,16 @@ describe("daysUntilPeriodCloses", () => {
     expect(daysUntilPeriodCloses(25, new Date(2026, 6, 20))).toBe(5);
   });
 });
+
+describe("periodStart clamping (espejo de household_period_start en Postgres)", () => {
+  // periodStartDay > 28 no es seleccionable hoy (`CLOSE_DAYS` en /more/settings va de 1 a 28),
+  // pero la función tiene que clampear igual para no divergir en silencio del servidor si esa
+  // lista se amplía — es la misma garantía que ya tiene `household_period_start()`.
+  it("clamps a 31 start day to the last day of a short month", () => {
+    // Febrero 2026 tiene 28 días: el 27/feb todavía no llegó al cierre clampeado (28),
+    // así que el período en curso arrancó el 31 de enero.
+    expect(closedPeriodsCount("2026-01-31T12:00:00.000Z", 31, new Date(2026, 1, 27))).toBe(0);
+    // El 28/feb (el día clampeado) ya es el propio arranque del período de febrero.
+    expect(closedPeriodsCount("2026-01-31T12:00:00.000Z", 31, new Date(2026, 1, 28))).toBe(1);
+  });
+});
