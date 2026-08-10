@@ -10,8 +10,9 @@ import type { IconName } from "@/design-system/core/Icon";
 import { useEffectiveUserId, useCurrentUserEmail } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
-import { ageFromBirthDate } from "@/lib/analytics/age";
+import type { BirthDatePrecision } from "@/lib/analytics/age";
 import { ProfileIconPicker } from "@/features/profile/ProfileIconPicker";
+import { BirthDateField, type BirthDateValue } from "@/features/profile/BirthDateField";
 
 /**
  * K2 — perfil: solo datos de la persona (nombre, email, fecha de
@@ -33,7 +34,7 @@ export default function ProfilePage() {
   const profileQuery = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
 
   const [name, setName] = useState<string | null>(null);
-  const [birthDate, setBirthDate] = useState<string | null>(null);
+  const [birthValue, setBirthValue] = useState<BirthDateValue | null>(null);
   const [saving, setSaving] = useState(false);
   const [countrySheetOpen, setCountrySheetOpen] = useState(false);
   const [countryPending, setCountryPending] = useState(false);
@@ -44,10 +45,16 @@ export default function ProfilePage() {
   if (profileQuery.isLoading || !userId) return <Skeleton height={400} style={{ marginTop: 16 }} />;
 
   const displayName = name ?? profileQuery.data?.displayName ?? "";
-  const currentBirthDate = birthDate ?? profileQuery.data?.birthDate ?? "";
+  const currentBirth: BirthDateValue = birthValue ?? {
+    birthDate: profileQuery.data?.birthDate ?? null,
+    precision: (profileQuery.data?.birthDatePrecision ?? null) as BirthDatePrecision | null,
+  };
   const country = COUNTRIES.find((c) => c.code === profileQuery.data?.country);
 
-  const dirty = displayName.trim() !== (profileQuery.data?.displayName ?? "") || currentBirthDate !== (profileQuery.data?.birthDate ?? "");
+  const dirty =
+    displayName.trim() !== (profileQuery.data?.displayName ?? "") ||
+    currentBirth.birthDate !== (profileQuery.data?.birthDate ?? null) ||
+    currentBirth.precision !== (profileQuery.data?.birthDatePrecision ?? null);
 
   const handleSave = async () => {
     if (!displayName.trim() || saving || !dirty) return;
@@ -55,7 +62,7 @@ export default function ProfilePage() {
     try {
       await Promise.all([
         profilesRepo.updateDisplayName(userId, displayName.trim()),
-        profilesRepo.updateBirthDate(userId, currentBirthDate || null),
+        profilesRepo.updateBirthDate(userId, currentBirth.birthDate, currentBirth.precision),
       ]);
       toast(t("profilePage.saved"));
       profileQuery.refetch();
@@ -106,13 +113,7 @@ export default function ProfilePage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Input label={t("profilePage.displayName")} value={displayName} onChange={(e) => setName(e.target.value)} />
           <Input label={t("profilePage.email")} value={email ?? ""} readOnly hint={t("profilePage.emailHint")} />
-          <Input
-            label={t("profilePage.birthDate")}
-            type="date"
-            value={currentBirthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-            hint={currentBirthDate ? t("profilePage.ageHint", { age: ageFromBirthDate(currentBirthDate) }) : t("profilePage.birthDateHint")}
-          />
+          <BirthDateField value={currentBirth} onChange={setBirthValue} />
           <Button disabled={!displayName.trim() || saving || !dirty} onClick={handleSave}>
             {t("common.save")}
           </Button>

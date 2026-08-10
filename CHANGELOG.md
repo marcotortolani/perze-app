@@ -6,6 +6,68 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.10] — 2026-08-10
+
+### Nuevo — onboarding pide nombre, edad, moneda e idioma; el remate se invierte a ingreso→gasto
+
+El onboarding pasaba de A2 (auth) directo a A4 (país) y de ahí a A5/A6, dejando que la app
+decidiera en silencio el nombre (`handle_new_user()`), la moneda (derivada del país sin poder
+cambiarla), el idioma (`Accept-Language`) y el formato de números (default `"locale"`). Ahora son
+5 pasos: `/onboarding/profile` (A4a, nuevo — nombre + fecha de nacimiento opcional o solo la edad)
+→ `/onboarding/country` (A4, moneda ahora editable aparte del país) → `/onboarding/format` (A4b,
+nuevo — idioma + separador decimal + formato de fecha) → `/onboarding/usage` (A5) →
+`/onboarding/account` (A6). Los tres primeros arrancan con lo auto-detectado pero son editables.
+
+- **`profiles.birth_date_precision`** (migración `20260810171917_profile_birth_date_precision`,
+  `'exact' | 'year'`, CHECK pareado con `birth_date`) — con la edad en años se guarda el 1 de julio
+  del año calculado (`birthDateFromAge()`, `src/lib/analytics/age.ts`) y la precisión evita que el
+  banner de cumpleaños y el recordatorio `birthdate` traten ese día sintético como real
+  (`isBirthdayToday()` ahora exige el parámetro). `BirthDateField` (`src/features/profile/`) es el
+  componente compartido entre A4a y `/more/profile`.
+- **A7 (saldo inicial) se elimina del flujo, sin reemplazo** — decisión cerrada, registrada en
+  `CLAUDE.md` § "Onboarding: preferencias del usuario y A7 eliminada". El saldo queda editable
+  desde `/accounts/[id]/edit`.
+- **El remate se invierte**: A11 manda a cargar el primer *ingreso* (la cuenta siempre arranca en
+  0) y, recién después de guardarlo, una pantalla nueva —`/onboarding/first-expense`, salteable—
+  ofrece el primer *gasto*. El estado de esta secuencia vive en `draft.firstTxStep`
+  (`useOnboardingStore`, reemplaza a `pendingBalanceAccountId`, persist `version: 1 → 3`) y las
+  transiciones están centralizadas en `src/lib/onboarding/first-tx-machine.ts` — cancelar una
+  captura sin guardar nunca avanza el paso (`CaptureFlow.onClose` ahora reporta `{saved, kind}` en
+  vez de disparar sin argumentos).
+
+### Arreglado
+
+- **`ProgressSteps` (barra de pasos del onboarding) era invisible en la práctica** — no solo por
+  contraste (el segmento inactivo usaba `--surface-3` contra `--page`, ~1,3:1), sino porque el
+  componente nunca recibía `flex: 1` de sus callers: el track interno (`flex:1` relativo a SU
+  propia raíz) no tenía ancho real contra el cual crecer y colapsaba a 0px. Se corrigen las dos
+  cosas en `src/design-system/core/ProgressSteps.tsx` — afecta a las seis pantallas del bloque A
+  que usan el componente, no solo las nuevas.
+- **`/onboarding/country` olvidaba el país elegido al volver desde `/onboarding/format`** — la
+  pantalla siempre re-ejecutaba la auto-detección al montarse, sin distinguir "el usuario ya
+  confirmó" de "está en el default sin tocar" (ambos casos empiezan en Uruguay). Nuevo campo
+  `draft.countryConfirmed` (`useOnboardingStore`, persist `version: 2 → 3`) resuelve la
+  ambigüedad: un país ya confirmado se restaura tal cual en vez de volver a detectarse.
+
+### Mejorado
+
+- El panel de operador (`/more/admin/users`) ahora muestra hora y minutos en las fechas de
+  solicitud, registro y última conexión de cada usuario, no solo el día — usando
+  `formatTimeOfDay()` (`src/i18n/formatting.ts`), mismo helper que ya usa la pantalla de
+  inversiones.
+- El tercer ítem de `/start` (`landingPage.features.private` → `.localFirst`) dejaba de ser
+  cierto: prometía "código abierto, autohospedado" cuando el repo todavía no es público. Se
+  reemplaza por el mensaje real de local-first (cargar movimientos sin conexión, sincronizar
+  solo al volver).
+
+### Refactor
+
+- `format-preferences-store` y las opciones de separador decimal/formato de fecha/idioma se
+  factorizaron a `src/lib/reference/format-options.ts`, compartido entre `/more/settings` y
+  `/onboarding/format`.
+
+---
+
 ## [0.30.9] — 2026-08-10
 
 ### Docs — idea del módulo de finanzas profesionales, anotada

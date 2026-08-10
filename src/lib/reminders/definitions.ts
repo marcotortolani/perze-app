@@ -14,7 +14,10 @@ export const REMINDER_ROUTE: Record<ReminderId, string> = {
 };
 
 export interface ReminderContext {
-  hasBirthDate: boolean;
+  /** `true` solo con precisión `'exact'` — quien dio únicamente su edad
+   *  (A4a) sigue siendo elegible para este recordatorio: la fecha real
+   *  todavía no está cargada. */
+  hasExactBirthDate: boolean;
   isStandalone: boolean;
   enabledModulesCount: number;
   themeIsDefault: boolean;
@@ -32,7 +35,7 @@ const TOTAL_MODULES = 6;
  */
 export function getEligibleReminders(ctx: ReminderContext): ReminderId[] {
   const ids: ReminderId[] = [];
-  if (!ctx.hasBirthDate) ids.push("birthdate");
+  if (!ctx.hasExactBirthDate) ids.push("birthdate");
   if (!ctx.isStandalone) ids.push("installPwa");
   if (ctx.enabledModulesCount < TOTAL_MODULES) ids.push("modules");
   if (ctx.themeIsDefault) ids.push("theme");

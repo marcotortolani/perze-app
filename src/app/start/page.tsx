@@ -51,7 +51,7 @@ export default async function StartPage() {
   const features = [
     { title: t("landingPage.features.fast.title"), body: t("landingPage.features.fast.body") },
     { title: t("landingPage.features.multiCurrency.title"), body: t("landingPage.features.multiCurrency.body") },
-    { title: t("landingPage.features.private.title"), body: t("landingPage.features.private.body") },
+    { title: t("landingPage.features.localFirst.title"), body: t("landingPage.features.localFirst.body") },
   ];
 
   return (

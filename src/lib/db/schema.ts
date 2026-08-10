@@ -11,6 +11,8 @@
  * timestamps) — Dexie no necesita `Date` nativo para poder indexar bien.
  */
 
+import type { BirthDatePrecision } from "@/lib/analytics/age";
+
 export type EnabledModule = "budgets" | "goals" | "recurring" | "debts" | "investments" | "family";
 
 export interface HouseholdRow {
@@ -51,6 +53,9 @@ export interface ProfileRow {
   timezone: string | null;
   defaultHouseholdId: string | null;
   settings: Record<string, unknown>;
+  /** Alineación de tipos con `profiles.birth_date` — esta tabla todavía no tiene wiring de sync (ver `sync-config.ts`), así que estos dos campos son inertes hasta que lo tenga. */
+  birthDate: string | null;
+  birthDatePrecision: BirthDatePrecision | null;
 }
 
 export interface CurrencyRow {

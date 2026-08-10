@@ -56,6 +56,6 @@ describe("resolveOnboardingDestination", () => {
       householdsRepo: { getCurrentHouseholdId: async () => null, hasRemoteHousehold: async () => false },
     }));
     const { resolveOnboardingDestination } = await import("./resolve-destination");
-    expect(await resolveOnboardingDestination()).toBe("/onboarding/country");
+    expect(await resolveOnboardingDestination()).toBe("/onboarding/profile");
   });
 });

@@ -10,7 +10,7 @@
  * (igual que `lib/auth/public-paths.ts`): así se puede testear sin
  * mockear Supabase/`next/headers`.
  */
-export function safeNextPath(next: string | null, fallback = "/onboarding/country"): string {
+export function safeNextPath(next: string | null, fallback = "/onboarding/profile"): string {
   if (!next) return fallback;
   if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return fallback;
   return next;

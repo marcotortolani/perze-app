@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/client";
+import type { BirthDatePrecision } from "@/lib/analytics/age";
 
 export interface Profile {
   id: string;
@@ -8,6 +9,8 @@ export interface Profile {
   icon: string;
   country: string | null;
   birthDate: string | null;
+  /** `exact` = día real · `year` = solo la edad, `birthDate` es el 1 de julio sintético. `null` sin fecha cargada. */
+  birthDatePrecision: BirthDatePrecision | null;
 }
 
 export type AccessStatus = "pending" | "approved" | "rejected" | "disabled";
@@ -26,9 +29,19 @@ export interface OwnAccess {
 export const profilesRepo = {
   async getOwn(userId: string): Promise<Profile | null> {
     const supabase = createClient();
-    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url, icon, country, birth_date").eq("id", userId).maybeSingle();
+    const { data, error } = await supabase.from("profiles").select("id, display_name, avatar_url, icon, country, birth_date, birth_date_precision").eq("id", userId).maybeSingle();
     if (error) throw error;
-    return data ? { id: data.id, displayName: data.display_name, avatarUrl: data.avatar_url, icon: data.icon, country: data.country, birthDate: data.birth_date } : null;
+    return data
+      ? {
+          id: data.id,
+          displayName: data.display_name,
+          avatarUrl: data.avatar_url,
+          icon: data.icon,
+          country: data.country,
+          birthDate: data.birth_date,
+          birthDatePrecision: data.birth_date_precision as BirthDatePrecision | null,
+        }
+      : null;
   },
 
   /**
@@ -69,10 +82,18 @@ export const profilesRepo = {
     if (error) throw error;
   },
 
-  /** K2 — opcional, solo estadística agregada. `null` la borra (el campo no es obligatorio). */
-  async updateBirthDate(userId: string, birthDate: string | null): Promise<void> {
+  /**
+   * K2 / A4a — opcional, solo estadística agregada. `birthDate === null`
+   * borra los dos campos: el CHECK de pareo (`profiles_birth_date_precision_pairing`)
+   * rechaza `precision` sin fecha, así que la precisión SIEMPRE se anula
+   * junto con la fecha, nunca se manda una sin la otra.
+   */
+  async updateBirthDate(userId: string, birthDate: string | null, precision: BirthDatePrecision | null): Promise<void> {
     const supabase = createClient();
-    const { error } = await supabase.from("profiles").update({ birth_date: birthDate }).eq("id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ birth_date: birthDate, birth_date_precision: birthDate === null ? null : precision })
+      .eq("id", userId);
     if (error) throw error;
   },
 

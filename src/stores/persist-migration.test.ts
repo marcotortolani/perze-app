@@ -61,6 +61,83 @@ describe("migración de persist v0 → v1", () => {
     expect(draft.accountKind).toBe("checking");
   });
 
+  it("onboarding-store: v1 → v3 — `pendingBalanceAccountId` (A7, eliminada) se descarta y `displayName`/`firstTxStep`/`countryConfirmed` toman su default", async () => {
+    window.localStorage.setItem(
+      "perze-onboarding",
+      JSON.stringify({
+        state: {
+          draft: {
+            email: "vale.mendez@gmail.com",
+            usage: "solo",
+            countryCode: "UY",
+            currencyCode: "UYU",
+            accountPreset: "Efectivo",
+            accountKind: "cash",
+            pendingBalanceAccountId: "acc-123",
+          },
+        },
+        version: 1,
+      })
+    );
+
+    await useOnboardingStore.persist.rehydrate();
+
+    const { draft } = useOnboardingStore.getState();
+    expect(draft.email).toBe("vale.mendez@gmail.com");
+    expect(draft.displayName).toBe("");
+    expect(draft.firstTxStep).toBeNull();
+    expect(draft.countryConfirmed).toBe(false);
+    expect(draft).not.toHaveProperty("pendingBalanceAccountId");
+
+    const raw = window.localStorage.getItem("perze-onboarding");
+    expect(raw && JSON.parse(raw).version).toBe(3);
+  });
+
+  it("onboarding-store: v2 → v3 — un `countryConfirmed` ya guardado en `true` sobrevive la migración", async () => {
+    window.localStorage.setItem(
+      "perze-onboarding",
+      JSON.stringify({
+        state: {
+          draft: {
+            email: "vale.mendez@gmail.com",
+            displayName: "Valentina",
+            usage: "solo",
+            countryCode: "AR",
+            currencyCode: "ARS",
+            countryConfirmed: true,
+            accountPreset: null,
+            accountKind: null,
+            firstTxStep: null,
+          },
+        },
+        version: 2,
+      })
+    );
+
+    await useOnboardingStore.persist.rehydrate();
+
+    const { draft } = useOnboardingStore.getState();
+    expect(draft.countryCode).toBe("AR");
+    expect(draft.currencyCode).toBe("ARS");
+    expect(draft.countryConfirmed).toBe(true);
+  });
+
+  it("onboarding-store: un `firstTxStep` corrupto cae a null sin perder el resto", async () => {
+    window.localStorage.setItem(
+      "perze-onboarding",
+      JSON.stringify({
+        state: { draft: { email: "vale.mendez@gmail.com", displayName: "Valentina", firstTxStep: "no-existe" } },
+        version: 2,
+      })
+    );
+
+    await useOnboardingStore.persist.rehydrate();
+
+    const { draft } = useOnboardingStore.getState();
+    expect(draft.displayName).toBe("Valentina");
+    expect(draft.firstTxStep).toBeNull();
+  });
+
   it("pin-store: un `failedAttempts` corrupto cae a 0 sin tocar el hash/sal opacos", async () => {
     window.localStorage.setItem(
       "perze-pin",

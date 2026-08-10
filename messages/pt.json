@@ -750,11 +750,31 @@
    "resent": "Reenviamos o código",
    "changeEmail": "Trocar email"
   },
+  "profile": {
+   "back": "Voltar",
+   "title": "Como você se chama?",
+   "subtitle": "É assim que os outros membros do seu lar vão te ver, se você adicionar algum.",
+   "nameLabel": "Seu nome",
+   "namePlaceholder": "Valentina",
+   "continue": "Continuar"
+  },
   "country": {
    "back": "Voltar",
    "title": "Onde você mora?",
    "subtitle": "Usamos isso para sua moeda e os bancos que oferecemos depois.",
    "yourCurrency": "Sua moeda: {currency}",
+   "currency": "Sua moeda",
+   "currencySheetTitle": "Escolha sua moeda",
+   "currencyHint": "Sugerimos pelo seu país — mude se você ganha ou gasta em outra.",
+   "continue": "Continuar"
+  },
+  "format": {
+   "back": "Voltar",
+   "title": "Como você vê os números",
+   "subtitle": "Idioma, separador decimal e formato de data — detectamos, mas é seu para mudar.",
+   "language": "Idioma",
+   "decimalSeparator": "Separador decimal",
+   "dateFormat": "Formato de data",
    "continue": "Continuar"
   },
   "usage": {
@@ -786,12 +806,18 @@
   "success": {
    "title": "Pronto!",
    "subtitle": "Sua conta foi criada. Lance seu primeiro gasto para começar a ver seu resumo.",
-   "subtitleIncome": "Sua conta foi criada, mas começa zerada. Lance uma receita primeiro — depois você vai poder registrar gastos.",
+   "subtitleIncome": "Sua conta foi criada e começa zerada. Lance sua primeira receita — depois você vai poder registrar gastos.",
    "cta": "Lançar meu primeiro gasto",
    "ctaIncome": "Lançar minha primeira receita",
    "errorTitle": "Não conseguimos terminar de criar sua conta",
    "errorSubtitle": "Pode ser sua conexão. Tente de novo — nada do que você escolheu foi perdido.",
    "retry": "Tentar de novo"
+  },
+  "firstExpense": {
+   "title": "Lance seu primeiro gasto",
+   "subtitle": "É assim que se registra um gasto de verdade: menos de cinco segundos, sem formulários.",
+   "cta": "Lançar meu primeiro gasto",
+   "later": "Agora não"
   },
   "pending": {
    "pendingTitle": "Seu acesso está esperando aprovação",
@@ -806,9 +832,6 @@
    "signOut": "Sair da conta"
   },
   "complete": {
-   "balanceTitle": "Quanto você tem em {account}?",
-   "yourAccount": "sua conta",
-   "balanceSubtitle": "Para que seu patrimônio comece correto. Você pode deixar em 0 e ajustar depois.",
    "continue": "Continuar",
    "installTitle": "Instale o PERZE",
    "installSubtitle": "Acesse mais rápido, como um app nativo.",
@@ -874,7 +897,7 @@
   "pendingSectionTitle": "Solicitações pendentes",
   "pendingEmpty": "Não há solicitações esperando aprovação.",
   "pendingLoadError": "Não foi possível carregar as solicitações pendentes.",
-  "requestedOn": "Solicitado em {date}",
+  "requestedOn": "Solicitado em {date} às {time}",
   "unknownCountry": "País ainda não escolhido",
   "approve": "Aprovar",
   "reject": "Rejeitar",
@@ -884,8 +907,8 @@
   "disabledToast": "Acesso desabilitado.",
   "allUsersSectionTitle": "Todos os usuários",
   "allUsersEmpty": "Ainda não há usuários registrados.",
-  "registeredOn": "Registrado em {date}",
-  "lastSeenOn": "última vez em {date}",
+  "registeredOn": "Registrado em {date} às {time}",
+  "lastSeenOn": "última vez em {date} às {time}",
   "neverConnected": "nunca se conectou",
   "disable": "Desabilitar acesso",
   "enable": "Habilitar acesso",
@@ -1089,6 +1112,13 @@
   "birthDate": "Data de nascimento",
   "birthDateHint": "Opcional, usado só para estatística.",
   "ageHint": "{age} anos · dado usado só para estatística.",
+  "birthPrecision": {
+   "exact": "Data exata",
+   "year": "Só minha idade"
+  },
+  "age": "Sua idade",
+  "agePlaceholder": "30",
+  "ageYearHint": "Vamos guardar um ano aproximado — você não vai receber parabéns de aniversário.",
   "country": "País",
   "countryUnset": "Não definido",
   "countrySheetTitle": "Escolha seu país",
@@ -1227,9 +1257,9 @@
     "title": "Todas as suas moedas",
     "body": "Várias contas, moedas e países, em um só lugar."
    },
-   "private": {
-    "title": "Seus dados, seus",
-    "body": "Código aberto, autohospedado — nunca passa por terceiros."
+   "localFirst": {
+    "title": "Local-first",
+    "body": "Sem internet você ainda pode lançar movimentos — eles sincronizam sozinhos assim que a conexão volta."
    }
   },
   "aboutLink": "Sobre o PERZE"

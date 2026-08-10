@@ -130,7 +130,7 @@ export default function OnboardingAuthPage() {
       // la sesión real (es quien sabe qué base está activa).
       if (isDemoModeActive()) {
         clearDemoCookie();
-        router.replace("/onboarding/country");
+        router.replace("/onboarding/profile");
         return;
       }
 
@@ -163,7 +163,7 @@ export default function OnboardingAuthPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding/country` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding/profile` },
     });
     if (error) toast.error(error.message);
   };

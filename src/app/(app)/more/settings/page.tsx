@@ -18,7 +18,7 @@ import { changeBaseCurrencyRepo, type BaseCurrencyPreflight } from "@/lib/repos/
 import { CURRENCIES } from "@/lib/reference/countries-currencies";
 import { useNavStore, type FourthTab } from "@/stores/nav-store";
 import { formatNumericDate, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
-import { useFormatPreferencesStore, type DateFormatPref, type DecimalSeparatorPref, type WeekStartPref } from "@/stores/format-preferences-store";
+import { useFormatPreferencesStore, type WeekStartPref } from "@/stores/format-preferences-store";
 import { setLocale } from "@/i18n/actions";
 import { routing } from "@/i18n/routing";
 import { applyThemePreference } from "@/lib/theme/apply-theme";
@@ -27,25 +27,14 @@ import type { ThemePreference } from "@/lib/theme/constants";
 import { applyBackdropPreference } from "@/lib/backdrop/apply-backdrop";
 import { useBackdropPreference } from "@/lib/backdrop/use-backdrop-preference";
 import { BACKDROP_DENSITIES, BACKDROP_INTENSITIES } from "@/lib/backdrop/constants";
+import { DATE_FORMAT_OPTIONS, DECIMAL_SEPARATOR_OPTIONS, LANGUAGE_MESSAGE_KEY, decimalSeparatorExample } from "@/lib/reference/format-options";
 
-const DECIMAL_SEPARATOR_OPTIONS: DecimalSeparatorPref[] = ["locale", "comma", "period"];
-const DATE_FORMAT_OPTIONS: DateFormatPref[] = ["locale", "dmy", "mdy", "ymd"];
 const WEEK_START_OPTIONS: WeekStartPref[] = ["monday", "sunday"];
 const WEEK_START_PREVIEW: Record<WeekStartPref, string> = {
   monday: "settingsPage.weekStartOptions.mondayPreview",
   sunday: "settingsPage.weekStartOptions.sundayPreview",
 };
 const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"];
-const LANGUAGE_MESSAGE_KEY = {
-  es: "morePage.languageNames.es",
-  en: "morePage.languageNames.en",
-  pt: "morePage.languageNames.pt",
-} as const;
-
-function decimalSeparatorExample(pref: DecimalSeparatorPref, localeChar: string): string {
-  const sep = pref === "locale" ? localeChar : pref === "comma" ? "," : ".";
-  return `1234${sep}56`;
-}
 
 const FOURTH_TAB_MESSAGE_KEY = {
   analytics: "nav.analysis",

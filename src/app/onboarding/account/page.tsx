@@ -93,8 +93,8 @@ export default function OnboardingAccountPage() {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <IconButton icon="chevron-left" ariaLabel={t("onboarding.account.back")} onClick={() => router.push("/onboarding/usage")} style={{ margin: -11 }} />
         <ProgressSteps
-          current={3}
-          total={3}
+          current={5}
+          total={5}
           onSkip={() => {
             setField("accountPreset", t(ACCOUNT_KIND_MESSAGE_KEY.cash));
             setField("accountKind", "cash");

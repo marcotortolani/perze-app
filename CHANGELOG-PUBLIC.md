@@ -40,6 +40,17 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.10 — 10 de agosto de 2026
+
+### Nuevo
+
+- El primer ingreso a la app ahora te pregunta tu nombre, tu edad (o solo tu edad, si preferís no
+  dar la fecha exacta), tu moneda, tu idioma y cómo querés ver los números — con lo que detectamos
+  ya puesto, pero editable ahí mismo. Antes esas cosas las decidía la app por vos y las tenías que
+  ir a cambiar después en Ajustes.
+- El orden para empezar a usar la app cambió: primero cargás un ingreso (para que tu cuenta no
+  arranque en cero) y recién después te invitamos a cargar tu primer gasto.
+
 ## 0.30.8 — 10 de agosto de 2026
 
 ### Nuevo

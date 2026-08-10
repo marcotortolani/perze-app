@@ -47,10 +47,10 @@ describe.each([
     expect(html).not.toContain("color-mix(");
   });
 
-  it("apunta a /onboarding, no a /onboarding/country (evita duplicar household en un reingreso)", async () => {
+  it("apunta a /onboarding, no a /onboarding/profile (evita duplicar household en un reingreso)", async () => {
     const html = await renderComponent(Component);
     expect(html).toContain("next=/onboarding");
-    expect(html).not.toContain("next=/onboarding/country");
+    expect(html).not.toContain("next=/onboarding/profile");
   });
 
   it("coincide con el HTML commiteado en supabase/templates/ — correr `pnpm email:export` si falla", async () => {

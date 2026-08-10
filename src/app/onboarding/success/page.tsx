@@ -76,8 +76,9 @@ export default function OnboardingSuccessPage() {
       const existingHouseholdId = await householdsRepo.getCurrentHouseholdId();
       if (existingHouseholdId) {
         const [existingAccount] = await accountsRepo.list(existingHouseholdId);
-        setField("pendingBalanceAccountId", existingAccount?.id ?? null);
-        setSuggestIncome(existingAccount ? existingAccount.currentBalance === 0n : true);
+        const suggestIncomeNow = existingAccount ? existingAccount.currentBalance === 0n : true;
+        setField("firstTxStep", suggestIncomeNow ? "income" : "expense");
+        setSuggestIncome(suggestIncomeNow);
         invalidateHousehold();
         setStatus("ready");
         return;
@@ -93,12 +94,14 @@ export default function OnboardingSuccessPage() {
       // quien llega a A11 sin haber pasado por A6 (atajo de aprobación).
       const accountName = draft.accountPreset ?? t(ACCOUNT_KIND_MESSAGE_KEY.cash);
       const accountKind = draft.accountKind ?? "cash";
-      // El nombre real del registro (A2b) — es el que van a ver los otros
-      // miembros del hogar en J1.
+      // El nombre real (A4a) — es el que van a ver los otros miembros del
+      // hogar en J1. El draft gana sobre el perfil ya guardado: el write
+      // best-effort de A4a puede no haber aterrizado todavía (offline), el
+      // draft sí está siempre que el usuario haya pasado por esa pantalla.
       const profile = await profilesRepo.getOwn(user.id).catch(() => null);
-      const { householdId, accountId } = await completeOnboarding({
+      const { householdId } = await completeOnboarding({
         userId: user.id,
-        displayName: profile?.displayName ?? null,
+        displayName: draft.displayName.trim() || profile?.displayName || null,
         countryCode: draft.countryCode,
         currencyCode: draft.currencyCode,
         usage: draft.usage ?? "solo",
@@ -110,7 +113,9 @@ export default function OnboardingSuccessPage() {
       // hidratación cae al household más viejo, que para un usuario con
       // uno solo es el mismo.
       void profilesRepo.setDefaultHousehold(user.id, householdId).catch(() => {});
-      setField("pendingBalanceAccountId", accountId);
+      // La cuenta arranca SIEMPRE en 0 (A7 salió del flujo) — el primer
+      // movimiento real tiene que ser un ingreso.
+      setField("firstTxStep", "income");
       invalidateHousehold();
       setStatus("ready");
     } catch {

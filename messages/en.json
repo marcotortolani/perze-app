@@ -750,11 +750,31 @@
    "resent": "We resent the code",
    "changeEmail": "Change email"
   },
+  "profile": {
+   "back": "Back",
+   "title": "What's your name?",
+   "subtitle": "This is how the other members of your household will see you, if you add any.",
+   "nameLabel": "Your name",
+   "namePlaceholder": "Valentina",
+   "continue": "Continue"
+  },
   "country": {
    "back": "Back",
    "title": "Where do you live?",
    "subtitle": "We use this for your currency and the banks we offer you later.",
    "yourCurrency": "Your currency: {currency}",
+   "currency": "Your currency",
+   "currencySheetTitle": "Choose your currency",
+   "currencyHint": "We suggest it from your country — change it if you earn or spend in another one.",
+   "continue": "Continue"
+  },
+  "format": {
+   "back": "Back",
+   "title": "How you see numbers",
+   "subtitle": "Language, decimal separator, and date format — we detected them, but they're yours to change.",
+   "language": "Language",
+   "decimalSeparator": "Decimal separator",
+   "dateFormat": "Date format",
    "continue": "Continue"
   },
   "usage": {
@@ -786,12 +806,18 @@
   "success": {
    "title": "All set!",
    "subtitle": "Your account is ready. Add your first expense to start seeing your summary.",
-   "subtitleIncome": "Your account is ready, but it starts at zero. Log an income first — then you'll be able to track expenses.",
+   "subtitleIncome": "Your account is ready and starts at zero. Add your first income — then you'll be able to track expenses.",
    "cta": "Add my first expense",
    "ctaIncome": "Add my first income",
    "errorTitle": "We couldn't finish setting up your account",
    "errorSubtitle": "It might be your connection. Try again — nothing you chose was lost.",
    "retry": "Try again"
+  },
+  "firstExpense": {
+   "title": "Add your first expense",
+   "subtitle": "This is how a real expense gets logged: under five seconds, no forms.",
+   "cta": "Add my first expense",
+   "later": "Not now"
   },
   "pending": {
    "pendingTitle": "Your access is waiting for approval",
@@ -806,9 +832,6 @@
    "signOut": "Sign out"
   },
   "complete": {
-   "balanceTitle": "How much do you have in {account}?",
-   "yourAccount": "your account",
-   "balanceSubtitle": "So your net worth starts correct. You can leave it at 0 and adjust it later.",
    "continue": "Continue",
    "installTitle": "Install PERZE",
    "installSubtitle": "Get in faster, like a native app.",
@@ -874,7 +897,7 @@
   "pendingSectionTitle": "Pending requests",
   "pendingEmpty": "No requests waiting for approval.",
   "pendingLoadError": "We couldn't load the pending requests.",
-  "requestedOn": "Requested on {date}",
+  "requestedOn": "Requested on {date} at {time}",
   "unknownCountry": "No country chosen yet",
   "approve": "Approve",
   "reject": "Reject",
@@ -884,8 +907,8 @@
   "disabledToast": "Access disabled.",
   "allUsersSectionTitle": "All users",
   "allUsersEmpty": "No users registered yet.",
-  "registeredOn": "Registered on {date}",
-  "lastSeenOn": "last seen {date}",
+  "registeredOn": "Registered on {date} at {time}",
+  "lastSeenOn": "last seen {date} at {time}",
   "neverConnected": "never connected",
   "disable": "Disable access",
   "enable": "Enable access",
@@ -1089,6 +1112,13 @@
   "birthDate": "Date of birth",
   "birthDateHint": "Optional, used only for statistics.",
   "ageHint": "{age} years old · used only for statistics.",
+  "birthPrecision": {
+   "exact": "Exact date",
+   "year": "Just my age"
+  },
+  "age": "Your age",
+  "agePlaceholder": "30",
+  "ageYearHint": "We'll store an approximate year — you won't get a birthday greeting.",
   "country": "Country",
   "countryUnset": "Not set",
   "countrySheetTitle": "Choose your country",
@@ -1227,9 +1257,9 @@
     "title": "All your currencies",
     "body": "Several accounts, currencies, and countries, in one place."
    },
-   "private": {
-    "title": "Your data, yours",
-    "body": "Open source, self-hosted — never routed through a third party."
+   "localFirst": {
+    "title": "Local-first",
+    "body": "No internet? Keep logging transactions — they sync automatically once you're back online."
    }
   },
   "aboutLink": "About PERZE"

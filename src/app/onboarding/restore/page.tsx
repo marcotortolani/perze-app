@@ -45,7 +45,7 @@ export default function OnboardingRestorePage() {
           // Carrera legítima: el chequeo remoto vio un household que ya no
           // existe (o quedó soft-deleted) — no hay nada que restaurar, sigue
           // el alta normal.
-          router.replace("/onboarding/country");
+          router.replace("/onboarding/profile");
           return;
         }
 
