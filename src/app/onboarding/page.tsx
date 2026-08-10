@@ -14,7 +14,6 @@ import { useEmailField } from "@/hooks/use-email-field";
 import { purgeNavigationCaches } from "@/lib/pwa/navigation-caches";
 import { createClient } from "@/lib/supabase/client";
 import { parseAuthHash } from "@/lib/auth/hash-tokens";
-import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 import { getPendingInviteCode } from "@/lib/onboarding/pending-invite";
 import { hasSeenWelcome } from "@/lib/onboarding/welcome-flag";
@@ -61,9 +60,11 @@ export default function OnboardingAuthPage() {
    * viaja al servidor) y el cliente PKCE no los consume solo, así que sin
    * este efecto la pantalla volvía a pedir el email a alguien que YA
    * verificó. Consume los tokens, y si hay sesión (por esto o de antes),
-   * salta A2 hacia donde corresponda: `/pending` sin aprobación del
-   * operador, la app si ya hay household local, o A4 para seguir el
-   * registro.
+   * salta A2 hacia donde corresponda: la app si ya hay household local, o
+   * A4 para seguir el registro. La aprobación del operador NO se chequea
+   * acá — chequearla antes de A4-A6 es el bug que ya se sacó una vez de
+   * `/onboarding/verify` (mismo patrón, mismo motivo): el gate real vive
+   * en `/onboarding/success`, justo antes de crear el household.
    */
   useEffect(() => {
     let cancelled = false;
@@ -115,13 +116,6 @@ export default function OnboardingAuthPage() {
       // "usado" para quien lo invitó.
       if (getPendingInviteCode()) {
         router.replace("/join");
-        return;
-      }
-
-      const access = await profilesRepo.getOwnAccess(user.id);
-      if (cancelled) return;
-      if (access && access.accessStatus !== "approved") {
-        router.replace("/pending");
         return;
       }
 

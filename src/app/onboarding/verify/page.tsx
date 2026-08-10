@@ -8,7 +8,6 @@ import { IconButton, OtpInput, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { createClient } from "@/lib/supabase/client";
-import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { resolveOnboardingDestination } from "@/lib/onboarding/resolve-destination";
 import { getPendingInviteCode } from "@/lib/onboarding/pending-invite";
 
@@ -72,16 +71,13 @@ export default function OnboardingVerifyPage() {
       }
 
       // Acceso controlado (§3.2) — verificarse no alcanza; hace falta la
-      // aprobación del operador antes de tocar el resto del onboarding.
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const access = user ? await profilesRepo.getOwnAccess(user.id) : null;
-      if (access && access.accessStatus !== "approved") {
-        router.push("/pending");
-        return;
-      }
-
+      // aprobación del operador, pero eso no debe frenar A4-A6 (país,
+      // moneda, con quién, primera cuenta): son datos mínimos que el resto
+      // de la app asume que ya existen, y esperar la aprobación antes de
+      // pedirlos introduce al usuario sin ellos. El gate real está en
+      // `/onboarding/success` (A11), justo antes de `completeOnboarding()`
+      // — el único punto que escribe el household.
+      //
       // AC-1/AC-9 — mismo chequeo que hace `/onboarding` al consumir el
       // link clickeado: sin esto, un reingreso por código (dispositivo
       // nuevo, o local storage limpio) mandaba siempre a A4 y creaba un

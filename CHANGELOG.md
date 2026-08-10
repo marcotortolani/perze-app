@@ -6,6 +6,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.14] — 2026-08-10
+
+### Arreglado
+
+- **Un usuario nuevo, tras verificarse y quedar a la espera de aprobación del operador, entraba
+  directo a `/add` con "ingreso" preseleccionado en cuanto lo aprobaban** — se saltaba por completo
+  `/onboarding/profile` (A4a), `/country` (A4), `/format` (A4b), `/usage` (A5) y `/account` (A6), y
+  el household se creaba con los defaults vacíos del store (`UYU`/`UY`/"Mi hogar"), nunca con datos
+  reales. La causa: dos lugares distintos (`/onboarding` y `/onboarding/verify`, uno por cada forma
+  de llegar — código tipeado o link del mail) chequeaban `access_status` y mandaban a `/pending`
+  ANTES de llegar a `resolveOnboardingDestination()`, en vez de dejar que el gate de aprobación
+  viviera únicamente en `/onboarding/success` (A11), justo antes de crear el household — que ya
+  tenía el chequeo correcto puesto. Se sacaron los dos gates tempranos; ahora A4-A6 se completan
+  siempre, sin importar el estado de aprobación, y recién A11 frena si todavía no está aprobado.
+
 ## [0.30.13] — 2026-08-10
 
 ### Feat — resumen anual

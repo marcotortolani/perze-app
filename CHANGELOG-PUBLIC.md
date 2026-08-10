@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.14 — 10 de agosto de 2026
+
+### Arreglado
+
+- Un usuario nuevo, apenas lo aprobábamos, entraba directo a cargar un ingreso sin haber elegido
+  antes su nombre, moneda, idioma ni su primera cuenta. Ahora esos pasos se completan siempre,
+  antes de que la cuenta quede lista para usar.
+
 ## 0.30.13 — 10 de agosto de 2026
 
 ### Nuevo
