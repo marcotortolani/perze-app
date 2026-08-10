@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.9] — 2026-08-10
+
+### Docs — idea del módulo de finanzas profesionales, anotada
+
+Cambio puramente interno, sin `CHANGELOG-PUBLIC.md`. Surgió migrando el Excel histórico de
+finanzas personales: la pestaña `Ahorros` de varios meses tenía un cronograma de pagos
+pendientes con el socio de la empresa de Pau, que no tiene sentido mezclar con las finanzas
+personales del household. Queda anotado en `docs/ideas-futuras.md` para evaluarlo más adelante
+— nada decidido ni programado todavía.
+
+---
+
 ## [0.30.8] — 2026-08-10
 
 ### Nuevo — cargar un gasto en la moneda del ticket, con la cuenta en otra moneda
