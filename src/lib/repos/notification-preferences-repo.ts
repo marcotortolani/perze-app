@@ -6,7 +6,12 @@ export interface NotificationPreferences {
   householdId: string;
   profileId: string;
   budgetAlerts: boolean;
-  weeklySummary: boolean;
+  /**
+   * Resumen del período por MAIL, no push (`docs/resumen-mensual-por-mail.md`).
+   * Reemplaza a `weekly_summary`, que quedó como columna muerta: prometía un
+   * envío semanal que nunca ocurrió, ni push ni mail.
+   */
+  monthlySummaryEmail: boolean;
   recurringReminders: boolean;
   insights: boolean;
   cardStatementDue: boolean;
@@ -14,7 +19,7 @@ export interface NotificationPreferences {
   householdJoined: boolean;
 }
 
-const DEFAULTS = { budgetAlerts: true, weeklySummary: true, recurringReminders: true, insights: true, cardStatementDue: true, householdJoined: true };
+const DEFAULTS = { budgetAlerts: true, monthlySummaryEmail: true, recurringReminders: true, insights: true, cardStatementDue: true, householdJoined: true };
 
 /**
  * K12 — preferencias de notificación, una fila por miembro (RLS: solo la
@@ -26,7 +31,7 @@ export const notificationPreferencesRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("notification_preferences")
-      .select("id, household_id, profile_id, budget_alerts, weekly_summary, recurring_reminders, insights, card_statement_due, household_joined")
+      .select("id, household_id, profile_id, budget_alerts, monthly_summary_email, recurring_reminders, insights, card_statement_due, household_joined")
       .eq("household_id", householdId)
       .eq("profile_id", profileId)
       .maybeSingle();
@@ -37,7 +42,7 @@ export const notificationPreferencesRepo = {
       householdId: data.household_id,
       profileId: data.profile_id,
       budgetAlerts: data.budget_alerts,
-      weeklySummary: data.weekly_summary,
+      monthlySummaryEmail: data.monthly_summary_email,
       recurringReminders: data.recurring_reminders,
       insights: data.insights,
       cardStatementDue: data.card_statement_due,
@@ -52,7 +57,7 @@ export const notificationPreferencesRepo = {
       household_id: prefs.householdId,
       profile_id: prefs.profileId,
       budget_alerts: prefs.budgetAlerts,
-      weekly_summary: prefs.weeklySummary,
+      monthly_summary_email: prefs.monthlySummaryEmail,
       recurring_reminders: prefs.recurringReminders,
       insights: prefs.insights,
       card_statement_due: prefs.cardStatementDue,

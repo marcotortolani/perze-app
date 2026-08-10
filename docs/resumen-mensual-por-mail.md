@@ -150,6 +150,16 @@ escritura solo `service_role`. Nadie del cliente escribe acá.
 El `UNIQUE` es la garantía real: si el cron corre dos veces, el segundo insert falla y no se manda
 nada. No alcanza con chequear antes de mandar — hay carrera.
 
+**Corregido al implementar: la fila se escribe ANTES del envío, no después.** El diseño original
+decía "después del envío exitoso, o un fallo de red deja a alguien sin resumen para siempre", y eso
+es cierto, pero entre el chequeo y el envío queda exactamente la carrera que el `UNIQUE` venía a
+cerrar — y el cron reintenta durante cuatro días, así que dos corridas solapadas mandarían el mismo
+mail dos veces. La Edge Function **reserva** el envío (insert), manda, y **libera la reserva
+(delete) si falla**. Se conservan las dos propiedades: no hay mail duplicado y un fallo de red se
+reintenta al día siguiente. Un período sin movimientos mantiene la reserva: es un resumen resuelto,
+no un fallo, y liberarla haría que el cron lo reintentara tres días para volver a descubrir que no
+hay nada que contar.
+
 ## Qué dice el mail
 
 Corto. Un mail de resumen que hay que scrollear no se lee.
@@ -183,7 +193,7 @@ Edge Function.
 
 ## Orden de implementación
 
-Los pasos 1 a 4 están hechos. Lo que existe hoy:
+**Los seis pasos están hechos.** Lo que existe hoy:
 
 - `src/lib/analytics/period-summary.ts` (`expenseByCategory`, `comparePeriods`) y
   `period-balances.ts` (`accountBalanceAt`, `periodAccountBalances`, `investingActivity`).
@@ -192,10 +202,29 @@ Los pasos 1 a 4 están hechos. Lo que existe hoy:
 - `src/app/api/emails/monthly-summary/route.ts` — recibe filas, calcula, renderiza y manda.
 - `supabase/migrations/20260810180000_monthly_summary_read.sql` — `summary_transactions()` y
   `summary_account_balances()`, con `supabase/tests/database/28_monthly_summary.sql`.
-- `supabase/functions/monthly-summary/index.ts` — lee por miembro y postea.
+- `supabase/functions/monthly-summary/index.ts` — lee por miembro, reserva el envío y postea.
+- `supabase/migrations/20260810190000_monthly_summary_schedule.sql` — preferencia,
+  `summary_emails_sent`, `household_period_start()` y el cron, con
+  `supabase/tests/database/29_monthly_summary_schedule.sql`.
+- La preferencia en `/more/notifications`, en una sección **Por mail** aparte: no cuelga del switch
+  de push, porque si colgara quedaría deshabilitada para todo el que nunca aceptó notificaciones —
+  o sea, para casi todos. El toggle de resumen semanal se retiró en el mismo movimiento.
 
-Falta el paso 5 (migración de preferencia + `summary_emails_sent` + cron) y el 6 (la preferencia en
-`/more/notifications`).
+Falta solamente el **resumen anual**, que reusa esta misma cadena con `kind = 'annual'`.
+
+### Lo que hay que hacer a mano una vez
+
+```bash
+supabase db push --linked
+pnpm db:types                                   # el repo lee monthly_summary_email
+supabase functions deploy monthly-summary
+supabase secrets set MONTHLY_SUMMARY_SECRET=... # el MISMO valor que en Vercel
+```
+
+Sin el secreto, la ruta de Next devuelve 404 a todo y la función sale en silencio: es el
+comportamiento correcto en un self-host que no activó los resúmenes, pero también el modo de falla
+más fácil de confundir con un bug. Los dos secrets de Vault (`perze_project_url`,
+`perze_service_role_key`) ya están registrados — los usan los cron que existen.
 
 1. **El cálculo, puro y testeado.** Una función que dado (household, profile, período) devuelve el
    resumen ya filtrado por visibilidad. Sin red, sin mail, sin cron. Es donde vive el riesgo real y

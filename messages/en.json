@@ -1019,10 +1019,6 @@
     "label": "Budget at its limit",
     "description": "When a category hits 80% or goes over"
    },
-   "weeklySummary": {
-    "label": "Weekly summary",
-    "description": "A weekly recap every Sunday"
-   },
    "recurringReminders": {
     "label": "Recurring reminders",
     "description": "When a fixed charge's date is coming up"
@@ -1038,6 +1034,14 @@
    "householdJoined": {
     "label": "New member in your household",
     "description": "When someone accepts your invitation"
+   }
+  },
+  "emailSection": "By email",
+  "emailSectionHint": "Sent to your account's inbox. They don't depend on notifications.",
+  "emailToggles": {
+   "monthlySummary": {
+    "label": "Monthly summary",
+    "description": "When your month closes, how it went"
    }
   },
   "profileToggles": {

@@ -2960,6 +2960,36 @@ export type Database = {
         }
         Returns: string[]
       }
+      summary_account_balances: {
+        Args: {
+          p_from: string
+          p_household_id: string
+          p_to: string
+          p_viewer: string
+        }
+        Returns: {
+          account_id: string
+          closing: string
+          currency_code: string
+          name: string
+          opening: string
+        }[]
+      }
+      summary_transactions: {
+        Args: {
+          p_from: string
+          p_household_id: string
+          p_to: string
+          p_viewer: string
+        }
+        Returns: {
+          amount_base: string
+          category_id: string
+          category_name: string
+          kind: string
+          occurred_at: string
+        }[]
+      }
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
       trigger_daily_inflation_sync: { Args: never; Returns: undefined }
       trigger_daily_price_sync: { Args: never; Returns: undefined }

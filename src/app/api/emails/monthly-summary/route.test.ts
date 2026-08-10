@@ -7,8 +7,9 @@ const SECRET = "un-secreto-largo-de-prueba";
 const envMock = { MONTHLY_SUMMARY_SECRET: SECRET as string | undefined, NEXT_PUBLIC_SITE_URL: "https://perze.tortolani.cc" };
 vi.mock("@/env", () => ({ env: envMock }));
 
-const sendEmail = vi.fn(async () => ({ ok: true as const }));
-vi.mock("@/emails/send", () => ({ sendEmail: (...args: unknown[]) => sendEmail(...(args as [])) }));
+type SentEmail = { to: string; subject: string; react: ReactElement };
+const sendEmail = vi.fn<(email: SentEmail) => Promise<{ ok: boolean; reason?: string }>>(async () => ({ ok: true }));
+vi.mock("@/emails/send", () => ({ sendEmail: (email: SentEmail) => sendEmail(email) }));
 
 const { POST } = await import("./route");
 
@@ -38,7 +39,7 @@ function post(body: unknown, secret: string | null = SECRET) {
 beforeEach(() => {
   envMock.MONTHLY_SUMMARY_SECRET = SECRET;
   sendEmail.mockClear();
-  sendEmail.mockResolvedValue({ ok: true as const });
+  sendEmail.mockResolvedValue({ ok: true });
 });
 
 describe("POST /api/emails/monthly-summary — el secreto es el único límite", () => {
@@ -89,7 +90,7 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
   it("formatea cada monto en la moneda que corresponde, no todo en la base", async () => {
     await post(validBody);
     expect(sendEmail).toHaveBeenCalledTimes(1);
-    const call = sendEmail.mock.calls[0]![0] as { to: string; subject: string; react: ReactElement };
+    const call = sendEmail.mock.calls[0]![0];
     expect(call.to).toBe("ana@example.com");
 
     const html = await render(call.react);
@@ -103,7 +104,7 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
 
   it("sin período anterior no inventa un 0%", async () => {
     await post({ ...validBody, previousTransactions: [] });
-    const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
+    const html = await render(sendEmail.mock.calls[0]![0].react);
     expect(html).toContain("no hay con qué comparar");
   });
 
@@ -117,7 +118,7 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
         { kind: "expense", amountBase: "40000", occurredAt: "2026-07-12T14:00:00.000Z", categoryId: CATEGORY_ID.replace("1", "2"), categoryName: null },
       ],
     });
-    const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
+    const html = await render(sendEmail.mock.calls[0]![0].react);
     expect(html).toContain("Supermercado");
     // 320.000 + 40.000 en unidades mínimas = $ 3.600
     expect(html).toContain("3.600");
@@ -126,12 +127,12 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
   it("una variación mínima cuenta como 'prácticamente lo mismo'", async () => {
     // "Gastaste un 0,3% más" es ruido con forma de dato.
     await post({ ...validBody, previousTransactions: [{ kind: "expense", amountBase: "319000", occurredAt: "2026-06-10T14:00:00.000Z" }] });
-    const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
+    const html = await render(sendEmail.mock.calls[0]![0].react);
     expect(html).toContain("prácticamente lo mismo");
   });
 
   it("propaga el fallo de envío en vez de responder 200", async () => {
-    sendEmail.mockResolvedValue({ ok: false, reason: "send_failed" } as never);
+    sendEmail.mockResolvedValue({ ok: false, reason: "send_failed" });
     const res = await post(validBody);
     expect(res.status).toBe(502);
   });

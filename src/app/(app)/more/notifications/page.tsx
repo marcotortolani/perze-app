@@ -13,8 +13,17 @@ import { notificationPreferencesRepo, type NotificationPreferences } from "@/lib
 import { profileNotificationPreferencesRepo, type ProfileNotificationPreferences } from "@/lib/repos/profile-notification-preferences-repo";
 import { getCurrentPushSubscription, PushUnsupportedError, subscribeToPush, unsubscribeFromPush } from "@/lib/push/subscribe";
 
-type ToggleKey = "budgetAlerts" | "weeklySummary" | "recurringReminders" | "insights" | "cardStatementDue" | "householdJoined";
-const TOGGLES: ToggleKey[] = ["budgetAlerts", "weeklySummary", "recurringReminders", "insights", "cardStatementDue", "householdJoined"];
+type ToggleKey = "budgetAlerts" | "recurringReminders" | "insights" | "cardStatementDue" | "householdJoined";
+const TOGGLES: ToggleKey[] = ["budgetAlerts", "recurringReminders", "insights", "cardStatementDue", "householdJoined"];
+
+/**
+ * Preferencias que NO son push: van por mail y por eso no se apagan con el
+ * switch de notificaciones ni se atenúan cuando está en off. Meterlas en
+ * `TOGGLES` las dejaría deshabilitadas para quien nunca aceptó push —
+ * o sea, invisibles para la mayoría.
+ */
+type EmailToggleKey = "monthlySummary";
+const EMAIL_TOGGLES: { key: EmailToggleKey; pref: "monthlySummaryEmail" }[] = [{ key: "monthlySummary", pref: "monthlySummaryEmail" }];
 
 type ProfileToggleKey = "inviteReceived" | "appUpdates";
 const PROFILE_TOGGLES: ProfileToggleKey[] = ["inviteReceived", "appUpdates"];
@@ -59,7 +68,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleTogglePreference = async (key: ToggleKey, value: boolean) => {
+  const handleTogglePreference = async (key: ToggleKey | "monthlySummaryEmail", value: boolean) => {
     const next: NotificationPreferences = { ...prefs, [key]: value };
     await notificationPreferencesRepo.upsert(next);
     invalidate();
@@ -105,6 +114,20 @@ export default function NotificationsPage() {
         ))}
 
         <p className="t-caption" style={{ color: "var(--text-muted)", marginTop: 18 }}>{t("notificationsPage.noEngagementPromise")}</p>
+
+        <div className="t-label" style={{ color: "var(--text-muted)", marginTop: 28 }}>{t("notificationsPage.emailSection")}</div>
+
+        {EMAIL_TOGGLES.map(({ key, pref }) => (
+          <div key={key} className="flex items-center gap-3.5" style={{ minHeight: 56 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{t(`notificationsPage.emailToggles.${key}.label`)}</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 1 }}>{t(`notificationsPage.emailToggles.${key}.description`)}</div>
+            </div>
+            <Switch checked={prefs[pref]} onChange={(v) => handleTogglePreference(pref, v)} id={`pref-${pref}`} />
+          </div>
+        ))}
+
+        <p className="t-caption" style={{ color: "var(--text-muted)", marginTop: 8 }}>{t("notificationsPage.emailSectionHint")}</p>
       </div>
     </div>
   );

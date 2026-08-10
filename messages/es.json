@@ -1019,10 +1019,6 @@
     "label": "Presupuesto al límite",
     "description": "Cuando una categoría llega al 80% o se pasa"
    },
-   "weeklySummary": {
-    "label": "Resumen semanal",
-    "description": "Los domingos, un resumen de la semana"
-   },
    "recurringReminders": {
     "label": "Recordatorios de recurrentes",
     "description": "Cuando se acerca la fecha de un cobro fijo"
@@ -1038,6 +1034,14 @@
    "householdJoined": {
     "label": "Nuevo miembro en tu hogar",
     "description": "Cuando alguien acepta tu invitación"
+   }
+  },
+  "emailSection": "Por mail",
+  "emailSectionHint": "Van a la casilla de tu cuenta. No dependen de las notificaciones.",
+  "emailToggles": {
+   "monthlySummary": {
+    "label": "Resumen mensual",
+    "description": "Cuando cierra tu mes, cómo te fue"
    }
   },
   "profileToggles": {

@@ -10,9 +10,11 @@
 // tenía 30 y nadie se enteró; acá el modo de falla sería un mail cuyos
 // números no coinciden con la app.
 //
-// Tampoco decide QUIÉN recibe ni CUÁNDO: recibe hogar, período y período
-// anterior ya resueltos. La selección por preferencia, la idempotencia y el
-// cron son el paso 5 y viven en SQL.
+// No decide CUÁNDO —eso lo dispara `trigger_monthly_summaries()`, que sabe
+// qué hogares cerraron período— pero sí decide QUIÉN: la preferencia y la
+// idempotencia se resuelven acá porque acá se sabe si el mail salió bien.
+// El cron es fire-and-forget (`net.http_post` no espera respuesta) y no
+// podría marcar nada como enviado sin mentir.
 //
 // Deploy: `supabase functions deploy monthly-summary`
 // Secrets: `SUMMARY_ENDPOINT` (o `SITE_URL`) y `MONTHLY_SUMMARY_SECRET`,
@@ -129,6 +131,15 @@ Deno.serve(async (req) => {
   if (membersError) return internalError("list members", membersError);
   if (!members || members.length === 0) return new Response(JSON.stringify({ sent: 0 }), { headers: { "Content-Type": "application/json" } });
 
+  // Quien nunca tocó la preferencia no tiene fila: el default es recibirlo,
+  // igual que la columna. Solo un `false` explícito lo apaga.
+  const { data: preferences, error: preferencesError } = await admin
+    .from("notification_preferences")
+    .select("profile_id, monthly_summary_email")
+    .eq("household_id", householdId);
+  if (preferencesError) return internalError("read preferences", preferencesError);
+  const optedOut = new Set((preferences ?? []).filter((row) => row.monthly_summary_email === false).map((row) => row.profile_id));
+
   const results: { profileId: string; status: string }[] = [];
 
   // En serie y no en paralelo: son pocos miembros por hogar y el cron
@@ -137,6 +148,11 @@ Deno.serve(async (req) => {
   // rate limit.
   for (const member of members) {
     const profileId = member.profile_id;
+
+    if (optedOut.has(profileId)) {
+      results.push({ profileId, status: "opted_out" });
+      continue;
+    }
 
     const { data: user, error: userError } = await admin.auth.admin.getUserById(profileId);
     if (userError) {
@@ -200,6 +216,43 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // Se RESERVA el envío antes de mandarlo, y se libera si falla.
+    //
+    // El diseño decía "insertar después del envío exitoso", pero entre el
+    // chequeo y el envío hay una carrera: el cron reintenta durante cuatro
+    // días y dos corridas solapadas mandarían el mismo resumen dos veces.
+    // Reservar primero cierra la carrera con el `UNIQUE`, y el `delete` de
+    // más abajo preserva lo que esa regla protegía: que un fallo de red no
+    // deje a alguien sin resumen para siempre.
+    const { error: claimError } = await admin.from("summary_emails_sent").insert({
+      household_id: householdId,
+      profile_id: profileId,
+      kind: "monthly",
+      period_start: periodStart,
+      period_end: periodEnd,
+    });
+    if (claimError) {
+      // 23505 = ya lo recibió (una corrida anterior de la ventana de
+      // reintento). Es el caso normal, no un error.
+      if (claimError.code === "23505") {
+        results.push({ profileId, status: "already_sent" });
+      } else {
+        console.error("[monthly-summary] claim:", claimError);
+        results.push({ profileId, status: "claim_error" });
+      }
+      continue;
+    }
+
+    const releaseClaim = async () => {
+      const { error } = await admin
+        .from("summary_emails_sent")
+        .delete()
+        .match({ household_id: householdId, profile_id: profileId, kind: "monthly", period_start: periodStart });
+      // Si ni siquiera se puede liberar, ese miembro pierde el resumen de
+      // este período. Queda logueado para poder borrar la fila a mano.
+      if (error) console.error("[monthly-summary] release claim:", error);
+    };
+
     let response: Response;
     try {
       response = await fetch(endpoint, {
@@ -209,19 +262,22 @@ Deno.serve(async (req) => {
       });
     } catch (error) {
       console.error("[monthly-summary] post to Next:", error);
+      await releaseClaim();
       results.push({ profileId, status: "network_error" });
       continue;
     }
 
     if (!response.ok) {
       console.error(`[monthly-summary] Next respondió ${response.status} para ${profileId}`);
+      await releaseClaim();
       results.push({ profileId, status: `http_${response.status}` });
       continue;
     }
 
-    // 200 con `sent: false` es un período sin movimientos: no es un fallo
-    // y no tiene que contar como enviado — el paso 5 no debe marcarlo como
-    // resumen ya mandado.
+    // 200 con `sent: false` es un período sin movimientos. La reserva se
+    // MANTIENE: no es un fallo, es un resumen resuelto, y liberarla haría
+    // que el cron lo reintentara los tres días siguientes para volver a
+    // descubrir que no hay nada que contar.
     const body = (await response.json().catch(() => ({}))) as { sent?: boolean; reason?: string };
     results.push({ profileId, status: body.sent === false ? (body.reason ?? "not_sent") : "sent" });
   }
