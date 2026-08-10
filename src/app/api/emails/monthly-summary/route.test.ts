@@ -12,20 +12,21 @@ vi.mock("@/emails/send", () => ({ sendEmail: (...args: unknown[]) => sendEmail(.
 
 const { POST } = await import("./route");
 
+const CATEGORY_ID = "0198c0f0-0000-7000-8000-000000000001";
+
 const validBody = {
   to: "ana@example.com",
   locale: "es",
   baseCurrency: "UYU",
   periodStart: "2026-07-01",
   periodEnd: "2026-07-31",
-  income: "500000",
-  expenses: "320000",
-  net: "180000",
-  expenseChangePct: 12.4,
+  previousPeriodStart: "2026-06-01",
   accounts: [{ name: "Itaú", currencyCode: "USD", opening: "100000", closing: "80000" }],
-  topCategories: [{ label: "Supermercado", total: "90000" }],
-  investing: null,
-  excludedCount: 0,
+  transactions: [
+    { kind: "income", amountBase: "500000", occurredAt: "2026-07-03T14:00:00.000Z", categoryId: null, categoryName: null },
+    { kind: "expense", amountBase: "320000", occurredAt: "2026-07-10T14:00:00.000Z", categoryId: CATEGORY_ID, categoryName: "Supermercado" },
+  ],
+  previousTransactions: [{ kind: "expense", amountBase: "285000", occurredAt: "2026-06-10T14:00:00.000Z" }],
 };
 
 function post(body: unknown, secret: string | null = SECRET) {
@@ -65,8 +66,23 @@ describe("POST /api/emails/monthly-summary — el secreto es el único límite",
 
 describe("POST /api/emails/monthly-summary — validación y formato", () => {
   it("rechaza un cuerpo inválido antes de mandar nada", async () => {
-    const res = await post({ ...validBody, income: "no-es-un-numero" });
+    const res = await post({ ...validBody, transactions: [{ ...validBody.transactions[0], amountBase: "no-es-un-numero" }] });
     expect(res.status).toBe(400);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("rechaza una fecha que no se puede parsear en vez de resumir en cero", async () => {
+    // Un `Date` inválido no tira: hace que todo quede fuera de rango y el
+    // mail saldría con todos los totales en cero, sin que nada falle.
+    const res = await post({ ...validBody, transactions: [{ ...validBody.transactions[0], occurredAt: "el martes" }] });
+    expect(res.status).toBe(400);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("un período sin movimientos no genera mail", async () => {
+    const res = await post({ ...validBody, transactions: [] });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ sent: false, reason: "NO_ACTIVITY" });
     expect(sendEmail).not.toHaveBeenCalled();
   });
 
@@ -85,15 +101,31 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
     expect(html).toContain("US$");
   });
 
-  it("sin comparación no inventa un 0%", async () => {
-    await post({ ...validBody, expenseChangePct: null });
+  it("sin período anterior no inventa un 0%", async () => {
+    await post({ ...validBody, previousTransactions: [] });
     const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
     expect(html).toContain("no hay con qué comparar");
   });
 
+  it("solo cuenta la categoría que ese miembro puede ver", async () => {
+    // La categoría privada de otro miembro no se nombra por mail, pero su
+    // plata sigue adentro del total de egresos.
+    await post({
+      ...validBody,
+      transactions: [
+        ...validBody.transactions,
+        { kind: "expense", amountBase: "40000", occurredAt: "2026-07-12T14:00:00.000Z", categoryId: CATEGORY_ID.replace("1", "2"), categoryName: null },
+      ],
+    });
+    const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
+    expect(html).toContain("Supermercado");
+    // 320.000 + 40.000 en unidades mínimas = $ 3.600
+    expect(html).toContain("3.600");
+  });
+
   it("una variación mínima cuenta como 'prácticamente lo mismo'", async () => {
     // "Gastaste un 0,3% más" es ruido con forma de dato.
-    await post({ ...validBody, expenseChangePct: 0.3 });
+    await post({ ...validBody, previousTransactions: [{ kind: "expense", amountBase: "319000", occurredAt: "2026-06-10T14:00:00.000Z" }] });
     const html = await render((sendEmail.mock.calls[0]![0] as { react: ReactElement }).react);
     expect(html).toContain("prácticamente lo mismo");
   });

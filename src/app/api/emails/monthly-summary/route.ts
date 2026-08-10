@@ -5,6 +5,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import MonthlySummaryEmail from "@/emails/monthly-summary";
 import { sendEmail } from "@/emails/send";
+import { buildMonthlySummary } from "@/lib/analytics/monthly-summary";
 import { formatAmount } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { formatDateLong, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
@@ -19,11 +20,17 @@ import messagesPt from "../../../../../messages/pt.json";
  * función es la que puede usar `service_role` para leer los movimientos de
  * todos los hogares — `CLAUDE.md` solo lo permite ahí y en cron. Pero los
  * mails de la app se arman con React Email y next-intl, que no corren en
- * Deno; de ahí el reparto: allá se calcula, acá se renderiza y se manda.
+ * Deno; de ahí el reparto: allá se lee, acá se calcula, se renderiza y se
+ * manda.
  *
- * Este handler **no recibe ids ni consulta la base**: recibe los números ya
- * calculados. Si el secreto se filtrara, quien lo tenga puede mandarse
- * mails con números inventados, pero no puede leer datos de nadie.
+ * El cálculo vive de este lado a propósito (`buildMonthlySummary`): la
+ * regla de signo por `kind` y la exclusión de `needs_fx` ya existen en
+ * TypeScript y no se duplican en Deno — ver la nota de ese módulo.
+ *
+ * Este handler **no consulta la base ni recibe ids de hogar**: recibe las
+ * filas que ese miembro puede ver, ya filtradas por visibilidad del otro
+ * lado. Si el secreto se filtrara, quien lo tenga puede mandarse mails con
+ * números inventados, pero no puede leer datos de nadie.
  *
  * `proxy.ts` excluye `/api/*` de su matcher — este handler se autentica
  * solo, no hereda ningún gate.
@@ -33,21 +40,31 @@ const localeSchema = z.enum(["es", "en", "pt"]);
 /** Montos en unidades mínimas como string: un `bigint` no sobrevive a JSON. */
 const minorUnits = z.string().regex(/^-?\d+$/, "monto en unidades mínimas");
 
+const kindSchema = z.enum(["expense", "income", "transfer", "adjustment", "investing"]);
+/** Un `Date` inválido no rompe: recorta todo por rango y el resumen sale en cero. Se rechaza acá. */
+const instant = z.string().refine((value) => !Number.isNaN(Date.parse(value)), "fecha-hora inválida");
+
+const transactionSchema = z.object({
+  kind: kindSchema,
+  /** `null` = sin cotización. Nunca 1 (`CLAUDE.md` § needs_fx). */
+  amountBase: minorUnits.nullable(),
+  occurredAt: instant,
+  categoryId: z.uuid().nullable(),
+  /** `null` si ese miembro no puede ver la categoría — cuenta en el total, no se nombra. */
+  categoryName: z.string().nullable(),
+});
+
 const bodySchema = z.object({
   to: z.email(),
   locale: localeSchema,
   baseCurrency: z.string().min(1),
   periodStart: z.iso.date(),
   periodEnd: z.iso.date(),
-  income: minorUnits,
-  expenses: minorUnits,
-  net: minorUnits,
-  /** Variación del gasto contra el período anterior. `null` = no hay con qué comparar. */
-  expenseChangePct: z.number().nullable(),
+  /** Inicio del período anterior — su fin es `periodStart`. Sin esto no hay comparación. */
+  previousPeriodStart: z.iso.date(),
   accounts: z.array(z.object({ name: z.string(), currencyCode: z.string().min(1), opening: minorUnits, closing: minorUnits })),
-  topCategories: z.array(z.object({ label: z.string(), total: minorUnits })),
-  investing: z.object({ invested: minorUnits, divested: minorUnits }).nullable(),
-  excludedCount: z.number().int().min(0),
+  transactions: z.array(transactionSchema),
+  previousTransactions: z.array(z.object({ kind: kindSchema, amountBase: minorUnits.nullable(), occurredAt: instant })),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,13 +125,40 @@ export async function POST(request: Request) {
   // El formateo vive de este lado: la precisión se deriva de cada moneda
   // (`decimalsFor`), así que un saldo en pesos y uno en bitcoin no se
   // muestran igual. La plantilla no decide nada de eso.
-  const fmt = (amount: string, currency: string) => formatAmount(money(BigInt(amount), currency), { locale: numberLocale, showSign: false });
+  const fmt = (amount: bigint, currency: string) => formatAmount(money(amount, currency), { locale: numberLocale, showSign: false });
 
-  const start = new Date(`${body.periodStart}T12:00:00.000Z`);
-  const end = new Date(`${body.periodEnd}T12:00:00.000Z`);
-  const periodLabel = `${formatDateLong(locale, start)} – ${formatDateLong(locale, end)}`;
+  // Mediodía UTC para las fechas que solo se muestran: a medianoche UTC,
+  // cualquier huso negativo las dibuja un día antes (`CLAUDE.md`).
+  const periodLabel = `${formatDateLong(locale, new Date(`${body.periodStart}T12:00:00.000Z`))} – ${formatDateLong(
+    locale,
+    new Date(`${body.periodEnd}T12:00:00.000Z`)
+  )}`;
 
-  const changePct = body.expenseChangePct;
+  // Los límites del cálculo, en cambio, son instantes: `[from, to)` con
+  // `periodEnd` inclusivo, así que el corte es el día siguiente a las 00:00
+  // UTC. **El hogar no guarda huso horario** (decisión cerrada: la app lee
+  // el del dispositivo), así que el único corte defendible del lado
+  // servidor es UTC — y tiene que ser EL MISMO que usa la consulta de la
+  // Edge Function, o el recorte de acá dejaría afuera filas que sí vinieron.
+  const from = new Date(`${body.periodStart}T00:00:00.000Z`);
+  const to = new Date(`${body.periodEnd}T00:00:00.000Z`);
+  to.setUTCDate(to.getUTCDate() + 1);
+  const previousFrom = new Date(`${body.previousPeriodStart}T00:00:00.000Z`);
+
+  const summary = buildMonthlySummary({
+    from,
+    to,
+    previousFrom,
+    transactions: body.transactions.map((tx) => ({ ...tx, amountBase: tx.amountBase === null ? null : BigInt(tx.amountBase) })),
+    previousTransactions: body.previousTransactions.map((tx) => ({ ...tx, amountBase: tx.amountBase === null ? null : BigInt(tx.amountBase) })),
+    accounts: body.accounts.map((account) => ({ ...account, opening: BigInt(account.opening), closing: BigInt(account.closing) })),
+  });
+
+  // Un hogar que no movió nada en el mes no recibe un mail de resumen
+  // vacío. No es un error: la Edge Function lo cuenta y sigue.
+  if (!summary.hasActivity) return NextResponse.json({ sent: false, reason: "NO_ACTIVITY" }, { status: 200, headers: NO_STORE_HEADERS });
+
+  const changePct = summary.expenseChangePct;
   const t = createTranslator({ locale, messages, namespace: "emails.monthlySummary" });
 
   const result = await sendEmail({
@@ -125,10 +169,10 @@ export async function POST(request: Request) {
       messages,
       siteUrl,
       periodLabel,
-      income: fmt(body.income, body.baseCurrency),
-      expenses: fmt(body.expenses, body.baseCurrency),
-      net: fmt(body.net, body.baseCurrency),
-      netDirection: directionOf(Number(body.net)),
+      income: fmt(summary.income, body.baseCurrency),
+      expenses: fmt(summary.expenses, body.baseCurrency),
+      net: fmt(summary.net, body.baseCurrency),
+      netDirection: directionOf(Number(summary.net)),
       expenseChange:
         changePct === null
           ? null
@@ -136,17 +180,19 @@ export async function POST(request: Request) {
               text: `${new Intl.NumberFormat(numberLocale, { maximumFractionDigits: 0 }).format(Math.abs(changePct))}%`,
               direction: directionOf(changePct),
             },
-      accounts: body.accounts.map((account) => ({
+      accounts: summary.accounts.map((account) => ({
         name: account.name,
+        // Cada saldo en la moneda de SU cuenta: consolidar dólares con
+        // pesos daría un número sin significado y el resumen no lo inventa.
         opening: fmt(account.opening, account.currencyCode),
         closing: fmt(account.closing, account.currencyCode),
-        direction: directionOf(Number(BigInt(account.closing) - BigInt(account.opening))),
+        direction: directionOf(Number(account.closing - account.opening)),
       })),
-      topCategories: body.topCategories.map((category) => ({ label: category.label, amount: fmt(category.total, body.baseCurrency) })),
-      investing: body.investing
-        ? { invested: fmt(body.investing.invested, body.baseCurrency), divested: fmt(body.investing.divested, body.baseCurrency) }
+      topCategories: summary.topCategories.map((category) => ({ label: category.label, amount: fmt(category.total, body.baseCurrency) })),
+      investing: summary.investing
+        ? { invested: fmt(summary.investing.invested, body.baseCurrency), divested: fmt(summary.investing.divested, body.baseCurrency) }
         : null,
-      excludedCount: body.excludedCount,
+      excludedCount: summary.excludedCount,
       appUrl: `${siteUrl}/`,
     }),
   });
@@ -155,5 +201,5 @@ export async function POST(request: Request) {
     return jsonError(result.reason === "not_configured" ? "EMAIL_NOT_CONFIGURED" : "SEND_FAILED", result.reason === "not_configured" ? 503 : 502);
   }
 
-  return NextResponse.json({}, { status: 200, headers: NO_STORE_HEADERS });
+  return NextResponse.json({ sent: true }, { status: 200, headers: NO_STORE_HEADERS });
 }

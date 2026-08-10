@@ -34,13 +34,13 @@ movimiento.
 
 ## Arquitectura
 
-**La Edge Function calcula, Next renderiza y envía.**
+**La Edge Function lee, Next calcula y envía.**
 
 ```text
 pg_cron (diario)
   └─ public.trigger_monthly_summaries()      -- SQL, mismo patrón que trigger_daily_fx_sync
-       └─ Edge Function `monthly-summary`     -- Deno, service_role: lee y calcula
-            └─ POST /api/emails/monthly-summary  -- Next: React Email + next-intl + Resend
+       └─ Edge Function `monthly-summary`     -- Deno, service_role: SOLO lee filas visibles
+            └─ POST /api/emails/monthly-summary  -- Next: calcula + React Email + next-intl + Resend
 ```
 
 El motivo del salto extra: `CLAUDE.md` permite `service_role` **solo en Edge Functions y cron**, y
@@ -50,8 +50,10 @@ Partirlo en dos respeta las dos restricciones: los datos se leen donde correspon
 donde ya está el diseño y los idiomas.
 
 La ruta de Next se protege con un secreto compartido en header (`MONTHLY_SUMMARY_SECRET`), verificado
-antes de hacer nada. No recibe ids: recibe **los números ya calculados**, así que aunque se filtrara
-no da acceso a nada.
+antes de hacer nada. No recibe ids de hogar ni consulta la base: recibe **las filas que ese miembro
+puede ver**, ya filtradas por visibilidad del otro lado, y las convierte en el resumen con
+`buildMonthlySummary()`. Aunque el secreto se filtrara, quien lo tenga puede mandarse mails con
+números inventados; no puede leer datos de nadie.
 
 ## Dónde vive el cálculo, y por qué
 
@@ -84,13 +86,21 @@ que existía.
 puede ver —SQL, `service_role`, `can_see_as`— y pasárselas a la ruta de Next, que ya corre el código
 de la app. Toda la lógica de dinero queda en un solo lugar, en TypeScript, ya testeada.
 
-**Excepción, decidida aparte:** el saldo de apertura de cada cuenta **se calcula en Postgres**, no
-en Next. Reconstruirlo en TypeScript exige *toda* la historia de la cuenta (`accountBalanceAt` suma
+**Excepción, decidida aparte:** el saldo de apertura y el de cierre de cada cuenta **se calculan en
+Postgres**, no
+en Next. Reconstruirlos en TypeScript exige *toda* la historia de la cuenta (`accountBalanceAt` suma
 efectos desde `opening_balance`), así que el payload crecería con los años de uso. Una agregación
-en SQL devuelve un número por cuenta y a Next viajan solo los movimientos del período. El costo es
-que la regla de "qué cuenta mueve cada `kind` y por cuánto" gana un equivalente en SQL: es una
-regla chica y estable comparada con toda la agregación, y hay que fijarla con un test que compare
-el resultado de SQL contra el de TypeScript sobre el mismo caso.
+en SQL devuelve dos números por cuenta —apertura y cierre— y a Next viajan solo los movimientos del
+período.
+
+El cierre sale de ahí también, y no de "apertura + lo que pasó en el período": una cuenta abierta en
+medio del período tiene apertura 0 —antes de `opening_date` no existía— y un cierre que sí incluye
+su `opening_balance`. Sumarle los efectos a la apertura la dejaría corta por exactamente ese monto.
+
+El costo es que la regla de "qué cuenta mueve cada `kind` y por cuánto" gana un equivalente en SQL:
+es una regla chica y estable comparada con toda la agregación, es espejo declarado de
+`computeTransactionEffects()` (`src/lib/repos/balance-effects.ts`), y queda fijada en
+`supabase/tests/database/28_monthly_summary.sql` con saldos calculados a mano según ese módulo.
 
 La alternativa —poblar `account_balance_snapshots`, que ya existe y está vacía— quedó documentada
 aparte en `docs/cierre-de-periodo.md`: no se puede hacer bien mientras el pasado sea editable.
@@ -173,6 +183,20 @@ Edge Function.
 
 ## Orden de implementación
 
+Los pasos 1 a 4 están hechos. Lo que existe hoy:
+
+- `src/lib/analytics/period-summary.ts` (`expenseByCategory`, `comparePeriods`) y
+  `period-balances.ts` (`accountBalanceAt`, `periodAccountBalances`, `investingActivity`).
+- `src/lib/analytics/monthly-summary.ts` — la composición, con sus unitarios.
+- `src/emails/monthly-summary.tsx` — la plantilla, en ES/EN/PT.
+- `src/app/api/emails/monthly-summary/route.ts` — recibe filas, calcula, renderiza y manda.
+- `supabase/migrations/20260810090000_monthly_summary_read.sql` — `summary_transactions()` y
+  `summary_account_balances()`, con `supabase/tests/database/28_monthly_summary.sql`.
+- `supabase/functions/monthly-summary/index.ts` — lee por miembro y postea.
+
+Falta el paso 5 (migración de preferencia + `summary_emails_sent` + cron) y el 6 (la preferencia en
+`/more/notifications`).
+
 1. **El cálculo, puro y testeado.** Una función que dado (household, profile, período) devuelve el
    resumen ya filtrado por visibilidad. Sin red, sin mail, sin cron. Es donde vive el riesgo real y
    se puede cubrir entero con tests — incluida la exclusión por `needs_fx` y el filtrado por
@@ -191,5 +215,13 @@ Edge Function.
 - **Miembros sin email verificado** o que se fueron del hogar entre el cierre y el envío.
 - **Zona horaria**: el cierre es un día calendario del hogar, y las fechas se guardan en UTC. Vale la
   misma regla que el resto de la app — mediodía UTC para fechas sintetizadas, nunca medianoche.
+- **El corte del período es UTC, y la app lo dibuja en el huso del dispositivo.** El hogar no guarda
+  huso horario (decisión cerrada: se lee el del sistema operativo al renderizar), así que del lado
+  servidor no hay otro corte defendible. Consecuencia real y aceptada: un movimiento cargado el
+  último día del período después de las 21:00 en UTC-3 cae, para el mail, en el período siguiente.
+  Son horas en el borde, no un desfase general. **El corte tiene que ser el mismo en los tres
+  lugares** —la consulta SQL, la Edge Function y el recorte de la ruta de Next—: si uno corre un día,
+  el recorte de Next tira filas que sí viajaron y el mail sale con menos plata que la pantalla.
+  Cuando exista huso por hogar, se cambia en un solo lugar (los límites que arma el cron).
 - **Resend puede fallar.** El insert en `summary_emails_sent` va DESPUÉS del envío exitoso, o un
   fallo de red deja a alguien sin resumen para siempre.
