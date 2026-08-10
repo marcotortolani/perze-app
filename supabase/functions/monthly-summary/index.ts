@@ -1,5 +1,5 @@
-// Resumen del período que cerró, por miembro
-// (`docs/resumen-mensual-por-mail.md`, paso 4).
+// Resumen del período que cerró, por miembro — y el anual, que es el mismo
+// resumen sobre doce períodos (`docs/resumen-mensual-por-mail.md`).
 //
 // **Esta función no calcula nada de dinero, y es a propósito.** Lee las
 // filas que cada miembro puede ver —con `service_role`, que `CLAUDE.md`
@@ -10,8 +10,9 @@
 // tenía 30 y nadie se enteró; acá el modo de falla sería un mail cuyos
 // números no coinciden con la app.
 //
-// No decide CUÁNDO —eso lo dispara `trigger_monthly_summaries()`, que sabe
-// qué hogares cerraron período— pero sí decide QUIÉN: la preferencia y la
+// No decide CUÁNDO —eso lo disparan `trigger_monthly_summaries()` y
+// `trigger_annual_summaries()`, que saben qué hogares cerraron— pero sí
+// decide QUIÉN: la preferencia y la
 // idempotencia se resuelven acá porque acá se sabe si el mail salió bien.
 // El cron es fire-and-forget (`net.http_post` no espera respuesta) y no
 // podría marcar nada como enviado sin mentir.
@@ -27,6 +28,12 @@ import { z } from "npm:zod@4";
 
 const requestSchema = z.object({
   householdId: z.uuid(),
+  /**
+   * `annual` es el mismo resumen sobre doce períodos, disparado por
+   * `trigger_annual_summaries()`. Cambia el rango, la clave de
+   * idempotencia y que hacen falta los cortes de cada período.
+   */
+  kind: z.enum(["monthly", "annual"]).default("monthly"),
   /** Primer día del período que cerró. */
   periodStart: z.iso.date(),
   /** Último día INCLUSIVE del período que cerró. */
@@ -109,7 +116,7 @@ Deno.serve(async (req) => {
   }
   const parsed = requestSchema.safeParse(rawBody);
   if (!parsed.success) return jsonError("invalid_body", 400);
-  const { householdId, periodStart, periodEnd, previousPeriodStart, profileIds, dryRun } = parsed.data;
+  const { householdId, kind, periodStart, periodEnd, previousPeriodStart, profileIds, dryRun } = parsed.data;
 
   const from = `${periodStart}T00:00:00.000Z`;
   const to = dayAfter(periodEnd);
@@ -119,7 +126,7 @@ Deno.serve(async (req) => {
 
   const { data: household, error: householdError } = await admin
     .from("households")
-    .select("base_currency, deleted_at")
+    .select("base_currency, period_start_day, deleted_at")
     .eq("id", householdId)
     .maybeSingle();
   if (householdError) return internalError("read household", householdError);
@@ -139,6 +146,22 @@ Deno.serve(async (req) => {
     .eq("household_id", householdId);
   if (preferencesError) return internalError("read preferences", preferencesError);
   const optedOut = new Set((preferences ?? []).filter((row) => row.monthly_summary_email === false).map((row) => row.profile_id));
+
+  // Los cortes de los períodos que abarca el anual: de ahí sale el mes de
+  // mayor gasto, del lado de Next. El mensual no los necesita — es un
+  // período solo.
+  let periodCuts: string[] | undefined;
+  if (kind === "annual") {
+    const { data, error } = await admin.rpc("household_period_cuts", {
+      p_start_day: household.period_start_day,
+      p_from: periodStart,
+      p_to: periodEnd,
+    });
+    if (error) return internalError("read period cuts", error);
+    // El último corte es el fin del rango, que no es un inicio de período
+    // pero sí el borde del último bucket.
+    periodCuts = [...((data ?? []) as string[]), dayAfter(periodEnd).slice(0, 10)];
+  }
 
   const results: { profileId: string; status: string }[] = [];
 
@@ -185,6 +208,8 @@ Deno.serve(async (req) => {
 
     const payload = {
       to: email,
+      kind,
+      periodCuts,
       locale,
       baseCurrency: household.base_currency,
       periodStart,
@@ -227,7 +252,7 @@ Deno.serve(async (req) => {
     const { error: claimError } = await admin.from("summary_emails_sent").insert({
       household_id: householdId,
       profile_id: profileId,
-      kind: "monthly",
+      kind,
       period_start: periodStart,
       period_end: periodEnd,
     });
@@ -247,7 +272,7 @@ Deno.serve(async (req) => {
       const { error } = await admin
         .from("summary_emails_sent")
         .delete()
-        .match({ household_id: householdId, profile_id: profileId, kind: "monthly", period_start: periodStart });
+        .match({ household_id: householdId, profile_id: profileId, kind, period_start: periodStart });
       // Si ni siquiera se puede liberar, ese miembro pierde el resumen de
       // este período. Queda logueado para poder borrar la fila a mano.
       if (error) console.error("[monthly-summary] release claim:", error);

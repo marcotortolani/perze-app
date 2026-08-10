@@ -83,6 +83,34 @@ export interface MonthlySummary {
 
 const DEFAULT_TOP_CATEGORIES = 5;
 
+export interface BiggestPeriod {
+  /** Inicio del período con más gasto de consumo. */
+  start: Date;
+  total: bigint;
+}
+
+/**
+ * De todos los períodos que abarca el resumen anual, el de mayor gasto.
+ *
+ * `cuts` son los inicios de cada período más el fin del último —doce
+ * períodos son trece cortes— y salen de `household_period_cuts()` en SQL,
+ * que es donde vive la regla del día de cierre del hogar. Acá solo se
+ * agrupa: cada bucket pasa por `summarizePeriod`, así que la exclusión de
+ * `needs_fx` y el signo por `kind` siguen siendo los mismos de siempre.
+ *
+ * Devuelve `null` si no hubo un solo gasto en todo el rango: un "tu mes de
+ * mayor gasto" con cero adentro no es un dato, es una fila vacía.
+ */
+export function biggestPeriodByExpense(transactions: readonly PeriodTransactionInput[], cuts: readonly Date[]): BiggestPeriod | null {
+  let biggest: BiggestPeriod | null = null;
+  for (let i = 0; i < cuts.length - 1; i += 1) {
+    const start = cuts[i]!;
+    const { expenseTotal } = summarizePeriod(transactions, start, cuts[i + 1]!);
+    if (expenseTotal > 0n && (biggest === null || expenseTotal > biggest.total)) biggest = { start, total: expenseTotal };
+  }
+  return biggest;
+}
+
 export function buildMonthlySummary(input: BuildMonthlySummaryInput): MonthlySummary {
   const { from, to, transactions, previousFrom, previousTransactions, accounts } = input;
   const limit = input.topCategoryLimit ?? DEFAULT_TOP_CATEGORIES;

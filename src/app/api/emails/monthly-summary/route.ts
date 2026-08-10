@@ -5,10 +5,10 @@ import { z } from "zod";
 import { env } from "@/env";
 import MonthlySummaryEmail from "@/emails/monthly-summary";
 import { sendEmail } from "@/emails/send";
-import { buildMonthlySummary } from "@/lib/analytics/monthly-summary";
+import { biggestPeriodByExpense, buildMonthlySummary } from "@/lib/analytics/monthly-summary";
 import { formatAmount } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
-import { formatDateLong, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { formatDateLong, formatMonthYear, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import messagesEs from "../../../../../messages/es.json";
 import messagesEn from "../../../../../messages/en.json";
 import messagesPt from "../../../../../messages/pt.json";
@@ -56,6 +56,14 @@ const transactionSchema = z.object({
 
 const bodySchema = z.object({
   to: z.email(),
+  /**
+   * `annual` es el mismo resumen sobre doce períodos: mismo cálculo, mismo
+   * cuerpo, una sección más. Lo único que cambia acá es que necesita los
+   * cortes de cada período para saber cuál fue el mes de mayor gasto.
+   */
+  kind: z.enum(["monthly", "annual"]).default("monthly"),
+  /** Solo en el anual: los 13 cortes de los 12 períodos, de `household_period_cuts()`. */
+  periodCuts: z.array(z.iso.date()).optional(),
   locale: localeSchema,
   baseCurrency: z.string().min(1),
   periodStart: z.iso.date(),
@@ -145,11 +153,13 @@ export async function POST(request: Request) {
   to.setUTCDate(to.getUTCDate() + 1);
   const previousFrom = new Date(`${body.previousPeriodStart}T00:00:00.000Z`);
 
+  const transactions = body.transactions.map((tx) => ({ ...tx, amountBase: tx.amountBase === null ? null : BigInt(tx.amountBase) }));
+
   const summary = buildMonthlySummary({
     from,
     to,
     previousFrom,
-    transactions: body.transactions.map((tx) => ({ ...tx, amountBase: tx.amountBase === null ? null : BigInt(tx.amountBase) })),
+    transactions,
     previousTransactions: body.previousTransactions.map((tx) => ({ ...tx, amountBase: tx.amountBase === null ? null : BigInt(tx.amountBase) })),
     accounts: body.accounts.map((account) => ({ ...account, opening: BigInt(account.opening), closing: BigInt(account.closing) })),
   });
@@ -161,11 +171,17 @@ export async function POST(request: Request) {
   const changePct = summary.expenseChangePct;
   const t = createTranslator({ locale, messages, namespace: "emails.monthlySummary" });
 
+  // El mes de mayor gasto sale de los cortes reales del hogar, no de meses
+  // calendario: el período de alguien que cierra el 10 no es "julio".
+  const cuts = (body.periodCuts ?? []).map((cut) => new Date(`${cut}T00:00:00.000Z`));
+  const biggest = body.kind === "annual" && cuts.length > 1 ? biggestPeriodByExpense(transactions, cuts) : null;
+
   const result = await sendEmail({
     to: body.to,
-    subject: t("subject", { period: periodLabel }),
+    subject: t(body.kind === "annual" ? "annualSubject" : "subject", { period: periodLabel }),
     react: MonthlySummaryEmail({
       locale,
+      variant: body.kind,
       messages,
       siteUrl,
       periodLabel,
@@ -191,6 +207,13 @@ export async function POST(request: Request) {
       topCategories: summary.topCategories.map((category) => ({ label: category.label, amount: fmt(category.total, body.baseCurrency) })),
       investing: summary.investing
         ? { invested: fmt(summary.investing.invested, body.baseCurrency), divested: fmt(summary.investing.divested, body.baseCurrency) }
+        : null,
+      // El corte es medianoche UTC porque así se recortan los buckets, pero
+      // para MOSTRARLO hay que pasarlo a mediodía: en cualquier huso
+      // negativo, medianoche UTC se dibuja el día anterior y el 1 de
+      // febrero sale como "enero" (`CLAUDE.md`).
+      biggestMonth: biggest
+        ? { label: formatMonthYear(locale, new Date(`${biggest.start.toISOString().slice(0, 10)}T12:00:00.000Z`)), amount: fmt(biggest.total, body.baseCurrency) }
         : null,
       excludedCount: summary.excludedCount,
       appUrl: `${siteUrl}/`,

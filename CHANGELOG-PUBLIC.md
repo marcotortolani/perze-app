@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.13 — 10 de agosto de 2026
+
+### Nuevo
+
+- Una vez por año te llega un resumen del año entero: cómo te fue en total y cuál fue tu mes más
+  caro. Sale una semana después del resumen de diciembre, para que no lleguen los dos juntos. Se
+  apaga con el mismo interruptor que el mensual.
+
 ## 0.30.12 — 10 de agosto de 2026
 
 ### Nuevo

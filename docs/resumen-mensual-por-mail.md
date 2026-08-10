@@ -1,6 +1,6 @@
 # Resumen por mail: mensual y anual
 
-Diseño cerrado, sin implementar. Decisiones tomadas con Marco el 10 de agosto de 2026.
+Implementado. Decisiones tomadas con Marco el 10 de agosto de 2026.
 
 ## Qué es
 
@@ -38,7 +38,8 @@ movimiento.
 
 ```text
 pg_cron (diario)
-  └─ public.trigger_monthly_summaries()      -- SQL, mismo patrón que trigger_daily_fx_sync
+  ├─ public.trigger_monthly_summaries()      -- el período que cerró
+  └─ public.trigger_annual_summaries()       -- los 12 períodos, una semana después
        └─ Edge Function `monthly-summary`     -- Deno, service_role: SOLO lee filas visibles
             └─ POST /api/emails/monthly-summary  -- Next: calcula + React Email + next-intl + Resend
 ```
@@ -175,8 +176,23 @@ Corto. Un mail de resumen que hay que scrollear no se lee.
 
 **Sin gráficos.** Los clientes de correo los rompen y obligan a imágenes generadas del lado servidor.
 
-**El resumen anual** es el mismo cuerpo sobre los 12 períodos cerrados, más el total del año y el
-mes de mayor gasto. Sale con el cierre del período que completa el año calendario del hogar.
+**El resumen anual** es el mismo cuerpo sobre los 12 períodos cerrados, más el mes de mayor gasto
+(el total del año ya son los tres números de arriba). Tres decisiones al implementarlo:
+
+- **Sale una semana después del mensual de diciembre**, no el mismo día. El cierre del primer
+  período del año dispara los dos, y dos mails de resumen el mismo día compiten entre sí: el anual,
+  que es el interesante, se lee por arriba.
+- **Misma preferencia que el mensual.** Es un paquete: uno por mes más uno por año. Un interruptor
+  aparte serviría para querer solo el anual, que es un caso lo bastante raro como para no pagar una
+  columna y una fila más de ajustes.
+- **Mínimo de tres períodos cerrados.** Con menos, un "resumen del año" con tres meses adentro
+  promete algo que no tiene (`CLAUDE.md` § Mínimos de historial). El hogar lo recibe el año
+  siguiente.
+
+**El año de un hogar son sus doce períodos, no el calendario**: para quien cierra el 10 va del 10 de
+enero al 10 de enero, y el mes de mayor gasto se busca sobre esos cortes
+(`household_period_cuts()`), nunca sobre meses calendario — agrupar por mes calendario metería dos
+medias mitades en el mismo bucket.
 
 ## Privacidad: la parte delicada
 
@@ -210,14 +226,17 @@ Edge Function.
   de push, porque si colgara quedaría deshabilitada para todo el que nunca aceptó notificaciones —
   o sea, para casi todos. El toggle de resumen semanal se retiró en el mismo movimiento.
 
-Falta solamente el **resumen anual**, que reusa esta misma cadena con `kind = 'annual'`.
+- `supabase/migrations/20260810200000_annual_summary.sql` — `household_period_cuts()` y
+  `trigger_annual_summaries()`, con `supabase/tests/database/30_annual_summary.sql`. El anual reusa
+  todo lo demás: mismas funciones de lectura, misma tabla de idempotencia (su `CHECK` ya aceptaba
+  `'annual'`), misma preferencia, misma plantilla con `variant="annual"`.
 
 ### Lo que hay que hacer a mano una vez
 
 ```bash
 supabase db push --linked
 pnpm db:types                                   # el repo lee monthly_summary_email
-supabase functions deploy monthly-summary
+supabase functions deploy monthly-summary       # la misma función sirve los dos resúmenes
 supabase secrets set MONTHLY_SUMMARY_SECRET=... # el MISMO valor que en Vercel
 ```
 

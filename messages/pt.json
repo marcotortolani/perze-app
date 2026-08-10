@@ -1975,6 +1975,14 @@
  },
  "emails": {
   "monthlySummary": {
+  "annualSubject": "Seu ano no Perze: {period}",
+  "annualPreview": "Como foi seu ano: {period}",
+  "annualTitle": "Seu resumo do ano",
+  "annualNoComparison": "É seu primeiro ano completo, então ainda não há com o que comparar.",
+  "annualSpentMore": "Você gastou {change} a mais que no ano anterior.",
+  "annualSpentLess": "Você gastou {change} a menos que no ano anterior.",
+  "annualSpentSame": "Você gastou praticamente o mesmo que no ano anterior.",
+  "biggestMonthTitle": "Seu mês mais caro",
    "subject": "Seu resumo de {period}",
    "preview": "Como foi {period}",
    "title": "Seu resumo do período",

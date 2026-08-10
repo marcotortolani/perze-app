@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthlySummary, type MonthlySummaryTransactionInput } from "./monthly-summary";
+import { biggestPeriodByExpense, buildMonthlySummary, type MonthlySummaryTransactionInput } from "./monthly-summary";
 
 const FROM = new Date("2026-07-01T00:00:00.000Z");
 const TO = new Date("2026-08-01T00:00:00.000Z");
@@ -116,5 +116,49 @@ describe("buildMonthlySummary", () => {
     });
     expect(summary.accounts.map((a) => a.currencyCode)).toEqual(["UYU", "USD"]);
     expect(summary.accounts[1]!.closing).toBe(120_000n);
+  });
+});
+
+describe("biggestPeriodByExpense", () => {
+  const CUTS = [new Date("2026-01-01T00:00:00.000Z"), new Date("2026-02-01T00:00:00.000Z"), new Date("2026-03-01T00:00:00.000Z"), new Date("2026-04-01T00:00:00.000Z")];
+
+  it("elige el período con más gasto de consumo", () => {
+    const biggest = biggestPeriodByExpense(
+      [
+        { kind: "expense", amountBase: 100_000n, occurredAt: "2026-01-10T12:00:00.000Z" },
+        { kind: "expense", amountBase: 900_000n, occurredAt: "2026-02-14T12:00:00.000Z" },
+        { kind: "expense", amountBase: 300_000n, occurredAt: "2026-03-02T12:00:00.000Z" },
+      ],
+      CUTS
+    );
+    expect(biggest?.start.toISOString()).toBe("2026-02-01T00:00:00.000Z");
+    expect(biggest?.total).toBe(900_000n);
+  });
+
+  it("una compra grande de instrumentos no convierte a ese mes en el de mayor gasto", () => {
+    const biggest = biggestPeriodByExpense(
+      [
+        { kind: "expense", amountBase: 100_000n, occurredAt: "2026-01-10T12:00:00.000Z" },
+        { kind: "investing", amountBase: -5_000_000n, occurredAt: "2026-02-14T12:00:00.000Z" },
+      ],
+      CUTS
+    );
+    expect(biggest?.start.toISOString()).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("sin un solo gasto no inventa un mes ganador", () => {
+    expect(biggestPeriodByExpense([], CUTS)).toBeNull();
+    expect(biggestPeriodByExpense([{ kind: "income", amountBase: 500_000n, occurredAt: "2026-01-10T12:00:00.000Z" }], CUTS)).toBeNull();
+  });
+
+  it("los movimientos sin cotización no eligen el mes", () => {
+    const biggest = biggestPeriodByExpense(
+      [
+        { kind: "expense", amountBase: 10_000n, occurredAt: "2026-01-10T12:00:00.000Z" },
+        { kind: "expense", amountBase: null, occurredAt: "2026-02-14T12:00:00.000Z" },
+      ],
+      CUTS
+    );
+    expect(biggest?.start.toISOString()).toBe("2026-01-01T00:00:00.000Z");
   });
 });

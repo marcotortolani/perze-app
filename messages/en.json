@@ -1975,6 +1975,14 @@
  },
  "emails": {
   "monthlySummary": {
+  "annualSubject": "Your year in Perze: {period}",
+  "annualPreview": "How your year went: {period}",
+  "annualTitle": "Your year in review",
+  "annualNoComparison": "This is your first full year, so there's nothing to compare against yet.",
+  "annualSpentMore": "You spent {change} more than last year.",
+  "annualSpentLess": "You spent {change} less than last year.",
+  "annualSpentSame": "You spent about the same as last year.",
+  "biggestMonthTitle": "Your priciest month",
    "subject": "Your {period} summary",
    "preview": "How {period} went",
    "title": "Your period summary",

@@ -137,3 +137,55 @@ describe("POST /api/emails/monthly-summary — validación y formato", () => {
     expect(res.status).toBe(502);
   });
 });
+
+describe("POST /api/emails/monthly-summary — el anual", () => {
+  const annualBody = {
+    ...validBody,
+    kind: "annual",
+    periodStart: "2026-01-01",
+    periodEnd: "2026-12-31",
+    previousPeriodStart: "2025-01-01",
+    periodCuts: ["2026-01-01", "2026-02-01", "2026-03-01", "2027-01-01"],
+    transactions: [
+      { kind: "expense", amountBase: "100000", occurredAt: "2026-01-15T14:00:00.000Z", categoryId: CATEGORY_ID, categoryName: "Supermercado" },
+      { kind: "expense", amountBase: "900000", occurredAt: "2026-02-15T14:00:00.000Z", categoryId: CATEGORY_ID, categoryName: "Supermercado" },
+    ],
+    previousTransactions: [],
+  };
+
+  it("nombra el período de mayor gasto y su monto", async () => {
+    await post(annualBody);
+    const html = await render(sendEmail.mock.calls[0]![0].react);
+    expect(html).toContain("Tu mes más caro");
+    // El corte es 2026-02-01 a medianoche UTC: en UTC-3 eso se dibuja como
+    // el 31 de enero si se formatea crudo. Es el bug que ya pasó una vez.
+    expect(html).toContain("febrero");
+    // 900.000 en unidades mínimas
+    expect(html).toContain("9.000");
+  });
+
+  it("usa el asunto y el título del año, no los del mes", async () => {
+    await post(annualBody);
+    expect(sendEmail.mock.calls[0]![0].subject).toContain("Tu año en Perze");
+    const html = await render(sendEmail.mock.calls[0]![0].react);
+    expect(html).toContain("Tu resumen del año");
+  });
+
+  it("el mensual no dibuja la sección del mes más caro aunque le manden cortes", async () => {
+    // Los cortes son inofensivos en el mensual: sin `kind: annual` no se
+    // usan. Un mail de un período con "tu mes más caro" adentro sería el
+    // mismo número dos veces.
+    await post({ ...annualBody, kind: "monthly" });
+    const html = await render(sendEmail.mock.calls[0]![0].react);
+    expect(html).not.toContain("Tu mes más caro");
+  });
+
+  it("un año sin un solo gasto no inventa un mes ganador", async () => {
+    await post({
+      ...annualBody,
+      transactions: [{ kind: "income", amountBase: "500000", occurredAt: "2026-01-15T14:00:00.000Z", categoryId: null, categoryName: null }],
+    });
+    const html = await render(sendEmail.mock.calls[0]![0].react);
+    expect(html).not.toContain("Tu mes más caro");
+  });
+});

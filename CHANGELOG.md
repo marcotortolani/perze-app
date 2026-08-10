@@ -6,6 +6,36 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.13] — 2026-08-10
+
+### Feat — resumen anual
+
+El mismo resumen sobre doce períodos. Reusa toda la cadena del mensual: las funciones de lectura,
+`summary_emails_sent` (su `CHECK` ya aceptaba `'annual'`), la preferencia y la plantilla, ahora con
+`variant="annual"` — comparte namespace de textos en vez de duplicar veinte claves por idioma para
+cambiar tres.
+
+Lo propio del anual son dos cosas. `household_period_cuts()` devuelve los trece cortes de los doce
+períodos, y `biggestPeriodByExpense()` busca sobre ellos el período de mayor gasto: **el año de un
+hogar son sus doce períodos, no el calendario**, así que agrupar por mes calendario metería dos
+medias mitades en el mismo bucket. Y `trigger_annual_summaries()`, que dispara **una semana después**
+del mensual de diciembre — el cierre del primer período del año dispara los dos y dos mails de
+resumen el mismo día compiten entre sí.
+
+Mínimo de tres períodos cerrados (`CLAUDE.md` § Mínimos de historial): con menos, un "resumen del
+año" con tres meses adentro promete algo que no tiene. Se mira el primer movimiento del hogar, no
+los de cada miembro: es una pregunta sobre si hay historia, no sobre qué ve cada uno.
+
+### Fix — el mes de mayor gasto se mostraba corrido un mes
+
+Los cortes de período son medianoche UTC porque así se recortan los buckets, pero al formatearlos
+para mostrar hay que pasarlos a mediodía: en cualquier huso negativo, medianoche UTC se dibuja el día
+anterior, y el corte del 1 de febrero salía como "enero". Es exactamente el bug que `CLAUDE.md`
+documenta y que ya había pasado con las ocurrencias de recurrentes. Lo agarró el test antes de que
+saliera un mail.
+
+---
+
 ## [0.30.12] — 2026-08-10
 
 ### Feat — resumen mensual por mail, de punta a punta

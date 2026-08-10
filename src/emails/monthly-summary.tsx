@@ -22,6 +22,13 @@ export interface AccountLine {
 
 export type MonthlySummaryEmailProps = {
   locale: MonthlySummaryEmailLocale;
+  /**
+   * El anual es el mismo cuerpo sobre doce períodos, con otro título y una
+   * sección más. Comparte namespace de textos a propósito: duplicar veinte
+   * claves por idioma para cambiar tres es la forma de que los dos mails
+   * se vayan pareciendo cada vez menos sin que nadie lo decida.
+   */
+  variant?: "monthly" | "annual";
   // Mismo motivo que `invite.tsx`: `use-intl` necesita `Record<string, any>`
   // para inferir las claves anidadas; con `unknown` colapsa a `never`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +47,8 @@ export type MonthlySummaryEmailProps = {
   topCategories: SummaryLine[];
   /** Solo si hubo movimientos de inversión — si es `null`, la sección no se dibuja. */
   investing: { invested: string; divested: string } | null;
+  /** Solo en el anual: el período de mayor gasto. `null` si no hubo gastos. */
+  biggestMonth?: { label: string; amount: string } | null;
   /** Movimientos excluidos por falta de cotización. `0` = no se menciona. */
   excludedCount: number;
   appUrl: string;
@@ -64,6 +73,7 @@ export type MonthlySummaryEmailProps = {
  */
 export default function MonthlySummaryEmail({
   locale,
+  variant = "monthly",
   messages,
   siteUrl,
   periodLabel,
@@ -75,15 +85,18 @@ export default function MonthlySummaryEmail({
   accounts,
   topCategories,
   investing,
+  biggestMonth,
   excludedCount,
   appUrl,
 }: MonthlySummaryEmailProps) {
   const t = createTranslator({ locale, messages, namespace: "emails.monthlySummary" });
+  const annual = variant === "annual";
+  const key = (base: string) => (annual ? `annual${base[0]!.toUpperCase()}${base.slice(1)}` : base);
 
   return (
-    <EmailLayout siteUrl={siteUrl} preview={t("preview", { period: periodLabel })}>
+    <EmailLayout siteUrl={siteUrl} preview={t(key("preview"), { period: periodLabel })}>
       <Heading as="h2" style={{ margin: "0 0 4px", fontSize: 22, lineHeight: "28px", fontFamily: emailTheme.fontStack, color: emailTheme.color.textPrimary }}>
-        {t("title")}
+        {t(key("title"))}
       </Heading>
       <Text style={{ margin: "0 0 24px", fontSize: 14, lineHeight: "20px", fontFamily: emailTheme.fontStack, color: emailTheme.color.textMuted }}>
         {periodLabel}
@@ -95,11 +108,11 @@ export default function MonthlySummaryEmail({
 
       {expenseChange ? (
         <Text style={{ margin: "8px 0 0", fontSize: 14, lineHeight: "20px", fontFamily: emailTheme.fontStack, color: emailTheme.color.textSecondary }}>
-          {t(expenseChange.direction === "up" ? "spentMore" : expenseChange.direction === "down" ? "spentLess" : "spentSame", { change: expenseChange.text })}
+          {t(key(expenseChange.direction === "up" ? "spentMore" : expenseChange.direction === "down" ? "spentLess" : "spentSame"), { change: expenseChange.text })}
         </Text>
       ) : (
         <Text style={{ margin: "8px 0 0", fontSize: 14, lineHeight: "20px", fontFamily: emailTheme.fontStack, color: emailTheme.color.textMuted }}>
-          {t("noComparison")}
+          {t(key("noComparison"))}
         </Text>
       )}
 
@@ -133,6 +146,14 @@ export default function MonthlySummaryEmail({
           {topCategories.map((category) => (
             <SummaryRow key={category.label} label={category.label} value={category.amount} />
           ))}
+        </>
+      ) : null}
+
+      {annual && biggestMonth ? (
+        <>
+          <Hr style={{ margin: "24px 0", borderColor: emailTheme.color.border }} />
+          <SectionTitle>{t("biggestMonthTitle")}</SectionTitle>
+          <SummaryRow label={biggestMonth.label} value={biggestMonth.amount} />
         </>
       ) : null}
 
