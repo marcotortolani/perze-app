@@ -190,7 +190,7 @@ Los pasos 1 a 4 están hechos. Lo que existe hoy:
 - `src/lib/analytics/monthly-summary.ts` — la composición, con sus unitarios.
 - `src/emails/monthly-summary.tsx` — la plantilla, en ES/EN/PT.
 - `src/app/api/emails/monthly-summary/route.ts` — recibe filas, calcula, renderiza y manda.
-- `supabase/migrations/20260810090000_monthly_summary_read.sql` — `summary_transactions()` y
+- `supabase/migrations/20260810180000_monthly_summary_read.sql` — `summary_transactions()` y
   `summary_account_balances()`, con `supabase/tests/database/28_monthly_summary.sql`.
 - `supabase/functions/monthly-summary/index.ts` — lee por miembro y postea.
 
