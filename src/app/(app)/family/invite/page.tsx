@@ -3,42 +3,35 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useLocale, useTranslations } from "next-intl";
-import { Button, Input, usePageHeader, ZMark } from "@/design-system";
+import { useTranslations } from "next-intl";
+import { Button, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useInvalidateInvites } from "@/hooks/use-invites";
 import { invitesRepo, type HouseholdInvite } from "@/lib/repos/invites-repo";
-import { useEmailField } from "@/hooks/use-email-field";
-import { optionalEmailSchema } from "@/lib/validation/email";
 
 /**
  * J3 — invitar. Se genera un código que el usuario comparte a mano y se
  * canjea en `/join` — el código es el mismo camino que un QR, así que
- * agregarlo después no cambia el modelo de datos. Con email cargado,
- * además se ofrece mandarlo por mail (`/api/emails/invite`, Route
- * Handler + Resend — decisión cerrada, no una Edge Function, ver
- * `docs/mejora-auth-oauth-y-email.md` § 6): el envío es best-effort, el
- * código sigue siendo el camino de respaldo si Resend no está
- * configurado o el mail falla.
+ * agregarlo después no cambia el modelo de datos.
  *
- * El email NO es decorativo aunque sea opcional: si se carga, la
- * invitación queda nominal y `accept_invite`
- * (`20260801100000_fix_invites_hardening.sql`) rechaza a cualquier otra
- * cuenta. Por eso se guarda normalizado en minúscula.
+ * El envío por mail (email opcional + `/api/emails/invite`, Resend) se
+ * probó y se sacó de esta pantalla: sin el SMTP de Resend configurado
+ * (`docs/mejora-auth-oauth-y-email.md` § 0, pendiente) no entrega nada,
+ * y pedir un mail que después no hace nada visible es peor que no
+ * pedirlo — código + link son el camino completo por su cuenta. La
+ * columna `household_invites.email` y el Route Handler quedan sin
+ * llamar, no se borraron: son lo que hay que retomar el día que Resend
+ * esté realmente configurado, no lo que hay que reescribir.
  */
 export default function InviteFamilyMemberPage() {
   const t = useTranslations();
-  const locale = useLocale();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const invalidateInvites = useInvalidateInvites(household?.id);
   usePageHeader({ title: t("familyPage.invite"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
-  // El email es opcional: vacío no es un error, pero escrito a medias sí.
-  const email = useEmailField();
   const [creating, setCreating] = useState(false);
   const [invite, setInvite] = useState<HouseholdInvite | null>(null);
-  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   if (!household) return null;
 
@@ -46,40 +39,13 @@ export default function InviteFamilyMemberPage() {
 
   const handleCreate = async () => {
     if (creating) return;
-    const parsed = optionalEmailSchema.safeParse(email.value);
-    if (!parsed.success) {
-      email.onBlur();
-      return;
-    }
     setCreating(true);
     try {
-      const created = await invitesRepo.create({ householdId: household.id, email: parsed.data, role: "member" });
+      const created = await invitesRepo.create({ householdId: household.id, email: null, role: "member" });
       invalidateInvites();
       setInvite(created);
-      if (created.email) void handleSendEmail(created);
     } finally {
       setCreating(false);
-    }
-  };
-
-  const handleSendEmail = async (target: HouseholdInvite) => {
-    if (!target.email) return;
-    setSendState("sending");
-    try {
-      const res = await fetch("/api/emails/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inviteId: target.id, locale }),
-      });
-      if (!res.ok) {
-        setSendState("error");
-        toast.error(t("familyPage.sendError"));
-        return;
-      }
-      setSendState("sent");
-    } catch {
-      setSendState("error");
-      toast.error(t("familyPage.sendError"));
     }
   };
 
@@ -123,36 +89,11 @@ export default function InviteFamilyMemberPage() {
                 </Button>
               </div>
               <p className="t-caption" style={{ margin: 0, color: "var(--text-muted)" }}>{t("familyPage.inviteExpires")}</p>
-              {/* Sin email cargado, este bloque entero no se dibuja: no
-                  hay a quién mandarle nada — el código/link de arriba
-                  siguen siendo el camino completo por su cuenta. */}
-              {invite?.email ? (
-                <>
-                  <p className="t-caption" style={{ margin: 0, color: sendState === "error" ? "var(--critical)" : "var(--text-muted)" }}>
-                    {sendState === "sending"
-                      ? t("familyPage.sending")
-                      : sendState === "sent"
-                        ? t("familyPage.sent", { email: invite.email })
-                        : sendState === "error"
-                          ? t("familyPage.sendError")
-                          : null}
-                  </p>
-                  {sendState === "error" ? (
-                    <Button variant="ghost" onClick={() => handleSendEmail(invite)}>
-                      {t("familyPage.sendByEmail")}
-                    </Button>
-                  ) : null}
-                </>
-              ) : null}
             </div>
           ) : (
-            <>
-              <Input label={t("familyPage.emailOptional")} placeholder={t("common.emailError.example")} {...email.bind} />
-              <p className="t-body" style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{t("familyPage.emailOptionalHint")}</p>
-              <Button disabled={creating || !!email.hint} onClick={handleCreate} style={{ marginTop: "auto" }}>
-                {t("familyPage.generateCode")}
-              </Button>
-            </>
+            <Button disabled={creating} onClick={handleCreate} style={{ marginTop: "auto" }}>
+              {t("familyPage.generateCode")}
+            </Button>
           )}
         </div>
 

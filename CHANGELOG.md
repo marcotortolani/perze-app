@@ -6,6 +6,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.15] — 2026-08-10
+
+### Arreglado
+
+- **`/family/invite` pedía un email opcional y prometía mandar la invitación por mail, pero nunca
+  entregaba nada** — el envío depende de tener el SMTP de Resend configurado (`docs/mejora-auth-oauth-y-email.md`
+  § 0, todavía pendiente), y sin eso el Route Handler fallaba en silencio para quien la recibía.
+  Se sacó el campo de email y el intento de envío de la pantalla: vuelve a generar solo código +
+  link, que ya funcionan sin depender de nada externo. `household_invites.email`,
+  `invites-repo.ts` y `src/app/api/emails/invite/route.ts` quedan sin llamar, no se borraron —
+  retomar el día que Resend esté realmente configurado.
+
 ## [0.30.14] — 2026-08-10
 
 ### Arreglado

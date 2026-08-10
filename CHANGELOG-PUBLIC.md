@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.15 — 10 de agosto de 2026
+
+### Arreglado
+
+- Al invitar a alguien al hogar, ya no aparece la opción de mandar la invitación por mail —no
+  estaba entregando nada—. Compartí el código o el link como hasta ahora.
+
 ## 0.30.14 — 10 de agosto de 2026
 
 ### Arreglado

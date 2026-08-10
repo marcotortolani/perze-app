@@ -1,6 +1,6 @@
 {
   "name": "personal-finances-app",
-  "version": "0.30.14",
+  "version": "0.30.15",
   "private": true,
   "license": "MIT",
   "scripts": {

@@ -306,13 +306,19 @@ del cliente.
 Backlog de lo que hoy no existe y que Resend habilita. Alcance de esta
 pasada: **solo el primer punto.**
 
-- **Invitación al household (J3) — implementado.**
-  `household_invites` guardaba una columna `email` que nadie usaba: el
-  código se compartía a mano (`src/lib/repos/invites-repo.ts`,
-  `src/app/(app)/family/invite/page.tsx`). Ahora, con email cargado,
-  `/family/invite` manda el mail vía `src/app/api/emails/invite/route.ts`
+- **Invitación al household (J3) — implementado en el backend, revertido
+  en la UI (2026-08-10).** Se había sumado un campo de email opcional en
+  `/family/invite` que mandaba el mail vía `src/app/api/emails/invite/route.ts`
   — ver [§ 8](#8-flujo-de-las-plantillas-de-auth-con-react-email) para el
-  patrón general de plantillas y el detalle del handler.
+  patrón general de plantillas y el detalle del handler. Probado con un
+  usuario real: sin el SMTP de Resend configurado (pendiente, § 0 arriba),
+  el envío no entrega nada y no hay ningún aviso de que dependía de un
+  paso externo sin hacer — pedir un mail que después no hace nada visible
+  es peor que no pedirlo. **La pantalla volvió a código + link únicamente**,
+  sin el campo de email ni el intento de envío. `household_invites.email`,
+  `invites-repo.ts` (acepta `email` opcional) y el Route Handler quedan
+  sin llamar, no se borraron — retomar el campo de email en la UI el día
+  que Resend esté realmente configurado, no reescribirlo.
 - **Resumen semanal, alertas de presupuesto, recordatorios de recurrentes e
   insights — fuera de alcance, con motivo.** Las cuatro preferencias ya
   existen en `src/lib/repos/notification-preferences-repo.ts` con **un
