@@ -53,6 +53,55 @@ La ruta de Next se protege con un secreto compartido en header (`MONTHLY_SUMMARY
 antes de hacer nada. No recibe ids: recibe **los números ya calculados**, así que aunque se filtrara
 no da acceso a nada.
 
+## Dónde vive el cálculo, y por qué
+
+La Edge Function corre en Deno y no puede importar de `src/`. Se evaluaron cuatro caminos.
+
+**Duplicar la agregación en Deno — descartado.** Es el precedente del proyecto: `daily-fx-sync`
+dice que son "los mismos proveedores que `src/lib/fx/providers/*.ts`, portados a Deno". Pero el
+comentario de ese mismo archivo registra cómo terminó: su set de monedas soportadas **tenía 14
+cuando el del cliente tenía 30**, así que el cron no precargó cotizaciones para 16 monedas durante
+un tiempo, y nadie se enteró hasta que alguien fue a mirar.
+
+Eso era una lista de códigos de tres letras. Acá habría que duplicar la clasificación de signo por
+`kind`, la exclusión de `needs_fx`, la reconstrucción de saldos por efectos y la separación
+consumo/liquidez. Si una lista se desincronizó, esto se desincroniza seguro — y el modo de falla es
+un mail cuyos números no coinciden con la app, que nadie reporta como bug: se lee como que la app
+miente.
+
+**Todo en una función de Postgres — descartado.** Dejaría el filtrado pegado a `can_see_as`, pero no
+elimina la duplicación: la mueve. La regla de signo por `kind` pasaría a existir en `cash-flow.ts`
+**y** en SQL, en el lenguaje donde es más difícil de testear y donde las migraciones son
+append-only.
+
+**Compartir el TypeScript con un import map de Deno — descartado.** Técnicamente plausible (los
+módulos son puros y los tipos desaparecen en runtime), pero acopla el deploy de la Edge Function a
+que nadie agregue nunca un import de React o de Next en esa cadena de archivos. Falla ruidosamente,
+que es mejor que en silencio, pero es una restricción invisible que alguien va a romper sin saber
+que existía.
+
+**Elegido: la Edge Function no calcula nada.** Su único trabajo es leer las filas que ese miembro
+puede ver —SQL, `service_role`, `can_see_as`— y pasárselas a la ruta de Next, que ya corre el código
+de la app. Toda la lógica de dinero queda en un solo lugar, en TypeScript, ya testeada.
+
+**Excepción, decidida aparte:** el saldo de apertura de cada cuenta **se calcula en Postgres**, no
+en Next. Reconstruirlo en TypeScript exige *toda* la historia de la cuenta (`accountBalanceAt` suma
+efectos desde `opening_balance`), así que el payload crecería con los años de uso. Una agregación
+en SQL devuelve un número por cuenta y a Next viajan solo los movimientos del período. El costo es
+que la regla de "qué cuenta mueve cada `kind` y por cuánto" gana un equivalente en SQL: es una
+regla chica y estable comparada con toda la agregación, y hay que fijarla con un test que compare
+el resultado de SQL contra el de TypeScript sobre el mismo caso.
+
+La alternativa —poblar `account_balance_snapshots`, que ya existe y está vacía— quedó documentada
+aparte en `docs/cierre-de-periodo.md`: no se puede hacer bien mientras el pasado sea editable.
+
+## Una limitación que el mail no debe negar
+
+**El resumen se calcula sobre lo que llegó al servidor.** Si alguien tiene movimientos sin
+sincronizar en su outbox, el mail no los incluye. No es un bug de esta funcionalidad: es la
+consecuencia de que la app sea local-first, y aplica a cualquiera de los cuatro caminos de arriba.
+El mail no debería afirmar una completitud que no tiene.
+
 ## Schema
 
 Una migración nueva, append-only.
