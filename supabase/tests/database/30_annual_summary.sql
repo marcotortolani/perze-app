@@ -34,7 +34,7 @@ SELECT tests.log(is(
 ));
 
 SELECT tests.log(is(
-  (SELECT array_agg(c ORDER BY c)[2] FROM public.household_period_cuts(10::smallint, '2026-01-10'::date, '2027-01-09'::date) AS c),
+  (SELECT (array_agg(c ORDER BY c))[2] FROM public.household_period_cuts(10::smallint, '2026-01-10'::date, '2027-01-09'::date) AS c),
   '2026-02-10'::date,
   'el segundo corte respeta el día de cierre, no el 1 del mes'
 ));
@@ -42,7 +42,7 @@ SELECT tests.log(is(
 -- Febrero no tiene 30: el corte se clampea al último día, igual que
 -- `household_period_start()`.
 SELECT tests.log(is(
-  (SELECT array_agg(c ORDER BY c)[2] FROM public.household_period_cuts(28::smallint, '2026-01-28'::date, '2026-04-30'::date) AS c),
+  (SELECT (array_agg(c ORDER BY c))[2] FROM public.household_period_cuts(28::smallint, '2026-01-28'::date, '2026-04-30'::date) AS c),
   '2026-02-28'::date,
   'un día de cierre que no existe en el mes se clampea al último'
 ));
