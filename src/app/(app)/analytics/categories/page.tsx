@@ -14,7 +14,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { previousClosedPeriodBounds } from "@/lib/analytics/history";
-import { classifyConsumption } from "@/lib/analytics/cash-flow";
+import { expenseByCategory } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
@@ -31,22 +31,16 @@ export default function CategoriesAnalyticsPage() {
   const slices = useMemo(() => {
     if (!household || !categories || !transactions) return [];
     const { start, end } = previousClosedPeriodBounds(household.periodStartDay || 1, new Date());
-    const byCategory = new Map<string, bigint>();
-    for (const tx of transactions) {
-      if (!tx.categoryId) continue;
-      const occurred = new Date(tx.occurredAt);
-      if (occurred < start || occurred >= end) continue;
-      const { bucket, magnitude } = classifyConsumption(tx);
-      if (bucket !== "outflow") continue;
-      byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0n) + magnitude);
-    }
+    // El agrupado por categoría vive en `lib/analytics/period-summary.ts`:
+    // el resumen mensual por mail necesita exactamente lo mismo, y copiarlo
+    // es cómo la regla de signo por `kind` terminó reimplementada doce veces
+    // (tres con el signo mal). Acá queda solo la presentación.
+    const { categories: ranked } = expenseByCategory(transactions, start, end);
     const categoryById = new Map(categories.map((c) => [c.id, c]));
-    const sorted = [...byCategory.entries()]
-      .sort((a, b) => (b[1] > a[1] ? 1 : -1))
-      .map(([categoryId, total]) => {
-        const category = categoryById.get(categoryId);
-        return { label: category ? categoryLabel(category) : categoryId, value: Number(total), total };
-      });
+    const sorted = ranked.map(({ categoryId, total }) => {
+      const category = categoryById.get(categoryId);
+      return { label: category ? categoryLabel(category) : categoryId, value: Number(total), total };
+    });
 
     // La paleta de datos es de 5 slots + "Otros" (docs/02-design-system.md
     // § 2.6) — nunca un sexto slot con su propio color.
