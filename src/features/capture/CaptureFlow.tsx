@@ -18,7 +18,7 @@ import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
 import type { AccountRow } from "@/lib/db/schema";
-import { useCaptureDraftStore } from "@/stores/capture-draft-store";
+import { useCaptureDraftStore, type CaptureKind } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { AccountPickerSheet } from "./AccountPickerSheet";
@@ -38,8 +38,13 @@ import { useFrequentTags } from "./use-frequent-tags";
 type Step = "amount" | "category";
 type SheetKind = "none" | "account" | "counterAccount" | "currency" | "details" | "voice";
 
+/** Resultado que `onClose` reporta — necesario para la máquina de estados
+ *  del primer movimiento (`src/lib/onboarding/first-tx-machine.ts`), que
+ *  necesita distinguir "guardó y cerró" de "cerró sin guardar nada". */
+export type CaptureCloseResult = { saved: true; kind: CaptureKind } | { saved: false };
+
 export interface CaptureFlowProps {
-  onClose?: () => void;
+  onClose?: ((result: CaptureCloseResult) => void) | undefined;
 }
 
 /**
@@ -127,6 +132,10 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
 
   const [step, setStep] = useState<Step>("amount");
   const [sheet, setSheet] = useState<SheetKind>("none");
+  // `null` hasta el primer guardado exitoso de este montaje — le da a
+  // `handleCancel` (que también dispara en modo ráfaga: guardar ×3 y
+  // después ✕) forma de reportar "sí se guardó algo" en vez de "cancelado".
+  const lastSavedKind = useRef<CaptureKind | null>(null);
 
   // Cuenta por defecto: la de el último movimiento cargado, no
   // `accounts[0]` (un orden sin ningún criterio — ni siquiera el
@@ -242,6 +251,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     if (latestDraft.tagIds.length > 0) invalidateTransactionTags();
     // B14 — habilita los 60s de edición sin PIN sobre este movimiento puntual.
     recordSave(tx.id);
+    lastSavedKind.current = latestDraft.kind;
 
     // El toast vive en el `<Toaster>` global (providers.tsx), no en este
     // componente: tiene que sobrevivir a que `CaptureFlow` se desmonte al
@@ -269,7 +279,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       setStep("amount");
     } else {
       reset();
-      onClose?.();
+      onClose?.({ saved: true, kind: lastSavedKind.current ?? draft.kind });
     }
   };
 
@@ -279,7 +289,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
       return;
     }
     reset();
-    onClose?.();
+    onClose?.(lastSavedKind.current ? { saved: true, kind: lastSavedKind.current } : { saved: false });
   };
 
   if (!household || !userId) {

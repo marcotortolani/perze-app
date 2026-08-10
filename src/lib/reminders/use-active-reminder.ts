@@ -11,7 +11,7 @@ import { todayIso } from "@/lib/dates/today";
 import type { EnabledModule } from "@/lib/db/schema";
 
 export interface UseActiveReminderParams {
-  hasBirthDate: boolean;
+  hasExactBirthDate: boolean;
   enabledModules: EnabledModule[] | undefined;
 }
 
@@ -21,7 +21,7 @@ export interface UseActiveReminderParams {
  * layout del dashboard (si reservar el `marginTop` del banner). Separar
  * la lógica de la presentación evita que ambos se desincronicen.
  */
-export function useActiveReminder({ hasBirthDate, enabledModules }: UseActiveReminderParams): ReminderId | null {
+export function useActiveReminder({ hasExactBirthDate, enabledModules }: UseActiveReminderParams): ReminderId | null {
   const dismissedForever = useReminderBannerStore((s) => s.dismissedForever);
   const lastDismissedOn = useReminderBannerStore((s) => s.lastDismissedOn);
   const themePref = useThemePreference();
@@ -39,7 +39,7 @@ export function useActiveReminder({ hasBirthDate, enabledModules }: UseActiveRem
   if (dismissedForever || lastDismissedOn === today) return null;
 
   const eligible = getEligibleReminders({
-    hasBirthDate,
+    hasExactBirthDate,
     isStandalone: standalone,
     enabledModulesCount: enabledModules?.length ?? 0,
     themeIsDefault: themePref === "system",

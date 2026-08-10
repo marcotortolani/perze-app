@@ -340,6 +340,18 @@ Se puede sumar en una versión futura sin migración: la maquinaria de outbox ya
 
 ---
 
+## Onboarding: preferencias del usuario y A7 eliminada, decisión cerrada
+
+**El onboarding pasó de 3 a 5 pasos** para que el usuario defina él mismo lo que antes decidía la app en silencio: `/onboarding/profile` (A4a, nombre + fecha de nacimiento opcional o solo la edad) → `/onboarding/country` (A4, país + moneda ahora editable aparte del país) → `/onboarding/format` (A4b, idioma + separador decimal + formato de fecha) → `/onboarding/usage` (A5) → `/onboarding/account` (A6). Los tres primeros arrancan con lo auto-detectado (`Accept-Language`, `Intl.Locale().region`) pero el usuario los confirma o los cambia — nunca entra a usar la app con un idioma o un formato que no eligió.
+
+**`docs/design/bloque-a-onboarding.html` no tiene A4a ni A4b.** Son pantallas nuevas sin verdad de píxel — se construyeron espejando los pickers ya existentes de `/more/settings` y `/more/profile` (mismos `ListRow`+`Sheet`, mismo `BirthDateField`). Si en algún momento se rediseña el bloque A, hay que sumarlas al archivo de diseño; hasta entonces el código es la única fuente para esas dos.
+
+**A7 (saldo inicial) se elimina del flujo, sin reemplazo.** `docs/design/bloque-a-onboarding.html` y `docs/03-prompts-wireframes.md` la documentan como parte del camino ("después del primer gasto"), y así estuvo programada durante una temporada. Ya no se pide en ningún punto del onboarding: la cuenta que crea A11 sigue naciendo en `openingBalance: 0n`, y el saldo real queda editable desde `/accounts/[id]/edit`, como cualquier otro dato de la cuenta. El motivo es de secuencia, no de alcance — con el orden nuevo (ingreso real → gasto real, ver el punto siguiente) preguntar "¿cuánto tenías?" después de que el usuario ya cargó su primer ingreso es una pregunta que contradice lo que acaba de hacer. **Si alguien mira el archivo de diseño y "restaura" A7 como pantalla faltante, está reabriendo esto** — la decisión está acá, no en el HTML.
+
+**El remate se invierte: primero un ingreso real, después el primer gasto.** La cuenta que sale de A11 siempre arranca en cero, así que "cargá tu primer gasto" como primera acción post-onboarding pedía algo imposible sin dejar el saldo en negativo. Ahora A11 manda a cargar el primer **ingreso** (`onboarding.success.ctaIncome`) y, recién después de guardarlo, una pantalla nueva —`/onboarding/first-expense`, salteable con "Ahora no"— ofrece cargar el primer **gasto**, que es la acción por la que la app se juzga. El estado de esta secuencia (`income → expense → install`) lo lleva `draft.firstTxStep` en `useOnboardingStore` (reemplaza al viejo `pendingBalanceAccountId`) y las transiciones están centralizadas en `src/lib/onboarding/first-tx-machine.ts` — cancelar una captura sin guardar nunca avanza el paso.
+
+---
+
 ## Las dos decisiones de imagen, cerradas
 
 **Logos de instituciones: baldosa de monograma, no el logo real.** A6 muestra presets de bancos y billeteras. Esos logos son marcas registradas de terceros: en un repo privado no pasa nada, el día que se libera se está distribuyendo propiedad intelectual ajena. Y hoy además todas se ven iguales, porque comparten un ícono genérico.

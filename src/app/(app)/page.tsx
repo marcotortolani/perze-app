@@ -218,7 +218,7 @@ export default function HomePage() {
   const seenPrivacyTooltip = useContextualTooltipStore((s) => s.hasSeen("home-privacy-toggle"));
   const markPrivacyTooltipSeen = useContextualTooltipStore((s) => s.markSeen);
   const [insightDismissed, setInsightDismissed] = useState(false);
-  const activeReminder = useActiveReminder({ hasBirthDate: !!profile?.birthDate, enabledModules: household?.enabledModules });
+  const activeReminder = useActiveReminder({ hasExactBirthDate: !!profile?.birthDate && profile.birthDatePrecision === "exact", enabledModules: household?.enabledModules });
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const accountById = useMemo(() => new Map((accounts ?? []).map((a: AccountRowData) => [a.id, a])), [accounts]);
@@ -319,7 +319,7 @@ export default function HomePage() {
 
   const recentTransactions = allTransactions.slice(0, 5);
 
-  const showBirthdayBanner = !!profile?.birthDate && isBirthdayToday(profile.birthDate, now) && dismissedYear !== now.getFullYear();
+  const showBirthdayBanner = !!profile?.birthDate && isBirthdayToday(profile.birthDate, profile.birthDatePrecision ?? null, now) && dismissedYear !== now.getFullYear();
   const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
   // Más urgente gana: offline/conflicto/cumpleaños se muestran arriba del
   // recordatorio informativo, nunca los dos apilados — el recordatorio es

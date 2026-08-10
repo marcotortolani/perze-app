@@ -1,7 +1,7 @@
 import { householdsRepo } from "../repos/households-repo";
 import { getPendingInviteCode } from "./pending-invite";
 
-export type OnboardingDestination = "/" | "/onboarding/country" | "/onboarding/restore" | "/join";
+export type OnboardingDestination = "/" | "/onboarding/profile" | "/onboarding/restore" | "/join";
 
 /**
  * C7 — punto único donde se decide a dónde va alguien con sesión válida y
@@ -13,7 +13,7 @@ export type OnboardingDestination = "/" | "/onboarding/country" | "/onboarding/r
  * que el onboarding cree un segundo household duplicado en silencio.
  *
  * Puede lanzar (sin red, Supabase pausado) — el caller decide qué mostrar
- * (AC-9): nunca degradar en silencio hacia `/onboarding/country`, que es el
+ * (AC-9): nunca degradar en silencio hacia `/onboarding/profile`, que es el
  * camino que crea el duplicado.
  *
  * El invitado que se registró para entrar a un household ajeno es el mismo
@@ -29,5 +29,5 @@ export async function resolveOnboardingDestination(): Promise<OnboardingDestinat
   const hasRemote = await householdsRepo.hasRemoteHousehold();
   if (hasRemote) return "/onboarding/restore";
 
-  return "/onboarding/country";
+  return "/onboarding/profile";
 }

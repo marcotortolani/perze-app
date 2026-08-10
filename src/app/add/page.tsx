@@ -12,15 +12,17 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useOnboardingStore } from "@/stores/onboarding-store";
 import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useDbOwnerStore } from "@/stores/db-owner-store";
+import { advanceFirstTx } from "@/lib/onboarding/first-tx-machine";
 
 /**
  * Acceso directo por URL — shortcut de la PWA, share target. Misma
  * `CaptureFlow` que la ruta interceptada, sin el overlay de modal.
  *
- * Si viene de A11 (recién cerró el onboarding), el primer gasto real es lo
- * que dispara A7/A10 (`docs/perze-plan-redesign-first-5-blocks.md` § Fase 9):
- * en vez de ir a home, va a `/onboarding/complete` a pedir el saldo inicial
- * y ofrecer instalar la PWA.
+ * Si viene de A11 (recién cerró el onboarding), `firstTxStep` guía el
+ * primer ingreso y el primer gasto reales antes de llegar a home —
+ * `advanceFirstTx` (`src/lib/onboarding/first-tx-machine.ts`) decide el
+ * siguiente paso y a dónde empujar. Cancelar (cerrar sin guardar) nunca
+ * avanza el paso.
  *
  * `?title=&note=&url=` llegan del `share_target` del manifest (compartir
  * desde otra app) — se vuelcan una sola vez a la nota del borrador, nunca
@@ -29,7 +31,8 @@ import { useDbOwnerStore } from "@/stores/db-owner-store";
 export default function AddPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pendingBalanceAccountId = useOnboardingStore((s) => s.draft.pendingBalanceAccountId);
+  const firstTxStep = useOnboardingStore((s) => s.draft.firstTxStep);
+  const setOnboardingField = useOnboardingStore((s) => s.setField);
   const setField = useCaptureDraftStore((s) => s.setField);
   const appliedShareTarget = useRef(false);
 
@@ -42,7 +45,13 @@ export default function AddPage() {
 
   return (
     <CaptureGuard>
-      <CaptureFlow onClose={() => router.push(pendingBalanceAccountId ? "/onboarding/complete" : "/")} />
+      <CaptureFlow
+        onClose={(result) => {
+          const { next, route } = advanceFirstTx(firstTxStep, result.saved ? { type: "saved", kind: result.kind } : { type: "cancelled" });
+          if (next !== firstTxStep) setOnboardingField("firstTxStep", next);
+          router.push(route ?? "/");
+        }}
+      />
     </CaptureGuard>
   );
 }

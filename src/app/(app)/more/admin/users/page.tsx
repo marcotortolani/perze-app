@@ -9,7 +9,7 @@ import { Button, EmptyState, ErrorState, Skeleton, StatusBadge, usePageHeader } 
 import { adminRepo } from "@/lib/repos/admin-repo";
 import type { AccessStatus } from "@/lib/repos/profiles-repo";
 import { useOwnAccess } from "@/hooks/use-own-access";
-import { formatNumericDate, type Locale } from "@/i18n/formatting";
+import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 const ACCESS_REQUESTS_KEY = ["admin", "access-requests"] as const;
@@ -111,7 +111,11 @@ export default function AdminUsersPage() {
                   {request.email ?? request.displayName ?? request.profileId}
                 </div>
                 <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                  {request.country ?? t("adminPage.unknownCountry")} · {t("adminPage.requestedOn", { date: formatNumericDate(locale, new Date(request.accessRequestedAt), dateFormat) })}
+                  {request.country ?? t("adminPage.unknownCountry")} ·{" "}
+                  {t("adminPage.requestedOn", {
+                    date: formatNumericDate(locale, new Date(request.accessRequestedAt), dateFormat),
+                    time: formatTimeOfDay(locale, new Date(request.accessRequestedAt)),
+                  })}
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                   <Button variant="secondary" disabled={acting === request.profileId} onClick={() => handleDecide(request.profileId, "approved")} style={{ flex: 1 }}>
@@ -148,9 +152,17 @@ export default function AdminUsersPage() {
                   <StatusBadge status={ACCESS_STATUS_BADGE_STATUS[user.accessStatus]}>{t(ACCESS_STATUS_MESSAGE_KEY[user.accessStatus] as Parameters<typeof t>[0])}</StatusBadge>
                 </div>
                 <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                  {t("adminPage.registeredOn", { date: formatNumericDate(locale, new Date(user.accessRequestedAt), dateFormat) })}
+                  {t("adminPage.registeredOn", {
+                    date: formatNumericDate(locale, new Date(user.accessRequestedAt), dateFormat),
+                    time: formatTimeOfDay(locale, new Date(user.accessRequestedAt)),
+                  })}
                   {" · "}
-                  {user.lastSeenAt ? t("adminPage.lastSeenOn", { date: formatNumericDate(locale, new Date(user.lastSeenAt), dateFormat) }) : t("adminPage.neverConnected")}
+                  {user.lastSeenAt
+                    ? t("adminPage.lastSeenOn", {
+                        date: formatNumericDate(locale, new Date(user.lastSeenAt), dateFormat),
+                        time: formatTimeOfDay(locale, new Date(user.lastSeenAt)),
+                      })
+                    : t("adminPage.neverConnected")}
                 </div>
                 {/* Deshabilitar/habilitar es la ÚNICA acción acá — a
                     propósito, no un tercer camino para aprobar/rechazar

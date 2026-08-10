@@ -28,8 +28,8 @@ export default function OnboardingUsagePage() {
   return (
     <ScreenShell style={{ padding: "16px var(--screen-padding) calc(var(--screen-padding) + env(safe-area-inset-bottom))", gap: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <IconButton icon="chevron-left" ariaLabel={t("onboarding.usage.back")} onClick={() => router.push("/onboarding/country")} style={{ margin: -11 }} />
-        <ProgressSteps current={2} total={3} onSkip={() => router.push("/onboarding/account")} skipLabel={t("ds.progressSteps.skip")} />
+        <IconButton icon="chevron-left" ariaLabel={t("onboarding.usage.back")} onClick={() => router.push("/onboarding/format")} style={{ margin: -11 }} />
+        <ProgressSteps current={4} total={5} onSkip={() => router.push("/onboarding/account")} skipLabel={t("ds.progressSteps.skip")} />
       </div>
 
       <div>
