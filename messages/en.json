@@ -413,6 +413,11 @@
    "useThis": "Use this",
    "startListening": "Start listening"
   },
+  "currencySheetTitle": "Which currency?",
+  "currencySameAsAccount": "account currency",
+  "changeCurrency": "Change the amount's currency",
+  "captureRatePending": "No rate yet: it saves anyway and stays pending",
+  "editDebit": "How much leaves the account",
   "savedOffline": "Saved on your phone. It'll go out once you're back online.",
   "noLocalDataOffline": "This device doesn't have your account data yet, and there's no connection to fetch it. Connect once and you'll be able to add expenses without internet."
  },

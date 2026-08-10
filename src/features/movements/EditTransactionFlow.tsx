@@ -8,6 +8,7 @@ import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { MorphButton } from "@/components/motion";
 import { ScreenShell } from "@/components/screen-shell";
 import { AccountPickerSheet } from "@/features/capture/AccountPickerSheet";
+import { CurrencyPickerSheet } from "@/features/capture/CurrencyPickerSheet";
 import { AmountStep, amountToExpression } from "@/features/capture/AmountStep";
 import { CategoryStep } from "@/features/capture/CategoryStep";
 import { DetailsSheet } from "@/features/capture/DetailsSheet";
@@ -59,7 +60,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const frequentTags = useFrequentTags(tags, (transactions ?? []).map((tx) => tx.id));
 
   const [step, setStep] = useState<"amount" | "category">("amount");
-  const [sheet, setSheet] = useState<"none" | "account" | "counterAccount" | "details">("none");
+  const [sheet, setSheet] = useState<"none" | "account" | "counterAccount" | "currency" | "details">("none");
   // Capturado una sola vez al montar (lazy init, no en el cuerpo del render)
   // — evita llamar a `Date.now()` en cada render solo para comparar antigüedad.
   const [openedAtMs] = useState(() => Date.now());
@@ -102,8 +103,20 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
     // toque (los primeros tres se comían el padding de la fracción y el
     // separador de miles). Mismo patrón que ya usan `PayCardSheet.tsx` y
     // `recurring/[id]/edit/page.tsx`.
-    setField("amountExpression", amountToExpression(transaction.amount, transaction.currencyCode, locale));
-    setField("currency", transaction.currencyCode);
+    // Un movimiento cargado en otra moneda (4.200 UYU pagados con la
+    // tarjeta en USD) se reabre como se cargó: el monto del ticket y su
+    // moneda, no el equivalente ya convertido. Antes esto ponía siempre
+    // `transaction.currencyCode` —la moneda de la CUENTA— así que abrir y
+    // guardar sin tocar nada reinterpretaba los 101,20 USD como si el
+    // usuario los hubiera tipeado, y `original_*` se perdía en silencio.
+    const capturedAmount = transaction.originalAmount ?? transaction.amount;
+    const capturedCurrency = transaction.originalCurrency ?? transaction.currencyCode;
+    setField("amountExpression", amountToExpression(capturedAmount, capturedCurrency, locale));
+    setField("currency", capturedCurrency);
+    // El rate con el que se guardó, para que reabrir y guardar no lo mueva
+    // — `fx_rate` se congela (`CLAUDE.md`), y esta es la conversión de
+    // captura, que sigue el mismo criterio.
+    setField("captureFxRateOverride", transaction.originalRate);
     setField("accountId", transaction.accountId);
     setField("counterAccountId", transaction.counterAccountId);
     setField("categoryId", transaction.categoryId);
@@ -190,6 +203,8 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
           counterAccount={counterAccount}
           householdId={household.id}
           onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
+          onCaptureFxRateChange={(rate) => setField("captureFxRateOverride", rate)}
+          onOpenCurrencyPicker={() => setSheet("currency")}
           onKindChange={setKind}
           onAmountKey={(key) => (key === "clear" ? clearAmount() : key === "backspace" ? backspaceAmount() : appendToAmount(key === "," ? "," : key))}
           onAmountChange={(expression) => setField("amountExpression", expression)}
@@ -219,6 +234,19 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
           <div style={{ marginTop: "auto" }}>{nextOrSaveButton}</div>
         </>
       )}
+
+      <CurrencyPickerSheet
+        open={sheet === "currency"}
+        onClose={() => setSheet("none")}
+        accounts={accounts}
+        transactions={transactions}
+        accountCurrency={account?.currencyCode}
+        value={draft.currency}
+        onChange={(code) => {
+          setField("currency", code);
+          setField("captureFxRateOverride", null);
+        }}
+      />
 
       <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts.filter((a) => a.id !== draft.counterAccountId)} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
       <AccountPickerSheet

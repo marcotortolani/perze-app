@@ -413,6 +413,11 @@
    "useThis": "Usar esto",
    "startListening": "Empezar a escuchar"
   },
+  "currencySheetTitle": "¿En qué moneda?",
+  "currencySameAsAccount": "moneda de la cuenta",
+  "changeCurrency": "Cambiar la moneda del monto",
+  "captureRatePending": "Sin cotización: se guarda igual y queda pendiente",
+  "editDebit": "Cuánto sale de la cuenta",
   "savedOffline": "Guardado en el teléfono. Sale al reconectar.",
   "noLocalDataOffline": "En este dispositivo todavía no hay datos de tu cuenta y no hay conexión para traerlos. Conectate una vez y vas a poder cargar gastos sin internet."
  },

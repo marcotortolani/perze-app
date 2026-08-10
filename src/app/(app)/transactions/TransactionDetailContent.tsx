@@ -29,6 +29,25 @@ import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
+/**
+ * "1 <moneda fuerte> = N <moneda débil>", que es como se lee un tipo de
+ * cambio. `rate` viene siempre en la dirección `quote` por 1 de `base`; si
+ * es menor a 1 se invierte SOLO para mostrar — "1 USD = 1.520 ARS", nunca
+ * "1 ARS = 0,000506072874 USD", que es lo que da el rate crudo. El valor
+ * guardado no se toca: `fx_rate` se congela (`CLAUDE.md`).
+ *
+ * Sirve para las dos conversiones —la de captura y la de moneda base—
+ * porque las dos guardan el rate con el mismo criterio.
+ */
+function formatRateLine(rate: ScaledRate, base: string, quote: string, locale: Locale): string {
+  const inverted = rate < RATE_SCALE;
+  const displayRate = roundRateForDisplay(inverted ? invertRate(rate) : rate);
+  const [from, to] = inverted ? [quote, base] : [base, quote];
+  const [intPart, fracPart = ""] = formatRateTrimmed(displayRate).split(".");
+  const formatted = fracPart ? `${intPart}${decimalSeparatorForLocale(locale)}${fracPart}` : intPart;
+  return `1 ${from} = ${formatted} ${to}`;
+}
+
 const FX_SOURCE_MESSAGE_KEY = {
   identity: "transactions.detail.fxSource.identity",
   manual: "transactions.detail.fxSource.manual",
@@ -205,10 +224,47 @@ export function TransactionDetailContent({ id }: { id: string }) {
       // `(app)/layout.tsx` sobre el ancho de lectura de cada pantalla.
       <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingTop: 16, paddingBottom: 24, maxWidth: 420 }}>
       <div style={{ textAlign: "center" }}>
+        {/* Lo que te cobraron, en la moneda en que te lo cobraron. Va ARRIBA
+            del héroe porque respeta el orden en que pasaron las cosas: te
+            cobraron $U 10.000 → salieron US$ 240,96 de tu cuenta → eso vale
+            X en tu moneda base (la línea de abajo, cuando aplica).
+
+            El héroe sigue siendo lo que salió de la cuenta: es la plata que
+            de verdad se movió y lo único que cuadra con el saldo. Estos dos
+            números son accesorios para el saldo, pero son los únicos que
+            dicen qué precio pagaste en el mercado donde compraste — y sin
+            ellos no hay forma de auditar si la tasa aplicada fue la
+            correcta. */}
+        {transaction.originalAmount !== null && transaction.originalCurrency !== null ? (
+          <div style={{ marginBottom: 6, display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+            {/* Mismo signo y misma polaridad que el héroe: es el MISMO
+                movimiento visto en otra moneda. Sin esto, un gasto se veía
+                como "+$U 10.000" en verde arriba de un "−US$ 240,96". */}
+            <Amount
+              value={money(transaction.kind === "expense" ? -transaction.originalAmount : transaction.originalAmount, transaction.originalCurrency)}
+              size="body"
+              polarity={polarity}
+              tabular
+            />
+          </div>
+        ) : null}
         <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />
+        {/* El valor en tu moneda base. NO es un cambio que hiciste: nadie
+            convirtió esta plata. Es cuánto representaba este movimiento en la
+            moneda con la que mirás todos tus números, calculado con la
+            cotización del día en que ocurrió y congelado ahí — un hecho
+            registrado de ese momento, no un render que cambia con el dólar de
+            hoy. Por eso la tasa se muestra acá, chiquita y sin nombrarla
+            "tipo de cambio usado": ese título queda para la conversión real,
+            la que sí movió plata entre dos monedas. */}
         {transaction.amountBase !== null && transaction.currencyCode !== household.baseCurrency ? (
-          <div style={{ marginTop: 6 }}>
+          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
             <Amount value={money(transaction.kind === "expense" ? -transaction.amountBase : transaction.amountBase, household.baseCurrency)} size="body" polarity={polarity} tabular />
+            {transaction.fxRate !== null ? (
+              <span className="t-caption" style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>
+                {formatRateLine(transaction.fxRate, transaction.currencyCode, household.baseCurrency, locale)}
+              </span>
+            ) : null}
           </div>
         ) : null}
         {transaction.kind === "transfer" || transaction.kind === "adjustment" || transaction.kind === "investing" ? (
@@ -271,35 +327,41 @@ export function TransactionDetailContent({ id }: { id: string }) {
         ) : null}
       </div>
 
-      {transaction.currencyCode !== household.baseCurrency ? (
+      {/* "Tipo de cambio usado" = la conversión que MOVIÓ PLATA de verdad:
+          te cobraron en una moneda y el banco debitó otra. Es la única que
+          se "usó" en el sentido literal, y la única editable — la tasa que
+          te aplicó tu banco casi nunca es la cotización de mercado del día.
+
+          Antes esta tarjeta mostraba la conversión a moneda base, que es
+          otra cosa: nadie cambió nada ahí. Un gasto en pesos argentinos con
+          una cuenta en pesos argentinos mostraba "1 USD = 1580,7 ARS" como
+          si hubieras hecho un cambio que nunca hiciste. Esa conversión ahora
+          vive como caption debajo del héroe. */}
+      {transaction.originalCurrency !== null ? (
         <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16, display: "flex", flexDirection: "column", gap: 6 }}>
           <span className="t-label" style={{ color: "var(--text-secondary)" }}>
             {t("transactions.detail.fxRateUsed")}
           </span>
-          {transaction.fxRate !== null ? (
-            (() => {
-              // Mismo criterio que `/currencies` (`roundRateForDisplay` +
-              // `invertRate`): mostrar la dirección donde 1 unidad de la
-              // moneda MÁS FUERTE equivale a varias de la más débil —
-              // "1 USD = 1.520 ARS", nunca "1 ARS = 0,000506072874 USD"
-              // (el fx_rate crudo, sin decidir dirección ni decimales por
-              // magnitud, es justo eso). `fx_rate` se guarda origen→base
-              // y nunca se recalcula (CLAUDE.md) — acá solo se ELIGE cómo
-              // mostrarlo, el valor guardado no se toca.
-              const inverted = transaction.fxRate! < RATE_SCALE;
-              const displayRate = roundRateForDisplay(inverted ? invertRate(transaction.fxRate!) : transaction.fxRate!);
-              const [from, to] = inverted ? [household.baseCurrency, transaction.currencyCode] : [transaction.currencyCode, household.baseCurrency];
-              const [intPart, fracPart = ""] = formatRateTrimmed(displayRate).split(".");
-              const formatted = fracPart ? `${intPart}${decimalSeparatorForLocale(locale)}${fracPart}` : intPart;
-              return (
-                <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 15, color: "var(--text-primary)" }}>
-                  {`1 ${from} = ${formatted} ${to}`}
-                </span>
-              );
-            })()
+          {transaction.originalRate !== null ? (
+            <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 15, color: "var(--text-primary)" }}>
+              {formatRateLine(transaction.originalRate, transaction.originalCurrency, transaction.currencyCode, locale)}
+            </span>
           ) : (
             <StatusBadge status="neutral">{t("transactions.detail.fxUnresolved")}</StatusBadge>
           )}
+        </div>
+      ) : null}
+
+      {/* La conversión a moneda base SIN resolver sí se queda prominente:
+          mientras no haya cotización, este movimiento queda afuera de todos
+          los agregados. No es decoración, es una acción pendiente — y
+          esconderla dejaría los totales incompletos sin que nada lo diga. */}
+      {transaction.currencyCode !== household.baseCurrency && transaction.fxRate === null ? (
+        <div style={{ background: "var(--surface-1)", borderRadius: "var(--radius-card)", padding: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+          <span className="t-label" style={{ color: "var(--text-secondary)" }}>
+            {t("transactions.detail.fxRateUsed")}
+          </span>
+          <StatusBadge status="neutral">{t("transactions.detail.fxUnresolved")}</StatusBadge>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
             {t(FX_SOURCE_MESSAGE_KEY[transaction.fxSource])}
             {transaction.fxProvider ? ` · ${transaction.fxProvider}` : ""}

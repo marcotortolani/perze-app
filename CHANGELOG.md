@@ -6,6 +6,127 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.8] — 2026-08-10
+
+### Nuevo — cargar un gasto en la moneda del ticket, con la cuenta en otra moneda
+
+Pagar 4.200 pesos uruguayos con una tarjeta emitida en dólares no se podía registrar sin ir a
+averiguar afuera de la app cuántos dólares eran — una conversión que muchas veces el usuario ni
+llega a ver. Ahora se tipea lo que dice el ticket, se elige la cuenta que lo paga, y la conversión
+la hace la app.
+
+**La invariante no cambió, y eso es lo importante.** `CLAUDE.md` § "son dos conversiones, no una"
+ya describía exactamente este caso: `amount`/`currency_code` van SIEMPRE en la moneda de la cuenta
+y lo capturado en otra moneda va a `original_amount`/`original_currency`/`original_rate`. El
+guardado ya lo implementaba entero, incluido el caso sin cotización (no reinterpreta el número, deja
+`amount` en 0, preserva lo tipeado y `needs_capture_fx` lo marca). Lo que faltaba era la interfaz:
+`draft.currency` solo se podía setear por carga de voz o por un deep link con `prefillCurrency`.
+
+- **Chip de moneda en la línea de la cuenta.** El nombre abre las cuentas, el código abre las
+  monedas. **Solo aparece si el household usa más de una moneda** — "cantidad de monedas en uso" es
+  uno de los flags de progresividad, y en un hogar mono-moneda esto no suma un elemento al
+  presupuesto de ruido del keypad. Las opciones salen del uso real (monedas de las cuentas más las
+  ya vistas en movimientos), no del catálogo, y sin banderas.
+- **Línea de tasa debajo del monto, sin slider**: cuánto sale de la cuenta y a qué tasa. Es
+  justamente el dato que hoy hay que ir a buscar afuera.
+- **Dos ediciones, con el original fijo.** Tocar la tasa recalcula el monto que sale de la cuenta;
+  tocar ese monto recalcula la tasa (`rateFromAmounts`). El monto original solo cambia editándolo a
+  él: es el dato duro del ticket. `captureFxRateOverride` es un campo aparte de
+  `counterFxRateOverride` a propósito — son las dos conversiones distintas, y en una transferencia
+  cross-moneda pueden estar vivas a la vez; unificarlas es el defecto V9.
+- **Una tasa escrita a mano vale incluso sin cotización del día.** Es un dato del usuario, no un 1
+  inventado, que es lo único que `needs_fx` prohíbe.
+- **Cambiar de cuenta o de moneda descarta la tasa tocada a mano**: el par ya no es el mismo, y
+  dejarla puesta la aplicaría a otra conversión en silencio.
+
+### Arreglado — "saldo insuficiente" sobre una cuenta con plata de sobra
+
+`computeExpenseDebitAmount` devolvía el monto TIPEADO sin convertir y el llamador lo comparaba
+contra `currentBalance`: 4.200 UYU contra un saldo en USD. Bloqueaba el guardado avisando saldo
+insuficiente sobre una cuenta que tenía de sobra. Era alcanzable hoy por carga de voz ("gasté 4200
+pesos" con una cuenta en dólares elegida); con el selector de moneda pasaba a ser el camino normal.
+
+### Arreglado — editar un movimiento en otra moneda lo reinterpretaba
+
+`EditTransactionFlow` cargaba el borrador con `transaction.currencyCode` (la moneda de la CUENTA) y
+el monto ya convertido. Abrir un gasto de 4.200 UYU pagado en dólares y guardarlo sin tocar nada
+reinterpretaba los USD 105 como si el usuario los hubiera tipeado, y `original_*` se perdía en
+silencio. Ahora se reabre como se cargó —monto y moneda del ticket— con `originalRate` precargado
+para que un guardado sin cambios no mueva la tasa (`fx_rate` se congela).
+
+### Arreglado — la fila de demo "Cena en Buenos Aires"
+
+Ponía `amount: 350_000n` con `currencyCode: "ARS"` sobre una cuenta en **UYU**: el defecto V9 en los
+propios datos de ejemplo, que además restaba 3.500 del saldo como si fueran pesos uruguayos. Ahora
+son 3.500 ARS en `original_*` sobre una fila en UYU sin cotización — exactamente lo que produce la
+captura en ese caso, que es para lo que la fila existe.
+
+### Arreglado — editar el monto dejaba todos los totales con el valor viejo
+
+Encontrado probando en el navegador: la fila mostraba US$ 2,58 y el encabezado del día seguía
+sumando 2,41. `updateTransactionFromDraft` solo recomputaba el bloque de FX si la tasa estaba sin
+resolver (`existing.fxRate === null`), y de paso se salteaba `amount_base` — que no es una tasa,
+es el producto `amount × fx_rate`. Así, editar guardaba el `amount` nuevo y dejaba el `amount_base`
+viejo, y **todos** los agregados (total del día y del período, patrimonio neto, presupuestos,
+análisis) seguían con el número anterior. El saldo de la cuenta sí quedaba bien —
+`transactionsRepo.update` revierte los efectos viejos y aplica los nuevos— así que el desfase era
+invisible salvo sumando las filas a mano.
+
+Ahora se recalcula con **la misma tasa congelada**, sin volver a resolver ninguna cotización. La
+regla de `CLAUDE.md` protege la tasa, no el derivado: un movimiento del pasado sigue valiendo lo que
+valía, a la cotización que valía; lo que no puede pasar es que la fila diga una cosa y los totales
+otra. Caso vecino contemplado: si el movimiento pasa a una cuenta en **otra** moneda, la tasa
+congelada era de otro par y no aplica a esta conversión — ahí sí se re-resuelve, que no es
+descongelar nada.
+
+Los movimientos editados antes de este arreglo conservan su `amount_base` viejo: el fix corrige al
+guardar, no repara lo ya guardado.
+
+### Arreglado — "tipo de cambio usado" mostraba una conversión que nunca ocurrió
+
+Un gasto de $10.000 pesos argentinos pagado con una cuenta en pesos argentinos mostraba
+`1 USD = 1580,7 ARS`. Nadie cambió nada ahí: esa es la conversión a la moneda base, que existe para
+poder sumar movimientos de cuentas en monedas distintas.
+
+Esa tarjeta pasa a ser exclusivamente de la conversión **real** — cuando la moneda del gasto difiere
+de la de la cuenta y el banco convirtió plata de verdad. La conversión a moneda base baja a una
+caption bajo el héroe, junto al equivalente que ya se mostraba: sigue estando, porque está congelada
+al momento del movimiento y es lo que hace auditables los totales, pero deja de presentarse como un
+cambio que no hiciste.
+
+**Excepción que se mantiene prominente:** si la conversión a moneda base está sin resolver, la
+tarjeta vuelve con su botón. Ese movimiento queda excluido de todos los agregados hasta resolverlo —
+no es decoración, es una acción pendiente, y esconderla dejaría los totales incompletos en silencio.
+
+### Arreglado — el monto original se veía como un ingreso
+
+`+$U 10.000,00` en verde, arriba de un `−US$ 240,96`. Se pasaba el monto crudo sin signo ni
+polaridad. Es el mismo movimiento visto en otra moneda, así que lleva el mismo signo y la misma
+polaridad que el héroe — y con eso vuelve a cumplir la regla de polaridad (fuera del home, lo
+negativo va en texto neutro, nunca en verde ni en rojo).
+
+### Arreglado — la línea de cuenta ocultaba la moneda de la cuenta
+
+Con el chip de moneda distinto al de la cuenta, la línea decía solo "Itaú  UYU": no se sabía que
+Itaú era una cuenta en dólares ni que UYU era la moneda del cobro. Ahora el orden es "moneda del
+monto" (chip, pegado a la cifra que califica) y después "cuenta · su moneda". Son dos hechos
+distintos y los dos hacen falta justo cuando se elige.
+
+### Detalle de implementación
+
+El nombre accesible del botón de cuenta sigue siendo `"<cuenta> · <moneda>"` aunque el código se
+haya mudado al chip: es lo correcto para un lector de pantalla (qué cuenta y en qué moneda) y evita
+romper los e2e que ubican ese botón sin depender de cuál sea la cuenta por defecto.
+
+### Tests
+
+Siete casos nuevos en `save-transaction.test.ts`: la conversión de captura con `original_*`, el
+override ganándole a la tasa resuelta, el override valiendo sin ninguna cotización, el caso sin
+nada (que guarda sin reinterpretar), y los tres de `computeExpenseDebitAmount` — incluido el que
+cubre el bug del saldo insuficiente.
+
+---
+
 ## [0.30.7] — 2026-08-09
 
 ### Nuevo — nombre e ícono del hogar editables, desde Grupo familiar en vez de Ajustes

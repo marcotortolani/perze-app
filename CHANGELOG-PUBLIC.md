@@ -40,6 +40,26 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.8 — 10 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés cargar un gasto en la moneda del ticket y pagarlo con una cuenta en otra moneda: por
+  ejemplo 4.200 pesos uruguayos con la tarjeta en dólares. Tipeás lo que gastaste y la app hace la
+  conversión, mostrándote cuánto sale de esa cuenta y a qué tasa antes de guardar.
+- Podés ajustar esa tasa, o directamente escribir cuánto se te cobró en la cuenta, y la app acomoda
+  la otra parte. El monto original queda siempre como lo cargaste.
+
+### Arreglado
+
+- Elegir una cuenta en otra moneda ya no avisa "saldo insuficiente" cuando la cuenta tiene de sobra.
+- Editar un movimiento cargado en otra moneda ya no pierde el monto original.
+- Al editar el monto de un movimiento, los totales del día, del período y el patrimonio ya se
+  actualizan: antes la fila mostraba el valor nuevo y los totales seguían sumando el viejo.
+- Un gasto en la misma moneda que la cuenta ya no muestra un "tipo de cambio usado" que nunca se
+  aplicó. Ese dato aparece solo cuando de verdad hubo un cambio de monedas.
+- En el detalle, el monto original de un gasto ya no se ve en verde como si fuera un ingreso.
+
 ## 0.30.7 — 9 de agosto de 2026
 
 ### Nuevo

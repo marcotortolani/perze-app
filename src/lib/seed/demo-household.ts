@@ -354,10 +354,17 @@ export async function seedDemoHousehold(): Promise<{ householdId: string }> {
       occurredAt: daysAgoIso(1),
       accountId: cash.id,
       counterAccountId: null,
-      amount: 350_000n, // ARS 3500,00
-      currencyCode: "ARS",
-      originalAmount: null,
-      originalCurrency: null,
+      // La cuenta es en UYU, así que `amount`/`currency_code` van en UYU —
+      // los pesos argentinos del ticket van en `original_*`. Antes esta fila
+      // ponía los 3.500 ARS directamente en `amount` sobre una cuenta en
+      // UYU: el defecto V9 de `CLAUDE.md`, que además restaba 3.500 del
+      // saldo como si fueran pesos uruguayos. `amount` en 0 y `originalRate`
+      // en `null` es exactamente lo que produce la captura cuando no hay
+      // cotización — la fila demuestra ese estado, que es para lo que existe.
+      amount: 0n,
+      currencyCode: "UYU",
+      originalAmount: 350_000n, // ARS 3.500,00
+      originalCurrency: "ARS",
       originalRate: null,
       fxRate: null,
       fxSource: "pending",

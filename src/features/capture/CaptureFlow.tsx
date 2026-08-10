@@ -22,6 +22,7 @@ import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { AccountPickerSheet } from "./AccountPickerSheet";
+import { CurrencyPickerSheet } from "./CurrencyPickerSheet";
 import { AmountStep } from "./AmountStep";
 import { CategoryStep } from "./CategoryStep";
 import { DetailsSheet } from "./DetailsSheet";
@@ -35,7 +36,7 @@ import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
 import { useFrequentTags } from "./use-frequent-tags";
 
 type Step = "amount" | "category";
-type SheetKind = "none" | "account" | "counterAccount" | "details" | "voice";
+type SheetKind = "none" | "account" | "counterAccount" | "currency" | "details" | "voice";
 
 export interface CaptureFlowProps {
   onClose?: () => void;
@@ -153,6 +154,14 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // que `AmountStep` lo use para su propia vista previa.
   const suggestedRate = useSuggestedFxRate(household?.id, account?.currencyCode, counterAccount?.currencyCode);
 
+  // La OTRA conversión (`CLAUDE.md` § "son dos conversiones, no una"): de
+  // la moneda en que se tipeó a la de la cuenta. Solo existe cuando el
+  // usuario eligió una moneda distinta a la de su cuenta — pagar 4.200 UYU
+  // con la tarjeta en USD. Mismo `queryKey` que el de `AmountStep`, así que
+  // TanStack Query no duplica el pedido.
+  const capturedCurrency = resolveAmountCurrency(draft, account, counterAccount);
+  const captureRate = useSuggestedFxRate(household?.id, capturedCurrency, account?.currencyCode);
+
   const categoryKind = draft.kind === "income" ? "income" : "expense";
   const sameKindCategories = dedupeCategoriesByIdentity(categories.filter((c) => c.kind === categoryKind), transactions ?? []);
   const frequentCategories = useFrequentCategories(categories, transactions, categoryKind, now, 5);
@@ -185,7 +194,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // por diseño, así que ahí nunca se bloquea.
   const expenseInsufficientFunds = () => {
     if (draft.kind !== "expense" || !account || LIABILITY_ACCOUNT_KINDS.has(account.kind)) return false;
-    const debit = computeExpenseDebitAmount(draft, account, numberLocaleForUiLocale(locale));
+    const debit = computeExpenseDebitAmount(draft, account, captureRate.data?.rate ?? null, numberLocaleForUiLocale(locale));
     return debit !== null && debit > account.currentBalance;
   };
 
@@ -330,6 +339,8 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
           counterAccount={counterAccount}
           householdId={household.id}
           onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
+          onCaptureFxRateChange={(rate) => setField("captureFxRateOverride", rate)}
+          onOpenCurrencyPicker={() => setSheet("currency")}
           onKindChange={setKind}
           onAmountKey={handleAmountKey}
           onAmountChange={(expression) => setField("amountExpression", expression)}
@@ -382,6 +393,22 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         </>
       )}
 
+      <CurrencyPickerSheet
+        open={sheet === "currency"}
+        onClose={() => setSheet("none")}
+        accounts={accounts}
+        transactions={transactions}
+        accountCurrency={account?.currencyCode}
+        value={draft.currency}
+        onChange={(code) => {
+          setField("currency", code);
+          // Cambiar de moneda invalida un rate tocado a mano para el par
+          // anterior: dejarlo puesto aplicaría la tasa de USD/UYU a un par
+          // que ya no es ese, en silencio.
+          setField("captureFxRateOverride", null);
+        }}
+      />
+
       <AccountPickerSheet
         open={sheet === "account"}
         title={t("capture.accountPicker.sourceTitle")}
@@ -389,6 +416,9 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
         onSelect={(a) => {
           setField("accountId", a.id);
           setField("counterFxRateOverride", null);
+          // Mismo motivo: cambiar de cuenta cambia el par de la conversión
+          // de captura, así que un rate tocado a mano deja de aplicar.
+          setField("captureFxRateOverride", null);
           // Un origen recién elegido en una transferencia precargada (p. ej.
           // "pagar tarjeta") vuelve a interpretar el monto en SU moneda, no
           // en la que traía el prefill — evita una doble conversión que

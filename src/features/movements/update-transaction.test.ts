@@ -32,6 +32,7 @@ function baseDraft(overrides: Partial<CaptureDraft> = {}): CaptureDraft {
     accountId: null,
     counterAccountId: null,
     counterFxRateOverride: null,
+    captureFxRateOverride: null,
     amountPinnedTo: "account",
     categoryId: "cat-1",
     occurredAt: "2026-07-27T12:00:00.000Z",
@@ -100,6 +101,34 @@ describe("updateTransactionFromDraft", () => {
     expect(updated.note).toBe("nota nueva");
     expect(updated.fxRate).toBe(frozenRate);
     expect(updated.amountBase).toBe(frozenAmountBase);
+  });
+
+  it("editar el monto arrastra amount_base con la MISMA tasa congelada", async () => {
+    // El bug: la fila mostraba el monto nuevo y todos los agregados —total
+    // del día, patrimonio, presupuestos— seguían sumando el `amount_base`
+    // viejo. Invisible salvo que alguien sumara las filas a mano.
+    const account = await makeArsAccount();
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(10));
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ amountExpression: "100" }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+    const frozenRate = tx.fxRate;
+    expect(tx.amountBase).toBe(tx.amount * 10n);
+
+    // La cotización de hoy cambia: no tiene que influir en nada.
+    await fxRepo.setManualOverride(HOUSEHOLD_UYU.id, "ARS", "UYU", rateFromInteger(999));
+
+    const updated = await updateTransactionFromDraft({
+      transactionId: tx.id,
+      draft: baseDraft({ amountExpression: "250" }),
+      household: HOUSEHOLD_UYU,
+      account,
+      existing: tx,
+    });
+
+    expect(updated.amount).toBe(25_000n);
+    // La tasa NO se movió...
+    expect(updated.fxRate).toBe(frozenRate);
+    // ...pero el derivado sí siguió al monto, con esa misma tasa.
+    expect(updated.amountBase).toBe(25_000n * 10n);
   });
 
   it("A4 — un rate pending sí se recalcula si el monto cambió de verdad", async () => {

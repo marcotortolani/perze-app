@@ -77,12 +77,16 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
         quote: account.currencyCode,
         date,
       });
-      if (captureResolution.rate !== null) {
-        amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
+      // Mismo criterio que `saveDraftAsTransaction`: una tasa tocada a mano
+      // gana sobre la resuelta, y vale incluso sin cotización del día —
+      // es un dato del usuario, no un 1 inventado.
+      const captureRate = draft.captureFxRateOverride ?? captureResolution.rate;
+      if (captureRate !== null) {
+        amount = convert(capturedAmount, account.currencyCode, captureRate);
         original = {
           originalAmount: capturedAmount.amount,
           originalCurrency: capturedCurrency,
-          originalRate: captureResolution.rate,
+          originalRate: captureRate,
         };
       } else {
         // A3 — sin cotización para la conversión de captura: nunca se
@@ -110,7 +114,12 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
   // congelado. Solo se recalcula cuando el rate previo era `pending` y algo
   // de lo que lo determina cambió de verdad.
   const fxInputsChanged = amount.amount !== existing.amount || account.id !== existing.accountId || currency !== existing.currencyCode;
-  const shouldRecomputeFx = existing.fxRate === null && fxInputsChanged;
+  // El par de monedas cambió (se movió a una cuenta en otra moneda): la tasa
+  // congelada era de OTRA conversión y no aplica a esta. No es "descongelar"
+  // un rate, es que el rate viejo dejó de tener nada que ver con este
+  // movimiento.
+  const currencyPairChanged = currency !== existing.currencyCode;
+  const shouldRecomputeFx = fxInputsChanged && (existing.fxRate === null || currencyPairChanged);
 
   let fx: Partial<Pick<TransactionRow, "fxRate" | "fxSource" | "fxProvider" | "fxQuoteKind" | "fxResolvedAt" | "amountBase">> = {};
 
@@ -129,6 +138,20 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
         amountBase: resolution.rate !== null ? convert(amount, household.baseCurrency, resolution.rate).amount : null,
       };
     }
+  } else if (fxInputsChanged && existing.fxRate !== null) {
+    // El monto cambió pero el par de monedas es el mismo. La TASA se
+    // respeta —`fx_rate` congelado, `CLAUDE.md`— pero `amount_base` no es
+    // una tasa: es el producto `amount × fx_rate`, y si cambia el monto
+    // tiene que seguirlo.
+    //
+    // Sin esto, editar el monto guardaba el `amount` nuevo y dejaba el
+    // `amount_base` viejo: la fila del movimiento mostraba el valor nuevo y
+    // TODOS los agregados —total del día, del período, patrimonio neto,
+    // presupuestos, análisis— seguían sumando el viejo, sin que nada lo
+    // avisara. El saldo de la cuenta sí quedaba bien (`transactionsRepo.update`
+    // revierte los efectos viejos y aplica los nuevos), así que el desfase
+    // era invisible salvo que alguien sumara las filas a mano.
+    fx = { amountBase: convert(amount, household.baseCurrency, existing.fxRate).amount };
   }
 
   const patch: Partial<TransactionRow> = {

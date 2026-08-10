@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { AmountScrubber, Button, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl, Sheet } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
-import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
+import { convert, formatRateTrimmed, invertRate, rateFromAmounts, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { CURRENCY_SYMBOLS, formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
@@ -30,6 +30,9 @@ export interface AmountStepProps {
   /** Solo para resolver el rate sugerido de `FxEditor` en una transferencia entre monedas distintas. */
   householdId: string | undefined;
   onCounterFxRateChange: (rate: bigint) => void;
+  /** Override de la conversión de CAPTURA (moneda tipeada → moneda de la cuenta). */
+  onCaptureFxRateChange: (rate: bigint) => void;
+  onOpenCurrencyPicker: () => void;
   onKindChange: (kind: CaptureKind) => void;
   onAmountKey: (key: string) => void;
   /** Reemplaza `amountExpression` entero con un monto absoluto — lo produce el drag del `AmountScrubber`, no una tecla más. */
@@ -89,6 +92,8 @@ export function AmountStep({
   counterAccount,
   householdId,
   onCounterFxRateChange,
+  onCaptureFxRateChange,
+  onOpenCurrencyPicker,
   onKindChange,
   onAmountKey,
   onAmountChange,
@@ -111,6 +116,20 @@ export function AmountStep({
   // no hacía nada acá (a diferencia de `/currencies`, que sí tiene este
   // mismo patrón completo). `null` = cerrado.
   const [rateKeypadDigits, setRateKeypadDigits] = useState<string | null>(null);
+  /**
+   * Cuál de las dos conversiones está editando el teclado de tasa: la de la
+   * transferencia (`counter`) o la de captura (`capture`). Son dos tasas
+   * distintas que pueden convivir, así que el teclado necesita saber a cuál
+   * le está escribiendo.
+   */
+  const [rateKeypadTarget, setRateKeypadTarget] = useState<"counter" | "capture">("counter");
+  /**
+   * Teclado del MONTO convertido (lo que sale de la cuenta). Editarlo ajusta
+   * la tasa, nunca el monto original: el original es lo que dice el ticket y
+   * solo cambia si se edita el héroe. Es la contracara de editar la tasa —
+   * los dos caminos llegan al mismo par (monto, tasa) desde puntas opuestas.
+   */
+  const [debitKeypadDigits, setDebitKeypadDigits] = useState<string | null>(null);
   const KIND_OPTIONS = [
     { id: "expense", label: t("capture.kind.expense") },
     { id: "income", label: t("capture.kind.income") },
@@ -177,23 +196,82 @@ export function AmountStep({
   // previa de solo lectura, la validación real vuelve a calcularse ahí al
   // confirmar. Nunca para cuentas de tipo pasivo (tarjeta/préstamo): esas
   // pueden ir en negativo por diseño.
-  const expenseDebit = draft.kind === "expense" ? computeExpenseDebitAmount(draft, account, numberLocale) : null;
+  // La conversión de CAPTURA (moneda tipeada → moneda de la cuenta), que es
+  // otra distinta de la de la transferencia. Solo existe cuando se tipeó en
+  // una moneda que no es la de la cuenta.
+  const capturedCrossCurrency = !isTransfer && !!account && currency !== account.currencyCode;
+  const captureRate = useSuggestedFxRate(householdId, capturedCrossCurrency ? currency : undefined, capturedCrossCurrency ? account.currencyCode : undefined);
+  // El rate efectivo: lo que el usuario tocó gana sobre lo resuelto.
+  const effectiveCaptureRate = draft.captureFxRateOverride ?? captureRate.data?.rate ?? null;
+  // Cuánto se debita de la cuenta. Es lo que hoy el usuario tiene que ir a
+  // averiguar afuera de la app antes de poder cargar el gasto.
+  const capturedDebit = capturedCrossCurrency && effectiveCaptureRate !== null ? convert(evaluated, account.currencyCode, effectiveCaptureRate) : null;
+  // Misma convención de anclaje que el resto de la app: "1 USD = X" cuando
+  // el dólar participa, invirtiendo solo para mostrar/editar. El rate
+  // interno sigue siendo siempre "moneda de cuenta por 1 de la capturada".
+  const captureNumeratorIsCaptured = !(account && account.currencyCode === "USD" && currency !== "USD");
+  // `roundRateForDisplay` acá y no solo al editar: invertir una tasa
+  // arrastra ruido de la división (1/41,5 invertido vuelve como
+  // 41,500000000291), y eso terminaba impreso tal cual debajo del monto.
+  const toCaptureDisplay = (internal: ScaledRate) => roundRateForDisplay(captureNumeratorIsCaptured ? internal : invertRate(internal));
+  const toCaptureInternal = (display: ScaledRate) => (captureNumeratorIsCaptured ? display : invertRate(display));
+  // El chip de moneda solo si el household usa más de una: "cantidad de
+  // monedas en uso" es uno de los flags de progresividad de `CLAUDE.md`, y
+  // en un hogar mono-moneda esto no debe sumar un elemento al presupuesto
+  // de ruido del keypad.
+  const multiCurrency = new Set(accounts.map((a) => a.currencyCode)).size > 1;
+  const expenseDebit = draft.kind === "expense" ? computeExpenseDebitAmount(draft, account, captureRate.data?.rate ?? null, numberLocale) : null;
   const expenseInsufficientFunds =
     draft.kind === "expense" && !!account && !LIABILITY_ACCOUNT_KINDS.has(account.kind) && expenseDebit !== null && expenseDebit > account.currentBalance;
 
   // Mismo patrón que `/currencies`: arranca el teclado desde el rate que
   // ya se está mostrando (no el interno), sin ceros finales.
-  const openRateKeypad = () => {
-    const current: ScaledRate = toDisplayRate(draft.counterFxRateOverride ?? suggestedRate.data?.rate ?? rateFromInteger(1));
-    const [wholePart, decPart] = formatRateTrimmed(current).split(".");
+  const seedRateKeypad = (rate: ScaledRate) => {
+    const [wholePart, decPart] = formatRateTrimmed(rate).split(".");
     setRateKeypadDigits(decPart ? `${wholePart}${decimalSeparator}${decPart}` : wholePart!);
+  };
+  const openRateKeypad = () => {
+    setRateKeypadTarget("counter");
+    seedRateKeypad(toDisplayRate(draft.counterFxRateOverride ?? suggestedRate.data?.rate ?? rateFromInteger(1)));
+  };
+  const openCaptureRateKeypad = () => {
+    setRateKeypadTarget("capture");
+    seedRateKeypad(toCaptureDisplay(effectiveCaptureRate ?? rateFromInteger(1)));
   };
   const commitRateKeypad = () => {
     if (rateKeypadDigits !== null) {
       const parsed = parseKeypadRate(rateKeypadDigits, decimalSeparator);
-      if (parsed !== null) onCounterFxRateChange(toInternalRate(roundRateForDisplay(parsed)));
+      if (parsed !== null) {
+        const rounded = roundRateForDisplay(parsed);
+        if (rateKeypadTarget === "capture") onCaptureFxRateChange(toCaptureInternal(rounded));
+        else onCounterFxRateChange(toInternalRate(rounded));
+      }
     }
     setRateKeypadDigits(null);
+  };
+
+  const openDebitKeypad = () => {
+    if (!capturedDebit) return;
+    setDebitKeypadDigits(amountToExpression(capturedDebit.amount, capturedDebit.currency, locale));
+  };
+  /**
+   * Editar el monto convertido ajusta la TASA, no el monto original: el
+   * original es el dato duro del ticket. `rateFromAmounts` deriva la tasa
+   * que hace que ese par cierre, así que las dos puntas quedan consistentes
+   * sin que ninguna pise a la otra.
+   */
+  const commitDebitKeypad = () => {
+    if (debitKeypadDigits !== null && account) {
+      try {
+        const target = evaluateKeypadExpression(debitKeypadDigits || "0", account.currencyCode, numberLocale);
+        const derived = rateFromAmounts(evaluated, target);
+        if (derived !== null) onCaptureFxRateChange(derived);
+      } catch {
+        // Expresión inválida: se cierra sin tocar nada, igual que el keypad
+        // de tasa. Nunca se guarda un rate a medio tipear.
+      }
+    }
+    setDebitKeypadDigits(null);
   };
 
   return (
@@ -267,13 +345,74 @@ export function AmountStep({
       ) : null}
 
       {!isTransfer ? (
-        <button
-          type="button"
-          onClick={onOpenAccountPicker}
-          style={{ background: "none", border: 0, cursor: hasAccounts ? "pointer" : "default", padding: 0, textAlign: "center", color: "var(--text-secondary)", fontSize: 13 }}
-        >
-          {account ? `${account.name} · ${currency}` : t("capture.chooseAccount")}
-        </button>
+        // Dos zonas tocables, y el ORDEN importa: primero la moneda del
+        // MONTO (califica a la cifra que está justo arriba), después la
+        // cuenta con SU propia moneda.
+        //
+        // Antes el chip reemplazaba al código de la cuenta, así que con las
+        // dos monedas distintas la línea decía solo "Itaú  UYU": no se sabía
+        // que Itaú era una cuenta en dólares ni que UYU era la moneda en la
+        // que te cobraron. Son dos hechos distintos —en qué moneda es el
+        // gasto y en qué moneda es la cuenta que lo paga— y los dos tienen
+        // que estar visibles justo cuando se elige.
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          {account && multiCurrency ? (
+            <button
+              type="button"
+              onClick={onOpenCurrencyPicker}
+              aria-label={t("capture.changeCurrency")}
+              style={{
+                border: 0,
+                cursor: "pointer",
+                padding: "0 10px",
+                minHeight: 44,
+                borderRadius: "var(--radius-chip)",
+                background: capturedCrossCurrency ? "var(--selection-surface)" : "transparent",
+                boxShadow: capturedCrossCurrency ? "inset 0 0 0 1px var(--selection-ring)" : "none",
+                color: capturedCrossCurrency ? "var(--text-primary)" : "var(--text-secondary)",
+                fontSize: 13,
+              }}
+            >
+              {currency}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onOpenAccountPicker}
+            // El nombre accesible repite la moneda de la cuenta — es lo que
+            // anuncia el lector de pantalla y lo que usan los e2e para
+            // ubicar este botón sin depender de cuál sea la cuenta por
+            // defecto.
+            aria-label={account ? `${account.name} · ${account.currencyCode}` : t("capture.chooseAccount")}
+            style={{ background: "none", border: 0, cursor: hasAccounts ? "pointer" : "default", padding: 0, textAlign: "center", color: "var(--text-secondary)", fontSize: 13 }}
+          >
+            {account ? `${account.name} · ${account.currencyCode}` : t("capture.chooseAccount")}
+          </button>
+        </div>
+      ) : null}
+
+      {capturedCrossCurrency ? (
+        // Solo el dato, sin slider (el ajuste fino aparece al tocarlo). Dos
+        // zonas: el monto convertido y la tasa, cada una con su teclado.
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
+          {capturedDebit ? (
+            <>
+              <button type="button" onClick={openDebitKeypad} className="t-caption" style={{ background: "none", border: 0, cursor: "pointer", padding: 4, color: "var(--text-secondary)" }}>
+                {formatAmountCompact(capturedDebit, { showSign: false })}
+              </button>
+              <span className="t-caption" style={{ color: "var(--text-muted)" }}>·</span>
+              <button type="button" onClick={openCaptureRateKeypad} className="t-caption" style={{ background: "none", border: 0, cursor: "pointer", padding: 4, color: "var(--text-muted)" }}>
+                {captureNumeratorIsCaptured
+                  ? `1 ${currency} = ${formatRateTrimmed(toCaptureDisplay(effectiveCaptureRate!))} ${account!.currencyCode}`
+                  : `1 ${account!.currencyCode} = ${formatRateTrimmed(toCaptureDisplay(effectiveCaptureRate!))} ${currency}`}
+              </button>
+            </>
+          ) : (
+            // Sin cotización no se bloquea nada: se guarda igual y queda
+            // pendiente de resolver (`needs_capture_fx`).
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("capture.captureRatePending")}</span>
+          )}
+        </div>
       ) : null}
 
       {!isTransfer ? (
@@ -352,7 +491,18 @@ export function AmountStep({
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-hero-size)", lineHeight: "var(--text-hero-line)", fontWeight: 600, marginTop: 4 }}>
-              {CURRENCY_SYMBOLS[(rateNumeratorIsSource ? counterAccount?.currencyCode : account?.currencyCode) ?? ""] ?? ""}{" "}
+              {/* La moneda del DENOMINADOR de lo que se está tipeando: en
+                  "1 USD = X UYU", lo que se tipea son UYU. Cambia según cuál
+                  de las dos conversiones se esté editando. */}
+              {CURRENCY_SYMBOLS[
+                (rateKeypadTarget === "capture"
+                  ? captureNumeratorIsCaptured
+                    ? account?.currencyCode
+                    : currency
+                  : rateNumeratorIsSource
+                    ? counterAccount?.currencyCode
+                    : account?.currencyCode) ?? ""
+              ] ?? ""}{" "}
               {rateKeypadDigits === "" ? "0" : rateKeypadDigits}
             </div>
           </div>
@@ -362,6 +512,27 @@ export function AmountStep({
               {t("currenciesPage.keypadCancel")}
             </Button>
             <Button variant="primary" onClick={commitRateKeypad} disabled={rateKeypadDigits === null || parseKeypadRate(rateKeypadDigits, decimalSeparator) === null}>
+              {t("currenciesPage.keypadDone")}
+            </Button>
+          </div>
+        </div>
+      </Sheet>
+
+      {/* Editar cuánto sale de la cuenta. Ajusta la tasa, nunca el monto
+          original — ver `commitDebitKeypad`. */}
+      <Sheet open={debitKeypadDigits !== null} title={t("capture.editDebit")} onClose={() => setDebitKeypadDigits(null)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-hero-size)", lineHeight: "var(--text-hero-line)", fontWeight: 600, marginTop: 4 }}>
+              {CURRENCY_SYMBOLS[account?.currencyCode ?? ""] ?? ""} {debitKeypadDigits === "" ? "0" : debitKeypadDigits}
+            </div>
+          </div>
+          <Keypad operators={false} onKey={(key) => setDebitKeypadDigits((d) => appendKeypadRateDigit(d ?? "", key, decimalSeparator))} onClear={() => setDebitKeypadDigits("")} />
+          <div style={{ display: "flex", gap: 12 }}>
+            <Button variant="secondary" onClick={() => setDebitKeypadDigits(null)}>
+              {t("currenciesPage.keypadCancel")}
+            </Button>
+            <Button variant="primary" onClick={commitDebitKeypad} disabled={!debitKeypadDigits}>
               {t("currenciesPage.keypadDone")}
             </Button>
           </div>

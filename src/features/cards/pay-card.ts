@@ -91,6 +91,7 @@ export async function payCard(params: PayCardParams): Promise<PayCardResult> {
     accountId: source.id,
     counterAccountId: card.id,
     counterFxRateOverride: rateOverride ?? null,
+    captureFxRateOverride: null,
     amountPinnedTo: "counterAccount",
     categoryId: null,
     occurredAt: new Date().toISOString(),

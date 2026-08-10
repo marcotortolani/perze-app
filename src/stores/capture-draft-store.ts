@@ -17,6 +17,21 @@ export interface CaptureDraft {
    */
   counterFxRateOverride: bigint | null;
   /**
+   * Override manual de la conversión **de captura**: de `currency` (la
+   * moneda en que se tipeó) a la moneda de la cuenta. `null` = se usa el
+   * rate resuelto por `fxRepo.resolve` como siempre.
+   *
+   * Es un campo aparte de `counterFxRateOverride` a propósito, aunque los
+   * dos guarden "una tasa que el usuario tocó": son **las dos conversiones
+   * distintas** de `CLAUDE.md` § dinero. Esta va de moneda capturada a
+   * moneda de cuenta y ocurre en la captura; la otra va de cuenta origen a
+   * cuenta destino en una transferencia. Unificarlas en un solo campo es
+   * exactamente el defecto V9 que esa sección existe para prevenir — y en
+   * una transferencia entre monedas distintas las dos pueden estar vivas a
+   * la vez.
+   */
+  captureFxRateOverride: bigint | null;
+  /**
    * Solo `transfer`. A qué cuenta corresponde la moneda del monto tipeado
    * — `"account"` (origen) es el comportamiento de siempre: se tipea en la
    * moneda de origen y el destino se deriva. `"counterAccount"` (destino)
@@ -56,6 +71,7 @@ function emptyDraft(): CaptureDraft {
     accountId: null,
     counterAccountId: null,
     counterFxRateOverride: null,
+    captureFxRateOverride: null,
     amountPinnedTo: "account",
     categoryId: null,
     occurredAt: new Date().toISOString(),

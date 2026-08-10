@@ -161,13 +161,28 @@ export function computeTransferDebitAmount(
  * evalúa — nunca se inventa un número para no bloquear ni aprobar por error.
  */
 export function computeExpenseDebitAmount(
-  draft: Pick<CaptureDraft, "kind" | "amountExpression" | "currency" | "amountPinnedTo">,
+  draft: Pick<CaptureDraft, "kind" | "amountExpression" | "currency" | "amountPinnedTo" | "captureFxRateOverride">,
   account: AccountRow | undefined,
+  captureRate: bigint | null,
   numberLocale: NumberLocale
 ): bigint | null {
   if (draft.kind !== "expense" || !account) return null;
   try {
-    return evaluateKeypadExpression(draft.amountExpression || "0", resolveAmountCurrency(draft, account, undefined), numberLocale).amount;
+    const capturedCurrency = resolveAmountCurrency(draft, account, undefined);
+    const captured = evaluateKeypadExpression(draft.amountExpression || "0", capturedCurrency, numberLocale);
+    if (capturedCurrency === account.currencyCode) return captured.amount;
+
+    // Antes esta función devolvía el monto TIPEADO sin convertir, y el
+    // llamador lo comparaba contra `account.currentBalance`: con la moneda
+    // de captura distinta a la de la cuenta eso comparaba 4.200 UYU contra
+    // un saldo en USD y avisaba "saldo insuficiente" sobre una cuenta con
+    // plata de sobra. Era inalcanzable desde el keypad —no había forma
+    // manual de cambiar la moneda— pero la carga por voz sí llegaba
+    // ("gasté 4200 pesos" con una cuenta en dólares elegida), y con el
+    // selector de moneda pasa a ser el camino normal.
+    const rate = draft.captureFxRateOverride ?? captureRate;
+    if (rate === null) return null;
+    return convert(captured, account.currencyCode, rate).amount;
   } catch {
     return null;
   }
@@ -234,12 +249,18 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
         quote: account.currencyCode,
         date,
       });
-      if (captureResolution.rate !== null) {
-        amount = convert(capturedAmount, account.currencyCode, captureResolution.rate);
+      // Un rate tocado a mano en la captura gana sobre el resuelto, igual
+      // que `counterFxRateOverride` en la transferencia. Y gana INCLUSO si
+      // no hubo cotización: si el usuario escribió la tasa (o el monto
+      // convertido, que es lo mismo con otra cara), eso es un dato suyo, no
+      // una invención de la app — que es lo único que `needs_fx` prohíbe.
+      const captureRate = draft.captureFxRateOverride ?? captureResolution.rate;
+      if (captureRate !== null) {
+        amount = convert(capturedAmount, account.currencyCode, captureRate);
         original = {
           originalAmount: capturedAmount.amount,
           originalCurrency: capturedCurrency,
-          originalRate: captureResolution.rate,
+          originalRate: captureRate,
         };
       } else {
         // A3 — sin cotización para la conversión de captura: nunca se
