@@ -38,6 +38,17 @@ const ACCESS_STATUS_BADGE_STATUS: Record<AccessStatus, "good" | "warning" | "ser
   disabled: "serious",
 };
 
+// Acción de estado que ofrece "Todos los usuarios" para cada estado ya
+// resuelto — `pending` queda afuera a propósito, eso lo resuelve la
+// sección de arriba con su propio copy (Aprobar/Rechazar). El rechazo
+// tampoco es terminal: la misma acción "Aprobar" que resuelve una
+// solicitud pendiente revierte un rechazo.
+const ACCESS_STATUS_NEXT_ACTION: Partial<Record<AccessStatus, { status: AccessStatus; labelKey: string; variant: "danger" | "secondary" }>> = {
+  approved: { status: "disabled", labelKey: "adminPage.disable", variant: "danger" },
+  disabled: { status: "approved", labelKey: "adminPage.enable", variant: "secondary" },
+  rejected: { status: "approved", labelKey: "adminPage.approve", variant: "secondary" },
+};
+
 /**
  * Sub-página de `/more/admin` — separada del panel para no mezclar la
  * gestión de usuarios (pending + all users) con las métricas. Mismo
@@ -86,6 +97,8 @@ export default function AdminUsersPage() {
         queryClient.invalidateQueries({ queryKey: ACCESS_REQUESTS_KEY }),
         queryClient.invalidateQueries({ queryKey: METRICS_KEY }),
       ]);
+    } catch {
+      toast.error(t("adminPage.decideError"));
     } finally {
       setActing(null);
     }
@@ -164,22 +177,24 @@ export default function AdminUsersPage() {
                       })
                     : t("adminPage.neverConnected")}
                 </div>
-                {/* Deshabilitar/habilitar es la ÚNICA acción acá — a
-                    propósito, no un tercer camino para aprobar/rechazar
-                    una solicitud pendiente (eso ya lo resuelve la
-                    sección de arriba, con su propio copy). Nunca se ofrece
+                {/* Acciones de estado sobre usuarios ya resueltos —
+                    `pending` queda afuera a propósito, eso lo resuelve la
+                    sección de arriba (Aprobar/Rechazar), no un tercer
+                    camino acá. Un rechazo tampoco es terminal: reaparece
+                    acá con "Aprobar" en vez de en la lista de pendientes,
+                    para no simular una solicitud nueva. Nunca se ofrece
                     para un operador (`isAppAdmin`): ni sobre uno mismo ni
                     sobre otro — `admin_set_access_status()` lo rechaza
                     igual del lado servidor, esto es solo para no mostrar
                     un botón que va a fallar. */}
-                {(user.accessStatus === "approved" || user.accessStatus === "disabled") && !user.isAppAdmin ? (
+                {!user.isAppAdmin && ACCESS_STATUS_NEXT_ACTION[user.accessStatus] ? (
                   <Button
-                    variant={user.accessStatus === "approved" ? "danger" : "secondary"}
+                    variant={ACCESS_STATUS_NEXT_ACTION[user.accessStatus]!.variant}
                     disabled={acting === user.profileId}
-                    onClick={() => handleDecide(user.profileId, user.accessStatus === "approved" ? "disabled" : "approved")}
+                    onClick={() => handleDecide(user.profileId, ACCESS_STATUS_NEXT_ACTION[user.accessStatus]!.status)}
                     style={{ marginTop: 4 }}
                   >
-                    {t(user.accessStatus === "approved" ? "adminPage.disable" : "adminPage.enable")}
+                    {t(ACCESS_STATUS_NEXT_ACTION[user.accessStatus]!.labelKey as Parameters<typeof t>[0])}
                   </Button>
                 ) : null}
               </div>

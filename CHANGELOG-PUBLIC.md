@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.11 — 10 de agosto de 2026
+
+### Arreglado
+
+- Ahora se puede aprobar a alguien que habías rechazado por error: en el panel de usuarios, la
+  lista de todos los usuarios tiene un botón "Aprobar" para las solicitudes rechazadas.
+
 ## 0.30.10 — 10 de agosto de 2026
 
 ### Nuevo

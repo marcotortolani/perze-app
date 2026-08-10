@@ -6,6 +6,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.11] — 2026-08-10
+
+### Arreglado
+
+- **Un usuario rechazado no tenía forma de ser aprobado después.** `/more/admin/users` solo
+  ofrecía la acción opuesta a "Rechazar" para estados `approved`/`disabled` (deshabilitar/habilitar);
+  un `rejected` quedaba sin botón, así que si el operador se equivocaba o cambiaba de opinión no
+  había cómo revertirlo — el usuario tampoco genera una solicitud nueva al reintentar el registro
+  (correcto, ya tiene fila), así que quedaba encerrado. La sección "Todos los usuarios" ahora ofrece
+  "Aprobar" también sobre `rejected` (`ACCESS_STATUS_NEXT_ACTION`, reemplaza el ternario
+  `approved`/`disabled` de antes); no reaparece en "Solicitudes pendientes" a propósito, para no
+  simular una solicitud nueva. Sin migración: `admin_set_access_status()` ya aceptaba `'approved'`
+  desde cualquier estado de origen, con sus guardas de operador intactas.
+- **`/pending` no ofrecía "Actualizar" a un usuario rechazado** — tenía sentido mientras el rechazo
+  era terminal, pero ahora que el operador puede revertirlo, alguien recién aprobado quedaba sin
+  forma de re-entrar salvo cerrar sesión y loguearse de nuevo. El botón se muestra para los tres
+  estados no aprobados por igual.
+- **`handleDecide` en `/more/admin/users` no tenía `catch`** — un rechazo de la RPC (por ejemplo, el
+  operador intentando actuar sobre otro operador) quedaba como unhandled rejection sin feedback
+  visible más que el spinner volviendo a su estado normal. Ahora muestra `adminPage.decideError`.
+
 ## [0.30.10] — 2026-08-10
 
 ### Nuevo — onboarding pide nombre, edad, moneda e idioma; el remate se invierte a ingreso→gasto

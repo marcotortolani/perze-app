@@ -89,11 +89,10 @@ export default function PendingPage() {
   }
 
   const rejected = status === "rejected";
-  // "disabled" — a diferencia de "rejected" (una solicitud que nunca
-  // llegó a entrar), esta cuenta SÍ tenía acceso y el operador se lo
-  // cortó a propósito, reversible en cualquier momento — por eso comparte
-  // el botón de actualizar con "pending" en vez de quedar sin salida como
-  // "rejected".
+  // "rejected" ya no es terminal: el operador puede revertirlo desde
+  // /more/admin/users, así que comparte el botón de actualizar con
+  // "pending" y "disabled" en vez de dejar a quien lo ve sin más salida
+  // que cerrar sesión.
   const disabled = status === "disabled";
   const titleKey = rejected ? "onboarding.pending.rejectedTitle" : disabled ? "onboarding.pending.disabledTitle" : "onboarding.pending.pendingTitle";
   const subtitleKey = rejected ? "onboarding.pending.rejectedSubtitle" : disabled ? "onboarding.pending.disabledSubtitle" : "onboarding.pending.pendingSubtitle";
@@ -121,11 +120,9 @@ export default function PendingPage() {
       </div>
 
       <div style={{ width: "100%", marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        {!rejected ? (
-          <Button size="lg" disabled={checking} onClick={handleRefresh}>
-            {checking ? t("onboarding.pending.stillPending") : t("onboarding.pending.refresh")}
-          </Button>
-        ) : null}
+        <Button size="lg" disabled={checking} onClick={handleRefresh}>
+          {checking ? t("onboarding.pending.stillPending") : t("onboarding.pending.refresh")}
+        </Button>
         <button
           type="button"
           onClick={handleSignOut}

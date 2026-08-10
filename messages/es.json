@@ -905,6 +905,7 @@
   "rejectedToast": "Acceso rechazado.",
   "pendingToast": "Acceso puesto en espera.",
   "disabledToast": "Acceso deshabilitado.",
+  "decideError": "No pudimos guardar el cambio. Probá de nuevo.",
   "allUsersSectionTitle": "Todos los usuarios",
   "allUsersEmpty": "Todavía no hay usuarios registrados.",
   "registeredOn": "Registrado el {date} a las {time}",
