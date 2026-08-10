@@ -1509,6 +1509,7 @@ export type Database = {
           household_joined: boolean
           id: string
           insights: boolean
+          monthly_summary_email: boolean
           profile_id: string
           recurring_reminders: boolean
           updated_at: string
@@ -1522,6 +1523,7 @@ export type Database = {
           household_joined?: boolean
           id: string
           insights?: boolean
+          monthly_summary_email?: boolean
           profile_id: string
           recurring_reminders?: boolean
           updated_at?: string
@@ -1535,6 +1537,7 @@ export type Database = {
           household_joined?: boolean
           id?: string
           insights?: boolean
+          monthly_summary_email?: boolean
           profile_id?: string
           recurring_reminders?: boolean
           updated_at?: string
@@ -2214,6 +2217,51 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      summary_emails_sent: {
+        Row: {
+          household_id: string
+          id: string
+          kind: string
+          period_end: string
+          period_start: string
+          profile_id: string
+          sent_at: string
+        }
+        Insert: {
+          household_id: string
+          id?: string
+          kind: string
+          period_end: string
+          period_start: string
+          profile_id: string
+          sent_at?: string
+        }
+        Update: {
+          household_id?: string
+          id?: string
+          kind?: string
+          period_end?: string
+          period_start?: string
+          profile_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "summary_emails_sent_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "summary_emails_sent_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2900,6 +2948,10 @@ export type Database = {
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }
+      household_period_start: {
+        Args: { p_on: string; p_start_day: number }
+        Returns: string
+      }
       is_app_admin: { Args: never; Returns: boolean }
       is_household_admin: { Args: { h: string }; Returns: boolean }
       is_household_owner: { Args: { h: string }; Returns: boolean }
@@ -2993,6 +3045,7 @@ export type Database = {
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
       trigger_daily_inflation_sync: { Args: never; Returns: undefined }
       trigger_daily_price_sync: { Args: never; Returns: undefined }
+      trigger_monthly_summaries: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

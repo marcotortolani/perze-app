@@ -67,7 +67,8 @@ SELECT tests.log(throws_ok(
       VALUES (%L, %L, 'monthly', '2026-07-01', '2026-07-31')$$,
     tests.get('a_household_id'), tests.get('a_profile_id')
   ),
-  '23505',
+  '23505'::char(5),
+  NULL::text,
   'el mismo resumen no se puede registrar dos veces — es lo que impide el mail duplicado'
 ));
 
@@ -96,13 +97,15 @@ SELECT tests.log(throws_ok(
       VALUES (%L, %L, 'monthly', '2026-08-01', '2026-08-31')$$,
     tests.get('a_household_id'), tests.get('a_profile_id')
   ),
-  '42501',
+  '42501'::char(5),
+  NULL::text,
   'nadie desde el cliente marca un resumen como enviado — solo la Edge Function con service_role'
 ));
 
 SELECT tests.log(throws_ok(
   $$DELETE FROM public.summary_emails_sent$$,
-  '42501',
+  '42501'::char(5),
+  NULL::text,
   'ni lo borra para forzar un reenvío'
 ));
 

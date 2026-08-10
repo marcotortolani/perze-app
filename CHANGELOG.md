@@ -6,6 +6,65 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.11] — 2026-08-10
+
+### Feat — resumen mensual por mail, de punta a punta
+
+Diseño completo en `docs/resumen-mensual-por-mail.md`. Un mail por miembro cuando cierra el período
+del hogar (`households.period_start_day`), no el 1° de cada mes: si no, el mail no coincidiría con
+lo que la app muestra como "este mes".
+
+**Reparto: la Edge Function lee, Next calcula.** `supabase/functions/monthly-summary` usa
+`service_role` para leer las filas visibles de cada miembro y las postea a
+`/api/emails/monthly-summary`, que corre `buildMonthlySummary()` — el mismo TypeScript que las
+pantallas — y renderiza con React Email + next-intl. Duplicar la agregación en Deno es el camino
+que ya salió caro con `daily-fx-sync` (su set de monedas quedó en 14 contra 30 del cliente sin que
+nadie se enterara); acá el modo de falla sería un mail cuyos números no coinciden con la app.
+
+**Excepción, en SQL:** `summary_account_balances()` agrega apertura y cierre por cuenta. En
+TypeScript exigiría mandar toda la historia de la cuenta por la red. Es la única regla de dinero
+duplicada — espejo declarado de `computeTransactionEffects()` — y queda fijada en pgTAP con saldos
+calculados a mano. El cierre sale de SQL también, y no de "apertura + lo del período": una cuenta
+abierta a mitad de período tiene apertura 0 y cierre con su `opening_balance` adentro.
+
+**Visibilidad:** `summary_transactions()` / `summary_account_balances()` repiten el predicado del
+`tx_select` de RLS con `can_see_as` en vez de `can_see`. Toman un `p_viewer` arbitrario, así que
+solo `service_role` puede ejecutarlas. Una categoría que el miembro no puede ver cuenta en el total
+pero no viaja con nombre.
+
+**Idempotencia — corrección contra el diseño:** la fila de `summary_emails_sent` se escribe ANTES
+del envío y se borra si falla. El documento decía "después del envío exitoso", pero eso deja la
+carrera que el `UNIQUE` venía a cerrar, y con el cron reintentando 4 días es un mail duplicado
+real. Reservar + liberar conserva las dos propiedades.
+
+**Cron:** `trigger_monthly_summaries()` despacha hogares cuyo período cerró dentro de la ventana de
+reintento. No decide quién recibe — `net.http_post` es fire-and-forget y desde SQL no se sabe si el
+mail salió.
+
+**Corte del período: UTC en los tres lugares** (SQL, Edge Function y el recorte de la ruta). El
+hogar no guarda huso horario. Borde conocido y documentado.
+
+### Refactor — agregados extraídos para reusarse
+
+- `expenseByCategory()` y `comparePeriods()` en `period-summary.ts` (el primero estaba inline en la
+  pantalla de categorías y **descartaba los `needs_fx` sin declararlo**).
+- `period-balances.ts`: `accountBalanceAt()`, `periodAccountBalances()`, `investingActivity()`.
+- `monthly-summary.ts`: la composición.
+
+### Chore
+
+- `weekly_summary` queda como columna muerta con su `COMMENT`: prometía un envío semanal que nunca
+  existió, ni push ni mail. Su toggle sale de `/more/notifications`.
+- La preferencia nueva va en una sección "Por mail" aparte, sin colgar del switch de push — si
+  colgara, quedaría deshabilitada para todo el que nunca aceptó notificaciones.
+- Migración renombrada a `20260810180000` para quedar después de la de v0.30.10.
+
+### Pendiente
+
+El resumen anual, que reusa esta misma cadena con `kind = 'annual'`.
+
+---
+
 ## [0.30.10] — 2026-08-10
 
 ### Nuevo — onboarding pide nombre, edad, moneda e idioma; el remate se invierte a ingreso→gasto

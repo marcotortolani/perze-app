@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.11 — 10 de agosto de 2026
+
+### Nuevo
+
+- Cuando cierra tu mes te llega un resumen por mail: cómo empezaron y cómo terminaron tus cuentas,
+  cuánto entró y cuánto salió, en qué se fue la plata y si gastaste más o menos que el mes pasado.
+  Si compartís el hogar con alguien, cada uno recibe el suyo con lo que puede ver.
+- Podés apagarlo desde Más → Notificaciones, en la sección "Por mail".
+
 ## 0.30.10 — 10 de agosto de 2026
 
 ### Nuevo
