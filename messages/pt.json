@@ -1939,6 +1939,27 @@
   "you": "Você"
  },
  "emails": {
+  "monthlySummary": {
+   "subject": "Seu resumo de {period}",
+   "preview": "Como foi {period}",
+   "title": "Seu resumo do período",
+   "income": "Entradas",
+   "expenses": "Gastos",
+   "net": "Resultado",
+   "spentMore": "Você gastou {change} a mais que no período anterior.",
+   "spentLess": "Você gastou {change} a menos que no período anterior.",
+   "spentSame": "Você gastou praticamente o mesmo que no período anterior.",
+   "noComparison": "Este é o seu primeiro período fechado, então ainda não há com o que comparar.",
+   "excluded": "{count, plural, one {Há # movimento sem cotação, então ele não entra nestes totais.} other {Há # movimentos sem cotação, então eles não entram nestes totais.}}",
+   "accountsTitle": "Suas contas",
+   "accountRange": "Começou em {opening} · terminou em {closing}",
+   "categoriesTitle": "Para onde foi",
+   "investingTitle": "Investimentos",
+   "invested": "Investiu",
+   "divested": "Vendeu",
+   "cta": "Ver o detalhe no Perze",
+   "unsubscribeHint": "Você pode parar de receber este resumo em Mais → Notificações."
+  },
   "invite": {
    "subject": "{inviterName} te convidou para {householdName} no PERZE",
    "preview": "{inviterName} te convidou para o PERZE",
