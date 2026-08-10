@@ -905,6 +905,7 @@
   "rejectedToast": "Access rejected.",
   "pendingToast": "Access put on hold.",
   "disabledToast": "Access disabled.",
+  "decideError": "We couldn't save the change. Try again.",
   "allUsersSectionTitle": "All users",
   "allUsersEmpty": "No users registered yet.",
   "registeredOn": "Registered on {date} at {time}",
