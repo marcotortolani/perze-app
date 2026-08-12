@@ -2152,7 +2152,7 @@
   "columnValue": "Valor",
   "purchaseDate": "Data da compra",
   "purchasePrice": "Preço de compra",
-  "addAnotherPurchase": "+ Adicionar outra compra de {symbol}",
+  "addPurchase": "+ Adicionar compra",
   "sellFromThisLot": "Vender desta compra",
   "editTrade": "Editar",
   "deleteTrade": "Excluir",

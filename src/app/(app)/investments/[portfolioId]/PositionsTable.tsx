@@ -35,7 +35,13 @@ export interface PositionsTableProps {
 // entre el instrumento y sus lotes. Con una sola definición de grilla
 // compartida, sin indentado que le reste ancho a la fila de lote, todo
 // alinea exacto.
-const GRID_COLUMNS = "minmax(160px,1.6fr) minmax(90px,1fr) minmax(80px,0.8fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(110px,1fr) 104px";
+// Posiciones angosta a propósito — un símbolo nunca pasa de 5-6
+// caracteres, y su clase de activo debajo tampoco. El aire que le sobra
+// se lo lleva Valor, que es donde de verdad aparecen los números grandes
+// (una posición de varios millones de pesos, p. ej.) — antes Posiciones
+// tenía la porción más grande de la grilla sin necesitarla, y Valor
+// quedaba apretado.
+const GRID_COLUMNS = "minmax(100px,1fr) minmax(90px,1fr) minmax(70px,0.7fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(140px,1.6fr) 104px";
 
 /**
  * Monto arriba (color por polaridad, nunca rojo — CLAUDE.md: fuera del
@@ -262,7 +268,7 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                   onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}`)}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px 14px", background: "none", border: 0, cursor: "pointer", color: "var(--primary-ink)", font: "500 13px/18px var(--font-sans)" }}
                 >
-                  {t("positionsTablePage.addAnotherPurchase", { symbol: instrument.symbol })}
+                  {t("positionsTablePage.addPurchase")}
                 </button>
               </div>
             ) : null}
