@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.24] — 2026-08-12
+
+Seguimiento del fix de v0.30.22: el radar de `/transactions` seguía mostrando un vértice
+"Sin categoría" enorme — no era una inversión (esas ya estaban excluidas), sino una
+referencia a categoría genuinamente huérfana (ni activa, ni archivada, ni borrada — la fila
+no existe en absoluto).
+
+### Arreglado — categoría sin resolver ya no ocupa un slot propio en el top 5
+
+- `useKnownCategoryIds()` (`use-category-directory.ts`) — set de ids que resuelven a una fila
+  real, misma query que `useCategoryDirectory` (sin pedido extra).
+- El radar de `/transactions` y el Donut de `/analytics/categories`: un `categoryId` sin
+  fila real no es una categoría con la que el usuario se identifique — es un dato roto, no
+  una elección de "sin categoría". Ya no compite por un vértice/slice propio: se funde en
+  "Otros", igual que el resto que no entra en el top 5.
+- Test nuevo cubriendo el caso (`useKnownCategoryIds` con activa/archivada/borrada/huérfana).
+
+---
+
 ## [0.30.23] — 2026-08-12
 
 Bug reportado en uso real (dos "Visa BBVA" indistinguibles en el selector de agrupar

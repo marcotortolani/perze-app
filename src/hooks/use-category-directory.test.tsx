@@ -6,7 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getDb, resetDbForTests } from "@/lib/db/client";
 import { categoriesRepo, type NewCategoryInput } from "@/lib/repos/categories-repo";
-import { useCategoryDirectory } from "./use-category-directory";
+import { useCategoryDirectory, useKnownCategoryIds } from "./use-category-directory";
 
 const HOUSEHOLD = "hh-1";
 const USER = "user-1";
@@ -45,6 +45,13 @@ function render() {
         </NextIntlClientProvider>
       </QueryClientProvider>
     ),
+  });
+}
+
+function renderKnownIds() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderHook(() => useKnownCategoryIds(HOUSEHOLD), {
+    wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
   });
 }
 
@@ -97,5 +104,35 @@ describe("useCategoryDirectory", () => {
     const { result } = render();
     await waitFor(() => expect(result.current(null)).toBe("Sin categoría"));
     expect(result.current(undefined)).toBe("Sin categoría");
+  });
+});
+
+describe("useKnownCategoryIds", () => {
+  beforeEach(() => {
+    resetDbForTests(`perze-test-known-category-ids-${crypto.randomUUID()}`);
+  });
+
+  afterEach(async () => {
+    await getDb().delete();
+  });
+
+  it("incluye activas, archivadas y borradas — un id huérfano queda afuera", async () => {
+    const [active] = await categoriesRepo.bulkCreate([newCategory({ name: "Electrónica" })]);
+    const [archived] = await categoriesRepo.bulkCreate([newCategory({ name: "Viajes" })]);
+    await categoriesRepo.archive(archived!.id);
+    const [removed] = await categoriesRepo.bulkCreate([newCategory({ name: "Regalos" })]);
+    await categoriesRepo.remove(removed!.id);
+
+    const { result } = renderKnownIds();
+    await waitFor(() => expect(result.current.size).toBe(3));
+
+    expect(result.current.has(active!.id)).toBe(true);
+    expect(result.current.has(archived!.id)).toBe(true);
+    expect(result.current.has(removed!.id)).toBe(true);
+    // El caso real que motiva este hook: un `categoryId` que no tiene NINGUNA
+    // fila (más profundo que archivada/borrada, p.ej. una referencia rota) no
+    // debe competir por un vértice/slice propio en un ranking top-5 — el
+    // consumidor lo detecta acá y lo funde en "Otros".
+    expect(result.current.has("00000000-0000-4000-8000-000000000000")).toBe(false);
   });
 });

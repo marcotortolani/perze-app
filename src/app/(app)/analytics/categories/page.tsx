@@ -11,7 +11,7 @@ import { SeriesLegend } from "@/design-system/charts";
 const Donut = dynamic(() => import("@/design-system/charts/Donut").then((m) => m.Donut), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryDirectory } from "@/hooks/use-category-directory";
+import { useCategoryDirectory, useKnownCategoryIds } from "@/hooks/use-category-directory";
 import { previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { expenseByCategory } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -25,6 +25,7 @@ export default function CategoriesAnalyticsPage() {
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const categoryLabel = useCategoryDirectory(household?.id);
+  const knownCategoryIds = useKnownCategoryIds(household?.id);
 
   const slices = useMemo(() => {
     if (!household || !transactions) return [];
@@ -34,16 +35,21 @@ export default function CategoriesAnalyticsPage() {
     // es cómo la regla de signo por `kind` terminó reimplementada doce veces
     // (tres con el signo mal). Acá queda solo la presentación.
     const { categories: ranked } = expenseByCategory(transactions, start, end);
-    const sorted = ranked.map(({ categoryId, total }) => ({ label: categoryLabel(categoryId), value: Number(total), total }));
+    // Un `categoryId` sin fila real (`useKnownCategoryIds`) es una
+    // referencia rota, no una categoría — se funde en "Otros" en vez de
+    // ocupar uno de los 5 slots de la paleta.
+    const known = ranked.filter((c) => knownCategoryIds.has(c.categoryId));
+    const unresolvedTotal = ranked.filter((c) => !knownCategoryIds.has(c.categoryId)).reduce((s, c) => s + c.total, 0n);
+    const sorted = known.map(({ categoryId, total }) => ({ label: categoryLabel(categoryId), value: Number(total), total }));
 
     // La paleta de datos es de 5 slots + "Otros" (docs/02-design-system.md
     // § 2.6) — nunca un sexto slot con su propio color.
-    if (sorted.length <= 5) return sorted;
+    if (sorted.length <= 5 && unresolvedTotal === 0n) return sorted;
     const top5 = sorted.slice(0, 5);
-    const restTotal = sorted.slice(5).reduce((s, x) => s + x.total, 0n);
+    const restTotal = sorted.slice(5).reduce((s, x) => s + x.total, 0n) + unresolvedTotal;
     return [...top5, { label: t("categoriesAnalyticsPage.other"), value: Number(restTotal), total: restTotal }];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household, transactions]);
+  }, [household, transactions, knownCategoryIds]);
 
   if (!household || !transactions) return <Skeleton height={300} style={{ marginTop: 16 }} />;
 

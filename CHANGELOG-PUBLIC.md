@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.24 — 12 de agosto de 2026
+
+### Arreglado
+
+- El gráfico de "Gastos por categoría" de Movimientos ya no dedica un sector entero a "Sin
+  categoría" cuando aparece un dato con una categoría rota — ahora se suma a "Otros" en vez
+  de ocupar un lugar del top 5.
+
 ## 0.30.23 — 12 de agosto de 2026
 
 ### Arreglado

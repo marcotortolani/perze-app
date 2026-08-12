@@ -43,3 +43,25 @@ export function useCategoryDirectory(householdId: string | undefined): (category
     return category ? categoryLabel(category) : t("transactions.detail.noCategory");
   };
 }
+
+/**
+ * Set de ids que SÍ resuelven a una fila real (activa, archivada o
+ * borrada) — misma query que `useCategoryDirectory` (mismo `queryKey`, sin
+ * pedido extra). Existe para el caso en que un agregado arma un ranking
+ * "top 5 + Otros" (radar de `/transactions`, Donut de
+ * `/analytics/categories`): un `categoryId` que no resuelve a NADA no es
+ * una categoría con la que el usuario pueda identificarse — es una
+ * referencia rota (dato corrupto, no una elección de "sin categoría") — y
+ * no debería competir por uno de los 5 slots de la paleta. Quien arma el
+ * ranking usa esto para fusionar esos montos en "Otros" en vez de darles
+ * un vértice/slice propio.
+ */
+export function useKnownCategoryIds(householdId: string | undefined): Set<string> {
+  const { data: rows } = useQuery({
+    queryKey: categoryDirectoryKey(householdId ?? ""),
+    queryFn: () => categoriesRepo.listForLabels(householdId!),
+    enabled: !!householdId,
+  });
+
+  return useMemo(() => new Set((rows ?? []).map((c) => c.id)), [rows]);
+}

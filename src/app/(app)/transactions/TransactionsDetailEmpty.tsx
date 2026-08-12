@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { EmptyState, NeedsFxBanner } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryDirectory } from "@/hooks/use-category-directory";
+import { useCategoryDirectory, useKnownCategoryIds } from "@/hooks/use-category-directory";
 import { currentPeriodBounds, previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { expenseByCategory } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -29,6 +29,7 @@ export function TransactionsDetailEmpty() {
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
   const categoryLabel = useCategoryDirectory(household?.id);
+  const knownCategoryIds = useKnownCategoryIds(household?.id);
 
   // Mismo criterio que `/analytics/categories` (Donut) y mismo cálculo:
   // `expenseByCategory` (`lib/analytics/period-summary.ts`) es la única
@@ -49,11 +50,17 @@ export function TransactionsDetailEmpty() {
 
     const breakdown = (start: Date, end: Date) => {
       const { categories: ranked, excludedCount: excluded } = expenseByCategory(transactions, start, end);
-      const sorted = ranked.map(({ categoryId, total }) => [categoryId, total] as [string, bigint]);
-      const top5 = sorted.slice(0, 5);
-      const rest = sorted.slice(5).reduce((s, [, v]) => s + v, 0n);
-      const entries = rest > 0n ? [...top5, ["__other", rest] as [string, bigint]] : top5;
-      const radarData = entries.map(([categoryId, total]) => {
+      // Un `categoryId` que no resuelve a ninguna fila (`useKnownCategoryIds`)
+      // no es una categoría con la que el usuario se identifique — es una
+      // referencia rota, no una elección de "sin categoría". No compite por
+      // un vértice propio: se funde en "Otros" igual que el resto que no
+      // entra en el top 5.
+      const known = ranked.filter((c) => knownCategoryIds.has(c.categoryId));
+      const unresolvedTotal = ranked.filter((c) => !knownCategoryIds.has(c.categoryId)).reduce((s, c) => s + c.total, 0n);
+      const top5 = known.slice(0, 5);
+      const rest = known.slice(5).reduce((s, c) => s + c.total, 0n) + unresolvedTotal;
+      const entries = rest > 0n ? [...top5, { categoryId: "__other", total: rest }] : top5;
+      const radarData = entries.map(({ categoryId, total }) => {
         const label = categoryId === "__other" ? t("categoriesAnalyticsPage.other") : categoryLabel(categoryId);
         return { label, value: Number(total), formatted: formatAmountCompact(money(total, household.baseCurrency), { showSign: false }) };
       });
@@ -68,7 +75,7 @@ export function TransactionsDetailEmpty() {
     const current = currentPeriodBounds(household.periodStartDay || 1, now);
     return { ...breakdown(current.start, current.end), isCurrentPeriod: true };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household, transactions]);
+  }, [household, transactions, knownCategoryIds]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
