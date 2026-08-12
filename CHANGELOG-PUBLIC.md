@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.27 — 12 de agosto de 2026
+
+### Arreglado
+
+- Al editar el saldo inicial o el límite de una tarjeta, ahora ves el número real completo
+  (antes aparecía la moneda repetida y redondeado, como "12,1 K") y podés corregirlo tocando
+  directo sobre esos dígitos, en vez de que se borren enteros al primer toque.
+
 ## 0.30.26 — 12 de agosto de 2026
 
 ### Arreglado

@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.27] — 2026-08-12
+
+Bug reportado al probar v0.30.26: el placeholder del saldo inicial en edición mostraba
+`"USD US$ 12,1 K"` (símbolo duplicado, monto abreviado a "K") y además era solo una vista
+previa — tocar cualquier tecla la borraba entera en vez de editar sobre el número real.
+El usuario lo dijo explícito: "así debería aparecer, y sobre ese número editarlo".
+
+### Arreglado — el campo arranca con el valor real, editable en el lugar
+
+Cambio de fondo, no solo de formato: `openingExpr`/`creditLimitExpr` dejan de arrancar
+vacíos con un texto de reemplazo aparte (`formatAmountCompact`, con su propio símbolo y
+redondeo a "K"/"M") y pasan a sembrarse con el valor existente **como el string crudo que
+el `<Keypad>` habría producido si el usuario lo hubiera tipeado** — nueva función pura
+`moneyToKeypadExpr` (inverso de `evaluateKeypadExpression`: sin separador de miles, sin
+parte decimal si es cero). Backspace y dígitos editan ese número real desde el primer toque,
+en vez de reemplazar una vista previa que no era el valor que se iba a guardar.
+
+Simplificación derivada: como el expr ya no arranca vacío en edición, `handleSave` deja de
+necesitar el caso especial "vacío = no tocado, conservar `existing.openingBalance`" — vacío
+ahora significa lo mismo que al crear la cuenta (limpiaste el campo, el monto es 0),
+consistente en los dos flujos. Y el estado `leftGroupCreditLimit` (agregado en el fix
+anterior para no perder el límite del grupo al abandonar la tarjeta multi-moneda) se
+elimina entero: alcanza con sembrar `creditLimitExpr` directo con el límite del grupo en el
+mismo `onClick` de "Ninguna", sin threading extra hasta `handleSave`.
+
+---
+
 ## [0.30.26] — 2026-08-12
 
 Pregunta del usuario en uso real: creó una cuenta con un saldo inicial equivocado y no

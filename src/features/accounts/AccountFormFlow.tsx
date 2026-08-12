@@ -7,8 +7,7 @@ import { Button, Chip, Icon, IconButton, Input, Keypad, ListRow, OptionCard, Seg
 import { ScreenShell } from "@/components/screen-shell";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
-import { formatAmountCompact } from "@/lib/money/format";
-import { money } from "@/lib/money/money";
+import { decimalsFor } from "@/lib/money/decimals";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { accountGroupsRepo } from "@/lib/repos/account-groups-repo";
 import { currenciesRepo } from "@/lib/repos/currencies-repo";
@@ -20,7 +19,7 @@ import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { ACCOUNT_COLOR_KEYS, accountColorVar, type AccountColorKey } from "@/lib/reference/account-colors";
 import { todayIso } from "@/lib/repos/ids";
 import type { AccountKind, AccountRow, Visibility } from "@/lib/db/schema";
-import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 const KIND_ICON: Record<AccountKind, IconName> = {
   cash: "banknote",
@@ -33,6 +32,26 @@ const KIND_ICON: Record<AccountKind, IconName> = {
   receivable: "receipt",
   other: "more",
 };
+
+/**
+ * Inverso de `evaluateKeypadExpression`: un monto guardado, como el string
+ * crudo que el `<Keypad>` produciría si el usuario lo hubiera tipeado — sin
+ * separador de miles (el keypad nunca lo muestra mientras se tipea) y sin
+ * parte decimal si es cero, para no forzar ",00" en un monto entero. Así
+ * el campo arranca en edición mostrando el valor real y editable en el
+ * lugar, en vez de una vista previa aparte que se borra entera al tocar
+ * la primera tecla.
+ */
+function moneyToKeypadExpr(amount: bigint, currency: string, decimalSeparator: string): string {
+  const decimals = decimalsFor(currency);
+  const divisor = 10n ** BigInt(decimals);
+  const negative = amount < 0n;
+  const abs = negative ? -amount : amount;
+  const intPart = abs / divisor;
+  const fracPart = abs % divisor;
+  const fracStr = decimals > 0 && fracPart > 0n ? `${decimalSeparator}${fracPart.toString().padStart(decimals, "0")}` : "";
+  return `${negative ? "-" : ""}${intPart}${fracStr}`;
+}
 
 export interface AccountFormFlowProps {
   householdId: string;
@@ -71,7 +90,9 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [newCurrencyName, setNewCurrencyName] = useState("");
   const [newCurrencyKind, setNewCurrencyKind] = useState<"fiat" | "crypto">("crypto");
   const [addingCurrency, setAddingCurrency] = useState(false);
-  const [openingExpr, setOpeningExpr] = useState("");
+  const [openingExpr, setOpeningExpr] = useState(() =>
+    existing ? moneyToKeypadExpr(existing.openingBalance, currencyCode, decimalSeparatorForLocale(locale)) : ""
+  );
   const [includeInNetWorth, setIncludeInNetWorth] = useState(existing?.includeInNetWorth ?? true);
   // "custom" se define en J4 (permisos), no en este formulario — si la
   // cuenta ya es custom, el toggle simple de acá no la puede representar;
@@ -79,7 +100,9 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [visibility, setVisibility] = useState<Visibility>(existing?.visibility === "private" ? "private" : "household");
   const [statementDay, setStatementDay] = useState(existing?.statementDay?.toString() ?? "");
   const [dueDay, setDueDay] = useState(existing?.dueDay?.toString() ?? "");
-  const [creditLimitExpr, setCreditLimitExpr] = useState("");
+  const [creditLimitExpr, setCreditLimitExpr] = useState(() =>
+    existing?.creditLimit != null ? moneyToKeypadExpr(existing.creditLimit, currencyCode, decimalSeparatorForLocale(locale)) : ""
+  );
   const [interestRate, setInterestRate] = useState(existing?.interestRate ?? "");
   const [termMonths, setTermMonths] = useState(existing?.termMonths?.toString() ?? "");
   const [step, setStep] = useState<"kind" | "details">(existing ? "details" : "kind");
@@ -104,10 +127,6 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [joinGroupId, setJoinGroupId] = useState<string | null>(existing?.accountGroupId ?? null);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [createNewGroup, setCreateNewGroup] = useState(false);
-  // Valores del grupo justo abandonado (tocar "Ninguna" mientras estaba
-  // agrupada) — sin esto, límite/ciclo se pierden en vez de quedar
-  // editables: la cuenta nunca los tuvo propios mientras estaba agrupada.
-  const [leftGroupCreditLimit, setLeftGroupCreditLimit] = useState<bigint | null>(null);
   const joinedGroup = joinGroupId ? (creditCardGroups.find((g) => g.id === joinGroupId) ?? null) : null;
   // Un grupo solo aparece como destino a UNIRSE si tiene otro miembro vivo
   // que no sea esta cuenta — el propio (re-seleccionarlo es un no-op
@@ -152,16 +171,14 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
       // Editable también en edición (no solo al crear): corrige el punto
       // de partida en sí, sin dejar un ajuste de conciliación — lo que la
       // cuenta tenía en `openingDate` cambia, los movimientos posteriores
-      // no se tocan. Si no se tipeó nada nuevo, se conserva el valor
-      // existente tal cual.
-      const openingBalance =
-        existing && openingExpr.trim() === ""
-          ? existing.openingBalance
-          : evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
+      // no se tocan. El campo arranca sembrado con el valor actual (ver
+      // `moneyToKeypadExpr`), así que vacío acá es una limpieza deliberada
+      // (igual que al crear: sin dígitos, el monto es 0), no "no tocado".
+      const openingBalance = evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
       const creditLimit =
         kind === "credit_card" && creditLimitExpr.trim() !== ""
           ? evaluateKeypadExpression(creditLimitExpr, currencyCode, numberLocaleForUiLocale(locale)).amount
-          : (existing?.creditLimit ?? leftGroupCreditLimit ?? null);
+          : null;
 
       // Tanda 4 — si esta tarjeta se suma a un grupo (existente o recién
       // creado), el límite y el ciclo pasan a vivir en el GRUPO, nunca en
@@ -365,8 +382,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           <div>
             <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.openingBalance")}</p>
             <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 28, marginBottom: 8 }}>
-              {currencyCode}{" "}
-              {openingExpr || (existing ? formatAmountCompact(money(existing.openingBalance, currencyCode), { showSign: false }) : "0")}
+              {currencyCode} {openingExpr || "0"}
             </div>
             <Keypad onKey={(k) => setOpeningExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setOpeningExpr("")} />
             {existing ? (
@@ -410,7 +426,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
                   <div>
                     <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.creditLimit")}</p>
                     <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 24, marginBottom: 8 }}>
-                      {currencyCode} {creditLimitExpr || (existing?.creditLimit ? formatAmountCompact(money(existing.creditLimit, currencyCode), { showSign: false }) : "0")}
+                      {currencyCode} {creditLimitExpr || "0"}
                     </div>
                     <Keypad onKey={(k) => setCreditLimitExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setCreditLimitExpr("")} />
                   </div>
@@ -485,15 +501,15 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           <ListRow
             label={t("accounts.form.cardGroupNone")}
             onClick={() => {
-              // Al abandonar el grupo, límite/ciclo dejan de heredarse —
-              // se precargan con lo que el grupo tenía para no perderlos
-              // (statementDay/dueDay se pueden pisar directo; el límite
-              // necesita esperar a `handleSave`, que no tiene el objeto
-              // del grupo, así que viaja por `leftGroupCreditLimit`).
+              // Al abandonar el grupo, límite/ciclo dejan de heredarse — se
+              // precargan con lo que el grupo tenía para no perderlos (la
+              // cuenta nunca los tuvo propios mientras estaba agrupada).
               if (joinedGroup) {
                 setStatementDay(joinedGroup.statementDay?.toString() ?? "");
                 setDueDay(joinedGroup.dueDay?.toString() ?? "");
-                setLeftGroupCreditLimit(joinedGroup.creditLimit);
+                setCreditLimitExpr(
+                  joinedGroup.creditLimit != null ? moneyToKeypadExpr(joinedGroup.creditLimit, currencyCode, decimalSeparatorForLocale(locale)) : ""
+                );
               }
               setJoinGroupId(null);
               setGroupPickerOpen(false);
@@ -507,7 +523,6 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
               onClick={() => {
                 setJoinGroupId(g.id);
                 setCreateNewGroup(false);
-                setLeftGroupCreditLimit(null);
                 setGroupPickerOpen(false);
               }}
             />
