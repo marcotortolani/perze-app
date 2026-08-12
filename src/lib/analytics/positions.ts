@@ -1,9 +1,19 @@
 /**
  * Bloque I — agrega trades en posiciones por instrumento: cantidad
- * tenida y costo base. Solo `buy`/`sell` mueven cantidad; el resto
- * (dividendos, intereses, comisiones...) son flujo de caja del
+ * tenida y costo base. `buy`/`transfer_in` suman cantidad,
+ * `sell`/`transfer_out` restan; el resto (dividendos, intereses,
+ * comisiones, `revaluation`...) son flujo de caja o ajuste de valor del
  * portfolio, no cambian cuánto del instrumento se tiene.
+ *
+ * `transfer_in` es la posición inicial (I3): un holding que ya existía
+ * antes de usar la app, cargado sin que ninguna cuenta se mueva (ver
+ * `tradeMovesCash`, `src/lib/investments/trade-settlement-policy.ts`) —
+ * para el cálculo de la posición es exactamente una compra: suma cantidad
+ * y costo base igual. `transfer_out` es su espejo (salida de una posición
+ * sin venta real, p. ej. mover el activo a otro broker).
  */
+const ADDS_QUANTITY = new Set(["buy", "transfer_in"]);
+const REMOVES_QUANTITY = new Set(["sell", "transfer_out"]);
 
 export interface PositionTradeInput {
   instrumentId: string;
@@ -26,16 +36,17 @@ export function computePositions(trades: readonly PositionTradeInput[]): Map<str
   for (const trade of trades) {
     const current = positions.get(trade.instrumentId) ?? { instrumentId: trade.instrumentId, quantity: 0, costBasis: 0n };
 
-    if (trade.kind === "buy") {
+    if (ADDS_QUANTITY.has(trade.kind)) {
       positions.set(trade.instrumentId, {
         instrumentId: trade.instrumentId,
         quantity: current.quantity + trade.quantity,
         costBasis: current.costBasis + trade.netAmount,
       });
-    } else if (trade.kind === "sell") {
+    } else if (REMOVES_QUANTITY.has(trade.kind)) {
       const remainingQty = current.quantity - trade.quantity;
-      // Costo base proporcional al remanente — vender la mitad de la
-      // posición se lleva la mitad del costo acumulado, nunca todo ni nada.
+      // Costo base proporcional al remanente — vender (o transferir afuera)
+      // la mitad de la posición se lleva la mitad del costo acumulado,
+      // nunca todo ni nada.
       const remainingCostBasis = current.quantity > 0 ? (current.costBasis * BigInt(Math.round(Math.max(remainingQty, 0) * 1_000_000))) / BigInt(Math.round(current.quantity * 1_000_000)) : 0n;
       positions.set(trade.instrumentId, {
         instrumentId: trade.instrumentId,

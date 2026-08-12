@@ -11,7 +11,8 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useInstruments, useInvalidateTrades, useTrades } from "@/hooks/use-investments";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
-import { resyncSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
+import { deleteSettlementTransaction, resyncSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
+import { tradeMovesCash } from "@/lib/investments/trade-settlement-policy";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert } from "@/lib/fx/rate";
@@ -21,7 +22,7 @@ import { decimalsFor } from "@/lib/money/decimals";
 import { isCreditCardAccount, tradeSettlementAccounts } from "@/lib/analytics/card-cycle";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 
-const KINDS: TradeKind[] = ["buy", "sell"];
+const KINDS = ["buy", "sell", "transfer_in"] as const satisfies readonly TradeKind[];
 
 function parseKeypadDecimal(raw: string, decimalSeparator: string): number | null {
   if (raw === "" || raw === decimalSeparator) return null;
@@ -45,6 +46,14 @@ function toKeypadDigits(n: number, decimalSeparator: string): string {
 export default function EditTradePage({ params }: { params: Promise<{ portfolioId: string; tradeId: string }> }) {
   const { portfolioId, tradeId } = use(params);
   const t = useTranslations();
+  // Ver el comentario equivalente en `trades/new/page.tsx`: `t()` necesita
+  // una clave literal, así que se resuelve el label acá, no se guarda la
+  // clave-string para llamarla después.
+  const KIND_LABEL: Record<(typeof KINDS)[number], string> = {
+    buy: t("newTradePage.buy"),
+    sell: t("newTradePage.sell"),
+    transfer_in: t("newTradePage.transferIn"),
+  };
   const locale = useLocale() as Locale;
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
@@ -79,7 +88,10 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const qty = Number(quantity.replace(",", "."));
   const unitPrice = Number(price.replace(",", "."));
   const grossAmount = Number.isFinite(qty) && Number.isFinite(unitPrice) ? Math.round(qty * unitPrice * 10 ** decimalsFor(trade.currencyCode)) : 0;
-  const canSave = !!account && !isCreditCardAccount(account) && qty > 0 && unitPrice > 0;
+  // Igual que en el alta: una posición inicial (`transfer_in`) no
+  // necesita cuenta de liquidación.
+  const requiresAccount = tradeMovesCash(kind);
+  const canSave = (!requiresAccount || (!!account && !isCreditCardAccount(account))) && qty > 0 && unitPrice > 0;
 
   const openQuantityKeypad = () => {
     setKeypadDigits(toKeypadDigits(qty || 0, decimalSeparator));
@@ -105,10 +117,11 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   };
 
   const handleSave = async () => {
-    if (!canSave || !account || saving) return;
+    if (!canSave || saving) return;
+    if (requiresAccount && !account) return;
     setSaving(true);
     try {
-      const netAmount = BigInt(kind === "buy" ? grossAmount : -grossAmount);
+      const netAmount = BigInt(kind === "sell" ? -grossAmount : grossAmount);
       let amountBase: bigint | null = null;
       let fxRate: string | null = null;
       let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = "pending";
@@ -132,25 +145,33 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
         currencyCode: trade.currencyCode,
         grossAmount: BigInt(grossAmount),
         netAmount,
-        settlementAccountId: account.id,
+        settlementAccountId: account?.id ?? null,
         amountBase,
         fxRate,
         fxSource,
       });
 
-      // La transacción de settlement vieja se descarta y se recrea entera
-      // con los valores nuevos — mismo criterio que `recompute_account_balance`.
-      await resyncSettlementTransaction({
-        household,
-        userId,
-        tradeId: trade.id,
-        netAmount,
-        instrumentCurrency: trade.currencyCode,
-        instrumentSymbol: instrument?.symbol ?? trade.instrumentId,
-        accountId: account.id,
-        accountCurrency: account.currencyCode,
-        accountKind: account.kind,
-      });
+      // Si el kind pasó a no mover caja (p. ej. se corrigió una compra a
+      // "posición inicial"), la settlement vieja se borra sin recrearse —
+      // dejarla habría sido una transacción fantasma que ya no corresponde
+      // a este trade. Si sigue moviendo caja, se descarta y se recrea
+      // entera con los valores nuevos, mismo criterio que
+      // `recompute_account_balance` (recomputar completo, no parchear).
+      if (tradeMovesCash(kind) && account) {
+        await resyncSettlementTransaction({
+          household,
+          userId,
+          tradeId: trade.id,
+          netAmount,
+          instrumentCurrency: trade.currencyCode,
+          instrumentSymbol: instrument?.symbol ?? trade.instrumentId,
+          accountId: account.id,
+          accountCurrency: account.currencyCode,
+          accountKind: account.kind,
+        });
+      } else {
+        await deleteSettlementTransaction(trade.id);
+      }
 
       invalidateTrades();
       invalidateTransactions();
@@ -158,6 +179,11 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
       // `back()`, no `replace`/`push` — el detalle del instrumento ya está
       // en el historial justo debajo.
       router.back();
+    } catch (error) {
+      // Antes esto era un try/finally sin catch — un fallo real (RLS,
+      // red) dejaba el botón habilitado de nuevo sin explicar qué pasó.
+      console.error("[trades/edit] no se pudo guardar la edición", error);
+      toast(t("newTradePage.saveError"));
     } finally {
       setSaving(false);
     }
@@ -173,20 +199,26 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
           </div>
 
           <SegmentedControl
-            options={KINDS.map((k) => ({ id: k, label: t(k === "buy" ? "newTradePage.buy" : "newTradePage.sell") }))}
+            options={KINDS.map((k) => ({ id: k, label: KIND_LABEL[k] }))}
             value={kind}
             onChange={(k) => setKindOverride(k as TradeKind)}
           />
 
-          <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
-            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
-          </button>
-          {account && isCreditCardAccount(account) ? (
-            // Trade viejo, de antes de esta regla — se puede seguir editando
-            // cantidad/precio, pero hay que elegir otra cuenta para guardar.
-            <p className="t-caption" style={{ color: "var(--critical)" }}>{t("newTradePage.creditCardNotAllowed")}</p>
-          ) : null}
+          {requiresAccount ? (
+            <>
+              <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+                <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
+                <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
+              </button>
+              {account && isCreditCardAccount(account) ? (
+                // Trade viejo, de antes de esta regla — se puede seguir editando
+                // cantidad/precio, pero hay que elegir otra cuenta para guardar.
+                <p className="t-caption" style={{ color: "var(--critical)" }}>{t("newTradePage.creditCardNotAllowed")}</p>
+              ) : null}
+            </>
+          ) : (
+            <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0, padding: "0 2px" }}>{t("newTradePage.transferInExplainer")}</p>
+          )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.quantity")}</div>

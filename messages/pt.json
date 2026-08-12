@@ -2123,6 +2123,8 @@
   "chooseAssetClass": "Escolher classe de ativo",
   "currency": "Moeda",
   "created": "Instrumento criado",
+  "alreadyExisted": "Você já tinha no seu portfólio",
+  "saveError": "Não foi possível salvar o instrumento — tente de novo.",
   "fixedIncomeSection": "Renda fixa (opcional)",
   "maturityDate": "Data de vencimento",
   "couponRate": "Taxa de cupom anual (%)",
@@ -2132,6 +2134,8 @@
  "newTradePage": {
   "buy": "Compra",
   "sell": "Venda",
+  "transferIn": "Posição inicial",
+  "transferInExplainer": "Registre o que você já tinha. Não mexe em nenhuma das suas contas.",
   "instrument": "Instrumento",
   "chooseInstrument": "Escolher instrumento",
   "settlementAccount": "Conta de liquidação",
@@ -2143,8 +2147,11 @@
   "unitPrice": "Preço unitário",
   "unitPriceInCurrency": "Preço unitário ({currency})",
   "loadingPrice": "Buscando preço de mercado…",
+  "priceNoProvider": "Esse instrumento não tem preço de mercado: coloque quanto você pagou por unidade em {currency}.",
+  "priceProviderEmpty": "Não encontramos um preço de mercado para esse instrumento: coloque quanto você pagou por unidade em {currency}.",
   "saved": "Operação salva",
-  "savedPendingFx": "Salvo sem cotação — resolve sozinho ao reconectar."
+  "savedPendingFx": "Salvo sem cotação — resolve sozinho ao reconectar.",
+  "saveError": "Não foi possível salvar a operação — tente de novo."
  },
  "allocationPage": {
   "title": "Alocação",

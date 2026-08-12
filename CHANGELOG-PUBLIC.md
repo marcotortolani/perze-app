@@ -40,6 +40,22 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.19 — 11 de agosto de 2026
+
+### Nuevo
+
+- Al cargar una operación de inversión, ahora podés elegir "Posición inicial" para registrar
+  algo que ya tenías antes de usar la app — no te pide de qué cuenta salió la plata ni la
+  cuenta un gasto del mes, porque no la mueve.
+
+### Arreglado
+
+- Cargar una operación con un instrumento que no tiene precio de mercado (como una empresa
+  privada) ya no deja el botón de guardar sin explicación — ahora te avisa y te deja poner el
+  precio a mano.
+- Si un instrumento existía en dos monedas distintas (por ejemplo el mismo papel como CEDEAR
+  en pesos y como acción en dólares), agregarlo ya no fallaba en silencio.
+
 ## 0.30.18 — 11 de agosto de 2026
 
 ### Arreglado

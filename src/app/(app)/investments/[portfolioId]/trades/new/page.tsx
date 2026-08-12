@@ -22,10 +22,11 @@ import { decimalsFor, decimalsForQuantity } from "@/lib/money/decimals";
 import { formatNumber } from "@/lib/money/format";
 import { computePositions } from "@/lib/analytics/positions";
 import { tradeSettlementAccounts } from "@/lib/analytics/card-cycle";
+import { tradeMovesCash } from "@/lib/investments/trade-settlement-policy";
 import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
-const KINDS: TradeKind[] = ["buy", "sell"];
+const KINDS = ["buy", "sell", "transfer_in"] as const satisfies readonly TradeKind[];
 
 /**
  * `quantity`/`price` son `number` en `NewTradeInput` (no `ScaledRate`, no
@@ -71,6 +72,15 @@ interface NewTradeFormProps {
 
 function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const t = useTranslations();
+  // Labels ya resueltos, no un mapa de claves-string: `t()` exige una
+  // clave literal conocida en build-time (`NamespacedMessageKeys`) — un
+  // `Record<Kind, string>` de claves y un `t(map[kind])` posterior pierde
+  // ese chequeo. Igual que `scopeLabels` en `(app)/layout.tsx`.
+  const KIND_LABEL: Record<(typeof KINDS)[number], string> = {
+    buy: t("newTradePage.buy"),
+    sell: t("newTradePage.sell"),
+    transfer_in: t("newTradePage.transferIn"),
+  };
   const locale = useLocale() as Locale;
   const decimalSeparator = decimalSeparatorForLocale(locale);
   const router = useRouter();
@@ -90,6 +100,15 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [priceLoading, setPriceLoading] = useState(false);
+  // Por qué el precio quedó vacío después de elegir instrumento — dos
+  // casos distintos, con copy distinto (CLAUDE.md: "los errores proponen
+  // la corrección, no la nombran"): un instrumento que nunca tuvo
+  // proveedor (FCI, plazo fijo) vs. uno que sí tiene pero el proveedor no
+  // devolvió nada (SpaceX en Finnhub — es una empresa privada, `/quote`
+  // responde 200 sin precio). Antes los dos casos eran indistinguibles:
+  // el campo quedaba vacío y el botón "Guardar" deshabilitado sin decir
+  // por qué, así que SPCX-USD parecía un botón roto.
+  const [priceUnavailable, setPriceUnavailable] = useState<"no-provider" | "provider-empty" | null>(null);
   const [sheet, setSheet] = useState<"none" | "instrument" | "account" | "quantity" | "price">("none");
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -101,11 +120,22 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
     setInstrumentId(inst.id);
     setSheet("none");
     setPrice("");
-    if (!inst.priceProvider) return;
+    if (!inst.priceProvider) {
+      setPriceUnavailable("no-provider");
+      return;
+    }
+    setPriceUnavailable(null);
     setPriceLoading(true);
     try {
       const quote = await priceSnapshotsRepo.refreshFromProvider(inst.id);
       if (quote) setPrice(String(quote.close));
+      else setPriceUnavailable("provider-empty");
+    } catch (error) {
+      // Antes esto era un try/finally sin catch: un fallo real del
+      // proveedor (red, 500) quedaba indistinguible de "este instrumento
+      // simplemente no tiene precio".
+      console.error("[trades/new] no se pudo obtener el precio de mercado", error);
+      setPriceUnavailable("provider-empty");
     } finally {
       setPriceLoading(false);
     }
@@ -146,7 +176,11 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   // en vez de fallar ruidosamente — hay que cortarlo acá, antes de guardar.
   const heldQuantity = instrument ? (computePositions(existingTrades).get(instrument.id)?.quantity ?? 0) : 0;
   const exceedsHeldQuantity = kind === "sell" && !!instrument && qty > heldQuantity;
-  const canSave = !!instrument && !!account && qty > 0 && unitPrice > 0 && !exceedsHeldQuantity;
+  // La cuenta de liquidación solo hace falta si el trade mueve caja de
+  // verdad — una posición inicial (`transfer_in`) registra algo que ya
+  // tenías, sin que ninguna cuenta se toque.
+  const requiresAccount = tradeMovesCash(kind);
+  const canSave = !!instrument && (!requiresAccount || !!account) && qty > 0 && unitPrice > 0 && !exceedsHeldQuantity;
   const quantityDecimals = instrument
     ? decimalsForQuantity({
         symbol: instrument.symbol,
@@ -183,7 +217,12 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       const parsed = parseKeypadDecimal(keypadDigits, decimalSeparator);
       const raw = parsed !== null ? String(parsed) : "";
       if (sheet === "quantity") setQuantity(raw);
-      else if (sheet === "price") setPrice(raw);
+      else if (sheet === "price") {
+        setPrice(raw);
+        // El usuario ya resolvió el precio a mano — el aviso de "sin
+        // precio de mercado" dejó de aplicar.
+        if (raw !== "") setPriceUnavailable(null);
+      }
     }
     setSheet("none");
     setKeypadDigits(null);
@@ -194,10 +233,14 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   };
 
   const handleSave = async () => {
-    if (!canSave || !instrument || !account || saving) return;
+    if (!canSave || !instrument || saving) return;
+    if (requiresAccount && !account) return;
     setSaving(true);
     try {
-      const netAmount = BigInt(kind === "buy" ? grossAmount : -grossAmount);
+      // Firma del monto: `sell` es la única salida de plata — `buy` Y
+      // `transfer_in` suman a la posición igual (ver `computePositions`),
+      // así que las dos quedan en positivo.
+      const netAmount = BigInt(kind === "sell" ? -grossAmount : grossAmount);
       let amountBase: bigint | null = null;
       let fxRate: string | null = null;
       let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = "pending";
@@ -224,28 +267,43 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         currencyCode: instrument.currencyCode,
         grossAmount: BigInt(grossAmount),
         netAmount,
-        settlementAccountId: account.id,
+        settlementAccountId: account?.id ?? null,
         amountBase,
         fxRate,
         fxSource,
       });
 
-      // Settlement — el bug reportado: antes `settlementAccountId` era
-      // puramente informativo, nunca movía la cuenta ni dejaba rastro en
-      // Transacciones. `kind: "investing"` (no una categoría — `categories.kind`
-      // solo admite expense/income) ya está excluido de presupuestos y
-      // "gasto por categoría", igual que transfer/adjustment.
-      await createSettlementTransaction({
-        household,
-        userId,
-        tradeId: trade.id,
-        netAmount,
-        instrumentCurrency: instrument.currencyCode,
-        instrumentSymbol: instrument.symbol,
-        accountId: account.id,
-        accountCurrency: account.currencyCode,
-        accountKind: account.kind,
-      });
+      try {
+        // Settlement — el bug reportado: antes `settlementAccountId` era
+        // puramente informativo, nunca movía la cuenta ni dejaba rastro en
+        // Transacciones. `kind: "investing"` (no una categoría — `categories.kind`
+        // solo admite expense/income) ya está excluido de presupuestos y
+        // "gasto por categoría", igual que transfer/adjustment.
+        //
+        // `tradeMovesCash`: una posición inicial (`transfer_in`) es lo
+        // contrario del bug de arriba — no tiene que mover ninguna cuenta,
+        // así que acá se salta la settlement a propósito.
+        if (tradeMovesCash(kind) && account) {
+          await createSettlementTransaction({
+            household,
+            userId,
+            tradeId: trade.id,
+            netAmount,
+            instrumentCurrency: instrument.currencyCode,
+            instrumentSymbol: instrument.symbol,
+            accountId: account.id,
+            accountCurrency: account.currencyCode,
+            accountKind: account.kind,
+          });
+        }
+      } catch (settlementError) {
+        // El trade ya se creó — dejarlo así sería un trade "fantasma" que
+        // movió la posición pero nunca la cuenta que dijo que iba a
+        // mover. Se descarta entero y se avisa, en vez de quedar en un
+        // estado a medias que nadie eligió.
+        await tradesRepo.softDelete(trade.id);
+        throw settlementError;
+      }
 
       invalidateTrades();
       invalidateTransactions();
@@ -254,6 +312,13 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       // justo debajo. `replace("/investments")` duplicaba esa misma
       // entrada.
       router.back();
+    } catch (error) {
+      // Antes esto era un try/finally sin catch: si `tradesRepo.create`
+      // o la settlement fallaban (RLS, red), el botón simplemente volvía
+      // a estar habilitado sin decir nada — parecía que no había pasado
+      // nada, en vez de que algo falló de verdad.
+      console.error("[trades/new] no se pudo guardar la operación", error);
+      toast(t("newTradePage.saveError"));
     } finally {
       setSaving(false);
     }
@@ -267,7 +332,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2" style={{ flex: 1, minHeight: 0, gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", paddingTop: 16, gap: 16 }}>
           <SegmentedControl
-            options={KINDS.map((k) => ({ id: k, label: t(k === "buy" ? "newTradePage.buy" : "newTradePage.sell") }))}
+            options={KINDS.map((k) => ({ id: k, label: KIND_LABEL[k] }))}
             value={kind}
             onChange={(k) => setKind(k as TradeKind)}
           />
@@ -277,10 +342,18 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
             <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{instrument ? `${instrument.symbol} — ${instrument.name}` : t("newTradePage.chooseInstrument")}</div>
           </button>
 
-          <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
-            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
-            <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
-          </button>
+          {requiresAccount ? (
+            <button type="button" onClick={() => setSheet("account")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+              <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.settlementAccount")}</div>
+              <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? `${account.name} · ${account.currencyCode}` : t("goalsPage.chooseAccount")}</div>
+            </button>
+          ) : (
+            // `transfer_in` — posición inicial: no hay cuenta que elegir,
+            // así que en vez del picker va la explicación de por qué no
+            // la pide (CLAUDE.md: los errores/estados se explican, no se
+            // dejan como un campo ausente sin motivo aparente).
+            <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0, padding: "0 2px" }}>{t("newTradePage.transferInExplainer")}</p>
+          )}
 
           {/* Cantidad: número centrado + ±1 a los costados — el caso común
               (comprar N unidades enteras) no necesita abrir el teclado. Tocar
@@ -325,6 +398,16 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
               {priceLoading ? t("newTradePage.loadingPrice") : price || "—"}
             </div>
           </button>
+          {/* El botón "Guardar" queda deshabilitado con `price` vacío
+              (`canSave`), pero sin este texto no había forma de saber POR
+              QUÉ — este era exactamente el bug de SPCX: el botón se veía
+              gris, sin ninguna pista de que el instrumento simplemente no
+              tiene precio de mercado. */}
+          {!priceLoading && !price && priceUnavailable ? (
+            <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0, padding: "0 2px" }}>
+              {t(priceUnavailable === "no-provider" ? "newTradePage.priceNoProvider" : "newTradePage.priceProviderEmpty", { currency: instrument?.currencyCode ?? "" })}
+            </p>
+          ) : null}
 
           <Button disabled={!canSave || saving} onClick={handleSave} style={{ marginTop: "auto" }}>
             {t("common.save")}

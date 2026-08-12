@@ -440,8 +440,16 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
                     confirmActionLabel={t("common.delete")}
                   >
                     <ListRow
-                      icon={tr.kind === "buy" ? "plus" : "minus"}
-                      label={tr.kind === "buy" ? t("newTradePage.buy") : tr.kind === "sell" ? t("newTradePage.sell") : tr.kind}
+                      icon={tr.kind === "sell" || tr.kind === "transfer_out" ? "minus" : "plus"}
+                      label={
+                        tr.kind === "buy"
+                          ? t("newTradePage.buy")
+                          : tr.kind === "sell"
+                            ? t("newTradePage.sell")
+                            : tr.kind === "transfer_in"
+                              ? t("newTradePage.transferIn")
+                              : tr.kind
+                      }
                       // D61 — precio unitario SIN abreviar: `formatAmountCompact`
                       // redondeaba a "K"/"M" un precio en pesos de varios dígitos
                       // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato

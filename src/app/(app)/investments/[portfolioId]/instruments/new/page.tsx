@@ -10,6 +10,7 @@ import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidateInstruments } from "@/hooks/use-investments";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
+import { findExistingInstrument } from "@/lib/investments/find-existing-instrument";
 import { assetClassLabelKey } from "@/lib/investments/asset-class-labels";
 import { useCurrencies } from "@/hooks/use-currencies";
 import type { InstrumentSearchResult } from "@/app/api/instruments/search/route";
@@ -89,9 +90,15 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
     setPicking(result.symbol);
     try {
       // "Ya la tenés" (I7): si el household ya tiene un instrumento con
-      // este símbolo y proveedor, se reusa en vez de duplicar el catálogo.
-      const existing = existingInstruments.find((i) => i.symbol === result.symbol && i.priceProvider === result.priceProvider);
-      if (!existing) {
+      // este símbolo, proveedor Y MONEDA, se reusa en vez de duplicar el
+      // catálogo — las tres, no solo símbolo+proveedor: el mismo ticker
+      // del mismo proveedor puede existir en dos monedas (SPCX como
+      // CEDEAR en ARS y como acción en USD, ambos de data912) y son dos
+      // instrumentos distintos. Ver `findExistingInstrument`.
+      const existing = findExistingInstrument(existingInstruments, { symbol: result.symbol, priceProvider: result.priceProvider, currencyCode: result.currencyCode });
+      if (existing) {
+        toast(t("newInstrumentPage.alreadyExisted"));
+      } else {
         const assetClass = assetClasses.find((a) => a.name === result.assetClass);
         await instrumentsRepo.create({
           householdId: household.id,
@@ -104,9 +111,15 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
           providerSymbol: result.providerSymbol,
         });
         invalidateInstruments();
+        toast(t("newInstrumentPage.created"));
       }
-      toast(t("newInstrumentPage.created"));
       router.back();
+    } catch (error) {
+      // Antes esto se tragaba en silencio (try/finally sin catch): un
+      // fallo real (RLS, red) dejaba al usuario sin instrumento y sin
+      // ningún aviso de por qué.
+      console.error("[instruments/new] no se pudo crear el instrumento", error);
+      toast(t("newInstrumentPage.saveError"));
     } finally {
       setPicking(null);
     }
@@ -142,6 +155,9 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
       // resuelve los dos casos a la vez: vuelve exactamente a la pantalla
       // real de origen, con lo que ya se había cargado ahí.
       router.back();
+    } catch (error) {
+      console.error("[instruments/new] no se pudo crear el instrumento", error);
+      toast(t("newInstrumentPage.saveError"));
     } finally {
       setSaving(false);
     }
@@ -163,12 +179,15 @@ export default function NewInstrumentPage({ params }: { params: Promise<{ portfo
                 <p className="t-body" style={{ color: "var(--text-secondary)", margin: 0 }}>{t("newInstrumentPage.searchEmpty")}</p>
               ) : (
                 results.map((r) => {
-                  const alreadyHave = existingInstruments.some((i) => i.symbol === r.symbol && i.priceProvider === r.priceProvider);
+                  // Misma clave de identidad que `handlePickResult`: sin la
+                  // moneda, el CEDEAR en ARS y la acción en USD del mismo
+                  // ticker (SPCX) colapsaban en un solo "ya la tenés".
+                  const alreadyHave = !!findExistingInstrument(existingInstruments, { symbol: r.symbol, priceProvider: r.priceProvider, currencyCode: r.currencyCode });
                   const resultAssetClassLabel = t(`assetClassLabels.${assetClassLabelKey(r.assetClass) ?? "acciones"}`);
                   const metaParts = [r.name && r.name !== r.symbol ? r.name : null, r.variantOf ? t("newInstrumentPage.variantOf", { symbol: r.variantOf }) : `${resultAssetClassLabel} · ${r.currencyCode}`].filter(Boolean);
                   return (
                     <ListRow
-                      key={`${r.priceProvider}-${r.symbol}`}
+                      key={`${r.priceProvider}-${r.symbol}-${r.currencyCode}`}
                       label={r.symbol}
                       meta={metaParts.join(" · ")}
                       variant="navigation"

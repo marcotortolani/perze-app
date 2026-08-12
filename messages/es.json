@@ -2123,6 +2123,8 @@
   "chooseAssetClass": "Elegir clase de activo",
   "currency": "Moneda",
   "created": "Instrumento creado",
+  "alreadyExisted": "Ya lo tenías en tu portfolio",
+  "saveError": "No se pudo guardar el instrumento — probá de nuevo.",
   "fixedIncomeSection": "Renta fija (opcional)",
   "maturityDate": "Fecha de vencimiento",
   "couponRate": "Tasa de cupón anual (%)",
@@ -2132,6 +2134,8 @@
  "newTradePage": {
   "buy": "Compra",
   "sell": "Venta",
+  "transferIn": "Posición inicial",
+  "transferInExplainer": "Registrá lo que ya tenías. No mueve ninguna de tus cuentas.",
   "instrument": "Instrumento",
   "chooseInstrument": "Elegir instrumento",
   "settlementAccount": "Cuenta de liquidación",
@@ -2143,8 +2147,11 @@
   "unitPrice": "Precio unitario",
   "unitPriceInCurrency": "Precio unitario ({currency})",
   "loadingPrice": "Buscando precio de mercado…",
+  "priceNoProvider": "Este instrumento no tiene precio de mercado: poné cuánto pagaste por unidad en {currency}.",
+  "priceProviderEmpty": "No encontramos un precio de mercado para este instrumento: poné cuánto pagaste por unidad en {currency}.",
   "saved": "Operación guardada",
-  "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar."
+  "savedPendingFx": "Guardada sin tipo de cambio — se resuelve solo al reconectar.",
+  "saveError": "No se pudo guardar la operación — probá de nuevo."
  },
  "allocationPage": {
   "title": "Asignación",

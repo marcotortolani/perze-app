@@ -2123,6 +2123,8 @@
   "chooseAssetClass": "Choose asset class",
   "currency": "Currency",
   "created": "Instrument created",
+  "alreadyExisted": "You already had it in your portfolio",
+  "saveError": "Couldn't save the instrument — try again.",
   "fixedIncomeSection": "Fixed income (optional)",
   "maturityDate": "Maturity date",
   "couponRate": "Annual coupon rate (%)",
@@ -2132,6 +2134,8 @@
  "newTradePage": {
   "buy": "Buy",
   "sell": "Sell",
+  "transferIn": "Initial position",
+  "transferInExplainer": "Record what you already had. It doesn't touch any of your accounts.",
   "instrument": "Instrument",
   "chooseInstrument": "Choose instrument",
   "settlementAccount": "Settlement account",
@@ -2143,8 +2147,11 @@
   "unitPrice": "Unit price",
   "unitPriceInCurrency": "Unit price ({currency})",
   "loadingPrice": "Looking up market price…",
+  "priceNoProvider": "This instrument has no market price: enter what you paid per unit in {currency}.",
+  "priceProviderEmpty": "We couldn't find a market price for this instrument: enter what you paid per unit in {currency}.",
   "saved": "Trade saved",
-  "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online."
+  "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online.",
+  "saveError": "Couldn't save the trade — try again."
  },
  "allocationPage": {
   "title": "Allocation",

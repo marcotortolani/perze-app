@@ -6,6 +6,59 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.19] — 2026-08-11
+
+Tanda 3 de la ronda de correcciones reportadas en uso real: inversiones. Posición inicial
+sin generar movimientos falsos, y el instrumento sin precio de mercado que no dejaba cargar
+una operación (SPCX/SpaceX).
+
+### Nuevo — posición inicial de inversiones (I3), sin generar ningún movimiento
+
+Cargar lo que ya tenías antes de usar la app obligaba a pasar por una compra, y
+`createSettlementTransaction` creaba SIEMPRE la transacción de liquidación —
+incondicionalmente, sin excepción — así que esa "compra" inflaba plata ficticia en una
+cuenta y encima aparecía como un movimiento real del mes en Egresos.
+
+Se resuelve reusando el kind `transfer_in`, que ya estaba en el `CHECK` de `trades` desde
+la migración original de inversiones pero nunca se conectó a la UI ni al cálculo de
+posiciones — **sin migración nueva**. `src/lib/investments/trade-settlement-policy.ts`
+(`tradeMovesCash`) centraliza qué kind mueve caja de verdad — mismo principio que
+`classifyCashFlow` para transactions: una sola función, nunca un `if` inline en cada call
+site. `computePositions` (`src/lib/analytics/positions.ts`) trata `transfer_in` igual que
+`buy` (suma cantidad y costo base) y `transfer_out` igual que `sell` (resta proporcional).
+
+En `trades/new` y `trades/[tradeId]/edit`, el tercer segmento "Posición inicial" saltea la
+cuenta de liquidación por completo — ni la pide ni la muestra — con el copy "Registrá lo que
+ya tenías. No mueve ninguna de tus cuentas." En la edición, si un trade cambia de kind y deja
+de mover caja, la transacción de liquidación vieja se borra en vez de quedar como fantasma.
+
+⚠️ Consecuencia esperada: una posición inicial sube el patrimonio neto sin bajar ninguna
+cuenta — correcto (antes ese capital no estaba registrado en ningún lado), pero es un salto
+visible en el gráfico de patrimonio la primera vez que se carga una.
+
+### Fix — un instrumento sin precio de mercado (SPCX/SpaceX) no dejaba cargar la operación
+
+Cuatro causas separadas, todas en el mismo flujo:
+
+1. SpaceX es una empresa privada — Finnhub devuelve sin precio, el campo quedaba vacío y el
+   botón "Guardar" se veía gris **sin explicar por qué**. Ahora hay un mensaje inline bajo
+   el precio que distingue "este instrumento nunca tuvo proveedor" de "el proveedor no
+   devolvió nada", y propone la corrección (poner el precio a mano) en vez de nombrar el error.
+2. `handleSelectInstrument` tenía un `try/finally` sin `catch`: un fallo real del proveedor
+   (red, 500) quedaba indistinguible de "este instrumento no tiene precio".
+3. `handleSave` (alta y edición) tampoco tenía `catch`: cualquier fallo al crear el trade o
+   la settlement se tragaba en silencio. Si el trade llegó a crearse pero la settlement
+   falló, ahora se descarta el trade entero en vez de dejarlo como una operación fantasma.
+4. El alta de instrumento (`instruments/new`) deduplicaba por `(symbol, priceProvider)`
+   **sin la moneda** — el CEDEAR de SPCX en ARS y la acción de SPCX en USD, mismo proveedor
+   (data912), se consideraban "el mismo instrumento": no se creaba nada, y aun así se
+   mostraba el toast "creado" y se volvía atrás. Nuevo `findExistingInstrument()`
+   (`src/lib/investments/find-existing-instrument.ts`) con la clave de tres partes
+   `(symbol, priceProvider, currencyCode)`, reusado en la búsqueda y en la `key` de React
+   (que colisionaba por el mismo motivo).
+
+---
+
 ## [0.30.18] — 2026-08-11
 
 Tanda 2 de la ronda de correcciones reportadas en uso real: presentación y FX. Orden de
