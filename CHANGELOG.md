@@ -6,6 +6,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.33.2] — 2026-08-12
+
+Ajuste de proporciones en `PositionsTable` contra feedback directo: con números grandes
+(varios millones de pesos en TSLA), la columna Valor quedaba apretada.
+
+### Arreglado — más ancho a Valor, quitándoselo a Posiciones
+
+`GRID_COLUMNS` reparte el ancho distinto: Posiciones baja de `1.6fr` a `1fr` (un símbolo
+nunca pasa de 5-6 caracteres, no necesitaba la porción más grande de la grilla) y Valor sube
+de `1fr` a `1.6fr`. El link "+ Agregar otra compra de {symbol}" pierde el `{symbol}` — pasa a
+"+ Agregar compra", ya se entiende de qué instrumento por la fila expandida en la que vive.
+
+---
+
 ## [0.33.1] — 2026-08-12
 
 Tres ajustes sobre `PositionsTable` (Fase A) contra feedback directo del usuario probando la
