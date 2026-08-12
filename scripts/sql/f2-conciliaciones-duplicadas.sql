@@ -2,7 +2,7 @@
 --
 -- Causa: `accounts` nunca tuvo un trigger que corriera
 -- `recompute_account_balance` al insertar la cuenta (fix en
--- `20260811090000_accounts_recompute_on_insert.sql`), así que toda cuenta
+-- `20260811220000_accounts_recompute_on_insert.sql`), así que toda cuenta
 -- creada con saldo inicial quedaba en 0 en el servidor hasta el primer
 -- movimiento. Si en el medio se conciliaba esa cuenta, la app calculaba la
 -- diferencia contra ese 0 y creaba un ajuste por el monto real completo —
@@ -10,7 +10,7 @@
 -- saldo real.
 --
 -- IMPORTANTE: correr esto DESPUÉS de aplicar
--- `20260811090000_accounts_recompute_on_insert.sql` (que ya trae su propio
+-- `20260811220000_accounts_recompute_on_insert.sql` (que ya trae su propio
 -- backfill de `current_balance`), nunca antes. Apenas se aplique esa
 -- migración, las cuentas afectadas van a mostrar el saldo correcto
 -- recalculado — lo que este script identifica es el `adjustment` de más

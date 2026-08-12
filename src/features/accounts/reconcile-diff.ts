@@ -14,7 +14,7 @@ export interface ReconcileDiffResult {
   /**
    * Solo hay diferencia real si el usuario tipeó algo y ese algo no
    * coincide con lo que la cuenta ya muestra. Antes del fix de
-   * `20260811090000_accounts_recompute_on_insert.sql`, `currentBalance`
+   * `20260811220000_accounts_recompute_on_insert.sql`, `currentBalance`
    * podía estar mintiendo (0 en vez del saldo inicial real), así que esta
    * misma cuenta calculaba una diferencia fantasma contra un piso
    * equivocado y generaba un ajuste duplicado — el bug no estaba en esta

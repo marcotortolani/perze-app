@@ -21,7 +21,7 @@ primer movimiento; el pull de otro dispositivo pisaba el valor local correcto co
 conciliar contra ese 0 generaba un ajuste por el monto real completo, así que el servidor
 terminaba con `opening_balance + adjustment` = el doble del saldo real.
 
-Migración nueva `20260811090000_accounts_recompute_on_insert.sql`: trigger
+Migración nueva `20260811220000_accounts_recompute_on_insert.sql`: trigger
 `accounts_recompute_balance` sobre `AFTER INSERT OR UPDATE OF opening_balance`, con
 backfill idempotente de las cuentas ya existentes en el remoto. Diagnóstico (sin tocar
 datos) de las conciliaciones ya duplicadas en `scripts/sql/f2-conciliaciones-duplicadas.sql`

@@ -108,7 +108,7 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       opening_balance: bigintToString(p.openingBalance),
       opening_date: p.openingDate,
       // current_balance NUNCA se sincroniza: lo mantiene el trigger
-      // `accounts_recompute_balance` (`20260811090000_...sql`) al insertar
+      // `accounts_recompute_balance` (`20260811220000_...sql`) al insertar
       // o editar `opening_balance`, más `transactions_recompute_balance`
       // a partir de las transactions ya sincronizadas — pushearlo desde
       // acá pisaría el cálculo del servidor con un valor stale.

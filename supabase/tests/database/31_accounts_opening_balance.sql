@@ -1,7 +1,7 @@
 -- Bug reportado: una cuenta con saldo inicial se muestra en 0 hasta el
 -- primer movimiento, y conciliarla después duplica el saldo. Causa: nunca
 -- hubo un trigger que corriera `recompute_account_balance` al insertar la
--- cuenta — ver `20260811090000_accounts_recompute_on_insert.sql`.
+-- cuenta — ver `20260811220000_accounts_recompute_on_insert.sql`.
 BEGIN;
 SELECT tests.reset_log();
 SELECT tests.log(plan(6));
