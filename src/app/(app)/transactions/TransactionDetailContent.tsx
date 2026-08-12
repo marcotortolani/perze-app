@@ -329,7 +329,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
             })()
           : null}
         {tagNames.length > 0 ? <ListRow icon="tag" label={tagNames.join(", ")} meta={t("transactions.detail.tags")} variant="value" /> : null}
-        {payee ? <ListRow icon="tag" label={payee.name} meta={t("transactions.detail.payee")} variant="value" /> : null}
+        {payee ? <ListRow icon="storefront" label={payee.name} meta={t("transactions.detail.payee")} variant="value" /> : null}
         {transaction.note ? <ListRow icon="edit" label={transaction.note} meta={t("transactions.detail.note")} variant="value" /> : null}
         {cardPayment && counterAccount ? (
           <ListRow icon="credit-card" label={t("transactions.detail.cardStatement")} onClick={() => router.push(`/accounts/${counterAccount.id}/card`)} />

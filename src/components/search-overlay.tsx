@@ -113,7 +113,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       items.push({ id: c.id, group: "categories", title: label, href: `/transactions?category=${c.id}`, icon: c.icon });
     }
     for (const p of payees) {
-      items.push({ id: p.id, group: "payees", title: p.name, href: `/transactions?payee=${p.id}`, icon: "tag" });
+      items.push({ id: p.id, group: "payees", title: p.name, href: `/transactions?payee=${p.id}`, icon: "storefront" });
     }
     for (const tg of tags) {
       items.push({ id: tg.id, group: "tags", title: tg.name, href: `/transactions?tag=${tg.id}`, icon: "tag" });

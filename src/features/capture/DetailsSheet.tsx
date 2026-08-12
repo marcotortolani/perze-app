@@ -192,7 +192,7 @@ function PayeeField({
       {suggestions.length > 0 ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
           {suggestions.map((p) => (
-            <Chip key={p.id} icon="tag" selected={payeeId === p.id} onClick={() => onChange({ name: p.name, payeeId: p.id, defaultCategoryId: p.defaultCategoryId })}>
+            <Chip key={p.id} icon="storefront" selected={payeeId === p.id} onClick={() => onChange({ name: p.name, payeeId: p.id, defaultCategoryId: p.defaultCategoryId })}>
               {p.name}
             </Chip>
           ))}
