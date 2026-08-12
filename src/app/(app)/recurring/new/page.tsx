@@ -24,13 +24,16 @@ import { useCategories } from '@/hooks/use-categories'
 import { useCategoryLabel } from '@/hooks/use-category-label'
 import { useInvalidateRecurringRules } from '@/hooks/use-recurring-rules'
 import { useTransaction } from '@/hooks/use-transactions'
+import { useSuggestedFxRate } from '@/hooks/use-fx-rate'
 import { recurringRulesRepo } from '@/lib/repos/recurring-rules-repo'
 import { transactionsRepo } from '@/lib/repos/transactions-repo'
 import { evaluateKeypadExpression, hasKeypadOperator } from '@/lib/money/keypad'
+import { formatRateTrimmed } from '@/lib/fx/rate'
 import { numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import type { RecurringFrequency } from '@/lib/db/schema'
 import { todayIso } from '@/lib/repos/ids'
 import { amountToExpression } from '@/features/capture/AmountStep'
+import { CurrencyPickerSheet } from '@/features/capture/CurrencyPickerSheet'
 
 const FREQUENCIES: RecurringFrequency[] = [
   'weekly',
@@ -79,8 +82,14 @@ export default function NewRecurringRulePage() {
   )
   const [expr, setExpr] = useState('')
   const [autoPost, setAutoPost] = useState(true)
+  // '' = la misma moneda que la cuenta elegida — mismo criterio que
+  // `draft.currency` en `/add` (`CurrencyPickerSheet`). Un recurrente
+  // pactado en otra moneda (alquiler en UYU pagado desde una cuenta en
+  // USD) guarda ese pacto en `currencyCode`; la conversión a la moneda de
+  // la cuenta se resuelve recién al materializar, nunca acá.
+  const [currency, setCurrency] = useState('')
   const [sheet, setSheet] = useState<
-    'none' | 'account' | 'fallbackAccount' | 'category' | 'month'
+    'none' | 'account' | 'fallbackAccount' | 'category' | 'month' | 'currency'
   >('none')
   const [saving, setSaving] = useState(false)
   const [prefilledFromOrigin, setPrefilledFromOrigin] = useState(false)
@@ -108,6 +117,7 @@ export default function NewRecurringRulePage() {
       setDayOfMonth('1')
       setExpr('')
       setAutoPost(true)
+      setCurrency('')
       setSheet('none')
       setPrefilledFromOrigin(false)
     }
@@ -124,9 +134,22 @@ export default function NewRecurringRulePage() {
     setExpr(String(Math.abs(Number(origin.amount))))
   }
 
+  // Todos los hooks van antes de cualquier `return` condicional — `account`
+  // y `ruleCurrency` no dependen de `household`/`userId`, así que se
+  // calculan acá arriba solo para poder llamar a `useSuggestedFxRate` en
+  // el mismo orden en cada render.
+  const account = accounts.find((a) => a.id === accountId)
+  const multiCurrency = new Set(accounts.map((a) => a.currencyCode)).size > 1
+  const ruleCurrency = currency || account?.currencyCode || household?.baseCurrency || ''
+  const crossCurrencyRule = !!account && ruleCurrency !== account.currencyCode
+  const suggestedRate = useSuggestedFxRate(
+    household?.id,
+    crossCurrencyRule ? ruleCurrency : undefined,
+    crossCurrencyRule ? account.currencyCode : undefined,
+  )
+
   if (!household || !userId) return null
 
-  const account = accounts.find((a) => a.id === accountId)
   const fallbackAccount = accounts.find((a) => a.id === fallbackAccountId)
   const showFallbackAccount =
     !autoPost && kind === 'expense' && accountId !== null
@@ -144,7 +167,7 @@ export default function NewRecurringRulePage() {
     try {
       const amount = evaluateKeypadExpression(
         expr,
-        account.currencyCode,
+        ruleCurrency,
         numberLocale,
       )
       const anchorSource = origin?.occurredAt.slice(0, 10) ?? todayIso()
@@ -166,7 +189,7 @@ export default function NewRecurringRulePage() {
         accountId: accountId!,
         fallbackAccountId: showFallbackAccount ? fallbackAccountId : null,
         expectedAmount: amount.amount,
-        currencyCode: account.currencyCode,
+        currencyCode: ruleCurrency,
         frequency,
         anchorDate,
         dayOfMonth: isDayBased ? day : null,
@@ -353,9 +376,40 @@ export default function NewRecurringRulePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="text-center font-mono text-[32px]">
-              {account?.currencyCode ?? household.baseCurrency} {expr || '0'}
+            <div className="flex items-center justify-center gap-2">
+              {account && multiCurrency ? (
+                <button
+                  type="button"
+                  onClick={() => setSheet('currency')}
+                  aria-label={t('capture.changeCurrency')}
+                  className="min-h-11 cursor-pointer rounded-chip border-0 px-2.5 text-[13px]"
+                  style={{
+                    background: crossCurrencyRule ? 'var(--selection-surface)' : 'transparent',
+                    boxShadow: crossCurrencyRule ? 'inset 0 0 0 1px var(--selection-ring)' : 'none',
+                    color: crossCurrencyRule ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {ruleCurrency}
+                </button>
+              ) : null}
+              <div className="text-center font-mono text-[32px]">
+                {expr || '0'}
+              </div>
             </div>
+            {crossCurrencyRule ? (
+              // Informativa, no editable acá: la tasa real se confirma
+              // recién al materializar ("Cargar ahora" o el auto-registro)
+              // — ver `ChargeRecurringPreviewSheet`. Sin cotización no se
+              // muestra nada, `needs_capture_fx` se resuelve más adelante.
+              <p className="t-caption m-0 text-center text-text-muted">
+                {suggestedRate.data?.rate != null
+                  ? t('recurringPage.crossCurrencyHint', {
+                      account: account!.name,
+                      rate: `1 ${ruleCurrency} = ${formatRateTrimmed(suggestedRate.data.rate)} ${account!.currencyCode}`,
+                    })
+                  : t('recurringPage.crossCurrencyHintNoRate', { account: account!.name })}
+              </p>
+            ) : null}
             <Keypad
               onKey={(k) =>
                 setExpr((s) =>
@@ -386,13 +440,13 @@ export default function NewRecurringRulePage() {
                     try {
                       const resolved = evaluateKeypadExpression(
                         expr,
-                        account?.currencyCode ?? household.baseCurrency,
+                        ruleCurrency,
                         numberLocale,
                       )
                       setExpr(
                         amountToExpression(
                           resolved.amount,
-                          account?.currencyCode ?? household.baseCurrency,
+                          ruleCurrency,
                           locale,
                         ),
                       )
@@ -512,6 +566,18 @@ export default function NewRecurringRulePage() {
           ))}
         </div>
       </Sheet>
+      <CurrencyPickerSheet
+        open={sheet === 'currency'}
+        onClose={() => setSheet('none')}
+        accounts={accounts}
+        transactions={undefined}
+        accountCurrency={account?.currencyCode}
+        value={currency}
+        onChange={(code) => {
+          setCurrency(code)
+          setSheet('none')
+        }}
+      />
     </div>
   )
 }

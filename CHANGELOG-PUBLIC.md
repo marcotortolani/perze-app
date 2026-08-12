@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.33.0 — 12 de agosto de 2026
+
+### Nuevo
+
+- Un recurrente ahora puede estar pactado en una moneda distinta a la de la cuenta que lo
+  paga — por ejemplo, un alquiler fijado en pesos que pagás desde una cuenta en dólares. Al
+  crear o editar el recurrente elegís la moneda del monto, y al cargarlo confirmás la
+  cotización del día (y el monto real, si varía como en un servicio de consumo).
+
 ## 0.32.2 — 12 de agosto de 2026
 
 ### Arreglado

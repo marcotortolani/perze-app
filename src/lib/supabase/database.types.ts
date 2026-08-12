@@ -3088,6 +3088,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      convert_minor: {
+        Args: {
+          p_amount: number
+          p_from_decimals: number
+          p_rate: number
+          p_to_decimals: number
+        }
+        Returns: number
+      }
+      currency_decimals: { Args: { p_code: string }; Returns: number }
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }

@@ -28,13 +28,16 @@ import {
   useInvalidateRecurringRules,
   useRecurringRules,
 } from '@/hooks/use-recurring-rules'
+import { useSuggestedFxRate } from '@/hooks/use-fx-rate'
 import { recurringRulesRepo } from '@/lib/repos/recurring-rules-repo'
 import { evaluateKeypadExpression, firstOperand, hasKeypadOperator } from '@/lib/money/keypad'
 import { money } from '@/lib/money/money'
+import { formatRateTrimmed } from '@/lib/fx/rate'
 import { numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import { todayIso } from '@/lib/repos/ids'
 import type { RecurringFrequency } from '@/lib/db/schema'
 import { amountToExpression } from '@/features/capture/AmountStep'
+import { CurrencyPickerSheet } from '@/features/capture/CurrencyPickerSheet'
 
 const FREQUENCIES: RecurringFrequency[] = [
   'weekly',
@@ -93,8 +96,13 @@ export default function EditRecurringRulePage({
     string | null | undefined
   >(undefined)
   const [autoPostOverride, setAutoPostOverride] = useState<boolean | null>(null)
+  // `null` = sin tocar, se mantiene `rule.currencyCode` — mismo mecanismo
+  // que el resto de los overrides de esta pantalla. A diferencia de
+  // `new/page.tsx` ('' = misma que la cuenta), acá el default es lo que la
+  // regla ya tenía, cross-currency o no.
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(null)
   const [sheet, setSheet] = useState<
-    'none' | 'account' | 'fallbackAccount' | 'category' | 'amount' | 'month'
+    'none' | 'account' | 'fallbackAccount' | 'category' | 'amount' | 'month' | 'currency'
   >('none')
   const [saving, setSaving] = useState(false)
   const rule = rules?.find((r) => r.id === id)
@@ -103,6 +111,21 @@ export default function EditRecurringRulePage({
     onBack: () => router.back(),
     backLabel: t('ds.appHeader.back'),
   })
+
+  // Todos los hooks van antes de cualquier `return` condicional — estos
+  // cuatro no dependen de que `household`/`rules`/`rule` ya hayan resuelto,
+  // así que se calculan acá arriba solo para poder llamar a
+  // `useSuggestedFxRate` en el mismo orden en cada render.
+  const accountIdEarly = accountIdOverride ?? rule?.accountId
+  const accountEarly = accounts.find((a) => a.id === accountIdEarly)
+  const multiCurrency = new Set(accounts.map((a) => a.currencyCode)).size > 1
+  const ruleCurrency = currencyOverride ?? rule?.currencyCode ?? ''
+  const crossCurrencyRule = !!accountEarly && ruleCurrency !== accountEarly.currencyCode
+  const suggestedRate = useSuggestedFxRate(
+    household?.id,
+    crossCurrencyRule ? ruleCurrency : undefined,
+    crossCurrencyRule ? accountEarly.currencyCode : undefined,
+  )
 
   // Con `cacheComponents: true` (Next 16), `router.back()` no desmonta esta
   // pantalla — la deja oculta (`Activity`, modo hidden) con su `useState`
@@ -122,6 +145,7 @@ export default function EditRecurringRulePage({
       setFallbackAccountIdOverride(undefined)
       setCategoryIdOverride(undefined)
       setAutoPostOverride(null)
+      setCurrencyOverride(null)
       setSheet('none')
     }
   }, [])
@@ -170,8 +194,8 @@ export default function EditRecurringRulePage({
     if (expr === null || expr === '') return rule.expectedAmount
     try {
       return pending
-        ? firstOperand(expr, rule.currencyCode, numberLocale).amount
-        : evaluateKeypadExpression(expr, rule.currencyCode, numberLocale).amount
+        ? firstOperand(expr, ruleCurrency, numberLocale).amount
+        : evaluateKeypadExpression(expr, ruleCurrency, numberLocale).amount
     } catch {
       return rule.expectedAmount
     }
@@ -182,8 +206,7 @@ export default function EditRecurringRulePage({
     setSaving(true)
     try {
       const amount = expr
-        ? evaluateKeypadExpression(expr, account.currencyCode, numberLocale)
-            .amount
+        ? evaluateKeypadExpression(expr, ruleCurrency, numberLocale).amount
         : rule.expectedAmount
 
       // La frecuencia o el día cambiaron: el ancla vieja ya no describe la
@@ -214,6 +237,7 @@ export default function EditRecurringRulePage({
         fallbackAccountId: showFallbackAccount ? (fallbackAccountId ?? null) : null,
         categoryId: categoryId ?? null,
         expectedAmount: amount,
+        currencyCode: ruleCurrency,
         autoPost,
       })
       invalidateRules()
@@ -238,28 +262,55 @@ export default function EditRecurringRulePage({
     // shell es único en toda la app, sin este grid el form se estira a 1200px.
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
       <div className="flex flex-1 flex-col gap-4 pt-4">
-        <button
-          type="button"
-          onClick={() => {
-            // Precarga el keypad con el monto vigente convertido a
-            // expresión — igual que `PayCardSheet` precarga `expectedDue` —
-            // para que editar arranque desde el valor actual en vez de 0.
-            setExpr(
-              amountToExpression(rule.expectedAmount, rule.currencyCode, locale),
-            )
-            setSheet('amount')
-          }}
-          className="bg-transparent border-0 cursor-pointer text-center"
-        >
-          <Amount
-            value={money(currentAmount, rule.currencyCode)}
-            size="hero"
-            fit
-            showSign={false}
-            polarity="neutral"
-            tabular
-          />
-        </button>
+        <div className="flex items-center justify-center gap-2">
+          {account && multiCurrency ? (
+            <button
+              type="button"
+              onClick={() => setSheet('currency')}
+              aria-label={t('capture.changeCurrency')}
+              className="min-h-11 cursor-pointer rounded-chip border-0 px-2.5 text-[13px]"
+              style={{
+                background: crossCurrencyRule ? 'var(--selection-surface)' : 'transparent',
+                boxShadow: crossCurrencyRule ? 'inset 0 0 0 1px var(--selection-ring)' : 'none',
+                color: crossCurrencyRule ? 'var(--text-primary)' : 'var(--text-secondary)',
+              }}
+            >
+              {ruleCurrency}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              // Precarga el keypad con el monto vigente convertido a
+              // expresión — igual que `PayCardSheet` precarga `expectedDue` —
+              // para que editar arranque desde el valor actual en vez de 0.
+              setExpr(amountToExpression(currentAmount, ruleCurrency, locale))
+              setSheet('amount')
+            }}
+            className="bg-transparent border-0 cursor-pointer text-center"
+          >
+            <Amount
+              value={money(currentAmount, ruleCurrency)}
+              size="hero"
+              fit
+              showSign={false}
+              polarity="neutral"
+              tabular
+            />
+          </button>
+        </div>
+        {crossCurrencyRule ? (
+          // Informativa, no editable acá — la tasa real se confirma recién
+          // al materializar (`ChargeRecurringPreviewSheet`).
+          <p className="t-caption m-0 text-center text-text-muted">
+            {suggestedRate.data?.rate != null
+              ? t('recurringPage.crossCurrencyHint', {
+                  account: account!.name,
+                  rate: `1 ${ruleCurrency} = ${formatRateTrimmed(suggestedRate.data.rate)} ${account!.currencyCode}`,
+                })
+              : t('recurringPage.crossCurrencyHintNoRate', { account: account!.name })}
+          </p>
+        ) : null}
         <p className="t-caption text-center text-text-muted">
           {t('recurringPage.amountEditsFutureOnly')}
         </p>
@@ -421,7 +472,7 @@ export default function EditRecurringRulePage({
       >
         <div className="flex w-full flex-col gap-4">
           <div className="text-center font-mono text-[28px]">
-            {rule.currencyCode} {expr || '0'}
+            {ruleCurrency} {expr || '0'}
           </div>
           <Keypad
             onKey={(k) =>
@@ -453,11 +504,11 @@ export default function EditRecurringRulePage({
                   try {
                     const resolved = evaluateKeypadExpression(
                       expr,
-                      rule.currencyCode,
+                      ruleCurrency,
                       numberLocale,
                     )
                     setExpr(
-                      amountToExpression(resolved.amount, rule.currencyCode, locale),
+                      amountToExpression(resolved.amount, ruleCurrency, locale),
                     )
                   } catch {
                     // Expresión sin resolver todavía (p. ej. "20+") — no hay nada que aplanar.
@@ -561,6 +612,22 @@ export default function EditRecurringRulePage({
           ))}
         </div>
       </Sheet>
+      <CurrencyPickerSheet
+        open={sheet === 'currency'}
+        onClose={() => setSheet('none')}
+        accounts={accounts}
+        transactions={undefined}
+        accountCurrency={account?.currencyCode}
+        value={ruleCurrency}
+        onChange={(code) => {
+          // Cambiar de moneda invalida cualquier expresión sin confirmar
+          // tipeada en la anterior — mismo criterio que cambiar de cuenta
+          // invalida la de respaldo, más abajo.
+          setCurrencyOverride(code || account?.currencyCode || rule.currencyCode)
+          setExpr(null)
+          setSheet('none')
+        }}
+      />
     </div>
   )
 }

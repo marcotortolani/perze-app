@@ -6,6 +6,78 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.33.0] — 2026-08-12
+
+Recurrentes en una moneda distinta a la de la cuenta que los paga — el caso pedido: alquiler
+pactado en pesos, pagado desde una cuenta en dólares, con el cambio calculado el día del
+pago. `recurring_rules.currency_code` ya significaba "la moneda del monto pactado"; hasta
+acá el formulario la forzaba a igualar la de la cuenta. Se generaliza la maquinaria que ya
+existía para la cuenta de respaldo (`resolveChargeAccount`, `ChargeFallbackPreviewSheet`) en
+vez de escribir un camino nuevo.
+
+### Nuevo — moneda elegible al crear/editar un recurrente
+
+`recurring/new/page.tsx` y `recurring/[id]/edit/page.tsx` suman el chip de moneda del monto
+(mismo `CurrencyPickerSheet` de `/add`, mismo gate de progresividad — solo aparece si el
+household usa más de una moneda). Debajo del monto, una línea informativa muestra a cuánto
+equivale en la moneda de la cuenta con la cotización sugerida del día — no editable ahí, la
+tasa real se congela recién al materializar.
+
+### Nuevo — confirmación de tasa y monto al cargar un recurrente cross-currency
+
+`ChargeFallbackPreviewSheet.tsx` se renombra `ChargeRecurringPreviewSheet.tsx` y se
+generaliza: antes solo aparecía cuando el pago caía en la cuenta de respaldo, ahora aparece
+siempre que la moneda de la regla difiera de la de la cuenta destino (principal o respaldo,
+`chargeTargetAccount()`/`needsChargePreview()` en `src/lib/recurring/materialize.ts`). Suma
+un tercer campo editable: el monto de origen (antes fijo), para servicios de consumo
+variable (UTE, OSE) donde la boleta no coincide con lo esperado. Los tres valores —origen,
+tasa, debitado— quedan enlazados: editar cualquiera de los dos primeros recalcula el
+debitado; editar el debitado infiere la tasa real, nunca al revés. Si el monto de origen
+confirmado difiere del esperado, la regla se actualiza sola (con un toast que lo dice) — el
+historial de montos (G2) ya venía registrando esa serie.
+
+### Nuevo — `convertRuleAmountToAccount()` en `src/lib/recurring/materialize.ts`
+
+Primera conversión de un recurrente (regla → cuenta), espejo de la rama de captura de
+`saveDraftAsTransaction()` — "SON DOS CONVERSIONES, NO UNA". Sin cotización disponible,
+nunca reinterpreta el número pactado: el monto queda en 0 y la terna `original_*` se guarda
+con `originalRate: null` (dispara `needs_capture_fx`), igual que el criterio A3 de `/add`.
+`resolveChargeAccount()`, `materializeOne()` y `materializeDueRecurring()` pasan a usarla;
+antes, el camino automático (sin cuenta de respaldo) ni siquiera intentaba esta conversión —
+`materializeOne()` caía silenciosamente a `rule.currencyCode` cuando no había `charge`.
+
+### Migraciones — `recurring_rule_currency` + `recurring_rule_currency_defer_no_capture_rate`
+
+Reescriben `materialize_recurring_transactions()` (motor SQL/cron) con la misma primera
+conversión. Divergencia deliberada del cliente: `amount = 0` es un placeholder válido en
+Dexie (sin CHECK que lo rechace) pero viola `amount_sign` en Postgres para gasto/ingreso —
+sin manejo por ocurrencia, un solo `INSERT` inválido abortaría la función entera para TODAS
+las reglas de la corrida. Sin usuario presente para notar y corregir un $0 en el libro, la
+corrida automática DIFIERE la ocurrencia entera cuando falta la cotización de la primera
+conversión (no inserta, no avanza `last_materialized_on`) y reintenta en la próxima corrida.
+"Cargar ahora" (cliente, manual) sigue pudiendo resolverla antes, con un usuario mirando la
+pantalla. Suma dos helpers, `currency_decimals()`/`convert_minor()`, que de paso corrigen la
+segunda conversión (cuenta → base): el `round(amount * rate)` que ya existía asumía la misma
+cantidad de decimales en las dos monedas — silenciosamente mal para cualquier par con
+JPY/CLP (0 decimales) o cripto (8).
+
+`supabase/tests/database/33_recurring_rule_currency.sql` — cobertura nueva: con cotización
+(convierte encadenando las dos conversiones) y sin ella (difiere, no inserta, no avanza el
+cursor).
+
+### Notas
+
+- `docs/design/bloque-fg-presupuestos.html` (G3) no tiene selector de moneda ni pantalla de
+  confirmación de tasa — es superficie nueva sin verdad de píxel, construida espejando
+  `AmountStep` de `/add` y el sheet que ya existía. Pendiente de sumar al archivo de diseño
+  si el bloque F+G se rediseña.
+- Se detectó (no se tocó, fuera de alcance) una aserción vieja en
+  `supabase/tests/database/25_recurring_materialize.sql` que ya fallaba antes de esta rama:
+  el `INSERT` manual de su test de duplicados no incluye `recurring_occurrence_date`
+  (columna sumada en `20260807160000_recurring_occurrence_date.sql`), así que choca con
+  `transactions_recurring_occurrence_date_scope` antes de llegar a probar el índice único
+  que el test dice cubrir.
+
 ## [0.32.2] — 2026-08-12
 
 El campo "Comercio" de `DetailsSheet` (C3, `/add` y la edición de un movimiento) nunca
