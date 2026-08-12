@@ -42,7 +42,7 @@ import {
   occurredAtFor,
   occurrencesBetween,
 } from '@/lib/recurring/occurrences'
-import { chargeRecurringNow, needsFxPreview } from '@/lib/recurring/materialize'
+import { chargeRecurringNow, chargeTargetAccount, needsChargePreview } from '@/lib/recurring/materialize'
 import type { ScaledRate } from '@/lib/fx/rate'
 import { todayIso } from '@/lib/repos/ids'
 import {
@@ -51,7 +51,7 @@ import {
   type Locale,
 } from '@/i18n/formatting'
 import { useDateFormatPreference } from '@/stores/format-preferences-store'
-import { ChargeFallbackPreviewSheet } from './ChargeFallbackPreviewSheet'
+import { ChargeRecurringPreviewSheet } from './ChargeRecurringPreviewSheet'
 
 // C15/auditoría: importar `BarChart` directo de su archivo, no del barrel.
 const BarChart = dynamic(
@@ -162,13 +162,20 @@ export default function RecurringRuleDetailPage({
     invalidateRules()
   }
 
-  // Preview editable de tasa/monto (`ChargeFallbackPreviewSheet`) solo
-  // cuando el pago va a caer en el respaldo con otra moneda — ahí la
-  // cotización resuelta es una estimación que puede no coincidir con lo
-  // que el banco/casa de cambio dio de verdad. Para cualquier otro caso
-  // (cuenta principal, o respaldo en la misma moneda) sigue siendo un
-  // solo tap, sin fricción extra.
-  const confirmCharge = async (rateOverride?: ScaledRate) => {
+  // Preview editable de tasa/monto (`ChargeRecurringPreviewSheet`) cuando
+  // la moneda de la regla difiere de la cuenta donde va a caer el cargo
+  // (`needsChargePreview`) — ahí la cotización resuelta es una estimación
+  // que puede no coincidir con lo que el banco/casa de cambio dio de
+  // verdad, o el monto pactado puede necesitar corrección (servicio de
+  // consumo variable). Para cualquier otro caso sigue siendo un solo tap,
+  // sin fricción extra.
+  //
+  // `originAmount`: si viene y difiere de `rule.expectedAmount`, la
+  // decisión de producto es actualizar la regla — el monto confirmado
+  // pasa a ser el nuevo "esperado" (CLAUDE.md § recurrentes con servicios
+  // variables). Se hace DESPUÉS de crear el movimiento, nunca antes: si
+  // `chargeRecurringNow` falla, la regla no debe quedar tocada.
+  const confirmCharge = async (rateOverride?: ScaledRate, originAmount?: bigint) => {
     if (charging || !isDue || nextChargeableDate === null) return
     setCharging(true)
     try {
@@ -179,6 +186,7 @@ export default function RecurringRuleDetailPage({
         nextChargeableDate,
         today,
         rateOverride,
+        originAmount,
       )
       invalidateTransactions()
       if (result.usedFallback) {
@@ -188,6 +196,16 @@ export default function RecurringRuleDetailPage({
       } else {
         toast(t('recurringPage.charged', { name: rule.name }))
       }
+      if (originAmount !== undefined && originAmount !== rule.expectedAmount) {
+        await recurringRulesRepo.update(rule.id, { expectedAmount: originAmount })
+        invalidateRules()
+        toast(
+          t('recurringPage.expectedAmountUpdated', {
+            name: rule.name,
+            amount: formatAmountCompact(money(originAmount, rule.currencyCode), { showSign: false }),
+          }),
+        )
+      }
       setPreviewOpen(false)
     } finally {
       setCharging(false)
@@ -196,7 +214,7 @@ export default function RecurringRuleDetailPage({
 
   const handleChargeNow = () => {
     if (charging || !isDue) return
-    if (account && fallbackAccount && needsFxPreview(rule, account, fallbackAccount)) {
+    if (account && needsChargePreview(rule, account, fallbackAccount ?? null)) {
       setPreviewOpen(true)
       return
     }
@@ -437,16 +455,16 @@ export default function RecurringRuleDetailPage({
         />
       </div>
 
-      {fallbackAccount ? (
-        <ChargeFallbackPreviewSheet
+      {account ? (
+        <ChargeRecurringPreviewSheet
           open={previewOpen}
           household={household}
           rule={rule}
-          fallbackAccount={fallbackAccount}
+          targetAccount={chargeTargetAccount(rule, account, fallbackAccount ?? null)}
           locale={locale}
           saving={charging}
           onClose={() => setPreviewOpen(false)}
-          onConfirm={(rate) => void confirmCharge(rate)}
+          onConfirm={(rate, originAmount) => void confirmCharge(rate, originAmount)}
         />
       ) : null}
     </div>

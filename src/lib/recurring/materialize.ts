@@ -44,6 +44,12 @@ export async function materializeDueRecurring(household: HouseholdRow, userId: s
   for (const rule of rules) {
     if (rule.archivedAt !== null || !rule.autoPost) continue;
 
+    // Sin cuenta (borrada localmente pero la regla no sincronizó todavía) no
+    // hay dónde postear — se salta, el próximo pull la resuelve o la regla
+    // se termina archivando.
+    const account = await db.accounts.get(rule.accountId);
+    if (!account) continue;
+
     const floor = maxDate([rule.anchorDate, addDays(todayDateOnly, -RECURRING_LOOKBACK_DAYS), rule.anchorDate]);
     const ceiling = minDate([todayDateOnly, rule.endDate ?? todayDateOnly]);
     if (floor > ceiling) continue;
@@ -66,7 +72,18 @@ export async function materializeDueRecurring(household: HouseholdRow, userId: s
 
     for (const occDate of occurrences) {
       if (existingDates.has(occDate)) continue;
-      const row = await materializeOne(household, userId, rule, occDate, occDate);
+      // Sin usuario presente el motor automático nunca usa la cuenta de
+      // respaldo (ver docstring de `resolveChargeAccount`) — sólo resuelve
+      // la conversión regla→principal, a la fecha de ESTA ocurrencia
+      // (un catch-up de 3 meses atrás no puede usar la cotización de hoy).
+      const { amount, original } = await convertRuleAmountToAccount(household.id, rule, account, occDate);
+      const row = await materializeOne(household, userId, rule, occDate, occDate, {
+        account,
+        amount,
+        original,
+        usedFallback: false,
+        fallbackSkippedNoRate: false,
+      });
       created.push(row);
     }
   }
@@ -86,30 +103,103 @@ export interface ResolvedChargeAccount {
 }
 
 /**
- * ¿Hay algo para elegir antes de cargar? Espeja las primeras tres
- * condiciones de `resolveChargeAccount()` (hay respaldo, es gasto, la
- * principal no alcanza, las monedas difieren) sin llamar a `fxRepo` — la
- * pantalla la usa para decidir si abre la preview editable de tasa/monto
- * ANTES de tocar nada. `false` acá significa que "Cargar ahora" sigue
- * siendo un solo tap: misma moneda o cuenta principal con fondos no
- * necesitan tasa que revisar.
+ * Primera conversión de un recurrente: `rule.currencyCode` (lo pactado,
+ * "el alquiler vale $U 25.000") → la moneda de la cuenta donde termina
+ * posando el movimiento (lo que sale de verdad). Espejo directo de la
+ * rama de captura de `saveDraftAsTransaction()`
+ * (`src/features/capture/save-transaction.ts`) — misma regla, "SON DOS
+ * CONVERSIONES, NO UNA" (`CLAUDE.md`): esto es la primera; la segunda (a
+ * moneda base) la resuelve `resolveFxForAccountCurrency()` en
+ * `materializeOne()`, aparte.
+ *
+ * `amountOverride` reemplaza `rule.expectedAmount` como el monto pactado —
+ * lo usa la confirmación manual cuando el usuario corrige el número de
+ * origen (un servicio variable: la boleta de UTE no es la que se esperaba).
+ * `rateOverride` gana siempre sobre lo resuelto, igual que
+ * `captureFxRateOverride` en la captura normal.
+ *
+ * Misma moneda: sin conversión, terna en `null`. Con tasa: convierte y
+ * completa la terna. Sin tasa disponible: **nunca reinterpreta el número
+ * como si ya estuviera en la moneda de la cuenta** (A3 de
+ * `save-transaction.ts`) — el monto queda en 0 y la terna se guarda con
+ * `originalRate: null`, que dispara `needs_capture_fx` en Postgres.
  */
-export function needsFxPreview(rule: RecurringRuleRow, primaryAccount: AccountRow, fallbackAccount: AccountRow | null): boolean {
-  if (fallbackAccount === null || rule.kind !== "expense") return false;
-  if (primaryAccount.currentBalance - rule.expectedAmount >= 0n) return false;
-  return fallbackAccount.currencyCode !== rule.currencyCode;
+export async function convertRuleAmountToAccount(
+  householdId: string,
+  rule: RecurringRuleRow,
+  account: AccountRow,
+  effectiveDate: string,
+  rateOverride?: ScaledRate | null,
+  amountOverride?: bigint | null
+): Promise<{ amount: Money; original: Pick<NewTransactionInput, "originalAmount" | "originalCurrency" | "originalRate"> | null }> {
+  const ruleAmount = money(amountOverride ?? rule.expectedAmount, rule.currencyCode);
+  if (rule.currencyCode === account.currencyCode) return { amount: ruleAmount, original: null };
+
+  const rate = rateOverride ?? (await fxRepo.resolve({ householdId, base: rule.currencyCode, quote: account.currencyCode, date: effectiveDate })).rate;
+  if (rate === null) {
+    return {
+      amount: money(0n, account.currencyCode),
+      original: { originalAmount: ruleAmount.amount, originalCurrency: rule.currencyCode, originalRate: null },
+    };
+  }
+
+  return {
+    amount: convert(ruleAmount, account.currencyCode, rate),
+    original: { originalAmount: ruleAmount.amount, originalCurrency: rule.currencyCode, originalRate: rate },
+  };
 }
 
 /**
- * Decide dónde postea "Cargar ahora": la cuenta principal, salvo que le
- * falten fondos para cubrir el gasto y la regla tenga cuenta de respaldo —
- * ahí se usa esa, convertida a SU moneda con la cotización del día
- * efectivo (nunca la de la regla: "SON DOS CONVERSIONES, NO UNA",
- * `CLAUDE.md`). Solo aplica a gastos: un ingreso no puede quedar sin
- * fondos. Un solo salto — si el respaldo tampoco alcanza, se carga ahí
- * igual, no hay cadena.
+ * A qué cuenta cae el cargo, sin resolver ninguna tasa — mismo criterio de
+ * fondos que `resolveChargeAccount()` (ver su comentario sobre por qué el
+ * respaldo sólo se evalúa cuando la regla ya comparte moneda con la
+ * principal). La usan `needsChargePreview()` y la pantalla de detalle,
+ * para saber qué cuenta mostrarle al usuario en el sheet de confirmación
+ * ANTES de resolver nada — las dos tienen que coincidir siempre con lo que
+ * termine eligiendo `resolveChargeAccount`.
+ */
+export function chargeTargetAccount(rule: RecurringRuleRow, primaryAccount: AccountRow, fallbackAccount: AccountRow | null): AccountRow {
+  if (fallbackAccount === null || rule.kind !== "expense" || rule.currencyCode !== primaryAccount.currencyCode) {
+    return primaryAccount;
+  }
+  const usesFallback = primaryAccount.currentBalance - rule.expectedAmount < 0n;
+  return usesFallback ? fallbackAccount : primaryAccount;
+}
+
+/**
+ * ¿Hay algo para elegir antes de cargar? La pantalla la usa para decidir
+ * si abre la preview editable de tasa/monto ANTES de tocar nada. Aparece
+ * siempre que la moneda de la cuenta donde va a caer el cargo
+ * (`chargeTargetAccount`) difiera de la de la regla — sea la principal
+ * (alquiler/servicios pactados en otra moneda, el caso nuevo) o el
+ * respaldo (el caso que ya existía). `false` acá significa que "Cargar
+ * ahora" sigue siendo un solo tap.
+ */
+export function needsChargePreview(rule: RecurringRuleRow, primaryAccount: AccountRow, fallbackAccount: AccountRow | null): boolean {
+  return chargeTargetAccount(rule, primaryAccount, fallbackAccount).currencyCode !== rule.currencyCode;
+}
+
+/**
+ * Decide dónde postea "Cargar ahora" y en qué moneda, con las dos
+ * conversiones que puede necesitar: `rule.currencyCode → account.currencyCode`
+ * (`convertRuleAmountToAccount`, arriba) siempre, y de ahí encima la
+ * decisión de cuenta.
  *
- * `rateOverride`: la preview editable (`ChargeFallbackPreviewSheet`) deja
+ * La cuenta es la principal, salvo que le falten fondos para cubrir el
+ * gasto y la regla tenga cuenta de respaldo — ahí se usa esa, convertida a
+ * SU moneda con la cotización del día efectivo. Solo aplica a gastos: un
+ * ingreso no puede quedar sin fondos. Un solo salto — si el respaldo
+ * tampoco alcanza, se carga ahí igual, no hay cadena.
+ *
+ * El respaldo **solo se evalúa cuando la regla ya comparte moneda con la
+ * principal** — es la única forma de comparar fondos sin resolver una
+ * tasa primero, y es la misma condición que espeja `needsChargePreview`.
+ * Si la regla está en otra moneda que la principal, el cargo va directo
+ * ahí (con su propia conversión) y el respaldo, si existe, no entra en
+ * juego — combinar las dos cosas (regla en una tercera moneda, respaldo en
+ * otra distinta) queda fuera de alcance.
+ *
+ * `rateOverride`: la preview editable (`ChargeRecurringPreviewSheet`) deja
  * ajustar la tasa sugerida o el monto final antes de confirmar — la
  * realidad del pago (lo que el banco/casa de cambio dio de verdad) puede
  * distar de cualquier cotización resuelta automáticamente. Si viene
@@ -117,8 +207,11 @@ export function needsFxPreview(rule: RecurringRuleRow, primaryAccount: AccountRo
  * (mismo criterio que `counterFxRateOverride` en `save-transaction.ts` y
  * `pay-card.ts`) — es WYSIWYG con lo que el usuario confirmó en pantalla.
  * Sin `rateOverride` y sin cotización resuelta, el respaldo NO se aplica:
- * mejor la principal con un `needs_fx` de verdad que un movimiento en $0
- * que no mueve la plata que el usuario quiso mover.
+ * mejor la principal con un `needs_fx`/`needs_capture_fx` de verdad que un
+ * movimiento en $0 que no mueve la plata que el usuario quiso mover.
+ *
+ * `amountOverride`: el monto de origen corregido (servicio variable) —
+ * ver `convertRuleAmountToAccount`.
  */
 export async function resolveChargeAccount(
   householdId: string,
@@ -126,20 +219,26 @@ export async function resolveChargeAccount(
   primaryAccount: AccountRow,
   fallbackAccount: AccountRow | null,
   effectiveDate: string,
-  rateOverride?: ScaledRate | null
+  rateOverride?: ScaledRate | null,
+  amountOverride?: bigint | null
 ): Promise<ResolvedChargeAccount> {
-  const ruleAmount = money(rule.expectedAmount, rule.currencyCode);
-  const primary: ResolvedChargeAccount = { account: primaryAccount, amount: ruleAmount, original: null, usedFallback: false, fallbackSkippedNoRate: false };
+  const chargeToPrimary = async (fallbackSkippedNoRate = false): Promise<ResolvedChargeAccount> => {
+    const { amount, original } = await convertRuleAmountToAccount(householdId, rule, primaryAccount, effectiveDate, rateOverride, amountOverride);
+    return { account: primaryAccount, amount, original, usedFallback: false, fallbackSkippedNoRate };
+  };
 
-  if (fallbackAccount === null || rule.kind !== "expense") return primary;
-  if (primaryAccount.currentBalance - rule.expectedAmount >= 0n) return primary;
+  if (fallbackAccount === null || rule.kind !== "expense" || rule.currencyCode !== primaryAccount.currencyCode) {
+    return chargeToPrimary();
+  }
+  if (primaryAccount.currentBalance - rule.expectedAmount >= 0n) return chargeToPrimary();
 
+  const ruleAmount = money(amountOverride ?? rule.expectedAmount, rule.currencyCode);
   if (fallbackAccount.currencyCode === rule.currencyCode) {
     return { account: fallbackAccount, amount: ruleAmount, original: null, usedFallback: true, fallbackSkippedNoRate: false };
   }
 
   const rate = rateOverride ?? (await fxRepo.resolve({ householdId, base: rule.currencyCode, quote: fallbackAccount.currencyCode, date: effectiveDate })).rate;
-  if (rate === null) return { ...primary, fallbackSkippedNoRate: true };
+  if (rate === null) return chargeToPrimary(true);
 
   return {
     account: fallbackAccount,
@@ -174,34 +273,45 @@ export interface ChargeRecurringNowResult {
  * A diferencia del motor automático, acá SÍ puede terminar posando en la
  * cuenta de respaldo (`resolveChargeAccount`) — el automático corre sin
  * usuario presente y no hay a quién avisarle que la plata salió de otro lado.
+ *
+ * `amountOverride`: el monto de origen que el usuario corrigió en
+ * `ChargeRecurringPreviewSheet` (servicio variable) — decisión de producto:
+ * confirmar con un monto distinto actualiza `expectedAmount` de la regla,
+ * pero esa escritura la hace el caller (`recurring/[id]/page.tsx`) después
+ * de esta llamada, no acá — esta función sólo crea el movimiento.
  */
-export async function chargeRecurringNow(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string, todayDateOnly: string, rateOverride?: ScaledRate | null): Promise<ChargeRecurringNowResult> {
+export async function chargeRecurringNow(
+  household: HouseholdRow,
+  userId: string,
+  rule: RecurringRuleRow,
+  occDate: string,
+  todayDateOnly: string,
+  rateOverride?: ScaledRate | null,
+  amountOverride?: bigint | null
+): Promise<ChargeRecurringNowResult> {
   const db = getDb();
   const primaryAccount = await db.accounts.get(rule.accountId);
   if (!primaryAccount) throw new Error("Cuenta principal del recurrente no encontrada");
   const fallbackAccount = rule.fallbackAccountId ? ((await db.accounts.get(rule.fallbackAccountId)) ?? null) : null;
 
-  const charge = await resolveChargeAccount(household.id, rule, primaryAccount, fallbackAccount, todayDateOnly, rateOverride);
+  const charge = await resolveChargeAccount(household.id, rule, primaryAccount, fallbackAccount, todayDateOnly, rateOverride, amountOverride);
   const transaction = await materializeOne(household, userId, rule, occDate, todayDateOnly, charge);
   return { transaction, usedFallback: charge.usedFallback, fallbackSkippedNoRate: charge.fallbackSkippedNoRate };
 }
 
-async function materializeOne(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string, effectiveDate: string, charge?: ResolvedChargeAccount): Promise<TransactionRow> {
-  const accountId = charge?.account.id ?? rule.accountId;
-  const currencyCode = charge?.account.currencyCode ?? rule.currencyCode;
-  const amount = charge?.amount ?? money(rule.expectedAmount, rule.currencyCode);
-  const original = charge?.original ?? { originalAmount: null, originalCurrency: null, originalRate: null };
-  const fx = await resolveFxForAccountCurrency(household, currencyCode, amount, effectiveDate);
+async function materializeOne(household: HouseholdRow, userId: string, rule: RecurringRuleRow, occDate: string, effectiveDate: string, charge: ResolvedChargeAccount): Promise<TransactionRow> {
+  const original = charge.original ?? { originalAmount: null, originalCurrency: null, originalRate: null };
+  const fx = await resolveFxForAccountCurrency(household, charge.account.currencyCode, charge.amount, effectiveDate);
 
   return transactionsRepo.create({
     householdId: household.id,
     createdBy: userId,
     kind: rule.kind,
     occurredAt: occurredAtFor(effectiveDate),
-    accountId,
+    accountId: charge.account.id,
     counterAccountId: null,
-    amount: amount.amount,
-    currencyCode,
+    amount: charge.amount.amount,
+    currencyCode: charge.account.currencyCode,
     ...original,
     fxRate: fx.fxRate,
     fxSource: fx.fxSource,

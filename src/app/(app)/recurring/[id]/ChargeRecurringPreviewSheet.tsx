@@ -13,40 +13,48 @@ import { amountToExpression } from '@/features/capture/AmountStep'
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import type { AccountRow, HouseholdRow, RecurringRuleRow } from '@/lib/db/schema'
 
-export interface ChargeFallbackPreviewSheetProps {
+export interface ChargeRecurringPreviewSheetProps {
   open: boolean
   household: HouseholdRow
   rule: RecurringRuleRow
-  fallbackAccount: AccountRow
+  /** La cuenta donde va a caer el cargo — principal o de respaldo, la que haya decidido `chargeTargetAccount()`. */
+  targetAccount: AccountRow
   locale: Locale
   saving: boolean
   onClose: () => void
-  /** Siempre la tasa efectiva que se veía en pantalla al confirmar — WYSIWYG, nunca se vuelve a resolver después. */
-  onConfirm: (rate: ScaledRate) => void
+  /** Siempre lo que se veía en pantalla al confirmar — WYSIWYG, nunca se vuelve a resolver después. `originAmount` es el monto pactado, tal cual quedó (el de la regla o el corregido). */
+  onConfirm: (rate: ScaledRate, originAmount: bigint) => void
 }
 
-type View = 'preview' | 'rateKeypad' | 'amountKeypad'
+type View = 'preview' | 'rateKeypad' | 'originKeypad' | 'debitedKeypad'
 
 /**
- * Preview editable de "Cargar ahora" cuando el pago va a caer en la
- * cuenta de respaldo con otra moneda que la regla (`needsFxPreview()`,
+ * Preview editable de "Cargar ahora" cuando la moneda de la regla difiere
+ * de la de `targetAccount` — sea porque el recurrente está pactado en otra
+ * moneda que la cuenta (alquiler en UYU pagado desde una cuenta en USD) o
+ * porque el pago cayó en la cuenta de respaldo (`needsChargePreview()`,
  * `src/lib/recurring/materialize.ts`). La cotización resuelta es la mejor
  * estimación del sistema, pero la realidad del pago puede ser otra (lo
- * que el banco/casa de cambio dio de verdad) — acá se puede corregir
+ * que el banco/casa de cambio dio de verdad, o —con servicios de consumo
+ * variable— un monto de origen distinto al esperado) — acá se corrige
  * ANTES de que el movimiento se guarde, en vez de ir después a
  * Movimientos a editarlo a mano (lo que además nunca corrige la
  * cotización guardada).
  *
- * El monto de la regla (`rule.expectedAmount`/`rule.currencyCode`) nunca
- * cambia acá — es un dato fijo de la regla, para eso está "Editar
- * frecuencia o monto". Lo único editable es la tasa (`FxEditor`, mismo
- * patrón que `/accounts/resolve-fx`) y el monto final convertido, enlazados
- * como en `PayCardSheet`: editar el monto final "hacia atrás" infiere la
- * tasa real con `rateFromAmounts` — nunca se guarda un monto suelto
- * desincronizado de la tasa (mismo invariante que `counterFxRateOverride`).
+ * Tres valores enlazados, mismo mecanismo que `PayCardSheet`:
+ * - Editar el **monto de origen** (el hero, "lo que vale de verdad" —
+ *   servicios variables) recalcula el debitado con la tasa vigente. Es la
+ *   única de las tres ediciones que además tiene un efecto fuera de este
+ *   movimiento: si termina siendo distinto de `rule.expectedAmount`, el
+ *   caller (`recurring/[id]/page.tsx`) actualiza la regla al confirmar —
+ *   decisión de producto, no de este componente.
+ * - Editar la **tasa** (`FxEditor` o su keypad) recalcula el debitado.
+ * - Editar el **monto debitado** infiere la tasa real con
+ *   `rateFromAmounts` — nunca se guarda un monto suelto desincronizado de
+ *   la tasa (mismo invariante que `counterFxRateOverride`).
  *
  * `rateOverride`/`effectiveRate` viven SIEMPRE en la dirección canónica
- * (`rule.currencyCode → fallbackAccount.currencyCode`, la que espera
+ * (`rule.currencyCode → targetAccount.currencyCode`, la que espera
  * `resolveChargeAccount`/`convert`) — `inverted` es puramente de
  * presentación y solo se aplica al armar `displayRate`/`FxEditor`, nunca
  * se guarda invertido. Si USD participa, siempre es la moneda ancla
@@ -56,35 +64,39 @@ type View = 'preview' | 'rateKeypad' | 'amountKeypad'
  * toggle de dirección deja al usuario cambiarlo en cualquier momento,
  * igual que en `/accounts/resolve-fx`.
  */
-export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAccount, locale, saving, onClose, onConfirm }: ChargeFallbackPreviewSheetProps) {
+export function ChargeRecurringPreviewSheet({ open, household, rule, targetAccount, locale, saving, onClose, onConfirm }: ChargeRecurringPreviewSheetProps) {
   const t = useTranslations()
   const numberLocale = numberLocaleForUiLocale(locale)
   const decimalSeparator = decimalSeparatorForLocale(locale)
   const [view, setView] = useState<View>('preview')
   const [rateOverride, setRateOverride] = useState<ScaledRate | null>(null)
+  const [originAmountOverride, setOriginAmountOverride] = useState<bigint | null>(null)
   const [rateKeypadDigits, setRateKeypadDigits] = useState('')
-  const [amountExpr, setAmountExpr] = useState('')
-  const [inverted, setInverted] = useState(() => fallbackAccount.currencyCode === 'USD' && rule.currencyCode !== 'USD')
+  const [originExpr, setOriginExpr] = useState('')
+  const [debitedExpr, setDebitedExpr] = useState('')
+  const [inverted, setInverted] = useState(() => targetAccount.currencyCode === 'USD' && rule.currencyCode !== 'USD')
 
-  const suggestedQuery = useSuggestedFxRate(household.id, rule.currencyCode, fallbackAccount.currencyCode)
+  const suggestedQuery = useSuggestedFxRate(household.id, rule.currencyCode, targetAccount.currencyCode)
   const suggestedRate = suggestedQuery.data?.rate ?? null
   const effectiveRate = rateOverride ?? suggestedRate
 
-  const ruleMoney = money(rule.expectedAmount, rule.currencyCode)
-  const convertedMoney = effectiveRate !== null ? convert(ruleMoney, fallbackAccount.currencyCode, effectiveRate) : null
+  const originMoney = money(originAmountOverride ?? rule.expectedAmount, rule.currencyCode)
+  const convertedMoney = effectiveRate !== null ? convert(originMoney, targetAccount.currencyCode, effectiveRate) : null
 
   // Solo de presentación — `effectiveRate`/`rateOverride` no cambian.
-  const displayFrom = inverted ? fallbackAccount.currencyCode : rule.currencyCode
-  const displayTo = inverted ? rule.currencyCode : fallbackAccount.currencyCode
+  const displayFrom = inverted ? targetAccount.currencyCode : rule.currencyCode
+  const displayTo = inverted ? rule.currencyCode : targetAccount.currencyCode
   const displayRate = effectiveRate !== null ? (inverted ? invertRate(effectiveRate) : effectiveRate) : null
   const displaySuggested = suggestedRate !== null ? (inverted ? invertRate(suggestedRate) : suggestedRate) : undefined
 
   const reset = () => {
     setView('preview')
     setRateOverride(null)
+    setOriginAmountOverride(null)
     setRateKeypadDigits('')
-    setAmountExpr('')
-    setInverted(fallbackAccount.currencyCode === 'USD' && rule.currencyCode !== 'USD')
+    setOriginExpr('')
+    setDebitedExpr('')
+    setInverted(targetAccount.currencyCode === 'USD' && rule.currencyCode !== 'USD')
   }
 
   const handleClose = () => {
@@ -94,7 +106,7 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
 
   const handleConfirm = () => {
     if (effectiveRate === null || saving) return
-    onConfirm(effectiveRate)
+    onConfirm(effectiveRate, originMoney.amount)
   }
 
   const openRateKeypad = () => {
@@ -112,15 +124,30 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
     setView('preview')
   }
 
-  const openAmountKeypad = () => {
-    setAmountExpr(convertedMoney ? amountToExpression(convertedMoney.amount, fallbackAccount.currencyCode, locale) : '')
-    setView('amountKeypad')
+  const openOriginKeypad = () => {
+    setOriginExpr(amountToExpression(originMoney.amount, rule.currencyCode, locale))
+    setView('originKeypad')
   }
 
-  const commitAmountKeypad = () => {
+  const commitOriginKeypad = () => {
     try {
-      const typed = evaluateKeypadExpression(amountExpr || '0', fallbackAccount.currencyCode, numberLocale)
-      const implied = rateFromAmounts(ruleMoney, typed)
+      const typed = evaluateKeypadExpression(originExpr || '0', rule.currencyCode, numberLocale)
+      setOriginAmountOverride(typed.amount)
+    } catch {
+      // Expresión sin resolver todavía — no hay nada que aplicar.
+    }
+    setView('preview')
+  }
+
+  const openDebitedKeypad = () => {
+    setDebitedExpr(convertedMoney ? amountToExpression(convertedMoney.amount, targetAccount.currencyCode, locale) : '')
+    setView('debitedKeypad')
+  }
+
+  const commitDebitedKeypad = () => {
+    try {
+      const typed = evaluateKeypadExpression(debitedExpr || '0', targetAccount.currencyCode, numberLocale)
+      const implied = rateFromAmounts(originMoney, typed)
       if (implied !== null) setRateOverride(implied)
     } catch {
       // Expresión sin resolver todavía — no hay nada que aplicar.
@@ -129,38 +156,42 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
   }
 
   return (
-    <Sheet open={open} title={t('recurringPage.fallbackPreviewTitle')} onClose={handleClose}>
+    <Sheet open={open} title={t('recurringPage.chargePreviewTitle')} onClose={handleClose}>
       {view === 'preview' ? (
         <div className="flex flex-col gap-4">
-          <div style={{ textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={openOriginKeypad}
+            style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'center' }}
+          >
             <Amount
-              value={money(rule.kind === 'expense' ? -rule.expectedAmount : rule.expectedAmount, rule.currencyCode)}
+              value={money(rule.kind === 'expense' ? -originMoney.amount : originMoney.amount, rule.currencyCode)}
               size="hero"
               fit
               polarity={rule.kind === 'income' ? 'positive' : 'negative'}
               tabular
             />
-          </div>
+          </button>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Icon name="arrow-down" size={16} color="var(--text-muted)" />
           </div>
           <button
             type="button"
-            onClick={openAmountKeypad}
+            onClick={openDebitedKeypad}
             style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'center' }}
           >
             <div className="t-caption" style={{ color: 'var(--text-muted)' }}>
-              {t('recurringPage.fallbackPreviewDebited', { name: fallbackAccount.name })}
+              {t('recurringPage.chargePreviewDebited', { name: targetAccount.name })}
             </div>
             <div style={{ marginTop: 2, fontFamily: 'var(--font-mono)', fontSize: 26, color: 'var(--text-primary)' }}>
-              {fallbackAccount.currencyCode}{' '}
+              {targetAccount.currencyCode}{' '}
               {convertedMoney ? formatAmount(convertedMoney, { showSign: false, showSymbol: false }) : '—'}
             </div>
           </button>
           <SegmentedControl
             options={[
-              { id: 'normal', label: `1 ${rule.currencyCode} = ${fallbackAccount.currencyCode}` },
-              { id: 'inverted', label: `1 ${fallbackAccount.currencyCode} = ${rule.currencyCode}` },
+              { id: 'normal', label: `1 ${rule.currencyCode} = ${targetAccount.currencyCode}` },
+              { id: 'inverted', label: `1 ${targetAccount.currencyCode} = ${rule.currencyCode}` },
             ]}
             value={inverted ? 'inverted' : 'normal'}
             onChange={(id) => setInverted(id === 'inverted')}
@@ -201,17 +232,34 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
         </div>
       ) : null}
 
-      {view === 'amountKeypad' ? (
+      {view === 'originKeypad' ? (
         <div className="flex flex-col gap-4">
           <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 28 }}>
-            {fallbackAccount.currencyCode} {amountExpr || '0'}
+            {rule.currencyCode} {originExpr || '0'}
           </div>
-          <Keypad operators={false} onKey={(k) => setAmountExpr((s) => (k === 'backspace' ? s.slice(0, -1) : s + k))} onClear={() => setAmountExpr('')} />
+          <Keypad operators={false} onKey={(k) => setOriginExpr((s) => (k === 'backspace' ? s.slice(0, -1) : s + k))} onClear={() => setOriginExpr('')} />
           <div style={{ display: 'flex', gap: 12 }}>
             <Button variant="secondary" onClick={() => setView('preview')}>
               {t('currenciesPage.keypadCancel')}
             </Button>
-            <Button variant="primary" onClick={commitAmountKeypad}>
+            <Button variant="primary" onClick={commitOriginKeypad}>
+              {t('currenciesPage.keypadDone')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {view === 'debitedKeypad' ? (
+        <div className="flex flex-col gap-4">
+          <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 28 }}>
+            {targetAccount.currencyCode} {debitedExpr || '0'}
+          </div>
+          <Keypad operators={false} onKey={(k) => setDebitedExpr((s) => (k === 'backspace' ? s.slice(0, -1) : s + k))} onClear={() => setDebitedExpr('')} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Button variant="secondary" onClick={() => setView('preview')}>
+              {t('currenciesPage.keypadCancel')}
+            </Button>
+            <Button variant="primary" onClick={commitDebitedKeypad}>
               {t('currenciesPage.keypadDone')}
             </Button>
           </div>
