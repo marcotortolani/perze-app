@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.30] — 2026-08-12
+
+Bug reportado en uso real, persistente incluso después de cerrar la PWA del todo (descarta
+un Service Worker viejo): en `/accounts` (desktop, master-detail), después de
+`?account=A` → `/transactions` → volver → elegir cuenta B, el header del panel actualizaba a
+"B" pero el cuerpo del panel se quedaba mostrando el detalle de A indefinidamente.
+
+### Arreglado — `DetailPanelTransition` podía quedar trabada en `mode="wait"`
+
+No se pudo reproducir en vivo (sin sesión autenticada disponible para probar), pero la
+lectura del código señala con bastante confianza a `AnimatePresence mode="wait"`
+(`src/components/motion/DetailPanelTransition.tsx`) — la ÚNICA pieza cuyo comportamiento
+depende de que un evento de "salida completa" dispare antes de montar el panel nuevo. Si ese
+evento no dispara (razonable bajo navegación rápida entre selecciones, o al desmontar/montar
+la página completa entre medio), `wait` deja el panel viejo colgado para siempre — coincide
+exactamente con el síntoma: el header (fuera de esta animación, reactivo directo al search
+param) sí actualiza, el cuerpo (adentro) no.
+
+Cambiado a `mode="sync"`: entra y sale a la vez, sin depender de que la salida "termine" para
+mostrar el panel nuevo — estructuralmente no puede quedar trabado, sea cual sea la causa
+exacta. El costo es el que `wait` existía para evitar (un estirón de layout a mitad de
+camino, porque el detalle de dos registros rara vez mide lo mismo de alto), aceptable frente
+a mostrar datos de la cuenta equivocada sin límite de tiempo. Afecta también a
+`/transactions`, que comparte el mismo componente — sin reporte de este bug ahí, pero
+corre el mismo riesgo estructural.
+
+**Pendiente de confirmar**: es un fix por diagnóstico de código, no verificado en vivo —
+pedirle al usuario que confirme después del deploy.
+
+---
+
 ## [0.30.29] — 2026-08-12
 
 Bug de la cola: cargar la posición inicial de SPCX (Space Exploration Technologies, USD)
