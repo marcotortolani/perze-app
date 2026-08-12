@@ -108,6 +108,15 @@ export function useLatestPrices(instrumentIds: string[]) {
   });
 }
 
+/** Tabla de posiciones estilo Google Finance — columna "Change" del día. */
+export function usePreviousClose(instrumentIds: string[]) {
+  return useQuery({
+    queryKey: ["previous-close", [...instrumentIds].sort()],
+    queryFn: () => priceSnapshotsRepo.previousCloseFor(instrumentIds),
+    enabled: instrumentIds.length > 0,
+  });
+}
+
 export function useInvalidateLatestPrices(instrumentIds: string[]) {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: ["latest-prices", [...instrumentIds].sort()], refetchType: "all" });

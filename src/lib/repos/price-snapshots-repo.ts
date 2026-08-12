@@ -1,5 +1,6 @@
 import { createClient } from "../supabase/client";
 import { todayIso } from "../dates/today";
+import { nearestPriceOnOrBefore } from "../investments/investments-trend-math";
 
 export interface LatestPrice {
   instrumentId: string;
@@ -53,6 +54,45 @@ export const priceSnapshotsRepo = {
       history.set(row.instrument_id, list);
     }
     return history;
+  },
+
+  /**
+   * "Change" del día (tabla de posiciones estilo Google Finance) — cierre
+   * de AYER contra el que se compara el precio de hoy. Reusa `historyFor` +
+   * `nearestPriceOnOrBefore` (mismo carry-forward que el sparkline del
+   * home): si ayer fue fin de semana/feriado sin snapshot nuevo, toma el
+   * último conocido antes de hoy, nunca el de hoy mismo.
+   */
+  async previousCloseFor(instrumentIds: string[]): Promise<Map<string, number>> {
+    if (instrumentIds.length === 0) return new Map();
+    const today = todayIso();
+    const yesterday = new Date(`${today}T12:00:00Z`);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    // Buffer de 7 días antes de "ayer" para poder hacer carry-forward si
+    // ayer mismo no tuvo snapshot — mismo criterio que `computeInvestmentsTrend`.
+    const since = new Date(yesterday);
+    since.setUTCDate(since.getUTCDate() - 7);
+    const history = await this.historyFor(instrumentIds, since.toISOString().slice(0, 10));
+    const previousClose = new Map<string, number>();
+    for (const [instrumentId, points] of history) {
+      const close = nearestPriceOnOrBefore(points, yesterday.toISOString().slice(0, 10));
+      if (close !== null) previousClose.set(instrumentId, close);
+    }
+    return previousClose;
+  },
+
+  /** Fase C (gráfico de tendencia) — primer `as_of` disponible por instrumento, para calcular hasta qué rango se puede mostrar sin inventar historial. */
+  async earliestFor(instrumentIds: string[]): Promise<Map<string, string>> {
+    if (instrumentIds.length === 0) return new Map();
+    const supabase = createClient();
+    const { data, error } = await supabase.from("price_snapshots").select("instrument_id, as_of").in("instrument_id", instrumentIds).order("as_of", { ascending: true });
+    if (error) throw error;
+    const earliest = new Map<string, string>();
+    for (const row of data ?? []) {
+      if (earliest.has(row.instrument_id)) continue; // ya ordenado asc — el primero que aparece es el más viejo
+      earliest.set(row.instrument_id, row.as_of);
+    }
+    return earliest;
   },
 
   /** I12 — precio cargado a mano cuando ningún proveedor lo trae. Queda como snapshot con `provider: 'manual'`, igual que cualquier otra fuente. */

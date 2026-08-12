@@ -10,6 +10,8 @@ import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
+import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
+import PositionsTable from "./PositionsTable";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
@@ -29,15 +31,12 @@ import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 export interface OverviewContentProps {
   portfolioId: string;
   /**
-   * `false` mientras el detalle de una posición está abierto al lado en
-   * split de escritorio — sin esto, el refresco de precios en vivo
-   * (`refreshPrices`, más abajo) reintroduce un `usePageHeader` propio en
-   * cada tick y le arrebata el título al detalle, que quedó seleccionado
-   * pero ya no aparece en el header (ver la nota larga en
-   * `usePageHeader`). En mobile (`Modal contained`, sin `DetailHeaderBridge`
-   * montado) siempre queda en `true`.
+   * Deep link (`?position=`) — en desktop, la fila de este instrumento
+   * arranca expandida en `PositionsTable` (ver la nota larga en
+   * `[portfolioId]/page.tsx`: ya no abre un panel aparte, esta pantalla
+   * dejó de compartir el header con nadie más).
    */
-  ownsHeader?: boolean;
+  initialExpandedInstrumentId?: string | null | undefined;
 }
 
 /**
@@ -48,9 +47,10 @@ export interface OverviewContentProps {
  * (`/investments/[portfolioId]`, la ruta que ya elige `PortfoliosListContent`),
  * así que un household con más de un portfolio los distingue de verdad.
  */
-export default function OverviewContent({ portfolioId, ownsHeader = true }: OverviewContentProps) {
+export default function OverviewContent({ portfolioId, initialExpandedInstrumentId }: OverviewContentProps) {
   const t = useTranslations();
   const assetClassLabel = useAssetClassLabel();
+  const isDesktop = useIsDesktop(SPLIT_BREAKPOINT);
   const locale = useLocale() as Locale;
   const dateFormat = useDateFormatPreference();
   const router = useRouter();
@@ -107,15 +107,12 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
     }
   };
 
-  usePageHeader(
-    {
-      title: portfolio?.name ?? t("nav.investments"),
-      onBack: () => router.push("/investments"),
-      backLabel: t("ds.appHeader.back"),
-      right: portfolio ? <IconButton icon="edit" ariaLabel={t("investmentsPage.editPortfolio")} onClick={handleOpenEdit} /> : undefined,
-    },
-    { enabled: ownsHeader }
-  );
+  usePageHeader({
+    title: portfolio?.name ?? t("nav.investments"),
+    onBack: () => router.push("/investments"),
+    backLabel: t("ds.appHeader.back"),
+    right: portfolio ? <IconButton icon="edit" ariaLabel={t("investmentsPage.editPortfolio")} onClick={handleOpenEdit} /> : undefined,
+  });
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
   const pricesQuery = useLatestPrices(instrumentIds);
   // D36 — el último valor de mercado conocido (localStorage) rellena el
@@ -337,79 +334,89 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
       {/* Asset classes es del household, no del portfolio — sin param. */}
       <ListRow icon="tag" label={t("assetClassesPage.title")} onClick={() => router.push("/investments/asset-classes")} />
 
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, gap: 12 }}>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.positions")}</div>
-          {/* Solo si hay algo que convertir: con todo en la moneda base el
-              toggle no cambiaría nada y sería puro ruido. */}
-          {heldCurrencies.length > 0 ? (
-            <SegmentedControl
-              options={[
-                { id: "original", label: t("investmentsPage.viewOriginalCurrency") },
-                { id: "base", label: t("investmentsPage.viewBaseCurrency", { currency: household.baseCurrency }) },
-              ]}
-              value={viewCurrency}
-              onChange={(v) => setViewCurrency(v as "original" | "base")}
-            />
-          ) : null}
-        </div>
-        {/* Un solo indicador de frescura por PANTALLA, no uno por fila
-            (D34) — declara cuándo se pidió el precio real por última vez
-            en vez de que cada posición lleve su propio "Actualizado"/
-            "Manual", que además nunca reflejaba el mercado en vivo. */}
-        {lastRefreshedAt ? (
-          <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 12 }}>
-            {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
-          </div>
-        ) : null}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {[...positions.values()].map((position) => {
-            const instrument = instrumentById.get(position.instrumentId);
-            if (!instrument) return null;
-            const price = prices.get(position.instrumentId);
-            const assetClass = instrument.assetClassId ? assetClassById.get(instrument.assetClassId) : undefined;
-            const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
-            const changePct = price && Number(position.costBasis) > 0 ? ((Number(value) - Number(position.costBasis)) / Number(position.costBasis)) * 100 : 0;
-            const baseValue = viewCurrency === "base" ? toBase(value, instrument.currencyCode) : null;
-            // D49 — sin ningún precio conocido todavía (ni cache ni API), un
-            // "$0,00" es un dato inventado, no un valor real: se muestra
-            // "—" en su lugar hasta que haya un primer dato de verdad.
-            const displayValue = !price ? (
-              <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
-            ) : viewCurrency === "base" ? (
-              baseValue !== null ? (
-                <Amount value={money(baseValue, household.baseCurrency)} size="body" showSign={false} polarity="neutral" tabular />
-              ) : (
-                <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
-              )
-            ) : (
-              <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
-            );
-            return (
-              <PositionRow
-                key={position.instrumentId}
-                symbol={instrument.symbol}
-                assetClass={assetClassLabel(assetClass) ?? t("investmentsPage.otherAssetClass")}
-                quantity={formatNumber(
-                  position.quantity,
-                  decimalsForQuantity({
-                    symbol: instrument.symbol,
-                    ...(assetClass?.name ? { assetClass: assetClass.name } : {}),
-                    ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}),
-                  })
-                )}
-                price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
-                value={displayValue}
-                changePct={price ? <DeltaPct value={changePct} /> : undefined}
-                // master-detail — search param, no ruta propia (ver la nota larga en
-                // `[portfolioId]/page.tsx`). `{ scroll: false }`: seleccionar
-                // una posición no debe saltar el scroll de la lista al tope.
-                onClick={() => router.push(`/investments/${portfolio.id}?position=${instrument.id}`, { scroll: false })}
+      {isDesktop ? (
+        // Rediseño tipo Google Finance (ver la nota larga en
+        // `[portfolioId]/page.tsx`): tabla ancha con expansión in place de
+        // los lotes, no la lista angosta de `PositionRow` de abajo. El
+        // toggle de moneda de visualización queda solo para mobile por
+        // ahora — la tabla muestra cada posición en su moneda propia,
+        // igual que Google Finance.
+        <PositionsTable portfolioId={portfolioId} initialExpandedInstrumentId={initialExpandedInstrumentId} />
+      ) : (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, gap: 12 }}>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.positions")}</div>
+            {/* Solo si hay algo que convertir: con todo en la moneda base el
+                toggle no cambiaría nada y sería puro ruido. */}
+            {heldCurrencies.length > 0 ? (
+              <SegmentedControl
+                options={[
+                  { id: "original", label: t("investmentsPage.viewOriginalCurrency") },
+                  { id: "base", label: t("investmentsPage.viewBaseCurrency", { currency: household.baseCurrency }) },
+                ]}
+                value={viewCurrency}
+                onChange={(v) => setViewCurrency(v as "original" | "base")}
               />
-            );
-          })}
+            ) : null}
+          </div>
+          {/* Un solo indicador de frescura por PANTALLA, no uno por fila
+              (D34) — declara cuándo se pidió el precio real por última vez
+              en vez de que cada posición lleve su propio "Actualizado"/
+              "Manual", que además nunca reflejaba el mercado en vivo. */}
+          {lastRefreshedAt ? (
+            <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 12 }}>
+              {t("investmentsPage.lastRefreshed", { date: formatNumericDate(locale, lastRefreshedAt, dateFormat), time: formatTimeOfDay(locale, lastRefreshedAt) })}
+            </div>
+          ) : null}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {[...positions.values()].map((position) => {
+              const instrument = instrumentById.get(position.instrumentId);
+              if (!instrument) return null;
+              const price = prices.get(position.instrumentId);
+              const assetClass = instrument.assetClassId ? assetClassById.get(instrument.assetClassId) : undefined;
+              const value = price ? fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode) : 0n;
+              const changePct = price && Number(position.costBasis) > 0 ? ((Number(value) - Number(position.costBasis)) / Number(position.costBasis)) * 100 : 0;
+              const baseValue = viewCurrency === "base" ? toBase(value, instrument.currencyCode) : null;
+              // D49 — sin ningún precio conocido todavía (ni cache ni API), un
+              // "$0,00" es un dato inventado, no un valor real: se muestra
+              // "—" en su lugar hasta que haya un primer dato de verdad.
+              const displayValue = !price ? (
+                <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
+              ) : viewCurrency === "base" ? (
+                baseValue !== null ? (
+                  <Amount value={money(baseValue, household.baseCurrency)} size="body" showSign={false} polarity="neutral" tabular />
+                ) : (
+                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("investmentsPage.pendingFx")}</span>
+                )
+              ) : (
+                <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
+              );
+              return (
+                <PositionRow
+                  key={position.instrumentId}
+                  symbol={instrument.symbol}
+                  assetClass={assetClassLabel(assetClass) ?? t("investmentsPage.otherAssetClass")}
+                  quantity={formatNumber(
+                    position.quantity,
+                    decimalsForQuantity({
+                      symbol: instrument.symbol,
+                      ...(assetClass?.name ? { assetClass: assetClass.name } : {}),
+                      ...(instrument.quantityDecimals !== null ? { decimals: instrument.quantityDecimals } : {}),
+                    })
+                  )}
+                  price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
+                  value={displayValue}
+                  changePct={price ? <DeltaPct value={changePct} /> : undefined}
+                  // master-detail — search param, no ruta propia (ver la nota larga en
+                  // `[portfolioId]/page.tsx`). `{ scroll: false }`: seleccionar
+                  // una posición no debe saltar el scroll de la lista al tope.
+                  onClick={() => router.push(`/investments/${portfolio.id}?position=${instrument.id}`, { scroll: false })}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
       {editSheet}
     </div>
   );

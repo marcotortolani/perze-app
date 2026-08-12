@@ -56,6 +56,12 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   const { portfolioId } = use(params);
   const searchParams = useSearchParams();
   const prefillInstrumentId = searchParams.get("instrumentId");
+  // Atajo nuevo de la tabla de posiciones (Fase A del rediseño): el ícono
+  // de venta de un lote ya sabe de qué instrumento y de qué lote sale —
+  // salta directo al picker resuelto en vez de forzar a elegir de nuevo.
+  const prefillKindParam = searchParams.get("kind");
+  const prefillKind: TradeKind | null = prefillKindParam === "sell" || prefillKindParam === "buy" || prefillKindParam === "transfer_in" ? prefillKindParam : null;
+  const prefillLotId = searchParams.get("lotId");
   // D45/D47 — Next.js reusa esta MISMA instancia de página al navegar de
   // `?instrumentId=A` a `?instrumentId=B` (es la misma ruta, solo cambia
   // el search param): sin este `key`, el `useState` de instrumento/precio/
@@ -64,15 +70,25 @@ export default function NewTradePage({ params }: { params: Promise<{ portfolioId
   // ninguno) — mismo criterio que "key={id} en el detalle" del recipe de
   // master-detail de `CLAUDE.md`, aplicado acá aunque esta ruta todavía no
   // sea master-detail en sí.
-  return <NewTradeForm key={prefillInstrumentId ?? "none"} portfolioId={portfolioId} prefillInstrumentId={prefillInstrumentId} />;
+  return (
+    <NewTradeForm
+      key={prefillInstrumentId ?? "none"}
+      portfolioId={portfolioId}
+      prefillInstrumentId={prefillInstrumentId}
+      prefillKind={prefillKind}
+      prefillLotId={prefillLotId}
+    />
+  );
 }
 
 interface NewTradeFormProps {
   portfolioId: string;
   prefillInstrumentId: string | null;
+  prefillKind: TradeKind | null;
+  prefillLotId: string | null;
 }
 
-function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
+function NewTradeForm({ portfolioId, prefillInstrumentId, prefillKind, prefillLotId }: NewTradeFormProps) {
   const t = useTranslations();
   // Labels ya resueltos, no un mapa de claves-string: `t()` exige una
   // clave literal conocida en build-time (`NamespacedMessageKeys`) — un
@@ -97,7 +113,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const invalidateTransactions = useInvalidateTransactions(household?.id);
   usePageHeader({ title: t("investmentsPage.recordTrade"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
 
-  const [kind, setKind] = useState<TradeKind>("buy");
+  const [kind, setKind] = useState<TradeKind>(prefillKind ?? "buy");
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("");
@@ -170,7 +186,13 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
     prefillApplied.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill único desde el query param, no un loop de sincronización de estado
     handleSelectInstrument(inst);
-  }, [prefillInstrumentId, instruments]);
+    // Después de `handleSelectInstrument` (que resetea `selectedLotId` a
+    // `null` de forma síncrona antes de su primer `await`) — el atajo de
+    // venta de un lote específico pisa ese reset con el lote que ya se
+    // conoce, sin pasar por el picker "¿De qué compra?".
+    if (prefillKind) setKind(prefillKind);
+    if (prefillLotId) setSelectedLotId(prefillLotId);
+  }, [prefillInstrumentId, instruments, prefillKind, prefillLotId]);
 
   if (!household || !userId) return null;
 

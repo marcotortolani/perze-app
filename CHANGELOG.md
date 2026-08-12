@@ -6,6 +6,50 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.32.0] — 2026-08-12
+
+Rediseño del overview de portfolio en escritorio, a partir de capturas reales de Google
+Finance que trajo el usuario — el panel angosto de detalle (donde vivían los lotes de las
+Fases 1/2, v0.31.3/0.31.4) resultó denso y redundante. Fase A de 3: layout ancho + tabla de
+posiciones con lotes inline. Fase B (highlights + tab Activity) y Fase C (gráfico de
+tendencia con selector de rango) quedan para las próximas versiones.
+
+### Nuevo — página ancha en desktop, sin el panel lateral de 504px
+
+`src/app/(app)/investments/[portfolioId]/page.tsx` sacó enterito el `SplitGrid`/
+`DetailPanelTransition`/`DetailHeaderBridge` que compartía con `accounts`/`transactions`
+— un panel de 504px no tiene lugar para una tabla de 6 columnas. Mobile no se tocó: sigue
+navegando `?position=` a `InstrumentDetailContent` en un `Modal contained`, con todo el
+motor de lotes de la Fase 1/2 intacto. En desktop, `?position=` cambia de significado: en
+vez de abrir un panel al lado, le dice a la tabla nueva qué fila arrancar expandida (deep
+link desde el home, por ejemplo).
+
+### Nuevo — `PositionsTable`: cada fila se expande in place mostrando sus lotes
+
+`src/app/(app)/investments/[portfolioId]/PositionsTable.tsx` — columnas símbolo, precio,
+cantidad, **Change** (variación del día, cálculo nuevo — ver abajo), **Total Gain/Loss**
+(monto y % desde la compra, ya existía como `unrealizedPnl`/`changePct`), valor. Tocar la
+fila la expande mostrando cada lote abierto (fecha de compra, precio, cantidad, Change,
+ganancia de ESE lote, valor) con lápiz (→ `trades/[tradeId]/edit`, sin cambios) y tacho
+(→ soft-delete + undo, sin cambios) por fila, y "+ Agregar otra compra de {symbol}" al pie.
+Reusa `computeLots`/`computePositions`/`useTradeLotAllocations` de las Fases 1/2 tal cual —
+esto es presentación, no toca el motor.
+
+Atajo nuevo: cada lote suma un ícono de venta que navega a
+`trades/new?instrumentId=X&kind=sell&lotId=Y`, saltándose el picker "¿De qué compra?" de la
+Fase 2 porque ya se sabe cuál — `trades/new/page.tsx` ahora lee `kind`/`lotId` del search
+param además de `instrumentId`.
+
+### Nuevo — columna "Change" del día
+
+`price-snapshots-repo.ts` suma `previousCloseFor()` (cierre de ayer, con carry-forward vía
+`nearestPriceOnOrBefore` — reusado de `investments-trend-math.ts`, no reimplementado) y
+`earliestFor()` (primer `as_of` por instrumento, preparado para la Fase C). Es una pregunta
+distinta de "Total Gain/Loss": Change es precio de hoy contra el cierre de ayer; Total
+Gain/Loss es la ganancia desde que se compró. Antes Perze solo tenía la segunda.
+
+---
+
 ## [0.31.4] — 2026-08-12
 
 Fase 2 de la revisión de inversiones (Fase 0 fue el fix de costo base v0.31.2, Fase 1 el

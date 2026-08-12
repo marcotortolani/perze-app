@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.32.0 — 12 de agosto de 2026
+
+### Nuevo
+
+- En la compu, la pantalla de un portfolio de inversión ahora usa todo el ancho disponible.
+  Cada posición muestra precio, cantidad, variación del día, ganancia total y valor en una
+  tabla — tocarla despliega cada compra por separado, con su propia evolución, y podés
+  editarla, borrarla o vender de esa compra puntual sin salir de ahí.
+
 ## 0.31.4 — 12 de agosto de 2026
 
 ### Nuevo
