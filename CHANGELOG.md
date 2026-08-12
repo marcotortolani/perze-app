@@ -6,6 +6,62 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.17] — 2026-08-11
+
+Tanda 1 de la ronda de correcciones reportadas en uso real (11 fallas, entregadas en 4
+tandas — ver el resto en próximas versiones). Esta tanda es la que corrompía datos o
+bloqueaba el uso diario.
+
+### Fix — saldo inicial de cuenta en 0 hasta el primer movimiento, duplicado al conciliar
+
+`recompute_account_balance` (la única fuente de verdad del saldo) solo se disparaba desde
+un trigger sobre `transactions` — nunca hubo uno sobre el `INSERT` de `accounts`. Una
+cuenta creada con saldo inicial quedaba en `current_balance = 0` en el servidor hasta el
+primer movimiento; el pull de otro dispositivo pisaba el valor local correcto con ese 0; y
+conciliar contra ese 0 generaba un ajuste por el monto real completo, así que el servidor
+terminaba con `opening_balance + adjustment` = el doble del saldo real.
+
+Migración nueva `20260811090000_accounts_recompute_on_insert.sql`: trigger
+`accounts_recompute_balance` sobre `AFTER INSERT OR UPDATE OF opening_balance`, con
+backfill idempotente de las cuentas ya existentes en el remoto. Diagnóstico (sin tocar
+datos) de las conciliaciones ya duplicadas en `scripts/sql/f2-conciliaciones-duplicadas.sql`
+— la corrección de esos ajustes puntuales se hace desde la app, borrándolos, nunca por SQL
+directo (no propagaría al outbox de Dexie de otros dispositivos).
+
+Cálculo de la diferencia de conciliación extraído a `src/features/accounts/reconcile-diff.ts`
+(puro, testeado) desde `accounts/[id]/reconcile/page.tsx`.
+
+### Fix — el borrador de un movimiento nuevo arrastraba los datos del anterior
+
+`useCaptureDraftStore` era un singleton global. `CaptureFlow` reseteaba al MONTAR, no al
+salir — así que cualquier prefill escrito antes de navegar (la nota del share target en
+`/add`, el kind sugerido desde onboarding) se perdía siempre, porque el reset corría
+después y lo pisaba. Y `EditTransactionFlow` escribía en el mismo store sin limpiar al
+salir, así que abrir "+" después de editar un movimiento heredaba sus campos.
+
+El store pasa a ser por instancia: `CaptureDraftProvider` (`src/stores/capture-draft-store.tsx`,
+renombrado de `.ts` porque ahora tiene JSX) crea un store nuevo por cada `CaptureFlow`/
+`EditTransactionFlow` montado — no hay nada que resetear porque no hay nada que heredar.
+Los prefills de query params (incluido el share target) se resuelven en
+`draft-from-search-params.ts` ANTES de crear el store. El kind sugerido desde onboarding
+(`onboarding/success`, `onboarding/first-expense`) ahora viaja por
+`/add?prefillKind=income|expense` en vez de escribirse a mano sobre el store.
+
+### Fix — el botón de guardar de la edición se moría después del primer guardado
+
+`MorphButton` tenía una fase interna (`idle → morphing → check → done`) que nunca volvía a
+`idle`, y quedaba `disabled` para siempre — solo se "recuperaba" si el componente se
+desmontaba. En la edición de un movimiento el cierre es un `router.back()` asíncrono que no
+siempre desmonta la pantalla, así que una segunda edición seguida se encontraba con el
+tilde de la primera, sin responder. En modo ráfaga (C8) el botón tampoco se desmonta entre
+cargas, así que solo se podía guardar una vez por ráfaga.
+
+Ahora vuelve a `idle` al terminar la secuencia (240+200+260ms = 700ms, dentro del límite ya
+documentado), limpia sus `setTimeout` al desmontar, y un `onConfirm` que falla libera el
+botón en vez de dejarlo muerto en `morphing`.
+
+---
+
 ## [0.30.16] — 2026-08-10
 
 ### Docs — diseño de "cierre de período" (`docs/cierre-de-periodo.md`)

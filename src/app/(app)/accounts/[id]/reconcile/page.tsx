@@ -9,7 +9,8 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
 import { useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
-import { money, subtract } from "@/lib/money/money";
+import { money } from "@/lib/money/money";
+import { computeReconcileDiff } from "@/features/accounts/reconcile-diff";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
@@ -40,8 +41,7 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
 
   const bankBalance = evaluateKeypadExpression(expr || "0", account.currencyCode, numberLocaleForUiLocale(locale));
   const currentBalance = money(account.currentBalance, account.currencyCode);
-  const diff = subtract(bankBalance, currentBalance);
-  const hasDiff = expr.trim() !== "" && diff.amount !== 0n;
+  const { diff, hasDiff } = computeReconcileDiff({ bankBalance, currentBalance, expr });
 
   const handleConfirm = async () => {
     if (!hasDiff || saving) return;

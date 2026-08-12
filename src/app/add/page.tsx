@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EmptyState, ZMark } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
@@ -10,7 +10,6 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useOnboardingStore } from "@/stores/onboarding-store";
-import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { useDbOwnerStore } from "@/stores/db-owner-store";
 import { advanceFirstTx } from "@/lib/onboarding/first-tx-machine";
 
@@ -25,23 +24,16 @@ import { advanceFirstTx } from "@/lib/onboarding/first-tx-machine";
  * avanza el paso.
  *
  * `?title=&note=&url=` llegan del `share_target` del manifest (compartir
- * desde otra app) — se vuelcan una sola vez a la nota del borrador, nunca
- * se sobreescribe lo que el usuario ya haya tipeado.
+ * desde otra app) — `CaptureFlow` los traduce al prefill del borrador vía
+ * `draftFromSearchParams` (`src/features/capture/draft-from-search-params.ts`)
+ * ANTES de crear el store, así que no hace falta (ni conviene) escribirlos
+ * acá arriba: un `setField` sobre un store que `CaptureFlow` todavía no
+ * montó es exactamente el patrón que perdía este prefill antes del fix.
  */
 export default function AddPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const firstTxStep = useOnboardingStore((s) => s.draft.firstTxStep);
   const setOnboardingField = useOnboardingStore((s) => s.setField);
-  const setField = useCaptureDraftStore((s) => s.setField);
-  const appliedShareTarget = useRef(false);
-
-  useEffect(() => {
-    if (appliedShareTarget.current) return;
-    appliedShareTarget.current = true;
-    const shared = [searchParams.get("title"), searchParams.get("note"), searchParams.get("url")].filter(Boolean).join(" — ");
-    if (shared) setField("note", shared);
-  }, [searchParams, setField]);
 
   return (
     <CaptureGuard>

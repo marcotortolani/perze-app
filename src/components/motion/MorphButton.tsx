@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { useHaptics } from "./use-haptics";
@@ -20,29 +20,76 @@ export interface MorphButtonProps {
 
 /**
  * Botón → círculo (240ms) → check dibujado con `pathLength` (200ms) →
- * `onComplete` (la card vuela a la lista y aparece el toast) —
- * `docs/02-design-system.md` § 5.2, secuencia de guardado, ≤700ms total,
- * interactivo desde el frame 1.
+ * se sostiene un instante (260ms) → `onComplete` (la card vuela a la
+ * lista y aparece el toast) y vuelve a "idle" — `docs/02-design-system.md`
+ * § 5.2, secuencia de guardado, ≤700ms total (240+200+260), interactivo
+ * desde el frame 1.
+ *
+ * Reutilizable: antes el botón no volvía nunca a "idle" — quedaba
+ * `disabled` mostrando el tilde para siempre, y solo se "recuperaba" si el
+ * componente se desmontaba. En la edición de un movimiento
+ * (`EditTransactionFlow`) el cierre es un `router.back()` asíncrono que no
+ * siempre desmonta la pantalla (entrada directa por URL, deep link, PWA
+ * shortcut), así que una segunda edición seguida se encontraba con el
+ * tilde de la primera. En modo ráfaga (`CaptureFlow`, C8) el botón ni
+ * siquiera se desmonta entre cargas — `resetForBurst()` reinicia el draft
+ * pero no el componente — así que sin este fix solo se podía guardar una
+ * vez por ráfaga.
  */
 export function MorphButton({ children, onConfirm, onComplete, disabled, style }: MorphButtonProps) {
   const [phase, setPhase] = useState<Phase>("idle");
   const vibrate = useHaptics();
   const intensity = useMotionIntensity();
   const animated = intensity !== "minimal";
+  const timeoutIds = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const mountedRef = useRef(true);
+
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+      timeoutIds.current.forEach(clearTimeout);
+    },
+    []
+  );
 
   const handleClick = async () => {
     if (phase !== "idle") return;
     setPhase("morphing");
     vibrate("success");
-    await onConfirm();
+    try {
+      await onConfirm();
+    } catch (error) {
+      // Un guardado que falla no puede dejar el botón muerto en
+      // "morphing" — el usuario tiene que poder reintentar. El error
+      // sigue subiendo: este botón no decide cómo se comunica la falla,
+      // solo se cuida de no quedar inutilizable después de una.
+      if (mountedRef.current) setPhase("idle");
+      throw error;
+    }
 
     const morphMs = animated ? 240 : 0;
     const checkMs = animated ? 200 : 0;
-    setTimeout(() => setPhase("check"), morphMs);
-    setTimeout(() => {
-      setPhase("done");
-      onComplete?.();
-    }, morphMs + checkMs);
+    const holdMs = animated ? 260 : 0;
+
+    timeoutIds.current.push(
+      setTimeout(() => {
+        if (mountedRef.current) setPhase("check");
+      }, morphMs)
+    );
+    timeoutIds.current.push(
+      setTimeout(() => {
+        if (mountedRef.current) setPhase("done");
+        onComplete?.();
+      }, morphMs + checkMs)
+    );
+    // Timeout aparte del anterior (no el mismo tick): si "done" y "idle"
+    // se setearan en la misma llamada, React los batchea y "done" nunca
+    // llega a pintarse — el tilde desaparecería antes de que nadie lo vea.
+    timeoutIds.current.push(
+      setTimeout(() => {
+        if (mountedRef.current) setPhase("idle");
+      }, morphMs + checkMs + holdMs)
+    );
   };
 
   const isCircle = phase !== "idle";

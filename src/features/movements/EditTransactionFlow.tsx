@@ -22,7 +22,7 @@ import { useInvalidateTransactionTags, useTagIdsForTransaction } from "@/hooks/u
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
-import { useCaptureDraftStore } from "@/stores/capture-draft-store";
+import { CaptureDraftProvider, useCaptureDraftStore, useCaptureDraftStoreApi } from "@/stores/capture-draft-store";
 import type { AccountRow, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { useFrequentTags } from "@/features/capture/use-frequent-tags";
 import { updateTransactionFromDraft } from "./update-transaction";
@@ -38,8 +38,26 @@ export interface EditTransactionFlowProps {
 
 const STALE_DAYS = 3;
 
-/** D4 — mismo flujo que la carga, con los valores existentes cargados. Reusa los pasos del Bloque C. */
-export function EditTransactionFlow({ transaction, household, accounts, categories, onClose }: EditTransactionFlowProps) {
+/**
+ * D4 — mismo flujo que la carga, con los valores existentes cargados.
+ * Reusa los pasos del Bloque C.
+ *
+ * Store propio (`CaptureDraftProvider`), no el singleton que existía
+ * antes: editar un movimiento escribía sobre el MISMO store que usa
+ * `/add`, y como nunca se limpiaba al salir de la edición, el próximo "+"
+ * heredaba los campos del movimiento recién editado. Con un store por
+ * instancia, cerrar esta pantalla se lleva el draft con ella — no hay
+ * nada que limpiar a mano.
+ */
+export function EditTransactionFlow(props: EditTransactionFlowProps) {
+  return (
+    <CaptureDraftProvider>
+      <EditTransactionFlowInner {...props} />
+    </CaptureDraftProvider>
+  );
+}
+
+function EditTransactionFlowInner({ transaction, household, accounts, categories, onClose }: EditTransactionFlowProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const draft = useCaptureDraftStore((s) => s.draft);
@@ -48,7 +66,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   const appendToAmount = useCaptureDraftStore((s) => s.appendToAmount);
   const backspaceAmount = useCaptureDraftStore((s) => s.backspaceAmount);
   const clearAmount = useCaptureDraftStore((s) => s.clearAmount);
-  const reset = useCaptureDraftStore((s) => s.reset);
+  const draftStoreApi = useCaptureDraftStoreApi();
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household.id);
   const invalidateCategories = useInvalidateCategories(household.id);
   const invalidateTags = useInvalidateTags(household.id);
@@ -88,7 +106,10 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
   };
 
   useEffect(() => {
-    reset();
+    // No hace falta un `reset()` acá: este store nace vacío con este
+    // componente (`CaptureDraftProvider` en `EditTransactionFlow`), no es
+    // el singleton compartido que exigía limpiarlo a mano antes de llenarlo.
+    //
     // `investing` (settlement de un trade) no es un `CaptureKind` editable a
     // mano — igual que `adjustment`, cae a "expense" en el picker. Editar el
     // MONTO de una fila `investing` desde acá la desincroniza de su trade;
@@ -145,7 +166,7 @@ export function EditTransactionFlow({ transaction, household, accounts, categori
 
   const doSave = async () => {
     if (!account) return;
-    const latestDraft = useCaptureDraftStore.getState().draft;
+    const latestDraft = draftStoreApi.getState().draft;
     const latestAccount = accounts.find((a) => a.id === latestDraft.accountId) ?? account;
     const latestCounterAccount = accounts.find((a) => a.id === latestDraft.counterAccountId);
 

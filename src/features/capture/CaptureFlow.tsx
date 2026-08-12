@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
@@ -18,9 +18,10 @@ import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
 import type { AccountRow } from "@/lib/db/schema";
-import { useCaptureDraftStore, type CaptureKind } from "@/stores/capture-draft-store";
+import { CaptureDraftProvider, useCaptureDraftStore, useCaptureDraftStoreApi, type CaptureKind } from "@/stores/capture-draft-store";
 import { useCaptureRecencyStore } from "@/stores/capture-recency-store";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
+import { draftFromSearchParams } from "./draft-from-search-params";
 import { AccountPickerSheet } from "./AccountPickerSheet";
 import { CurrencyPickerSheet } from "./CurrencyPickerSheet";
 import { AmountStep } from "./AmountStep";
@@ -55,11 +56,25 @@ export interface CaptureFlowProps {
  *
  * Invariante duro: guardar no puede fallar. El guardado es local
  * (Dexie); la red es un detalle de otra capa.
+ *
+ * El prefill de query params (share target, "pagar tarjeta", kind
+ * sugerido desde onboarding) se resuelve ACÁ, antes de crear el store del
+ * draft — nunca escrito encima de un store ya montado (ver el comentario
+ * de `CaptureDraftProvider`).
  */
 export function CaptureFlow({ onClose }: CaptureFlowProps) {
+  const searchParams = useSearchParams();
+  const [initialDraft] = useState(() => draftFromSearchParams(searchParams));
+  return (
+    <CaptureDraftProvider initial={initialDraft}>
+      <CaptureFlowInner onClose={onClose} />
+    </CaptureDraftProvider>
+  );
+}
+
+function CaptureFlowInner({ onClose }: CaptureFlowProps) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   // `useEffectiveUserId` y no `useCurrentUserId`: el gate de más abajo
   // (`if (!household || !userId)`) deja la captura en "Cargando…" para
@@ -84,18 +99,6 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   // recalcular el ranking en cada tecla del keypad.
   const [now] = useState(() => new Date());
 
-  // El store del draft es un singleton en memoria, no atado al ciclo de
-  // vida de este componente — sobrevive a cualquier forma de cerrar `/add`
-  // que no pase por `handleAfterSaveComplete`/`handleCancel` (el backdrop
-  // del modal hace `router.back()` directo, un swipe-back o un tab
-  // también). El próximo `+` heredaba lo que haya quedado. Reiniciar acá,
-  // una sola vez por montaje (inicializador perezoso de `useState`, no un
-  // efecto: corre ANTES del primer render, así que el selector de `draft`
-  // de la línea de abajo ya lee el estado limpio, sin flash del valor
-  // viejo) garantiza que tocar "+" siempre arranca en blanco,
-  // independientemente de cómo terminó la sesión anterior.
-  useState(() => useCaptureDraftStore.getState().reset());
-
   const draft = useCaptureDraftStore((s) => s.draft);
   const setField = useCaptureDraftStore((s) => s.setField);
   const setKind = useCaptureDraftStore((s) => s.setKind);
@@ -105,30 +108,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
   const resetForBurst = useCaptureDraftStore((s) => s.resetForBurst);
   const recordSave = useCaptureRecencyStore((s) => s.recordSave);
   const reset = useCaptureDraftStore((s) => s.reset);
-
-  // Precarga desde query params (p. ej. "Pagar tarjeta" desde el detalle
-  // de una cuenta) — llega DESPUÉS del reset-on-mount de arriba, porque un
-  // `useEffect` corre tras el commit, nunca antes: escribir el prefill vía
-  // el store antes de navegar acá se perdía siempre, porque el reset de
-  // línea 79 corre último dentro del mismo montaje. Una sola vez (mismo
-  // patrón que `appliedShareTarget` en `/add`), y nunca toca `accountId` —
-  // el origen de una transferencia precargada se deja sin elegir a propósito.
-  const appliedPrefill = useRef(false);
-  useEffect(() => {
-    if (appliedPrefill.current) return;
-    appliedPrefill.current = true;
-    const prefillKind = searchParams.get("prefillKind");
-    const prefillCounterAccountId = searchParams.get("prefillCounterAccountId");
-    const prefillAmountExpression = searchParams.get("prefillAmountExpression");
-    const prefillCurrency = searchParams.get("prefillCurrency");
-    const prefillAmountPinnedTo = searchParams.get("prefillAmountPinnedTo");
-    if (!prefillKind && !prefillCounterAccountId && !prefillAmountExpression) return;
-    if (prefillKind === "transfer") setKind("transfer");
-    if (prefillCounterAccountId) setField("counterAccountId", prefillCounterAccountId);
-    if (prefillAmountExpression) setField("amountExpression", prefillAmountExpression);
-    if (prefillCurrency) setField("currency", prefillCurrency);
-    if (prefillAmountPinnedTo === "counterAccount") setField("amountPinnedTo", "counterAccount");
-  }, [searchParams, setKind, setField]);
+  const draftStoreApi = useCaptureDraftStoreApi();
 
   const [step, setStep] = useState<Step>("amount");
   const [sheet, setSheet] = useState<SheetKind>("none");
@@ -235,7 +215,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps) {
     // Se lee `getState()` en vez del `draft` reactivo de este closure: si
     // esta función corre justo después de un `setField` (p. ej. el chip de
     // categoría frecuente), el closure todavía tendría el valor viejo.
-    const latestDraft = useCaptureDraftStore.getState().draft;
+    const latestDraft = draftStoreApi.getState().draft;
     const latestAccount = accounts.find((a) => a.id === latestDraft.accountId) ?? account;
     const latestCounterAccount = accounts.find((a) => a.id === latestDraft.counterAccountId);
 

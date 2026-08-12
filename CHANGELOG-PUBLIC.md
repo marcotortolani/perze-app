@@ -40,6 +40,18 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.17 — 11 de agosto de 2026
+
+### Arreglado
+
+- El saldo inicial de una cuenta nueva ya no aparece en cero: se ve desde el momento en que
+  creás la cuenta, sin necesidad de cargar ningún movimiento.
+- Si conciliaste una cuenta poco después de crearla y el saldo te quedó duplicado, hablanos
+  para corregirlo — ya no vuelve a pasar en cuentas nuevas.
+- Cargar un movimiento después de otro ya no arrastra los datos del anterior.
+- Al editar un movimiento, ahora podés guardar los cambios más de una vez seguida sin que el
+  botón se quede trabado.
+
 ## 0.30.16 — 10 de agosto de 2026
 
 ### Arreglado

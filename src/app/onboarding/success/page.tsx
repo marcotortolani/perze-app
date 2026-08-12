@@ -13,7 +13,6 @@ import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { createClient } from "@/lib/supabase/client";
-import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 
 /**
  * A11 — éxito + CTA gigante al keypad. Acá se crea el household real:
@@ -174,11 +173,12 @@ export default function OnboardingSuccessPage() {
         <Button
           size="lg"
           onClick={() => {
-            // Store efímero, no persistido — arranca en "expense" en
-            // cualquier otra entrada a `/add` (share target, shortcut,
-            // FAB). Acá se pisa a propósito, una sola vez, antes de navegar.
-            if (suggestIncome) useCaptureDraftStore.getState().setKind("income");
-            router.push("/add");
+            // El kind sugerido viaja por query param, no escrito a mano
+            // sobre el store de captura antes de navegar — `CaptureFlow`
+            // lo lee vía `draftFromSearchParams` al crear su propio store,
+            // así que nunca hay ventana para que se pierda ni para que se
+            // filtre a la próxima carga sin querer.
+            router.push(suggestIncome ? "/add?prefillKind=income" : "/add");
           }}
         >
           {t(suggestIncome ? "onboarding.success.ctaIncome" : "onboarding.success.cta")}

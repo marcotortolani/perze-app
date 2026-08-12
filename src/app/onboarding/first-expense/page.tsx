@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { Button, Icon } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import { useOnboardingHydrated, useOnboardingStore } from "@/stores/onboarding-store";
-import { useCaptureDraftStore } from "@/stores/capture-draft-store";
 import { advanceFirstTx } from "@/lib/onboarding/first-tx-machine";
 
 /**
@@ -47,11 +46,11 @@ export default function OnboardingFirstExpensePage() {
         <Button
           size="lg"
           onClick={() => {
-            // Explícito aunque sea el default del store — mismo criterio
-            // que el override a "income" de A11: acá se pisa a propósito,
-            // una sola vez, antes de navegar.
-            useCaptureDraftStore.getState().setKind("expense");
-            router.push("/add");
+            // Explícito por query param aunque sea el default del store
+            // — mismo criterio que el "income" de A11 (ver
+            // `onboarding/success/page.tsx`): viaja por la URL, nunca
+            // escrito a mano sobre el store de captura antes de navegar.
+            router.push("/add?prefillKind=expense");
           }}
         >
           {t("onboarding.firstExpense.cta")}

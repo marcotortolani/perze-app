@@ -107,9 +107,11 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       currency_code: p.currencyCode,
       opening_balance: bigintToString(p.openingBalance),
       opening_date: p.openingDate,
-      // current_balance NUNCA se sincroniza: lo mantiene el trigger de
-      // Postgres a partir de las transactions ya sincronizadas — pushearlo
-      // desde acá pisaría el cálculo del servidor con un valor stale.
+      // current_balance NUNCA se sincroniza: lo mantiene el trigger
+      // `accounts_recompute_balance` (`20260811090000_...sql`) al insertar
+      // o editar `opening_balance`, más `transactions_recompute_balance`
+      // a partir de las transactions ya sincronizadas — pushearlo desde
+      // acá pisaría el cálculo del servidor con un valor stale.
       credit_limit: bigintToString(p.creditLimit),
       statement_day: p.statementDay,
       due_day: p.dueDay,
