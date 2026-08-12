@@ -72,6 +72,35 @@ igual en mobile (`left ++ right`), que es el requisito central del feature.
 
 ---
 
+## [0.31.2] — 2026-08-12
+
+Fase 0 de la revisión de inversiones (posiciones agregadas → lotes FIFO): un fix aislado del
+costo base, previo a tocar nada del cálculo por lote.
+
+### Arreglado — `computePositions` calculaba mal el costo base en cualquier instrumento con una venta
+
+Causa: `computePositions` (`src/lib/analytics/positions.ts`) itera los trades **en el orden
+en que llegan** y asume orden cronológico ascendente. `tradesRepo.listForPortfolio` devuelve
+`executed_at DESC` (para mostrar lo más reciente primero en el historial) — con ese orden, una
+venta se procesa ANTES que su compra: reduce una posición vacía (`current.quantity` es 0, no
+hace nada) y la compra que sigue suma su costo completo sin descontar nada.
+
+La cantidad final salía bien por casualidad (la suma es conmutativa, no depende del orden),
+pero **el costo base quedaba sin reducir** — precio promedio de compra y P&L% inflados en
+cualquier instrumento que tuviera una venta. Los 10 tests existentes de `positions.test.ts`
+pasaban todos porque alimentaban los trades en orden ascendente, que no es el orden real de
+producción — es exactamente el tipo de test que no atrapa este bug.
+
+Fix: `PositionTradeInput` suma `id` y `executedAt`; `computePositions` ordena
+cronológicamente (desempate estable por `id`) antes de iterar, en vez de asumir el orden de
+entrada. Los ocho call sites (`OverviewContent`, `InstrumentDetailContent`,
+`allocation/page.tsx`, `performance/page.tsx`, `future-income/page.tsx`,
+`instruments/page.tsx`, `investments-trend.ts`, `net-worth-value.ts`) pasan `id`/`executedAt`
+del trade. Test nuevo: mismo cálculo alimentado en orden ascendente y descendente debe dar el
+mismo resultado — es el test que hubiera atrapado esto.
+
+---
+
 ## [0.30.32] — 2026-08-12
 
 v0.30.29 arregló el `trades_fx_pair` de SPCX, pero el retest sobre la misma posición inicial

@@ -16,11 +16,13 @@ const ADDS_QUANTITY = new Set(["buy", "transfer_in"]);
 const REMOVES_QUANTITY = new Set(["sell", "transfer_out"]);
 
 export interface PositionTradeInput {
+  id: string;
   instrumentId: string;
   kind: string;
   quantity: number;
   /** Costo total de la operación en unidades mínimas de la moneda del trade. */
   netAmount: bigint;
+  executedAt: string;
 }
 
 export interface Position {
@@ -30,10 +32,22 @@ export interface Position {
   costBasis: bigint;
 }
 
+/**
+ * `tradesRepo.listForPortfolio` devuelve `executed_at DESC` (para mostrar
+ * lo más reciente primero) — este cálculo necesita el orden cronológico
+ * inverso: una venta procesada antes que su compra reduce una posición
+ * vacía (no hace nada) y la compra que sigue suma el costo completo sin
+ * descontar nada, dejando costBasis inflado. Desempate estable por `id`
+ * para que dos trades del mismo instante no dependan del orden de entrada.
+ */
+function chronological(trades: readonly PositionTradeInput[]): PositionTradeInput[] {
+  return [...trades].sort((a, b) => (a.executedAt < b.executedAt ? -1 : a.executedAt > b.executedAt ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
 export function computePositions(trades: readonly PositionTradeInput[]): Map<string, Position> {
   const positions = new Map<string, Position>();
 
-  for (const trade of trades) {
+  for (const trade of chronological(trades)) {
     const current = positions.get(trade.instrumentId) ?? { instrumentId: trade.instrumentId, quantity: 0, costBasis: 0n };
 
     if (ADDS_QUANTITY.has(trade.kind)) {

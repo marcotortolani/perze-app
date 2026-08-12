@@ -28,7 +28,7 @@ export default function FutureIncomePage() {
 
   const events = useMemo(() => {
     if (!trades || !instruments) return [];
-    const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
+    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
     const instrumentById = new Map(instruments.map((i) => [i.id, i]));
     const fixedIncomePositions = [...positions.values()]
       .map((position) => {

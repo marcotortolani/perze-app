@@ -207,7 +207,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
   if (!trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
-  const positions = computePositions(trades.map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
+  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
 
   /**
    * `needs_fx` para posiciones: sin rate no hay forma de sumar esta

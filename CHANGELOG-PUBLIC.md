@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.31.2 — 12 de agosto de 2026
+
+### Arreglado
+
+- En Inversiones, el precio promedio de compra y el rendimiento de un instrumento con al
+  menos una venta se calculaban mal — quedaban más altos de lo real. Ya calcula bien.
+
 ## 0.31.0 — 12 de agosto de 2026
 
 ### Nuevo

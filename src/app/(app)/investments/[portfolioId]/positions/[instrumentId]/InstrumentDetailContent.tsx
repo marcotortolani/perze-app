@@ -83,7 +83,7 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   // Se computa antes de `usePageHeader` (no después del `if` de abajo) solo
   // porque el botón de "eliminar de seguimiento" del header lo necesita, y
   // todo hook tiene que correr antes de cualquier return condicional.
-  const positions = computePositions((trades ?? []).map((tr) => ({ instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount })));
+  const positions = computePositions((trades ?? []).map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
   const position = positions.get(instrumentId);
   // Mismo criterio que la hoja de edición de "Instrumentos": solo un
   // instrumento propio del household (no del catálogo global) y sin
