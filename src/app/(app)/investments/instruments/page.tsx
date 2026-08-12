@@ -124,7 +124,7 @@ export default function InstrumentsListPage() {
     );
   }
 
-  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
   const held: Instrument[] = [];
   const watchlist: Instrument[] = [];
   for (const instrument of instruments) {

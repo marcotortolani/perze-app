@@ -2163,7 +2163,14 @@
   "deletePositionWarning": "Isso exclui {count, plural, one {# operação} other {# operações}} de {symbol} neste portfólio. Não pode ser desfeito.",
   "deletePositionConfirm": "Sim, excluir posição",
   "positionDeleted": "{symbol} removido do portfólio",
-  "selectPrompt": "Escolha uma posição da lista para ver o detalhe aqui."
+  "selectPrompt": "Escolha uma posição da lista para ver o detalhe aqui.",
+  "expandAll": "Expandir todas",
+  "collapseAll": "Recolher todas",
+  "lotRemaining": "Restam {remaining} de {original}",
+  "lotClosed": "Lote encerrado",
+  "lotValueToday": "Valor hoje: {value}",
+  "soldFromOneLot": "Da compra de {date}",
+  "soldFromLots": "De {count} compras"
  },
  "newInstrumentPage": {
   "search": "Buscar instrumento",
@@ -2193,6 +2200,7 @@
   "transferInExplainer": "Registre o que você já tinha. Não mexe em nenhuma das suas contas.",
   "instrument": "Instrumento",
   "chooseInstrument": "Escolher instrumento",
+  "searchInstrument": "Buscar por símbolo ou nome",
   "settlementAccount": "Conta de liquidação",
   "creditCardNotAllowed": "Um cartão de crédito não pode liquidar uma operação — escolha outra conta.",
   "quantity": "Quantidade",

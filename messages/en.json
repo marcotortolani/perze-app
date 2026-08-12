@@ -2163,7 +2163,14 @@
   "deletePositionWarning": "This deletes {count, plural, one {# trade} other {# trades}} of {symbol} in this portfolio. This can't be undone.",
   "deletePositionConfirm": "Yes, delete position",
   "positionDeleted": "{symbol} removed from portfolio",
-  "selectPrompt": "Pick a position from the list to see its detail here."
+  "selectPrompt": "Pick a position from the list to see its detail here.",
+  "expandAll": "Expand all",
+  "collapseAll": "Collapse all",
+  "lotRemaining": "{remaining} of {original} left",
+  "lotClosed": "Lot closed",
+  "lotValueToday": "Value today: {value}",
+  "soldFromOneLot": "From the buy on {date}",
+  "soldFromLots": "From {count} buys"
  },
  "newInstrumentPage": {
   "search": "Search instrument",
@@ -2193,6 +2200,7 @@
   "transferInExplainer": "Record what you already had. It doesn't touch any of your accounts.",
   "instrument": "Instrument",
   "chooseInstrument": "Choose instrument",
+  "searchInstrument": "Search by symbol or name",
   "settlementAccount": "Settlement account",
   "creditCardNotAllowed": "A credit card can't settle a trade — choose another account.",
   "quantity": "Quantity",

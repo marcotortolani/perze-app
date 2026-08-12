@@ -91,7 +91,7 @@ export default function AllocationPage() {
   if (!portfolio || !trades) return <Skeleton height={200} style={{ marginTop: 16 }} />;
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
-  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
 
   const toBase = (value: bigint, currencyCode: string): bigint | null => {
     if (currencyCode === household.baseCurrency) return value;

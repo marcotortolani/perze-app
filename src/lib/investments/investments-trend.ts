@@ -50,7 +50,7 @@ export async function computeInvestmentsTrend(householdId: string, baseCurrency:
   const positionsByInstrument = new Map<string, number>();
   for (const portfolio of portfolios) {
     const trades = await tradesRepo.listForPortfolio(portfolio.id);
-    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
     for (const [instrumentId, position] of positions) {
       if (position.quantity <= 0) continue;
       positionsByInstrument.set(instrumentId, (positionsByInstrument.get(instrumentId) ?? 0) + position.quantity);

@@ -28,7 +28,7 @@ export default function PerformancePage() {
   const result = useMemo(() => {
     if (!trades || !pricesQuery.data || !instruments) return null;
     const instrumentById = new Map(instruments.map((i) => [i.id, i]));
-    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
     let currentValue = 0n;
     for (const [instrumentId, position] of positions) {
       const price = pricesQuery.data.get(instrumentId);

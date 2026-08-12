@@ -6,6 +6,80 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.31.3] — 2026-08-12
+
+Fase 1 de la revisión de inversiones (Fase 0 fue el fix de costo base, v0.31.2): motor de
+lotes FIFO, evolución por compra individual en el detalle de instrumento, y buscador de
+instrumento al cargar una operación.
+
+### Nuevo — motor de lotes FIFO (`src/lib/analytics/lots.ts`)
+
+Cada compra (`buy`/`transfer_in`) abre un lote propio con su cantidad, precio y costo; cada
+venta (`sell`/`transfer_out`) consume los lotes abiertos más antiguos primero — FIFO, la
+decisión de producto tomada, no promedio ponderado. `computeLots()` devuelve los lotes por
+instrumento y, por cada venta, qué lote(s) consumió.
+
+`computePositions()` (`positions.ts`) se reescribe para derivarse de `computeLots()` sumando
+lotes abiertos, en vez de reimplementar su propio prorrateo — una sola fuente de verdad. Esto
+**cambia el costo base de promedio ponderado a FIFO**: con más de un lote a precios distintos,
+vender ahora se lleva el costo de la compra más vieja entera, no una porción de todas. Es un
+cambio de número intencional (ver el comentario largo en `lots.ts`), no una regresión — con un
+solo lote por instrumento (el caso más común) da exactamente el mismo resultado que antes.
+
+Los 8 call sites de `computePositions` ahora también pasan `price` (antes solo pasaban
+`quantity`/`netAmount`) — lo necesita `computeLots` para el `unitPrice` de cada lote.
+
+### Nuevo — evolución por compra individual en el detalle de instrumento
+
+Cada fila de compra del historial suma una segunda línea con su evolución (flecha, % y monto)
+desde el precio de compra hasta el precio actual — sin necesitar histórico de
+`price_snapshots` (que solo existe desde que arrancó el cron diario, sin backfill). Tocar la
+fila la expande con cantidad remanente / original y valor de hoy. Chip "Expandir todas" /
+"Colapsar todas" arriba del historial. Las filas de venta muestran de qué compra salieron
+(`allocationsBySellTradeId` de `computeLots`).
+
+Componente nuevo `DeltaPct` (`src/design-system/finance/DeltaPct.tsx`) — variación porcentual
+con flecha, siguiendo la polaridad del proyecto (ganancia en `--money-positive`, pérdida en
+texto neutro, nunca rojo fuera del home). Reemplaza el `↑ X%` sin color que estaba escrito a
+mano en `OverviewContent.tsx`.
+
+### Mejorado — el selector de instrumento de "Registrar operación" ahora se puede buscar
+
+`trades/new` mostraba una lista plana de todos los instrumentos del household sin filtro — el
+wireframe I3 pide "buscable". Filtro por símbolo o nombre, visible desde 7 instrumentos en
+adelante.
+
+---
+
+## [0.31.2] — 2026-08-12
+
+Fase 0 de la revisión de inversiones (posiciones agregadas → lotes FIFO): un fix aislado del
+costo base, previo a tocar nada del cálculo por lote.
+
+### Arreglado — `computePositions` calculaba mal el costo base en cualquier instrumento con una venta
+
+Causa: `computePositions` (`src/lib/analytics/positions.ts`) itera los trades **en el orden
+en que llegan** y asume orden cronológico ascendente. `tradesRepo.listForPortfolio` devuelve
+`executed_at DESC` (para mostrar lo más reciente primero en el historial) — con ese orden, una
+venta se procesa ANTES que su compra: reduce una posición vacía (`current.quantity` es 0, no
+hace nada) y la compra que sigue suma su costo completo sin descontar nada.
+
+La cantidad final salía bien por casualidad (la suma es conmutativa, no depende del orden),
+pero **el costo base quedaba sin reducir** — precio promedio de compra y P&L% inflados en
+cualquier instrumento que tuviera una venta. Los 10 tests existentes de `positions.test.ts`
+pasaban todos porque alimentaban los trades en orden ascendente, que no es el orden real de
+producción — es exactamente el tipo de test que no atrapa este bug.
+
+Fix: `PositionTradeInput` suma `id` y `executedAt`; `computePositions` ordena
+cronológicamente (desempate estable por `id`) antes de iterar, en vez de asumir el orden de
+entrada. Los ocho call sites (`OverviewContent`, `InstrumentDetailContent`,
+`allocation/page.tsx`, `performance/page.tsx`, `future-income/page.tsx`,
+`instruments/page.tsx`, `investments-trend.ts`, `net-worth-value.ts`) pasan `id`/`executedAt`
+del trade. Test nuevo: mismo cálculo alimentado en orden ascendente y descendente debe dar el
+mismo resultado — es el test que hubiera atrapado esto.
+
+---
+
 ## [0.31.1] — 2026-08-12
 
 ### Arreglado — el modo edición del home quedaba a un cuarto de ancho
@@ -69,35 +143,6 @@ igual en mobile (`left ++ right`), que es el requisito central del feature.
   (`persist-migration`, doc corrupto/válido) nuevos en Vitest; `e2e/home-customize.spec.ts`
   (4 tests) cubre entrar al modo edición, ocultar/mostrar, reordenar por teclado + persistencia
   tras recargar, restablecer, y la ausencia del botón en mobile.
-
----
-
-## [0.31.2] — 2026-08-12
-
-Fase 0 de la revisión de inversiones (posiciones agregadas → lotes FIFO): un fix aislado del
-costo base, previo a tocar nada del cálculo por lote.
-
-### Arreglado — `computePositions` calculaba mal el costo base en cualquier instrumento con una venta
-
-Causa: `computePositions` (`src/lib/analytics/positions.ts`) itera los trades **en el orden
-en que llegan** y asume orden cronológico ascendente. `tradesRepo.listForPortfolio` devuelve
-`executed_at DESC` (para mostrar lo más reciente primero en el historial) — con ese orden, una
-venta se procesa ANTES que su compra: reduce una posición vacía (`current.quantity` es 0, no
-hace nada) y la compra que sigue suma su costo completo sin descontar nada.
-
-La cantidad final salía bien por casualidad (la suma es conmutativa, no depende del orden),
-pero **el costo base quedaba sin reducir** — precio promedio de compra y P&L% inflados en
-cualquier instrumento que tuviera una venta. Los 10 tests existentes de `positions.test.ts`
-pasaban todos porque alimentaban los trades en orden ascendente, que no es el orden real de
-producción — es exactamente el tipo de test que no atrapa este bug.
-
-Fix: `PositionTradeInput` suma `id` y `executedAt`; `computePositions` ordena
-cronológicamente (desempate estable por `id`) antes de iterar, en vez de asumir el orden de
-entrada. Los ocho call sites (`OverviewContent`, `InstrumentDetailContent`,
-`allocation/page.tsx`, `performance/page.tsx`, `future-income/page.tsx`,
-`instruments/page.tsx`, `investments-trend.ts`, `net-worth-value.ts`) pasan `id`/`executedAt`
-del trade. Test nuevo: mismo cálculo alimentado en orden ascendente y descendente debe dar el
-mismo resultado — es el test que hubiera atrapado esto.
 
 ---
 

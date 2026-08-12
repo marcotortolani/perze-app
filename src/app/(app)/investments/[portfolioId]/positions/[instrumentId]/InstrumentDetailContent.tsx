@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, Button, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton } from "@/design-system";
+import { Amount, Button, Chip, DeltaPct, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton } from "@/design-system";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
+import { computeLots } from "@/lib/analytics/lots";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { tradesRepo } from "@/lib/repos/trades-repo";
 import { deleteSettlementTransaction, restoreSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
@@ -77,13 +78,38 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
   const [confirmingDeletePosition, setConfirmingDeletePosition] = useState(false);
   const [deletingPosition, setDeletingPosition] = useState(false);
+  // Lotes expandidos por `buyTradeId` — arranca vacío (todo colapsado). El
+  // chip "expandir/colapsar todas" mira este mismo set, no un booleano
+  // aparte, para no poder desincronizarse de lo que el usuario expandió a mano.
+  const [expandedLotIds, setExpandedLotIds] = useState<Set<string>>(new Set());
+  const toggleLot = (buyTradeId: string) => {
+    setExpandedLotIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(buyTradeId)) next.delete(buyTradeId);
+      else next.add(buyTradeId);
+      return next;
+    });
+  };
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const instrument = instruments?.find((i) => i.id === instrumentId);
   // Se computa antes de `usePageHeader` (no después del `if` de abajo) solo
   // porque el botón de "eliminar de seguimiento" del header lo necesita, y
   // todo hook tiene que correr antes de cualquier return condicional.
-  const positions = computePositions((trades ?? []).map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+  const lotTradeInputs = (trades ?? []).map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt }));
+  const positions = computePositions(lotTradeInputs);
+  // `computePositions` ya corre `computeLots` por dentro para el agregado —
+  // acá se vuelve a llamar para tener los lotes individuales que el
+  // agregado descarta. Es una segunda pasada sobre el mismo array chico
+  // (los trades de un portfolio personal), no vale la pena cachear.
+  const { lotsByInstrument, allocationsBySellTradeId } = computeLots(lotTradeInputs);
+  const instrumentLots = lotsByInstrument.get(instrumentId) ?? [];
+  const lotByBuyTradeId = new Map(instrumentLots.map((l) => [l.buyTradeId, l]));
+  const openLotCount = instrumentLots.filter((l) => l.remainingQuantity > 0).length;
+  const allLotsExpanded = openLotCount > 0 && instrumentLots.every((l) => l.remainingQuantity <= 0 || expandedLotIds.has(l.buyTradeId));
+  const toggleAllLots = () => {
+    setExpandedLotIds(allLotsExpanded ? new Set() : new Set(instrumentLots.map((l) => l.buyTradeId)));
+  };
   const position = positions.get(instrumentId);
   // Mismo criterio que la hoja de edición de "Instrumentos": solo un
   // instrumento propio del household (no del catálogo global) y sin
@@ -413,7 +439,16 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
       </Button>
 
       <div>
-        <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 8 }}>{t("instrumentDetailPage.history")}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("instrumentDetailPage.history")}</div>
+          {/* Chip único que alterna label según el estado agregado — no un
+              toggle propio, así nunca puede desincronizarse de lo que el
+              usuario ya expandió a mano fila por fila. Solo tiene sentido
+              si hay al menos un lote abierto para expandir. */}
+          {openLotCount > 0 ? (
+            <Chip onClick={toggleAllLots}>{t(allLotsExpanded ? "instrumentDetailPage.collapseAll" : "instrumentDetailPage.expandAll")}</Chip>
+          ) : null}
+        </div>
         {instrumentTrades.length === 0 ? (
           <EmptyState message={t("instrumentDetailPage.noHistory")} />
         ) : (
@@ -426,40 +461,105 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
                 <div style={{ padding: "16px 0 6px" }}>
                   <span className="t-label" style={{ color: "var(--text-secondary)" }}>{formatDateMedium(locale, new Date(dayTrades[0]!.executedAt))}</span>
                 </div>
-                {dayTrades.map((tr) => (
-                  // D54 — mismo gesto que Transactions (D1): swipe izquierda
-                  // borra (con su propia confirmación en la fila), swipe
-                  // derecha edita. El tap normal en la fila sigue sin hacer
-                  // nada acá — a diferencia de Transactions, esta lista no
-                  // tiene un detalle propio por operación, solo editar/borrar.
-                  <SwipeableRow
-                    key={tr.id}
-                    onSwipeLeftCommit={() => handleDeleteTrade(tr.id)}
-                    onSwipeRightCommit={() => router.push(`/investments/${portfolioId}/trades/${tr.id}/edit`)}
-                    confirmLabel={t("instrumentDetailPage.confirmDeleteTrade")}
-                    confirmActionLabel={t("common.delete")}
-                  >
-                    <ListRow
-                      icon={tr.kind === "sell" || tr.kind === "transfer_out" ? "minus" : "plus"}
-                      label={
-                        tr.kind === "buy"
-                          ? t("newTradePage.buy")
-                          : tr.kind === "sell"
-                            ? t("newTradePage.sell")
-                            : tr.kind === "transfer_in"
-                              ? t("newTradePage.transferIn")
+                {dayTrades.map((tr) => {
+                  const isBuyKind = tr.kind === "buy" || tr.kind === "transfer_in";
+                  const isSellKind = tr.kind === "sell" || tr.kind === "transfer_out";
+                  const lot = isBuyKind ? lotByBuyTradeId.get(tr.id) : undefined;
+                  const expanded = !!lot && expandedLotIds.has(lot.buyTradeId);
+                  const qtyDecimals = decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) });
+                  // Evolución del lote: precio de compra (ya está en `tr.price`)
+                  // contra el precio actual — no hace falta histórico de
+                  // `price_snapshots` (que solo existe desde que arrancó el
+                  // cron diario, sin backfill para compras viejas).
+                  const evolutionPct = price && lot && lot.unitPrice > 0 ? ((price.close - lot.unitPrice) / lot.unitPrice) * 100 : null;
+                  const currentValueRemaining = price && lot ? fromMajorUnitsUnsafe(lot.remainingQuantity * price.close, tr.currencyCode) : null;
+                  const evolutionAmount = currentValueRemaining !== null && lot ? currentValueRemaining - lot.costBasisRemaining : null;
+                  // De qué compra(s) salió esta venta — FIFO siempre asigna
+                  // el/los lote(s) más viejo(s) primero (`computeLots`).
+                  const saleAllocations = isSellKind ? (allocationsBySellTradeId.get(tr.id) ?? []) : [];
+                  const sourceBuyTrade = saleAllocations.length === 1 ? trades!.find((t2) => t2.id === saleAllocations[0]!.buyTradeId) : undefined;
+
+                  return (
+                    // D54 — mismo gesto que Transactions (D1): swipe izquierda
+                    // borra (con su propia confirmación en la fila), swipe
+                    // derecha edita.
+                    <SwipeableRow
+                      key={tr.id}
+                      onSwipeLeftCommit={() => handleDeleteTrade(tr.id)}
+                      onSwipeRightCommit={() => router.push(`/investments/${portfolioId}/trades/${tr.id}/edit`)}
+                      confirmLabel={t("instrumentDetailPage.confirmDeleteTrade")}
+                      confirmActionLabel={t("common.delete")}
+                    >
+                      {lot ? (
+                        // Fila expandible: la evolución (flecha + % + monto)
+                        // siempre visible como segunda línea, tocar despliega
+                        // cantidad remanente y valor de hoy. Sin `onClick` en
+                        // el `ListRow` interno (queda como `div`, no `button`)
+                        // porque el `button` que envuelve todo es el que
+                        // recibe el tap — un `button` no puede contener otro.
+                        <button
+                          type="button"
+                          onClick={() => toggleLot(tr.id)}
+                          style={{ width: "100%", background: "none", border: 0, padding: 0, textAlign: "left", cursor: "pointer" }}
+                        >
+                          <ListRow
+                            icon="plus"
+                            label={tr.kind === "buy" ? t("newTradePage.buy") : t("newTradePage.transferIn")}
+                            meta={`${formatNumber(tr.quantity, qtyDecimals)} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
+                            variant="value"
+                            value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                          />
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 8px 54px" }}>
+                            {evolutionPct !== null && evolutionAmount !== null ? (
+                              <>
+                                <DeltaPct value={evolutionPct} />
+                                <Amount value={money(evolutionAmount, tr.currencyCode)} size="label" showSign polarity="neutral" tabular />
+                              </>
+                            ) : (
+                              <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
+                            )}
+                          </div>
+                          {expanded ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 0 12px 54px" }}>
+                              <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+                                {lot.remainingQuantity > 0
+                                  ? t("instrumentDetailPage.lotRemaining", { remaining: formatNumber(lot.remainingQuantity, qtyDecimals), original: formatNumber(lot.originalQuantity, qtyDecimals) })
+                                  : t("instrumentDetailPage.lotClosed")}
+                              </span>
+                              {currentValueRemaining !== null ? (
+                                <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+                                  {t("instrumentDetailPage.lotValueToday", { value: formatAmount(money(currentValueRemaining, tr.currencyCode), { showSign: false }) })}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </button>
+                      ) : (
+                        <ListRow
+                          icon={isSellKind ? "minus" : "plus"}
+                          label={
+                            tr.kind === "sell"
+                              ? t("newTradePage.sell")
                               : tr.kind
-                      }
-                      // D61 — precio unitario SIN abreviar: `formatAmountCompact`
-                      // redondeaba a "K"/"M" un precio en pesos de varios dígitos
-                      // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
-                      // que esta línea existe para mostrar completo.
-                      meta={`${formatNumber(tr.quantity, decimalsForQuantity({ symbol: instrument.symbol, ...(assetClass?.name ? { assetClass: assetClass.name } : {}) }))} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`}
-                      variant="value"
-                      value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
-                    />
-                  </SwipeableRow>
-                ))}
+                          }
+                          // D61 — precio unitario SIN abreviar: `formatAmountCompact`
+                          // redondeaba a "K"/"M" un precio en pesos de varios dígitos
+                          // (ej. "AR$ 24,7 K" en vez de "AR$ 24.660,00"), justo el dato
+                          // que esta línea existe para mostrar completo.
+                          meta={
+                            sourceBuyTrade
+                              ? t("instrumentDetailPage.soldFromOneLot", { date: formatDateMedium(locale, new Date(sourceBuyTrade.executedAt)) })
+                              : saleAllocations.length > 1
+                                ? t("instrumentDetailPage.soldFromLots", { count: saleAllocations.length })
+                                : `${formatNumber(tr.quantity, qtyDecimals)} × ${formatAmount(money(fromMajorUnitsUnsafe(tr.price, tr.currencyCode), tr.currencyCode), { showSign: false })}`
+                          }
+                          variant="value"
+                          value={<Amount value={money(tr.netAmount, tr.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                        />
+                      )}
+                    </SwipeableRow>
+                  );
+                })}
               </div>
             ))}
           </div>

@@ -4,7 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, IconButton, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
+import { Button, IconButton, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -110,6 +110,10 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   // por qué, así que SPCX-USD parecía un botón roto.
   const [priceUnavailable, setPriceUnavailable] = useState<"no-provider" | "provider-empty" | null>(null);
   const [sheet, setSheet] = useState<"none" | "instrument" | "account" | "quantity" | "price">("none");
+  // I3 pide el selector de instrumento "buscable" — hoy es una lista plana
+  // con todos los instrumentos del household, sin filtro. Chico pero es
+  // fricción real ya con pocos instrumentos cargados.
+  const [instrumentQuery, setInstrumentQuery] = useState("");
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -163,6 +167,12 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   if (!household || !userId) return null;
 
   const instrument = instruments.find((i) => i.id === instrumentId);
+  const filteredInstruments = instrumentQuery.trim()
+    ? instruments.filter((i) => {
+        const needle = instrumentQuery.trim().toLowerCase();
+        return i.symbol.toLowerCase().includes(needle) || i.name.toLowerCase().includes(needle);
+      })
+    : instruments;
   const account = accounts.find((a) => a.id === accountId);
   const qty = Number(quantity.replace(",", "."));
   const unitPrice = Number(price.replace(",", "."));
@@ -431,12 +441,17 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         </div>
       </div>
 
-      <Sheet open={sheet === "instrument"} title={t("newTradePage.instrument")} onClose={() => setSheet("none")}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {instruments.map((i) => (
-            <ListRow key={i.id} label={`${i.symbol} — ${i.name}`} meta={i.currencyCode} onClick={() => handleSelectInstrument(i)} />
-          ))}
-          <ListRow icon="plus" label={t("investmentsPage.newInstrument")} variant="action" onClick={() => router.push(`/investments/${portfolioId}/instruments/new`)} />
+      <Sheet open={sheet === "instrument"} title={t("newTradePage.instrument")} onClose={() => { setSheet("none"); setInstrumentQuery(""); }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {instruments.length > 6 ? (
+            <Input placeholder={t("newTradePage.searchInstrument")} value={instrumentQuery} onChange={(e) => setInstrumentQuery(e.target.value)} autoFocus />
+          ) : null}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {filteredInstruments.map((i) => (
+              <ListRow key={i.id} label={`${i.symbol} — ${i.name}`} meta={i.currencyCode} onClick={() => handleSelectInstrument(i)} />
+            ))}
+            <ListRow icon="plus" label={t("investmentsPage.newInstrument")} variant="action" onClick={() => router.push(`/investments/${portfolioId}/instruments/new`)} />
+          </div>
         </div>
       </Sheet>
       <Sheet open={sheet === "account"} title={t("newTradePage.settlementAccount")} onClose={() => setSheet("none")}>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, Button, EmptyState, Icon, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, DeltaPct, EmptyState, Icon, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
@@ -207,7 +207,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
   if (!trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
-  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
 
   /**
    * `needs_fx` para posiciones: sin rate no hay forma de sumar esta
@@ -396,7 +396,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
                 )}
                 price={price ? formatAmountCompact(money(fromMajorUnitsUnsafe(price.close, instrument.currencyCode), instrument.currencyCode), { showSign: false }) : "—"}
                 value={displayValue}
-                changePct={price ? <span>{changePct >= 0 ? "↑" : "↓"} {formatNumber(Math.abs(changePct), 1)}%</span> : undefined}
+                changePct={price ? <DeltaPct value={changePct} /> : undefined}
                 // master-detail — search param, no ruta propia (ver la nota larga en
                 // `[portfolioId]/page.tsx`). `{ scroll: false }`: seleccionar
                 // una posición no debe saltar el scroll de la lista al tope.

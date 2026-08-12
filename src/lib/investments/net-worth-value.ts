@@ -43,7 +43,7 @@ export async function computeInvestmentsValue(householdId: string, baseCurrency:
 
   for (const portfolio of portfolios) {
     const trades = await tradesRepo.listForPortfolio(portfolio.id);
-    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+    const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
     const instrumentIds = [...positions.keys()];
     const prices = await priceSnapshotsRepo.latestFor(instrumentIds);
 

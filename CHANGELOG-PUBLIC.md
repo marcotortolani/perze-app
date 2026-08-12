@@ -40,6 +40,17 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.31.3 — 12 de agosto de 2026
+
+### Nuevo
+
+- En el detalle de un instrumento de inversión, cada compra ahora muestra su propia
+  evolución (cuánto ganó o perdió desde ese momento hasta hoy) — tocarla te muestra cuánto te
+  queda de esa compra. Un chip arriba del historial te deja expandir o colapsar todas de una.
+  Al vender, ahora ves de qué compra salió.
+- Al elegir el instrumento para registrar una operación, ahora podés buscarlo por símbolo o
+  nombre en vez de scrollear la lista completa.
+
 ## 0.31.2 — 12 de agosto de 2026
 
 ### Arreglado
