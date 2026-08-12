@@ -124,17 +124,18 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
       const netAmount = BigInt(kind === "sell" ? -grossAmount : grossAmount);
       let amountBase: bigint | null = null;
       let fxRate: string | null = null;
-      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = "pending";
-      if (trade.currencyCode === household.baseCurrency) {
-        amountBase = netAmount;
-        fxSource = "identity";
+      // Siempre por `fxRepo.resolve()` — ver el comentario largo en
+      // `trades/new/page.tsx`: el atajo manual para `base === quote` dejaba
+      // `fxRate` en `null` con `amountBase` puesto, violando
+      // `trades_fx_pair` y devolviendo 400 en cualquier trade en la
+      // moneda base del household.
+      const resolution = await fxRepo.resolve({ householdId: household.id, base: trade.currencyCode, quote: household.baseCurrency, date: todayIso() });
+      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
+      if (resolution.rate) {
+        amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, resolution.rate).amount;
+        fxRate = resolution.rate.toString();
       } else {
-        const resolution = await fxRepo.resolve({ householdId: household.id, base: trade.currencyCode, quote: household.baseCurrency, date: todayIso() });
-        if (resolution.rate) {
-          amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, resolution.rate).amount;
-          fxRate = resolution.rate.toString();
-          fxSource = resolution.source;
-        }
+        fxSource = "pending";
       }
 
       await tradesRepo.update(trade.id, {

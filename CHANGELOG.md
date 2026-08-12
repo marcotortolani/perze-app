@@ -6,6 +6,34 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.29] — 2026-08-12
+
+Bug de la cola: cargar la posición inicial de SPCX (Space Exploration Technologies, USD)
+fallaba con 400 al guardar el trade. Consola del usuario: `POST .../trades ... 400`, además
+de un 403 en `/accounts` que resultó ser ruido del bug de v0.30.28 ya resuelto (outbox
+reintentando la edición vieja de Itau).
+
+### Arreglado — cualquier trade en la moneda base del household violaba `trades_fx_pair`
+
+Causa: `trades/new/page.tsx` y `trades/[tradeId]/edit/page.tsx` (Tanda 4/inversiones,
+v0.30.20) resolvían el caso "misma moneda que la base" a mano —
+`if (currency === household.baseCurrency) { amountBase = netAmount; fxSource = "identity" }`
+— dejando `fxRate` en `null` mientras `amountBase` sí quedaba puesto. Viola
+`CONSTRAINT trades_fx_pair CHECK ((fx_rate IS NULL) = (amount_base IS NULL))`: el insert
+vuelve 400 en **cualquier** trade (no solo `transfer_in`) cuyo instrumento cotiza en la misma
+moneda que la base del household — SPCX en USD con household en USD, el caso más simple
+posible, lo disparaba siempre.
+
+El patrón correcto ya existe en el código (`resolveFxForAccountCurrency`,
+`src/features/capture/save-transaction.ts:38-50`, y `resolveFxRate` misma — `base === quote`
+devuelve `rate = 1` **real**, no inventado: es un hecho, no un dato faltante disfrazado).
+Los dos archivos de trades reimplementaban ese caso a mano en vez de llamar a
+`fxRepo.resolve()` siempre — mismo antipatrón que `cash-flow.ts` ya existe para evitar en
+otro dominio. Fix: sacar el atajo manual, llamar a `fxRepo.resolve()` incondicionalmente en
+los dos archivos — la función ya maneja `identity` (rate=1 real) internamente.
+
+---
+
 ## [0.30.28] — 2026-08-12
 
 Bug grave reportado en uso real: editar el saldo inicial de una cuenta parecía "no

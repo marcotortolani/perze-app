@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.29 — 12 de agosto de 2026
+
+### Arreglado
+
+- Cargar una operación de inversión (compra, venta o posición inicial) en un instrumento que
+  cotiza en la misma moneda que tu moneda base ya no fallaba al guardar.
+
 ## 0.30.28 — 12 de agosto de 2026
 
 ### Arreglado

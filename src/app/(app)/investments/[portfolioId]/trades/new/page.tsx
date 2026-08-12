@@ -243,17 +243,22 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       const netAmount = BigInt(kind === "sell" ? -grossAmount : grossAmount);
       let amountBase: bigint | null = null;
       let fxRate: string | null = null;
-      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = "pending";
-      if (instrument.currencyCode === household.baseCurrency) {
-        amountBase = netAmount;
-        fxSource = "identity";
+      // Siempre por `fxRepo.resolve()`, incluso en la misma moneda — es la
+      // única fuente de la cadena de resolución, y para `base === quote`
+      // devuelve `identity` con `rate = 1` de verdad (un hecho, no un dato
+      // inventado tapando uno faltante). El bug real: el atajo manual de
+      // acá reimplementaba ese caso a mano y dejaba `fxRate` en `null`
+      // mientras `amountBase` sí quedaba puesto — viola
+      // `trades_fx_pair CHECK ((fx_rate IS NULL) = (amount_base IS NULL))`
+      // y el insert vuelve 400 en CUALQUIER trade en la moneda base del
+      // household, no solo `transfer_in`.
+      const resolution = await fxRepo.resolve({ householdId: household.id, base: instrument.currencyCode, quote: household.baseCurrency, date: todayIso() });
+      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
+      if (resolution.rate) {
+        amountBase = convert(money(netAmount, instrument.currencyCode), household.baseCurrency, resolution.rate).amount;
+        fxRate = resolution.rate.toString();
       } else {
-        const resolution = await fxRepo.resolve({ householdId: household.id, base: instrument.currencyCode, quote: household.baseCurrency, date: todayIso() });
-        if (resolution.rate) {
-          amountBase = convert(money(netAmount, instrument.currencyCode), household.baseCurrency, resolution.rate).amount;
-          fxRate = resolution.rate.toString();
-          fxSource = resolution.source;
-        }
+        fxSource = "pending";
       }
 
       const trade = await tradesRepo.create({
