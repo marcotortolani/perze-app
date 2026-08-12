@@ -13,14 +13,12 @@ import type { Locale } from "@/i18n/formatting";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
-import { useAccounts } from "@/hooks/use-accounts";
-import { useScopeStore } from "@/stores/scope-store";
-import { accountMatchesScope } from "@/lib/scope/match-scope";
+import { useScopedAccounts, useScopedTransactions } from "@/hooks/use-scoped-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
-import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
+import { useInvalidateAfterTransactionWrite, useTransactionYearRange } from "@/hooks/use-transactions";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { add, money, subtract, zero } from "@/lib/money/money";
@@ -33,7 +31,7 @@ import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, typ
 import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
 import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
 import { formatDateMedium } from "@/i18n/formatting";
-import { useCalendarView } from "./use-calendar-view";
+import { useCalendarView, useHistoryView } from "./use-calendar-view";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
 import type { AccountRow, TransactionRow as TransactionRecord } from "@/lib/db/schema";
@@ -90,6 +88,10 @@ export interface MovementsListContentProps {
    * está abierto pero no va acá adentro.
    */
   calendarOpen?: boolean;
+  /** El panel de historial (año → mes), mismo criterio que `calendarSlot`. */
+  historySlot?: ReactNode;
+  /** `true` cuando el panel de historial está activo — mismo criterio que `calendarOpen`. */
+  historyOpen?: boolean;
   /**
    * Los filtros los tiene `page.tsx` y no esta lista: el heatmap del
    * calendario también los necesita, y con el estado acá adentro filtrar por
@@ -99,8 +101,8 @@ export interface MovementsListContentProps {
   onFiltersChange: (filters: MovementsFilters) => void;
 }
 
-/** D1/D2/D5/D6/D7 — lista de movimientos y su vista de calendario. Bloque D, Fase 7. */
-export function MovementsListContent({ calendarSlot, calendarOpen = false, filters, onFiltersChange }: MovementsListContentProps) {
+/** D1/D2/D5/D6/D7 — lista de movimientos y sus vistas de calendario/historial. Bloque D, Fase 7. */
+export function MovementsListContent({ calendarSlot, calendarOpen = false, historySlot, historyOpen = false, filters, onFiltersChange }: MovementsListContentProps) {
   const t = useTranslations();
   usePageHeader({ title: t("nav.movements") });
   const locale = useLocale() as Locale;
@@ -110,7 +112,13 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const isCardPayment = useIsCardPayment(household?.id);
-  const { data: accountsRaw = [], isLoading: accountsLoading } = useAccounts(household?.id);
+  // El switch Personal/Compartido/Todo del header filtra acá — antes se
+  // mostraba en esta pantalla (2+ miembros) sin que nada de abajo lo
+  // leyera. `useScopedAccounts`/`useScopedTransactions` (mismo criterio que
+  // usa el heatmap en `page.tsx`, ver `use-scoped-transactions.ts`) para TODO
+  // lo que sigue (resumen, calendario, lista, virtualización) sin tocar cada
+  // consumidor uno por uno.
+  const { accounts, isLoading: accountsLoading } = useScopedAccounts(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   const { data: tags = [] } = useTags(household?.id);
   const { data: rules = [] } = useRecurringRules(household?.id);
@@ -118,10 +126,10 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   // período del household ya resuelto — `from`/`to` puentean el sistema de
   // presets (que no conoce el `periodStartDay` del household) en vez de
   // forzar un preset nuevo solo para este deep link. Se calcula ACÁ, antes
-  // de `useTransactions`, para que el rango acote la consulta real a Dexie
-  // (índice `[householdId+occurredAt]`) — antes se traía TODO el historial
-  // y este mismo rango se aplicaba recién después, como un `.filter()` en
-  // JS sobre el total.
+  // de `useScopedTransactions`, para que el rango acote la consulta real a
+  // Dexie (índice `[householdId+occurredAt]`) — antes se traía TODO el
+  // historial y este mismo rango se aplicaba recién después, como un
+  // `.filter()` en JS sobre el total.
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
   const now = new Date();
@@ -130,20 +138,21 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   // `undefined` explícito a una clave opcional, que el compilador rechaza
   // aunque el VALOR sea válido — se arma condicionalmente en vez de pasar
   // las claves siempre presentes.
-  const transactionsQuery = useTransactions(household?.id, { ...(from !== undefined && { from }), ...(to !== undefined && { to }) });
-  const { data: transactionsRaw, isLoading: txLoading } = transactionsQuery;
-  // El switch Personal/Compartido/Todo del header filtra acá — antes se
-  // mostraba en esta pantalla (2+ miembros) sin que nada de abajo lo
-  // leyera. `accounts`/`transactions`, ya filtrados, reemplazan a los
-  // crudos del fetch para TODO lo que sigue (resumen, calendario, lista,
-  // virtualización) sin tocar cada consumidor uno por uno.
-  const scope = useScopeStore((s) => s.scope);
-  const accounts = useMemo(() => accountsRaw.filter((a) => accountMatchesScope(a.visibility, scope)), [accountsRaw, scope]);
-  const scopedAccountIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
-  const transactions = useMemo(
-    () => (transactionsRaw ?? []).filter((tx) => scopedAccountIds.has(tx.accountId) || (tx.counterAccountId && scopedAccountIds.has(tx.counterAccountId))),
-    [transactionsRaw, scopedAccountIds]
-  );
+  const transactionsQuery = useScopedTransactions(household?.id, { ...(from !== undefined && { from }), ...(to !== undefined && { to }) });
+  const { data: transactions, isLoading: txLoading } = transactionsQuery;
+  // Distingue "esta household NUNCA cargó nada" (el único caso que merece la
+  // pantalla de bienvenida con "Cargar mi primer gasto") de "el rango/día/
+  // filtro elegido no tiene movimientos" (un día del calendario sin gastos,
+  // un mes del historial vacío) — antes las dos pisaban el mismo chequeo
+  // (`transactions.length === 0`) y un día cualquiera sin actividad mostraba
+  // "todavía no cargaste ningún movimiento" con un CTA que no correspondía:
+  // la household sí tiene movimientos, y esta pantalla no es donde se carga
+  // uno con fecha atrás. `yearRange` sale de dos lecturas puntuales sobre el
+  // índice (`transactionsRepo.yearRange`), no de escanear `transactions` —
+  // ya lo usa `/transactions/history` con el mismo criterio: `null` es la
+  // señal de "cero movimientos en TODA la historia", `undefined` mientras
+  // carga (nunca se lee como "vacío" en la condición de abajo).
+  const { data: yearRange } = useTransactionYearRange(household?.id);
   const { data: transactionTagLinks } = useTransactionTagsFor((transactions ?? []).map((tx) => tx.id));
   const tagById = useMemo(() => new Map(tags.map((tag) => [tag.id, tag])), [tags]);
   const recurringRuleById = useMemo(() => new Map(rules.map((rule) => [rule.id, rule])), [rules]);
@@ -226,10 +235,11 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
     [router, searchParams, isSplit]
   );
 
-  // El alcance y la navegación de la vista de calendario viven en un hook
-  // propio, compartido con `page.tsx`: las dos puntas lo derivan de la misma
-  // URL en vez de pasarse estado.
+  // El alcance y la navegación de las vistas de calendario e historial viven
+  // en hooks propios, compartidos con `page.tsx`: las dos puntas los derivan
+  // de la misma URL en vez de pasarse estado.
   const calendar = useCalendarView();
+  const history = useHistoryView();
 
   // Resultados del buscador flotante (`?category=` / `?payee=`) aterrizan
   // acá ya filtrados en vez de en una lista sin filtrar — ver `SearchOverlay`.
@@ -350,16 +360,17 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
   /**
    * Distancia entre el origen del scroller y el arranque de la lista.
    *
-   * Vale 0 salvo cuando el calendario va adentro del scroller (mobile): ahí la
-   * lista virtualizada ya no empieza en el tope, y sin esto el virtualizador
-   * cree que el primer ítem está arriba de todo y desmonta filas que todavía
-   * se ven. Se MIDE en vez de calcularse porque depende del ancho del teléfono
-   * (las celdas del mes son cuadradas), de cuántas filas tenga el mes y del
-   * alto de la franja de totales.
+   * Vale 0 salvo cuando el calendario o el historial van adentro del
+   * scroller (mobile): ahí la lista virtualizada ya no empieza en el tope, y
+   * sin esto el virtualizador cree que el primer ítem está arriba de todo y
+   * desmonta filas que todavía se ven. Se MIDE en vez de calcularse porque
+   * depende del ancho del teléfono (las celdas del mes son cuadradas, el
+   * panel de historial tiene 12 filas variables), de cuántas filas tenga el
+   * mes y del alto de la franja de totales.
    */
   const [scrollMargin, setScrollMargin] = useState(0);
   useEffect(() => {
-    if (!calendarSlot) {
+    if (!calendarSlot && !historySlot) {
       setScrollMargin(0);
       return;
     }
@@ -379,7 +390,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
       if (sibling !== listNode) observer.observe(sibling);
     }
     return () => observer.disconnect();
-  }, [calendarSlot, scrollerNode, listNode]);
+  }, [calendarSlot, historySlot, scrollerNode, listNode]);
 
   const virtualizer = useVirtualizer({
     count: items.length,
@@ -442,11 +453,20 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
 
   if (errorState) return <ErrorState {...errorState} />;
 
-  if ((transactions ?? []).length === 0) {
+  // `yearRange === null`, no solo `transactions.length === 0`: esta es la
+  // pantalla de bienvenida de un household que NUNCA cargó nada — un rango,
+  // día o mes vacío con historial real en otra parte usa el estado vacío
+  // granular de más abajo (calendario/historial/filtros), que sí explica lo
+  // que pasó y ofrece la acción correcta.
+  if ((transactions ?? []).length === 0 && yearRange === null) {
     return <EmptyState message={t("transactions.list.empty")} actionLabel={t("transactions.list.emptyAction")} onAction={() => router.push("/add")} />;
   }
 
-  const activeFilterCount = countActiveFilters(filters, calendarOpen);
+  // Con el calendario O el historial abiertos el eje de fecha lo manda la
+  // vista, no el preset del sheet — contar el preset ahí sería contar un
+  // filtro que no está haciendo nada (mismo argumento que ya justificaba
+  // `dateOwnedByCalendar` cuando solo existía el calendario).
+  const activeFilterCount = countActiveFilters(filters, calendarOpen || historyOpen);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, paddingTop: 12 }}>
@@ -499,24 +519,28 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
         {/* Acceso al historial completo — el default de acá arriba es "este
             mes" (evita traer todo el historial en la apertura normal), así
             que hace falta una salida explícita para ir más atrás sin pasar
-            por el sheet de filtros. Navega a `/transactions/history`, que
-            elige año → mes y entrega a esta misma lista ya acotada. */}
+            por el sheet de filtros. Toggle de vista, igual que el calendario
+            de al lado: antes empujaba a `/transactions/history`, una
+            pantalla propia que reimplementaba esta misma lista; ahora el
+            historial es una vista de acá, gobernada por `?view=history`. */}
         <button
           type="button"
-          onClick={() => router.push("/transactions/history")}
+          aria-pressed={historyOpen}
+          onClick={() => (historyOpen ? history.closeHistory() : history.openHistory())}
           style={{
             display: "flex",
             alignItems: "center",
             gap: 6,
-            background: "var(--surface-2)",
+            background: historyOpen ? "var(--selection-surface)" : "var(--surface-2)",
+            boxShadow: historyOpen ? "inset 0 0 0 1px var(--selection-ring)" : undefined,
             border: 0,
             borderRadius: "var(--radius-chip)",
             padding: "8px 14px",
             cursor: "pointer",
           }}
         >
-          <Icon name="list" size={16} color="var(--text-secondary)" />
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{t("transactions.list.history")}</span>
+          <Icon name="list" size={16} color={historyOpen ? "var(--text-primary)" : "var(--text-secondary)"} />
+          <span style={{ fontSize: 13, color: historyOpen ? "var(--text-primary)" : "var(--text-secondary)" }}>{t("transactions.list.history")}</span>
         </button>
         {/* El alcance del día vive acá y no en la franja de totales: en
             escritorio la franja está en la otra columna, y el chip tiene que
@@ -548,6 +572,44 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
             }}
           >
             {formatDateMedium(locale, noonUtc(calendar.scope.day))}
+            <Icon name="close" size={14} color="var(--text-secondary)" />
+          </button>
+        ) : null}
+        {/* Período aplicado desde el historial — separado del chip de día de
+            arriba a propósito: ese vive MIENTRAS el calendario gobierna el
+            rango y desaparece si se cambia de mes; este sobrevive a CERRAR
+            el panel de historial (decisión de producto: elegir un mes es una
+            acción, no un modo de exploración transitorio — ver
+            `useHistoryView`). Los dos nunca coexisten: `calendar.scope.day`
+            solo es no-nulo cuando el rango vino del calendario, y
+            `history.selectedMonth` solo cuando vino del historial. */}
+        {!calendar.scope.day && history.selectedMonth ? (
+          <button
+            type="button"
+            aria-label={t("transactions.list.clearPeriod")}
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete("from");
+              next.delete("to");
+              const query = next.toString();
+              router.push(query ? `/transactions?${query}` : "/transactions", { scroll: false });
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "var(--surface-2)",
+              border: 0,
+              borderRadius: "var(--radius-chip)",
+              padding: "8px 14px",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              fontSize: 13,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            {new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(noonUtc(`${history.selectedMonth}-01`))}
             <Icon name="close" size={14} color="var(--text-secondary)" />
           </button>
         ) : null}
@@ -601,13 +663,17 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, filte
               paddingRight: SELECTION_BLEED + 8,
             }}
           >
-            {/* El calendario scrollea CON la lista: en un teléfono chico no
-                entran los dos a la vez, y fijarlo dejaba a la lista con la
-                altura sobrante, que a 568px de alto es cero. No se arregla
-                achicando el mes — cualquier techo que deje lugar a tres filas
-                de lista pone las celdas por debajo del mínimo táctil de 44px.
-                El calendario no es un encabezado fijo, es contenido. */}
+            {/* El calendario y el historial scrollean CON la lista: en un
+                teléfono chico no entran los dos a la vez, y fijarlo dejaba a
+                la lista con la altura sobrante, que a 568px de alto es cero.
+                No se arregla achicando el panel — cualquier techo que deje
+                lugar a tres filas de lista pone las celdas o las filas del
+                panel por debajo del mínimo táctil de 44px. Ninguno de los
+                dos es un encabezado fijo, son contenido. Nunca coexisten
+                (`view` es un solo param), así que no hace falta decidir
+                orden entre ellos. */}
             {calendarSlot ? <div style={{ paddingBottom: 16 }}>{calendarSlot}</div> : null}
+            {historySlot ? <div style={{ paddingBottom: 16 }}>{historySlot}</div> : null}
 
             {/* La franja de totales sí queda pegada: es una línea, sobrevive
                 en cualquier alto y mantiene visible a qué corresponden los

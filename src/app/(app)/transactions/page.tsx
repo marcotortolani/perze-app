@@ -9,7 +9,7 @@ import { DetailPanelTransition, PageEnter } from "@/components/motion";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { useScrollOverflow } from "@/hooks/use-scroll-overflow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useScopedTransactions } from "@/hooks/use-scoped-transactions";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
 import { defaultMovementsFilters, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
@@ -18,7 +18,8 @@ import { MovementsListContent } from "./TransactionsListContent";
 import { TransactionDetailContent } from "./TransactionDetailContent";
 import { TransactionsDetailEmpty } from "./TransactionsDetailEmpty";
 import { TransactionsMonthCalendar } from "./TransactionsMonthCalendar";
-import { useCalendarView } from "./use-calendar-view";
+import { TransactionsHistoryPanel } from "./TransactionsHistoryPanel";
+import { useCalendarView, useHistoryView } from "./use-calendar-view";
 
 /**
  * Las dos columnas del split, en una constante nombrada porque el ancho es
@@ -128,13 +129,20 @@ export default function MovementsPage() {
   const isSplit = useIsDesktop(SPLIT_BREAKPOINT);
   const { ref: detailScrollerRef, overflowing } = useScrollOverflow<HTMLDivElement>();
   const calendarView = useCalendarView();
+  const historyView = useHistoryView();
   const { data: household } = useCurrentHousehold();
   // Acotado al mes que el calendario está mostrando — es lo único que el
   // heatmap necesita (`heatmapTransactions` más abajo), no el historial
   // completo de la household. Se calcula siempre, esté el calendario
   // abierto o no: es barato (un mes) y evita agregar un toggle `enabled`.
+  // `useScopedTransactions`, no `useTransactions` a secas: el heatmap tiene
+  // que pintar exactamente el mismo conjunto que la lista, que además
+  // filtra por el switch Personal/Compartido/Todo — si no, un movimiento
+  // cuya cuenta no matchea el scope activo pinta el día pero no aparece al
+  // tocarlo (visto como "actividad fantasma" cuando en realidad es un
+  // desacople de filtros, no un caché sucio).
   const heatmapMonthRange = monthRange(calendarView.scope.month);
-  const { data: transactions } = useTransactions(household?.id, heatmapMonthRange);
+  const { data: transactions } = useScopedTransactions(household?.id, heatmapMonthRange);
 
   const txId = searchParams.get("tx");
 
@@ -208,13 +216,24 @@ export default function MovementsPage() {
     />
   ) : null;
 
-  // En escritorio el calendario vive en la segunda columna, así que no baja
-  // como slot; en mobile y tablet va adentro del scroller de la lista, arriba
-  // de las filas.
+  const historyPanel = historyView.open ? (
+    <TransactionsHistoryPanel selectedMonth={historyView.selectedMonth} onSelectMonth={historyView.selectMonth} />
+  ) : null;
+
+  // Calendario e historial se pelean la misma columna que el detalle — y
+  // entre ellos no hay pelea posible: `view` es UN param, así que abrir uno
+  // cierra el otro por construcción (ver `use-calendar-view.ts`).
+  const rightPanel = calendar ?? historyPanel;
+
+  // En escritorio los dos viven en la segunda columna, así que no bajan
+  // como slot; en mobile y tablet van adentro del scroller de la lista,
+  // arriba de las filas.
   const list = (
     <MovementsListContent
       calendarOpen={calendarView.open}
       calendarSlot={isSplit ? undefined : calendar}
+      historyOpen={historyView.open}
+      historySlot={isSplit ? undefined : historyPanel}
       filters={filters}
       onFiltersChange={setFilters}
     />
@@ -233,15 +252,15 @@ export default function MovementsPage() {
   }
 
   /**
-   * La segunda columna la pelean el detalle y el calendario, y gana el
-   * detalle: se llegó a ese movimiento DESDE el día del calendario, el alcance
-   * del día sigue aplicado a la lista de la izquierda y esa lista sigue
-   * visible con la fila resaltada. Cerrar el detalle es `router.back()`, que
-   * restaura `view=calendar` sin ningún código extra porque el param nunca se
-   * perdió.
+   * La segunda columna la pelean el detalle, el calendario y el historial, y
+   * gana el detalle: se llegó a ese movimiento DESDE el día del calendario o
+   * un mes del historial, el alcance sigue aplicado a la lista de la
+   * izquierda y esa lista sigue visible con la fila resaltada. Cerrar el
+   * detalle es `router.back()`, que restaura `view=calendar`/`view=history`
+   * sin ningún código extra porque el param nunca se perdió.
    *
    * El swap lo anima `DetailPanelTransition` con solo ampliar su
-   * `transitionKey` a tres valores — cero maquinaria nueva.
+   * `transitionKey` a los valores que hagan falta — cero maquinaria nueva.
    */
   return (
     <>
@@ -250,17 +269,17 @@ export default function MovementsPage() {
         right={
           /**
            * `transitionKey` cambia solo cuando cambia el DETALLE, no cuando se
-           * prende el calendario. No es una simplificación: meter los tres
-           * estados en el mismo `AnimatePresence mode="wait"` lo deja
-           * trabado — la salida del estado vacío no resuelve nunca y el hijo
-           * nuevo no llega a montarse, así que el calendario no aparecía.
-           * `mode="wait"` está para que los dos paneles no se superpongan en
-           * el mismo track del grid, y esa razón sigue valiendo para el
-           * detalle; el calendario, que ocupa el mismo lugar que el estado
-           * vacío, entra con su propia animación de montaje (`PageEnter`).
+           * prende el calendario o el historial. No es una simplificación:
+           * meter todos los estados en el mismo `AnimatePresence mode="wait"`
+           * lo deja trabado — la salida del estado vacío no resuelve nunca y
+           * el hijo nuevo no llega a montarse, así que el panel no aparecía.
+           * `mode="wait"` está para que los paneles no se superpongan en el
+           * mismo track del grid, y esa razón sigue valiendo para el detalle;
+           * calendario e historial, que ocupan el mismo lugar que el estado
+           * vacío, entran con su propia animación de montaje (`PageEnter`).
            */
           <DetailPanelTransition transitionKey={txId ?? "__placeholder"}>
-            {detail ?? (calendar ? <PageEnter style={{}}>{calendar}</PageEnter> : <TransactionsDetailEmpty />)}
+            {detail ?? (rightPanel ? <PageEnter style={{}}>{rightPanel}</PageEnter> : <TransactionsDetailEmpty />)}
           </DetailPanelTransition>
         }
         overflowing={overflowing}

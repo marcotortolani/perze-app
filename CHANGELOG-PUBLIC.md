@@ -40,6 +40,24 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.17 — 11 de agosto de 2026
+
+### Mejorado
+
+- El historial de movimientos ya no te saca de la pantalla: ahora se abre al lado de la lista
+  (o arriba, en el celular), igual que el calendario. Elegí un mes y se aplica directo a lo que
+  estás viendo, con un chip para sacarlo cuando quieras.
+- Abrir el calendario ahora siempre arranca en el mes de hoy, sin quedar atado a un período que
+  hayas elegido antes desde el historial.
+
+### Arreglado
+
+- El calendario de movimientos podía mostrar actividad en días que ya no tenían nada —pasaba
+  después de borrar todos tus datos desde Ajustes. Ahora el color de cada día coincide siempre
+  con lo que ves al tocarlo.
+- Un día o un mes sin movimientos ya no te ofrecía "cargar tu primer gasto" como si nunca
+  hubieras cargado nada — ahora te avisa que ese día en particular está vacío.
+
 ## 0.30.16 — 10 de agosto de 2026
 
 ### Arreglado

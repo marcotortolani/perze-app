@@ -1181,6 +1181,7 @@ export type Database = {
           id: string
           name: string
           period_start_day: number
+          purged_at: string | null
           settings: Json
           updated_at: string
           week_start: number
@@ -1196,6 +1197,7 @@ export type Database = {
           id: string
           name: string
           period_start_day?: number
+          purged_at?: string | null
           settings?: Json
           updated_at?: string
           week_start?: number
@@ -1211,6 +1213,7 @@ export type Database = {
           id?: string
           name?: string
           period_start_day?: number
+          purged_at?: string | null
           settings?: Json
           updated_at?: string
           week_start?: number
@@ -2948,6 +2951,10 @@ export type Database = {
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }
+      household_period_cuts: {
+        Args: { p_from: string; p_start_day: number; p_to: string }
+        Returns: string[]
+      }
       household_period_start: {
         Args: { p_on: string; p_start_day: number }
         Returns: string
@@ -2994,6 +3001,10 @@ export type Database = {
       }
       prune_push_subscriptions: { Args: never; Returns: undefined }
       purge_audit_log: { Args: never; Returns: undefined }
+      purge_household_finish: {
+        Args: { p_household_id: string }
+        Returns: string
+      }
       purge_household_step: {
         Args: { p_household_id: string; p_step: string }
         Returns: number
@@ -3042,6 +3053,7 @@ export type Database = {
           occurred_at: string
         }[]
       }
+      trigger_annual_summaries: { Args: never; Returns: undefined }
       trigger_daily_fx_sync: { Args: never; Returns: undefined }
       trigger_daily_inflation_sync: { Args: never; Returns: undefined }
       trigger_daily_price_sync: { Args: never; Returns: undefined }

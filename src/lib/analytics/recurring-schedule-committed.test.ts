@@ -10,7 +10,7 @@ vi.mock("@/features/capture/save-transaction", () => ({
 const { computeMonthlyCommitted } = await import("./recurring-schedule");
 
 function household(baseCurrency: string): HouseholdRow {
-  return { id: "h1", name: "Casa", baseCurrency, baseCountry: "UY", periodStartDay: 1, weekStart: 1, enabledModules: [], settings: {}, createdBy: "u1", createdAt: "", updatedAt: "", clientRev: 1 };
+  return { id: "h1", name: "Casa", baseCurrency, baseCountry: "UY", periodStartDay: 1, weekStart: 1, enabledModules: [], settings: {}, createdBy: "u1", createdAt: "", updatedAt: "", clientRev: 1, purgedAt: null };
 }
 
 function rule(overrides: Partial<RecurringRuleInput>): RecurringRuleInput {

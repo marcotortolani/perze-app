@@ -6,6 +6,89 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.17] — 2026-08-11
+
+### Feat — historial como vista de `/transactions`, no una pantalla propia
+
+El chip "Historial" hacía `router.push("/transactions/history")`: en desktop reemplazaba la
+página entera y hacía desaparecer la lista y la segunda columna. Ahora es una vista más de
+`/transactions`, gobernada por `?view=history` — mismo mecanismo que ya tenía el calendario
+(`?view=calendar`), un solo param mutuamente excluyente entre los dos.
+
+- `useHistoryView()` (`use-calendar-view.ts`) reusa el contrato de URL del calendario: `push` que
+  clona `searchParams`, nunca `replace`. `openHistory()`/`closeHistory()`/`selectMonth()`.
+  **Cerrar el panel NO borra `from`/`to`** —a diferencia de `closeCalendar()`— porque elegir un
+  mes es una acción ("aplicá este período"), no un modo de exploración transitorio que se
+  deshace solo al salir.
+- `monthFromParams()` (`calendar-scope.ts`) — inversa de `monthRange`, análoga a la lectura de
+  día de `scopeFromParams` pero para "el rango ES exactamente un mes calendario completo".
+- `TransactionsHistoryPanel.tsx` — el cuerpo de la vieja `/transactions/history/page.tsx`,
+  sin `usePageHeader` (es un panel, no una pantalla). En desktop va en la segunda columna
+  (`page.tsx`, mismo lugar que el calendario); en mobile va inline arriba de la lista
+  (`historySlot`, mismo patrón que `calendarSlot`).
+- Chip de período aplicado en `TransactionsListContent.tsx`, hermano del chip de día del
+  calendario — visible mientras `historyView.selectedMonth` no sea `null`, sobrevive a cerrar el
+  panel, lo quita un click.
+- `/transactions/history/page.tsx` pasa a ser un redirect de compatibilidad (`redirect("/transactions?view=history")`),
+  mismo patrón que ya tenía `/transactions/calendar`.
+
+### Fix — el calendario heredaba el período aplicado desde el historial
+
+`openCalendar()` armaba su rango desde `scope.month`, derivado de `from`/`to` — como
+`closeHistory()` deja `from`/`to` puestos a propósito, abrir el calendario después de elegir un
+mes en el historial abría YA acotado a ese mes, con el chip de período todavía puesto: el
+calendario, que tiene que ser un explorador libre mes a mes, quedaba encerrado en el filtro que
+dejó el historial. `openCalendar()` ahora arranca siempre en el mes real de hoy
+(`scopeFromParams(null, null, new Date())`), ignorando cualquier `from`/`to` que hubiera quedado
+puesto — mismo comportamiento que ya tenía cualquier apertura de calendario antes de que
+existiera el historial (`closeCalendar()` borra `from`/`to`, así que reabrir siempre caía en hoy).
+
+### Fix — el heatmap del calendario pintaba días con movimientos que la lista no mostraba
+
+Dos causas superpuestas, reportadas como "actividad fantasma" después de correr "Borrar todos
+mis datos":
+
+- El heatmap (`page.tsx`) filtraba solo con `matchesNonDateFilters`, sin el switch
+  Personal/Compartido/Todo que sí aplicaba la lista (`accountMatchesScope` sobre `accounts`) — un
+  movimiento cuya cuenta no matcheaba el scope activo pintaba el día pero no aparecía al tocarlo.
+  Extraído a `useScopedAccounts`/`useScopedTransactions` (`hooks/use-scoped-transactions.ts`),
+  usado ahora por el heatmap, la lista y el panel de historial — un solo dueño del filtro de
+  scope, estructuralmente imposible que diverjan.
+- El purge ("Borrar todos mis datos", `/more/data`) hace `DELETE` real en el servidor, pero el
+  pull incremental de `transactions` (`pull.ts`) depende de soft-deletes para enterarse de un
+  borrado remoto — ningún otro dispositivo (ni una segunda pestaña con otra sesión) se enteraba
+  nunca, y sus `transactions` en Dexie sobrevivían para siempre. Se suma `households.purged_at`
+  (migración `20260811210000_household_purge_marker.sql`) + `purge_household_finish` (RPC,
+  SECURITY DEFINER) + `reconcileRemotePurge` (`purge-reconcile.ts`), que corre en cada
+  `pullFromRemote` ANTES de `pullTransactions` y vacía Dexie si ve un `purged_at` más nuevo que
+  el que ya aplicó ese dispositivo. También se suma limpieza de `outbox` (podía resucitar en el
+  servidor filas que el purge acababa de borrar), el watermark de `meta`, `conflicts` y
+  `fxRates` — antes solo se vaciaban las tablas raíz — y se llama a `purgeNavigationCaches()` y
+  `clearHouseholdDataStores()` (precios de instrumentos, banners) al terminar el purge.
+
+### Fix — un día/mes sin movimientos mostraba "Cargar mi primer gasto" aunque la household tuviera historial
+
+`TransactionsListContent` usaba el mismo chequeo (`transactions.length === 0`) para "esta
+household nunca cargó nada" (la pantalla de bienvenida con CTA a `/add`) y para "el rango/día
+elegido no tiene movimientos" — un día del calendario sin gasto activaba la pantalla de
+bienvenida completa, sin los chips de filtro/calendario/historial y con un CTA que no
+correspondía. Ahora se distingue con `useTransactionYearRange` (`yearRange === null` = cero
+movimientos en TODA la historia): el caso "rango vacío, household con datos" cae en el estado
+vacío granular que ya existía pero estaba inalcanzable (`"Sin movimientos ese día" + "Todo el
+mes"`, `"Sin movimientos este mes"`, `"Ningún movimiento coincide con estos filtros" + "Limpiar
+filtros"`, según la vista activa).
+
+### Fix — el resalte de selección del panel de historial no sangraba como el resto de la app
+
+`TransactionsHistoryPanel` marcaba la fila del mes elegido con el fondo pegado exactamente al
+ancho de la fila (`ListRow` no tiene padding horizontal propio) — se veía como una franja plana
+en vez del mismo "chip flotante" con el que ya se marca la selección en todos lados (la fila de
+movimiento activa, los días del calendario). Ahora usa la misma técnica `SELECTION_BLEED` que
+`TransactionsListContent`: la caja del resalte sangra 12px más allá de la fila y el padding
+compensa para que el ícono y el texto no se muevan de su posición sin selección.
+
+---
+
 ## [0.30.16] — 2026-08-10
 
 ### Docs — diseño de "cierre de período" (`docs/cierre-de-periodo.md`)

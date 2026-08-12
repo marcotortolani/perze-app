@@ -529,6 +529,7 @@
    "filters": "Filters",
    "calendar": "Calendar",
    "history": "History",
+   "clearPeriod": "Clear applied period",
    "cancel": "Cancel",
    "income": "Income",
    "expenses": "Expenses",
@@ -555,11 +556,9 @@
    "dayCount": "{count, plural, one {# transaction} other {# transactions}}"
   },
   "history": {
-   "title": "History",
    "year": "Year",
    "chooseYear": "Choose year",
-   "empty": "No transactions saved yet.",
-   "back": "Back to transactions"
+   "empty": "No transactions saved yet."
   },
   "detail": {
    "selectPrompt": "Pick a transaction from the list to see its detail here.",

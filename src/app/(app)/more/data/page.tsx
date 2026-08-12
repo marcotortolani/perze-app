@@ -18,7 +18,9 @@ import { useGoals } from "@/hooks/use-goals";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useDebts } from "@/hooks/use-debts";
 import { usePortfolios } from "@/hooks/use-investments";
-import { PURGE_STEPS, runPurgeStep, wipeLocalHouseholdData } from "@/lib/repos/purge-household-repo";
+import { finishPurge, PURGE_STEPS, runPurgeStep, wipeLocalHouseholdData } from "@/lib/repos/purge-household-repo";
+import { clearHouseholdDataStores } from "@/lib/auth/sign-out";
+import { purgeNavigationCaches } from "@/lib/pwa/navigation-caches";
 
 // Un solo literal del token de marca en todo el archivo (presupuesto de
 // ruido: 1 violeta visible por pantalla) — la barra "en progreso" y la
@@ -96,6 +98,18 @@ export default function DataAndBackupPage() {
       }
     }
     await wipeLocalHouseholdData(household.id);
+    clearHouseholdDataStores();
+    // Best-effort — los payloads RSC cacheados de `/transactions` y `/`
+    // traen datos renderizados de antes del borrado. `purgeNavigationCaches`
+    // ya existe (se usa al cerrar sesión y en onboarding) y nunca puede
+    // bloquear una transición de estado.
+    await purgeNavigationCaches();
+    // Recién ACÁ, después de que el caché local ya quedó limpio: estampa
+    // `households.purged_at` para que cualquier OTRO dispositivo se entere
+    // en su próximo pull (`reconcileRemotePurge`) y guarda el marcador local
+    // con el timestamp exacto que devolvió el servidor, para que el PROPIO
+    // dispositivo no repita el wipe en el próximo tick.
+    await finishPurge(household.id).catch(() => {});
     queryClient.clear();
     setFlow({ phase: "success" });
   };

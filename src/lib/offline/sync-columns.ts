@@ -6,7 +6,7 @@
  */
 
 export const HOUSEHOLDS_COLUMNS =
-  "id, name, base_currency, base_country, period_start_day, week_start, enabled_modules, settings, created_by, created_at, updated_at, client_rev";
+  "id, name, base_currency, base_country, period_start_day, week_start, enabled_modules, settings, created_by, created_at, updated_at, client_rev, purged_at";
 
 export const HOUSEHOLD_MEMBERS_COLUMNS = "household_id, profile_id, role, display_name, color, icon, status, joined_at";
 

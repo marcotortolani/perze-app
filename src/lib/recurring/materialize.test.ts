@@ -22,6 +22,7 @@ const HOUSEHOLD: HouseholdRow = {
   createdAt: "2026-07-01T00:00:00.000Z",
   updatedAt: "2026-07-01T00:00:00.000Z",
   clientRev: 1,
+  purgedAt: null,
 };
 
 async function makeAccount(overrides: Partial<AccountRow> & Pick<AccountRow, "currencyCode" | "openingBalance">): Promise<AccountRow> {

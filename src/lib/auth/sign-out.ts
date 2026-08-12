@@ -9,6 +9,8 @@ import { useScopeStore } from "@/stores/scope-store";
 import { useNavStore } from "@/stores/nav-store";
 import { useContextualTooltipStore } from "@/stores/contextual-tooltip-store";
 import { useInstrumentPricesStore } from "@/stores/instrument-prices-store";
+import { useBirthdayBannerStore } from "@/stores/birthday-banner-store";
+import { useReminderBannerStore } from "@/stores/reminder-banner-store";
 
 /**
  * B4 — no existía `signOut()` en todo el repo (`grep -rn "signOut" src/` daba
@@ -63,8 +65,27 @@ function clearPersistedStores(): void {
   useScopeStore.persist.clearStorage();
   useNavStore.persist.clearStorage();
   useContextualTooltipStore.persist.clearStorage();
-  useInstrumentPricesStore.persist.clearStorage();
+  clearHouseholdDataStores();
   clearPendingInviteCode();
+}
+
+/**
+ * Stores persistidos cuyo contenido es un CACHÉ de datos financieros del
+ * household (no una preferencia de cuenta o de dispositivo) — sobreviven a
+ * un logout normal solo porque `clearPersistedStores` los incluye, pero
+ * también quedan sin sentido después de "Borrar todos mis datos"
+ * (`/more/data`), que dejó el household vacío sin cerrar la sesión.
+ * Compartido entre los dos flujos para no mantener la lista dos veces.
+ *
+ * `useInstrumentPricesStore`: precios cacheados de instrumentos que, tras
+ * el purge, ya no tienen ningún trade/posición detrás. `useBirthdayBannerStore`/
+ * `useReminderBannerStore`: guardan qué se descartó ya — sin datos del
+ * household, esos avisos no tienen nada que evaluar hasta la próxima carga.
+ */
+export function clearHouseholdDataStores(): void {
+  useInstrumentPricesStore.persist.clearStorage();
+  useBirthdayBannerStore.persist.clearStorage();
+  useReminderBannerStore.persist.clearStorage();
 }
 
 /** Vacía el CacheStorage del service worker — sin esto, respuestas cacheadas de un household ajeno (p. ej. `/api/fx`) sobreviven al logout (B5/C25). */
