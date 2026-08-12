@@ -6,6 +6,72 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.18] — 2026-08-11
+
+Tanda 2 de la ronda de correcciones reportadas en uso real: presentación y FX. Orden de
+cuentas en mobile, cifra héroe recortada, banner de sincronización mal acomodado, y el
+diagnóstico de la cuenta en BTC sin equivalente en dólares.
+
+### Fix — el carrusel de cuentas en mobile ignoraba el orden de `/accounts`
+
+`(app)/page.tsx` ordenaba las cuentas del home solo por código de moneda y nunca leía
+`sortOrder` (el orden que se define con drag&drop en `/accounts`) — en desktop no se notaba
+porque el bento reordena por tamaño, pero en mobile el carrusel muestra el array tal cual
+llega. Nuevo `compareAccountsForDisplay()` (`src/lib/reference/account-order.ts`): agrupa
+por moneda (base primero, mismo criterio que `/accounts`) y dentro de cada grupo por
+`sortOrder` — que solo tiene significado DENTRO de un grupo de moneda, porque
+`reorderAccounts` lo reinicia en 0 por cada uno. Aplicado sobre `AccountRow[]` antes de
+mapear a los summaries del home, no en el repo (que no conoce la moneda base del household).
+
+### Fix — la cifra héroe del detalle de un movimiento se recortaba en montos grandes
+
+`Amount` con `fit` tiene un piso de auto-fit (55% del tamaño nominal) y por debajo de eso
+**recortaba en silencio** dentro de su `overflow: hidden` — un monto de 8+ dígitos en ARS no
+entraba en un iPhone real. Tres cambios: (1) se saca `tabular` del héroe del detalle
+(`TransactionDetailContent.tsx`) — la fuente mono es ~15% más ancha sin ninguna columna con
+la que alinear, y `docs/design/bloque-d-movimientos.html` (D3) tampoco la usa; (2)
+`fitFloor={0.4}` en ese mismo call site; (3) `--text-hero-xl-size`/`--text-hero-size` pasan
+a `clamp()` en vez de un tamaño fijo, así que la cifra nace más chica en pantallas angostas
+en vez de depender solo del auto-fit — que sigue existiendo como red de seguridad. Nuevo
+`isTruncated()` (junto a `fitScale()`) para dejar de recortar en silencio: cuando ni el piso
+alcanza, `Amount` marca `data-truncated` + `title` con el valor completo.
+
+**Hallazgo aparte, no corregido acá**: `docs/design/bloque-d-movimientos.html` (D3) y la
+regla ya documentada en `docs/02-design-system.md` § 3 ("`hero-xl` es solo para la cifra que
+el usuario está construyendo activamente — el keypad; `hero` es para toda cifra protagonista
+ya resuelta") coinciden en que el héroe del detalle de un movimiento debería ser `hero` (40px),
+no `hero-xl` (64px) como está hoy en el código. No se tocó en esta tanda porque cambiar el
+tamaño es una decisión de jerarquía visual aparte de la que se pidió (sacar el mono + bajar
+el piso + clamp) — queda señalado para decidir en otra conversación.
+
+### Fix — el banner de sincronización se veía torcido y roto en mobile
+
+Dos causas en el home (`(app)/page.tsx`): (1) el banner vive dentro del scroller
+`scroll-gutter-right`, que estira su propia caja 12px a la derecha y le agrega 20px de
+padding — el contenido normal termina con un inset de 20px a la izquierda pero 28px a la
+derecha, así que el `margin: 0 calc(-1 * var(--screen-padding))` simétrico del banner
+cancelaba bien el lado izquierdo pero dejaba el derecho 8px corto. Ahora el margen es
+asimétrico, compensando esos 8px. (2) `Banner.tsx` no tenía `minWidth: 0` en el mensaje ni
+`flexShrink: 0`/`whiteSpace: nowrap` en el contador de pendientes o el botón de acción — a
+390px el texto desbordaba en vez de hacer wrap, y el contador o el botón podían partirse en
+dos líneas. (Se descartó agregar `--safe-left`/`--safe-right` al banner: ya se aplican una
+sola vez en `app-shell`, más arriba en el árbol — sumarlos acá habría sido doble inset.)
+
+### Fix — logging de diagnóstico para la cuenta en BTC sin equivalente en dólares
+
+Diagnóstico contra el proyecto remoto: `BTC` YA está en `currencies` (activa) y la moneda
+base real del household afectado (USD) SÍ está en `SUPPORTED_VS` de CoinGecko — ninguna de
+las dos causas hipotéticas (moneda sin dar de alta / par no soportado) aplica. `fx_rates` no
+tiene ni una sola fila histórica para BTC/USD, así que el fetch en vivo contra CoinGecko
+nunca tuvo éxito — y se descartaba en silencio en dos lugares (`fetchAllQuotes` en
+`api/fx/route.ts` ante un proveedor rechazado, `fx-repo.ts` ante un `!res.ok` o una excepción),
+indistinguible de "nunca se intentó". Se agregó `console.warn` en los dos puntos para que la
+próxima falla deje rastro real en los logs de Vercel — sospecha más probable: CoinGecko es
+agresivo limitando IPs de infraestructura cloud compartida, pero hace falta el log real para
+confirmarlo en vez de adivinar un fix a ciegas.
+
+---
+
 ## [0.30.17] — 2026-08-11
 
 Tanda 1 de la ronda de correcciones reportadas en uso real (11 fallas, entregadas en 4

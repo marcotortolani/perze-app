@@ -67,8 +67,17 @@ async function fetchAllQuotes(base: string, quote: string): Promise<FxRateRecord
 
   const records: FxRateRecord[] = [];
   for (const [i, r] of results.entries()) {
-    if (r.status !== "fulfilled") continue;
     const provider = supporting[i];
+    if (r.status !== "fulfilled") {
+      // Antes esto se descartaba en silencio: un proveedor que tira (rate
+      // limit, timeout, IP bloqueada — CoinGecko en particular es agresivo
+      // con IPs de infraestructura cloud compartida) dejaba el par en
+      // `pending` para siempre, sin ningún rastro en los logs de Vercel
+      // para diferenciarlo de "nunca se intentó". Un log acá es la única
+      // forma de confirmar la causa real la próxima vez que pase.
+      console.warn(`[fx] proveedor ${provider?.id ?? "?"} falló para ${base}/${quote}:`, r.reason);
+      continue;
+    }
     if (!provider) continue;
     for (const q of r.value) {
       records.push({

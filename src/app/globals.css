@@ -336,11 +336,22 @@ html[data-backdrop-intensity="vivid"] {
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --text-hero-xl-size: 64px;
-  --text-hero-xl-line: 60px;
+  /*
+   * `clamp()`, no un tamaño fijo: antes 64px/40px eran el mismo número en
+   * un iPhone de 390px que en un desktop de 1400px, así que la única
+   * defensa contra un monto largo (p. ej. "−AR$ 18.478.800,00") era el
+   * auto-fit por JS de `Amount` — que tiene un piso (`FIT_FLOOR`) y
+   * recortaba en silencio por debajo de él. El `clamp()` hace que la
+   * cifra NAZCA más chica en una pantalla angosta (el mínimo cubre hasta
+   * los teléfonos más chicos, ~320px), así que el auto-fit tiene que
+   * achicar menos — el fit sigue siendo la red de seguridad, no el único
+   * mecanismo.
+   */
+  --text-hero-xl-size: clamp(40px, 11vw, 64px);
+  --text-hero-xl-line: clamp(40px, 10.5vw, 60px);
   --text-hero-xl-track: -0.02em;
-  --text-hero-size: 40px;
-  --text-hero-line: 44px;
+  --text-hero-size: clamp(28px, 7vw, 40px);
+  --text-hero-line: clamp(32px, 7.7vw, 44px);
   --text-hero-track: -0.015em;
   --text-title-size: 22px;
   --text-title-line: 28px;

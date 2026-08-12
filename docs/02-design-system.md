@@ -236,6 +236,12 @@ caption   11 / 16   +2%    uppercase, headers de sección
 
 Las cifras héroe usan figuras proporcionales; `tabular-nums` se reserva para columnas.
 
+**`hero-xl`/`hero` son `clamp()`, no un tamaño fijo.** 64px y 40px son el TECHO (pantallas
+anchas); en un teléfono angosto nacen más chicos (`clamp(40px, 11vw, 64px)` y
+`clamp(28px, 7vw, 40px)`) para que un monto largo no dependa solo del auto-fit por JS de
+`<Amount fit>` para entrar — ese mecanismo sigue existiendo como red de seguridad (tiene un
+piso, configurable con `fitFloor`), no como el único mecanismo.
+
 **Cuándo `hero-xl` (64) en vez de `hero` (40) — CON-28.** La auditoría marcó J7 y H11
 usándolo sin que ninguna regla lo explicara. La regla: `hero-xl` es solo para la cifra que
 el usuario está **construyendo activamente en el momento** — el monto en el keypad de

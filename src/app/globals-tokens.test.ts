@@ -66,8 +66,12 @@ describe("tokens de color — docs/02-design-system.md § 2", () => {
 
 describe("tipografía — docs/02-design-system.md § 3", () => {
   it("escala completa, 6 niveles", () => {
-    expectToken("--text-hero-xl-size: 64px");
-    expectToken("--text-hero-size: 40px");
+    // hero-xl/hero: `clamp()`, no un valor fijo — nace más chico en una
+    // pantalla angosta (fix del recorte de cifras grandes en mobile), pero
+    // el TECHO documentado en docs/02 (64/40) sigue siendo el mismo, así
+    // que el guard sigue verificando que no se haya movido en silencio.
+    expectToken("clamp(40px, 11vw, 64px)"); // --text-hero-xl-size
+    expectToken("clamp(28px, 7vw, 40px)"); // --text-hero-size
     expectToken("--text-title-size: 22px");
     expectToken("--text-body-size: 16px");
     expectToken("--text-label-size: 13px");

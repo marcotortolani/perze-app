@@ -86,4 +86,53 @@ describe("Amount — integración de `fit`", () => {
       globalThis.ResizeObserver = original;
     }
   });
+
+});
+
+/**
+ * La matemática exacta de `truncated` (dónde está el límite, un fitFloor
+ * custom, casos borde) se prueba sin DOM en `isTruncated()`
+ * (`Amount.test.ts`) — acá solo se verifica que el componente la conecta
+ * de verdad al atributo `data-truncated`/`title`.
+ *
+ * Los dos casos de este describe usan disparidades GRANDES a propósito
+ * (contenedor mucho más chico o mucho más grande que el texto), no un
+ * caso al límite como 280/400: el `scrollWidth` mockeado es una
+ * CONSTANTE (no reacciona al `font-size` real como en un browser — mismo
+ * límite del entorno de test que ya documenta el describe de arriba), así
+ * que cuando el efecto se re-dispara por el cambio de `scale` (pasa varias
+ * veces dentro de un solo `render()`), cada pasada recalcula `naturalWidth`
+ * dividiendo esa constante por una `scale` cada vez más chica — en un
+ * browser real eso converge porque `scrollWidth` SÍ se achica junto con el
+ * `scale` anterior; acá diverge. Con una disparidad grande el resultado de
+ * `truncated` no cambia de signo entre pasadas, así que el test es estable
+ * sin depender de en qué pasada se haya "asentado" el efecto.
+ */
+describe("Amount — `truncated` cuando ni el piso de `fit` alcanza", () => {
+  afterEach(() => {
+    // Vuelve al fixture del describe de arriba (280/400) para no filtrar
+    // este ancho a otros tests del archivo.
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 280 });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, value: 400 });
+  });
+
+  it("contenedor mucho más chico que el texto: marca truncated y conserva el valor completo en title", () => {
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 50 });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, value: 1000 });
+
+    const { container } = renderAmount({ size: "hero-xl", fitFloor: 0.4 });
+
+    const outer = container.querySelector<HTMLElement>("span[data-truncated='true']");
+    expect(outer).not.toBeNull();
+    expect(outer!.title).toContain("1.234.567");
+  });
+
+  it("contenedor más ancho que el texto (nunca necesita achicar): no marca truncated", () => {
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 500 });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, value: 400 });
+
+    const { container } = renderAmount({ size: "hero-xl", fitFloor: 0.4 });
+
+    expect(container.querySelector("span[data-truncated]")).toBeNull();
+  });
 });

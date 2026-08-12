@@ -248,7 +248,16 @@ export function TransactionDetailContent({ id }: { id: string }) {
             />
           </div>
         ) : null}
-        <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit polarity={polarity} tabular mutedDecimals />
+        {/* Sin `tabular`: acá no hay ninguna columna con la que alinear —
+            es un número centrado y único, y la fuente mono es ~15% más
+            ancha sin ganar nada a cambio. `docs/design/bloque-d-movimientos.html`
+            (D3, la fuente de verdad de esta pantalla) tampoco la usa.
+            `fitFloor={0.4}`: con un monto de 8+ dígitos en ARS y mono
+            (piso 55% default) el texto se recortaba en silencio en un
+            iPhone — bajar el piso más `data-truncated` en `Amount`
+            (si aun así no entra, ya no pasa desapercibido) resuelve el
+            caso real sin inventar un dato que no existe. */}
+        <Amount value={money(signedAmount, transaction.currencyCode)} size="hero-xl" fit fitFloor={0.4} polarity={polarity} mutedDecimals />
         {/* El valor en tu moneda base. NO es un cambio que hiciste: nadie
             convirtió esta plata. Es cuánto representaba este movimiento en la
             moneda con la que mirás todos tus números, calculado con la

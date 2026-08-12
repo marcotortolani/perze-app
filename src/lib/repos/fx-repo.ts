@@ -430,9 +430,16 @@ export const fxRepo = {
             });
           }
           resolution = { ...resolution, availableQuoteKinds: freshRecords.length > 0 ? freshRecords : resolution.availableQuoteKinds };
+        } else if (typeof console !== "undefined") {
+          // Antes esto era indistinguible de "no hay red": una moneda mal
+          // configurada (400) y un fallo real de proveedor (500/502) daban
+          // el mismo resultado — `pending`, sin rastro. El guardado sigue
+          // sin bloquearse (se devuelve `resolution` tal cual estaba).
+          console.warn(`[fx] /api/fx respondió ${res.status} para ${base}/${quote}`);
         }
-      } catch {
+      } catch (error) {
         // Sin red o la API falló: se guarda igual sin conversión (needs_fx). Nunca bloquea.
+        if (typeof console !== "undefined") console.warn(`[fx] resolve(${base}/${quote}) falló:`, error);
       }
     }
 

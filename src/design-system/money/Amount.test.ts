@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitScale, FIT_FLOOR } from "./Amount";
+import { fitScale, isTruncated, FIT_FLOOR } from "./Amount";
 
 describe("fitScale — prop `fit` de Amount", () => {
   it("si el texto ya entra, no encoge (escala 1)", () => {
@@ -42,5 +42,47 @@ describe("fitScale — prop `fit` de Amount", () => {
     const naturalWidthAgain = scrollWidthAtFirst / first;
     const second = fitScale(280, naturalWidthAgain, first);
     expect(second).toBe(first);
+  });
+});
+
+describe("isTruncated — cuándo ni el piso de fitScale alcanza", () => {
+  it("si el texto entra sin escalar, nunca está truncado", () => {
+    expect(isTruncated(320, 200)).toBe(false);
+  });
+
+  it("si escala por encima del piso, entra y no está truncado", () => {
+    // 280/400 = 0.7, por encima del FIT_FLOOR (0.55) default.
+    expect(isTruncated(280, 400)).toBe(false);
+  });
+
+  it("si ni al piso entra, está truncado — el caso que antes se recortaba en silencio", () => {
+    // Al FIT_FLOOR (0.55), el texto de 1000px mide 550px — sigue sin
+    // entrar en un contenedor de 50px.
+    expect(isTruncated(50, 1000)).toBe(true);
+  });
+
+  it("justo en el límite del piso no cuenta como truncado (< estricto, no <=)", () => {
+    // 0.5 en vez de 0.55: exacto en binario, evita que un error de
+    // redondeo de punto flotante en 400*0.55 mueva la frontera del test.
+    // containerWidth == naturalWidth * floor exactamente: fitScale lo deja
+    // pasar (clamped = floor = containerWidth/naturalWidth), así que
+    // truncated tiene que coincidir con esa misma frontera.
+    expect(isTruncated(200, 400, 0.5)).toBe(false); // 400*0.5 = 200
+    expect(isTruncated(199, 400, 0.5)).toBe(true);
+  });
+
+  it("respeta un fitFloor custom, no solo el default", () => {
+    // Con floor 0.4 en vez del default 0.55, el piso de "entra sin
+    // truncar" baja de 220 a 160 (400*0.4) — el mismo caso de arriba
+    // (280/400) sigue sin estar truncado, pero acá además un contenedor
+    // más angosto (200) que SÍ hubiera truncado con el floor default
+    // ahora entra justo.
+    expect(isTruncated(200, 400, 0.4)).toBe(false); // 400*0.4 = 160 < 200
+    expect(isTruncated(100, 400, 0.4)).toBe(true); // 400*0.4 = 160 > 100
+  });
+
+  it("ignora una medición inválida (contenedor o texto en 0)", () => {
+    expect(isTruncated(0, 400)).toBe(false);
+    expect(isTruncated(300, 0)).toBe(false);
   });
 });

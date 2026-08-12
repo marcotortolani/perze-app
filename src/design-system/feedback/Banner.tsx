@@ -67,9 +67,22 @@ export function Banner({ pending = 0, status = "offline", message, action, style
       }}
     >
       <Icon name={STATUS_ICON[status]} size={15} strokeWidth={2} color={color} />
-      <span>{message ?? t(`ds.banner.${status}`)}</span>
+      {/* `flex: 1, minWidth: 0`: sin esto, un `<span>` dentro de un flex
+          container no encoge ni hace wrap — su `min-width` default es el
+          ancho de su propio contenido, así que un mensaje largo (p. ej.
+          el de conflictos, que lleva un conteo) desbordaba el banner en
+          vez de pasar a una segunda línea en una pantalla angosta. */}
+      <span style={{ flex: 1, minWidth: 0 }}>{message ?? t(`ds.banner.${status}`)}</span>
       {pending > 0 ? (
-        <span style={{ marginLeft: action ? undefined : "auto", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums" }}>
+        <span
+          style={{
+            marginLeft: action ? undefined : "auto",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
+            fontFamily: "var(--font-mono)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
           {t("ds.banner.pending", { count: pending })}
         </span>
       ) : null}
@@ -77,7 +90,20 @@ export function Banner({ pending = 0, status = "offline", message, action, style
         <button
           type="button"
           onClick={action.onClick}
-          style={{ marginLeft: "auto", minHeight: 32, background: "none", border: 0, cursor: "pointer", color: textColor, fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, padding: "0 4px" }}
+          style={{
+            marginLeft: "auto",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
+            minHeight: 32,
+            background: "none",
+            border: 0,
+            cursor: "pointer",
+            color: textColor,
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: 700,
+            padding: "0 4px",
+          }}
         >
           {action.label}
         </button>

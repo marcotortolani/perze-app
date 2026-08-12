@@ -50,6 +50,17 @@ export function fitScale(containerWidth: number, naturalWidthAtScale1: number, p
   return Math.abs(clamped - previousScale) < FIT_EPSILON ? previousScale : clamped;
 }
 
+/**
+ * Cierto cuando ni siquiera al `floor` de `fitScale` el texto entra en
+ * `containerWidth` — el caso que antes `Amount` recortaba en silencio
+ * dentro de su `overflow: hidden`, sin dejar ningún rastro. Pura por el
+ * mismo motivo que `fitScale`: la matemática se testea sin DOM.
+ */
+export function isTruncated(containerWidth: number, naturalWidthAtScale1: number, floor: number = FIT_FLOOR): boolean {
+  if (containerWidth <= 0 || naturalWidthAtScale1 <= 0) return false;
+  return containerWidth < naturalWidthAtScale1 * floor;
+}
+
 export interface AmountProps {
   /** Money — bigint en unidades mínimas. Nunca un `number`: ver `docs/00-producto.md` § 2.3. */
   value: Money;
@@ -125,6 +136,13 @@ export function Amount({
   const outerRef = useRef<HTMLSpanElement>(null);
   const innerRef = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(1);
+  // Antes, tocar `fitFloor` y seguir sin entrar se resolvía en silencio:
+  // el `overflow: hidden` del contenedor medido se comía lo que sobraba
+  // sin dejar rastro, ni en el DOM ni en un test. `truncated` no cambia
+  // ningún píxel — solo lo hace visible (`data-truncated` + `title` en el
+  // nodo externo) para que el caso se pueda detectar y testear en vez de
+  // descubrirse a mano en un teléfono real.
+  const [truncated, setTruncated] = useState(false);
   const negative = value.amount < 0n;
   const pol = polarity ?? (!showSign ? "neutral" : negative ? "negative" : value.amount > 0n ? "positive" : "neutral");
   const color =
@@ -152,6 +170,11 @@ export function Amount({
   const sign = value.amount === 0n ? "" : negative ? "−" : showSign ? "+" : "";
   const arrow = showArrow && value.amount !== 0n ? (negative ? "↓ " : "↑ ") : "";
   const symbol = CURRENCY_SYMBOLS[value.currency.toUpperCase()] ?? value.currency;
+  // Texto plano equivalente al que arma `inner` en JSX — solo se usa como
+  // `title` cuando `truncated` es cierto, para que el valor completo siga
+  // siendo consultable (hover/lectura de pantalla) aunque el dibujo se
+  // haya quedado corto.
+  const plainText = `${arrow}${sign}${symbol} ${intFormatted}${decimals > 0 ? `${decimal}${fracPart}` : ""}`;
 
   useLayoutEffect(() => {
     if (!fit) return;
@@ -166,6 +189,7 @@ export function Amount({
       // necesitar un nodo de medición oculto ni un flash a tamaño completo.
       const naturalWidth = inner.scrollWidth / scale;
       setScale((prev) => fitScale(containerWidth, naturalWidth, prev, fitFloor));
+      setTruncated(isTruncated(containerWidth, naturalWidth, fitFloor));
     };
 
     measure();
@@ -253,7 +277,13 @@ export function Amount({
   // píldora se dibuja como su hermana, no su hija — recién ahí el blur
   // tiene aire para difuminarse igual que en los montos que no usan `fit`.
   const measured = (
-    <span ref={outerRef} style={{ display: "block", width: "100%", minWidth: 0, overflow: "hidden", textAlign: "inherit", ...(privacy ? null : style) }} {...(privacy ? {} : rest)}>
+    <span
+      ref={outerRef}
+      data-truncated={truncated ? "true" : undefined}
+      title={truncated ? plainText : undefined}
+      style={{ display: "block", width: "100%", minWidth: 0, overflow: "hidden", textAlign: "inherit", ...(privacy ? null : style) }}
+      {...(privacy ? {} : rest)}
+    >
       {inner}
     </span>
   );

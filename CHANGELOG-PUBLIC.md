@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.18 — 11 de agosto de 2026
+
+### Arreglado
+
+- En el celular, el carrusel de cuentas del inicio ahora respeta el orden que elegiste en
+  "Cuentas".
+- Los montos grandes en el detalle de un movimiento ya no se cortan en pantallas chicas.
+- El aviso de "sin conexión"/sincronización pendiente ya no se ve torcido ni se rompe en el
+  celular.
+
 ## 0.30.17 — 11 de agosto de 2026
 
 ### Arreglado

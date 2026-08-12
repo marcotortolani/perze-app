@@ -60,6 +60,7 @@ import type { Money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { accountColorVar } from "@/lib/reference/account-colors";
+import { compareAccountsForDisplay } from "@/lib/reference/account-order";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-transaction";
@@ -297,25 +298,29 @@ export default function HomePage() {
   // vas acumulando un gasto pendiente de pagar. Van a su propia sección más
   // abajo, no al carrusel de cuentas — mezclarlas ahí las hacía leerse como
   // si fueran saldo disponible.
-  const liquidityAccounts = allAccounts.filter((a) => a.kind !== "credit_card");
+  // `compareAccountsForDisplay`: agrupa por moneda (base primero, mismo
+  // criterio que `/accounts`) y dentro de cada grupo por `sortOrder` — el
+  // orden que el usuario define ahí con drag&drop. Antes esto ordenaba
+  // solo por código de moneda y nunca leía `sortOrder`, así que en mobile
+  // (donde no hay bento que reordene por tamaño, ver más abajo) el
+  // carrusel de cuentas salía en un orden que el usuario nunca eligió.
+  const liquidityAccounts = allAccounts.filter((a) => a.kind !== "credit_card").sort(compareAccountsForDisplay(baseCurrency));
   const creditCardAccounts = allAccounts.filter((a) => a.kind === "credit_card");
 
-  const liquiditySummaries = liquidityAccounts.map((a) => ({
+  // Bento en desktop (`AccountCarousel gridOnDesktop`): sin card de total —
+  // "Total convertido" mostraba el mismo número que el patrimonio neto del
+  // héroe, arriba de esto, y repetir la misma cifra dos veces en la
+  // pantalla es ruido, no información. Cuál card queda destacada la
+  // decide el layout del bento (`bentoLayout()` en `AccountCarousel`), que
+  // solo se aplica en desktop — en mobile se muestra tal cual, en el orden
+  // de `liquidityAccounts` de arriba.
+  const accountSummaries = liquidityAccounts.map((a) => ({
     id: a.id,
     institution: a.name,
     name: t(ACCOUNT_KIND_MESSAGE_KEY[a.kind]),
     balance: money(a.currentBalance, a.currencyCode),
     country: a.countryCode ?? undefined,
   }));
-  // Bento en desktop (`AccountCarousel gridOnDesktop`): sin card de total —
-  // "Total convertido" mostraba el mismo número que el patrimonio neto del
-  // héroe, arriba de esto, y repetir la misma cifra dos veces en la
-  // pantalla es ruido, no información. El resto se ordena por moneda:
-  // cifras en la misma moneda (comparables entre sí) quedan agrupadas, en
-  // vez de un orden arbitrario que las mezcla al azar. Cuál card queda
-  // destacada lo decide el layout del bento (`bentoLayout()` en
-  // `AccountCarousel`), no esta página.
-  const accountSummaries = [...liquiditySummaries].sort((a, b) => a.balance.currency.localeCompare(b.balance.currency));
 
   const recentTransactions = allTransactions.slice(0, 5);
 
@@ -342,13 +347,25 @@ export default function HomePage() {
         style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 8 }}
       >
       {showBirthdayBanner ? <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} /> : null}
-      {pending && pending > 0 ? <Banner status="offline" pending={pending} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
+      {/* `margin` asimétrico, no `0 calc(-1 * var(--screen-padding))` en
+          los dos lados: este banner vive DENTRO del scroller
+          `scroll-gutter-right` de más arriba, que estira su propia caja
+          12px a la derecha y le agrega 20px de padding — el contenido
+          normal (la lista de cuentas, etc.) termina con un inset de 20px
+          a la izquierda pero 28px a la derecha (20 + 8 de aire real de la
+          barra de scroll, ver el comentario de `scroll-gutter-right` en
+          globals.css). Un `margin: 0 -20px` simétrico solo cancelaba el
+          lado izquierdo — el derecho quedaba 8px corto y el banner se
+          veía sangrado torcido. */}
+      {pending && pending > 0 ? (
+        <Banner status="offline" pending={pending} style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }} />
+      ) : null}
       {conflicts.length > 0 ? (
         <Banner
           status="error"
           message={t("conflictsPage.homeBanner", { count: conflicts.length })}
           action={{ label: t("conflictsPage.homeBannerAction"), onClick: () => router.push("/more/sync") }}
-          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+          style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }}
         />
       ) : null}
       {/* El recordatorio informativo solo aparece si no hay ya otro banner
