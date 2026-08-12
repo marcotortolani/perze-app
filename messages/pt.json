@@ -1306,6 +1306,44 @@
   "movement": "Movimentação",
   "errorWhat": "Não conseguimos carregar seu resumo.",
   "privacyTooltip": "Toque no olho para borrar os valores — útil em público.",
+  "customize": {
+   "enter": "Personalizar",
+   "done": "Pronto",
+   "hint": "Arraste os blocos para reordená-los ou movê-los entre colunas.",
+   "dragBlock": "Mover {block}",
+   "moveToLeftColumn": "Mover {block} para a coluna esquerda",
+   "moveToRightColumn": "Mover {block} para a coluna direita",
+   "hideBlock": "Ocultar {block}",
+   "showBlock": "Mostrar {block}",
+   "show": "Mostrar",
+   "hiddenTitle": "Blocos ocultos",
+   "unavailable": "Sem dados por enquanto",
+   "reset": "Restaurar",
+   "resetDone": "Voltamos à ordem original.",
+   "undo": "Desfazer",
+   "allHidden": "Você ocultou todos os blocos da tela inicial.",
+   "saveFailed": "Salvamos a ordem neste dispositivo; não conseguimos sincronizar.",
+   "columns": {
+    "left": "Coluna esquerda",
+    "right": "Coluna direita"
+   },
+   "blocks": {
+    "net-worth": "Patrimônio líquido",
+    "investing": "Investimentos",
+    "accounts": "Contas",
+    "credit-cards": "Cartões de crédito",
+    "period-totals": "Receitas e despesas do período",
+    "insight": "Sugestão",
+    "recent-transactions": "Últimas movimentações"
+   },
+   "a11y": {
+    "instructions": "Pressione espaço para pegar o bloco. Use as setas para movê-lo; espaço para soltar, esc para cancelar.",
+    "pickUp": "Você pegou {block}.",
+    "over": "{block} está sobre a posição {index} de {total} na {column}.",
+    "dropped": "{block} ficou na posição {index} da {column}.",
+    "cancelled": "O movimento de {block} foi cancelado."
+   }
+  },
   "reminders": {
    "action": "Ajustar",
    "dismissToday": "Não mostrar hoje",

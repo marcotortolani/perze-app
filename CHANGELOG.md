@@ -6,6 +6,72 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.31.1] — 2026-08-12
+
+### Arreglado — el modo edición del home quedaba a un cuarto de ancho
+
+`HomeBlocksLayout.tsx` envolvía a `<HomeLayoutEditor>` en su propio `grid grid-cols-1
+xl:grid-cols-2` — pero `HomeLayoutEditor` ya arma esa misma grilla de dos columnas puertas
+adentro. Con un solo hijo, la grilla EXTERIOR lo auto-ubicaba en la columna 1 y dejaba la mitad
+derecha de la pantalla vacía; la grilla INTERIOR volvía a partir esa mitad izquierda en dos,
+así que las dos columnas reales del editor terminaban ocupando un cuarto del ancho cada una en
+vez del ancho completo que sí usa la vista sin editar. Fix: sacar el wrapper redundante — el
+editor recibe el `marginTop` de los banners por prop (`style`) y arma su propia grilla a ancho
+completo, igual que el renderer estático.
+
+---
+
+## [0.31.0] — 2026-08-12
+
+### Nuevo — dashboard reordenable por drag & drop (solo desktop)
+
+Los siete bloques del home (patrimonio neto, inversiones, cuentas, tarjetas de crédito,
+egresos/ingresos del período, sugerencia, últimos movimientos) se pueden reordenar, mover entre
+las dos columnas y ocultar desde un botón "Personalizar" en el header — solo en desktop
+(`SPLIT_BREAKPOINT`, 1280px). El orden se persiste por perfil, no por household
+(`profiles.home_layout jsonb`, migración `20260812110000_profile_home_layout.sql`), y se aplica
+igual en mobile (`left ++ right`), que es el requisito central del feature.
+
+- **Refactor previo, sin cambio de comportamiento**: `(app)/page.tsx` bajó de 666 a ~65 líneas.
+  Los siete bloques salieron a `src/features/home/blocks/*Block.tsx`; todos los hooks/queries que
+  antes vivían inline en `HomePage()` se movieron a `useHomeDataState()`
+  (`src/features/home/home-data.tsx`), que expone un contexto (`useHomeData()`) para que los
+  bloques no necesiten prop-drilling. `HomeBlocksLayout.tsx` reemplaza el JSX estático de la
+  grilla de dos columnas.
+- **Modelo de layout puro** (`src/features/home/layout/{types,resolve-layout,layout-actions}.ts`):
+  `resolveHomeLayout()` tolera doc corrupto/`v` desconocida (cae a default sin reescribir el
+  servidor), preserva ids desconocidos de versiones futuras sin renderizarlos, e inserta un
+  bloque del catálogo ausente del doc junto a su predecesor default — nunca al final.
+  `moveBlock`/`hideBlock`/`showBlock`/`resetLayout` son las acciones puras, con 17 tests.
+- **Persistencia**: `profile-home-layout-repo.ts` (mismo patrón que
+  `profile-notification-preferences-repo.ts`) + `use-home-layout.ts` (TanStack Query,
+  `createOptimisticMutation`, **sin outbox** — excepción declarada: es una preferencia de UI con
+  semántica last-write-wins, no una entidad del household con historia de conflicto) + un espejo
+  local en Zustand (`home-layout-mirror-store.ts`) para el primer pintado, el skeleton, y que el
+  modo demo (sin sesión real, el `update` falla por RLS) siga funcionando en el dispositivo.
+- **Modo edición** (`src/features/home/edit/`, único subárbol que importa `@dnd-kit/core`
+  + `@dnd-kit/sortable` + `@dnd-kit/utilities`): `dynamic(..., { ssr: false })` en
+  `HomeBlocksLayout.tsx` — el chunk (~38 kB gzip) solo se pide cuando `editing && isDesktop`, y
+  una regla de ESLint (`no-restricted-imports`) impide que un import descuidado lo filtre a otro
+  archivo del home. Bloques no disponibles (módulo apagado, sin datos) se muestran como
+  placeholder en vez de desaparecer, para poder ubicarlos antes de que existan. El reordenado por
+  teclado usa el `KeyboardSensor` de `@dnd-kit` dentro de una columna; cruzar de columna por
+  teclado usa un botón dedicado (mismo límite que ya resolvió así el bento de cuentas en
+  desktop), con anuncios de `aria-live` propios.
+- Bug encontrado y corregido en el camino: `usePageHeader` registrado en `HomeBlocksLayout` (hijo)
+  y en `page.tsx` (padre) en el mismo commit — React dispara `useLayoutEffect` de adentro hacia
+  afuera, así que el del padre pisaba el del hijo en cada render y el botón "Personalizar" nunca
+  se veía. Se resolvió con la opción `enabled` que el hook ya exponía para este caso exacto
+  (`page.tsx` cede mientras `state.status === "ready"`).
+- `src/components/home-skeleton.tsx` ahora lee el espejo local y arma su silueta con el orden
+  guardado, en vez de una forma fija — sin red, para no demorar el primer frame.
+- Tests: 17 (`resolve-layout`/`layout-actions`) + 3 (`use-home-layout`) + 2
+  (`persist-migration`, doc corrupto/válido) nuevos en Vitest; `e2e/home-customize.spec.ts`
+  (4 tests) cubre entrar al modo edición, ocultar/mostrar, reordenar por teclado + persistencia
+  tras recargar, restablecer, y la ausencia del botón en mobile.
+
+---
+
 ## [0.30.32] — 2026-08-12
 
 v0.30.29 arregló el `trades_fx_pair` de SPCX, pero el retest sobre la misma posición inicial

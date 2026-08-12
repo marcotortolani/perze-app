@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useFormatPreferencesStore } from "./format-preferences-store";
 import { useOnboardingStore } from "./onboarding-store";
 import { usePinStore } from "./pin-store";
+import { useHomeLayoutMirrorStore } from "./home-layout-mirror-store";
 
 /**
  * Prueba de extremo a extremo del bump a `version: 1`: siembra un envelope
@@ -162,5 +163,25 @@ describe("migración de persist v0 → v1", () => {
     expect(state.pinHash).toBe("abc");
     expect(state.pinSalt).toBe("xyz");
     expect(state.failedAttempts).toBe(0);
+  });
+
+  it("home-layout-mirror-store: un `doc` corrupto (JSON editado a mano, `v` desconocida) cae a null sin tirar", async () => {
+    window.localStorage.setItem(
+      "perze-home-layout",
+      JSON.stringify({ state: { doc: { v: 99, left: "no-es-un-array" } }, version: 1 })
+    );
+
+    await useHomeLayoutMirrorStore.persist.rehydrate();
+
+    expect(useHomeLayoutMirrorStore.getState().doc).toBeNull();
+  });
+
+  it("home-layout-mirror-store: un doc válido sobrevive la rehidratación", async () => {
+    const doc = { v: 1 as const, left: ["b", "a"], right: ["c"], hidden: [] };
+    window.localStorage.setItem("perze-home-layout", JSON.stringify({ state: { doc }, version: 1 }));
+
+    await useHomeLayoutMirrorStore.persist.rehydrate();
+
+    expect(useHomeLayoutMirrorStore.getState().doc).toEqual(doc);
   });
 });

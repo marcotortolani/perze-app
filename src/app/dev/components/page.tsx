@@ -52,6 +52,7 @@ import { BarChart, LineChart, SeriesLegend, Sparkline } from "@/design-system/ch
 import { ContextualTooltip, LockScreen } from "@/design-system/systems";
 import { CountUp, DetailPanelTransition, MorphButton, PageEnter, Pressable, StaggerList } from "@/components/motion";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
+import { DashboardBlockShell } from "@/features/home/DashboardBlockShell";
 import { money } from "@/lib/money/money";
 import { rateFromInteger } from "@/lib/fx/rate";
 
@@ -498,6 +499,46 @@ export default function ComponentsPage() {
           <PageEnter key={pageEnterRun} style={{}}>
             <ListRow label="Contenido de la pantalla" icon="chart" variant="value" meta="PageEnter" />
           </PageEnter>
+        </div>
+      </Section>
+
+      <Section title="Home — modo edición">
+        {/* Estático a propósito: el drag real (`@dnd-kit`) vive detrás de
+            `HomeLayoutEditor` (`src/features/home/edit/`), lazy-loaded solo
+            en desktop — este demo no lo importa, solo muestra el chrome
+            (`DashboardBlockShell`) con props de mentira para `dragHandleProps`/
+            `dragHandleRef`. */}
+        <div style={{ maxWidth: 360 }}>
+          <DashboardBlockShell
+            label="Patrimonio neto"
+            dragLabel="Mover Patrimonio neto"
+            hideLabel="Ocultar Patrimonio neto"
+            onHide={() => {}}
+            moveToOtherColumnLabel="Pasar Patrimonio neto a la columna derecha"
+            onMoveToOtherColumn={() => {}}
+            column="left"
+            dragHandleProps={{}}
+            dragHandleRef={() => {}}
+          >
+            <StatTile label="Patrimonio neto" value={<Amount value={DEMO_MONEY} size="title" />} />
+          </DashboardBlockShell>
+        </div>
+        <div style={{ maxWidth: 360 }}>
+          <DashboardBlockShell
+            label="Inversiones"
+            dragLabel="Mover Inversiones"
+            hideLabel="Ocultar Inversiones"
+            onHide={() => {}}
+            moveToOtherColumnLabel="Pasar Inversiones a la columna izquierda"
+            onMoveToOtherColumn={() => {}}
+            column="right"
+            dragHandleProps={{}}
+            dragHandleRef={() => {}}
+            unavailable
+            unavailableLabel="Sin datos por ahora"
+          >
+            <div />
+          </DashboardBlockShell>
         </div>
       </Section>
 

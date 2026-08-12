@@ -1931,6 +1931,7 @@ export type Database = {
           country: string | null
           default_household_id: string | null
           display_name: string | null
+          home_layout: Json | null
           icon: string
           id: string
           is_app_admin: boolean
@@ -1950,6 +1951,7 @@ export type Database = {
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null
+          home_layout?: Json | null
           icon?: string
           id: string
           is_app_admin?: boolean
@@ -1969,6 +1971,7 @@ export type Database = {
           country?: string | null
           default_household_id?: string | null
           display_name?: string | null
+          home_layout?: Json | null
           icon?: string
           id?: string
           is_app_admin?: boolean

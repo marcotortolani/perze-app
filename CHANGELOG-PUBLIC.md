@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.31.0 — 12 de agosto de 2026
+
+### Nuevo
+
+- En la compu, ahora podés personalizar el orden del inicio. Tocá "Personalizar" arriba a la
+  derecha del Dashboard para arrastrar los bloques (patrimonio neto, cuentas, movimientos
+  recientes, etc.), pasarlos de columna u ocultar los que no te interesan. El orden que elijas
+  se guarda y se ve igual en el celular.
+
 ## 0.30.32 — 12 de agosto de 2026
 
 ### Arreglado

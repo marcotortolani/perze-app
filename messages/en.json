@@ -1306,6 +1306,44 @@
   "movement": "Transaction",
   "errorWhat": "We couldn't load your summary.",
   "privacyTooltip": "Tap the eye to blur amounts — handy in public.",
+  "customize": {
+   "enter": "Customize",
+   "done": "Done",
+   "hint": "Drag blocks to reorder them or move them between columns.",
+   "dragBlock": "Move {block}",
+   "moveToLeftColumn": "Move {block} to the left column",
+   "moveToRightColumn": "Move {block} to the right column",
+   "hideBlock": "Hide {block}",
+   "showBlock": "Show {block}",
+   "show": "Show",
+   "hiddenTitle": "Hidden blocks",
+   "unavailable": "No data yet",
+   "reset": "Reset",
+   "resetDone": "Back to the original order.",
+   "undo": "Undo",
+   "allHidden": "You hid every block on the home screen.",
+   "saveFailed": "We saved the order on this device; we couldn't sync it.",
+   "columns": {
+    "left": "Left column",
+    "right": "Right column"
+   },
+   "blocks": {
+    "net-worth": "Net worth",
+    "investing": "Investments",
+    "accounts": "Accounts",
+    "credit-cards": "Credit cards",
+    "period-totals": "Period income and expenses",
+    "insight": "Insight",
+    "recent-transactions": "Recent transactions"
+   },
+   "a11y": {
+    "instructions": "Press space to pick up the block. Use the arrow keys to move it; space to drop, escape to cancel.",
+    "pickUp": "Picked up {block}.",
+    "over": "{block} is over position {index} of {total} in the {column}.",
+    "dropped": "{block} was dropped in position {index} of the {column}.",
+    "cancelled": "Moving {block} was cancelled."
+   }
+  },
   "reminders": {
    "action": "Adjust",
    "dismissToday": "Don't show today",

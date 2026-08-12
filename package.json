@@ -1,6 +1,6 @@
 {
   "name": "personal-finances-app",
-  "version": "0.30.32",
+  "version": "0.31.1",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.4.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-slot": "^1.2.4",

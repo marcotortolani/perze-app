@@ -62,6 +62,28 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    // El editor de reordenamiento del home (`@dnd-kit`, ~38 kB gzip) solo
+    // se carga en desktop, vía `dynamic(..., { ssr: false })` en
+    // `HomeBlocksLayout.tsx` — un import descuidado de `@dnd-kit` en
+    // cualquier otro archivo del home (o de cualquier bloque) haría que
+    // el bundler lo siga y el chunk termine llegando a mobile igual.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/features/home/edit/**", "**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@dnd-kit/*", "@dnd-kit"],
+              message: "@dnd-kit solo se importa desde src/features/home/edit/** — ver el comentario sobre lazy-load en HomeBlocksLayout.tsx.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // CON-27: presupuesto de ruido — un solo `--primary-fill` visible por
     // pantalla. Solo aplica a archivos de pantalla, nunca a
     // `src/design-system/**`, donde el token es la implementación legítima
