@@ -6,6 +6,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.32.1] — 2026-08-12
+
+Ajustes de formato en `PositionsTable` (Fase A, v0.32.0) contra capturas reales de Google
+Finance que mostró el usuario: el monto y el porcentaje de Change/Total Gain-Loss estaban en
+el orden inverso, y la fila expandida no se distinguía visualmente de sus lotes.
+
+### Arreglado — orden monto/porcentaje y agrupación visual del bloque expandido
+
+`DeltaCell` nuevo (local a `PositionsTable.tsx`, no un componente de design-system — es un
+patrón de presentación de esta tabla, no reusado en otro lado): monto arriba con color por
+polaridad, porcentaje abajo entre paréntesis — mismo orden que Google Finance. **Color, no
+copiado**: positivo en `--money-positive` (aqua), negativo en texto neutro — nunca rojo fuera
+del home (CLAUDE.md), a propósito distinto de la captura de referencia. Un solo lugar para
+las 4 celdas que repetían este patrón (Change y Total Gain/Loss, en la fila del instrumento y
+en cada lote) — antes eran 4 bloques JSX casi idénticos.
+
+Fila expandida: fondo `--surface-1` compartido entre el instrumento y sus lotes mientras está
+abierta, para que se lean como un solo bloque en vez de filas sueltas — mismo criterio visual
+que Google Finance, con el token de superficie de Perze en vez de un gris ad hoc.
+
+---
+
 ## [0.32.0] — 2026-08-12
 
 Rediseño del overview de portfolio en escritorio, a partir de capturas reales de Google

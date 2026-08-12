@@ -28,6 +28,28 @@ export interface PositionsTableProps {
 const GRID_COLUMNS = "minmax(160px,1.6fr) minmax(90px,1fr) minmax(80px,0.8fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(110px,1fr) 28px";
 
 /**
+ * Monto arriba (color por polaridad, nunca rojo — CLAUDE.md: fuera del
+ * home lo negativo queda en texto neutro) + porcentaje abajo entre
+ * paréntesis — mismo orden que Google Finance, adaptado a la paleta de
+ * Perze en vez de copiar su verde/rojo. Un solo lugar para las 4 celdas
+ * que repiten este patrón (Change y Total Gain/Loss, en la fila del
+ * instrumento y en cada lote).
+ */
+function DeltaCell({ amount, pct, currencyCode, amountSize = "label", pctSize = 11 }: { amount: bigint | null; pct: number | null; currencyCode: string; amountSize?: "label" | "body"; pctSize?: number }) {
+  if (amount === null || pct === null) return <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>;
+  return (
+    <>
+      <Amount value={money(amount, currencyCode)} size={amountSize} showSign polarity={pct >= 0 ? "positive" : "neutral"} tabular />
+      <div style={{ marginTop: 1 }}>
+        {"("}
+        <DeltaPct value={pct} size={pctSize} />
+        {")"}
+      </div>
+    </>
+  );
+}
+
+/**
  * Tabla de posiciones estilo Google Finance — reemplaza la lista de
  * `PositionRow` de `OverviewContent` en desktop (ver la nota larga en
  * `[portfolioId]/page.tsx`). Cada fila de instrumento se expande IN PLACE
@@ -140,7 +162,11 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
         const lots = (lotsByInstrument.get(position.instrumentId) ?? []).filter((l) => l.remainingQuantity > 0);
 
         return (
-          <div key={position.instrumentId}>
+          // Fondo compartido entre la fila del instrumento y sus lotes
+          // mientras está expandida — mismo criterio visual que Google
+          // Finance (agrupa el bloque abierto), con el token de superficie
+          // de Perze en vez de un gris ad hoc.
+          <div key={position.instrumentId} style={expanded ? { background: "var(--surface-1)", borderRadius: "var(--radius-card)" } : undefined}>
             <button
               type="button"
               onClick={() => toggleExpanded(position.instrumentId)}
@@ -155,28 +181,10 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
               </span>
               <span style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums" }}>{formatNumber(position.quantity, qtyDecimals)}</span>
               <span style={{ textAlign: "right" }}>
-                {dayChangePct !== null && dayChangeAmount !== null ? (
-                  <>
-                    <DeltaPct value={dayChangePct} />
-                    <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                      <Amount value={money(dayChangeAmount, instrument.currencyCode)} size="label" showSign polarity="neutral" tabular />
-                    </div>
-                  </>
-                ) : (
-                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
-                )}
+                <DeltaCell amount={dayChangeAmount} pct={dayChangePct} currencyCode={instrument.currencyCode} />
               </span>
               <span style={{ textAlign: "right" }}>
-                {totalGainPct !== null && unrealizedPnl !== null ? (
-                  <>
-                    <DeltaPct value={totalGainPct} />
-                    <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                      <Amount value={money(unrealizedPnl, instrument.currencyCode)} size="label" showSign polarity="neutral" tabular />
-                    </div>
-                  </>
-                ) : (
-                  <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
-                )}
+                <DeltaCell amount={unrealizedPnl} pct={totalGainPct} currencyCode={instrument.currencyCode} />
               </span>
               <span style={{ textAlign: "right" }}>{value !== null ? <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular /> : <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>}</span>
               <Icon name="chevron-down" size={16} color="var(--text-muted)" style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--duration-fast) var(--ease-spring-snappy)" }} />
@@ -197,28 +205,10 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                       </span>
                       <span style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 13, color: "var(--text-secondary)" }}>{formatNumber(lot.remainingQuantity, qtyDecimals)}</span>
                       <span style={{ textAlign: "right" }}>
-                        {dayChangePct !== null && lotDayChangeAmount !== null ? (
-                          <>
-                            <DeltaPct value={dayChangePct} size={11} />
-                            <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                              <Amount value={money(lotDayChangeAmount, instrument.currencyCode)} size="label" showSign polarity="neutral" tabular />
-                            </div>
-                          </>
-                        ) : (
-                          <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
-                        )}
+                        <DeltaCell amount={lotDayChangeAmount} pct={dayChangePct} currencyCode={instrument.currencyCode} />
                       </span>
                       <span style={{ textAlign: "right" }}>
-                        {lotEvolutionPct !== null && lotGain !== null ? (
-                          <>
-                            <DeltaPct value={lotEvolutionPct} size={11} />
-                            <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                              <Amount value={money(lotGain, instrument.currencyCode)} size="label" showSign polarity="neutral" tabular />
-                            </div>
-                          </>
-                        ) : (
-                          <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>
-                        )}
+                        <DeltaCell amount={lotGain} pct={lotEvolutionPct} currencyCode={instrument.currencyCode} />
                       </span>
                       <span style={{ textAlign: "right" }}>{lotValue !== null ? <Amount value={money(lotValue, instrument.currencyCode)} size="label" showSign={false} polarity="neutral" tabular /> : <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>}</span>
                       <span />
