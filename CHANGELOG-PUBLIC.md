@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.23 — 12 de agosto de 2026
+
+### Arreglado
+
+- Al agrupar dos tarjetas de la misma tarjeta física en distintas monedas, el selector
+  "agrupar con otra tarjeta" ya no muestra dos opciones idénticas e imposibles de distinguir
+  — ahora ves la moneda de cada una, y la tarjeta que estás editando ya no aparece como
+  opción para agruparse a sí misma. Si un intento de agrupar queda a medias, la app ya no
+  deja un grupo fantasma dando vueltas.
+
 ## 0.30.22 — 12 de agosto de 2026
 
 ### Arreglado

@@ -6,6 +6,48 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.23] — 2026-08-12
+
+Bug reportado en uso real (dos "Visa BBVA" indistinguibles en el selector de agrupar
+tarjeta): el flujo de tarjeta multi-moneda (Tanda 4, v0.30.21) nunca terminaba de asociar
+la segunda moneda si el primer intento se abandonaba a mitad de camino.
+
+### Arreglado — grupo de tarjeta huérfano y selector ambiguo
+
+Diagnóstico contra la base del usuario: `account_groups.name` se copia del nombre de la
+cuenta que crea el grupo y nunca se resincroniza, así que dos tarjetas homónimas por moneda
+(p. ej. "Visa BBVA" ARS y USD) terminan en dos grupos con el mismo nombre en cuanto el
+segundo intento de agrupar crea un grupo propio en lugar de unirse al que ya existía —
+indistinguibles en el picker de `AccountFormFlow.tsx`. Encontramos exactamente ese caso:
+un grupo real con la cuenta ARS y un grupo huérfano (0 miembros) con los datos de un intento
+sobre la cuenta USD que nunca se persistió. Saneo de datos vía `supabase db query --linked`
+(no por outbox): grupo huérfano archivado (`archived_at`), `Visa BBVA USD` y `Master BBVA
+USD` unidas a sus grupos reales con `statement_day`/`due_day`/`credit_limit` propios en
+`null` (invariante de cuenta agrupada).
+
+Cuatro cambios en `AccountFormFlow.tsx` para que no vuelva a pasar:
+
+- El picker de "agrupar con otra tarjeta" muestra ahora la moneda de cada miembro vivo del
+  grupo como `meta` (segunda línea), para desambiguar nombres repetidos.
+- El grupo al que la cuenta ya pertenece deja de listarse como opción para "unirse" — unirse
+  a sí misma no tiene sentido y era la fuente de la confusión original.
+- Grupos huérfanos (0 miembros vivos) dejan de ofrecerse como destino: `joinableGroups`
+  filtra por `groupMemberCurrencies(g.id).length > 0`.
+- Un grupo se archiva automáticamente cuando la cuenta que lo abandona (elige "Ninguna" o se
+  une a otro grupo) era su último miembro — evita que se repita el huérfano. Al abandonar, el
+  día de cierre/vencimiento del grupo se precarga en los inputs propios de la cuenta (antes
+  quedaban en blanco) y el límite viaja por un nuevo estado `leftGroupCreditLimit` hasta
+  `handleSave`, para no perderlo silenciosamente como pasó acá (el límite de la USD había
+  quedado en `null` después de un intento fallido de desagrupar).
+
+### Datos
+
+`scripts` no se agregó — el saneo fue puntual, ejecutado a mano por el usuario vía `!supabase
+db query --linked -f`, con los 3 UPDATE + el SELECT de verificación pegados en la
+conversación (no en un archivo versionado, es un caso de un solo household).
+
+---
+
 ## [0.30.22] — 2026-08-12
 
 Fix reportado en uso real: el radar "Gastos por categoría" de `/transactions` mostraba el

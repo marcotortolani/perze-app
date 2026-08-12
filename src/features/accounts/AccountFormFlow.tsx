@@ -13,6 +13,7 @@ import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { accountGroupsRepo } from "@/lib/repos/account-groups-repo";
 import { currenciesRepo } from "@/lib/repos/currencies-repo";
 import { useAccountGroups, useInvalidateAccountGroups } from "@/hooks/use-account-groups";
+import { useAccounts } from "@/hooks/use-accounts";
 import { useCurrencies, useInvalidateCurrencies } from "@/hooks/use-currencies";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
@@ -91,11 +92,28 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   // grupo se crea acá mismo, con los mismos datos que se están cargando.
   const { data: allGroups = [] } = useAccountGroups(householdId);
   const invalidateGroups = useInvalidateAccountGroups(householdId);
+  const { data: allAccounts = [] } = useAccounts(householdId);
+  // El nombre de un grupo se copia del nombre de la cuenta que lo creó y
+  // nunca se vuelve a sincronizar — dos tarjetas "Visa BBVA" (una por
+  // moneda) fácilmente terminan con dos grupos que se llaman igual. Sin
+  // más dato que el nombre son indistinguibles en el selector, así que acá
+  // se suma la moneda de cada miembro vivo como desambiguador.
+  const groupMemberCurrencies = (groupId: string, excludeAccountId?: string) =>
+    allAccounts.filter((a) => a.accountGroupId === groupId && a.archivedAt === null && a.id !== excludeAccountId).map((a) => a.currencyCode);
   const creditCardGroups = allGroups.filter((g) => g.kind === "credit_card" && g.archivedAt === null);
   const [joinGroupId, setJoinGroupId] = useState<string | null>(existing?.accountGroupId ?? null);
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [createNewGroup, setCreateNewGroup] = useState(false);
+  // Valores del grupo justo abandonado (tocar "Ninguna" mientras estaba
+  // agrupada) — sin esto, límite/ciclo se pierden en vez de quedar
+  // editables: la cuenta nunca los tuvo propios mientras estaba agrupada.
+  const [leftGroupCreditLimit, setLeftGroupCreditLimit] = useState<bigint | null>(null);
   const joinedGroup = joinGroupId ? (creditCardGroups.find((g) => g.id === joinGroupId) ?? null) : null;
+  // Un grupo solo aparece como destino a UNIRSE si tiene otro miembro vivo
+  // que no sea esta cuenta — el propio (re-seleccionarlo es un no-op
+  // confuso) y los huérfanos (0 miembros, restos de un intento anterior
+  // que nunca se completó) quedan afuera.
+  const joinableGroups = creditCardGroups.filter((g) => g.id !== joinGroupId && groupMemberCurrencies(g.id, existing?.id).length > 0);
 
   const canSave =
     name.trim().length > 0 &&
@@ -135,7 +153,7 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
       const creditLimit =
         kind === "credit_card" && creditLimitExpr.trim() !== ""
           ? evaluateKeypadExpression(creditLimitExpr, currencyCode, numberLocaleForUiLocale(locale)).amount
-          : (existing?.creditLimit ?? null);
+          : (existing?.creditLimit ?? leftGroupCreditLimit ?? null);
 
       // Tanda 4 — si esta tarjeta se suma a un grupo (existente o recién
       // creado), el límite y el ciclo pasan a vivir en el GRUPO, nunca en
@@ -175,6 +193,20 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
         includeInNetWorth,
         visibility,
       };
+
+      // Si esta cuenta deja un grupo (o se une a otro), y era su último
+      // miembro vivo, el grupo abandonado queda huérfano — sin esto es
+      // exactamente el bug que generó dos "Visa BBVA" indistinguibles en
+      // el selector. Se archiva, nunca se borra (mismo criterio que
+      // `accounts`: apagar oculta, no destruye).
+      const previousGroupId = existing?.accountGroupId ?? null;
+      if (previousGroupId && previousGroupId !== accountGroupId) {
+        const stillHasMembers = groupMemberCurrencies(previousGroupId, existing?.id).length > 0;
+        if (!stillHasMembers) {
+          await accountGroupsRepo.archive(previousGroupId);
+          invalidateGroups();
+        }
+      }
 
       let saved: AccountRow;
       if (existing) {
@@ -325,17 +357,22 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
 
           {kind === "credit_card" ? (
             <>
-              {/* Tanda 4 — solo aparece si ya existe otro grupo de tarjeta
-                  en el household: la mayoría de las tarjetas nunca lo va a
-                  ver, cero pasos extra a menos que haga falta. */}
-              {creditCardGroups.length > 0 || joinedGroup ? (
+              {/* Tanda 4 — solo aparece si hay otro grupo real (con algún
+                  miembro vivo) al que unirse, o si esta cuenta ya está
+                  agrupada: la mayoría de las tarjetas nunca lo va a ver,
+                  cero pasos extra a menos que haga falta. */}
+              {joinableGroups.length > 0 || joinedGroup ? (
                 <button
                   type="button"
                   onClick={() => setGroupPickerOpen(true)}
                   style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}
                 >
                   <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accounts.form.cardGroup")}</div>
-                  <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{joinedGroup ? joinedGroup.name : t("accounts.form.cardGroupNone")}</div>
+                  <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>
+                    {joinedGroup
+                      ? `${joinedGroup.name} · ${[currencyCode, ...groupMemberCurrencies(joinedGroup.id, existing?.id)].join(", ")}`
+                      : t("accounts.form.cardGroupNone")}
+                  </div>
                 </button>
               ) : null}
 
@@ -426,17 +463,29 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           <ListRow
             label={t("accounts.form.cardGroupNone")}
             onClick={() => {
+              // Al abandonar el grupo, límite/ciclo dejan de heredarse —
+              // se precargan con lo que el grupo tenía para no perderlos
+              // (statementDay/dueDay se pueden pisar directo; el límite
+              // necesita esperar a `handleSave`, que no tiene el objeto
+              // del grupo, así que viaja por `leftGroupCreditLimit`).
+              if (joinedGroup) {
+                setStatementDay(joinedGroup.statementDay?.toString() ?? "");
+                setDueDay(joinedGroup.dueDay?.toString() ?? "");
+                setLeftGroupCreditLimit(joinedGroup.creditLimit);
+              }
               setJoinGroupId(null);
               setGroupPickerOpen(false);
             }}
           />
-          {creditCardGroups.map((g) => (
+          {joinableGroups.map((g) => (
             <ListRow
               key={g.id}
               label={g.name}
+              meta={groupMemberCurrencies(g.id, existing?.id).join(", ")}
               onClick={() => {
                 setJoinGroupId(g.id);
                 setCreateNewGroup(false);
+                setLeftGroupCreditLimit(null);
                 setGroupPickerOpen(false);
               }}
             />
