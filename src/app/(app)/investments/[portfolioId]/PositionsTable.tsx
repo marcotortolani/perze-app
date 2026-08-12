@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Amount, DeltaPct, Icon, IconButton } from "@/design-system";
+import { Amount, Button, DeltaPct, Icon, IconButton, Sheet } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAssetClasses, useInstruments, useInvalidateTrades, useLatestPrices, usePreviousClose, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
@@ -25,7 +25,17 @@ export interface PositionsTableProps {
   initialExpandedInstrumentId?: string | null | undefined;
 }
 
-const GRID_COLUMNS = "minmax(160px,1.6fr) minmax(90px,1fr) minmax(80px,0.8fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(110px,1fr) 28px";
+// Última columna fija en 104px (no `fr`/`minmax`) — la fila del instrumento
+// solo pone un chevron ahí, la de cada lote pone 3 íconos de acción. Antes
+// la fila de lote agregaba una OCTAVA columna de 72px propia
+// (`${GRID_COLUMNS} 72px`) para esos íconos: mismas proporciones `fr` que
+// la fila del instrumento pero repartidas sobre un ancho total distinto
+// (72px menos, más el indentado del wrapper) — los `fr` se recalculaban
+// distinto en cada fila y las columnas de datos quedaban desalineadas
+// entre el instrumento y sus lotes. Con una sola definición de grilla
+// compartida, sin indentado que le reste ancho a la fila de lote, todo
+// alinea exacto.
+const GRID_COLUMNS = "minmax(160px,1.6fr) minmax(90px,1fr) minmax(80px,0.8fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(110px,1fr) 104px";
 
 /**
  * Monto arriba (color por polaridad, nunca rojo — CLAUDE.md: fuera del
@@ -95,6 +105,14 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
 
   const instrumentById = useMemo(() => new Map((instruments ?? []).map((i) => [i.id, i])), [instruments]);
   const assetClassById = useMemo(() => new Map((assetClasses ?? []).map((a) => [a.id, a])), [assetClasses]);
+
+  // Borrar un lote es la excepción a "reversible, no confirmable"
+  // (CLAUDE.md): a diferencia de borrar UNA operación desde el historial
+  // por swipe (que ya trae su propio paso de confirmación en el gesto),
+  // acá el tacho es un tap directo — sin un paso intermedio, un toque de
+  // más lo borra sin querer. El toast de deshacer sigue después igual.
+  const [confirmingDelete, setConfirmingDelete] = useState<{ tradeId: string; symbol: string; date: string } | null>(null);
+  const [deletingTrade, setDeletingTrade] = useState(false);
 
   const handleDeleteTrade = async (tradeId: string) => {
     await tradesRepo.softDelete(tradeId);
@@ -187,18 +205,26 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                 <DeltaCell amount={unrealizedPnl} pct={totalGainPct} currencyCode={instrument.currencyCode} />
               </span>
               <span style={{ textAlign: "right" }}>{value !== null ? <Amount value={money(value, instrument.currencyCode)} size="body" showSign={false} polarity="neutral" tabular /> : <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>}</span>
-              <Icon name="chevron-down" size={16} color="var(--text-muted)" style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--duration-fast) var(--ease-spring-snappy)" }} />
+              <span style={{ display: "flex", justifyContent: "flex-end" }}>
+                <Icon name="chevron-down" size={16} color="var(--text-muted)" style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--duration-fast) var(--ease-spring-snappy)" }} />
+              </span>
             </button>
 
             {expanded ? (
-              <div style={{ display: "flex", flexDirection: "column", paddingLeft: 14, borderLeft: "2px solid var(--surface-2)", marginLeft: 20 }}>
+              // Mismo padding horizontal que el `button` de arriba (`14px`),
+              // sin indentado extra — es lo que mantiene la grilla al mismo
+              // ancho total y las columnas alineadas. La distinción visual
+              // de "esto es un lote, no otro instrumento" la da el fondo
+              // compartido (`--surface-1` del contenedor) y el tipo más
+              // chico/secundario del texto, no un corrimiento horizontal.
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 {lots.map((lot) => {
                   const lotEvolutionPct = price && lot.unitPrice > 0 ? ((price.close - lot.unitPrice) / lot.unitPrice) * 100 : null;
                   const lotValue = price ? fromMajorUnitsUnsafe(lot.remainingQuantity * price.close, instrument.currencyCode) : null;
                   const lotGain = lotValue !== null ? lotValue - lot.costBasisRemaining : null;
                   const lotDayChangeAmount = dayChangePct !== null && prevClose ? fromMajorUnitsUnsafe(lot.remainingQuantity * (price!.close - prevClose), instrument.currencyCode) : null;
                   return (
-                    <div key={lot.buyTradeId} style={{ display: "grid", gridTemplateColumns: `${GRID_COLUMNS} 72px`, gap: 12, padding: "10px 14px", alignItems: "center" }}>
+                    <div key={lot.buyTradeId} style={{ display: "grid", gridTemplateColumns: GRID_COLUMNS, gap: 12, padding: "10px 14px", alignItems: "center" }}>
                       <span className="t-caption" style={{ color: "var(--text-secondary)" }}>{formatDateMedium(locale, new Date(lot.executedAt))}</span>
                       <span style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 13, color: "var(--text-secondary)" }}>
                         {formatAmount(money(fromMajorUnitsUnsafe(lot.unitPrice, instrument.currencyCode), instrument.currencyCode), { showSign: false })}
@@ -211,7 +237,6 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                         <DeltaCell amount={lotGain} pct={lotEvolutionPct} currencyCode={instrument.currencyCode} />
                       </span>
                       <span style={{ textAlign: "right" }}>{lotValue !== null ? <Amount value={money(lotValue, instrument.currencyCode)} size="label" showSign={false} polarity="neutral" tabular /> : <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>}</span>
-                      <span />
                       <span style={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
                         <IconButton
                           icon="minus"
@@ -221,7 +246,13 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                           onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}&kind=sell&lotId=${lot.buyTradeId}`)}
                         />
                         <IconButton icon="edit" size={28} iconSize={15} ariaLabel={t("positionsTablePage.editTrade")} onClick={() => router.push(`/investments/${portfolioId}/trades/${lot.buyTradeId}/edit`)} />
-                        <IconButton icon="trash" size={28} iconSize={15} ariaLabel={t("positionsTablePage.deleteTrade")} onClick={() => handleDeleteTrade(lot.buyTradeId)} />
+                        <IconButton
+                          icon="trash"
+                          size={28}
+                          iconSize={15}
+                          ariaLabel={t("positionsTablePage.deleteTrade")}
+                          onClick={() => setConfirmingDelete({ tradeId: lot.buyTradeId, symbol: instrument.symbol, date: lot.executedAt })}
+                        />
                       </span>
                     </div>
                   );
@@ -238,6 +269,30 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
           </div>
         );
       })}
+
+      <Sheet open={!!confirmingDelete} title={t("positionsTablePage.confirmDeleteTrade")} onClose={() => setConfirmingDelete(null)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p className="t-body" style={{ color: "var(--text-secondary)" }}>
+            {confirmingDelete ? t("positionsTablePage.confirmDeleteTradeWarning", { symbol: confirmingDelete.symbol, date: formatDateMedium(locale, new Date(confirmingDelete.date)) }) : null}
+          </p>
+          <Button
+            variant="danger"
+            disabled={deletingTrade}
+            onClick={async () => {
+              if (!confirmingDelete) return;
+              setDeletingTrade(true);
+              try {
+                await handleDeleteTrade(confirmingDelete.tradeId);
+                setConfirmingDelete(null);
+              } finally {
+                setDeletingTrade(false);
+              }
+            }}
+          >
+            {t("positionsTablePage.deleteTrade")}
+          </Button>
+        </div>
+      </Sheet>
     </div>
   );
 }

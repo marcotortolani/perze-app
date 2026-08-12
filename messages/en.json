@@ -2155,7 +2155,9 @@
   "addAnotherPurchase": "+ Add another purchase of {symbol}",
   "sellFromThisLot": "Sell from this purchase",
   "editTrade": "Edit",
-  "deleteTrade": "Delete"
+  "deleteTrade": "Delete",
+  "confirmDeleteTrade": "Delete this purchase?",
+  "confirmDeleteTradeWarning": "This deletes the {date} purchase of {symbol}. You can undo it from the notice that shows up after."
  },
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",
@@ -2217,6 +2219,7 @@
   "instrument": "Instrument",
   "chooseInstrument": "Choose instrument",
   "searchInstrument": "Search by symbol or name",
+  "date": "Date",
   "sellFromLot": "Sell from which buy?",
   "sellFromLotAuto": "Automatic",
   "sellFromLotAutoHint": "Oldest buy first",

@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, EmptyState, IconButton, Keypad, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
+import { Button, EmptyState, IconButton, Input, Keypad, ListRow, SegmentedControl, Sheet, Skeleton, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
@@ -72,6 +72,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const [accountIdOverride, setAccountIdOverride] = useState<string | null | undefined>(undefined);
   const [quantityOverride, setQuantityOverride] = useState<string | null>(null);
   const [priceOverride, setPriceOverride] = useState<string | null>(null);
+  const [dateOverride, setDateOverride] = useState<string | null>(null);
   const [sheet, setSheet] = useState<"none" | "account" | "quantity" | "price">("none");
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -85,6 +86,7 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
   const account = accounts.find((a) => a.id === accountId);
   const quantity = quantityOverride ?? String(trade.quantity);
   const price = priceOverride ?? String(trade.price);
+  const executedDate = dateOverride ?? trade.executedAt.slice(0, 10);
   const qty = Number(quantity.replace(",", "."));
   const unitPrice = Number(price.replace(",", "."));
   const grossAmount = Number.isFinite(qty) && Number.isFinite(unitPrice) ? Math.round(qty * unitPrice * 10 ** decimalsFor(trade.currencyCode)) : 0;
@@ -143,7 +145,8 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
 
       await tradesRepo.update(trade.id, {
         kind,
-        executedAt: trade.executedAt,
+        // Mediodía UTC, nunca medianoche — mismo criterio que `trades/new`.
+        executedAt: `${executedDate}T12:00:00.000Z`,
         quantity: qty,
         price: unitPrice,
         currencyCode: trade.currencyCode,
@@ -223,6 +226,8 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
           ) : (
             <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0, padding: "0 2px" }}>{t("newTradePage.transferInExplainer")}</p>
           )}
+
+          <Input label={t("newTradePage.date")} type="date" value={executedDate} onChange={(e) => setDateOverride(e.target.value)} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.quantity")}</div>

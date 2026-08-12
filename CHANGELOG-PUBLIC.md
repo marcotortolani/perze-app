@@ -40,6 +40,19 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.33.1 — 12 de agosto de 2026
+
+### Nuevo
+
+- Al cargar o editar una compra o venta de inversión, ahora podés poner la fecha real en la
+  que pasó (antes quedaba fija en el día en que la cargabas).
+- Borrar una compra puntual desde la tabla de posiciones ahora te pide confirmación antes.
+
+### Arreglado
+
+- En la tabla de posiciones (compu), las columnas de cada compra individual ahora quedan
+  alineadas con las columnas del instrumento — antes se veían corridas.
+
 ## 0.33.0 — 12 de agosto de 2026
 
 ### Nuevo

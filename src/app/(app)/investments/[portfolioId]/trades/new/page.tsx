@@ -118,6 +118,11 @@ function NewTradeForm({ portfolioId, prefillInstrumentId, prefillKind, prefillLo
   const [accountId, setAccountId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  // Arranca en hoy — antes esto no se pedía y `handleSave` mandaba
+  // `new Date().toISOString()` fijo, así que una compra de hace unos días
+  // (lo más común al cargar el historial) quedaba fechada "hoy" sin forma
+  // de corregirlo sin ir a "Editar operación" después.
+  const [executedDate, setExecutedDate] = useState(todayIso());
   const [priceLoading, setPriceLoading] = useState(false);
   // Por qué el precio quedó vacío después de elegir instrumento — dos
   // casos distintos, con copy distinto (CLAUDE.md: "los errores proponen
@@ -320,7 +325,11 @@ function NewTradeForm({ portfolioId, prefillInstrumentId, prefillKind, prefillLo
         instrumentId: instrument.id,
         createdBy: userId,
         kind,
-        executedAt: new Date().toISOString(),
+        // Mediodía UTC, nunca medianoche (CLAUDE.md § huso horario): una
+        // fecha-sin-hora sintetizada en el cliente a medianoche UTC cae en
+        // el día anterior apenas se formatea en cualquier huso negativo
+        // (Uruguay/Argentina, UTC-3).
+        executedAt: `${executedDate}T12:00:00.000Z`,
         quantity: qty,
         price: unitPrice,
         currencyCode: instrument.currencyCode,
@@ -443,6 +452,8 @@ function NewTradeForm({ portfolioId, prefillInstrumentId, prefillKind, prefillLo
               </div>
             </button>
           ) : null}
+
+          <Input label={t("newTradePage.date")} type="date" value={executedDate} onChange={(e) => setExecutedDate(e.target.value)} />
 
           {/* Cantidad: número centrado + ±1 a los costados — el caso común
               (comprar N unidades enteras) no necesita abrir el teclado. Tocar

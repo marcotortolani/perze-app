@@ -6,6 +6,43 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.33.1] — 2026-08-12
+
+Tres ajustes sobre `PositionsTable` (Fase A) contra feedback directo del usuario probando la
+pantalla.
+
+### Arreglado — desalineación entre la fila del instrumento y sus lotes
+
+Causa: la fila de cada lote agregaba una OCTAVA columna de grilla propia
+(`${GRID_COLUMNS} 72px`) para los íconos de acción, y encima vivía indentada dentro de un
+`marginLeft: 20` — mismas proporciones `fr` que la fila del instrumento pero calculadas sobre
+un ancho total distinto en cada una, así que las columnas de datos (precio, cantidad, change,
+ganancia, valor) no coincidían verticalmente entre el instrumento y sus compras. Fix: una sola
+`GRID_COLUMNS` compartida (última columna fija en 104px, no `fr`) para las dos filas, sin
+indentado — la distinción visual de "esto es un lote" queda en el fondo `--surface-1`
+compartido y el tipo secundario, no en un corrimiento horizontal.
+
+### Nuevo — fecha editable al cargar o editar una operación
+
+`trades/new` no pedía fecha en ningún momento: `executedAt` salía hardcodeado a
+`new Date().toISOString()`, así que una compra de hace días quedaba fechada "hoy" sin forma de
+corregirlo ahí mismo. `trades/[tradeId]/edit` tampoco la exponía — reenviaba
+`trade.executedAt` sin cambios. Las dos pantallas suman un `Input type="date"`, arrancando en
+hoy (alta) o en la fecha ya cargada (edición), mediodía UTC al construir el timestamp — nunca
+medianoche (CLAUDE.md § huso horario: medianoche UTC cae en el día anterior en cualquier huso
+negativo).
+
+### Nuevo — confirmación antes de borrar un lote
+
+El tacho de cada lote en `PositionsTable` borraba directo, con el mismo criterio de
+"reversible, no confirmable" (toast con deshacer) que usa el resto de la app — pero acá es un
+tap directo sin ningún paso intermedio de por medio (a diferencia del historial por swipe, que
+ya trae su propia confirmación en el gesto), así que un toque de más lo borraba sin querer.
+Ahora abre un `Sheet` de confirmación primero (mismo patrón que "Eliminar posición" en
+`InstrumentDetailContent`); el toast de deshacer sigue apareciendo después de confirmar.
+
+---
+
 ## [0.33.0] — 2026-08-12
 
 Recurrentes en una moneda distinta a la de la cuenta que los paga — el caso pedido: alquiler
@@ -77,6 +114,8 @@ cursor).
   (columna sumada en `20260807160000_recurring_occurrence_date.sql`), así que choca con
   `transactions_recurring_occurrence_date_scope` antes de llegar a probar el índice único
   que el test dice cubrir.
+
+---
 
 ## [0.32.2] — 2026-08-12
 
