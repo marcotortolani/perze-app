@@ -490,6 +490,7 @@
     "slate": "Cinza-ardósia"
    },
    "openingBalance": "Saldo inicial",
+   "openingBalanceEditHint": "Isso corrige o ponto de partida da conta — nenhum ajuste é registrado. Os lançamentos já feitos não são alterados.",
    "statementDay": "Dia de fechamento",
    "dayPlaceholder": "1-31",
    "dueDay": "Dia de vencimento",

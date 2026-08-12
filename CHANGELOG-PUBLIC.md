@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.26 — 12 de agosto de 2026
+
+### Arreglado
+
+- Ahora podés corregir el saldo inicial de una cuenta después de haberla creado, desde
+  Editar cuenta — sin que eso genere un ajuste de conciliación ni toque tus movimientos ya
+  cargados.
+
 ## 0.30.25 — 12 de agosto de 2026
 
 ### Arreglado

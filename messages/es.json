@@ -490,6 +490,7 @@
     "slate": "Gris pizarra"
    },
    "openingBalance": "Saldo inicial",
+   "openingBalanceEditHint": "Corregís el punto de partida de la cuenta, no se guarda ningún ajuste. Los movimientos ya cargados no se tocan.",
    "statementDay": "Día de cierre",
    "dayPlaceholder": "1-31",
    "dueDay": "Día de vencimiento",

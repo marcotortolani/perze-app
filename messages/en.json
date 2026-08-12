@@ -490,6 +490,7 @@
     "slate": "Slate"
    },
    "openingBalance": "Opening balance",
+   "openingBalanceEditHint": "This corrects the account's starting point — no adjustment is recorded. Existing transactions aren't touched.",
    "statementDay": "Statement day",
    "dayPlaceholder": "1-31",
    "dueDay": "Due day",

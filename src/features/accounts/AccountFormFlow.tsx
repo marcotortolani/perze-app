@@ -149,7 +149,15 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
     if (!canSave || saving) return;
     setSaving(true);
     try {
-      const openingBalance = existing ? existing.openingBalance : evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
+      // Editable también en edición (no solo al crear): corrige el punto
+      // de partida en sí, sin dejar un ajuste de conciliación — lo que la
+      // cuenta tenía en `openingDate` cambia, los movimientos posteriores
+      // no se tocan. Si no se tipeó nada nuevo, se conserva el valor
+      // existente tal cual.
+      const openingBalance =
+        existing && openingExpr.trim() === ""
+          ? existing.openingBalance
+          : evaluateKeypadExpression(openingExpr || "0", currencyCode, numberLocaleForUiLocale(locale)).amount;
       const creditLimit =
         kind === "credit_card" && creditLimitExpr.trim() !== ""
           ? evaluateKeypadExpression(creditLimitExpr, currencyCode, numberLocaleForUiLocale(locale)).amount
@@ -210,8 +218,17 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
 
       let saved: AccountRow;
       if (existing) {
-        await accountsRepo.update(existing.id, patch);
-        saved = { ...existing, ...patch };
+        // El trigger `accounts_recompute_balance` (servidor) recalcula
+        // `current_balance` cuando cambia `opening_balance`, pero eso
+        // llega recién en el próximo pull — sin este ajuste optimista acá,
+        // el saldo se ve viejo en este mismo dispositivo hasta que
+        // sincronice. Sumar el delta es exactamente lo que el trigger
+        // termina calculando: `current_balance` no depende de nada más que
+        // `opening_balance` y la suma de movimientos, que no cambió.
+        const openingBalanceDelta = openingBalance - existing.openingBalance;
+        const updatePatch = { ...patch, openingBalance, currentBalance: existing.currentBalance + openingBalanceDelta };
+        await accountsRepo.update(existing.id, updatePatch);
+        saved = { ...existing, ...updatePatch };
       } else {
         saved = await accountsRepo.create({
           householdId,
@@ -345,15 +362,20 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
             </div>
           </div>
 
-          {!existing ? (
-            <div>
-              <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.openingBalance")}</p>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 28, marginBottom: 8 }}>
-                {currencyCode} {openingExpr || "0"}
-              </div>
-              <Keypad onKey={(k) => setOpeningExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setOpeningExpr("")} />
+          <div>
+            <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.openingBalance")}</p>
+            <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 28, marginBottom: 8 }}>
+              {currencyCode}{" "}
+              {openingExpr || (existing ? formatAmountCompact(money(existing.openingBalance, currencyCode), { showSign: false }) : "0")}
             </div>
-          ) : null}
+            <Keypad onKey={(k) => setOpeningExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setOpeningExpr("")} />
+            {existing ? (
+              // No es una conciliación: no queda ningún ajuste registrado,
+              // se corrige el punto de partida en sí — los movimientos
+              // posteriores no se tocan, solo el número del que arrancan.
+              <p className="t-caption" style={{ color: "var(--text-muted)", marginTop: 8 }}>{t("accounts.form.openingBalanceEditHint")}</p>
+            ) : null}
+          </div>
 
           {kind === "credit_card" ? (
             <>

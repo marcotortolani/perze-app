@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.26] — 2026-08-12
+
+Pregunta del usuario en uso real: creó una cuenta con un saldo inicial equivocado y no
+encontraba forma de corregirlo sin generar un ajuste de conciliación — quería corregir el
+punto de partida en sí, no dejar un movimiento extra.
+
+### Arreglado — saldo inicial editable después de crear la cuenta
+
+`AccountFormFlow.tsx` mostraba el keypad de saldo inicial solo con `!existing` (paso de
+creación); en edición no había forma de tocarlo. Como el trigger `accounts_recompute_balance`
+(v0.30.18) ya recalcula `current_balance` a partir de `opening_balance` + suma de
+transacciones, el backend soportaba esto desde esa migración — solo faltaba exponerlo:
+
+- El bloque de saldo inicial ahora se muestra también en edición, con el valor actual como
+  placeholder (mismo patrón que `creditLimit`) y una `t-caption` aclarando que no es una
+  conciliación: no queda ningún ajuste registrado, los movimientos ya cargados no se tocan.
+- `handleSave`: si no se tipeó nada nuevo, se conserva `existing.openingBalance` tal cual
+  (no hay reevaluación espuria de un expr vacío).
+- Ajuste optimista local de `current_balance` (`existing.currentBalance + delta`) para que el
+  saldo no se vea stale en este mismo dispositivo hasta el próximo pull — `sync-config.ts`
+  nunca empuja `current_balance` al servidor (lo recalcula el trigger), así que este ajuste es
+  puramente de UX local, no puede pisar el cálculo real.
+
+---
+
 ## [0.30.25] — 2026-08-12
 
 Causa raíz de v0.30.22/v0.30.24: investigando el "Sin categoría" del radar contra los datos
