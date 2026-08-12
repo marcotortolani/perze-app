@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.31 — 12 de agosto de 2026
+
+### Arreglado
+
+- En Cuentas y en Movimientos (vista de escritorio, con el detalle al lado de la lista), el
+  panel de la derecha podía quedar mostrando un registro viejo —o el registro viejo
+  mezclado con el mensaje de "elegí algo de la lista"— después de navegar a otra pantalla y
+  volver. Ya elige siempre lo que corresponde.
+
 ## 0.30.29 — 12 de agosto de 2026
 
 ### Arreglado

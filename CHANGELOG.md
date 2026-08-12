@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.31] — 2026-08-12
+
+v0.30.30 confirmó el fix en `/accounts` pero destapó la misma causa en `/transactions`, con
+otra cara: seleccionar un movimiento → navegar afuera (Dashboard/Cuentas, cualquiera) →
+volver mostraba el detalle viejo **y** el estado vacío "Elegí un movimiento…" apilados a la
+vez, en vez de solo el que correspondía. Recargar la página lo arreglaba siempre — la pista
+de que no era un problema de datos, sino de qué queda montado en el DOM.
+
+### Arreglado — `DetailPanelTransition` sin `AnimatePresence`, en las dos pantallas de una
+
+`mode="wait"` (bug de v0.30.28) y `mode="sync"` (fix de v0.30.30) son las dos caras de lo
+mismo: los dos dependen de que el nodo que sale complete su animación de salida y se
+desmonte para que `AnimatePresence` pueda limpiarlo. Con `wait`, mientras eso no pase, el
+nodo nuevo no se muestra (`/accounts`). Con `sync`, el nuevo se muestra igual pero el viejo
+queda dando vueltas sin desmontarse nunca (`/transactions`) — mismo síntoma de fondo,
+maquillado distinto por el modo. Hipótesis con bastante confianza (no instrumentada del
+todo): navegar afuera de la página y volver, dentro de la ventana del router cache de
+Next.js (`staleTimes`), no desmonta el árbol de verdad — probablemente lo oculta y lo
+reactiva — y ninguno de los dos modos de `AnimatePresence` está pensado para eso.
+
+Fix de fondo, no otro ajuste de modo: se saca `AnimatePresence` del componente entero.
+Queda un `motion.div` con `key={transitionKey}` sin envoltorio — el reconciliador de React
+reemplaza el nodo viejo por el nuevo de forma inmediata e incondicional en cuanto cambia el
+`key`, sin depender de ningún evento de animación. Se pierde el fundido de salida del panel
+viejo (quedan la entrada del nuevo con fade+spring, y el respeto de `useMotionIntensity`);
+se gana que la columna de detalle no puede quedar en un estado inconsistente pase lo que
+pase con el router cache. El `initial={false}` que daba `AnimatePresence` para no animar el
+primer render se reimplementa a mano con `useState` (ajuste de estado durante el render, no
+un ref: un ref leído/escrito en render rompe bajo el React Compiler de este proyecto).
+
+Afecta a `/accounts` y `/transactions` por igual, que comparten el componente.
+`pnpm build` limpio (React Compiler no se queja de nada nuevo).
+
+---
+
 ## [0.30.30] — 2026-08-12
 
 Bug reportado en uso real, persistente incluso después de cerrar la PWA del todo (descarta
