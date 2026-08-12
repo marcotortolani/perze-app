@@ -108,6 +108,24 @@ export function scopeFromParams(from: string | null | undefined, to: string | nu
   return { month, day: from === range.from && to === range.to ? candidate : null };
 }
 
+/**
+ * Inversa de `monthRange`: `null` salvo que `from`/`to` sean EXACTAMENTE el
+ * rango de un mes calendario completo — un día suelto (`dayRange`) o un
+ * preset arbitrario (el período del household que linkea el home) no
+ * cuentan. Vive separada de `scopeFromParams` porque las dos preguntan cosas
+ * distintas: esa devuelve "qué día, si hay uno" (para el calendario), esta
+ * devuelve "qué mes, si el rango ES un mes" (para el panel de historial y su
+ * chip de período aplicado).
+ */
+export function monthFromParams(from: string | null | undefined, to: string | null | undefined): string | null {
+  if (!from || !to) return null;
+  const start = new Date(from);
+  if (Number.isNaN(start.getTime())) return null;
+  const month = formatMonth(start.getFullYear(), start.getMonth());
+  const range = monthRange(month);
+  return from === range.from && to === range.to ? month : null;
+}
+
 /** Corre el mes `delta` meses. `Date` cruza el año sola. */
 export function shiftMonth(month: string, delta: number): string {
   const [y, m] = splitMonth(month);

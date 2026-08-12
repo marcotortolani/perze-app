@@ -1,5 +1,13 @@
 import { createClient } from "../supabase/client";
 import { getDb } from "../db/client";
+import { purgeAppliedKeyFor } from "../offline/purge-reconcile";
+import { wipeLocalHouseholdData } from "./purge-household-local";
+
+// Reexportada — sigue viviendo en `purge-household-local.ts` (100% Dexie,
+// testeable sin arrastrar la validación de env vars de Supabase que dispara
+// `createClient()`), pero todo lo que ya la importaba de acá (`/more/data/page.tsx`)
+// no tiene que cambiar.
+export { wipeLocalHouseholdData };
 
 export type PurgeStepKey =
   | "transactions"
@@ -43,36 +51,24 @@ export async function runPurgeStep(householdId: string, step: PurgeStepKey): Pro
 }
 
 /**
- * Limpieza del caché local, solo después de que los 7 pasos remotos
- * terminaron bien — nunca antes, para no vaciar Dexie si el borrado
- * remoto todavía puede fallar a mitad de camino. A diferencia de
- * `signOut()` (que tira toda la base con `getDb().delete()`), acá el
- * usuario sigue logueado y en el mismo household: solo se vacían las
- * tablas con datos de ESE household, nunca `households`/`householdMembers`/
- * `profiles`/`currencies`/`countries` ni las filas globales de catálogo.
+ * Se llama DESPUÉS de que los 7 pasos terminaron bien — nunca antes, mismo
+ * criterio que `wipeLocalHouseholdData`. Estampa `households.purged_at`
+ * (`purge_household_finish`, `20260811210000_household_purge_marker.sql`),
+ * para que cualquier OTRO dispositivo se entere en su próximo pull y limpie
+ * su propio Dexie (`reconcileRemotePurge`, `purge-reconcile.ts`) — sin esto,
+ * `transactions` es la única tabla que un segundo dispositivo nunca poda:
+ * el pull incremental depende de soft-deletes y el purge hace `DELETE`
+ * real.
+ *
+ * También escribe el marcador LOCAL con el `purged_at` exacto que devolvió
+ * el servidor, para que el próximo pull en ESTE MISMO dispositivo (que ya
+ * limpió su Dexie de forma síncrona en `runPurge`) no vuelva a repetir el
+ * wipe en vano.
  */
-export async function wipeLocalHouseholdData(householdId: string): Promise<void> {
-  const db = getDb();
-
-  const txIds = await db.transactions.where("householdId").equals(householdId).primaryKeys();
-  await db.transactionShares.where("transactionId").anyOf(txIds).delete();
-  await db.transactionSplits.where("transactionId").anyOf(txIds).delete();
-  await db.transactionTags.where("transactionId").anyOf(txIds).delete();
-
-  await Promise.all([
-    db.transactions.where("householdId").equals(householdId).delete(),
-    db.settlements.where("householdId").equals(householdId).delete(),
-    db.accounts.where("householdId").equals(householdId).delete(),
-    db.categories.where("householdId").equals(householdId).delete(),
-    db.tags.where("householdId").equals(householdId).delete(),
-    db.payees.where("householdId").equals(householdId).delete(),
-    db.budgets.where("householdId").equals(householdId).delete(),
-    db.goals.where("householdId").equals(householdId).delete(),
-    db.recurringRules.where("householdId").equals(householdId).delete(),
-    db.categorizationRules.where("householdId").equals(householdId).delete(),
-    db.householdFxPreferences.where("householdId").equals(householdId).delete(),
-    // Clones del household únicamente — las filas globales (`householdId: null`)
-    // del catálogo compartido no matchean `.equals(householdId)`.
-    db.institutions.where("householdId").equals(householdId).delete(),
-  ]);
+export async function finishPurge(householdId: string): Promise<void> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("purge_household_finish", { p_household_id: householdId });
+  if (error) throw error;
+  await getDb().meta.put({ key: purgeAppliedKeyFor(householdId), value: data as string });
 }
+

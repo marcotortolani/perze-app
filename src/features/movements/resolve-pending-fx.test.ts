@@ -20,6 +20,7 @@ const HOUSEHOLD_UYU: HouseholdRow = {
   createdAt: "2026-07-01T00:00:00.000Z",
   updatedAt: "2026-07-01T00:00:00.000Z",
   clientRev: 1,
+  purgedAt: null,
 };
 
 describe("resolvePendingFx (A4)", () => {

@@ -4,6 +4,8 @@ import { getDb } from "../db/client";
 import { withoutOutbox } from "./outbox";
 import { fetchKeyset, fetchPaged, type KeysetCursor } from "./paging";
 import { fxRepo } from "../repos/fx-repo";
+import { reconcileRemotePurge } from "./purge-reconcile";
+import { watermarkKeyFor } from "./sync-keys";
 import {
   ACCOUNTS_COLUMNS,
   ACCOUNT_GROUPS_COLUMNS,
@@ -62,12 +64,11 @@ import type { AccountGroupRow, BudgetRow, CategorizationRuleRow, CategoryRow, Go
 const OVERLAP_MS = 5_000;
 const EPOCH = new Date(0).toISOString();
 
-// Exportado — el household switcher (PR 3) lo usa para decidir si un
-// household ya tiene un pull incremental corrido y puede saltear el
-// hydrate completo al cambiar a él.
-export function watermarkKeyFor(householdId: string): string {
-  return `pullWatermark:${householdId}`;
-}
+// Reexportada desde `sync-keys.ts` (rompe un ciclo de imports con el purge,
+// ver su comentario) — el household switcher (PR 3) sigue importándola de
+// acá para decidir si un household ya tiene un pull incremental corrido y
+// puede saltear el hydrate completo al cambiar a él.
+export { watermarkKeyFor } from "./sync-keys";
 
 async function blockedEntityIds(candidateIds: string[], table: string): Promise<Set<string>> {
   if (candidateIds.length === 0) return new Set();
@@ -114,14 +115,23 @@ async function blockingAccountIds(): Promise<Set<string>> {
 // households — fila única, sin poda (nunca se borra desde acá).
 // ---------------------------------------------------------------------------
 
-async function refreshHousehold(householdId: string): Promise<void> {
+/**
+ * Devuelve el `purgedAt` que acaba de bajar (o `undefined` si no pudo leer
+ * la fila) — `pullFromRemote` lo usa para decidir si hay que reconciliar un
+ * purge remoto ANTES de pedir `transactions`, que es exactamente la tabla
+ * que un purge deja en un estado que el pull incremental no sabe leer (ver
+ * `purge-reconcile.ts`).
+ */
+async function refreshHousehold(householdId: string): Promise<string | null | undefined> {
   const supabase = createClient();
   const { data, error } = await supabase.from("households").select(HOUSEHOLDS_COLUMNS).eq("id", householdId).is("deleted_at", null).maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) return; // borrado o fuera de alcance — no es tema de F1 (ver "Riesgos conocidos" del plan)
+  if (!data) return undefined; // borrado o fuera de alcance — no es tema de F1 (ver "Riesgos conocidos" del plan)
   const blocked = await blockedEntityIds([householdId], "households");
-  if (blocked.has(householdId)) return;
-  await getDb().households.put(householdFromRow(data as unknown as RawHousehold));
+  if (blocked.has(householdId)) return undefined;
+  const row = householdFromRow(data as unknown as RawHousehold);
+  await getDb().households.put(row);
+  return row.purgedAt;
 }
 
 // ---------------------------------------------------------------------------
@@ -333,15 +343,48 @@ export interface PullResult {
   prunedTotal: number;
 }
 
+// `prunedTotal: 1`, no 0 — `invalidateAfterPull` decide si invalida el
+// cache mirando exactamente dos señales (`transactions > 0` o
+// `prunedTotal > 0`, ver su comentario). Una reconciliación de purge es la
+// definición misma de "hubo un cambio real"; un `0` acá dejaría el
+// calendario y la lista de `/transactions` pintando datos que Dexie ya no
+// tiene hasta el próximo tick que sí traiga una novedad "de verdad".
+const PURGE_RECONCILED_RESULT: PullResult = {
+  transactions: 0,
+  accounts: 0,
+  accountGroups: 0,
+  categories: 0,
+  tags: 0,
+  payees: 0,
+  budgets: 0,
+  goals: 0,
+  recurringRules: 0,
+  rules: 0,
+  members: 0,
+  prunedTotal: 1,
+};
+
 /**
  * Pull incremental de `transactions` + refresh completo del resto — F1/F2
  * de `docs/plan-sync-incremental.md`. Siempre corre DESPUÉS de
  * `drainOutbox()` en el mismo tick (`use-sync-loop.ts`): lo local pendiente
  * sube primero, así el merge tiene la foto más al día del propio outbox.
+ *
+ * `refreshHousehold` corre PRIMERO, antes que `pullTransactions` — a
+ * propósito, invirtiendo el orden que tenía antes. Es la única forma de
+ * enterarse de un purge remoto (`households.purged_at`) ANTES de pedirle a
+ * `transactions` "todo lo nuevo desde mi watermark", que es exactamente la
+ * pregunta equivocada cuando el servidor acaba de hacer un `DELETE` real
+ * (ver `purge-reconcile.ts`). Si hubo reconciliación, se corta acá: Dexie
+ * ya quedó vacío para este household y el watermark en cero, así que el
+ * tick siguiente vuelve a traer lo que haya sobrevivido desde el principio.
  */
 export async function pullFromRemote(householdId: string): Promise<PullResult> {
+  const purgedAt = await refreshHousehold(householdId);
+  if (await reconcileRemotePurge(householdId, purgedAt ?? null)) {
+    return PURGE_RECONCILED_RESULT;
+  }
   const tx = await pullTransactions(householdId);
-  await refreshHousehold(householdId);
   try {
     // Overrides manuales y preferencia de cotización (blue/CCL/oficial) del
     // household — sin esto, "qué tipo de cambio se está eligiendo" solo se

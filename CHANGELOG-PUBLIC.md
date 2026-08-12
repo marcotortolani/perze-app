@@ -40,7 +40,7 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
-## 0.30.20 — 12 de agosto de 2026
+## 0.30.21 — 12 de agosto de 2026
 
 ### Nuevo
 
@@ -51,7 +51,7 @@ inventes de memoria.
   Cuando te llegue el resumen real, confirmalo desde la tarjeta con "Llegó el resumen":
   tres datos precargados que corregís si hace falta.
 
-## 0.30.19 — 11 de agosto de 2026
+## 0.30.20 — 11 de agosto de 2026
 
 ### Nuevo
 
@@ -67,7 +67,7 @@ inventes de memoria.
 - Si un instrumento existía en dos monedas distintas (por ejemplo el mismo papel como CEDEAR
   en pesos y como acción en dólares), agregarlo ya no fallaba en silencio.
 
-## 0.30.18 — 11 de agosto de 2026
+## 0.30.19 — 11 de agosto de 2026
 
 ### Arreglado
 
@@ -77,7 +77,7 @@ inventes de memoria.
 - El aviso de "sin conexión"/sincronización pendiente ya no se ve torcido ni se rompe en el
   celular.
 
-## 0.30.17 — 11 de agosto de 2026
+## 0.30.18 — 11 de agosto de 2026
 
 ### Arreglado
 
@@ -88,6 +88,24 @@ inventes de memoria.
 - Cargar un movimiento después de otro ya no arrastra los datos del anterior.
 - Al editar un movimiento, ahora podés guardar los cambios más de una vez seguida sin que el
   botón se quede trabado.
+
+## 0.30.17 — 11 de agosto de 2026
+
+### Mejorado
+
+- El historial de movimientos ya no te saca de la pantalla: ahora se abre al lado de la lista
+  (o arriba, en el celular), igual que el calendario. Elegí un mes y se aplica directo a lo que
+  estás viendo, con un chip para sacarlo cuando quieras.
+- Abrir el calendario ahora siempre arranca en el mes de hoy, sin quedar atado a un período que
+  hayas elegido antes desde el historial.
+
+### Arreglado
+
+- El calendario de movimientos podía mostrar actividad en días que ya no tenían nada —pasaba
+  después de borrar todos tus datos desde Ajustes. Ahora el color de cada día coincide siempre
+  con lo que ves al tocarlo.
+- Un día o un mes sin movimientos ya no te ofrecía "cargar tu primer gasto" como si nunca
+  hubieras cargado nada — ahora te avisa que ese día en particular está vacío.
 
 ## 0.30.16 — 10 de agosto de 2026
 

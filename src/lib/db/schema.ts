@@ -28,6 +28,8 @@ export interface HouseholdRow {
   createdAt: string;
   updatedAt: string;
   clientRev: number;
+  /** `null` salvo que el owner haya corrido "Borrar todos mis datos" — ver `purge-reconcile.ts`. */
+  purgedAt: string | null;
 }
 
 export type HouseholdRole = "owner" | "admin" | "member" | "viewer";

@@ -5,7 +5,7 @@ import { newId, nowIso } from "./ids";
 
 const CURRENT_HOUSEHOLD_META_KEY = "currentHouseholdId";
 
-export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt" | "clientRev">;
+export type NewHouseholdInput = Omit<HouseholdRow, "id" | "createdAt" | "updatedAt" | "clientRev" | "purgedAt">;
 
 export const householdsRepo = {
   async get(id: string): Promise<HouseholdRow | undefined> {
@@ -27,7 +27,7 @@ export const householdsRepo = {
   async create(input: NewHouseholdInput): Promise<HouseholdRow> {
     const db = getDb();
     const now = nowIso();
-    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now, clientRev: 1 };
+    const row: HouseholdRow = { ...input, id: newId(), createdAt: now, updatedAt: now, clientRev: 1, purgedAt: null };
     // C4 — enqueue en la misma transacción que la escritura (ver nota en accounts-repo.ts).
     await db.transaction("rw", db.households, db.outbox, async () => {
       await db.households.add(row);

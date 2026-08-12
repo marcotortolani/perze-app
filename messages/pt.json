@@ -534,6 +534,7 @@
    "filters": "Filtros",
    "calendar": "Calendário",
    "history": "Histórico",
+   "clearPeriod": "Remover período aplicado",
    "cancel": "Cancelar",
    "income": "Receitas",
    "expenses": "Gastos",
@@ -560,11 +561,9 @@
    "dayCount": "{count, plural, one {# movimento} other {# movimentos}}"
   },
   "history": {
-   "title": "Histórico",
    "year": "Ano",
    "chooseYear": "Escolher ano",
-   "empty": "Ainda não há movimentos salvos.",
-   "back": "Voltar aos movimentos"
+   "empty": "Ainda não há movimentos salvos."
   },
   "detail": {
    "selectPrompt": "Escolha um movimento da lista para ver o detalhe aqui.",

@@ -121,6 +121,8 @@ export interface RawHousehold {
   created_at: string;
   updated_at: string;
   client_rev: number;
+  /** `null` salvo que el owner haya corrido "Borrar todos mis datos" — ver `purge-reconcile.ts`. */
+  purged_at: string | null;
 }
 
 export function householdFromRow(row: RawHousehold): HouseholdRow {
@@ -137,6 +139,7 @@ export function householdFromRow(row: RawHousehold): HouseholdRow {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     clientRev: row.client_rev,
+    purgedAt: row.purged_at ?? null,
   };
 }
 

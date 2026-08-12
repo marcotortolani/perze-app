@@ -8,6 +8,7 @@ import {
   heatMixPercent,
   isFutureDay,
   localMidnightIso,
+  monthFromParams,
   monthGrid,
   monthOfDay,
   monthRange,
@@ -82,6 +83,35 @@ describe("scopeFromParams", () => {
 
   it("no explota con un `from` inválido escrito a mano en la URL", () => {
     expect(scopeFromParams("no-es-una-fecha", null, new Date(2026, 7, 5))).toEqual({ month: "2026-08", day: null });
+  });
+});
+
+describe("monthFromParams", () => {
+  it("reconoce un rango que ES exactamente un mes calendario", () => {
+    const { from, to } = monthRange("2026-08");
+    expect(monthFromParams(from, to)).toBe("2026-08");
+  });
+
+  it("un día suelto no cuenta como mes elegido", () => {
+    const { from, to } = dayRange("2026-08-04");
+    expect(monthFromParams(from, to)).toBeNull();
+  });
+
+  it("un rango arbitrario (el período del household que linkea el home) no cuenta", () => {
+    const from = localMidnightIso(2026, 7, 5);
+    const to = localMidnightIso(2026, 8, 5);
+    expect(monthFromParams(from, to)).toBeNull();
+  });
+
+  it("sin from o sin to, null", () => {
+    const { from } = monthRange("2026-08");
+    expect(monthFromParams(null, null)).toBeNull();
+    expect(monthFromParams(from, null)).toBeNull();
+    expect(monthFromParams(null, "2026-09-01T00:00:00.000Z")).toBeNull();
+  });
+
+  it("no explota con un `from` inválido", () => {
+    expect(monthFromParams("no-es-una-fecha", "tampoco")).toBeNull();
   });
 });
 
