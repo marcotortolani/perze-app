@@ -15,7 +15,7 @@ import { createSettlementTransaction } from "@/lib/investments/create-settlement
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { todayIso } from "@/lib/repos/ids";
-import { convert } from "@/lib/fx/rate";
+import { convert, formatRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
 import { decimalsFor, decimalsForQuantity } from "@/lib/money/decimals";
@@ -256,7 +256,14 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
       let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
       if (resolution.rate) {
         amountBase = convert(money(netAmount, instrument.currencyCode), household.baseCurrency, resolution.rate).amount;
-        fxRate = resolution.rate.toString();
+        // `formatRate()`, no `.toString()` — `resolution.rate` es un
+        // `ScaledRate` (bigint × 10^12, formato interno). `.toString()` deja
+        // el entero crudo escalado ("1000000000000" para rate=1) en vez del
+        // decimal ("1.000000000000"), y eso desborda `numeric(24,12)` (máx.
+        // 12 dígitos enteros) apenas el rate deja de ser 0 — 400
+        // "numeric field overflow" en cualquier trade con fx resuelto, el
+        // caso de SPCX que reportó el bug.
+        fxRate = formatRate(resolution.rate);
       } else {
         fxSource = "pending";
       }

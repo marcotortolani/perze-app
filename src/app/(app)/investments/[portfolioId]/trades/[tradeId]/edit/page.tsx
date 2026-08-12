@@ -15,7 +15,7 @@ import { deleteSettlementTransaction, resyncSettlementTransaction } from "@/lib/
 import { tradeMovesCash } from "@/lib/investments/trade-settlement-policy";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { todayIso } from "@/lib/repos/ids";
-import { convert } from "@/lib/fx/rate";
+import { convert, formatRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
 import { decimalsFor } from "@/lib/money/decimals";
@@ -133,7 +133,10 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
       let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
       if (resolution.rate) {
         amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, resolution.rate).amount;
-        fxRate = resolution.rate.toString();
+        // `formatRate()`, no `.toString()` — ver el comentario largo en
+        // `trades/new/page.tsx`: `.toString()` deja el entero crudo
+        // escalado en vez del decimal y desborda `numeric(24,12)`.
+        fxRate = formatRate(resolution.rate);
       } else {
         fxSource = "pending";
       }

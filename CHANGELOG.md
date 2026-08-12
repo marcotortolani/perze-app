@@ -6,6 +6,30 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.32] — 2026-08-12
+
+v0.30.29 arregló el `trades_fx_pair` de SPCX, pero el retest sobre la misma posición inicial
+siguió devolviendo 400 — mensaje distinto: `22003 numeric field overflow`,
+`"A field with precision 24, scale 12 must round to an absolute value less than 10^12."`.
+
+### Arreglado — `fx_rate` de un trade se mandaba escalado × 10^12, no como decimal
+
+`resolution.rate` es un `ScaledRate` (bigint = rate × `RATE_SCALE`, `RATE_SCALE = 10^12`) — el
+formato interno con el que se opera en `src/lib/fx/rate.ts`, nunca el que se persiste tal cual.
+`trades/new/page.tsx` y `trades/[tradeId]/edit/page.tsx` (mismo Tanda 4 que originó v0.30.29)
+lo serializaban con `resolution.rate.toString()`: para un rate de 1 eso manda el string
+`"1000000000000"` (13 dígitos) a una columna `numeric(24,12)`, que solo admite 12 dígitos
+antes del punto — desborda apenas el rate deja de ser 0, así que pasaba en cualquier trade
+con fx resuelta, no solo en el caso `base === quote` de v0.30.29.
+
+El patrón correcto ya vive en `src/lib/offline/sync-config.ts` (`rateToString`, vía
+`formatRate()`) para transacciones — convierte el bigint escalado al decimal real
+(`"1.000000000000"`) antes de mandarlo a Postgres. Las dos páginas de trades reimplementaban
+la serialización a mano con `.toString()` en vez de usar `formatRate()`, que ya existe
+exactamente para esto. Fix: `formatRate(resolution.rate)` en los dos lugares.
+
+---
+
 ## [0.30.31] — 2026-08-12
 
 v0.30.30 confirmó el fix en `/accounts` pero destapó la misma causa en `/transactions`, con
