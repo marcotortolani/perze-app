@@ -24,6 +24,7 @@ function account(overrides: Partial<AccountRow> = {}): AccountRow {
     creditLimit: null,
     statementDay: null,
     dueDay: null,
+    accountGroupId: null,
     interestRate: null,
     termMonths: null,
     includeInNetWorth: true,

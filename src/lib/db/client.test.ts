@@ -35,6 +35,7 @@ describe("PerzeDatabase — schema abre y hace CRUD básico", () => {
       creditLimit: null,
       statementDay: null,
       dueDay: null,
+      accountGroupId: null,
       interestRate: null,
       termMonths: null,
       includeInNetWorth: true,

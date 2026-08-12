@@ -111,9 +111,20 @@ export interface AccountRow {
   openingDate: string | null;
   currentBalance: bigint;
 
+  /**
+   * Tanda 4 — límite y ciclo de una tarjeta pasaron a vivir en
+   * `AccountGroupRow` cuando la cuenta pertenece a uno (multi-moneda:
+   * varias cuentas `credit_card`, un solo grupo dueño del límite/ciclo
+   * compartido). Estas tres columnas siguen existiendo acá para las
+   * tarjetas SIN agrupar (compatibilidad, caso de una sola moneda) — el
+   * valor efectivo es `accountGroupId ? group.field : account.field`, ver
+   * `effectiveCardCycleConfig()` en `lib/analytics/card-cycle.ts`.
+   */
   creditLimit: bigint | null;
   statementDay: number | null;
   dueDay: number | null;
+  /** `null` = tarjeta sin agrupar (usa sus propias `creditLimit`/`statementDay`/`dueDay` de arriba). */
+  accountGroupId: string | null;
 
   interestRate: string | null; // decimal string, numeric(8,4)
   termMonths: number | null;
@@ -128,6 +139,37 @@ export interface AccountRow {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
+  clientRev: number;
+}
+
+/**
+ * Tanda 4 — pieza reutilizable, no un parche de tarjetas: agrupa cuentas
+ * y les presta atributos compartidos. Hoy solo existe `kind: 'credit_card'`
+ * (límite + ciclo de una tarjeta multi-moneda); las columnas específicas
+ * de ese kind son nullable para dejar lugar a un `kind` futuro sin
+ * romper esta fila. Ver la migración
+ * `20260812090000_account_groups_card_multicurrency.sql`.
+ */
+export type AccountGroupKind = "credit_card";
+
+export interface AccountGroupRow {
+  id: string;
+  householdId: string;
+  kind: AccountGroupKind;
+  name: string;
+
+  /** Solo `kind: 'credit_card'` — nullable para cualquier otro kind futuro. */
+  creditLimit: bigint | null;
+  limitCurrency: string | null;
+  /** Semilla de la PROYECCIÓN del ciclo — nunca la fecha real confirmada (`docs/`, § Tanda 4 tarjetas). */
+  statementDay: number | null;
+  dueDay: number | null;
+
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt: string | null;
   deletedAt: string | null;
   clientRev: number;
 }

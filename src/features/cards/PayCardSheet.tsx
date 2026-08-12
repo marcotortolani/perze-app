@@ -19,13 +19,15 @@ import { payCard, isValidPayAmount, type PayCardResult } from "@/features/cards/
 import { amountToExpression } from "@/features/capture/AmountStep";
 import { ACCOUNT_KIND_ICON } from "@/lib/reference/account-kind-labels";
 import { accountColorVar } from "@/lib/reference/account-colors";
-import type { AccountRow, HouseholdRow } from "@/lib/db/schema";
+import type { AccountGroupRow, AccountRow, HouseholdRow } from "@/lib/db/schema";
 import type { Debt } from "@/lib/repos/debts-repo";
 import type { Locale } from "@/i18n/formatting";
 
 export interface PayCardSheetProps {
   open: boolean;
   card: AccountRow;
+  /** Tanda 4 — `null` si `card` no está agrupada. */
+  cardGroup: AccountGroupRow | null;
   accounts: readonly AccountRow[];
   expectedDue: bigint;
   installmentDebts: readonly Debt[];
@@ -46,7 +48,7 @@ type Step = "source" | "amount" | "reconcile";
  * `/accounts/[id]`, así los dos entran por el mismo camino (`payCard()`)
  * en vez de tener cada uno su propia lógica divergente.
  */
-export function PayCardSheet({ open, card, accounts, expectedDue, installmentDebts, household, userId, numberLocale, locale, onClose, onPaid }: PayCardSheetProps) {
+export function PayCardSheet({ open, card, cardGroup, accounts, expectedDue, installmentDebts, household, userId, numberLocale, locale, onClose, onPaid }: PayCardSheetProps) {
   const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState<Step>("source");
@@ -171,6 +173,7 @@ export function PayCardSheet({ open, card, accounts, expectedDue, installmentDeb
         household,
         userId,
         card,
+        cardGroup,
         source,
         amountExpression: expr || "0",
         numberLocale,

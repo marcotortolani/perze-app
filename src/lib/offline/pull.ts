@@ -6,6 +6,7 @@ import { fetchKeyset, fetchPaged, type KeysetCursor } from "./paging";
 import { fxRepo } from "../repos/fx-repo";
 import {
   ACCOUNTS_COLUMNS,
+  ACCOUNT_GROUPS_COLUMNS,
   BUDGETS_COLUMNS,
   CATEGORIES_COLUMNS,
   GOALS_COLUMNS,
@@ -19,6 +20,7 @@ import {
 } from "./sync-columns";
 import {
   accountFromRow,
+  accountGroupFromRow,
   budgetFromRow,
   categoryFromRow,
   goalFromRow,
@@ -30,6 +32,7 @@ import {
   tagFromRow,
   transactionFromRow,
   type RawAccount,
+  type RawAccountGroup,
   type RawBudget,
   type RawCategory,
   type RawGoal,
@@ -41,7 +44,7 @@ import {
   type RawTag,
   type RawTransaction,
 } from "./hydrate";
-import type { BudgetRow, CategorizationRuleRow, CategoryRow, GoalRow, OutboxEntryRow, PayeeRow, RecurringRuleRow, TagRow } from "../db/schema";
+import type { AccountGroupRow, BudgetRow, CategorizationRuleRow, CategoryRow, GoalRow, OutboxEntryRow, PayeeRow, RecurringRuleRow, TagRow } from "../db/schema";
 
 /**
  * AC-14 (`docs/plan-sync-incremental.md`) — pull incremental: la contracara
@@ -174,6 +177,13 @@ async function refreshAccounts(householdId: string): Promise<{ count: number; pr
   }
 
   return commitSimpleTable(db.accounts, "accounts", householdId, rows);
+}
+
+async function refreshAccountGroups(householdId: string): Promise<{ count: number; pruned: number }> {
+  const db = getDb();
+  const supabase = createClient();
+  const raw = await fetchPaged<RawAccountGroup>((f, t) => supabase.from("account_groups").select(ACCOUNT_GROUPS_COLUMNS).eq("household_id", householdId).order("id").range(f, t));
+  return commitSimpleTable<AccountGroupRow>(db.accountGroups, "account_groups", householdId, raw.map(accountGroupFromRow));
 }
 
 // ---------------------------------------------------------------------------
@@ -311,6 +321,7 @@ async function pullTransactions(householdId: string): Promise<{ count: number }>
 export interface PullResult {
   transactions: number;
   accounts: number;
+  accountGroups: number;
   categories: number;
   tags: number;
   payees: number;
@@ -343,6 +354,7 @@ export async function pullFromRemote(householdId: string): Promise<PullResult> {
   }
   const members = await refreshMembers(householdId);
   const accounts = await refreshAccounts(householdId);
+  const accountGroups = await refreshAccountGroups(householdId);
   const categories = await refreshCategories(householdId);
   const tags = await refreshTags(householdId);
   const payees = await refreshPayees(householdId);
@@ -351,11 +363,12 @@ export async function pullFromRemote(householdId: string): Promise<PullResult> {
   const recurringRules = await refreshRecurringRules(householdId);
   const rules = await refreshRules(householdId);
 
-  const prunedTotal = [members, accounts, categories, tags, payees, budgets, goals, recurringRules, rules].reduce((sum, r) => sum + r.pruned, 0);
+  const prunedTotal = [members, accounts, accountGroups, categories, tags, payees, budgets, goals, recurringRules, rules].reduce((sum, r) => sum + r.pruned, 0);
 
   return {
     transactions: tx.count,
     accounts: accounts.count,
+    accountGroups: accountGroups.count,
     categories: categories.count,
     tags: tags.count,
     payees: payees.count,

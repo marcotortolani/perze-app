@@ -40,6 +40,17 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.20 — 12 de agosto de 2026
+
+### Nuevo
+
+- Las tarjetas de crédito ahora pueden tener más de una moneda (por ejemplo pesos y
+  dólares), cada una con su propio resumen y su propio pago — el límite y la fecha de
+  cierre son compartidos entre las dos.
+- El ciclo de la tarjeta ya no se cierra solo con una fecha que la app calculaba de memoria.
+  Cuando te llegue el resumen real, confirmalo desde la tarjeta con "Llegó el resumen":
+  tres datos precargados que corregís si hace falta.
+
 ## 0.30.19 — 11 de agosto de 2026
 
 ### Nuevo

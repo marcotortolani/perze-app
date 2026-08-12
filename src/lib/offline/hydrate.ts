@@ -4,6 +4,7 @@ import { withoutOutbox } from "./outbox";
 import { fetchPaged } from "./paging";
 import {
   ACCOUNTS_COLUMNS,
+  ACCOUNT_GROUPS_COLUMNS,
   BUDGETS_COLUMNS,
   CATEGORIES_COLUMNS,
   GOALS_COLUMNS,
@@ -19,6 +20,7 @@ import { parseRate } from "../fx/rate";
 import { nowIso } from "../repos/ids";
 import { BASIC_CATEGORY_TEMPLATE, COMPLETE_CATEGORY_TEMPLATE, type CategoryTemplateItem } from "../reference/category-templates";
 import type {
+  AccountGroupRow,
   AccountKind,
   AccountRow,
   Attachment,
@@ -176,6 +178,7 @@ export interface RawAccount {
   credit_limit: string | null;
   statement_day: number | null;
   due_day: number | null;
+  account_group_id: string | null;
   interest_rate: string | null;
   term_months: number | null;
   include_in_net_worth: boolean;
@@ -210,6 +213,7 @@ export function accountFromRow(row: RawAccount): AccountRow {
     creditLimit: bigOfN(row.credit_limit),
     statementDay: row.statement_day,
     dueDay: row.due_day,
+    accountGroupId: row.account_group_id,
     interestRate: row.interest_rate,
     termMonths: row.term_months,
     includeInNetWorth: row.include_in_net_worth,
@@ -217,6 +221,42 @@ export function accountFromRow(row: RawAccount): AccountRow {
     color: row.color,
     icon: row.icon,
     sortOrder: row.sort_order ?? 0,
+    archivedAt: row.archived_at,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+    clientRev: row.client_rev,
+  };
+}
+
+export interface RawAccountGroup {
+  id: string;
+  household_id: string;
+  kind: string;
+  name: string;
+  credit_limit: string | null;
+  limit_currency: string | null;
+  statement_day: number | null;
+  due_day: number | null;
+  archived_at: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  client_rev: number;
+}
+
+export function accountGroupFromRow(row: RawAccountGroup): AccountGroupRow {
+  return {
+    id: row.id,
+    householdId: row.household_id,
+    kind: row.kind as AccountGroupRow["kind"],
+    name: row.name,
+    creditLimit: bigOfN(row.credit_limit),
+    limitCurrency: row.limit_currency,
+    statementDay: row.statement_day,
+    dueDay: row.due_day,
     archivedAt: row.archived_at,
     createdBy: row.created_by,
     createdAt: row.created_at,
@@ -642,9 +682,10 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   const scopeId = activeHouseholdId;
   const scoped = <Q extends { eq: (col: string, v: string) => Q }>(q: Q): Q => q.eq("household_id", scopeId);
 
-  const [rawMembers, rawAccounts, rawCategories, rawTags, rawPayees, rawBudgets, rawGoals, rawRecurring, rawRules] = await Promise.all([
+  const [rawMembers, rawAccounts, rawAccountGroups, rawCategories, rawTags, rawPayees, rawBudgets, rawGoals, rawRecurring, rawRules] = await Promise.all([
     fetchPaged((f, t) => scoped(supabase.from("household_members").select(HOUSEHOLD_MEMBERS_COLUMNS).order("household_id").order("profile_id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("accounts").select(ACCOUNTS_COLUMNS).order("id")).range(f, t)),
+    fetchPaged((f, t) => scoped(supabase.from("account_groups").select(ACCOUNT_GROUPS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("categories").select(CATEGORIES_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("tags").select(TAGS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("payees").select(PAYEES_COLUMNS).order("id")).range(f, t)),
@@ -658,6 +699,7 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
 
   const members = rawMembers.filter((m) => m.status === "active").map(memberFromRow);
   const accounts = rawAccounts.map(accountFromRow);
+  const accountGroups = rawAccountGroups.map(accountGroupFromRow);
   const categories = rawCategories.map(categoryFromRow);
   const tags = rawTags.map(tagFromRow);
   const payees = rawPayees.map(payeeFromRow);
@@ -670,11 +712,12 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   await withoutOutbox(async () => {
     await db.transaction(
       "rw",
-      [db.households, db.householdMembers, db.accounts, db.categories, db.tags, db.payees, db.transactions, db.budgets, db.goals, db.recurringRules, db.categorizationRules, db.meta],
+      [db.households, db.householdMembers, db.accounts, db.accountGroups, db.categories, db.tags, db.payees, db.transactions, db.budgets, db.goals, db.recurringRules, db.categorizationRules, db.meta],
       async () => {
         await db.households.bulkPut(households);
         await db.householdMembers.bulkPut(members);
         await db.accounts.bulkPut(accounts);
+        await db.accountGroups.bulkPut(accountGroups);
         await db.categories.bulkPut(categories);
         await db.tags.bulkPut(tags);
         await db.payees.bulkPut(payees);

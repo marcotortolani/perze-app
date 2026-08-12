@@ -65,8 +65,82 @@ export type Database = {
           },
         ]
       }
+      account_groups: {
+        Row: {
+          archived_at: string | null
+          client_rev: number
+          created_at: string
+          created_by: string
+          credit_limit: number | null
+          deleted_at: string | null
+          due_day: number | null
+          household_id: string
+          id: string
+          kind: string
+          limit_currency: string | null
+          name: string
+          statement_day: number | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          client_rev?: number
+          created_at?: string
+          created_by: string
+          credit_limit?: number | null
+          deleted_at?: string | null
+          due_day?: number | null
+          household_id: string
+          id: string
+          kind: string
+          limit_currency?: string | null
+          name: string
+          statement_day?: number | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          client_rev?: number
+          created_at?: string
+          created_by?: string
+          credit_limit?: number | null
+          deleted_at?: string | null
+          due_day?: number | null
+          household_id?: string
+          id?: string
+          kind?: string
+          limit_currency?: string | null
+          name?: string
+          statement_day?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_groups_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_groups_limit_currency_fkey"
+            columns: ["limit_currency"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       accounts: {
         Row: {
+          account_group_id: string | null
           archived_at: string | null
           client_rev: number
           color: string | null
@@ -96,6 +170,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          account_group_id?: string | null
           archived_at?: string | null
           client_rev?: number
           color?: string | null
@@ -125,6 +200,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          account_group_id?: string | null
           archived_at?: string | null
           client_rev?: number
           color?: string | null
@@ -154,6 +230,13 @@ export type Database = {
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "accounts_account_group_id_fkey"
+            columns: ["account_group_id"]
+            isOneToOne: false
+            referencedRelation: "account_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "accounts_country_code_fkey"
             columns: ["country_code"]
@@ -432,6 +515,7 @@ export type Database = {
           paid_amount: number
           period_end: string
           period_start: string
+          projection_status: string
           settlement_transaction_id: string | null
           statement_balance: number
           status: string
@@ -448,6 +532,7 @@ export type Database = {
           paid_amount?: number
           period_end: string
           period_start: string
+          projection_status?: string
           settlement_transaction_id?: string | null
           statement_balance: number
           status?: string
@@ -464,6 +549,7 @@ export type Database = {
           paid_amount?: number
           period_end?: string
           period_start?: string
+          projection_status?: string
           settlement_transaction_id?: string | null
           statement_balance?: number
           status?: string
@@ -2948,6 +3034,15 @@ export type Database = {
       }
       close_overdue_card_statements: { Args: never; Returns: undefined }
       compute_fx_monthly_averages: { Args: never; Returns: undefined }
+      confirm_card_statement: {
+        Args: {
+          p_closing_date: string
+          p_due_date: string
+          p_statement_balance: number
+          p_statement_id: string
+        }
+        Returns: undefined
+      }
       current_households: { Args: never; Returns: string[] }
       dispatch_due_notifications: { Args: never; Returns: undefined }
       household_created_by_caller: { Args: { h: string }; Returns: boolean }

@@ -6,6 +6,95 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.20] — 2026-08-12
+
+Tanda 4 (última de la ronda de correcciones reportadas en uso real) — tarjetas de crédito.
+La más grande: rediseño de modelo, no solo un fix puntual. Dos ejes independientes que
+comparten la misma entidad nueva.
+
+### Nuevo — `account_groups`, pieza reutilizable
+
+Tabla nueva `account_groups` (`kind: 'credit_card'` por ahora, con columnas específicas de
+ese kind nullable para dejarle lugar a un `kind` futuro sin romper la fila) más
+`accounts.account_group_id`. No es un parche de tarjetas: es el patrón "una entidad agrupa
+cuentas y les presta atributos compartidos", nombrado y modelado genéricamente para
+reaparecer el día que haga falta agrupar cuentas de un mismo banco o una caja de ahorro con
+su tarjeta de débito. Sincronizado offline igual que `accounts` (Dexie, outbox,
+`client_rev` para conflictos) — `src/lib/repos/account-groups-repo.ts`,
+`src/hooks/use-account-groups.ts`.
+
+### Nuevo — tarjeta multi-moneda
+
+Antes una tarjeta tenía una sola `currency_code`, así que no había forma de representar
+"esta tarjeta permite pagar en ARS y en USD, con resumen y pago separados por moneda" (el
+caso real de las tarjetas argentinas con dólar tarjeta). Se resuelve reusando el MISMO
+mecanismo que ya existe para "BBVA ARS" / "BBVA USD" como cuentas separadas: una cuenta
+`credit_card` por moneda, agrupadas bajo un `account_group` que es dueño del límite y del
+ciclo — nunca la cuenta, porque es el mismo plástico, el mismo corte, y así es imposible por
+construcción que dos monedas cierren en fechas distintas.
+
+El % de "uso del límite" es un estimador visual, nunca un dato duro — mismo criterio que el
+"dólar tarjeta": si el límite del grupo está en una moneda distinta a la de la cuenta que se
+está mirando, no se muestra un % (mezclar monedas ahí sería un número falso), se muestra el
+límite compartido como texto. Ninguna lógica de guardado depende de ese número.
+
+Un consumo en una moneda no habilitada se convierte a la moneda "de exterior" con la tasa
+del banco **congelada en el movimiento** (`original_amount`/`original_currency`/
+`original_rate`, el mecanismo canónico de siempre) — nunca se recalcula después.
+
+`AccountFormFlow`: al crear una segunda tarjeta, aparece "Agrupar con otra tarjeta" (solo si
+ya existe un grupo — cero pasos extra para quien tiene una sola moneda). Un switch "Esta
+tarjeta va a tener más de una moneda" crea el grupo desde cero, listo para que la próxima
+cuenta se le sume.
+
+### Nuevo — el ciclo ya no se cierra solo, se confirma
+
+`statement_day`/`due_day` (ahora del grupo) pasan a ser una PROYECCIÓN, nunca la fecha real:
+un banco que corre el cierre con reglas como "último jueves hábil del mes" deja la fecha
+calculada desalineada de la real, y antes la app la daba por buena sin que nadie la mirara.
+
+`card_statements` gana `projection_status` (`projected`/`confirmed`). El cron
+(`open_card_statements`, corre todos los días) sigue abriendo/proyectando el ciclo en curso
+y recalculando el total acumulado — pero **ya no lo cierra por fecha**:
+`close_overdue_card_statements()` queda neutralizada (no-op, documentado, no se borra). El
+cierre real ahora es exclusivo de la confirmación manual: "Llegó el resumen"
+(`/accounts/[id]/card`, nuevo `ConfirmStatementSheet`), un tap con tres campos prellenados
+con la proyección — cierre, vencimiento, total — que el usuario corrige con lo que dice el
+resumen real y confirma. Confirmar corre la RPC `confirm_card_statement`: pisa los tres
+valores, marca `confirmed`, cierra de verdad, y abre el próximo ciclo como una proyección
+nueva (para no quedar sin "ciclo actual" hasta la próxima corrida del cron).
+
+Un ciclo `projected` no dispara notificación de vencimiento — avisar "vence el DD/MM" con
+una fecha que es una adivinanza propia sería mentir con confianza
+(`dispatch_due_notifications()` actualizada).
+
+**Principio que esto no cambia y por eso es seguro**: el saldo del pasivo
+(`accounts.current_balance`) nunca dependió de estas fechas — sigue siendo
+`opening_balance + Σ(transactions)` vía el trigger de siempre. Las fechas de ciclo son una
+capa de agrupación y notificación por encima; si la proyección anda floja entre
+confirmaciones, en el peor caso un consumo cae en el período que no es, pero el saldo real
+nunca se corrompe.
+
+### Alcance de esta tanda — qué queda para después
+
+Por tamaño, se dejó fuera deliberadamente (no es una desviación silenciosa, es una decisión
+de scope):
+
+- El bloque de tarjetas del home (`(app)/page.tsx`) todavía no agrupa visualmente las
+  cuentas de un mismo grupo bajo un encabezado común — cada una se sigue viendo como fila
+  independiente. Funcionalmente correcto, falta la agrupación visual.
+- La proyección del ciclo sigue siendo un día fijo del mes (`clamped_date`, sin cambios en
+  el cálculo) — no un motor de reglas de recurrencia tipo "último jueves hábil". El fix real
+  de esta tanda es que esa proyección deja de tratarse como verdad (nunca cierra sola, se
+  confirma), no una fecha más inteligente. Sumar reglas de recurrencia (nth-weekday, día
+  hábil) queda como mejora futura sobre esta misma base.
+- Sin test e2e para el flujo de alta/agrupación de tarjeta ni para "Llegó el resumen" — los
+  tests pgTAP nuevos (`32_account_groups_card_cycle.sql`) no se pudieron correr localmente
+  (sin Docker, limitación ya documentada del proyecto); se verificó que la migración aplica
+  limpio contra el remoto, que es la validación sintáctica disponible en este entorno.
+
+---
+
 ## [0.30.19] — 2026-08-11
 
 Tanda 3 de la ronda de correcciones reportadas en uso real: inversiones. Posición inicial

@@ -15,6 +15,7 @@ function account(overrides: Partial<AccountRow> & Pick<AccountRow, "id" | "name"
     creditLimit: null,
     statementDay: null,
     dueDay: null,
+    accountGroupId: null,
     interestRate: null,
     termMonths: null,
     includeInNetWorth: true,

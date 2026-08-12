@@ -1,9 +1,44 @@
-import type { AccountRow, AccountKind, TransactionKind } from "@/lib/db/schema";
+import type { AccountRow, AccountGroupRow, AccountKind, TransactionKind } from "@/lib/db/schema";
 import type { CardStatement } from "@/lib/repos/card-statements-repo";
 
 /** El único lugar donde se decide "esto es una tarjeta de crédito" — reemplaza los `kind === 'credit_card'` sueltos que había en cada pantalla. */
 export function isCreditCardAccount(a: Pick<AccountRow, "kind">): boolean {
   return a.kind === ("credit_card" satisfies AccountKind);
+}
+
+export interface EffectiveCardCycleConfig {
+  statementDay: number | null;
+  dueDay: number | null;
+  creditLimit: bigint | null;
+  limitCurrency: string | null;
+  /** `true` si la tarjeta pertenece a un grupo multi-moneda (Tanda 4). */
+  isGrouped: boolean;
+}
+
+/**
+ * Tanda 4 — límite y ciclo pasan a vivir en `AccountGroupRow` cuando la
+ * cuenta pertenece a uno; una tarjeta sin agrupar sigue usando sus propias
+ * columnas (compatibilidad, caso de una sola moneda). Gemela del `COALESCE`
+ * que hace `open_card_statements()`/`confirm_card_statement()` del lado de
+ * Postgres — mismo criterio, no tiene que divergir.
+ */
+export function effectiveCardCycleConfig(account: Pick<AccountRow, "statementDay" | "dueDay" | "creditLimit" | "currencyCode">, group: AccountGroupRow | null): EffectiveCardCycleConfig {
+  if (group) {
+    return {
+      statementDay: group.statementDay,
+      dueDay: group.dueDay,
+      creditLimit: group.creditLimit,
+      limitCurrency: group.limitCurrency,
+      isGrouped: true,
+    };
+  }
+  return {
+    statementDay: account.statementDay,
+    dueDay: account.dueDay,
+    creditLimit: account.creditLimit,
+    limitCurrency: account.currencyCode,
+    isGrouped: false,
+  };
 }
 
 /**

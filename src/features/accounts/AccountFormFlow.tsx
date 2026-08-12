@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Chip, Icon, IconButton, Input, Keypad, OptionCard, SegmentedControl, Sheet, Switch } from "@/design-system";
+import { Button, Chip, Icon, IconButton, Input, Keypad, ListRow, OptionCard, SegmentedControl, Sheet, Switch } from "@/design-system";
 import { ScreenShell } from "@/components/screen-shell";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
+import { accountGroupsRepo } from "@/lib/repos/account-groups-repo";
 import { currenciesRepo } from "@/lib/repos/currencies-repo";
+import { useAccountGroups, useInvalidateAccountGroups } from "@/hooks/use-account-groups";
 import { useCurrencies, useInvalidateCurrencies } from "@/hooks/use-currencies";
 import { COUNTRIES, COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
@@ -82,7 +84,23 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
   const [step, setStep] = useState<"kind" | "details">(existing ? "details" : "kind");
   const [saving, setSaving] = useState(false);
 
-  const canSave = name.trim().length > 0 && (kind !== "credit_card" || (statementDay && dueDay)) && (kind !== "loan" || (interestRate && termMonths));
+  // Tanda 4 — tarjeta multi-moneda: `joinGroupId` es el grupo existente al
+  // que esta cuenta se suma (límite/ciclo dejan de ser suyos, pasan a
+  // leerse del grupo). `createNewGroup` es la otra punta: recién nace
+  // agrupable, para que una SEGUNDA moneda pueda sumarse después — el
+  // grupo se crea acá mismo, con los mismos datos que se están cargando.
+  const { data: allGroups = [] } = useAccountGroups(householdId);
+  const invalidateGroups = useInvalidateAccountGroups(householdId);
+  const creditCardGroups = allGroups.filter((g) => g.kind === "credit_card" && g.archivedAt === null);
+  const [joinGroupId, setJoinGroupId] = useState<string | null>(existing?.accountGroupId ?? null);
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [createNewGroup, setCreateNewGroup] = useState(false);
+  const joinedGroup = joinGroupId ? (creditCardGroups.find((g) => g.id === joinGroupId) ?? null) : null;
+
+  const canSave =
+    name.trim().length > 0 &&
+    (kind !== "credit_card" || !!joinGroupId || (statementDay && dueDay)) &&
+    (kind !== "loan" || (interestRate && termMonths));
   const newCurrencyCodeNormalized = newCurrencyCode.trim().toUpperCase();
   const canAddCurrency = /^[A-Z0-9]{2,10}$/.test(newCurrencyCodeNormalized) && newCurrencyName.trim().length > 0;
 
@@ -118,15 +136,40 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
         kind === "credit_card" && creditLimitExpr.trim() !== ""
           ? evaluateKeypadExpression(creditLimitExpr, currencyCode, numberLocaleForUiLocale(locale)).amount
           : (existing?.creditLimit ?? null);
+
+      // Tanda 4 — si esta tarjeta se suma a un grupo (existente o recién
+      // creado), el límite y el ciclo pasan a vivir en el GRUPO, nunca en
+      // la cuenta — es el mismo plástico, el mismo corte, así que las dos
+      // cosas a la vez sería la fuente de verdad duplicada que la
+      // migración de tarjetas multi-moneda existe para evitar.
+      let accountGroupId: string | null = kind === "credit_card" ? joinGroupId : null;
+      if (kind === "credit_card" && !joinGroupId && createNewGroup) {
+        const group = await accountGroupsRepo.create({
+          householdId,
+          kind: "credit_card",
+          name: name.trim(),
+          creditLimit,
+          limitCurrency: currencyCode,
+          statementDay: Number(statementDay),
+          dueDay: Number(dueDay),
+          archivedAt: null,
+          createdBy: userId,
+        });
+        invalidateGroups();
+        accountGroupId = group.id;
+      }
+      const isGrouped = kind === "credit_card" && !!accountGroupId;
+
       const patch = {
         name: name.trim(),
         kind,
         countryCode,
         currencyCode,
         color,
-        creditLimit: kind === "credit_card" ? creditLimit : null,
-        statementDay: kind === "credit_card" ? Number(statementDay) : null,
-        dueDay: kind === "credit_card" ? Number(dueDay) : null,
+        creditLimit: kind === "credit_card" && !isGrouped ? creditLimit : null,
+        statementDay: kind === "credit_card" && !isGrouped ? Number(statementDay) : null,
+        dueDay: kind === "credit_card" && !isGrouped ? Number(dueDay) : null,
+        accountGroupId,
         interestRate: kind === "loan" ? interestRate : null,
         termMonths: kind === "loan" ? Number(termMonths) : null,
         includeInNetWorth,
@@ -282,17 +325,45 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
 
           {kind === "credit_card" ? (
             <>
-              <div style={{ display: "flex", gap: 12 }}>
-                <Input label={t("accounts.form.statementDay")} value={statementDay} onChange={(e) => setStatementDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
-                <Input label={t("accounts.form.dueDay")} value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
-              </div>
-              <div>
-                <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.creditLimit")}</p>
-                <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 24, marginBottom: 8 }}>
-                  {currencyCode} {creditLimitExpr || (existing?.creditLimit ? formatAmountCompact(money(existing.creditLimit, currencyCode), { showSign: false }) : "0")}
-                </div>
-                <Keypad onKey={(k) => setCreditLimitExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setCreditLimitExpr("")} />
-              </div>
+              {/* Tanda 4 — solo aparece si ya existe otro grupo de tarjeta
+                  en el household: la mayoría de las tarjetas nunca lo va a
+                  ver, cero pasos extra a menos que haga falta. */}
+              {creditCardGroups.length > 0 || joinedGroup ? (
+                <button
+                  type="button"
+                  onClick={() => setGroupPickerOpen(true)}
+                  style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}
+                >
+                  <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accounts.form.cardGroup")}</div>
+                  <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{joinedGroup ? joinedGroup.name : t("accounts.form.cardGroupNone")}</div>
+                </button>
+              ) : null}
+
+              {joinedGroup ? (
+                // Límite y ciclo ya no son de esta cuenta — son del grupo.
+                <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0 }}>{t("accounts.form.cardGroupInherits", { name: joinedGroup.name })}</p>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <Input label={t("accounts.form.statementDay")} value={statementDay} onChange={(e) => setStatementDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
+                    <Input label={t("accounts.form.dueDay")} value={dueDay} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ""))} placeholder={t("accounts.form.dayPlaceholder")} />
+                  </div>
+                  <div>
+                    <p className="t-label" style={{ color: "var(--text-secondary)", marginBottom: 8 }}>{t("accounts.form.creditLimit")}</p>
+                    <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 24, marginBottom: 8 }}>
+                      {currencyCode} {creditLimitExpr || (existing?.creditLimit ? formatAmountCompact(money(existing.creditLimit, currencyCode), { showSign: false }) : "0")}
+                    </div>
+                    <Keypad onKey={(k) => setCreditLimitExpr((s) => (k === "backspace" ? s.slice(0, -1) : s + k))} onClear={() => setCreditLimitExpr("")} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{t("accounts.form.multiCurrencyCard")}</span>
+                    <Switch checked={createNewGroup} onChange={setCreateNewGroup} id="card-group-switch" />
+                  </div>
+                  {createNewGroup ? (
+                    <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0 }}>{t("accounts.form.multiCurrencyCardHint")}</p>
+                  ) : null}
+                </>
+              )}
             </>
           ) : null}
 
@@ -347,6 +418,29 @@ export function AccountFormFlow({ householdId, userId, existing, onClose, onSave
           <Button disabled={!canAddCurrency || addingCurrency} onClick={handleAddCurrency}>
             {t("accounts.form.addCurrencyConfirm")}
           </Button>
+        </div>
+      </Sheet>
+
+      <Sheet open={groupPickerOpen} title={t("accounts.form.cardGroup")} onClose={() => setGroupPickerOpen(false)}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <ListRow
+            label={t("accounts.form.cardGroupNone")}
+            onClick={() => {
+              setJoinGroupId(null);
+              setGroupPickerOpen(false);
+            }}
+          />
+          {creditCardGroups.map((g) => (
+            <ListRow
+              key={g.id}
+              label={g.name}
+              onClick={() => {
+                setJoinGroupId(g.id);
+                setCreateNewGroup(false);
+                setGroupPickerOpen(false);
+              }}
+            />
+          ))}
         </div>
       </Sheet>
     </ScreenShell>

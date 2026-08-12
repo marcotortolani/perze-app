@@ -3,9 +3,10 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, Button, Chip, EmptyState, ListRow, ProgressBar, Sheet, Skeleton, TransactionRow, usePageHeader } from "@/design-system";
+import { Amount, Button, Chip, EmptyState, ListRow, ProgressBar, Sheet, Skeleton, StatusBadge, TransactionRow, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { useAccount, useAccounts, useInvalidateAccounts } from "@/hooks/use-accounts";
+import { useAccountGroups } from "@/hooks/use-account-groups";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useTransaction, useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
@@ -15,7 +16,8 @@ import { useLatestCardStatement, useInvalidateCardStatements } from "@/hooks/use
 import { useDebtsByAccount, useInvalidateDebts } from "@/hooks/use-debts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { PayCardSheet } from "@/features/cards/PayCardSheet";
-import { cardPaymentSources, currentCycleStart, expectedDueAmount } from "@/lib/analytics/card-cycle";
+import { ConfirmStatementSheet } from "@/features/cards/ConfirmStatementSheet";
+import { cardPaymentSources, currentCycleStart, effectiveCardCycleConfig, expectedDueAmount } from "@/lib/analytics/card-cycle";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { formatDateShort, formatNumericDate, numberLocaleForUiLocale } from "@/i18n/formatting";
@@ -37,6 +39,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const { data: categories = [] } = useCategories(household?.id);
   const { data: latestStatement, isLoading: statementLoading } = useLatestCardStatement(id);
   const { data: allAccounts = [] } = useAccounts(household?.id);
+  const { data: accountGroups = [] } = useAccountGroups(household?.id);
   const { data: debtsForAccount = [] } = useDebtsByAccount(id);
   const { data: recurringRules = [] } = useRecurringRules(household?.id);
   const accountRecurringCount = recurringRules.filter((r) => r.accountId === id).length;
@@ -48,6 +51,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   const invalidateDebts = useInvalidateDebts(household?.id);
   const [convertSheetOpen, setConvertSheetOpen] = useState(false);
   const [payCardSheetOpen, setPayCardSheetOpen] = useState(false);
+  const [confirmSheetOpen, setConfirmSheetOpen] = useState(false);
 
   const currencyBreakdown = useMemo(() => {
     const totals = new Map<string, bigint>();
@@ -63,17 +67,29 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
   if (accountLoading || statementLoading || !household || !transactions || !userId) return <Skeleton height={320} style={{ marginTop: 16 }} />;
   if (!account || account.kind !== "credit_card") return <EmptyState message={t("cardCyclePage.notFound")} />;
 
+  // Tanda 4 — límite y ciclo pueden vivir en el grupo (multi-moneda) o en
+  // la propia cuenta (tarjeta sin agrupar, compatibilidad). Nunca los dos
+  // a la vez: `effectiveCardCycleConfig` decide cuál manda.
+  const cardGroup = account.accountGroupId ? (accountGroups.find((g) => g.id === account.accountGroupId) ?? null) : null;
+  const cycleConfig = effectiveCardCycleConfig(account, cardGroup);
+  const groupSiblingAccounts = cardGroup ? allAccounts.filter((a) => a.id !== account.id && a.accountGroupId === cardGroup.id && a.archivedAt === null) : [];
+
   const now = new Date();
-  const cycleStart = latestStatement ? new Date(latestStatement.periodStart) : currentCycleStart(account.statementDay, now);
+  const cycleStart = latestStatement ? new Date(latestStatement.periodStart) : currentCycleStart(cycleConfig.statementDay, now);
   const cycleTransactions = transactions.filter((tx) => tx.kind === "expense" && new Date(tx.occurredAt) >= cycleStart);
   const cycleTotal = cycleTransactions.reduce((s, tx) => s + tx.amount, 0n);
 
   const dueAmount = expectedDueAmount(account, latestStatement ?? null);
-  const dueDate = latestStatement ? new Date(latestStatement.dueDate) : account.dueDay ? new Date(now.getFullYear(), now.getMonth() + 1, account.dueDay) : null;
-  const closingDate = latestStatement ? new Date(latestStatement.closingDate) : account.statementDay ? new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, account.statementDay) : null;
+  const dueDate = latestStatement ? new Date(latestStatement.dueDate) : cycleConfig.dueDay ? new Date(now.getFullYear(), now.getMonth() + 1, cycleConfig.dueDay) : null;
+  const closingDate = latestStatement ? new Date(latestStatement.closingDate) : cycleConfig.statementDay ? new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, cycleConfig.statementDay) : null;
   const daysToClose = closingDate ? Math.max(0, Math.ceil((closingDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : null;
-  const usage = account.creditLimit ? Number(-account.currentBalance) / Number(account.creditLimit) : null;
+  // El % de uso del límite solo se muestra sin conversión de por medio —
+  // si el límite está en otra moneda que esta cuenta (grupo multi-moneda),
+  // mostrar un % mezclando monedas sería un número falso; se muestra el
+  // límite como dato de texto en su lugar (ver el bloque de abajo).
+  const usage = cycleConfig.creditLimit && cycleConfig.limitCurrency === account.currencyCode ? Number(-account.currentBalance) / Number(cycleConfig.creditLimit) : null;
   const eligibleSources = cardPaymentSources(allAccounts, account);
+  const isProjected = latestStatement?.projectionStatus === "projected";
 
   // Reconciliación: si la liquidación se pagó desde una cuenta de otra
   // moneda, `settlementTx.counterAmount` es lo que realmente se aplicó a
@@ -90,8 +106,11 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 24, paddingBottom: 24 }}>
         <div>
-          <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-            {dueDate ? t("cardCyclePage.dueOn", { date: formatDateShort(locale, dueDate) }) : t("cardCyclePage.dueUnknown")}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="t-caption" style={{ color: "var(--text-muted)" }}>
+              {dueDate ? t("cardCyclePage.dueOn", { date: formatDateShort(locale, dueDate) }) : t("cardCyclePage.dueUnknown")}
+            </span>
+            {isProjected ? <StatusBadge status="neutral">{t("cardCyclePage.projectedBadge")}</StatusBadge> : null}
           </div>
           <div style={{ marginTop: 6 }}>
             <Amount value={money(dueAmount > 0n ? dueAmount : 0n, account.currencyCode)} size="hero" fit showSign={false} polarity="neutral" tabular />
@@ -101,17 +120,50 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
               {t("cardCyclePage.closesOn", { date: formatDateShort(locale, closingDate), days: daysToClose ?? 0 })}
             </div>
           ) : null}
+          {latestStatement && isProjected ? (
+            <div style={{ marginTop: 12 }}>
+              <ListRow icon="check" label={t("cardCyclePage.statementArrived")} onClick={() => setConfirmSheetOpen(true)} variant="action" />
+            </div>
+          ) : null}
         </div>
 
-        {account.creditLimit ? (
+        {cycleConfig.creditLimit ? (
           <div>
-            <ProgressBar value={usage ?? 0} height={8} />
-            <div style={{ marginTop: 8, fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-              {t("accountsPage.detail.cycleOf", {
-                spent: formatAmountCompact(money(-account.currentBalance, account.currencyCode), { showSign: false }),
-                limit: formatAmountCompact(money(account.creditLimit, account.currencyCode), { showSign: false }),
-              })}
-            </div>
+            {cycleConfig.limitCurrency === account.currencyCode ? (
+              <>
+                <ProgressBar value={usage ?? 0} height={8} />
+                <div style={{ marginTop: 8, fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
+                  {t("accountsPage.detail.cycleOf", {
+                    spent: formatAmountCompact(money(-account.currentBalance, account.currencyCode), { showSign: false }),
+                    limit: formatAmountCompact(money(cycleConfig.creditLimit, cycleConfig.limitCurrency), { showSign: false }),
+                  })}
+                </div>
+              </>
+            ) : (
+              // Grupo multi-moneda con el límite declarado en OTRA moneda
+              // que esta cuenta: mostrar un % mezclando monedas sería un
+              // número falso (mismo criterio que el "dólar tarjeta" — un
+              // estimador vale para un gauge, nunca como dato duro). Se
+              // muestra el límite compartido como texto, sin barra.
+              <div className="t-caption" style={{ color: "var(--text-muted)" }}>
+                {t("cardCyclePage.sharedLimit", { amount: formatAmountCompact(money(cycleConfig.creditLimit, cycleConfig.limitCurrency ?? account.currencyCode), { showSign: false }) })}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {groupSiblingAccounts.length > 0 ? (
+          <div>
+            <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("cardCyclePage.groupAccounts")}</div>
+            {groupSiblingAccounts.map((sibling) => (
+              <ListRow
+                key={sibling.id}
+                label={`${sibling.name} · ${sibling.currencyCode}`}
+                variant="value"
+                value={formatAmountCompact(money(-sibling.currentBalance, sibling.currencyCode), { showSign: false })}
+                onClick={() => router.push(`/accounts/${sibling.id}/card`)}
+              />
+            ))}
           </div>
         ) : null}
 
@@ -196,6 +248,7 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
       <PayCardSheet
         open={payCardSheetOpen}
         card={account}
+        cardGroup={cardGroup}
         accounts={allAccounts}
         expectedDue={dueAmount}
         installmentDebts={debtsForAccount}
@@ -211,6 +264,19 @@ export default function CardCyclePage({ params }: { params: Promise<{ id: string
           invalidateDebts();
         }}
       />
+
+      {latestStatement ? (
+        <ConfirmStatementSheet
+          open={confirmSheetOpen}
+          statement={latestStatement}
+          numberLocale={numberLocaleForUiLocale(locale)}
+          onClose={() => setConfirmSheetOpen(false)}
+          onConfirmed={() => {
+            invalidateStatements();
+            invalidateAccounts();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

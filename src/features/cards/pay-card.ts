@@ -1,4 +1,4 @@
-import type { AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
+import type { AccountGroupRow, AccountRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import type { NumberLocale } from "@/lib/money/parse";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { money } from "@/lib/money/money";
@@ -6,7 +6,7 @@ import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { cardStatementsRepo, type CardStatement } from "@/lib/repos/card-statements-repo";
 import { debtsRepo, type Debt } from "@/lib/repos/debts-repo";
 import { saveDraftAsTransaction, resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
-import { isCreditCardAccount } from "@/lib/analytics/card-cycle";
+import { effectiveCardCycleConfig, isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 
 export class PayCardError extends Error {}
@@ -15,6 +15,8 @@ export interface PayCardParams {
   household: HouseholdRow;
   userId: string;
   card: AccountRow;
+  /** Tanda 4 — `null` si `card` no está agrupada (tarjeta de una sola moneda, sin cambios). */
+  cardGroup: AccountGroupRow | null;
   source: AccountRow;
   amountExpression: string;
   numberLocale: NumberLocale;
@@ -59,7 +61,7 @@ export interface PayCardResult {
  * función.
  */
 export async function payCard(params: PayCardParams): Promise<PayCardResult> {
-  const { household, userId, card, source, amountExpression, numberLocale, installmentDebts, declareSettled, reconciliationDelta, adjustmentNote, rateOverride } = params;
+  const { household, userId, card, cardGroup, source, amountExpression, numberLocale, installmentDebts, declareSettled, reconciliationDelta, adjustmentNote, rateOverride } = params;
 
   // Mensajes de guarda en inglés técnico a propósito: son invariantes de
   // programación (`payCard()` solo se llama desde `PayCardSheet`, que ya
@@ -76,7 +78,7 @@ export async function payCard(params: PayCardParams): Promise<PayCardResult> {
   // `card_statements` vive solo en Supabase, sin espejo en Dexie) NO se
   // aborta: la transferencia se guarda igual, misma regla que rige
   // `needs_fx` ("guardar no puede fallar").
-  const statement = await cardStatementsRepo.ensureCurrentCycle(card);
+  const statement = await cardStatementsRepo.ensureCurrentCycle(card, effectiveCardCycleConfig(card, cardGroup));
 
   // Pineado al DESTINO (la tarjeta): el monto tipeado es "cuánto tengo que
   // cubrir de la tarjeta", no "cuánto sale de mi cuenta de origen" — así

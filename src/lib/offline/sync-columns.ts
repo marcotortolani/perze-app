@@ -11,7 +11,10 @@ export const HOUSEHOLDS_COLUMNS =
 export const HOUSEHOLD_MEMBERS_COLUMNS = "household_id, profile_id, role, display_name, color, icon, status, joined_at";
 
 export const ACCOUNTS_COLUMNS =
-  "id, household_id, owner_id, name, kind, institution_id, country_code, currency_code, opening_balance::text, opening_date, current_balance::text, credit_limit::text, statement_day, due_day, interest_rate::text, term_months, include_in_net_worth, visibility, color, icon, sort_order, archived_at, created_by, created_at, updated_at, deleted_at, client_rev";
+  "id, household_id, owner_id, name, kind, institution_id, country_code, currency_code, opening_balance::text, opening_date, current_balance::text, credit_limit::text, statement_day, due_day, account_group_id, interest_rate::text, term_months, include_in_net_worth, visibility, color, icon, sort_order, archived_at, created_by, created_at, updated_at, deleted_at, client_rev";
+
+export const ACCOUNT_GROUPS_COLUMNS =
+  "id, household_id, kind, name, credit_limit::text, limit_currency, statement_day, due_day, archived_at, created_by, created_at, updated_at, deleted_at, client_rev";
 
 export const CATEGORIES_COLUMNS =
   "id, household_id, parent_id, name, icon, color, kind, nature, is_system, sort_order, archived_at, visibility, owner_id, created_by, created_at, updated_at, deleted_at, client_rev";

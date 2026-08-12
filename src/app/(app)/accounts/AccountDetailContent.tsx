@@ -15,6 +15,7 @@ import type { IconName } from "@/design-system/core/Icon";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccount, useAccounts, useInvalidateAccount, useInvalidateAccounts } from "@/hooks/use-accounts";
+import { useAccountGroups } from "@/hooks/use-account-groups";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions, useInvalidateAfterTransactionWrite } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
@@ -23,7 +24,7 @@ import { useDebtsByAccount, useInvalidateDebts } from "@/hooks/use-debts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useIsCardPayment } from "@/hooks/use-card-payment";
 import { PayCardSheet } from "@/features/cards/PayCardSheet";
-import { expectedDueAmount, isCreditCardAccount } from "@/lib/analytics/card-cycle";
+import { effectiveCardCycleConfig, expectedDueAmount, isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { computeAccountEvolution } from "@/lib/analytics/account-evolution";
 import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
@@ -63,6 +64,7 @@ export function AccountDetailContent({ id }: { id: string }) {
   const { data: household } = useCurrentHousehold();
   const { data: account, isLoading } = useAccount(id);
   const { data: allAccounts = [] } = useAccounts(household?.id);
+  const { data: accountGroups = [] } = useAccountGroups(household?.id);
   const { data: categories = [] } = useCategories(household?.id);
   // Sin filtrar por `accountId` acá — ese filtro solo mira `t.accountId`
   // (el lado que descuenta), así que un pago de tarjeta (una transferencia
@@ -109,11 +111,15 @@ export function AccountDetailContent({ id }: { id: string }) {
   }
 
   const isCreditCard = isCreditCardAccount(account);
+  const cardGroup = account.accountGroupId ? (accountGroups.find((g) => g.id === account.accountGroupId) ?? null) : null;
+  // Tanda 4 — límite/ciclo pueden venir del grupo (multi-moneda) o de la
+  // propia cuenta; `effectiveCardCycleConfig` decide cuál, una sola vez.
+  const cardCycleConfig = isCreditCard ? effectiveCardCycleConfig(account, cardGroup) : null;
   const cycleTransactions = isCreditCard
     ? transactions.filter((t) => {
-        if (!account.statementDay) return true;
+        if (!cardCycleConfig?.statementDay) return true;
         const cycleStart = new Date();
-        cycleStart.setDate(account.statementDay);
+        cycleStart.setDate(cardCycleConfig.statementDay);
         if (cycleStart > new Date()) cycleStart.setMonth(cycleStart.getMonth() - 1);
         return t.occurredAt >= cycleStart.toISOString();
       })
@@ -261,13 +267,13 @@ export function AccountDetailContent({ id }: { id: string }) {
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span className="t-label" style={{ color: "var(--text-secondary)" }}>{t("accountsPage.detail.cycleSummary")}</span>
-          {account.creditLimit ? (
+          {cardCycleConfig?.creditLimit && cardCycleConfig.limitCurrency === account.currencyCode ? (
             <>
-              <ProgressBar value={Number(cycleTotal) / Number(account.creditLimit)} />
+              <ProgressBar value={Number(cycleTotal) / Number(cardCycleConfig.creditLimit)} />
               <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
                 {t("accountsPage.detail.cycleOf", {
                   spent: formatAmountCompact(money(cycleTotal, account.currencyCode), { showSign: false }),
-                  limit: formatAmountCompact(money(account.creditLimit, account.currencyCode), { showSign: false }),
+                  limit: formatAmountCompact(money(cardCycleConfig.creditLimit, account.currencyCode), { showSign: false }),
                 })}
               </span>
             </>
@@ -359,6 +365,7 @@ export function AccountDetailContent({ id }: { id: string }) {
         <PayCardSheet
           open={payCardSheetOpen}
           card={account}
+          cardGroup={cardGroup}
           accounts={allAccounts}
           expectedDue={dueAmount}
           installmentDebts={debtsForAccount}

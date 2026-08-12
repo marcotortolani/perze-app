@@ -3,6 +3,9 @@ import { newId } from "./ids";
 import { cardCycle } from "@/lib/analytics/card-cycle";
 import type { AccountRow } from "@/lib/db/schema";
 
+const SELECT_COLUMNS =
+  "id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id, projection_status";
+
 export interface CardStatement {
   id: string;
   accountId: string;
@@ -16,26 +19,33 @@ export interface CardStatement {
   paidAmount: bigint;
   status: "open" | "closed" | "paid" | "overdue";
   settlementTransactionId: string | null;
+  /**
+   * Tanda 4 — `projected`: `closingDate`/`dueDate`/`statementBalance` son
+   * una ESTIMACIÓN (la proyección diaria de `open_card_statements()`),
+   * nunca la verdad. `confirmed`: el usuario confirmó los tres datos
+   * reales del resumen del banco (`confirmStatement`). Un ciclo
+   * `projected` no dispara notificación de vencimiento — avisar "vence el
+   * DD/MM" con una fecha que es una adivinanza propia sería mentir con
+   * confianza.
+   */
+  projectionStatus: "projected" | "confirmed";
 }
 
 /**
  * E4 — resúmenes de tarjeta. Hija de accounts, vive solo en Supabase: es
  * dato de bajo volumen (un resumen por ciclo) sin sync local — igual que
  * payees/tags. El cron diario `open_card_statements()`
- * (`20260804010000_card_statement_autoopen.sql`) abre/realinea el resumen
- * del ciclo en curso de cada tarjeta y recalcula su saldo — no hay carga
- * manual. `ensureCurrentCycle()` es el mismo cálculo del lado del cliente,
- * para el caso en que el usuario pague ANTES de que el cron haya corrido
- * ese día (o la cuenta sea nueva).
+ * (`20260804010000_card_statement_autoopen.sql`, extendida por Tanda 4 en
+ * `20260812090000_...sql`) abre/proyecta el resumen del ciclo en curso de
+ * cada tarjeta y recalcula su saldo — nunca lo cierra por fecha.
+ * `ensureCurrentCycle()` es el mismo cálculo del lado del cliente, para el
+ * caso en que el usuario pague ANTES de que el cron haya corrido ese día
+ * (o la cuenta sea nueva).
  */
 export const cardStatementsRepo = {
   async list(accountId: string): Promise<CardStatement[]> {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("card_statements")
-      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
-      .eq("account_id", accountId)
-      .order("period_start", { ascending: false });
+    const { data, error } = await supabase.from("card_statements").select(SELECT_COLUMNS).eq("account_id", accountId).order("period_start", { ascending: false });
     if (error) throw error;
     return (data ?? []).map(fromRow);
   },
@@ -44,7 +54,7 @@ export const cardStatementsRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("card_statements")
-      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
+      .select(SELECT_COLUMNS)
       .eq("account_id", accountId)
       .in("status", ["open", "closed", "overdue"])
       .order("period_start", { ascending: false })
@@ -62,15 +72,16 @@ export const cardStatementsRepo = {
    * Nunca lanza por estar offline: `card_statements` vive solo en
    * Supabase, sin espejo en Dexie, y "pagar tarjeta" no puede depender de
    * tener señal — el caller decide seguir guardando la transferencia
-   * igual si esto devuelve `null`.
+   * igual si esto devuelve `null`. Nace siempre `projected` — creado a
+   * mano acá, no confirmado por nadie.
    */
-  async ensureCurrentCycle(card: Pick<AccountRow, "id" | "statementDay" | "dueDay" | "currencyCode">): Promise<CardStatement | null> {
-    if (!card.statementDay || !card.dueDay) return null;
+  async ensureCurrentCycle(card: Pick<AccountRow, "id" | "currencyCode">, config: { statementDay: number | null; dueDay: number | null }): Promise<CardStatement | null> {
+    if (!config.statementDay || !config.dueDay) return null;
     try {
       const existing = await cardStatementsRepo.latestOpen(card.id);
       if (existing) return existing;
 
-      const cycle = cardCycle(card.statementDay, card.dueDay, new Date());
+      const cycle = cardCycle(config.statementDay, config.dueDay, new Date());
       const supabase = createClient();
       const row = {
         id: newId(),
@@ -84,6 +95,7 @@ export const cardStatementsRepo = {
         currency_code: card.currencyCode,
         paid_amount: "0",
         status: "open",
+        projection_status: "projected",
       };
       const { error } = await supabase.from("card_statements").upsert(row as never, { onConflict: "account_id,period_start", ignoreDuplicates: true });
       if (error) throw error;
@@ -108,6 +120,7 @@ export const cardStatementsRepo = {
       paid_amount: input.paidAmount.toString(),
       status: input.status,
       settlement_transaction_id: input.settlementTransactionId,
+      projection_status: input.projectionStatus,
     };
     const { error } = await supabase.from("card_statements").insert(row as never);
     if (error) throw error;
@@ -143,13 +156,31 @@ export const cardStatementsRepo = {
       .update({ paid_amount: newPaid.toString(), status, settlement_transaction_id: transactionId } as never)
       .eq("id", id);
     if (error) throw error;
-    const updated = await supabase
-      .from("card_statements")
-      .select("id, account_id, period_start, period_end, closing_date, due_date, statement_balance::text, minimum_payment::text, currency_code, paid_amount::text, status, settlement_transaction_id")
-      .eq("id", id)
-      .single();
+    const updated = await supabase.from("card_statements").select(SELECT_COLUMNS).eq("id", id).single();
     if (updated.error) throw updated.error;
     return fromRow(updated.data);
+  },
+
+  /**
+   * "Llegó el resumen" — el único camino real para cerrar un ciclo (Tanda
+   * 4). Pisa cierre/vencimiento/total con lo que dice el banco, marca
+   * `projection_status = 'confirmed'`, cierra de verdad, y abre el
+   * próximo ciclo como proyección — todo en la RPC `confirm_card_statement`
+   * (`SECURITY DEFINER`, valida `can_write` ella misma). Los montos viajan
+   * como bigint en unidades mínimas: la RPC los recibe como `bigint` de
+   * Postgres, PostgREST los serializa de vuelta como `number` si se
+   * pidieran, así que esta función no lee el resultado — el caller vuelve
+   * a pedir el resumen actualizado con `latestOpen`/`list`.
+   */
+  async confirmStatement(statementId: string, input: { closingDate: string; dueDate: string; statementBalance: bigint }): Promise<void> {
+    const supabase = createClient();
+    const { error } = await supabase.rpc("confirm_card_statement", {
+      p_statement_id: statementId,
+      p_closing_date: input.closingDate,
+      p_due_date: input.dueDate,
+      p_statement_balance: input.statementBalance.toString(),
+    } as never);
+    if (error) throw error;
   },
 };
 
@@ -166,6 +197,7 @@ interface CardStatementRow {
   paid_amount: string;
   status: string;
   settlement_transaction_id: string | null;
+  projection_status: string;
 }
 
 function fromRow(row: CardStatementRow): CardStatement {
@@ -182,5 +214,6 @@ function fromRow(row: CardStatementRow): CardStatement {
     paidAmount: BigInt(row.paid_amount),
     status: row.status as CardStatement["status"],
     settlementTransactionId: row.settlement_transaction_id,
+    projectionStatus: row.projection_status as CardStatement["projectionStatus"],
   };
 }

@@ -28,6 +28,7 @@ const RAW_ACCOUNT: RawAccount = {
   credit_limit: null,
   statement_day: null,
   due_day: null,
+  account_group_id: null,
   interest_rate: null,
   term_months: null,
   include_in_net_worth: true,

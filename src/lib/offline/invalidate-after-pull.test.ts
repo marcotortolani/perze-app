@@ -6,6 +6,7 @@ import type { PullResult } from "./pull";
 const EMPTY_RESULT: PullResult = {
   transactions: 0,
   accounts: 3,
+  accountGroups: 0,
   categories: 5,
   tags: 0,
   payees: 0,

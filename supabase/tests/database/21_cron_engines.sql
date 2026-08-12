@@ -80,7 +80,10 @@ SELECT tests.log(is(
   'materialize_recurring_transactions es idempotente — correrla dos veces no duplica'
 ));
 
--- E9c — card_statements: closed + vencido + no saldado → overdue.
+-- E9c → Tanda 4 (20260812090000_account_groups_card_multicurrency.sql):
+-- close_overdue_card_statements() se neutralizó — cerrar por fecha era
+-- exactamente el bug reportado. Ahora es un no-op: un resumen closed y
+-- vencido se queda como estaba, nunca pasa solo a overdue.
 SELECT tests.stash('ce_statement_id', gen_random_uuid());
 INSERT INTO public.card_statements (id, account_id, period_start, period_end, closing_date, due_date, statement_balance, currency_code, paid_amount, status)
 VALUES (tests.get('ce_statement_id'), tests.get('ce_account_id'), current_date - 40, current_date - 10, current_date - 10, current_date - 1, 100000, 'ARS', 0, 'closed');
@@ -88,8 +91,8 @@ VALUES (tests.get('ce_statement_id'), tests.get('ce_account_id'), current_date -
 SELECT public.close_overdue_card_statements();
 SELECT tests.log(is(
   (SELECT status FROM public.card_statements WHERE id = tests.get('ce_statement_id')),
-  'overdue',
-  'close_overdue_card_statements pasa a overdue un resumen closed vencido y no saldado'
+  'closed',
+  'close_overdue_card_statements es un no-op — ya no cierra/vence nada por fecha (Tanda 4)'
 ));
 
 -- E9f — push_subscriptions: tope de 5 por perfil, se queda con las más nuevas.

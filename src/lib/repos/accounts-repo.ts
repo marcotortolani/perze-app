@@ -5,8 +5,8 @@ import { newId, nowIso } from "./ids";
 
 export type NewAccountInput = Omit<
   AccountRow,
-  "id" | "currentBalance" | "createdAt" | "updatedAt" | "deletedAt" | "sortOrder" | "clientRev"
-> & { sortOrder?: number };
+  "id" | "currentBalance" | "createdAt" | "updatedAt" | "deletedAt" | "sortOrder" | "clientRev" | "accountGroupId"
+> & { sortOrder?: number; accountGroupId?: string | null };
 
 /**
  * Repositorio de cuentas. Ninguna pantalla toca Dexie directo — esta es la
@@ -31,6 +31,7 @@ export const accountsRepo = {
       id: newId(),
       currentBalance: input.openingBalance,
       sortOrder: input.sortOrder ?? 0,
+      accountGroupId: input.accountGroupId ?? null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,

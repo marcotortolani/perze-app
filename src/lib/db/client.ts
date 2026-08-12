@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
 import type {
+  AccountGroupRow,
   AccountRow,
   BudgetRow,
   CategorizationRuleRow,
@@ -44,6 +45,7 @@ export class PerzeDatabase extends Dexie {
   countries!: EntityTable<CountryRow, "code">;
   institutions!: EntityTable<InstitutionRow, "id">;
   accounts!: EntityTable<AccountRow, "id">;
+  accountGroups!: EntityTable<AccountGroupRow, "id">;
   categories!: EntityTable<CategoryRow, "id">;
   tags!: EntityTable<TagRow, "id">;
   payees!: EntityTable<PayeeRow, "id">;
@@ -227,6 +229,17 @@ export class PerzeDatabase extends Dexie {
     this.version(9).stores({
       transactions:
         "id, householdId, accountId, categoryId, payeeId, [householdId+occurredAt], deletedAt, occurredAt, recurringId",
+    });
+
+    /**
+     * Tanda 4 — tarjeta de crédito multi-moneda: `account_groups` es dueño
+     * del límite/ciclo compartido, `accounts.accountGroupId` la referencia.
+     * Índice nuevo en `accounts` para poder listar las cuentas de un grupo
+     * sin escanear toda la tabla.
+     */
+    this.version(10).stores({
+      accounts: "id, householdId, [householdId+archivedAt], currencyCode, deletedAt, accountGroupId",
+      accountGroups: "id, householdId, deletedAt",
     });
   }
 }

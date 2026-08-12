@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cardCycle, cardPaymentSources, cycleExpenseTotal, expectedDueAmount, isCreditCardAccount, tradeSettlementAccounts } from "./card-cycle";
-import type { AccountRow } from "@/lib/db/schema";
+import { cardCycle, cardPaymentSources, cycleExpenseTotal, effectiveCardCycleConfig, expectedDueAmount, isCreditCardAccount, tradeSettlementAccounts } from "./card-cycle";
+import type { AccountGroupRow, AccountRow } from "@/lib/db/schema";
 
 function account(overrides: Partial<AccountRow>): AccountRow {
   return {
@@ -18,6 +18,7 @@ function account(overrides: Partial<AccountRow>): AccountRow {
     creditLimit: null,
     statementDay: null,
     dueDay: null,
+    accountGroupId: null,
     interestRate: null,
     termMonths: null,
     includeInNetWorth: true,
@@ -174,6 +175,7 @@ describe("expectedDueAmount", () => {
       paidAmount: 1000n,
       status: "open",
       settlementTransactionId: null,
+      projectionStatus: "confirmed",
     });
     expect(amount).toBe(2000n);
   });
@@ -203,7 +205,43 @@ describe("expectedDueAmount", () => {
       paidAmount: 0n,
       status: "open",
       settlementTransactionId: null,
+      projectionStatus: "confirmed",
     });
     expect(amount).toBe(5000n);
+  });
+});
+
+function accountGroup(overrides: Partial<AccountGroupRow>): AccountGroupRow {
+  return {
+    id: "group-1",
+    householdId: "h1",
+    kind: "credit_card",
+    name: "Visa BBVA",
+    creditLimit: null,
+    limitCurrency: null,
+    statementDay: null,
+    dueDay: null,
+    createdBy: "u1",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    archivedAt: null,
+    deletedAt: null,
+    clientRev: 1,
+    ...overrides,
+  };
+}
+
+describe("effectiveCardCycleConfig", () => {
+  it("sin grupo, usa las columnas propias de la cuenta", () => {
+    const card = account({ kind: "credit_card", statementDay: 5, dueDay: 15, creditLimit: 100000n, currencyCode: "ARS" });
+    const config = effectiveCardCycleConfig(card, null);
+    expect(config).toEqual({ statementDay: 5, dueDay: 15, creditLimit: 100000n, limitCurrency: "ARS", isGrouped: false });
+  });
+
+  it("con grupo, usa el límite/ciclo del grupo — nunca el de la cuenta, aunque la cuenta tenga los suyos", () => {
+    const card = account({ kind: "credit_card", statementDay: 1, dueDay: 1, creditLimit: 1n, currencyCode: "USD" });
+    const group = accountGroup({ statementDay: 5, dueDay: 15, creditLimit: 2000000n, limitCurrency: "ARS" });
+    const config = effectiveCardCycleConfig(card, group);
+    expect(config).toEqual({ statementDay: 5, dueDay: 15, creditLimit: 2000000n, limitCurrency: "ARS", isGrouped: true });
   });
 });
