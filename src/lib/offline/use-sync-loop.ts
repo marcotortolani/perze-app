@@ -8,6 +8,7 @@ import { outbox } from "./outbox";
 import { drainOutbox } from "./sync-worker";
 import { pullFromRemote } from "./pull";
 import { invalidateAfterPull } from "./invalidate-after-pull";
+import { retryPendingPurgeFinish } from "@/lib/repos/purge-household-repo";
 
 const POLL_INTERVAL_MS = 30_000;
 const CURRENT_HOUSEHOLD_META_KEY = "currentHouseholdId";
@@ -60,6 +61,11 @@ export function useSyncLoop(): void {
 
           const householdId = (await getDb().meta.get(CURRENT_HOUSEHOLD_META_KEY))?.value as string | undefined;
           if (householdId) {
+            // Best-effort, sin bloquear el pull si falla — ver el comentario
+            // de `markPurgeFinishPending` (`purge-household-repo.ts`): sin
+            // marcador pendiente esto no hace nada, así que en régimen
+            // normal es un `meta.get()` de más, no una llamada de red.
+            await retryPendingPurgeFinish(householdId).catch(() => {});
             const result = await pullFromRemote(householdId);
             if (!cancelled) invalidateAfterPull(queryClient, result);
           }

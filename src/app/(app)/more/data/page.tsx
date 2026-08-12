@@ -18,7 +18,7 @@ import { useGoals } from "@/hooks/use-goals";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useDebts } from "@/hooks/use-debts";
 import { usePortfolios } from "@/hooks/use-investments";
-import { finishPurge, PURGE_STEPS, runPurgeStep, wipeLocalHouseholdData } from "@/lib/repos/purge-household-repo";
+import { finishPurge, markPurgeFinishPending, PURGE_STEPS, runPurgeStep, wipeLocalHouseholdData } from "@/lib/repos/purge-household-repo";
 import { clearHouseholdDataStores } from "@/lib/auth/sign-out";
 import { purgeNavigationCaches } from "@/lib/pwa/navigation-caches";
 
@@ -109,6 +109,19 @@ export default function DataAndBackupPage() {
     // en su próximo pull (`reconcileRemotePurge`) y guarda el marcador local
     // con el timestamp exacto que devolvió el servidor, para que el PROPIO
     // dispositivo no repita el wipe en el próximo tick.
+    //
+    // `finishPurge` puede fallar (red, timeout del RPC) — antes ese error se
+    // tragaba en silencio y la pantalla mostraba "éxito" igual, dejando
+    // `purged_at` en `null` para siempre: como `reconcileRemotePurge` es el
+    // ÚNICO mecanismo por el que OTRO dispositivo se entera de un purge, ese
+    // household quedaba sin ninguna forma de recuperarse — cualquier
+    // dispositivo que no fue el que corrió esto sigue viendo movimientos que
+    // el servidor ya borró de verdad, para siempre. El borrado local YA es
+    // irreversible acá, así que un fallo de `finishPurge` no debe bloquear
+    // "éxito" para ESTE dispositivo — pero `markPurgeFinishPending` deja un
+    // marcador durable (sobrevive un reload) que `useSyncLoop` reintenta
+    // solo, sin que el usuario tenga que volver a esta pantalla.
+    await markPurgeFinishPending(household.id);
     await finishPurge(household.id).catch(() => {});
     queryClient.clear();
     setFlow({ phase: "success" });

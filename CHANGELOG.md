@@ -6,6 +6,56 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.25] — 2026-08-12
+
+Causa raíz de v0.30.22/v0.30.24: investigando el "Sin categoría" del radar contra los datos
+reales del household, se encontró que 53 movimientos locales (no 43 — los que tienen
+`categoryId: null` también estaban muertos) no existían en el servidor. Confirmado por
+lectura directa (`supabase db query --linked`, solo lectura): el purge de "Borrar todos mis
+datos" corrido hace 2 días sí borró todo del lado servidor (0 transacciones anteriores al 10
+de agosto), pero `households.purged_at` seguía en `null` — el marcador que le avisa a
+`reconcileRemotePurge` que hubo un purge nunca se estampó.
+
+### Arreglado — `finishPurge` ya no traga su error en silencio
+
+`runPurge` (`/more/data/page.tsx`) hacía `await finishPurge(household.id).catch(() => {})` —
+si el RPC fallaba (red, timeout), el error desaparecía y la pantalla mostraba "éxito" igual.
+Sin `purged_at` estampado, ningún dispositivo (ni siquiera el mismo, reabierto después) tiene
+forma de enterarse de que el purge fue real — quedan movimientos fantasma para siempre, sin
+ninguna recuperación automática pese a que el borrado remoto SÍ se completó.
+
+- `markPurgeFinishPending(householdId)` — marcador durable en `meta` (sobrevive un reload),
+  escrito DESPUÉS de `wipeLocalHouseholdData` (el borrado local ya es irreversible en ese
+  punto) y ANTES de intentar `finishPurge`.
+- `retryPendingPurgeFinish(householdId)` — reintento automático enganchado a cada tick de
+  `useSyncLoop` (cada 30s): si hay marcador pendiente, reintenta `finishPurge` solo, sin que
+  el usuario tenga que volver a `/more/data`. `finishPurge` limpia el marcador al tener éxito.
+- Tests nuevos en `purge-household-repo.test.ts` (éxito, fallo, reintento, reintento fallido).
+
+### Arreglado — borrar un movimiento cuya cuenta ya no existe ya no tira
+
+Al intentar limpiar los 53 movimientos fantasma se encontró un segundo bug: sus 53 cuentas
+TAMBIÉN habían sido purgadas, y `bumpBalance` tira `Cuenta no encontrada` si la cuenta no
+existe — usado sin condición por `softDelete`/`discardLocal`, así que ni el borrado normal ni
+"Descartar" desde Más → Estado de sincronización podían limpiar estos movimientos: la
+operación de limpieza fallaba con el mismo bug que la causó.
+
+- `bumpBalanceIfExists()` (`transactions-repo.ts`) — si la cuenta no existe, no hay saldo
+  vivo que corregir, no es un bug. La usan `softDelete`/`discardLocal`. `create`/`update`/
+  `restore`/`adoptServerRow` siguen con `bumpBalance` estricto a propósito: ahí una cuenta
+  ausente sí es un bug real (el picker solo ofrece cuentas vivas).
+- Tests nuevos en `transactions-repo.test.ts` cubriendo el caso de cuenta fantasma, y
+  confirmando que `create` sigue tirando (no se relajó por accidente).
+
+### Datos — limpieza puntual
+
+Los 53 movimientos fantasma del household de prueba se borraron a mano (sin outbox — el
+servidor ya no tenía estas filas) tras confirmar contra el servidor que ninguno tenía cuenta,
+categoría, split, share ni settlement vivos. No fue necesario tocar categorías ni cuentas
+(esas ya eran reales, recreadas en los 2 días posteriores al purge).
+
+---
+
 ## [0.30.24] — 2026-08-12
 
 Seguimiento del fix de v0.30.22: el radar de `/transactions` seguía mostrando un vértice

@@ -70,5 +70,44 @@ export async function finishPurge(householdId: string): Promise<void> {
   const { data, error } = await supabase.rpc("purge_household_finish", { p_household_id: householdId });
   if (error) throw error;
   await getDb().meta.put({ key: purgeAppliedKeyFor(householdId), value: data as string });
+  await getDb().meta.delete(pendingPurgeFinishKeyFor(householdId));
+}
+
+export function pendingPurgeFinishKeyFor(householdId: string): string {
+  return `purgeFinishPending:${householdId}`;
+}
+
+/**
+ * Se escribe DESPUÉS de `wipeLocalHouseholdData` (el borrado local ya es
+ * irreversible en ese punto) y ANTES de intentar `finishPurge` — vive en
+ * `meta`, así que sobrevive a un reload o a que el usuario cierre la
+ * pestaña. Existe porque `finishPurge` puede fallar (red, timeout del RPC)
+ * y ANTES ese error se tragaba en silencio (`.catch(() => {})` en
+ * `runPurge`, `/more/data/page.tsx`): `households.purged_at` quedaba
+ * `null` para siempre, y como `reconcileRemotePurge` es el ÚNICO mecanismo
+ * por el que cualquier OTRO dispositivo se entera de que hubo un purge,
+ * ese household quedaba sin ninguna forma de recuperarse — cualquier otro
+ * dispositivo (o esta misma pestaña reabierta días después) sigue
+ * mostrando movimientos que el servidor ya borró de verdad, para siempre.
+ */
+export async function markPurgeFinishPending(householdId: string): Promise<void> {
+  await getDb().meta.put({ key: pendingPurgeFinishKeyFor(householdId), value: true });
+}
+
+/**
+ * Reintento automático, pensado para correr en cada tick de
+ * `useSyncLoop` — no depende de que el usuario vuelva a `/more/data` ni
+ * de que note un error. Sin marcador pendiente, no hace nada (el caso
+ * normal). Con marcador, reintenta `finishPurge`: `purge_household_finish`
+ * no chequea el valor previo, siempre pisa `purged_at` con un `now()`
+ * fresco, pero eso es inofensivo de reintentar — cada llamada exitosa
+ * limpia el marcador local, así que en régimen normal esto llama a lo
+ * sumo una vez. Si vuelve a fallar, el marcador queda puesto para el
+ * próximo tick.
+ */
+export async function retryPendingPurgeFinish(householdId: string): Promise<void> {
+  const pending = await getDb().meta.get(pendingPurgeFinishKeyFor(householdId));
+  if (!pending) return;
+  await finishPurge(householdId);
 }
 

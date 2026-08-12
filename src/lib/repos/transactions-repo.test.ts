@@ -195,6 +195,35 @@ describe("transactionsRepo — mantiene el saldo de cuenta sin trigger de Postgr
       expect(entries.map((e) => e.clientRev)).toEqual([2, 3, 4]);
     });
   });
+
+  describe("cuenta fantasma (purge incompleto — v0.30.25)", () => {
+    it("softDelete no tira si la cuenta ya no existe: no hay saldo vivo que corregir", async () => {
+      const account = await accountsRepo.create(baseAccount({ openingBalance: 100_000n }));
+      const tx = await transactionsRepo.create(baseTx({ kind: "expense", accountId: account.id, amount: 10_000n }));
+      const { getDb } = await import("../db/client");
+      await getDb().accounts.delete(account.id);
+
+      await expect(transactionsRepo.softDelete(tx.id)).resolves.toBeUndefined();
+      expect((await transactionsRepo.get(tx.id))?.deletedAt).not.toBeNull();
+    });
+
+    it("discardLocal no tira si la cuenta ya no existe, y borra la fila de verdad", async () => {
+      const account = await accountsRepo.create(baseAccount({ openingBalance: 100_000n }));
+      const tx = await transactionsRepo.create(baseTx({ kind: "expense", accountId: account.id, amount: 10_000n }));
+      const { getDb } = await import("../db/client");
+      await getDb().accounts.delete(account.id);
+
+      await expect(transactionsRepo.discardLocal(tx.id)).resolves.toBeUndefined();
+      expect(await transactionsRepo.get(tx.id)).toBeNull();
+    });
+
+    // create/update siguen tirando a propósito: ahí una cuenta ausente es
+    // un bug real (el picker solo ofrece cuentas vivas), no un ghost
+    // esperable — no hay que silenciarlo con la misma tolerancia.
+    it("create sigue tirando si la cuenta no existe", async () => {
+      await expect(transactionsRepo.create(baseTx({ kind: "expense", accountId: "cuenta-inexistente", amount: 1_000n }))).rejects.toThrow();
+    });
+  });
 });
 
 describe("transactionsRepo.yearRange — para /transactions/history", () => {

@@ -179,7 +179,7 @@ export const transactionsRepo = {
       updated = { ...existing, ...patch };
       const reversed = reverseEffects(computeTransactionEffects(existing));
       for (const [accountId, delta] of mergeEffectsByAccount(reversed)) {
-        await bumpBalance(accountId, delta);
+        await bumpBalanceIfExists(accountId, delta);
       }
       await enqueueTransaction("update", updated);
     });
@@ -203,7 +203,7 @@ export const transactionsRepo = {
       if (existing.deletedAt === null) {
         const reversed = reverseEffects(computeTransactionEffects(existing));
         for (const [accountId, delta] of mergeEffectsByAccount(reversed)) {
-          await bumpBalance(accountId, delta);
+          await bumpBalanceIfExists(accountId, delta);
         }
       }
       await db.transactions.delete(id);
@@ -256,5 +256,22 @@ async function bumpBalance(accountId: string, delta: bigint): Promise<void> {
   const db = getDb();
   const account = await db.accounts.get(accountId);
   if (!account) throw new Error(`Cuenta ${accountId} no encontrada`);
+  await db.accounts.update(accountId, { currentBalance: account.currentBalance + delta, updatedAt: nowIso() });
+}
+
+/**
+ * Variante de `bumpBalance` para los caminos de "sacar esto de mi vista"
+ * (`softDelete`, `discardLocal`): si la cuenta ya no existe, no hay ningún
+ * saldo vivo que corregir — no es un bug, es la consecuencia esperada de
+ * borrar una cuenta (o un purge de household que se cortó a mitad de
+ * camino, dejando movimientos fantasma sin su cuenta). `create`/`update`/
+ * `restore`/`adoptServerRow` siguen usando `bumpBalance` a propósito: ahí
+ * una cuenta ausente SÍ es un bug real que hay que ver, no silenciar —
+ * nunca deberían apuntar a una cuenta que no existe.
+ */
+async function bumpBalanceIfExists(accountId: string, delta: bigint): Promise<void> {
+  const db = getDb();
+  const account = await db.accounts.get(accountId);
+  if (!account) return;
   await db.accounts.update(accountId, { currentBalance: account.currentBalance + delta, updatedAt: nowIso() });
 }

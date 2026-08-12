@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.25 — 12 de agosto de 2026
+
+### Arreglado
+
+- "Borrar todos mis datos" ahora avisa a todos tus dispositivos cuando el borrado termina de
+  verdad. Antes, si ese último aviso fallaba por una desconexión, tu dispositivo (o cualquier
+  otro donde tengas la cuenta abierta) podía seguir mostrando movimientos viejos que ya
+  estaban borrados del todo, sin ninguna forma de darte cuenta ni de que se arreglara solo.
+  Ahora se reintenta solo hasta confirmarse.
+
 ## 0.30.24 — 12 de agosto de 2026
 
 ### Arreglado
