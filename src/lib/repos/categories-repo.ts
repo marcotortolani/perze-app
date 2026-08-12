@@ -35,6 +35,18 @@ export const categoriesRepo = {
   },
 
   /**
+   * TODAS las filas del household, sin filtrar archivadas ni borradas. NO es
+   * una fuente de opciones para un picker —para eso está `list()`— existe
+   * solo para resolver el NOMBRE de una categoría histórica. Un movimiento
+   * conserva su `categoryId` para siempre, así que archivar o borrar una
+   * categoría no puede convertir su etiqueta en el UUID crudo (ver
+   * `useCategoryDirectory`, que es el único consumidor pensado para esto).
+   */
+  async listForLabels(householdId: string): Promise<CategoryRow[]> {
+    return getDb().categories.where("householdId").equals(householdId).toArray();
+  },
+
+  /**
    * Borrado de verdad, a diferencia de `archive()`: la categoría desaparece
    * de las dos listas y no vuelve.
    *

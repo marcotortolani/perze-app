@@ -6,6 +6,42 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.22] — 2026-08-12
+
+Fix reportado en uso real: el radar "Gastos por categoría" de `/transactions` mostraba el
+`categoryId` crudo en vez del nombre en varios de sus vértices.
+
+### Arreglado — etiquetas de categoría que caían al UUID
+
+La hipótesis inicial (movimientos de inversión filtrándose al agregado) no se confirmó:
+`createSettlementTransaction` siempre crea las transacciones de trades con `categoryId: null`
+y el agregado del radar ya descartaba todo lo que no fuera `kind === "expense"` con
+`categoryId`. La causa real era `categoriesRepo.list()` (`categories-repo.ts`), que filtra a
+propósito archivadas y soft-deleted — correcto para pickers, pero una transacción conserva su
+`categoryId` para siempre, así que un gasto categorizado con algo que después se archivó o se
+borró no encontraba fila y caía al id crudo.
+
+- Sumado `categoriesRepo.listForLabels()`: trae TODAS las filas del household sin filtrar, para
+  resolver nombres históricos — nunca para poblar un picker.
+- Nuevo hook `useCategoryDirectory()` (`src/hooks/use-category-directory.ts`), la única
+  resolución de "id → nombre" que debería usarse de acá en más. Devuelve el nombre real de la
+  categoría exista, esté archivada o borrada; si el id es huérfano o nulo, "Sin categoría" —
+  nunca el UUID.
+- `TransactionsDetailEmpty.tsx` dejó de reimplementar el agregado inline (era la reimplementación
+  número trece de la regla de `kind` que `cash-flow.ts` centraliza) y pasó a usar
+  `expenseByCategory` de `period-summary.ts`, igual que `/analytics/categories`. También suma
+  `NeedsFxBanner` con el conteo de `needs_fx` excluidos, que antes no declaraba (regla 6 de
+  "terminado" de `CLAUDE.md`).
+- Mismo fallback a UUID (o al `CategoryRow` sintético equivalente) sacado de
+  `analytics/categories`, `analytics/flow`, `analytics/insights`, `analytics/export`,
+  `analytics/weekly` y `family/compare` — todas usan `useCategoryDirectory` ahora.
+
+Tests nuevos: `categories-repo.test.ts` (listForLabels vs list) y
+`use-category-directory.test.tsx` (activa / archivada / borrada / huérfana / sistema con
+i18nKey).
+
+---
+
 ## [0.30.21] — 2026-08-12
 
 Tanda 4 (última de la ronda de correcciones reportadas en uso real) — tarjetas de crédito.

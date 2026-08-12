@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.22 — 12 de agosto de 2026
+
+### Arreglado
+
+- El gráfico de "Gastos por categoría" de Movimientos ya no muestra un código sin sentido en
+  vez del nombre cuando la categoría de un gasto estaba archivada o borrada — ahora sigue
+  mostrando su nombre real.
+
 ## 0.30.21 — 12 de agosto de 2026
 
 ### Nuevo

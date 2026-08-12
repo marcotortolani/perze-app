@@ -6,10 +6,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button, Switch, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
-import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useCategoryDirectory } from "@/hooks/use-category-directory";
 import { previousClosedPeriodBounds, currentPeriodBounds } from "@/lib/analytics/history";
 import { toCsv } from "@/lib/export/csv";
 import { formatAmount } from "@/lib/money/format";
@@ -27,10 +26,9 @@ export default function ExportReportsPage() {
   usePageHeader({ title: t("exportReportsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
-  const { data: categories } = useCategories(household?.id);
   const { data: accounts } = useAccounts(household?.id);
   const { data: payees } = usePayees(household?.id);
-  const categoryLabel = useCategoryLabel();
+  const categoryLabel = useCategoryDirectory(household?.id);
   const [period, setPeriod] = useState<PeriodOption>("previous");
   const [includeAccounts, setIncludeAccounts] = useState(true);
 
@@ -44,9 +42,8 @@ export default function ExportReportsPage() {
     return { start: new Date(prev.start.getFullYear(), prev.start.getMonth() - 1, periodStartDay), end: prev.start };
   }, [household, period]);
 
-  if (!household || !transactions || !categories || !accounts || !payees || !bounds) return null;
+  if (!household || !transactions || !accounts || !payees || !bounds) return null;
 
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
   const accountById = new Map(accounts.map((a) => [a.id, a]));
   const payeeById = new Map(payees.map((p) => [p.id, p]));
 
@@ -62,7 +59,7 @@ export default function ExportReportsPage() {
       tx.occurredAt,
       tx.kind,
       accountById.get(tx.accountId)?.name ?? tx.accountId,
-      tx.categoryId ? categoryLabel(categoryById.get(tx.categoryId) ?? { name: tx.categoryId, i18nKey: null, isSystem: false }) : "",
+      tx.categoryId ? categoryLabel(tx.categoryId) : "",
       tx.payeeId ? (payeeById.get(tx.payeeId)?.name ?? tx.payeeId) : "",
       formatAmount(money(tx.amount, tx.currencyCode)),
       tx.amountBase !== null ? formatAmount(money(tx.amountBase, household.baseCurrency)) : "",

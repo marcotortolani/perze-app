@@ -171,5 +171,25 @@ describe("categoriesRepo", () => {
       await seedParentWithChildren();
       expect(await categoriesRepo.listArchived(HOUSEHOLD)).toEqual([]);
     });
+
+    // `listForLabels` es la única consulta que NO filtra: existe para
+    // resolver nombres de categorías históricas (un movimiento conserva su
+    // `categoryId` aunque la categoría se archive o se borre), nunca para
+    // poblar un picker. Si esto vuelve a filtrar, el radar de gasto por
+    // categoría vuelve a mostrar UUIDs.
+    it("listForLabels devuelve activas, archivadas Y borradas — a diferencia de list()", async () => {
+      const { parent, children } = await seedParentWithChildren();
+      const archivedLeaf = children[0]!;
+      const removedLeaf = children[1]!;
+
+      await categoriesRepo.archiveWithChildren(archivedLeaf.id);
+      await categoriesRepo.remove(removedLeaf.id);
+
+      const forLabels = await categoriesRepo.listForLabels(HOUSEHOLD);
+      const activeOnly = await categoriesRepo.list(HOUSEHOLD);
+
+      expect(forLabels.map((c) => c.id).sort()).toEqual([parent.id, archivedLeaf.id, removedLeaf.id, children[2]!.id].sort());
+      expect(activeOnly.map((c) => c.id).sort()).toEqual([parent.id, children[2]!.id].sort());
+    });
   });
 });

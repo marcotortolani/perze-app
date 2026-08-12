@@ -10,9 +10,8 @@ import { SeriesLegend } from "@/design-system/charts";
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const Donut = dynamic(() => import("@/design-system/charts/Donut").then((m) => m.Donut), { ssr: false });
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useCategoryDirectory } from "@/hooks/use-category-directory";
 import { previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { expenseByCategory } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -23,24 +22,19 @@ export default function CategoriesAnalyticsPage() {
   const t = useTranslations();
   const router = useRouter();
   usePageHeader({ title: t("categoriesAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
-  const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
-  const { data: categories } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
+  const categoryLabel = useCategoryDirectory(household?.id);
 
   const slices = useMemo(() => {
-    if (!household || !categories || !transactions) return [];
+    if (!household || !transactions) return [];
     const { start, end } = previousClosedPeriodBounds(household.periodStartDay || 1, new Date());
     // El agrupado por categoría vive en `lib/analytics/period-summary.ts`:
     // el resumen mensual por mail necesita exactamente lo mismo, y copiarlo
     // es cómo la regla de signo por `kind` terminó reimplementada doce veces
     // (tres con el signo mal). Acá queda solo la presentación.
     const { categories: ranked } = expenseByCategory(transactions, start, end);
-    const categoryById = new Map(categories.map((c) => [c.id, c]));
-    const sorted = ranked.map(({ categoryId, total }) => {
-      const category = categoryById.get(categoryId);
-      return { label: category ? categoryLabel(category) : categoryId, value: Number(total), total };
-    });
+    const sorted = ranked.map(({ categoryId, total }) => ({ label: categoryLabel(categoryId), value: Number(total), total }));
 
     // La paleta de datos es de 5 slots + "Otros" (docs/02-design-system.md
     // § 2.6) — nunca un sexto slot con su propio color.
@@ -49,9 +43,9 @@ export default function CategoriesAnalyticsPage() {
     const restTotal = sorted.slice(5).reduce((s, x) => s + x.total, 0n);
     return [...top5, { label: t("categoriesAnalyticsPage.other"), value: Number(restTotal), total: restTotal }];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household, categories, transactions]);
+  }, [household, transactions]);
 
-  if (!household || !categories || !transactions) return <Skeleton height={300} style={{ marginTop: 16 }} />;
+  if (!household || !transactions) return <Skeleton height={300} style={{ marginTop: 16 }} />;
 
   const grandTotal = slices.reduce((s, x) => s + x.total, 0n);
   const baseCurrency = household.baseCurrency;

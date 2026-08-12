@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useCategories } from "@/hooks/use-categories";
 import { usePayees } from "@/hooks/use-payees";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useCategoryDirectory } from "@/hooks/use-category-directory";
 import { computeWeeklySummary } from "@/lib/analytics/weekly-summary";
 import { weekdayAnchors } from "@/features/movements/calendar-scope";
 import { useWeekStartsOn } from "@/stores/format-preferences-store";
@@ -25,9 +24,8 @@ export default function WeeklySummaryPage() {
   usePageHeader({ title: t("weeklySummaryPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
   const { data: transactions } = useTransactions(household?.id);
-  const { data: categories } = useCategories(household?.id);
   const { data: payees } = usePayees(household?.id);
-  const categoryLabel = useCategoryLabel();
+  const categoryLabel = useCategoryDirectory(household?.id);
   const weekStartsOn = useWeekStartsOn();
 
   const summary = useMemo(() => {
@@ -39,7 +37,7 @@ export default function WeeklySummaryPage() {
     return { weekStart, weekEnd, ...computeWeeklySummary(transactions, weekStart, weekEnd, prevWeekStart, weekStart) };
   }, [transactions, weekStartsOn]);
 
-  if (!household || !transactions || !categories || !payees || !summary) return <Skeleton height={220} style={{ marginTop: 16 }} />;
+  if (!household || !transactions || !payees || !summary) return <Skeleton height={220} style={{ marginTop: 16 }} />;
 
   if (summary.total === 0n && summary.excludedCount === 0) {
     return (
@@ -49,13 +47,10 @@ export default function WeeklySummaryPage() {
     );
   }
 
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
   const payeeById = new Map(payees.map((p) => [p.id, p]));
   const baseCurrency = household.baseCurrency;
 
-  const categoryChangeLabel = summary.biggestCategoryChange
-    ? categoryLabel(categoryById.get(summary.biggestCategoryChange.categoryId) ?? { name: summary.biggestCategoryChange.categoryId, i18nKey: null, isSystem: false })
-    : null;
+  const categoryChangeLabel = summary.biggestCategoryChange ? categoryLabel(summary.biggestCategoryChange.categoryId) : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

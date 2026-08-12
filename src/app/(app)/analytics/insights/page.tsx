@@ -8,7 +8,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useCategoryDirectory } from "@/hooks/use-category-directory";
 import { currentPeriodBounds } from "@/lib/analytics/history";
 import { computeBudgetProgress } from "@/lib/analytics/budget-progress";
 import { computeBudgetPaceInsights, computeLoggingStreak } from "@/lib/analytics/insights";
@@ -25,14 +25,13 @@ export default function InsightsPage() {
   const { data: transactions } = useTransactions(household?.id);
   const { data: budgets } = useBudgets(household?.id);
   const { data: categories } = useCategories(household?.id);
-  const categoryLabel = useCategoryLabel();
+  const categoryLabel = useCategoryDirectory(household?.id);
 
   const insights = useMemo(() => {
     if (!household || !transactions || !budgets || !categories) return null;
     const now = new Date();
     const streak = computeLoggingStreak(transactions, now);
     const { start, end } = currentPeriodBounds(household.periodStartDay || 1, now);
-    const categoryById = new Map(categories.map((c) => [c.id, c]));
     const activeBudgets = budgets.filter((b) => !b.archivedAt);
     const paceInputs = activeBudgets.map((b) => {
       const progress = computeBudgetProgress({ categoryId: b.categoryId, amountLimit: b.amountLimit }, transactions, start, end, categories);
@@ -42,7 +41,7 @@ export default function InsightsPage() {
     return {
       streak,
       pace: pace.map((p) => ({
-        label: p.categoryId ? categoryLabel(categoryById.get(p.categoryId) ?? { name: p.categoryId, i18nKey: null, isSystem: false }) : t("insightsPage.wholeHousehold"),
+        label: p.categoryId ? categoryLabel(p.categoryId) : t("insightsPage.wholeHousehold"),
         date: p.projectedOverspendDate,
       })),
     };
