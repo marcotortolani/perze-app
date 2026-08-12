@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.31.4 — 12 de agosto de 2026
+
+### Nuevo
+
+- Al vender un instrumento de inversión con más de una compra cargada, ahora podés elegir de
+  cuál sale la venta (por defecto sale de la más vieja).
+
 ## 0.31.3 — 12 de agosto de 2026
 
 ### Nuevo

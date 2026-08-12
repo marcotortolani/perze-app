@@ -3,7 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { portfoliosRepo, type Portfolio } from "@/lib/repos/portfolios-repo";
-import { tradesRepo } from "@/lib/repos/trades-repo";
+import { tradesRepo, type Trade } from "@/lib/repos/trades-repo";
+import { tradeLotAllocationsRepo } from "@/lib/repos/trade-lot-allocations-repo";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 
@@ -51,6 +52,24 @@ export function useTrade(tradeId: string | null | undefined) {
     queryKey: ["trade", tradeId ?? ""],
     queryFn: () => tradesRepo.get(tradeId!),
     enabled: !!tradeId,
+  });
+}
+
+/**
+ * Fase 2 — allocations explícitas (qué lote se vendió) para las ventas de
+ * `trades`. Se pasa a `computeLots`/`computePositions` junto con los
+ * trades para que el agregado (posiciones, P&L, peso en el portfolio)
+ * quede consistente con lo que el detalle de instrumento muestra cuando el
+ * usuario eligió un lote — sin esto, cada pantalla que llama a
+ * `computePositions` caería a FIFO puro por su cuenta y podría mostrar un
+ * número distinto al del detalle.
+ */
+export function useTradeLotAllocations(trades: Trade[] | undefined) {
+  const sellTradeIds = (trades ?? []).filter((tr) => tr.kind === "sell" || tr.kind === "transfer_out").map((tr) => tr.id);
+  return useQuery({
+    queryKey: ["trade-lot-allocations", sellTradeIds],
+    queryFn: () => tradeLotAllocationsRepo.listForPortfolio(sellTradeIds),
+    enabled: sellTradeIds.length > 0,
   });
 }
 

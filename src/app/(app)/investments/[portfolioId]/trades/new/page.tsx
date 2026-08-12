@@ -4,11 +4,11 @@ import { use, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, IconButton, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
+import { Button, IconButton, Input, Keypad, ListRow, SegmentedControl, SelectableRow, Sheet, usePageHeader, ZMark } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
-import { useAssetClasses, useInstruments, useInvalidateTrades, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidateTrades, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
 import { createSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
@@ -17,13 +17,15 @@ import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
 import { todayIso } from "@/lib/repos/ids";
 import { convert, formatRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
-import { money } from "@/lib/money/money";
+import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { decimalsFor, decimalsForQuantity } from "@/lib/money/decimals";
-import { formatNumber } from "@/lib/money/format";
+import { formatAmount, formatNumber } from "@/lib/money/format";
 import { computePositions } from "@/lib/analytics/positions";
+import { computeLots } from "@/lib/analytics/lots";
+import { tradeLotAllocationsRepo } from "@/lib/repos/trade-lot-allocations-repo";
 import { tradeSettlementAccounts } from "@/lib/analytics/card-cycle";
 import { tradeMovesCash } from "@/lib/investments/trade-settlement-policy";
-import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
+import { decimalSeparatorForLocale, formatDateMedium, type Locale } from "@/i18n/formatting";
 import type { Instrument } from "@/lib/repos/instruments-repo";
 
 const KINDS = ["buy", "sell", "transfer_in"] as const satisfies readonly TradeKind[];
@@ -90,6 +92,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   const { data: assetClasses = [] } = useAssetClasses();
   const { data: accounts = [] } = useAccounts(household?.id);
   const { data: existingTrades = [] } = useTrades(portfolioId);
+  const allocationsQuery = useTradeLotAllocations(existingTrades);
   const invalidateTrades = useInvalidateTrades(portfolioId);
   const invalidateTransactions = useInvalidateTransactions(household?.id);
   usePageHeader({ title: t("investmentsPage.recordTrade"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
@@ -109,11 +112,15 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   // el campo quedaba vacío y el botón "Guardar" deshabilitado sin decir
   // por qué, así que SPCX-USD parecía un botón roto.
   const [priceUnavailable, setPriceUnavailable] = useState<"no-provider" | "provider-empty" | null>(null);
-  const [sheet, setSheet] = useState<"none" | "instrument" | "account" | "quantity" | "price">("none");
+  const [sheet, setSheet] = useState<"none" | "instrument" | "account" | "quantity" | "price" | "lot">("none");
   // I3 pide el selector de instrumento "buscable" — hoy es una lista plana
   // con todos los instrumentos del household, sin filtro. Chico pero es
   // fricción real ya con pocos instrumentos cargados.
   const [instrumentQuery, setInstrumentQuery] = useState("");
+  // Fase 2 — elegir de qué compra sale una venta. `null` = automático
+  // (FIFO, el default de `computeLots`) — el usuario nunca está obligado a
+  // decidir esto.
+  const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
   const [keypadDigits, setKeypadDigits] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -124,6 +131,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
     setInstrumentId(inst.id);
     setSheet("none");
     setPrice("");
+    setSelectedLotId(null);
     if (!inst.priceProvider) {
       setPriceUnavailable("no-provider");
       return;
@@ -184,8 +192,15 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
   // una posición que queda en cantidad <= 0 se BORRA (se interpreta como
   // "cerrada"), así que una venta de más hace desaparecer la posición entera
   // en vez de fallar ruidosamente — hay que cortarlo acá, antes de guardar.
-  const heldQuantity = instrument ? (computePositions(existingTrades).get(instrument.id)?.quantity ?? 0) : 0;
+  const heldQuantity = instrument ? (computePositions(existingTrades, allocationsQuery.data).get(instrument.id)?.quantity ?? 0) : 0;
   const exceedsHeldQuantity = kind === "sell" && !!instrument && qty > heldQuantity;
+  // Lotes abiertos del instrumento, más viejo primero (FIFO) — solo tiene
+  // sentido ofrecer el picker si hay más de uno, si no no hay elección
+  // real que hacer.
+  const openLots = instrument
+    ? (computeLots(existingTrades, allocationsQuery.data).lotsByInstrument.get(instrument.id) ?? []).filter((l) => l.remainingQuantity > 0)
+    : [];
+  const selectedLot = selectedLotId ? openLots.find((l) => l.buyTradeId === selectedLotId) : undefined;
   // La cuenta de liquidación solo hace falta si el trade mueve caja de
   // verdad — una posición inicial (`transfer_in`) registra algo que ya
   // tenías, sin que ninguna cuenta se toque.
@@ -295,6 +310,24 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         fxSource,
       });
 
+      // Fase 2 — si el usuario eligió un lote específico, se persiste. Sin
+      // elección (`selectedLotId === null`), no se escribe nada: una
+      // venta sin filas en `trade_lot_allocations` cae a FIFO en
+      // `computeLots()`, así que "automático" no necesita ningún registro.
+      // Best-effort a propósito: si esto falla, la venta ya se guardó bien
+      // y cae a FIFO igual — nunca vale la pena descartar el trade entero
+      // por esto, a diferencia de la settlement de arriba.
+      if (kind === "sell" && selectedLotId) {
+        const lot = openLots.find((l) => l.buyTradeId === selectedLotId);
+        if (lot) {
+          try {
+            await tradeLotAllocationsRepo.replaceForSell(trade.id, [{ buyTradeId: selectedLotId, quantity: Math.min(qty, lot.remainingQuantity) }]);
+          } catch (lotError) {
+            console.error("[trades/new] no se pudo guardar la elección de lote — la venta ya se guardó, cae a FIFO", lotError);
+          }
+        }
+      }
+
       try {
         // Settlement — el bug reportado: antes `settlementAccountId` era
         // puramente informativo, nunca movía la cuenta ni dejaba rastro en
@@ -356,7 +389,7 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
           <SegmentedControl
             options={KINDS.map((k) => ({ id: k, label: KIND_LABEL[k] }))}
             value={kind}
-            onChange={(k) => setKind(k as TradeKind)}
+            onChange={(k) => { setKind(k as TradeKind); setSelectedLotId(null); }}
           />
 
           <button type="button" onClick={() => setSheet("instrument")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
@@ -376,6 +409,18 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
             // dejan como un campo ausente sin motivo aparente).
             <p className="t-caption" style={{ color: "var(--text-muted)", margin: 0, padding: "0 2px" }}>{t("newTradePage.transferInExplainer")}</p>
           )}
+
+          {/* Fase 2 — de qué compra sale la venta. Solo aparece si hay más
+              de un lote abierto: con uno solo no hay elección real, y con
+              cero no hay nada que vender (`canSave` ya lo bloquea). */}
+          {kind === "sell" && instrument && openLots.length > 1 ? (
+            <button type="button" onClick={() => setSheet("lot")} style={{ background: "var(--surface-2)", border: 0, borderRadius: "var(--radius-card)", padding: 14, textAlign: "left", cursor: "pointer" }}>
+              <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("newTradePage.sellFromLot")}</div>
+              <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>
+                {selectedLot ? t("newTradePage.sellFromLotDate", { date: formatDateMedium(locale, new Date(selectedLot.executedAt)) }) : t("newTradePage.sellFromLotAuto")}
+              </div>
+            </button>
+          ) : null}
 
           {/* Cantidad: número centrado + ±1 a los costados — el caso común
               (comprar N unidades enteras) no necesita abrir el teclado. Tocar
@@ -458,6 +503,30 @@ function NewTradeForm({ portfolioId, prefillInstrumentId }: NewTradeFormProps) {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {tradeSettlementAccounts(accounts, null).map((a) => (
             <ListRow key={a.id} label={a.name} meta={a.currencyCode} onClick={() => { setAccountId(a.id); setSheet("none"); }} />
+          ))}
+        </div>
+      </Sheet>
+
+      {/* Fase 2 — "Automático" (FIFO) siempre primero y pre-seleccionado
+          por default: quien no quiere decidir no decide nada. Un
+          `radiogroup` — una sola elección, nunca varias a la vez (repartir
+          entre lotes queda para más adelante, ver `docs/plan-de-trabajo.md`). */}
+      <Sheet open={sheet === "lot"} title={t("newTradePage.sellFromLot")} onClose={() => setSheet("none")}>
+        <div role="radiogroup" aria-label={t("newTradePage.sellFromLot")} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <SelectableRow
+            label={t("newTradePage.sellFromLotAuto")}
+            meta={t("newTradePage.sellFromLotAutoHint")}
+            selected={selectedLotId === null}
+            onChange={() => { setSelectedLotId(null); setSheet("none"); }}
+          />
+          {instrument && openLots.map((lot) => (
+            <SelectableRow
+              key={lot.buyTradeId}
+              label={formatDateMedium(locale, new Date(lot.executedAt))}
+              meta={`${formatNumber(lot.remainingQuantity, quantityDecimals)} × ${formatAmount(money(fromMajorUnitsUnsafe(lot.unitPrice, instrument.currencyCode), instrument.currencyCode), { showSign: false })}`}
+              selected={selectedLotId === lot.buyTradeId}
+              onChange={() => { setSelectedLotId(lot.buyTradeId); setSheet("none"); }}
+            />
           ))}
         </div>
       </Sheet>

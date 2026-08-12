@@ -9,7 +9,7 @@ import { Amount, Button, DeltaPct, EmptyState, Icon, IconButton, Input, ListRow,
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
-import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
@@ -63,6 +63,7 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
 
   const portfolio = portfolios?.find((p) => p.id === portfolioId);
   const { data: trades } = useTrades(portfolio?.id);
+  const allocationsQuery = useTradeLotAllocations(trades);
 
   const [editingPortfolio, setEditingPortfolio] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -207,7 +208,10 @@ export default function OverviewContent({ portfolioId, ownsHeader = true }: Over
   if (!trades) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
-  const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
+  const positions = computePositions(
+    trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })),
+    allocationsQuery.data
+  );
 
   /**
    * `needs_fx` para posiciones: sin rate no hay forma de sumar esta

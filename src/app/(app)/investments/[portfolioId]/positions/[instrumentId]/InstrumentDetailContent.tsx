@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Amount, Button, Chip, DeltaPct, EmptyState, IconButton, Input, ListRow, SegmentedControl, Sheet, Skeleton } from "@/design-system";
 import { SwipeableRow } from "@/features/movements/SwipeableRow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
-import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidateInstruments, useInvalidateLatestPrices, useInvalidateTrades, useLatestPrices, usePortfolios, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
 import { useInvalidateTransactions } from "@/hooks/use-transactions";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
@@ -60,6 +60,11 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   const { data: instruments } = useInstruments(household?.id);
   const { data: trades } = useTrades(portfolioId);
   const instrumentIds = useMemo(() => [...new Set((trades ?? []).map((tr) => tr.instrumentId))], [trades]);
+  // Fase 2 — allocations explícitas ya guardadas (elegir qué lote se
+  // vendió), para que el historial refleje la elección real y no solo el
+  // fallback FIFO. Una venta sin filas acá simplemente cae a FIFO en
+  // `computeLots` — no hace falta distinguir el caso acá.
+  const allocationsQuery = useTradeLotAllocations(trades);
   const pricesQuery = useLatestPrices(instrumentIds);
   // D36 — mismo cache persistido que el overview: último precio conocido
   // mientras la consulta real todavía no resolvió, nunca "$ 0,00".
@@ -97,12 +102,12 @@ export default function InstrumentDetailContent({ portfolioId, instrumentId }: I
   // porque el botón de "eliminar de seguimiento" del header lo necesita, y
   // todo hook tiene que correr antes de cualquier return condicional.
   const lotTradeInputs = (trades ?? []).map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt }));
-  const positions = computePositions(lotTradeInputs);
+  const positions = computePositions(lotTradeInputs, allocationsQuery.data);
   // `computePositions` ya corre `computeLots` por dentro para el agregado —
   // acá se vuelve a llamar para tener los lotes individuales que el
   // agregado descarta. Es una segunda pasada sobre el mismo array chico
   // (los trades de un portfolio personal), no vale la pena cachear.
-  const { lotsByInstrument, allocationsBySellTradeId } = computeLots(lotTradeInputs);
+  const { lotsByInstrument, allocationsBySellTradeId } = computeLots(lotTradeInputs, allocationsQuery.data);
   const instrumentLots = lotsByInstrument.get(instrumentId) ?? [];
   const lotByBuyTradeId = new Map(instrumentLots.map((l) => [l.buyTradeId, l]));
   const openLotCount = instrumentLots.filter((l) => l.remainingQuantity > 0).length;

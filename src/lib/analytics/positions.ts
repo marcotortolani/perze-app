@@ -1,4 +1,4 @@
-import { computeLots, type LotTradeInput } from "./lots";
+import { computeLots, type ExplicitAllocations, type LotTradeInput } from "./lots";
 
 /**
  * Bloque I — agrega los lotes de `computeLots` en una posición por
@@ -18,8 +18,16 @@ export interface Position {
   costBasis: bigint;
 }
 
-export function computePositions(trades: readonly PositionTradeInput[]): Map<string, Position> {
-  const { lotsByInstrument } = computeLots(trades);
+/**
+ * `explicitAllocations` (Fase 2 — qué lote se vendió) es opcional a
+ * propósito: sin ella, `computeLots` cae a FIFO puro. El total de costo
+ * base remanente SÍ depende de qué lote se consumió (dos lotes a precios
+ * distintos dejan costos distintos aunque la cantidad vendida sea la
+ * misma) — pasarla es lo que mantiene el agregado consistente con lo que
+ * muestra el detalle de instrumento cuando el usuario eligió un lote.
+ */
+export function computePositions(trades: readonly PositionTradeInput[], explicitAllocations?: ExplicitAllocations): Map<string, Position> {
+  const { lotsByInstrument } = computeLots(trades, explicitAllocations);
   const positions = new Map<string, Position>();
 
   for (const [instrumentId, lots] of lotsByInstrument) {

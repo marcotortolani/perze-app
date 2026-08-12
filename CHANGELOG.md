@@ -6,6 +6,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.31.4] — 2026-08-12
+
+Fase 2 de la revisión de inversiones (Fase 0 fue el fix de costo base v0.31.2, Fase 1 el
+motor FIFO y la evolución por compra v0.31.3): elegir qué lote se vende.
+
+### Nuevo — migración `trade_lot_allocations`
+
+Tabla nueva, hija de `trades` (Patrón B, sin `household_id` propio, RLS por `EXISTS` sobre
+`trades` → `portfolios`, `USING`+`WITH CHECK` en el `UPDATE`, DELETE no expuesto — mismo
+criterio que `transaction_splits`/`transaction_shares`). `sell_trade_id`, `buy_trade_id`,
+`quantity numeric(38,12) CHECK (quantity > 0)`. **Una venta sin filas acá cae a FIFO** —
+todas las ventas cargadas antes de esta migración siguen funcionando sin migrar datos, y FIFO
+queda como default permanente, no transitorio. Aplicada con `supabase db push --linked` y
+tipos regenerados con `pnpm db:types`.
+
+### Nuevo — `computeLots()` acepta asignaciones explícitas
+
+`ExplicitAllocations` (`Map<sellTradeId, LotAllocation[]>`) se consume primero, en el orden
+que el usuario eligió; lo que no cubra cae a FIFO sobre lo que quede abierto. La suma de
+allocations de una venta se recorta a la cantidad vendida — un exceso cargado nunca vende de
+más (`Math.min(alloc.quantity, lot.remainingQuantity, toConsume)`).
+
+**`computePositions()` también pasa a aceptar `explicitAllocations`** — el total de costo
+base remanente de una posición SÍ depende de qué lote se consumió (dos lotes a precios
+distintos dejan costos distintos aunque la cantidad vendida sea la misma), así que sin esto
+el agregado (P&L, precio promedio, `changePct`) podía divergir de lo que mostraba el detalle
+de instrumento apenas alguien elegía un lote no-FIFO. Hook nuevo `useTradeLotAllocations()`
+en `use-investments.ts`, cableado en los dos lugares que de verdad usan `costBasis`
+(`OverviewContent`, `InstrumentDetailContent`) y en `trades/new` (para que el picker de lote
+y el tope de cantidad a vender reflejen lo ya asignado, no FIFO puro). Los otros cinco call
+sites de `computePositions` (`allocation`, `performance`, `future-income`, `instruments`,
+`investments-trend`, `net-worth-value`) solo usan `quantity` — invariante a qué lote se
+consumió — así que no necesitan la allocation explícita.
+
+### Nuevo — `SelectableRow` (`docs/contrato-componentes.md` § SelectableRow)
+
+Estaba especificado desde la reconciliación del contrato pero sin una sola implementación en
+el repo (0 hits). `role="radio"`/`"checkbox"` según `multiple`, `aria-checked` obligatorio,
+Espacio/Enter alternan, selección por superficie (`--selection-surface`/`--selection-ring`).
+Primer caller real: el picker "¿De qué compra?" de `trades/new` al vender — un
+`radiogroup` con "Automático" (FIFO, pre-seleccionado por default) más cada lote abierto con
+fecha, cantidad remanente y precio. Elegir un lote específico persiste una fila en
+`trade_lot_allocations` después de crear el trade — best-effort a propósito (si falla, la
+venta ya se guardó bien y cae a FIFO igual, no vale la pena descartar el trade por esto, a
+diferencia de la settlement que sí se revierte si falla).
+
+---
+
 ## [0.31.3] — 2026-08-12
 
 Fase 1 de la revisión de inversiones (Fase 0 fue el fix de costo base, v0.31.2): motor de

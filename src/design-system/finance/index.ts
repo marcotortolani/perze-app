@@ -16,6 +16,7 @@ export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { PriceStatus, type PriceStatusProps } from "./PriceStatus";
 export { PositionRow, type PositionRowProps } from "./PositionRow";
 export { DeltaPct, type DeltaPctProps } from "./DeltaPct";
+export { SelectableRow, type SelectableRowProps } from "./SelectableRow";
 export { NeedsFxBanner, type NeedsFxBannerProps } from "./NeedsFxBanner";
 export { StoryFrame, type StoryFrameProps } from "./StoryFrame";
 export { InfoCard, type InfoCardProps } from "./InfoCard";

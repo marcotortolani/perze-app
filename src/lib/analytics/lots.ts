@@ -68,7 +68,17 @@ function proratedCost(costBasis: bigint, consumedQty: number, totalQty: number):
   return (costBasis * BigInt(Math.round(consumedQty * PRORATION_SCALE))) / BigInt(Math.round(totalQty * PRORATION_SCALE));
 }
 
-export function computeLots(trades: readonly LotTradeInput[]): LotsResult {
+/**
+ * Fase 2 — elegir qué lote se vende, no solo consumir FIFO. Una fila en
+ * `trade_lot_allocations` para un `sellTradeId` es la elección explícita
+ * del usuario; lo que esa elección no cubra (parcial, o ausente del todo)
+ * cae a FIFO sobre lo que quede abierto — así toda venta cargada antes de
+ * esta tabla sigue funcionando sin migrar datos, y FIFO queda como default
+ * permanente en vez de estado transitorio.
+ */
+export type ExplicitAllocations = ReadonlyMap<string, readonly LotAllocation[]>;
+
+export function computeLots(trades: readonly LotTradeInput[], explicitAllocations?: ExplicitAllocations): LotsResult {
   const lotsByInstrument = new Map<string, Lot[]>();
   const allocationsBySellTradeId = new Map<string, LotAllocation[]>();
 
@@ -92,8 +102,29 @@ export function computeLots(trades: readonly LotTradeInput[]): LotsResult {
     if (REMOVES_QUANTITY.has(trade.kind)) {
       let toConsume = trade.quantity;
       const allocations: LotAllocation[] = [];
-      // FIFO: el lote abierto más antiguo primero — `lots` ya está en
-      // orden de apertura porque se pushea en orden cronológico.
+      const lotById = new Map(lots.map((l) => [l.buyTradeId, l]));
+
+      // 1. Elección explícita del usuario primero, en el orden que eligió.
+      // `Math.min(..., toConsume)` es lo que evita que la suma de
+      // allocations de una venta exceda su cantidad — un exceso cargado
+      // (o una allocation vieja que quedó de una edición) se recorta acá,
+      // nunca vende de más.
+      for (const alloc of explicitAllocations?.get(trade.id) ?? []) {
+        if (toConsume <= 0) break;
+        const lot = lotById.get(alloc.buyTradeId);
+        if (!lot || lot.remainingQuantity <= 0) continue;
+        const consumed = Math.min(alloc.quantity, lot.remainingQuantity, toConsume);
+        if (consumed <= 0) continue;
+        const consumedCost = proratedCost(lot.costBasisRemaining, consumed, lot.remainingQuantity);
+        lot.remainingQuantity -= consumed;
+        lot.costBasisRemaining -= consumedCost;
+        toConsume -= consumed;
+        allocations.push({ buyTradeId: lot.buyTradeId, quantity: consumed });
+      }
+
+      // 2. Lo que la elección explícita no cubrió cae a FIFO — el lote
+      // abierto más antiguo primero (`lots` ya está en orden de apertura
+      // porque se pushea en orden cronológico).
       for (const lot of lots) {
         if (toConsume <= 0) break;
         if (lot.remainingQuantity <= 0) continue;

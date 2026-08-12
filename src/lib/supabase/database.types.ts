@@ -2425,6 +2425,48 @@ export type Database = {
           },
         ]
       }
+      trade_lot_allocations: {
+        Row: {
+          buy_trade_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          quantity: number
+          sell_trade_id: string
+        }
+        Insert: {
+          buy_trade_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id: string
+          quantity: number
+          sell_trade_id: string
+        }
+        Update: {
+          buy_trade_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          quantity?: number
+          sell_trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_lot_allocations_buy_trade_id_fkey"
+            columns: ["buy_trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_lot_allocations_sell_trade_id_fkey"
+            columns: ["sell_trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           amount_base: number | null
