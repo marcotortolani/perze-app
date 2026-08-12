@@ -14,7 +14,13 @@ import { drainOutbox } from "./sync-worker";
  * error en una fila no frena las demás.
  */
 function fakeSupabase(
-  opts: { failTables?: Set<string>; postgrestErrorTables?: Set<string>; duplicateTables?: Set<string>; serverRowsById?: Record<string, Record<string, unknown>> } = {}
+  opts: {
+    failTables?: Set<string>;
+    postgrestErrorTables?: Set<string>;
+    duplicateTables?: Set<string>;
+    serverRowsById?: Record<string, Record<string, unknown>>;
+    missingOnUpdateTables?: Set<string>;
+  } = {}
 ) {
   const calls: Array<{ table: string; method: string; args: unknown[] }> = [];
   const shouldFail = (table: string) => opts.failTables?.has(table) ?? false;
@@ -32,14 +38,21 @@ function fakeSupabase(
       if (shouldFailPostgrest(table)) return { error: { code: "42501", message: `permiso denegado para ${table}` } };
       return shouldFail(table) ? { error: new Error(`insert falló para ${table}`) } : { error: null };
     }),
-    upsert: vi.fn(async (row: unknown) => {
-      calls.push({ table, method: "upsert", args: [row] });
-      return shouldFail(table) ? { error: new Error(`upsert falló para ${table}`) } : { error: null };
-    }),
+    // `.update(row).eq(...)` — el brazo "delete" (soft-delete) lo espera
+    // directo (`await ...eq(...)`), el brazo "update" real le encadena
+    // `.select("id")` para saber si algo matcheó. El objeto que devuelve
+    // `eq()` sirve para los dos: es thenable (así el `await` sin
+    // `.select()` resuelve solo) y además expone `.select()`.
     update: vi.fn((patch: unknown) => ({
-      eq: vi.fn(async (col: string, val: unknown) => {
+      eq: vi.fn((col: string, val: unknown) => {
         calls.push({ table, method: "update", args: [patch, col, val] });
-        return shouldFail(table) ? { error: new Error(`update falló para ${table}`) } : { error: null };
+        const result = shouldFail(table)
+          ? { data: null, error: new Error(`update falló para ${table}`) }
+          : { data: opts.missingOnUpdateTables?.has(table) ? [] : [{ id: val }], error: null };
+        return {
+          select: vi.fn(async () => result),
+          then: (resolve: (v: { data: unknown; error: unknown }) => void) => resolve(result),
+        };
       }),
     })),
     delete: vi.fn(() => ({
@@ -153,7 +166,11 @@ describe("drainOutbox — BASE-05", () => {
     expect(await outbox.count()).toBe(1); // sigue en la cola, no se pierde en silencio
   });
 
-  it("un update sí usa upsert — a esa altura la fila y la membresía ya existen en el servidor", async () => {
+  it("un update hace UPDATE puro, nunca upsert — un upsert cuela el WITH CHECK de la policy de INSERT (created_by = auth.uid()) en cada edición", async () => {
+    // Bug real: en un household compartido, `.upsert()` en el brazo de
+    // update bloqueaba con 403 cualquier edición de una fila creada por
+    // OTRO miembro, porque `INSERT ... ON CONFLICT DO UPDATE` evalúa
+    // también la policy de INSERT contra la fila propuesta.
     await outbox.enqueue({
       table: "tags",
       op: "update",
@@ -166,8 +183,27 @@ describe("drainOutbox — BASE-05", () => {
     const result = await drainOutbox(client);
 
     expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
-    const upsertCall = calls.find((c) => c.method === "upsert");
-    expect(upsertCall?.table).toBe("tags");
+    expect(calls.some((c) => c.method === "upsert")).toBe(false);
+    const updateCall = calls.find((c) => c.method === "update" && c.table === "tags");
+    expect(updateCall?.args[1]).toBe("id");
+    expect(updateCall?.args[2]).toBe("tag-up");
+  });
+
+  it("un update cuya fila no existe en el servidor (huérfana en el outbox) cae a insert como respaldo", async () => {
+    await outbox.enqueue({
+      table: "tags",
+      op: "update",
+      entityId: "tag-lost",
+      payload: { id: "tag-lost", householdId: "hh-1", name: "perdida", color: null },
+      clientRev: 2,
+    });
+
+    const { client, calls } = fakeSupabase({ missingOnUpdateTables: new Set(["tags"]) });
+    const result = await drainOutbox(client);
+
+    expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
+    expect(calls.some((c) => c.method === "update" && c.table === "tags")).toBe(true);
+    expect(calls.some((c) => c.method === "insert" && c.table === "tags")).toBe(true);
   });
 
   it("traduce un delete de transactions a un UPDATE de deleted_at, nunca un DELETE real", async () => {
@@ -364,6 +400,6 @@ describe("drainOutbox — BASE-05", () => {
     const result = await drainOutbox(client);
 
     expect(result).toEqual({ synced: 1, failed: 0, conflicts: 0 });
-    expect(calls.some((c) => c.method === "upsert")).toBe(true);
+    expect(calls.some((c) => c.method === "update" && c.table === "transactions")).toBe(true);
   });
 });

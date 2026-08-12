@@ -6,6 +6,51 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.30.28] — 2026-08-12
+
+Bug grave reportado en uso real: editar el saldo inicial de una cuenta parecía "no
+efectivizarse" — el cambio se veía un instante y volvía al valor anterior. Diagnóstico
+contra la base (`supabase db query --linked`, solo lectura) de la cuenta reportada: seguía
+en `client_rev: 1` (nunca sincronizó ninguna edición desde que se creó) y su
+`created_by`/`owner_id` era el de **otro miembro del household** (`paulasanchez.arg@…`), no
+el del usuario que la estaba editando (`mjtorto@…`, owner del household).
+
+### Arreglado — editar una fila creada por otro miembro del household fallaba en silencio
+
+Causa raíz, no acotada a `accounts`: el brazo `op === "update"` de `syncOne`
+(`sync-worker.ts`) usaba `.upsert(row)` — `INSERT ... ON CONFLICT DO UPDATE`, que para
+Postgres RLS sigue siendo estructuralmente un INSERT. Postgres evalúa el `WITH CHECK` de la
+policy de INSERT contra la fila propuesta, no solo el de UPDATE — y la policy de INSERT de
+`accounts` (y de todas las entidades raíz con `created_by`: `categories`, `transactions`,
+`budgets`, `goals`, `recurring_rules`, `debts`, `portfolios`, `settlements`, `rules`,
+`account_groups`) exige `created_by = auth.uid()`, correcto para bloquear que alguien
+falsifique el autor en un alta real. Con upsert, esa misma condición se cuela en **cada
+edición**: cualquier miembro de un household compartido que edite una fila creada por OTRO
+miembro queda bloqueado con 403, aunque `can_write()` lo autorice de sobra y sea la policy
+de UPDATE (sin ese requisito) la que de verdad debería aplicar.
+
+El 403 no tenía ningún efecto visible: `enqueueAccountUpdate` sí escribe local (por eso el
+número cambiaba un instante en pantalla), pero el outbox reintentaba para siempre en
+background sin toast ni error — y el próximo `pull` incremental traía de vuelta el valor
+real del servidor, que nunca cambió, pisando el optimista local. Mismo patrón,
+probablemente, detrás de al menos parte del 403 en `/rest/v1/accounts` que aparece en la
+consola al reportar el bug de SPCX (agregado a la cola por separado).
+
+Fix: `.update(row).eq("id", entry.entityId).select("id")` — UPDATE puro, evalúa solo la
+policy de UPDATE. Si no matchea ninguna fila (el caso borde real que el upsert original
+quería cubrir: la fila se perdió en el servidor), recién ahí se cae a un `insert()` — donde
+sí corresponde que la policy de INSERT se aplique. Dos tests nuevos en
+`sync-worker.test.ts` (update nunca usa upsert; fila ausente cae a insert) más los dos
+existentes que verificaban upsert, actualizados.
+
+**Household afectado**: la edición del saldo inicial de esta sesión no se perdió — sigue en
+el outbox local del dispositivo (reintentando o en `dead` por `DEAD_LETTER_THRESHOLD`, ver
+`outbox.ts`). Con este fix debería sincronizar sola en el próximo drenaje; si quedó
+`dead`, re-escribir el valor una vez más en Editar cuenta genera una entrada nueva y
+evita depender del reintento manual desde Más → diagnóstico de sincronización.
+
+---
+
 ## [0.30.27] — 2026-08-12
 
 Bug reportado al probar v0.30.26: el placeholder del saldo inicial en edición mostraba

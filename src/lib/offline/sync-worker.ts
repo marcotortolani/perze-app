@@ -203,10 +203,28 @@ async function syncOne(
     return;
   }
 
-  // op === "update": acá el upsert sí es legítimo — la fila y la membresía
-  // ya existen en el servidor (FIFO: su insert sincronizó antes), así que
-  // el brazo DO UPDATE pasa RLS, y cubre el caso borde de una fila que el
-  // servidor perdió.
-  const { error } = await supabase.from(config.supabaseTable).upsert(row);
+  // op === "update": UPDATE puro, nunca upsert. `INSERT ... ON CONFLICT DO
+  // UPDATE` (lo que hace `.upsert()`) sigue siendo estructuralmente un
+  // INSERT para RLS: Postgres evalúa el WITH CHECK de la policy de INSERT
+  // contra la fila propuesta, no solo el de UPDATE. La policy de INSERT
+  // exige `created_by = auth.uid()` — correcto para bloquear que alguien
+  // falsifique el autor en un alta real, pero con upsert esa misma
+  // condición se cuela en cada EDICIÓN. En un household compartido,
+  // cualquier miembro que edite una fila creada por OTRO miembro queda
+  // bloqueado con 403 en TODAS sus ediciones — aunque `can_write()` lo
+  // autorice de sobra y sea la policy de UPDATE, sin ese requisito, la que
+  // de verdad debería aplicar. Encontrado en cuentas de un household
+  // compartido: la edición reintentaba para siempre en el outbox sin
+  // ningún error visible, y el próximo pull pisaba el valor optimista
+  // local con el que nunca cambió en el servidor.
+  const { error, data } = await supabase.from(config.supabaseTable).update(row).eq("id", entry.entityId).select("id");
   if (error) throw error;
+  if (!data || data.length === 0) {
+    // Caso borde real que el upsert original quería cubrir: la fila no
+    // existe en el servidor (se perdió, o el insert previo nunca llegó).
+    // Recién acá vale la pena un insert — y ahí sí corresponde que la
+    // policy de INSERT se aplique de verdad.
+    const { error: insertError } = await supabase.from(config.supabaseTable).insert(row);
+    if (insertError) throw insertError;
+  }
 }

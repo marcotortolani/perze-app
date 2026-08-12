@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.30.28 — 12 de agosto de 2026
+
+### Arreglado
+
+- En un grupo familiar, editar algo que creó otra persona del hogar (una cuenta, una
+  categoría, un movimiento) ya no se revertía solo sin avisar nada — antes el cambio se veía
+  un instante y volvía atrás en cuanto la app sincronizaba en segundo plano.
+
 ## 0.30.27 — 12 de agosto de 2026
 
 ### Arreglado
