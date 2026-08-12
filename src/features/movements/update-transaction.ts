@@ -7,6 +7,7 @@ import { fxRepo } from "@/lib/repos/fx-repo";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { transactionTagsRepo } from "@/lib/repos/transaction-tags-repo";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
+import { resolvePayeeId } from "@/features/capture/resolve-payee";
 
 export interface UpdateDraftParams {
   transactionId: string;
@@ -154,6 +155,8 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
     fx = { amountBase: convert(amount, household.baseCurrency, existing.fxRate).amount };
   }
 
+  const payeeId = await resolvePayeeId(household.id, draft.payeeName, draft.payeeId, draft.categoryId);
+
   const patch: Partial<TransactionRow> = {
     kind: draft.kind === "transfer" ? "transfer" : draft.kind,
     accountId: account.id,
@@ -163,6 +166,7 @@ export async function updateTransactionFromDraft({ transactionId, draft, househo
     ...original,
     occurredAt: draft.occurredAt,
     categoryId: draft.kind === "transfer" ? null : draft.categoryId,
+    payeeId,
     note: draft.note || null,
     ...fx,
   };

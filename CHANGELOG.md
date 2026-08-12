@@ -6,6 +6,57 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.32.2] — 2026-08-12
+
+El campo "Comercio" de `DetailsSheet` (C3, `/add` y la edición de un movimiento) nunca
+tuvo autocompletado ni se guardaba: `payeesRepo.findByName()` existía "para autocompletado"
+y no lo llamaba nadie, y `save-transaction.ts`/`update-transaction.ts` escribían
+`payeeId: null` fijo. El CHANGELOG del bloque C ya anunciaba "comercio autocompletado desde
+`payees`" — quedó sin cablear. Reportado por el usuario: "no aparecen las opciones que se
+hayan precargado de comercio si existieran, y lo que se escriba no queda guardado".
+
+### Arreglado — el comercio tipeado en la captura ahora se resuelve, se crea si hace falta, y se guarda
+
+`resolvePayeeId()` nuevo en `src/features/capture/resolve-payee.ts`: busca el comercio por
+nombre o alias (case-insensitive, `payeesRepo.findByName`, ya existía sin consumidor) y, si
+no existe, lo crea con `defaultCategoryId` sembrado en la categoría de ESE movimiento — es lo
+que hace útil el autocompletado la próxima vez. Nunca bloquea el guardado: un fallo acá deja
+`payeeId: null`, el movimiento se guarda igual. `saveDraftAsTransaction`
+(`save-transaction.ts`) y `updateTransactionFromDraft` (`update-transaction.ts`) pasan a
+llamarlo en vez del `payeeId: null` hardcodeado.
+
+`CaptureDraft` suma `payeeId: string | null` — `null` mientras `payeeName` es texto libre sin
+confirmar; se fija al tocar un chip de sugerencia, y escribir a mano siempre lo vuelve a
+limpiar. Evita una búsqueda por nombre redundante al guardar y es inmune a que el texto
+tipeado coincida por casualidad con otro comercio.
+
+### Arreglado — el campo ahora sugiere comercios existentes
+
+`DetailsSheet.tsx` suma `PayeeField`: con el campo vacío muestra las 5 más usadas
+(`useFrequentPayees`/`rankPayeesByUsage`, espejo de `useFrequentTags`/`rankTagsByUsage` — el
+uso de un comercio vive directo en `transactions.payeeId`, sin tabla puente); al tipear,
+filtra por prefijo sobre nombre y aliases. Elegir un comercio con `defaultCategoryId`
+precarga la categoría, pero solo si el usuario todavía no eligió una a mano — la misma regla
+que ya rige la auto-categorización por reglas. `CaptureFlow.tsx` y `EditTransactionFlow.tsx`
+pasan `payees`/`frequentPayees` al sheet.
+
+### Arreglado — editar un movimiento con comercio ya no lo mostraba vacío
+
+`EditTransactionFlow.tsx` no seteaba `payeeName`/`payeeId` al prefiltrar el draft desde el
+movimiento existente (solo tenía `transaction.payeeId`, no el nombre) — el campo se abría
+vacío y lo que se escribiera se perdía igual, porque el `patch` de `update-transaction.ts`
+tampoco incluía `payeeId`. Las dos puntas se corrigen juntas.
+
+### Notas
+
+- `payeesRepo.get()` no existe — los tests nuevos resuelven por `payeesRepo.list().find()`.
+  No se agregó: nadie más lo necesita todavía y el repo ya tiene el método que hace falta
+  (`findByName`) para el caso real.
+- Los demás creadores de transacciones que escriben `payeeId: null` fijo
+  (`pay-card.ts`, `create-imported-transactions.ts`, `materialize.ts`,
+  `reconcile/page.tsx`, `create-settlement-transaction.ts`) quedan sin tocar — correcto ahí,
+  ninguno tiene un comercio que capturar.
+
 ## [0.32.1] — 2026-08-12
 
 Ajustes de formato en `PositionsTable` (Fase A, v0.32.0) contra capturas reales de Google

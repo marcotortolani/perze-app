@@ -129,7 +129,7 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
   }
 
   return (
-    <Sheet open={open} title={t('recurringPage.fallbackPreviewTitle')} onClose={handleClose}>
+    <Sheet open={open} title={t('recurringPage.chargePreviewTitle')} onClose={handleClose}>
       {view === 'preview' ? (
         <div className="flex flex-col gap-4">
           <div style={{ textAlign: 'center' }}>
@@ -150,7 +150,7 @@ export function ChargeFallbackPreviewSheet({ open, household, rule, fallbackAcco
             style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textAlign: 'center' }}
           >
             <div className="t-caption" style={{ color: 'var(--text-muted)' }}>
-              {t('recurringPage.fallbackPreviewDebited', { name: fallbackAccount.name })}
+              {t('recurringPage.chargePreviewDebited', { name: fallbackAccount.name })}
             </div>
             <div style={{ marginTop: 2, fontFamily: 'var(--font-mono)', fontSize: 26, color: 'var(--text-primary)' }}>
               {fallbackAccount.currencyCode}{' '}

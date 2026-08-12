@@ -14,6 +14,7 @@ import { useCategories, useInvalidateCategories } from "@/hooks/use-categories";
 import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use-transactions";
 import { useInvalidateTags, useTags } from "@/hooks/use-tags";
 import { useInvalidateTransactionTags } from "@/hooks/use-transaction-tags";
+import { usePayees } from "@/hooks/use-payees";
 import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
@@ -35,6 +36,7 @@ import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
 import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
 import { useFrequentTags } from "./use-frequent-tags";
+import { useFrequentPayees } from "./use-frequent-payees";
 
 type Step = "amount" | "category";
 type SheetKind = "none" | "account" | "counterAccount" | "currency" | "details" | "voice";
@@ -89,11 +91,13 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
   const { data: categories = [] } = useCategories(household?.id);
   const { data: transactions } = useTransactions(household?.id);
   const { data: tags = [] } = useTags(household?.id);
+  const { data: payees = [] } = usePayees(household?.id);
   const invalidateTransactions = useInvalidateAfterTransactionWrite(household?.id);
   const invalidateCategories = useInvalidateCategories(household?.id);
   const invalidateTags = useInvalidateTags(household?.id);
   const invalidateTransactionTags = useInvalidateTransactionTags();
   const frequentTags = useFrequentTags(tags, (transactions ?? []).map((tx) => tx.id));
+  const frequentPayees = useFrequentPayees(payees, transactions);
   // Capturado una vez al montar, no en cada render: `useFrequentCategories`
   // compara por `now.getTime()`, así que un `Date` estable evita
   // recalcular el ranking en cada tecla del keypad.
@@ -436,6 +440,8 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
         tags={tags}
         frequentTags={frequentTags}
         onCreateTag={handleCreateTag}
+        payees={payees}
+        frequentPayees={frequentPayees}
       />
       <VoiceCaptureSheet
         key={sheet === "voice" ? "voice-open" : "voice-closed"}

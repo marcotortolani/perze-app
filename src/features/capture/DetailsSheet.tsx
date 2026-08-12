@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AccountCarousel, Chip, DateStrip, Input, ListRow, Sheet, Switch } from "@/design-system";
 import { todayIso as todayIsoLocal } from "@/lib/dates/today";
-import type { AccountRow, TagRow } from "@/lib/db/schema";
+import type { AccountRow, PayeeRow, TagRow } from "@/lib/db/schema";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
 import { findExistingTagByName } from "./create-tag";
 
@@ -19,6 +19,10 @@ export interface DetailsSheetProps {
   /** Top-5 por uso real (`useFrequentTags`, calculado en el caller igual que las categorías). */
   frequentTags: TagRow[];
   onCreateTag: (name: string) => Promise<TagRow>;
+  /** Catálogo de comercios del household — para el autocompletado de "Comercio". */
+  payees: PayeeRow[];
+  /** Top-5 por uso real (`useFrequentPayees`), sugeridos con el campo vacío. */
+  frequentPayees: PayeeRow[];
 }
 
 /**
@@ -141,8 +145,65 @@ function TagsField({ tags, frequentTags, selectedIds, onToggle, onCreate }: { ta
   );
 }
 
+/**
+ * Comercio — autocompletado sobre el catálogo del household
+ * (`payeesRepo`/`resolvePayeeId`). A diferencia de `TagsField` no hay
+ * grilla completa detrás de un "Otras": es un solo campo de texto, y las
+ * sugerencias son un atajo para no re-tipear un nombre ya usado, no un
+ * selector obligatorio — el texto libre siempre es válido y se guarda
+ * igual (`resolvePayeeId` crea el comercio si no existe).
+ *
+ * Con el campo vacío, muestra las 5 más usadas (`frequentPayees`); al
+ * tipear, filtra por prefijo sobre nombre y aliases. Tocar un chip
+ * completa el campo Y fija `payeeId` (evita una búsqueda redundante al
+ * guardar y es inmune a que el nombre tipeado coincida por casualidad con
+ * otro comercio) — escribir a mano siempre limpia `payeeId`, el texto deja
+ * de ser necesariamente ESE comercio.
+ */
+function PayeeField({
+  payees,
+  frequentPayees,
+  name,
+  payeeId,
+  onChange,
+}: {
+  payees: PayeeRow[];
+  frequentPayees: PayeeRow[];
+  name: string;
+  payeeId: string | null;
+  /** `defaultCategoryId` solo viaja al elegir un chip — el caller decide si le sirve (nunca pisa una categoría ya elegida a mano). */
+  onChange: (next: { name: string; payeeId: string | null; defaultCategoryId?: string | null }) => void;
+}) {
+  const t = useTranslations();
+  const query = name.trim().toLowerCase();
+  const suggestions =
+    query === ""
+      ? frequentPayees
+      : payees.filter((p) => p.name.toLowerCase().startsWith(query) || p.aliases.some((a) => a.toLowerCase().startsWith(query))).slice(0, 5);
+
+  return (
+    <div>
+      <Input
+        label={t("capture.details_sheet.payee")}
+        value={name}
+        onChange={(e) => onChange({ name: e.target.value, payeeId: null })}
+        placeholder={t("capture.details_sheet.payeePlaceholder")}
+      />
+      {suggestions.length > 0 ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+          {suggestions.map((p) => (
+            <Chip key={p.id} icon="tag" selected={payeeId === p.id} onClick={() => onChange({ name: p.name, payeeId: p.id, defaultCategoryId: p.defaultCategoryId })}>
+              {p.name}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** C3 — detalles colapsados: etiquetas, cuenta, fecha, comercio, nota. Todo con default, ninguna fila obligatoria. */
-export function DetailsSheet({ open, onClose, draft, accounts, onSetField, tags, frequentTags, onCreateTag }: DetailsSheetProps) {
+export function DetailsSheet({ open, onClose, draft, accounts, onSetField, tags, frequentTags, onCreateTag, payees, frequentPayees }: DetailsSheetProps) {
   const t = useTranslations();
   const todayIso = todayIsoLocal(); // D10 — día calendario local, no UTC
   const dateValue = draft.occurredAt.slice(0, 10);
@@ -174,7 +235,21 @@ export function DetailsSheet({ open, onClose, draft, accounts, onSetField, tags,
           </p>
           <DateStrip days={days} value={dateValue} onChange={(date) => onSetField("occurredAt", `${date}T12:00:00.000Z`)} />
         </div>
-        <Input label={t("capture.details_sheet.payee")} value={draft.payeeName} onChange={(e) => onSetField("payeeName", e.target.value)} placeholder={t("capture.details_sheet.payeePlaceholder")} />
+        <PayeeField
+          payees={payees}
+          frequentPayees={frequentPayees}
+          name={draft.payeeName}
+          payeeId={draft.payeeId}
+          onChange={({ name, payeeId, defaultCategoryId }) => {
+            onSetField("payeeName", name);
+            onSetField("payeeId", payeeId);
+            // Una elección explícita de categoría nunca se pisa — mismo
+            // criterio que la auto-categorización por reglas.
+            if (payeeId && defaultCategoryId && !draft.categoryId) {
+              onSetField("categoryId", defaultCategoryId);
+            }
+          }}
+        />
         <Input label={t("capture.details_sheet.note")} value={draft.note} onChange={(e) => onSetField("note", e.target.value)} multiline placeholder={t("capture.details_sheet.notePlaceholder")} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 15, color: "var(--text-primary)" }}>{t("capture.details_sheet.burstMode")}</span>

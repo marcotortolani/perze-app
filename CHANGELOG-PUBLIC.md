@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.32.2 — 12 de agosto de 2026
+
+### Arreglado
+
+- El campo Comercio (al cargar o editar un gasto, en "más detalles") ahora te sugiere los
+  comercios que ya usaste antes, y lo que escribís ahí queda guardado de verdad — antes se
+  perdía al confirmar.
+
 ## 0.32.0 — 12 de agosto de 2026
 
 ### Nuevo

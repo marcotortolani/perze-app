@@ -47,6 +47,16 @@ export interface CaptureDraft {
   /** ISO datetime. */
   occurredAt: string;
   payeeName: string;
+  /**
+   * `null` cuando `payeeName` es texto libre sin confirmar contra el
+   * catálogo — al guardar, `resolvePayeeId()` busca por nombre/alias o crea
+   * uno nuevo. No-`null` cuando el usuario tocó un chip de sugerencia en
+   * `DetailsSheet`: ahí ya se sabe exactamente a qué comercio se refiere
+   * (evita una búsqueda redundante y es inmune a que el nombre coincida por
+   * casualidad con otro). Escribir `payeeName` a mano SIEMPRE limpia esto
+   * — el texto ya no es necesariamente el comercio elegido.
+   */
+  payeeId: string | null;
   note: string;
   tagIds: string[];
   /** Modo ráfaga (C8): sigue cargando, mantiene cuenta y fecha. */
@@ -79,6 +89,7 @@ function emptyDraft(): CaptureDraft {
     categoryId: null,
     occurredAt: new Date().toISOString(),
     payeeName: "",
+    payeeId: null,
     note: "",
     tagIds: [],
     burstMode: false,

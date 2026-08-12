@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getDb, resetDbForTests } from "@/lib/db/client";
 import { accountsRepo } from "@/lib/repos/accounts-repo";
+import { payeesRepo } from "@/lib/repos/payees-repo";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { rateFromInteger } from "@/lib/fx/rate";
 import type { HouseholdRow } from "@/lib/db/schema";
@@ -59,6 +60,7 @@ function baseDraft(overrides: Partial<CaptureDraft> = {}): CaptureDraft {
     categoryId: "cat-1",
     occurredAt: "2026-07-27T12:00:00.000Z",
     payeeName: "",
+    payeeId: null,
     note: "",
     tagIds: [],
     burstMode: false,
@@ -273,6 +275,89 @@ describe("saveDraftAsTransaction", () => {
     expect(tx.counterAmount).toBe(50_000n);
     expect((await accountsRepo.get(from.id))?.currentBalance).toBe(150_000n);
     expect((await accountsRepo.get(to.id))?.currentBalance).toBe(50_000n);
+  });
+});
+
+describe("saveDraftAsTransaction — comercio (payeeId)", () => {
+  beforeEach(() => {
+    resetDbForTests(`perze-test-save-payee-${crypto.randomUUID()}`);
+  });
+
+  afterEach(async () => {
+    await getDb().delete();
+  });
+
+  async function makeAccount() {
+    return accountsRepo.create({
+      householdId: HOUSEHOLD_UYU.id,
+      ownerId: "user-1",
+      name: "Efectivo",
+      kind: "cash",
+      institutionId: null,
+      countryCode: "UY",
+      currencyCode: "UYU",
+      openingBalance: 100_000n,
+      openingDate: "2026-07-01",
+      creditLimit: null,
+      statementDay: null,
+      dueDay: null,
+      interestRate: null,
+      termMonths: null,
+      includeInNetWorth: true,
+      visibility: "household",
+      color: null,
+      icon: null,
+      archivedAt: null,
+      createdBy: "user-1",
+    });
+  }
+
+  it("comercio nuevo (texto libre, sin payeeId): se crea y la transacción queda con su id", async () => {
+    const account = await makeAccount();
+
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ payeeName: "Tienda Inglesa" }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+
+    expect(tx.payeeId).not.toBeNull();
+    const payee = (await payeesRepo.list(HOUSEHOLD_UYU.id)).find((p) => p.id === tx.payeeId);
+    expect(payee?.name).toBe("Tienda Inglesa");
+    expect(payee?.defaultCategoryId).toBe("cat-1"); // sembrado con la categoría del movimiento
+  });
+
+  it("comercio existente por nombre (case-insensitive): reusa el que hay, no duplica", async () => {
+    const account = await makeAccount();
+    const existing = await payeesRepo.create({ householdId: HOUSEHOLD_UYU.id, name: "Disco", defaultCategoryId: null, defaultAccountId: null, logoUrl: null, aliases: [] });
+
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ payeeName: "disco" }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+
+    expect(tx.payeeId).toBe(existing.id);
+    expect((await payeesRepo.list(HOUSEHOLD_UYU.id)).length).toBe(1);
+  });
+
+  it("comercio existente por alias: reusa el que hay", async () => {
+    const account = await makeAccount();
+    const existing = await payeesRepo.create({ householdId: HOUSEHOLD_UYU.id, name: "Pedidos Ya", defaultCategoryId: null, defaultAccountId: null, logoUrl: null, aliases: ["PedidosYa"] });
+
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ payeeName: "PedidosYa" }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+
+    expect(tx.payeeId).toBe(existing.id);
+  });
+
+  it("`payeeId` ya elegido en el draft (chip de sugerencia): se usa tal cual, sin buscar por nombre", async () => {
+    const account = await makeAccount();
+    const existing = await payeesRepo.create({ householdId: HOUSEHOLD_UYU.id, name: "Farmashop", defaultCategoryId: null, defaultAccountId: null, logoUrl: null, aliases: [] });
+
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ payeeName: "Farmashop", payeeId: existing.id }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+
+    expect(tx.payeeId).toBe(existing.id);
+  });
+
+  it("comercio vacío: payeeId queda null, no crea nada", async () => {
+    const account = await makeAccount();
+
+    const tx = await saveDraftAsTransaction({ draft: baseDraft({ payeeName: "  " }), household: HOUSEHOLD_UYU, userId: "user-1", account });
+
+    expect(tx.payeeId).toBeNull();
+    expect((await payeesRepo.list(HOUSEHOLD_UYU.id)).length).toBe(0);
   });
 });
 

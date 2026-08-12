@@ -19,12 +19,14 @@ import { useInvalidateAfterTransactionWrite, useTransactions } from "@/hooks/use
 import { useInvalidateCategories } from "@/hooks/use-categories";
 import { useInvalidateTags, useTags } from "@/hooks/use-tags";
 import { useInvalidateTransactionTags, useTagIdsForTransaction } from "@/hooks/use-transaction-tags";
+import { usePayees } from "@/hooks/use-payees";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { categoriesRepo } from "@/lib/repos/categories-repo";
 import { tagsRepo } from "@/lib/repos/tags-repo";
 import { CaptureDraftProvider, useCaptureDraftStore, useCaptureDraftStoreApi } from "@/stores/capture-draft-store";
 import type { AccountRow, CategoryRow, HouseholdRow, TransactionRow } from "@/lib/db/schema";
 import { useFrequentTags } from "@/features/capture/use-frequent-tags";
+import { useFrequentPayees } from "@/features/capture/use-frequent-payees";
 import { updateTransactionFromDraft } from "./update-transaction";
 import { hasNonZeroAmount } from "@/features/capture/save-transaction";
 
@@ -74,8 +76,10 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
   const userId = useEffectiveUserId();
   const { data: transactions } = useTransactions(household.id);
   const { data: tags = [] } = useTags(household.id);
+  const { data: payees = [] } = usePayees(household.id);
   const { data: existingTagIds } = useTagIdsForTransaction(transaction.id);
   const frequentTags = useFrequentTags(tags, (transactions ?? []).map((tx) => tx.id));
+  const frequentPayees = useFrequentPayees(payees, transactions);
 
   const [step, setStep] = useState<"amount" | "category">("amount");
   const [sheet, setSheet] = useState<"none" | "account" | "counterAccount" | "currency" | "details">("none");
@@ -153,6 +157,21 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
     if (existingTagIds) setField("tagIds", existingTagIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaction.id, existingTagIds]);
+
+  // Mismo motivo — `payees` es otra query async y el `transaction` solo
+  // guarda `payeeId`, no el nombre. Sin esto, editar un movimiento con
+  // comercio abría el campo vacío y lo que se escribiera se perdía al
+  // guardar (el bug reportado: "no aparecen las opciones precargadas ni
+  // queda guardado lo que se escribe").
+  useEffect(() => {
+    if (!transaction.payeeId) return;
+    const payee = payees.find((p) => p.id === transaction.payeeId);
+    if (payee) {
+      setField("payeeName", payee.name);
+      setField("payeeId", payee.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction.id, transaction.payeeId, payees]);
 
   const account = accounts.find((a) => a.id === draft.accountId);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
@@ -286,6 +305,8 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
         tags={tags}
         frequentTags={frequentTags}
         onCreateTag={handleCreateTag}
+        payees={payees}
+        frequentPayees={frequentPayees}
       />
     </ScreenShell>
   );

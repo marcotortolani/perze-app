@@ -98,6 +98,7 @@ export async function payCard(params: PayCardParams): Promise<PayCardResult> {
     categoryId: null,
     occurredAt: new Date().toISOString(),
     payeeName: "",
+    payeeId: null,
     note: "",
     tagIds: [],
     burstMode: false,

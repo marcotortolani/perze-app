@@ -10,6 +10,7 @@ import { transactionTagsRepo } from "@/lib/repos/transaction-tags-repo";
 import { categorizationRulesRepo } from "@/lib/repos/categorization-rules-repo";
 import { evaluateCategorizationRules } from "@/lib/analytics/categorization-rules";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
+import { resolvePayeeId } from "./resolve-payee";
 
 export interface ResolvedFx {
   fxRate: bigint | null;
@@ -296,6 +297,8 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
   }
   if (matchedRuleId) void categorizationRulesRepo.recordHit(matchedRuleId);
 
+  const payeeId = await resolvePayeeId(household.id, draft.payeeName, draft.payeeId, matchedCategoryId);
+
   const base: Omit<NewTransactionInput, "kind" | "accountId" | "counterAccountId" | "amount" | "counterAmount" | "counterCurrencyCode" | "counterFxRate"> = {
     householdId: household.id,
     createdBy: userId,
@@ -309,7 +312,7 @@ export async function saveDraftAsTransaction({ draft, household, userId, account
     fxResolvedAt: null,
     amountBase: null,
     categoryId: matchedCategoryId,
-    payeeId: null,
+    payeeId,
     note: draft.note || null,
     attachments: [],
     location: null,
