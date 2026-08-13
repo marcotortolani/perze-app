@@ -51,6 +51,25 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | undefined {
 }
 
 /**
+ * Best-effort, sin garantía: en iOS/WebKit el indicador de micrófono del sistema puede
+ * quedar prendido después de `recognition.stop()` aunque el reconocimiento ya haya
+ * terminado del todo — es un bug reportado del motor sin fix confirmado del lado del sitio
+ * (WICG/speech-api#96, varios hilos de Apple Developer Forums). Abrir y soltar
+ * inmediatamente un stream de audio corto, DESPUÉS de que el reconocimiento terminó (nunca
+ * en paralelo — eso fue lo que rompía el dictado antes de v0.35.1), es el único patrón que
+ * la comunidad reporta como "a veces ayuda" a que WebKit reevalúe y libere la sesión de
+ * audio del sistema. El permiso ya está concedido a esta altura, así que no dispara un
+ * prompt nuevo. Si falla o el navegador no lo soporta, no hay nada que hacer — se ignora.
+ */
+function nudgeAudioSessionRelease(): void {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+  navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((stream) => stream.getTracks().forEach((track) => track.stop()))
+    .catch(() => {});
+}
+
+/**
  * Antes `onerror` descartaba el evento entero y solo apagaba `listening` —
  * sin distinguir "no soportado" (rama aparte, `unsupported`) de "soportado
  * pero falló" (permiso de micrófono denegado, sin micrófono, sin red, no
@@ -99,7 +118,14 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply, lo
    *  `stop()` pueda disparar no vuelve a tocar el estado. Puede tirar sobre un reconocimiento
    *  ya terminado en algunos motores — el propio caller (p. ej. "Usar esto") no puede
    *  depender de que esto nunca lance. */
-  const stopRecognition = useCallback(() => {
+  /**
+   * `nudge` (default `true`) dispara `nudgeAudioSessionRelease()` unos ms después de
+   * parar — SIEMPRE `false` cuando este stop es el paso defensivo dentro de
+   * `startListening()` (ver ahí abajo): si un `startListening()` va a abrir un audio
+   * nuevo de inmediato, pedir OTRO stream en el medio es exactamente la condición de
+   * carrera que rompía el dictado antes de v0.35.1.
+   */
+  const stopRecognition = useCallback((nudge = true) => {
     const recognition = recognitionRef.current;
     recognitionRef.current = null;
     setListening(false);
@@ -111,6 +137,11 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply, lo
       recognition.stop();
     } catch {
       // Ya terminado o nunca arrancó de verdad — no hay nada más que limpiar.
+    }
+    if (nudge) {
+      // Delay corto para dejar que WebKit termine su propio cierre antes de la sacudida —
+      // pedirlo en el mismo tick compite con la propia teardown de `stop()`.
+      window.setTimeout(nudgeAudioSessionRelease, 300);
     }
   }, []);
 
@@ -131,11 +162,14 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply, lo
     function stopIfHidden() {
       if (document.hidden) stopRecognition();
     }
+    function stopOnPageHide() {
+      stopRecognition();
+    }
     document.addEventListener("visibilitychange", stopIfHidden);
-    window.addEventListener("pagehide", stopRecognition);
+    window.addEventListener("pagehide", stopOnPageHide);
     return () => {
       document.removeEventListener("visibilitychange", stopIfHidden);
-      window.removeEventListener("pagehide", stopRecognition);
+      window.removeEventListener("pagehide", stopOnPageHide);
     };
   }, [stopRecognition]);
 
@@ -143,8 +177,9 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply, lo
     const Recognition = getSpeechRecognition();
     if (!Recognition) return;
     // Nunca dos instancias vivas a la vez — pisar `recognitionRef` sin abortar la anterior
-    // dejaba un recognizer filtrado (indicador de mic prendido en WebKit).
-    stopRecognition();
+    // dejaba un recognizer filtrado (indicador de mic prendido en WebKit). `nudge: false`:
+    // esto es un stop defensivo con un start inmediato después, no una salida real.
+    stopRecognition(false);
     setErrorKey(null);
     setInterimTranscript("");
     const recognition = new Recognition();

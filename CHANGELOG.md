@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.3] — 2026-08-13
+
+Tercera vuelta sobre el micrófono en iOS: confirmado en el iPhone real del usuario que el
+punto naranja de la barra de estado sigue prendido después de "Usar esto" incluso con
+`stop()` en vez de `abort()` (v0.35.2). Investigado a fondo — es un bug sin fix confirmado
+del lado del sitio en el motor de reconocimiento de voz de WebKit (WICG/speech-api#96,
+varios hilos de Apple Developer Forums desde 2021 sin resolución). No hay ningún llamado de
+JavaScript documentado que garantice apagarlo.
+
+### Agregado — `nudgeAudioSessionRelease()`, mitigación best-effort sin garantía
+
+Después de que `stopRecognition()` termina de verdad (nunca en paralelo con un
+reconocimiento activo — esa fue la causa raíz de v0.34.1/v0.35.1), se abre y suelta
+inmediatamente un stream de audio corto (`getUserMedia` + `stop()` de sus tracks), con
+300ms de por medio para no competir con el propio cierre de WebKit. Es el único patrón que
+la comunidad reporta como "a veces ayuda" a que el sistema reevalúe y libere la sesión de
+audio activa — no una garantía. Se dispara desde los mismos caminos de salida reales
+(cerrar, desmontar, aplicar, toggle manual, pantalla oculta), pero NUNCA desde el stop
+defensivo que corre dentro de `startListening()` antes de arrancar una sesión nueva —
+hacerlo ahí reabriría la carrera de dos streams de audio en paralelo que es la causa
+original de todos estos bugs.
+
+Si el punto naranja persiste incluso con esto, es una limitación de iOS/WebKit fuera del
+alcance de lo que el código de la app puede resolver — no queda otra palanca conocida del
+lado del sitio.
+
 ## [0.35.2] — 2026-08-13
 
 Segunda vuelta sobre el dictado de voz (C9), a partir de probarlo en un iPhone real como PWA
