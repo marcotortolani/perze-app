@@ -2157,7 +2157,13 @@
   "editTrade": "Edit",
   "deleteTrade": "Delete",
   "confirmDeleteTrade": "Delete this purchase?",
-  "confirmDeleteTradeWarning": "This deletes the {date} purchase of {symbol}. You can undo it from the notice that shows up after."
+  "confirmDeleteTradeWarning": "This deletes the {date} purchase of {symbol}. You can undo it from the notice that shows up after.",
+  "confirmDeleteOperation": "Delete this transaction?",
+  "confirmDeleteOperationWarning": "This deletes the {date} transaction of {symbol}. You can undo it from the notice that shows up after.",
+  "tabInvestments": "Investments",
+  "tabActivity": "Activity",
+  "dayGain": "Today",
+  "totalGain": "Total"
  },
  "instrumentDetailPage": {
   "notFound": "We couldn't find this instrument.",

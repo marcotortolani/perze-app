@@ -6,6 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.34.0] — 2026-08-12
+
+Fase B del rediseño de portfolio (Fase A: layout ancho + tabla de posiciones, v0.32.0):
+highlights del día/total + tab "Activity". "News and events" de Google Finance quedó
+descartado a pedido del usuario — no aporta nada al caso de uso acá.
+
+### Nuevo — highlights "Hoy"/"Total" arriba de la tabla, solo desktop
+
+Dos `StatTile size="compact"` (nunca tiles de 30px — D20/D26 de `docs/auditoria-visual.md`
+castigaron esa combinación en la versión vieja de I2) con el monto y el % agregados sobre
+TODAS las posiciones en moneda base. "Hoy" reusa el mismo cálculo de `previousCloseFor()` que
+ya alimenta la columna Change de `PositionsTable` (Fase A, v0.32.3), sumado por posición
+antes de convertir a base — nunca se suman montos de monedas distintas sin convertir primero
+(CLAUDE.md). "Total" es `totalValue - totalCostBasisBase`, con el mismo criterio de exclusión
+needs_fx/sin-precio que ya usa el Donut de arriba: una posición que no entra en el total
+tampoco entra acá.
+
+### Nuevo — `ActivityList.tsx`, tab "Activity"
+
+Todas las operaciones del portfolio (de todos los instrumentos, no filtradas a uno) en orden
+cronológico, con Editar/Borrar inline por fila — decisión tomada con el usuario: vista
+alternativa a nivel portfolio, **no reemplaza** el historial por instrumento que ya vive en
+`InstrumentDetailContent`/`PositionsTable`. Borrar pasa por el mismo `Sheet` de confirmación
+que `PositionsTable` (v0.32.3), con copy genérico ("esta operación", no "esta compra" —
+Activity mezcla compras, ventas y el resto de los `kind`).
+
+`SegmentedControl` de 2 opciones ("Investments"/"Activity", dentro del límite de 2-4 del
+contrato) arriba de la tabla, en `OverviewContent.tsx` — solo en la rama desktop.
+
+---
+
 ## [0.33.2] — 2026-08-12
 
 Ajuste de proporciones en `PositionsTable` contra feedback directo: con números grandes

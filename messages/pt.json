@@ -2157,7 +2157,13 @@
   "editTrade": "Editar",
   "deleteTrade": "Excluir",
   "confirmDeleteTrade": "Excluir esta compra?",
-  "confirmDeleteTradeWarning": "Isso exclui a compra de {date} de {symbol}. Pode ser desfeito no aviso que aparece depois."
+  "confirmDeleteTradeWarning": "Isso exclui a compra de {date} de {symbol}. Pode ser desfeito no aviso que aparece depois.",
+  "confirmDeleteOperation": "Excluir esta operação?",
+  "confirmDeleteOperationWarning": "Isso exclui a operação de {date} de {symbol}. Pode ser desfeito no aviso que aparece depois.",
+  "tabInvestments": "Posições",
+  "tabActivity": "Atividade",
+  "dayGain": "Hoje",
+  "totalGain": "Total"
  },
  "instrumentDetailPage": {
   "notFound": "Não encontramos esse instrumento.",

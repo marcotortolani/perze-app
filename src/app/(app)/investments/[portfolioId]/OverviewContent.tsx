@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Amount, Button, DeltaPct, EmptyState, Icon, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Amount, Button, DeltaPct, EmptyState, Icon, IconButton, Input, ListRow, NeedsFxBanner, PositionRow, SegmentedControl, Sheet, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { Donut } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
-import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
+import { useAssetClasses, useInstruments, useInvalidatePortfolios, useLatestPrices, usePortfolios, usePreviousClose, useTradeLotAllocations, useTrades } from "@/hooks/use-investments";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import PositionsTable from "./PositionsTable";
+import ActivityList from "./ActivityList";
 import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { computePositions } from "@/lib/analytics/positions";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
@@ -122,6 +123,10 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
   const prices = useCachedLatestPrices(pricesQuery.data);
   const queryClient = useQueryClient();
   const [viewCurrency, setViewCurrency] = useState<"original" | "base">("original");
+  // Fase B — highlights + tab Activity, solo desktop.
+  const [activeTab, setActiveTab] = useState<"investments" | "activity">("investments");
+  const previousCloseQuery = usePreviousClose(instrumentIds);
+  const previousClose = previousCloseQuery.data ?? new Map<string, number>();
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
   const instrumentById = useMemo(() => new Map((instruments ?? []).map((i) => [i.id, i])), [instruments]);
@@ -232,6 +237,11 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
   // cuenta aparte — nunca con el mismo contador/copy de `NeedsFxBanner`,
   // que está redactado específicamente para FX pendiente.
   let excludedNoPriceCount = 0;
+  // Fase B — highlights "Hoy"/"Total", agregados en moneda base sobre las
+  // mismas posiciones que ya entran en `totalValue` (misma exclusión de
+  // needs_fx/sin precio — nunca cuentan una posición que no está en el total).
+  let totalCostBasisBase = 0n;
+  let totalDayChangeBase = 0n;
   const byAssetClass = new Map<string, number>();
   for (const [instrumentId, position] of positions) {
     const instrument = instrumentById.get(instrumentId);
@@ -248,9 +258,23 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
       continue;
     }
     totalValue += baseValue;
+    const costBasisBase = toBase(position.costBasis, instrument.currencyCode);
+    if (costBasisBase !== null) totalCostBasisBase += costBasisBase;
+    const prevClose = previousClose.get(instrumentId);
+    if (prevClose && prevClose > 0) {
+      const dayChange = fromMajorUnitsUnsafe(position.quantity * (price.close - prevClose), instrument.currencyCode);
+      const dayChangeBase = toBase(dayChange, instrument.currencyCode);
+      if (dayChangeBase !== null) totalDayChangeBase += dayChangeBase;
+    }
     const acKey = instrument.assetClassId ?? "__other";
     byAssetClass.set(acKey, (byAssetClass.get(acKey) ?? 0) + Number(baseValue));
   }
+  const totalGainPct = totalCostBasisBase > 0n ? (Number(totalValue - totalCostBasisBase) / Number(totalCostBasisBase)) * 100 : null;
+  // % del día contra el valor de AYER (hoy menos lo que cambió), no contra
+  // el costo de compra — es la misma pregunta que "Change" en la tabla de
+  // posiciones, a nivel portfolio.
+  const yesterdayValueBase = totalValue - totalDayChangeBase;
+  const dayGainPct = yesterdayValueBase > 0n ? (Number(totalDayChangeBase) / Number(yesterdayValueBase)) * 100 : null;
 
   const slices = [...byAssetClass.entries()].map(([acId, value]) => ({
     label: acId === "__other" ? t("investmentsPage.otherAssetClass") : (assetClassLabel(assetClassById.get(acId)) ?? acId),
@@ -296,6 +320,30 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
         <Donut slices={slices} dimension={formatAmountCompact(money(totalValue, household.baseCurrency), { showSign: false })} />
       </div>
 
+      {/* Highlights — solo desktop, un solo hero arriba (el Donut) + estos
+          dos `StatTile size="compact"` en vez de tiles de 30px: D20/D26 de
+          `docs/auditoria-visual.md` ya castigaron esa combinación en la
+          versión vieja de I2 (5 cifras grandes, 4 niveles tipográficos) —
+          esto la evita a propósito. */}
+      {isDesktop ? (
+        <div style={{ display: "flex", gap: 16 }}>
+          <StatTile
+            label={t("positionsTablePage.dayGain")}
+            value={<Amount value={money(totalDayChangeBase, household.baseCurrency)} size="body" showSign polarity={dayGainPct !== null && dayGainPct >= 0 ? "positive" : "neutral"} tabular />}
+            delta={dayGainPct !== null ? <DeltaPct value={dayGainPct} /> : undefined}
+            size="compact"
+            style={{ flex: 1, minWidth: 0 }}
+          />
+          <StatTile
+            label={t("positionsTablePage.totalGain")}
+            value={<Amount value={money(totalValue - totalCostBasisBase, household.baseCurrency)} size="body" showSign polarity={totalGainPct !== null && totalGainPct >= 0 ? "positive" : "neutral"} tabular />}
+            delta={totalGainPct !== null ? <DeltaPct value={totalGainPct} /> : undefined}
+            size="compact"
+            style={{ flex: 1, minWidth: 0 }}
+          />
+        </div>
+      ) : null}
+
       <NeedsFxBanner count={excludedCount} />
       {/* D60 — mismo peso visual que `NeedsFxBanner` pero copy propio: es
           una causa distinta (precio de mercado ausente, no FX pendiente)
@@ -340,8 +388,24 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
         // los lotes, no la lista angosta de `PositionRow` de abajo. El
         // toggle de moneda de visualización queda solo para mobile por
         // ahora — la tabla muestra cada posición en su moneda propia,
-        // igual que Google Finance.
-        <PositionsTable portfolioId={portfolioId} initialExpandedInstrumentId={initialExpandedInstrumentId} />
+        // igual que Google Finance. Fase B: tab "Activity" al lado —
+        // decisión tomada con el usuario, vista alternativa a nivel
+        // portfolio, no reemplaza el historial por instrumento.
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <SegmentedControl
+            options={[
+              { id: "investments", label: t("positionsTablePage.tabInvestments") },
+              { id: "activity", label: t("positionsTablePage.tabActivity") },
+            ]}
+            value={activeTab}
+            onChange={(v) => setActiveTab(v as "investments" | "activity")}
+          />
+          {activeTab === "investments" ? (
+            <PositionsTable portfolioId={portfolioId} initialExpandedInstrumentId={initialExpandedInstrumentId} />
+          ) : (
+            <ActivityList portfolioId={portfolioId} />
+          )}
+        </div>
       ) : (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, gap: 12 }}>

@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.34.0 — 12 de agosto de 2026
+
+### Nuevo
+
+- En la pantalla de un portfolio (compu), arriba de la tabla ahora ves cuánto ganaste o
+  perdiste hoy y en total, y podés cambiar a un segundo tab, "Actividad", que lista todas las
+  operaciones del portfolio juntas en orden cronológico, con editar y borrar directo desde ahí.
+
 ## 0.33.1 — 12 de agosto de 2026
 
 ### Nuevo

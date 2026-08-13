@@ -2157,7 +2157,13 @@
   "editTrade": "Editar",
   "deleteTrade": "Borrar",
   "confirmDeleteTrade": "¿Borrar esta compra?",
-  "confirmDeleteTradeWarning": "Esto borra la compra del {date} de {symbol}. Se puede deshacer desde el aviso que aparece después."
+  "confirmDeleteTradeWarning": "Esto borra la compra del {date} de {symbol}. Se puede deshacer desde el aviso que aparece después.",
+  "confirmDeleteOperation": "¿Borrar esta operación?",
+  "confirmDeleteOperationWarning": "Esto borra la operación del {date} de {symbol}. Se puede deshacer desde el aviso que aparece después.",
+  "tabInvestments": "Posiciones",
+  "tabActivity": "Actividad",
+  "dayGain": "Hoy",
+  "totalGain": "Total"
  },
  "instrumentDetailPage": {
   "notFound": "No encontramos este instrumento.",
