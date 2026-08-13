@@ -57,15 +57,26 @@ describe("parseVoiceCapture", () => {
     expect(parseVoiceCapture("transfirieron 300 a ahorros").kind).toBe("transfer");
   });
 
-  it("D33 — moneda: reconoce dólares/euros/reales, nunca adivina 'pesos' a secas", () => {
+  it("D33 — moneda: reconoce dólares/euros/reales, nunca adivina 'pesos' a secas sin contexto", () => {
     expect(parseVoiceCapture("gasté 100 dólares en el súper").currencyCode).toBe("USD");
     expect(parseVoiceCapture("gasté 100 euros en el súper").currencyCode).toBe("EUR");
     expect(parseVoiceCapture("gasté 100 reales en el súper").currencyCode).toBe("BRL");
     expect(parseVoiceCapture("gasté 100 pesos uruguayos en el súper").currencyCode).toBe("UYU");
     expect(parseVoiceCapture("gasté 100 pesos argentinos en el súper").currencyCode).toBe("ARS");
-    // "pesos" solo, sin calificar, es ambiguo entre UYU/ARS/MXN/CLP — no adivina.
+    // "pesos" solo, sin calificar y sin moneda base del household, es ambiguo entre
+    // UYU/ARS/MXN/CLP — no adivina.
     expect(parseVoiceCapture("gasté 100 pesos en el súper").currencyCode).toBeNull();
     expect(parseVoiceCapture("gasté 100 en el súper").currencyCode).toBeNull();
+  });
+
+  it("'pesos' a secas resuelve a la moneda base del household cuando esa moneda es un peso", () => {
+    expect(parseVoiceCapture("gasté 1500 pesos en el súper", "UYU").currencyCode).toBe("UYU");
+    expect(parseVoiceCapture("gasté 1500 pesos en el súper", "ARS").currencyCode).toBe("ARS");
+    // Con household en USD, "pesos" sigue sin adivinar — decir "pesos" ahí no tiene
+    // una lectura obvia, así que se mantiene el criterio de no inventar.
+    expect(parseVoiceCapture("gasté 1500 pesos en el súper", "USD").currencyCode).toBeNull();
+    // Una moneda calificada explícita nunca se pisa con la moneda base local.
+    expect(parseVoiceCapture("gasté 100 dólares en el súper", "UYU").currencyCode).toBe("USD");
   });
 });
 

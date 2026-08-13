@@ -448,6 +448,7 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
         onClose={() => setSheet("none")}
         categories={categories}
         tags={tags}
+        localCurrencyCode={household?.baseCurrency ?? null}
         onApply={({ amountExpression, payeeName, kind: voiceKind, categoryId, currencyCode, tagIds }) => {
           if (amountExpression) setField("amountExpression", amountExpression);
           if (payeeName) setField("payeeName", payeeName);

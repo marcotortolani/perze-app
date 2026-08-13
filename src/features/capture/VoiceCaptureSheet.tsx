@@ -26,6 +26,8 @@ export interface VoiceCaptureSheetProps {
   /** Tags del household — a diferencia de la categoría, pueden matchear varios a la vez. */
   tags: readonly VoiceTagOption[];
   onApply: (result: { amountExpression: string; payeeName: string; kind: VoiceCaptureKind | null; categoryId: string | null; currencyCode: string | null; tagIds: string[] }) => void;
+  /** Moneda base del household — desambigua un "pesos" dicho sin calificar (ver `parse-voice.ts`). */
+  localCurrencyCode?: string | null;
 }
 
 type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
@@ -67,7 +69,7 @@ const ERROR_MESSAGE_KEY: Record<string, string> = {
 };
 
 /** C9 — captura por voz. Todo lo interpretado queda editable antes de confirmar; degrada limpio si el navegador no la soporta. */
-export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: VoiceCaptureSheetProps) {
+export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply, localCurrencyCode = null }: VoiceCaptureSheetProps) {
   const t = useTranslations();
   const intensity = useMotionIntensity();
   const [listening, setListening] = useState(false);
@@ -88,9 +90,15 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
 
   /** Único punto de apagado del reconocimiento — se invoca desde los cinco caminos de
    *  salida (cerrar sheet, desmontar, aplicar, toggle de parar, pantalla oculta) para que
-   *  nunca quede un `SpeechRecognition` corriendo sin que el usuario lo sepa. `abort()`
-   *  sobre un reconocimiento que ya terminó tira en algunos motores — el propio caller
-   *  (p. ej. "Usar esto") no puede depender de que esto nunca lance. */
+   *  nunca quede un `SpeechRecognition` corriendo sin que el usuario lo sepa. Se prefiere
+   *  `stop()` a `abort()`: en iOS/WebKit, `abort()` corta de golpe sin pasar por el cierre
+   *  normal del motor de reconocimiento, y es un patrón reportado de que el indicador de
+   *  micrófono del sistema se quede prendido después de cerrar — `stop()` deja terminar el
+   *  reconocimiento en curso y libera el micrófono de forma más confiable. Los handlers ya
+   *  están en `null` antes de llamar a cualquiera de los dos, así que el resultado final que
+   *  `stop()` pueda disparar no vuelve a tocar el estado. Puede tirar sobre un reconocimiento
+   *  ya terminado en algunos motores — el propio caller (p. ej. "Usar esto") no puede
+   *  depender de que esto nunca lance. */
   const stopRecognition = useCallback(() => {
     const recognition = recognitionRef.current;
     recognitionRef.current = null;
@@ -100,7 +108,7 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
     recognition.onerror = null;
     recognition.onend = null;
     try {
-      (recognition.abort ?? recognition.stop).call(recognition);
+      recognition.stop();
     } catch {
       // Ya terminado o nunca arrancó de verdad — no hay nada más que limpiar.
     }
@@ -158,7 +166,7 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       }
       setInterimTranscript("");
       setTranscript(text);
-      const parsed = parseVoiceCapture(text);
+      const parsed = parseVoiceCapture(text, localCurrencyCode);
       if (parsed.amountExpression) setAmountExpression(parsed.amountExpression);
       if (parsed.payeeName) setPayeeName(parsed.payeeName);
       setKind(parsed.kind);
@@ -194,7 +202,7 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       setListening(false);
       setErrorKey("capture.voice_sheet.errors.other");
     }
-  }, [categories, tags, stopRecognition]);
+  }, [categories, tags, stopRecognition, localCurrencyCode]);
 
   // El sheet ya no se remonta por `key` — este efecto es la única puerta de
   // entrada/salida: al abrir, resetea todo lo interpretado de la vez anterior y arranca

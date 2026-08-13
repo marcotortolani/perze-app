@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.2 — 13 de agosto de 2026
+
+### Arreglado
+
+- El dictado por voz reconoce "pesos" dicho sin aclarar de qué país (antes ese caso quedaba
+  sin resolver y el monto podía entrar en dólares por error). También mejoramos cómo se
+  apaga el micrófono en iPhone después de tocar "Usar esto" — en algunos casos puntuales de
+  iOS puede seguir tardando un poco en apagarse, es una limitación del sistema operativo, no
+  algo que dependa solo de la app.
+
 ## 0.35.1 — 13 de agosto de 2026
 
 ### Arreglado

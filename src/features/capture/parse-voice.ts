@@ -47,11 +47,13 @@ function detectKind(normalized: string): VoiceCaptureKind | null {
 
 /**
  * Solo las monedas sin ambigüedad razonable en español rioplatense —
- * "pesos" a secas se queda afuera a propósito: puede ser UYU, ARS, MXN o
- * CLP según quién hable, y adivinar mal es peor que no tocar nada (el
- * monto sigue entrando en la moneda de la cuenta elegida). Ordenado de
- * más a menos específico para que "pesos uruguayos" no caiga en un match
- * genérico antes de tiempo.
+ * "pesos" a secas se queda afuera de esta lista a propósito: puede ser
+ * UYU, ARS, MXN o CLP según quién hable. `detectCurrency` recién resuelve
+ * ese caso más abajo, usando la moneda base del household como
+ * desambiguador — ahí sí es inambiguo, porque es la moneda del propio
+ * usuario, no una adivinanza entre países. Ordenado de más a menos
+ * específico para que "pesos uruguayos" no caiga en un match genérico
+ * antes de tiempo.
  */
 const CURRENCY_WORDS: Array<{ words: string[]; code: string }> = [
   { words: ["pesos uruguayos", "peso uruguayo"], code: "UYU" },
@@ -63,9 +65,25 @@ const CURRENCY_WORDS: Array<{ words: string[]; code: string }> = [
   { words: ["reales", "real brasileño", "brl"], code: "BRL" },
 ];
 
-function detectCurrency(normalized: string): string | null {
+/** Monedas para las que "pesos" a secas (sin calificar de qué país) es un nombre válido. */
+const BARE_PESO_CURRENCIES = new Set(["UYU", "ARS", "MXN", "CLP"]);
+
+/**
+ * `localCurrencyCode` es la moneda base del household de quien dicta — no
+ * una adivinanza entre países, es la moneda de esa persona. Si dice
+ * "pesos" sin calificar y esa moneda base es alguna de las de peso
+ * latinoamericanas, es ESA la que quiso decir: nadie narra su propio gasto
+ * calificando de qué país es su moneda. Solo aplica si `localCurrencyCode`
+ * es efectivamente una moneda de "peso" — si el household usa dólares y
+ * alguien dice "pesos" (mencionando otra moneda sin calificar), seguimos
+ * sin adivinar.
+ */
+function detectCurrency(normalized: string, localCurrencyCode: string | null): string | null {
   for (const { words, code } of CURRENCY_WORDS) {
     if (words.some((w) => normalized.includes(w))) return code;
+  }
+  if (localCurrencyCode && BARE_PESO_CURRENCIES.has(localCurrencyCode) && /\bpesos?\b/.test(normalized)) {
+    return localCurrencyCode;
   }
   return null;
 }
@@ -77,7 +95,7 @@ function detectCurrency(normalized: string): string | null {
  * editables antes de confirmar, así que un acierto parcial nunca bloquea
  * la carga.
  */
-export function parseVoiceCapture(transcript: string): ParsedVoiceCapture {
+export function parseVoiceCapture(transcript: string, localCurrencyCode: string | null = null): ParsedVoiceCapture {
   const normalized = transcript.toLowerCase().trim();
 
   const numberMatch = normalized.match(/(\d+(?:[.,]\d+)?)/);
@@ -87,7 +105,7 @@ export function parseVoiceCapture(transcript: string): ParsedVoiceCapture {
   const payeeName = enMatch ? (enMatch[1]?.trim().replace(/\s+/g, " ") ?? null) : null;
 
   const kind = detectKind(normalized);
-  const currencyCode = detectCurrency(normalized);
+  const currencyCode = detectCurrency(normalized, localCurrencyCode);
 
   return { amountExpression, payeeName, kind, currencyCode };
 }

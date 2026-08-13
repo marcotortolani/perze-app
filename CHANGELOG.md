@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.2] — 2026-08-13
+
+Segunda vuelta sobre el dictado de voz (C9), a partir de probarlo en un iPhone real como PWA
+instalada tras v0.35.1: el micrófono seguía quedando activo después de "Usar esto", y "gasté
+1500 pesos en el súper" entraba en dólares en vez de en la moneda del household.
+
+### Arreglado — el micrófono del sistema seguía prendido en iOS
+
+`stopRecognition()` prefería `abort()` a `stop()`. Es un patrón documentado del motor de
+WebKit en iOS/Safari/PWA: `abort()` corta de golpe sin pasar por el cierre normal del
+reconocimiento, y ahí es donde se reportan indicadores de micrófono que quedan prendidos
+después de cerrar aunque el JS ya no tenga ninguna referencia viva. Se invierte la
+preferencia a `stop()`, que sí deja terminar el reconocimiento en curso — los handlers ya se
+ponen en `null` antes de llamarlo, así que el resultado final que dispare no vuelve a tocar
+el estado. Nota honesta: esto es la mitigación documentada, no una garantía — es una
+limitación conocida y sin fix completo del lado del sitio en el motor de WebKit para esta
+API (ver hilos de Apple Developer Forums y el issue #96 de `WebAudio/web-speech-api`), así
+que puede seguir habiendo casos puntuales donde el indicador tarda en apagarse.
+
+### Arreglado — "pesos" a secas ya no cae en dólares
+
+`parseVoiceCapture` seguía sin resolver "pesos" sin calificar (a propósito: puede ser UYU,
+ARS, MXN o CLP según quién hable). Sin moneda detectada, el monto entraba en la moneda de la
+cuenta actualmente seleccionada en la captura (`resolveAmountCurrency`) — que por default es
+la del último movimiento cargado, no necesariamente la moneda base del household. Si esa
+cuenta resultaba estar en USD, "pesos" terminaba entrando en dólares sin que nada lo avisara.
+
+Ahora `parseVoiceCapture(transcript, localCurrencyCode)` recibe la moneda base del household
+(`household.baseCurrency`, ya disponible en `CaptureFlow` pero no conectada) y, si "pesos" se
+dice sin calificar Y esa moneda base es alguna de peso latinoamericana (UYU/ARS/MXN/CLP), la
+resuelve directo a esa — no es adivinar entre países, es la moneda de la propia persona que
+dicta. Una moneda calificada explícita (p. ej. "dólares") nunca se pisa con este fallback, y
+si el household usa una moneda no-peso, "pesos" a secas sigue sin resolver nada, tal como
+antes.
+
 ## [0.35.1] — 2026-08-13
 
 Fix del sheet de dictado por voz (C9) en mobile: abría con scroll innecesario, recortaba el
