@@ -6,6 +6,50 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.1] — 2026-08-13
+
+Fix del sheet de dictado por voz (C9) en mobile: abría con scroll innecesario, recortaba el
+botón del micrófono, y cerrar/reabrir dejaba el reconocimiento sin arrancar o el micrófono
+prendido de fondo. `cd35d94` (v0.34.1) había introducido las tres cosas de una: un segundo
+stream de `getUserMedia` para animar el anillo con la amplitud real, y un remontaje por `key`
+en `CaptureFlow` para resetear el estado en cada apertura.
+
+### Arreglado — un solo consumidor del micrófono, un solo apagado
+
+Se borra `use-mic-level.ts` (y su test): el anillo de amplitud abría un segundo
+`getUserMedia` en paralelo al `SpeechRecognition`. En iOS/PWA instalada, abrir ese segundo
+stream justo cuando arranca el reconocimiento frecuentemente lo mata (`audio-capture` /
+`onend` inmediato) — el permiso ya concedido resuelve instantáneo la segunda vez y le pelea
+la captura de audio al reconocimiento, que la primera vez no competía porque el prompt de
+permiso lo demoraba. Era también la causa de que el indicador de mic del navegador quedara
+prendido tras cerrar el sheet o cambiar de pantalla sin guardar. El anillo vuelve al pulso
+sintético de dos ondas que ya estaba programado.
+
+`stopRecognition()` pasa a ser la única puerta de apagado, invocada desde los cinco caminos
+de salida (cerrar, desmontar, aplicar, toggle manual, pantalla oculta) — antes convivían un
+`abort()` sin `try/catch` (podía tirar y cortar `onApply`/`onClose` a mitad de camino), un
+`onend` que apagaba `listening` sin soltar `recognitionRef` (recognizer filtrado en WebKit
+cuando `startListening()` lo pisaba sin abortarlo), y un `catch` de `start()` que no limpiaba
+el ref. Se suma un listener de `visibilitychange`/`pagehide` como red de seguridad: cambiar
+de pantalla o mandar la app a segundo plano con el sheet escuchando ahora apaga el
+micrófono aunque `onClose` nunca se dispare.
+
+Se saca el `key={sheet === "voice" ? ... }` de `CaptureFlow.tsx` — el reset de estado pasa a
+un efecto explícito sobre `open` dentro del propio sheet, en vez de forzar un desmontar/
+remontar completo. Recupera de paso la animación de entrada/salida de `Overlay`, que el
+remontaje rompía (la fase `entering`/`leaving` nunca corría porque el componente viejo
+desaparecía y el nuevo montaba directo en `"open"`).
+
+### Arreglado — layout del sheet
+
+`height={360}` fijo → `height="auto"` (el default de `Sheet`): con transcripción, el
+contenido pedía 272–318px contra ~234px útiles dentro del alto fijo (que además cobraba
+`env(safe-area-inset-bottom)` desde adentro), así que scrolleaba siempre. El wrapper del
+botón de mic pasa de 72×72 a 120×120 con los anillos en `inset: 24` en vez de `inset: 0`: el
+halo escalado (hasta 1.6×) sangraba ~22px fuera de una caja sin margen, lo que a la vez
+recortaba el arco superior (primer hijo del `overflowY: auto`, bajo un panel con
+`overflow: hidden`) y sumaba altura scrolleable de más incluso sin transcripción.
+
 ## [0.35.0] — 2026-08-13
 
 Rediseño de `/more/admin/users` — pasa de dos secciones de cards apiladas (con cada pendiente

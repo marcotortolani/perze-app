@@ -444,7 +444,6 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
         frequentPayees={frequentPayees}
       />
       <VoiceCaptureSheet
-        key={sheet === "voice" ? "voice-open" : "voice-closed"}
         open={sheet === "voice"}
         onClose={() => setSheet("none")}
         categories={categories}

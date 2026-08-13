@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.1 — 13 de agosto de 2026
+
+### Arreglado
+
+- El dictado por voz ahora funciona bien al cerrarlo y volver a abrirlo (antes, la segunda
+  vez el micrófono podía quedarse sin escuchar), y el micrófono se apaga siempre al cerrar la
+  pantalla, aunque no hayas guardado el gasto. La ventana de dictado ya no abre con un scroll
+  de más y el botón del micrófono se ve completo, sin recortar.
+
 ## 0.35.0 — 13 de agosto de 2026
 
 ### Mejorado

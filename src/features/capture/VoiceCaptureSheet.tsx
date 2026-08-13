@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion, useTransform } from "motion/react";
+import { motion } from "motion/react";
 import { Button, Icon, Sheet } from "@/design-system";
 import { useMotionIntensity } from "@/components/motion/use-motion-intensity";
 import { matchVoiceCategory, matchVoiceTags, parseVoiceCapture, type VoiceCaptureKind, type VoiceCategoryMatch, type VoiceTagMatch } from "./parse-voice";
-import { useMicLevel } from "./use-mic-level";
 
 export interface VoiceCategoryOption {
   id: string;
@@ -82,27 +81,29 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
   const [matchedTags, setMatchedTags] = useState<VoiceTagMatch[]>([]);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  // El sheet se remonta por `key` en cada apertura (`CaptureFlow`), así que basta con
-  // un flag por instancia para no auto-arrancar dos veces en re-renders.
-  const startedRef = useRef(false);
   // Handlers de un reconocimiento ya cerrado no deben tocar el estado — sin esto, un
   // `onresult`/`onend` que llega tarde hace `setState` sobre un sheet cerrado/desmontado.
   const aliveRef = useRef(true);
   const supported = !!getSpeechRecognition();
-  const { level, live: micLive } = useMicLevel(listening);
 
-  /** Único punto de apagado del reconocimiento — se invoca desde los cuatro caminos de
-   *  salida (cerrar sheet, desmontar, aplicar, toggle de parar) para que nunca quede un
-   *  `SpeechRecognition` corriendo sin que el usuario lo sepa. */
+  /** Único punto de apagado del reconocimiento — se invoca desde los cinco caminos de
+   *  salida (cerrar sheet, desmontar, aplicar, toggle de parar, pantalla oculta) para que
+   *  nunca quede un `SpeechRecognition` corriendo sin que el usuario lo sepa. `abort()`
+   *  sobre un reconocimiento que ya terminó tira en algunos motores — el propio caller
+   *  (p. ej. "Usar esto") no puede depender de que esto nunca lance. */
   const stopRecognition = useCallback(() => {
     const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+    setListening(false);
     if (!recognition) return;
     recognition.onresult = null;
     recognition.onerror = null;
     recognition.onend = null;
-    (recognition.abort ?? recognition.stop).call(recognition);
-    recognitionRef.current = null;
-    setListening(false);
+    try {
+      (recognition.abort ?? recognition.stop).call(recognition);
+    } catch {
+      // Ya terminado o nunca arrancó de verdad — no hay nada más que limpiar.
+    }
   }, []);
 
   useEffect(() => {
@@ -111,19 +112,31 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       aliveRef.current = false;
       stopRecognition();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar/desmontar la instancia (remontada por `key`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar/desmontar
   }, []);
 
+  // Red de seguridad: cambiar de pantalla, mandar la app a segundo plano o bloquear el
+  // dispositivo con el sheet todavía escuchando no debe dejar el micrófono prendido. Los
+  // cierres normales (botón, backdrop, Escape, drag) ya pasan por el efecto de `open` de
+  // abajo — esto cubre las salidas que no tocan esa prop.
   useEffect(() => {
-    // Solo detiene el reconocimiento en curso — el estado (transcript,
-    // campos) se reinicia remontando el componente (`key` en el padre),
-    // no acá: evita el setState síncrono dentro del efecto.
-    if (!open) stopRecognition();
-  }, [open, stopRecognition]);
+    function stopIfHidden() {
+      if (document.hidden) stopRecognition();
+    }
+    document.addEventListener("visibilitychange", stopIfHidden);
+    window.addEventListener("pagehide", stopRecognition);
+    return () => {
+      document.removeEventListener("visibilitychange", stopIfHidden);
+      window.removeEventListener("pagehide", stopRecognition);
+    };
+  }, [stopRecognition]);
 
   const startListening = useCallback(() => {
     const Recognition = getSpeechRecognition();
     if (!Recognition) return;
+    // Nunca dos instancias vivas a la vez — pisar `recognitionRef` sin abortar la anterior
+    // dejaba un recognizer filtrado (indicador de mic prendido en WebKit).
+    stopRecognition();
     setErrorKey(null);
     setInterimTranscript("");
     const recognition = new Recognition();
@@ -159,10 +172,14 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
     recognition.onerror = (event) => {
       if (!aliveRef.current) return;
       setErrorKey(ERROR_MESSAGE_KEY[event.error ?? ""] ?? "capture.voice_sheet.errors.other");
+      recognitionRef.current = null;
       setListening(false);
     };
     recognition.onend = () => {
       if (!aliveRef.current) return;
+      // Instancia terminada — sacarla del ref además de apagar `listening`, si no el
+      // próximo `startListening()` la pisa sin haberla abortado nunca.
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
       setListening(false);
     };
     recognitionRef.current = recognition;
@@ -171,60 +188,70 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       setListening(true);
     } catch {
       // `InvalidStateError` u otro throw síncrono — mismo tratamiento que
-      // un `onerror` asíncrono, para no dejar el botón "colgado".
+      // un `onerror` asíncrono, para no dejar el botón "colgado" ni una
+      // instancia a medio construir en el ref.
+      recognitionRef.current = null;
+      setListening(false);
       setErrorKey("capture.voice_sheet.errors.other");
     }
-  }, [categories, tags]);
+  }, [categories, tags, stopRecognition]);
 
-  // Auto-arranque: tocar "Voz" en el keypad ya implica la intención de dictar, así que
-  // el sheet abre directo escuchando en vez de pedir un segundo toque sobre el botón.
+  // El sheet ya no se remonta por `key` — este efecto es la única puerta de
+  // entrada/salida: al abrir, resetea todo lo interpretado de la vez anterior y arranca
+  // escuchando (tocar "Voz" ya implica la intención de dictar); al cerrar, apaga el
+  // reconocimiento. Sin esto, cerrar y reabrir reusaría el estado de la sesión anterior.
   useEffect(() => {
-    if (open && supported && !startedRef.current) {
-      startedRef.current = true;
-      startListening();
+    if (!open) {
+      // Sincronización genuina con el prop `open`, no derivable del render — es
+      // justo la transición open→closed la que tiene que apagar el micrófono.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      stopRecognition();
+      return;
     }
-  }, [open, supported, startListening]);
+    setTranscript("");
+    setInterimTranscript("");
+    setAmountExpression("");
+    setPayeeName("");
+    setKind(null);
+    setCurrencyCode(null);
+    setMatchedCategory(null);
+    setMatchedTags([]);
+    setErrorKey(null);
+    if (supported) startListening();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo debe correr al cambiar `open`, no en cada re-render de `startListening`
+  }, [open]);
 
-  // "reduced" mantiene el anillo pero con amplitud atenuada, en vez de apagarlo entero
-  // (eso lo hace "minimal", que ni siquiera monta este árbol).
+  // "reduced" mantiene el pulso pero con amplitud atenuada, en vez de apagarlo entero (eso
+  // lo hace "minimal", que ni siquiera monta este árbol).
   const amplitudeFactor = intensity === "reduced" ? 0.4 : 1;
-  const ringLevel = useTransform(level, (v) => 1 + v * 0.6 * amplitudeFactor);
-  const ringOpacity = useTransform(level, (v) => 0.35 * v * amplitudeFactor);
 
   return (
-    <Sheet open={open} title={t("capture.voice_sheet.title")} onClose={onClose} height={360}>
+    <Sheet open={open} title={t("capture.voice_sheet.title")} onClose={onClose}>
       {!supported ? (
         <p className="t-body" style={{ color: "var(--text-secondary)" }}>
           {t("capture.voice_sheet.unsupported")}
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ position: "relative", alignSelf: "center", width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 8 }}>
+          {/* 120×120: la caja del anillo (72 × escala máxima 1.6 ≈ 115px) queda reservada
+              adentro del wrapper, así el halo nunca sangra fuera de él — ni se recorta
+              arriba (primer hijo del scroller) ni suma alto scrolleable de más abajo. */}
+          <div style={{ position: "relative", alignSelf: "center", width: 120, height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {listening && intensity !== "minimal" ? (
-              micLive ? (
-                // Amplitud real: un solo anillo cuya escala/opacidad siguen el RMS del mic.
+              <>
                 <motion.div
                   aria-hidden
-                  style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", scale: ringLevel, opacity: ringOpacity, pointerEvents: "none" }}
+                  style={{ position: "absolute", inset: 24, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
+                  animate={{ scale: [1, 1 + 0.6 * amplitudeFactor], opacity: [0.35 * amplitudeFactor, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
                 />
-              ) : (
-                // Sin stream de amplitud (permiso denegado, sin soporte): pulso sintético
-                // de dos anillos desfasados, solo para señalar "activo".
-                <>
-                  <motion.div
-                    aria-hidden
-                    style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
-                    animate={{ scale: [1, 1.6], opacity: [0.35, 0] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
-                  />
-                  <motion.div
-                    aria-hidden
-                    style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
-                    animate={{ scale: [1, 1.4], opacity: [0.3, 0] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
-                  />
-                </>
-              )
+                <motion.div
+                  aria-hidden
+                  style={{ position: "absolute", inset: 24, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
+                  animate={{ scale: [1, 1 + 0.4 * amplitudeFactor], opacity: [0.3 * amplitudeFactor, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+                />
+              </>
             ) : null}
             <button
               type="button"
