@@ -6,6 +6,56 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.0] — 2026-08-13
+
+Rediseño de `/more/admin/users` — pasa de dos secciones de cards apiladas (con cada pendiente
+duplicado) a una sola lista con búsqueda/filtro/orden y un detalle master-detail por `?user=`,
+para que la pantalla escale más allá de un puñado de usuarios.
+
+### Nuevo — lista con búsqueda, filtros, orden y master-detail
+
+Tabla real en desktop (grilla compartida header/filas, patrón `PositionsTable`) y cards de dos
+líneas en mobile, con virtualización (`@tanstack/react-virtual`) a partir de 50 filas —
+`filter-users.ts` es la lógica pura de filtrado/búsqueda/orden, testeada aparte de la UI.
+Filtros en URL (`q`/`status`/`country`/`sort`), no `useState`: el flujo real es filtrar → abrir
+un usuario → decidir → `router.back()` → seguir, y con la URL el back vuelve a la lista
+filtrada. Búsqueda con `scoreMatch`/`normalize` de `lib/search/rank.ts` (acento-insensible),
+debounce de 300ms para la URL vía `useDeferredValue` + `setTimeout`, nunca controlando el input
+desde `searchParams` (eso metería un round-trip por tecla).
+
+Detalle en `AdminUserDetailContent.tsx` con `?user=<id>` — mismo patrón de 7 pasos que
+`/accounts` y `/transactions` (`SplitGrid`/`DetailHeaderBridge` duplicados por tercera vez a
+propósito, con un TODO que justifica no extraerlos todavía). Reutiliza el cache de
+`admin_list_access_requests()` vía `select` en `useAccessRequest()` — no hay RPC de detalle
+individual, así que el detalle nunca dispara un fetch propio.
+
+Banner de pendientes (`Banner status="warning"`) reemplaza la sección "Solicitudes pendientes"
+duplicada: al tocarlo aplica `status=pending` sobre la misma lista, en vez de mostrar cada
+pendiente dos veces.
+
+### Nuevo — `formatRelativeDay` en `i18n/formatting.ts`
+
+"hoy"/"ayer"/"hace N días" vía `Intl.RelativeTimeFormat`, diff sobre días calendario LOCALES
+(no milisegundos) — mismo criterio de huso que `todayIso()`. Usado en la columna/campo de
+última actividad.
+
+### Arreglado
+
+- El país se traduce con `COUNTRY_MESSAGE_KEY` en vez de mostrarse crudo (`UY`), como ya hacía
+  el resto de la app.
+- `setAccessStatus` ahora invalida el prefijo `["admin"]` completo (`useInvalidateAdmin()`), no
+  solo `access-requests`/`metrics` — el badge de pendientes del tab "Más" quedaba desfasado
+  hasta 60s después de aprobar o rechazar.
+- Mientras el gating (`ownAccess === undefined`) no resolvió, la pantalla muestra un skeleton en
+  vez de un `EmptyState` que le decía "no hay usuarios" a alguien que ni sabía si podía mirar.
+- Las cuatro acciones de estado (aprobar/rechazar/deshabilitar/habilitar) pasan a optimistas con
+  toast + Deshacer — verificado que `admin_set_access_status()` no dispara ningún trigger de
+  email/push, así que las cuatro son reversibles de verdad ("reversible, no confirmable").
+- `/more/admin/users` se agrega a `OWN_SCROLLER_ROUTES` (`(app)/layout.tsx`) — la lista maneja
+  su propio scroller con el despeje del FAB, en vez de heredar el del shell.
+
+---
+
 ## [0.34.1] — 2026-08-13
 
 Corrección de la captura por voz (C9) en `/add`: exigía un segundo toque para arrancar a
@@ -45,6 +95,8 @@ lo abre, para no dejar el indicador de mic encendido. `rmsFromTimeDomain()` qued
 testeada aparte, sin necesitar `AudioContext` en el test.
 
 Clave i18n nueva: `capture.voice_sheet.stopListening`, en los tres idiomas.
+
+---
 
 ## [0.34.0] — 2026-08-12
 

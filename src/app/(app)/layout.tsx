@@ -51,6 +51,7 @@ const OWN_SCROLLER_ROUTES = new Set([
   "/more",
   "/more/settings",
   "/more/categories",
+  "/more/admin/users",
 ]);
 
 /** Las únicas 4 pantallas cuyos datos de verdad se filtran por `scope` (`match-scope.ts`) — ver el comentario junto a `showScope`. */

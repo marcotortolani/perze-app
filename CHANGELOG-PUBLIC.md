@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.0 — 13 de agosto de 2026
+
+### Mejorado
+
+- Si administrás una instancia de Perze, la pantalla de usuarios ahora tiene buscador, filtros
+  por estado y país, y se puede ordenar por fecha o por última vez que entraron — antes era una
+  lista larga sin forma de encontrar a alguien puntual. Aprobar, rechazar, habilitar o
+  deshabilitar un acceso ahora se puede deshacer desde el mismo aviso de confirmación.
+
 ## 0.34.1 — 13 de agosto de 2026
 
 ### Arreglado

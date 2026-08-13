@@ -118,3 +118,35 @@ export function formatNumericDate(locale: Locale, date: Date, pref: DateFormatPr
 export function formatTimeOfDay(locale: Locale, date: Date): string {
   return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(date);
 }
+
+/** Medianoche LOCAL de una fecha, como epoch ms — para diferenciar días
+ * calendario (no bloques de 24hs) al calcular un relativo. */
+function localMidnightMs(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/**
+ * "hoy" / "ayer" / "hace 3 días" / "hace 2 meses" — narrativo, igual que
+ * `formatDateShort`/`formatDateLong`: sale de `Intl` vía locale, no del
+ * ajuste numérico de Ajustes → Formato (esa es la excepción declarada en
+ * CLAUDE.md, no le aplica el ajuste numérico).
+ *
+ * El diff se calcula sobre DÍAS CALENDARIO LOCALES, nunca sobre
+ * milisegundos: 23:00 de ayer y 01:00 de hoy están a 2 horas de distancia
+ * pero son "ayer" y "hoy", no "hace 0 días" los dos. Es el mismo criterio
+ * de huso que ya fuerza `todayIso()` en vez de un slice de ISO — comparar
+ * timestamps crudos corre el mismo riesgo de leer "hoy" como "ayer" (o
+ * viceversa) en cualquier huso negativo (UY/AR: UTC-3).
+ */
+export function formatRelativeDay(locale: Locale, date: Date, now: Date = new Date()): string {
+  const diffDays = Math.round((localMidnightMs(now) - localMidnightMs(date)) / 86_400_000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+
+  if (Math.abs(diffDays) < 30) return rtf.format(-diffDays, "day");
+
+  const diffMonths = Math.round(diffDays / 30);
+  if (Math.abs(diffMonths) < 12) return rtf.format(-diffMonths, "month");
+
+  const diffYears = Math.round(diffDays / 365);
+  return rtf.format(-diffYears, "year");
+}
