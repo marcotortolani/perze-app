@@ -411,7 +411,8 @@
     "other": "Não foi possível ouvir. Tente de novo ou use o teclado."
    },
    "useThis": "Usar isto",
-   "startListening": "Começar a escutar"
+   "startListening": "Começar a escutar",
+   "stopListening": "Toque para parar"
   },
   "currencySheetTitle": "Em qual moeda?",
   "currencySameAsAccount": "moeda da conta",

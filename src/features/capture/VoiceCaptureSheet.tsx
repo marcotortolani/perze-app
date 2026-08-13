@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { motion, useTransform } from "motion/react";
 import { Button, Icon, Sheet } from "@/design-system";
+import { useMotionIntensity } from "@/components/motion/use-motion-intensity";
 import { matchVoiceCategory, matchVoiceTags, parseVoiceCapture, type VoiceCaptureKind, type VoiceCategoryMatch, type VoiceTagMatch } from "./parse-voice";
+import { useMicLevel } from "./use-mic-level";
 
 export interface VoiceCategoryOption {
   id: string;
@@ -26,13 +29,16 @@ export interface VoiceCaptureSheetProps {
   onApply: (result: { amountExpression: string; payeeName: string; kind: VoiceCaptureKind | null; categoryId: string | null; currencyCode: string | null; tagIds: string[] }) => void;
 }
 
+type SpeechRecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
+
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  abort?: () => void;
+  onresult: ((event: { results: ArrayLike<SpeechRecognitionResultLike> }) => void) | null;
   onerror: ((event: { error?: string | undefined }) => void) | null;
   onend: (() => void) | null;
 };
@@ -64,8 +70,10 @@ const ERROR_MESSAGE_KEY: Record<string, string> = {
 /** C9 — captura por voz. Todo lo interpretado queda editable antes de confirmar; degrada limpio si el navegador no la soporta. */
 export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: VoiceCaptureSheetProps) {
   const t = useTranslations();
+  const intensity = useMotionIntensity();
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
   const [amountExpression, setAmountExpression] = useState("");
   const [payeeName, setPayeeName] = useState("");
   const [kind, setKind] = useState<VoiceCaptureKind | null>(null);
@@ -74,28 +82,68 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
   const [matchedTags, setMatchedTags] = useState<VoiceTagMatch[]>([]);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // El sheet se remonta por `key` en cada apertura (`CaptureFlow`), así que basta con
+  // un flag por instancia para no auto-arrancar dos veces en re-renders.
+  const startedRef = useRef(false);
+  // Handlers de un reconocimiento ya cerrado no deben tocar el estado — sin esto, un
+  // `onresult`/`onend` que llega tarde hace `setState` sobre un sheet cerrado/desmontado.
+  const aliveRef = useRef(true);
   const supported = !!getSpeechRecognition();
+  const { level, live: micLive } = useMicLevel(listening);
+
+  /** Único punto de apagado del reconocimiento — se invoca desde los cuatro caminos de
+   *  salida (cerrar sheet, desmontar, aplicar, toggle de parar) para que nunca quede un
+   *  `SpeechRecognition` corriendo sin que el usuario lo sepa. */
+  const stopRecognition = useCallback(() => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+    (recognition.abort ?? recognition.stop).call(recognition);
+    recognitionRef.current = null;
+    setListening(false);
+  }, []);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      stopRecognition();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar/desmontar la instancia (remontada por `key`)
+  }, []);
 
   useEffect(() => {
     // Solo detiene el reconocimiento en curso — el estado (transcript,
     // campos) se reinicia remontando el componente (`key` en el padre),
     // no acá: evita el setState síncrono dentro del efecto.
-    if (!open) recognitionRef.current?.stop();
-  }, [open]);
+    if (!open) stopRecognition();
+  }, [open, stopRecognition]);
 
-  const startListening = () => {
+  const startListening = useCallback(() => {
     const Recognition = getSpeechRecognition();
     if (!Recognition) return;
     setErrorKey(null);
+    setInterimTranscript("");
     const recognition = new Recognition();
     // Fijo en es-UY: `parseVoiceCapture` solo entiende español rioplatense
     // (ver el comentario de `parse-voice.ts`) — cambiarlo desalinearía el
     // reconocimiento del audio con lo que el parser puede interpretar.
     recognition.lang = "es-UY";
     recognition.continuous = false;
-    recognition.interimResults = false;
+    // Transcripción en vivo (C9): el texto interino se muestra mientras se habla, pero
+    // el parseo solo corre sobre el resultado final — evita re-parsear en cada palabra.
+    recognition.interimResults = true;
     recognition.onresult = (event) => {
-      const text = event.results[0]?.[0]?.transcript ?? "";
+      if (!aliveRef.current) return;
+      const result = event.results[event.results.length - 1];
+      const text = result?.[0]?.transcript ?? "";
+      if (!result?.isFinal) {
+        setInterimTranscript(text);
+        return;
+      }
+      setInterimTranscript("");
       setTranscript(text);
       const parsed = parseVoiceCapture(text);
       if (parsed.amountExpression) setAmountExpression(parsed.amountExpression);
@@ -109,10 +157,14 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       setMatchedTags(matchVoiceTags(text, tags));
     };
     recognition.onerror = (event) => {
+      if (!aliveRef.current) return;
       setErrorKey(ERROR_MESSAGE_KEY[event.error ?? ""] ?? "capture.voice_sheet.errors.other");
       setListening(false);
     };
-    recognition.onend = () => setListening(false);
+    recognition.onend = () => {
+      if (!aliveRef.current) return;
+      setListening(false);
+    };
     recognitionRef.current = recognition;
     try {
       recognition.start();
@@ -122,7 +174,22 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
       // un `onerror` asíncrono, para no dejar el botón "colgado".
       setErrorKey("capture.voice_sheet.errors.other");
     }
-  };
+  }, [categories, tags]);
+
+  // Auto-arranque: tocar "Voz" en el keypad ya implica la intención de dictar, así que
+  // el sheet abre directo escuchando en vez de pedir un segundo toque sobre el botón.
+  useEffect(() => {
+    if (open && supported && !startedRef.current) {
+      startedRef.current = true;
+      startListening();
+    }
+  }, [open, supported, startListening]);
+
+  // "reduced" mantiene el anillo pero con amplitud atenuada, en vez de apagarlo entero
+  // (eso lo hace "minimal", que ni siquiera monta este árbol).
+  const amplitudeFactor = intensity === "reduced" ? 0.4 : 1;
+  const ringLevel = useTransform(level, (v) => 1 + v * 0.6 * amplitudeFactor);
+  const ringOpacity = useTransform(level, (v) => 0.35 * v * amplitudeFactor);
 
   return (
     <Sheet open={open} title={t("capture.voice_sheet.title")} onClose={onClose} height={360}>
@@ -132,29 +199,57 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <button
-            type="button"
-            onClick={startListening}
-            disabled={listening}
-            aria-label={t("capture.voice_sheet.startListening")}
-            style={{
-              alignSelf: "center",
-              width: 72,
-              height: 72,
-              borderRadius: 999,
-              border: 0,
-              background: listening ? "var(--critical)" : "var(--primary-fill)",
-              color: "var(--primary-on-fill)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Icon name="mic" size={28} />
-          </button>
+          <div style={{ position: "relative", alignSelf: "center", width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {listening && intensity !== "minimal" ? (
+              micLive ? (
+                // Amplitud real: un solo anillo cuya escala/opacidad siguen el RMS del mic.
+                <motion.div
+                  aria-hidden
+                  style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", scale: ringLevel, opacity: ringOpacity, pointerEvents: "none" }}
+                />
+              ) : (
+                // Sin stream de amplitud (permiso denegado, sin soporte): pulso sintético
+                // de dos anillos desfasados, solo para señalar "activo".
+                <>
+                  <motion.div
+                    aria-hidden
+                    style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
+                    animate={{ scale: [1, 1.6], opacity: [0.35, 0] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    style={{ position: "absolute", inset: 0, borderRadius: 999, background: "var(--critical)", pointerEvents: "none" }}
+                    animate={{ scale: [1, 1.4], opacity: [0.3, 0] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+                  />
+                </>
+              )
+            ) : null}
+            <button
+              type="button"
+              onClick={() => (listening ? stopRecognition() : startListening())}
+              aria-pressed={listening}
+              aria-label={t(listening ? "capture.voice_sheet.stopListening" : "capture.voice_sheet.startListening")}
+              style={{
+                position: "relative",
+                width: 72,
+                height: 72,
+                borderRadius: 999,
+                border: 0,
+                background: listening ? "var(--critical)" : "var(--primary-fill)",
+                color: "var(--primary-on-fill)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Icon name="mic" size={28} />
+            </button>
+          </div>
           <p className="t-body" style={{ textAlign: "center", color: errorKey ? "var(--critical)" : "var(--text-secondary)" }}>
-            {listening ? t("capture.voice_sheet.listening") : errorKey ? (t as (key: string) => string)(errorKey) : transcript || t("capture.voice_sheet.prompt")}
+            {listening ? interimTranscript || t("capture.voice_sheet.listening") : errorKey ? (t as (key: string) => string)(errorKey) : transcript || t("capture.voice_sheet.prompt")}
           </p>
           {transcript ? (
             <>
@@ -186,6 +281,7 @@ export function VoiceCaptureSheet({ open, onClose, categories, tags, onApply }: 
               </div>
               <Button
                 onClick={() => {
+                  stopRecognition();
                   onApply({
                     amountExpression,
                     payeeName,

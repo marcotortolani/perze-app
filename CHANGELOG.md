@@ -6,6 +6,46 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.34.1] — 2026-08-13
+
+Corrección de la captura por voz (C9) en `/add`: exigía un segundo toque para arrancar a
+escuchar y el reconocimiento podía quedar vivo si el sheet se cerraba por una vía que no
+fuera "Usar esto".
+
+### Arreglado — dictado de voz: auto-arranque y apagado garantizado del micrófono
+
+`VoiceCaptureSheet` tenía dos problemas de ciclo de vida. Primero, tocar "Voz" solo abría el
+sheet — recién un segundo toque sobre el botón circular llamaba a `startListening()`, con
+`interimResults: false` (nada de transcripción en vivo) y como único feedback un cambio de
+color de fondo, sin animación. Segundo, el único `stop()` vivía en un `useEffect` atado a
+`open`: no había cleanup de unmount ni `abort()`, así que una salida que no pasara por ese
+efecto — `router.back()` desde el modal, navegación dura, cierre del share target — dejaba el
+`SpeechRecognition` corriendo, con el indicador de mic del navegador encendido y sus
+`onresult`/`onend` disparando `setState` sobre un componente ya desmontado.
+
+Ahora el sheet arranca a escuchar solo al abrirse (`useEffect` guardado por `startedRef`, sin
+duplicarse en re-renders) y el botón es un toggle real (`aria-pressed`) que también permite
+parar a mano — antes quedaba `disabled` mientras escuchaba. `interimResults: true` muestra la
+transcripción mientras se habla; el parseo (`parseVoiceCapture`/`matchVoiceCategory`/
+`matchVoiceTags`, sin cambios) sigue corriendo solo sobre el resultado `isFinal`.
+
+Se centralizó el apagado en un único `stopRecognition()` (desregistra handlers, llama
+`abort()`/`stop()`, limpia el ref) invocado desde los cuatro caminos de salida: el efecto de
+`!open`, el cleanup de unmount (antes inexistente), `onApply` (antes detenía implícitamente,
+si acaso), y el toggle de parar. Un `aliveRef` descarta cualquier `setState` que llegue tarde
+sobre una instancia ya cerrada.
+
+Nuevo hook `src/features/capture/use-mic-level.ts` (`useMicLevel`): segundo stream de audio en
+paralelo al reconocimiento —`getUserMedia` + `AnalyserNode`, nunca condiciona si el dictado
+funciona— que anima un anillo alrededor del botón con la amplitud real de la voz. Si el
+permiso falla o no hay soporte, cae a un pulso sintético en loop; `intensity: "minimal"` no
+monta ninguno de los dos. Teardown único (`cancelAnimationFrame` → `analyser.disconnect()` →
+`stream.getTracks().forEach(t => t.stop())` → `audioContext.close()`) en el mismo efecto que
+lo abre, para no dejar el indicador de mic encendido. `rmsFromTimeDomain()` queda exportada y
+testeada aparte, sin necesitar `AudioContext` en el test.
+
+Clave i18n nueva: `capture.voice_sheet.stopListening`, en los tres idiomas.
+
 ## [0.34.0] — 2026-08-12
 
 Fase B del rediseño de portfolio (Fase A: layout ancho + tabla de posiciones, v0.32.0):

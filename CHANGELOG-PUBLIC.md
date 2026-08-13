@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.34.1 — 13 de agosto de 2026
+
+### Arreglado
+
+- Al cargar un gasto por voz, ahora empieza a escuchar apenas tocás el botón (antes había que
+  tocarlo dos veces) y ves lo que vas diciendo mientras hablás, con un anillo que responde a
+  tu voz. Además, el micrófono ya no puede quedar encendido por error al cerrar la pantalla.
+
 ## 0.34.0 — 12 de agosto de 2026
 
 ### Nuevo

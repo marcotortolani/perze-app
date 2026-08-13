@@ -411,7 +411,8 @@
     "other": "No se pudo escuchar. Probá de nuevo o cargá con el keypad."
    },
    "useThis": "Usar esto",
-   "startListening": "Empezar a escuchar"
+   "startListening": "Empezar a escuchar",
+   "stopListening": "Tocá para detener"
   },
   "currencySheetTitle": "¿En qué moneda?",
   "currencySameAsAccount": "moneda de la cuenta",

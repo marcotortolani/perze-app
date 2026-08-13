@@ -411,7 +411,8 @@
     "other": "Couldn't listen. Try again or use the keypad."
    },
    "useThis": "Use this",
-   "startListening": "Start listening"
+   "startListening": "Start listening",
+   "stopListening": "Tap to stop"
   },
   "currencySheetTitle": "Which currency?",
   "currencySameAsAccount": "account currency",
