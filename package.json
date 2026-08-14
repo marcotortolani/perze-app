@@ -1,6 +1,6 @@
 {
   "name": "personal-finances-app",
-  "version": "0.35.3",
+  "version": "0.35.4",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -40,10 +40,10 @@
     "dexie-react-hooks": "^4.4.0",
     "geist": "^1.7.2",
     "motion": "^12.42.2",
-    "next": "16.2.6",
+    "next": "16.3.1",
     "next-intl": "^4.13.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "react-hook-form": "^7.76.1",
     "recharts": "^3.10.1",
     "resend": "^6.18.1",
@@ -66,12 +66,12 @@
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20.19.41",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "^5.2.0",
     "esbuild": "^0.28.1",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.1",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.11.1",
     "tailwindcss": "^4",
@@ -79,5 +79,9 @@
     "typescript": "^5",
     "vite": "^7.3.6",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4"
   }
 }

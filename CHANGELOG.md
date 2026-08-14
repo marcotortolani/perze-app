@@ -6,6 +6,33 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.4] — 2026-08-14
+
+### Actualizado — Next.js 16.2.6 → 16.3.1
+
+Ya estábamos en los patrones de Next 16 (`proxy.ts`, `cacheComponents`, config de
+Turbopack top-level), así que no hizo falta tocar código de la app: el codemod oficial
+(`@next/codemod upgrade`) no encontró nada que migrar (`cache-components-instant-false` y
+`remove-partial-prefetch` corrieron sin cambios). Se actualizó `react`/`react-dom` a
+19.2.8 y `@types/react*` en paralelo.
+
+El codemod también subió `eslint` a 10.8.1, pero eso rompe `eslint-plugin-react`
+(usa `context.getFilename`, removido en ESLint 10, sin fix todavía en la 7.37.5 que
+trae `eslint-config-next`). Se fijó de nuevo en `^9`, que es lo que
+`eslint-config-next@16.3.1` realmente pide (`peerDependencies: eslint >=9.0.0`).
+
+Verificado: `pnpm lint`, `tsc --noEmit`, `pnpm build` y `pnpm test` (1302/1303 — el
+único que falla, un mismatch de mayúsculas en el asunto del resumen anual por mail,
+ya fallaba igual en 16.2.6 y es preexistente, no una regresión de esta actualización).
+
+Medido antes/después (build limpio, `next dev` y `next start`, mismo hardware): build
+limpio ~7% más rápido, arranque de `next dev` ~11% más rápido, compilación en frío de
+una ruta bajo Turbopack ~20% más rápida. La ganancia más grande es nueva: con la caché
+persistente de build de Turbopack (`.next/cache`), un build sin borrar `.next` pasa de
+~19s a ~6.7s — antes no existía ese modo. Sin cambios medibles en tiempos de respuesta
+de `next start` (ya estaban en el rango de milisegundos de ruido) ni en memoria del
+dev server para una sesión corta.
+
 ## [0.35.3] — 2026-08-13
 
 Tercera vuelta sobre el micrófono en iOS: confirmado en el iPhone real del usuario que el
