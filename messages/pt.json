@@ -1083,6 +1083,10 @@
    "householdJoined": {
     "label": "Novo membro na sua casa",
     "description": "Quando alguém aceita seu convite"
+   },
+   "settleUpReminders": {
+    "label": "Lembrete de saldo",
+    "description": "Uma vez por período, se devem a você ou você deve a alguém da casa"
    }
   },
   "emailSection": "Por e-mail",
@@ -1432,6 +1436,10 @@
     "title": "Patrimônio líquido",
     "subtitle": "Está subindo?"
    },
+   "balanceProjection": {
+    "title": "Projeção de saldo",
+    "subtitle": "Quanto você vai ter em 30, 60 e 90 dias?"
+   },
    "categories": {
     "title": "Categorias",
     "subtitle": "Para onde vai o dinheiro?"
@@ -1764,6 +1772,17 @@
   "loadError": "Não conseguimos carregar seu patrimônio líquido.",
   "current": "Patrimônio líquido",
   "last30": "{amount} nos últimos 30 dias"
+ },
+ "balanceProjectionPage": {
+  "title": "Projeção de saldo",
+  "loadError": "Não conseguimos calcular a projeção de saldo.",
+  "empty": "Adicione uma conta para projetar seu saldo disponível.",
+  "current": "Saldo disponível hoje",
+  "chartTitle": "Projeção",
+  "horizon": "{days} dias",
+  "breakdown": "O que compõe",
+  "noCommitments": "Não há recorrentes nem parcelas comprometidas nos próximos 90 dias — o saldo projetado é o de hoje.",
+  "noEstimate": "Só o que já está comprometido: parcelas pendentes, recorrentes e renda fixa contratual. Não é uma estimativa de novo consumo."
  },
  "moneyFlowPage": {
   "title": "Fluxo de dinheiro",

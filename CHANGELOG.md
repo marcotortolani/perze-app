@@ -6,6 +6,80 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.41.0] — 2026-08-16
+
+### Nuevo — proyección de saldo 30/60/90 días
+
+Fase 4 del plan de cierre de auditoría (`docs/plan-analisis-comparativas.md`):
+"cuánto vas a tener disponible" proyectado desde SOLO lo ya comprometido —
+nunca una estimación de consumo nuevo, mismo criterio de cabecera que ya
+declara `installment-projection.ts`.
+
+- `src/lib/analytics/balance-projection.ts` (con tests) — módulo puro que
+  combina el saldo actual con una lista de `ProjectedEvent[]` YA
+  convertidos a moneda base por el caller y arma la serie acumulada más el
+  snapshot de cada horizonte (30/60/90 días por defecto, configurable).
+  No hace FX ni toca ningún repo — misma separación que
+  `computeMonthlyCommitted` (puro) vs. su wrapper async.
+- `/analytics/balance-projection` — pantalla nueva, registrada en el hub de
+  Análisis sin gate de historial mínimo (es forward-looking, no una
+  tendencia pasada). Compone tres fuentes: próximas ocurrencias de
+  recurrentes (`occurrencesBetween`), cuotas de deuda pendientes
+  (`debtsRepo.listSchedule`, con signo por `direction: 'owe' | 'owed'`) y
+  renta fija contractual del primer portfolio del household
+  (`computeFutureIncome`). `NeedsFxBanner` con el conteo excluido cuando
+  algún componente no resuelve cotización — nunca se suma como si valiera
+  cero.
+- **Límite conocido de esta primera versión**: la renta fija solo se suma
+  sobre el PRIMER portfolio del household (mismo fallback que
+  `usePortfolioFromParam` sin query param) — un household con más de un
+  portfolio de inversión subestima acá lo que `/investments/future-income`
+  ya cuenta bien. Las cuentas `broker` quedan fuera del saldo base (su
+  valor vive en posiciones, no en `currentBalance`).
+
+### Nuevo — recordatorio de settle-up
+
+`src/lib/analytics/settle-up.ts` (J7) ya calculaba el neto entre miembros
+excluyendo `needs_fx` correctamente, pero saldar era 100% manual — dependía
+de que alguien se acordara de abrir Familia. Se investigó la infraestructura
+de push existente (`supabase/functions/send-push`, con seis `kind`
+household-scoped ya andando, y el cron de `monthly-summary` como
+referencia de "corre una vez al cierre de período") y se replicó el mismo
+patrón en vez de construir un sistema nuevo:
+
+- `supabase/migrations/20260816000000_settle_up_reminders.sql` — columna
+  `notification_preferences.settle_up_reminders` (default `true`) y
+  `trigger_settle_up_reminders()`: un `pg_cron` diario que, en households
+  con el módulo `family` prendido, calcula el neto por par de miembros
+  directo en SQL sobre `transaction_shares.share_amount_base` (ya
+  resuelto y congelado por fila — sumar `bigint` ahí es seguro, sin
+  reinventar ninguna regla; needs_fx —`share_amount_base IS NULL`—
+  excluido siempre) y llama a `send-push` con un texto personalizado por
+  miembro ("Llevás $X pendiente con Juan" / "Juan te debe $X"). Ventana de
+  reintento e idempotencia por `audit_log`, mismo criterio que
+  `trigger_monthly_summaries()`.
+- **Esta migración YA SE APLICÓ contra el proyecto remoto** (`perze-app`)
+  durante la sesión que la generó, a diferencia de las demás migraciones
+  de este cierre de auditoría (todas las otras quedaron sin correr,
+  pendientes de `supabase db push --linked` manual) — un error de consigna
+  de esa tarea puntual, detectado después. El cron `perze-settle-up-reminders`
+  (13:00 UTC diario) y la columna `settle_up_reminders` (default `true`
+  para todos los households existentes) están activos en producción desde
+  entonces. Confirmado con `supabase migration list --linked`.
+- `send-push`: nuevo `kind: 'settle_up_reminder'`, household-scoped, con
+  `profileIds` acotando a un miembro puntual del par por llamada (no es un
+  broadcast).
+- Toggle nuevo en `/more/notifications` (`settleUpReminders`).
+- **Decisión documentada**: el texto del push se formatea a mano en SQL
+  (sin separador de miles, sin la preferencia de decimales de
+  `Ajustes → Formato`) — mismo criterio que ya usa `card_statement_due`
+  para su fecha (`to_char(..., 'DD/MM')` fijo, unas migraciones más
+  arriba): el cuerpo de un push es texto de servidor sin perfil de lectura
+  al que ajustarle el formato, no un componente de UI. No se construyó
+  además un banner in-app en Familia — el push cubre el caso de uso
+  ("que no dependa de acordarse de mirar la pantalla") sin duplicar el
+  mecanismo.
+
 ## [0.40.0] — 2026-08-16
 
 ### Agregado — rebalanceo de inversiones (`target_allocations`)

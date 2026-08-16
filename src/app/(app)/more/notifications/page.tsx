@@ -13,8 +13,8 @@ import { notificationPreferencesRepo, type NotificationPreferences } from "@/lib
 import { profileNotificationPreferencesRepo, type ProfileNotificationPreferences } from "@/lib/repos/profile-notification-preferences-repo";
 import { getCurrentPushSubscription, PushUnsupportedError, subscribeToPush, unsubscribeFromPush } from "@/lib/push/subscribe";
 
-type ToggleKey = "budgetAlerts" | "recurringReminders" | "insights" | "cardStatementDue" | "householdJoined";
-const TOGGLES: ToggleKey[] = ["budgetAlerts", "recurringReminders", "insights", "cardStatementDue", "householdJoined"];
+type ToggleKey = "budgetAlerts" | "recurringReminders" | "insights" | "cardStatementDue" | "householdJoined" | "settleUpReminders";
+const TOGGLES: ToggleKey[] = ["budgetAlerts", "recurringReminders", "insights", "cardStatementDue", "householdJoined", "settleUpReminders"];
 
 /**
  * Preferencias que NO son push: van por mail y por eso no se apagan con el

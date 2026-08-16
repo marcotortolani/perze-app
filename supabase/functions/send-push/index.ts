@@ -1,8 +1,11 @@
 // K12 — envía un push. Dos modelos de destinatario:
-//   (a) household-scoped (los 5 tipos originales + `household_joined`):
-//       todos los miembros del household, filtrados por
-//       `notification_preferences`. Si además viene `profileIds`, se
-//       intersecta (p. ej. "solo owner/admin", ver `household_joined`).
+//   (a) household-scoped (los 5 tipos originales + `household_joined` +
+//       `settle_up_reminder`): todos los miembros del household, filtrados
+//       por `notification_preferences`. Si además viene `profileIds`, se
+//       intersecta (p. ej. "solo owner/admin" en `household_joined`, o "un
+//       miembro puntual del par" en `settle_up_reminder` —
+//       `trigger_settle_up_reminders()`, `20260816000000...sql`, manda un
+//       texto personalizado por miembro con dos llamadas, no un broadcast).
 //   (b) profile-scoped (`household_invite`, `app_update`): sin household
 //       — "te invitaron" es ANTES de ser miembro de nada, y "nueva versión"
 //       es de la cuenta, no del hogar. Filtrados por
@@ -26,7 +29,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3";
 import { z } from "npm:zod@4";
 
-const HOUSEHOLD_KINDS = ["budget_alerts", "weekly_summary", "recurring_reminders", "insights", "card_statement_due", "household_joined"] as const;
+const HOUSEHOLD_KINDS = ["budget_alerts", "weekly_summary", "recurring_reminders", "insights", "card_statement_due", "household_joined", "settle_up_reminder"] as const;
 const PROFILE_KINDS = ["household_invite", "app_update"] as const;
 
 const requestSchema = z.object({
@@ -54,6 +57,7 @@ const HOUSEHOLD_PREFERENCE_COLUMN: Record<(typeof HOUSEHOLD_KINDS)[number], stri
   insights: "insights",
   card_statement_due: "card_statement_due",
   household_joined: "household_joined",
+  settle_up_reminder: "settle_up_reminders",
 };
 
 const PROFILE_PREFERENCE_COLUMN: Record<(typeof PROFILE_KINDS)[number], string> = {

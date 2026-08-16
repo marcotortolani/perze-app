@@ -17,9 +17,19 @@ export interface NotificationPreferences {
   cardStatementDue: boolean;
   /** D35 — "alguien se unió a tu hogar" (owner/admin). */
   householdJoined: boolean;
+  /** Fase 4 auditoría — "llevás $X pendiente con Juan", una vez por cierre de período (`trigger_settle_up_reminders()`). */
+  settleUpReminders: boolean;
 }
 
-const DEFAULTS = { budgetAlerts: true, monthlySummaryEmail: true, recurringReminders: true, insights: true, cardStatementDue: true, householdJoined: true };
+const DEFAULTS = {
+  budgetAlerts: true,
+  monthlySummaryEmail: true,
+  recurringReminders: true,
+  insights: true,
+  cardStatementDue: true,
+  householdJoined: true,
+  settleUpReminders: true,
+};
 
 /**
  * K12 — preferencias de notificación, una fila por miembro (RLS: solo la
@@ -31,7 +41,7 @@ export const notificationPreferencesRepo = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("notification_preferences")
-      .select("id, household_id, profile_id, budget_alerts, monthly_summary_email, recurring_reminders, insights, card_statement_due, household_joined")
+      .select("id, household_id, profile_id, budget_alerts, monthly_summary_email, recurring_reminders, insights, card_statement_due, household_joined, settle_up_reminders")
       .eq("household_id", householdId)
       .eq("profile_id", profileId)
       .maybeSingle();
@@ -47,6 +57,7 @@ export const notificationPreferencesRepo = {
       insights: data.insights,
       cardStatementDue: data.card_statement_due,
       householdJoined: data.household_joined,
+      settleUpReminders: data.settle_up_reminders,
     };
   },
 
@@ -62,6 +73,7 @@ export const notificationPreferencesRepo = {
       insights: prefs.insights,
       card_statement_due: prefs.cardStatementDue,
       household_joined: prefs.householdJoined,
+      settle_up_reminders: prefs.settleUpReminders,
     };
     const { error } = await supabase.from("notification_preferences").upsert(row as never, { onConflict: "household_id,profile_id" });
     if (error) throw error;
