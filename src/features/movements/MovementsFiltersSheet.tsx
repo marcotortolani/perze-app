@@ -5,7 +5,7 @@ import { Button, Chip, Sheet, Switch } from "@/design-system";
 import type { AccountRow, CategoryRow, RecurringRuleRow, TagRow } from "@/lib/db/schema";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 
-export type DatePreset = "all" | "this-month" | "last-month" | "last-7" | "last-30";
+export type DatePreset = "all" | "today" | "this-month" | "last-month" | "last-7" | "last-30";
 export type KindFilter = "all" | "expense" | "income" | "investing" | "transfer" | "adjustment";
 
 export interface MovementsFilters {
@@ -84,6 +84,7 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
   const categoryLabel = useCategoryLabel();
 
   const DATE_PRESETS: Array<{ id: DatePreset; label: string }> = [
+    { id: "today", label: t("movements.filters.date.today") },
     { id: "this-month", label: t("movements.filters.date.thisMonth") },
     { id: "last-month", label: t("movements.filters.date.lastMonth") },
     { id: "last-7", label: t("movements.filters.date.last7") },
@@ -144,7 +145,7 @@ export function MovementsFiltersSheet({ open, onClose, filters, onChange, accoun
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {accounts.map((a) => (
               <Chip key={a.id} selected={filters.accountIds.includes(a.id)} onClick={() => onChange({ ...filters, accountIds: toggle(filters.accountIds, a.id) })}>
-                {a.name}
+                {a.name} · {a.currencyCode}
               </Chip>
             ))}
           </div>

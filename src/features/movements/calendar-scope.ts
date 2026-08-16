@@ -269,6 +269,8 @@ export function periodStartFor(preset: DatePreset, now: Date): { from?: string; 
   const m = now.getMonth();
   const d = now.getDate();
   switch (preset) {
+    case "today":
+      return { from: localMidnightIso(y, m, d), to: localMidnightIso(y, m, d + 1) };
     case "this-month":
       return { from: localMidnightIso(y, m, 1) };
     case "last-month":

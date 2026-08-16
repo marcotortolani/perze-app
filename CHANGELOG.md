@@ -6,6 +6,56 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.6] — 2026-08-16
+
+### Arreglado — nueve detalles de UI reportados: navegación, animaciones, filtros y tarjetas
+
+**Logo "PERZE" del sidebar sin navegación.** `Sidebar.tsx` lo renderizaba como `<Logo />`
+suelto, sin `Link` ni `onClick`. Ahora envuelve en `<Link href="/" prefetch>`, mismo patrón
+que `NavButton`.
+
+**Tres transiciones faltantes:**
+
+- `Overlay.tsx`: el `variant="dialog"` en mobile (usado por el buscador) solo fundía+escalaba
+  (`scale(0.96)→1`); con el panel anclado abajo (`alignItems: "flex-end"`) eso se sentía casi
+  estático. Ahora en mobile traslada (`translateY(24px)→0`) en vez de escalar — desktop no
+  cambia.
+- `Modal.tsx` (rutas interceptadas `/add`, `/accounts/new`): aparecía/desaparecía de golpe,
+  cero transición. Ahora es una máquina de fases simple (monta oculto, un `requestAnimationFrame`
+  después entra, `router.back()` real se retrasa `duration` para que la salida termine de
+  animar). Se agrega `useModalClose()` (contexto expuesto por `Modal`) porque `CaptureFlow`/
+  `AccountFormFlow` llamaban `router.back()` directo desde adentro del flujo — sin este hook la
+  animación de salida solo corría para el botón "volver"/tocar el fondo, no para guardar o
+  cancelar desde el propio formulario, que es el cierre más común.
+- `/more/page.tsx`: sin ninguna animación de montaje a diferencia de `/` y `/transactions`
+  (las otras dos raíces de tab). Se agrega `PageEnter`, mismo gesto que las otras dos — no un
+  slide horizontal nuevo, para no sumar un segundo lenguaje de motion a la app.
+
+**Subtotales de movimientos no respetaban los filtros.** `TransactionsListContent.tsx` sumaba
+ingresos/egresos/balance sobre `dateFiltered` (transacciones crudas + solo rango de fecha),
+mientras la lista visible salía de `filtered` (fecha + tipo/cuenta/categoría/etiqueta/
+recurrente/pendientes). Filtrar por categoría o etiqueta mostraba 3 movimientos con el total
+de todo el período al lado. Los subtotales ahora suman sobre `filtered` — el mismo array que
+alimenta la lista, sin un segundo cálculo paralelo. Se elimina `dateFiltered`, sin otros usos.
+
+**Filtro de cuentas y de período, dos ajustes chicos** (`MovementsFiltersSheet.tsx`,
+`calendar-scope.ts`): el chip de cuenta ahora muestra `Nombre · MONEDA` (antes solo el
+nombre, indistinguible entre cuentas homónimas en distinta moneda); se agrega el preset
+`"today"` (`localMidnightIso(y, m, d)` a `d+1`, mismo patrón que `dayRange`), con sus claves
+`movements.filters.date.today` en `es`/`en`/`pt`.
+
+**Gráfico de tarjeta de crédito invertido.** `computeAccountEvolution` (D66) ya invierte el
+signo para que el consumo sea positivo y creciente (cero abajo). `AccountDetailContent.tsx`
+le aplicaba un segundo `*-1` "solo para el gráfico" que lo volvía a pasar a negativo-decreciente
+— la base quedaba arriba y la deuda se dibujaba hacia abajo. Se elimina la segunda inversión;
+`LineChart` recibe `evolution` tal cual.
+
+**Fechas de ciclo de tarjetas agrupadas vacías.** Mismo archivo, la barra de progreso del ciclo
+ya usaba `cardCycleConfig` (resuelve grupo→cuenta vía `effectiveCardCycleConfig`), pero el texto
+de "Cierra el / Vence el" leía `account.statementDay`/`account.dueDay` directo — siempre `null`
+para una tarjeta agrupada (el dato vive en `account_groups`, a propósito: mismo plástico, mismo
+corte para ARS y USD). Se cambia a `cardCycleConfig?.statementDay`/`dueDay`.
+
 ## [0.35.5] — 2026-08-16
 
 ### Arreglado — cinco bugs reportados sobre recurrentes, captura y sync

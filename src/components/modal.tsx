@@ -2,9 +2,30 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/design-system/core/Icon";
+import { useMotionIntensity } from "@/components/motion";
+
+/** Mismo `--duration-base` que `Overlay` (`src/design-system/core/Overlay.tsx`) — la otra primitiva de portal a `document.body` de la app, misma sensación de "hoja que entra". */
+const TRANSITION_MS = 240;
+
+const ModalCloseContext = createContext<(() => void) | null>(null);
+
+/**
+ * El `onClose`/`onCancel` que `CaptureFlow`/`AccountFormFlow` reciben desde
+ * cada `page.tsx` interceptado llama a esto en vez de `router.back()`
+ * directo — si no, la salida animada de `Modal` (ver más abajo) solo
+ * corre para el backdrop y el botón `contained`, y guardar/cancelar desde
+ * ADENTRO del flujo (que es el cierre más común) sigue desapareciendo de
+ * golpe. Fallback a `router.back()` solo por si algún consumidor viejo
+ * quedara fuera del árbol de `Modal` — no debería pasar nunca en uso normal.
+ */
+export function useModalClose(): () => void {
+  const ctx = useContext(ModalCloseContext);
+  const router = useRouter();
+  return ctx ?? (() => router.back());
+}
 
 /**
  * Envoltorio de rutas interceptadas (`/add`, `/accounts/new`,
@@ -55,12 +76,57 @@ import { Icon } from "@/design-system/core/Icon";
 export function Modal({ children, contained = false }: { children: ReactNode; contained?: boolean }) {
   const router = useRouter();
   const t = useTranslations();
+  const intensity = useMotionIntensity();
+  const duration = intensity === "minimal" ? 0 : TRANSITION_MS;
+
+  // Mismo problema que resolvía `Overlay` antes de su máquina de fases: sin
+  // esto la pantalla interceptada aparecía de golpe (montaba ya en su
+  // posición final) y `router.back()` la desmontaba en el mismo frame, sin
+  // nada que animar. Acá no hay una prop `open` que gobernar (esto vive
+  // detrás de una ruta interceptora, no de un booleano) — el estado de
+  // "entrando"/"saliendo" lo lleva este componente solo, entre el montaje y
+  // el momento en que algo pide cerrar.
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const [closing, setClosing] = useState(false);
+
+  // `router.back()` real se retrasa `duration` — tiempo para que el panel
+  // termine de deslizarse afuera antes de que Next desmonte el slot
+  // interceptado. El gesto de swipe-back del sistema (o el botón físico de
+  // Android) no pasa por acá y cierra sin animar: es el mismo límite que
+  // documenta `Overlay` para cualquier cierre que no dispare el propio JS.
+  function close() {
+    if (duration === 0) {
+      router.back();
+      return;
+    }
+    setClosing(true);
+    setTimeout(() => router.back(), duration);
+  }
+
+  const shown = visible && !closing;
+  const transform = `translateY(${shown ? "0" : "100%"})`;
+  const transition = `transform ${duration}ms var(--ease-spring-snappy)`;
 
   const overlay = (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", flexDirection: "column", background: "var(--page)", overflowY: "auto", overscrollBehavior: "contain" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--page)",
+        overflowY: "auto",
+        overscrollBehavior: "contain",
+        transform,
+        transition,
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) router.back();
+        if (e.target === e.currentTarget) close();
       }}
     >
       {contained ? (
@@ -68,17 +134,19 @@ export function Modal({ children, contained = false }: { children: ReactNode; co
           <div style={{ display: "flex", alignItems: "center", height: "var(--header-height)", paddingTop: "var(--safe-top)", paddingInline: "var(--screen-padding)", flexShrink: 0 }}>
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={close}
               aria-label={t("ds.appHeader.back")}
               style={{ width: 44, height: 44, marginLeft: -12, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: 0, cursor: "pointer" }}
             >
               <Icon name="chevron-left" size={22} color="var(--text-secondary)" />
             </button>
           </div>
-          <div style={{ width: "100%", maxWidth: "var(--content-max-width)", margin: "0 auto", paddingInline: "var(--screen-padding)", paddingBottom: "var(--safe-bottom)" }}>{children}</div>
+          <div style={{ width: "100%", maxWidth: "var(--content-max-width)", margin: "0 auto", paddingInline: "var(--screen-padding)", paddingBottom: "var(--safe-bottom)" }}>
+            <ModalCloseContext.Provider value={close}>{children}</ModalCloseContext.Provider>
+          </div>
         </>
       ) : (
-        children
+        <ModalCloseContext.Provider value={close}>{children}</ModalCloseContext.Provider>
       )}
     </div>
   );

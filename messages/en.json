@@ -434,6 +434,7 @@
    "seeResults": "See {count, plural, one {# result} other {# results}}",
    "date": {
     "all": "All",
+    "today": "Today",
     "thisMonth": "This month",
     "lastMonth": "Last month",
     "last7": "Last 7 days",

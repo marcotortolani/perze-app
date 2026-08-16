@@ -150,9 +150,13 @@ export function Sidebar({ tabs, groups, onNavigate, active, onChange, onAdd, onS
       }}
     >
       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 24, padding: "0 16px 24px" }}>
-        <div style={{ padding: "0 8px" }}>
+        {/* `Link`, no un `div` suelto: es lo primero que alguien toca cuando
+            busca "volver al principio" — el gesto más natural que existe
+            para un wordmark en un header, y hoy no hacía nada. Mismo
+            `Link prefetch` que `NavButton` de acá abajo. */}
+        <Link href="/" prefetch style={{ padding: "0 8px", display: "block", width: "fit-content" }}>
           <Logo />
-        </div>
+        </Link>
 
         <button
           type="button"

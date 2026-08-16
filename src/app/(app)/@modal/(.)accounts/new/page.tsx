@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Modal } from "@/components/modal";
+import { Modal, useModalClose } from "@/components/modal";
 import { AccountFormFlow } from "@/features/accounts/AccountFormFlow";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidateAccounts } from "@/hooks/use-accounts";
+import type { AccountRow } from "@/lib/db/schema";
 
 /**
  * Intercepta `/accounts/new` en navegación blanda desde dentro de
@@ -32,15 +33,24 @@ export default function InterceptedNewAccountPage() {
 
   return (
     <Modal>
-      <AccountFormFlow
-        householdId={household.id}
-        userId={userId}
-        onClose={() => router.back()}
-        onSaved={(account) => {
-          invalidateAccounts();
-          router.replace(`/accounts?account=${account.id}`);
-        }}
-      />
+      <InterceptedNewAccountInner householdId={household.id} userId={userId} onSaved={(account) => {
+        invalidateAccounts();
+        router.replace(`/accounts?account=${account.id}`);
+      }} />
     </Modal>
   );
+}
+
+/** `useModalClose()` necesita estar debajo de `<Modal>` en el árbol — ver la misma nota en `@modal/(.)add/page.tsx`. */
+function InterceptedNewAccountInner({
+  householdId,
+  userId,
+  onSaved,
+}: {
+  householdId: string;
+  userId: string;
+  onSaved: (account: AccountRow) => void;
+}) {
+  const closeModal = useModalClose();
+  return <AccountFormFlow householdId={householdId} userId={userId} onClose={closeModal} onSaved={onSaved} />;
 }

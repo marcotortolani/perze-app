@@ -235,19 +235,15 @@ export function AccountDetailContent({ id }: { id: string }) {
             />
           }
         >
-          {/* Tarjeta de crédito: `evolution` ya viene invertida (D66,
-              `computeAccountEvolution`) para que la TABLA lea bien —
-              "cero, después el consumo real acumulado" en vez del saldo
-              negativo crudo. El GRÁFICO de línea es otro consumidor con
-              otra necesidad: ahí "cero abajo, el consumo sube" es la
-              lectura intuitiva de una deuda, y una curva que arranca en 0
-              y baja a un valor negativo (que es lo que da graficar
-              `evolution` tal cual, con el signo ya invertido para la
-              tabla) se lee al revés. Un segundo `*-1` sobre esos mismos
-              puntos, solo para el gráfico, deja el consumo positivo y
-              subiendo — la tabla no se toca. */}
+          {/* Tarjeta de crédito: `computeAccountEvolution` (D66) YA invierte
+              el signo — `evolution` trae el consumo positivo y creciendo
+              (cero abajo, la deuda sube), para que tanto la tabla como este
+              gráfico lean bien "cero, después cuánto se gastó". Un segundo
+              `*-1` acá volvía a pasarlo a negativo-decreciente y dejaba la
+              línea de base arriba con la deuda dibujándose hacia abajo —
+              exactamente al revés de lo que se quiere leer. */}
           <LineChart
-            data={isCreditCard ? evolution.map((p) => ({ ...p, value: -p.value })) : evolution}
+            data={evolution}
             formatValue={(v) => formatAmountCompact(money(fromMajorUnitsUnsafe(v, account.currencyCode), account.currencyCode), { showSign: false })}
           />
         </ChartCard>
@@ -283,7 +279,14 @@ export function AccountDetailContent({ id }: { id: string }) {
             </span>
           )}
           <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            {t("accountsPage.detail.cycleCloses", { statementDay: account.statementDay ?? "", dueDay: account.dueDay ?? "" })}
+            {/* Tarjeta agrupada (`accountGroupId` no nulo): `account.statementDay`/
+                `dueDay` son siempre `null` a propósito — el dato vive en el
+                grupo, es el mismo plástico y el mismo corte para todas las
+                monedas (ver CLAUDE.md § tarjetas agrupadas). `cardCycleConfig`
+                ya resuelve el valor efectivo (grupo si hay, cuenta si no) —
+                leer la columna cruda de la cuenta acá dejaba este texto vacío
+                para cualquier tarjeta agrupada. */}
+            {t("accountsPage.detail.cycleCloses", { statementDay: cardCycleConfig?.statementDay ?? "", dueDay: cardCycleConfig?.dueDay ?? "" })}
           </span>
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
             {t("accountsPage.detail.cycleProjection", { amount: formatAmountCompact(money(cycleTotal, account.currencyCode), { showSign: false }) })}

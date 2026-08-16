@@ -285,27 +285,21 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, histo
     [nonDateFiltered, from, to]
   );
 
-  // Ingresos/Egresos/Balance son el resumen del PERÍODO, no de lo que se ve
-  // en la lista — solo respetan el rango de fecha (mismo concepto que
-  // "egresos del período" del home). Los demás filtros (tipo, cuenta,
-  // categoría, pendientes) narrowean qué se MUESTRA en la lista, y no
-  // tienen por qué vaciar "ingresos" a 0 cuando el filtro activo es "gasto".
+  // Ingresos/Egresos/Balance reflejan exactamente lo que la lista de abajo
+  // está mostrando — TODOS los filtros activos (fecha, tipo, cuenta,
+  // categoría, etiqueta, recurrente, pendientes), no solo el rango de
+  // fecha. Antes solo el rango de fecha entraba acá (mismo concepto que
+  // "egresos del período" del home) y el resto de los filtros narroweaban
+  // la lista sin tocar los subtotales — filtrar por una categoría o
+  // etiqueta puntual mostraba 3 movimientos en pantalla con el total de
+  // TODO el período al lado, un número que no correspondía a nada visible.
   //
   // "Egresos" incluye compras de instrumentos, no solo consumo — es toda la
   // liquidez que salió de las cuentas (`src/lib/analytics/cash-flow.ts`).
-  const dateFiltered = useMemo(() => {
-    if (!transactions) return [];
-    return transactions.filter((t) => {
-      if (from && t.occurredAt < from) return false;
-      if (to && t.occurredAt >= to) return false;
-      return true;
-    });
-  }, [transactions, from, to]);
-
   const baseCurrency = household?.baseCurrency ?? "UYU";
   let periodIncome = zero(baseCurrency);
   let periodExpense = zero(baseCurrency);
-  for (const t of dateFiltered) {
+  for (const t of filtered) {
     const { bucket, magnitude } = classifyCashFlow(t);
     if (bucket === "inflow") periodIncome = add(periodIncome, money(magnitude, baseCurrency));
     else if (bucket === "outflow") periodExpense = add(periodExpense, money(magnitude, baseCurrency));

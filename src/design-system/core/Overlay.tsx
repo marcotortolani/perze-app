@@ -206,9 +206,13 @@ export function Overlay({ open, onClose, labelledBy, children, variant = "dialog
   const sheetTransform = dragging ? `translateY(${dragY}px)` : `translateY(calc(${sheetPhaseOffset} + ${dragY}px))`;
   const sheetTransition = dragging || phase === "entering" ? "none" : `transform ${duration}ms var(--ease-spring-snappy)`;
 
-  // El diálogo centrado no desliza (no tiene agarradera ni sentido de
-  // "hacia abajo") — funde y escala levemente, mismo `duration`.
-  const dialogTransform = visible ? "scale(1)" : "scale(0.96)";
+  // El diálogo centrado de escritorio no desliza (no tiene agarradera ni
+  // sentido de "hacia abajo") — funde y escala levemente. En mobile este
+  // mismo `variant="dialog"` queda anclado abajo (`alignItems: "flex-end"`
+  // arriba) — sin una traslación real un fade+scale centrado en un panel ya
+  // pegado al borde inferior se siente casi estático. Mismo `duration` que
+  // el desktop, solo cambia QUÉ se anima.
+  const dialogTransform = isDesktop ? (visible ? "scale(1)" : "scale(0.96)") : visible ? "translateY(0)" : "translateY(24px)";
   const dialogTransition = phase === "entering" ? "none" : `transform ${duration}ms var(--ease-spring-snappy), opacity ${duration}ms var(--ease-spring-snappy)`;
 
   return createPortal(

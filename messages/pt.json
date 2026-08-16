@@ -434,6 +434,7 @@
    "seeResults": "Ver {count, plural, one {# resultado} other {# resultados}}",
    "date": {
     "all": "Tudo",
+    "today": "Hoje",
     "thisMonth": "Este mês",
     "lastMonth": "Mês passado",
     "last7": "Últimos 7 dias",

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Card, ListRow, Sheet, StatusBadge, usePageHeader, ZMark } from "@/design-system";
+import { PageEnter } from "@/components/motion";
 import { HouseholdSwitcherSheet } from "@/components/household-switcher-sheet";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
@@ -109,10 +110,15 @@ export default function MorePage() {
   };
 
   return (
-    // `scroll-fade-bottom`: esta pantalla pasa a manejar su propio scroll
-    // (antes dependía del `<main>` compartido del shell) para tener el
-    // mismo fade de `/accounts` — sumada a `OWN_SCROLLER_ROUTES` en
-    // `(app)/layout.tsx`.
+    // `PageEnter`: mismo gesto de entrada que `/` y `/transactions` (los
+    // otros dos tabs raíz con esta screen ya montada al entrar por el tab
+    // bar) — antes esta pantalla aparecía de golpe, la única de las tres
+    // sin ninguna transición.
+    <PageEnter>
+    {/* `scroll-fade-bottom`: esta pantalla pasa a manejar su propio scroll
+        (antes dependía del `<main>` compartido del shell) para tener el
+        mismo fade de `/accounts` — sumada a `OWN_SCROLLER_ROUTES` en
+        `(app)/layout.tsx`. */}
     <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", height: "100%", minHeight: 0 } as CSSProperties}>
       <div
         ref={scrollerRef}
@@ -278,5 +284,6 @@ export default function MorePage() {
 
       <HouseholdSwitcherSheet open={householdSwitcherOpen} onClose={() => setHouseholdSwitcherOpen(false)} />
     </div>
+    </PageEnter>
   );
 }

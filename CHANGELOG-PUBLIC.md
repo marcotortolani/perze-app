@@ -40,6 +40,28 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.6 — 16 de agosto de 2026
+
+### Nuevo
+
+- En Movimientos, el filtro de período ahora tiene la opción "Hoy".
+
+### Mejorado
+
+- Tocar el logo de PERZE ahora te lleva al inicio.
+- Suavizamos varias transiciones que aparecían de golpe: el buscador, el modal de cargar un
+  movimiento o cuenta nueva, y la pantalla de Más.
+- En el filtro de cuentas de Movimientos, ahora se ve la moneda de cada cuenta.
+
+### Arreglado
+
+- En Movimientos, los totales de ingresos/egresos/balance ahora reflejan los filtros que
+  tengas activos (categoría, etiqueta, cuenta, etc.) en vez de mostrar siempre el total del
+  período completo.
+- El gráfico de una tarjeta de crédito ahora se lee bien: el gasto sube, no baja.
+- En tarjetas de crédito agrupadas (mismo plástico en más de una moneda), ahora se ven bien
+  el día de cierre y el de vencimiento en el detalle.
+
 ## 0.35.5 — 16 de agosto de 2026
 
 ### Nuevo
