@@ -303,6 +303,9 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       created_at: p.createdAt,
       updated_at: p.updatedAt,
       client_rev: p.clientRev,
+      rollover_surplus: p.rolloverSurplus,
+      rollover_deficit: p.rolloverDeficit,
+      rollover_since: p.rolloverSince,
     }),
   },
 

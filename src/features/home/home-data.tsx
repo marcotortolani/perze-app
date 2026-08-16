@@ -20,6 +20,9 @@ import { useNetWorth } from "@/hooks/use-net-worth";
 import { useInvestmentsTrend } from "@/hooks/use-investments-trend";
 import { useNetWorthInCurrency } from "@/hooks/use-net-worth-in-currency";
 import { useBudgetAlerts } from "@/hooks/use-budget-alerts";
+import { useBudgets } from "@/hooks/use-budgets";
+import { pickBudgetClosureCandidate } from "@/lib/analytics/budget-closure";
+import { budgetClosureKey, useBudgetClosureBannerStore } from "@/stores/budget-closure-banner-store";
 import { useConflicts } from "@/hooks/use-conflicts";
 import { usePendingMutations } from "@/lib/offline";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
@@ -86,6 +89,9 @@ export interface HomeDataReady {
   dueManualRecurringCount: number;
   /** Solo cuando hay exactamente una regla vencida — a dónde navega el banner. `null` con 0 o ≥2 (ahí va a `/recurring`). */
   dueManualRecurringRuleId: string | null;
+  showBudgetClosureBanner: boolean;
+  closureCandidate: ReturnType<typeof pickBudgetClosureCandidate<BudgetRow>> | null;
+  dismissClosureBanner: (key: string) => void;
 
   // Datos de negocio — los consumen los bloques vía `useHomeData()`.
   household: HouseholdRow;
@@ -212,6 +218,9 @@ export function useHomeDataState(): HomeDataState {
   const incomeThisPeriodUsd = useNetWorthInCurrency(household?.id, incomeThisPeriod, wantsUsd ? "USD" : null);
 
   const budgetAlerts = useBudgetAlerts();
+  const { data: budgets } = useBudgets(household?.id);
+  const dismissedClosureKeys = useBudgetClosureBannerStore((s) => s.dismissedKeys);
+  const dismissClosureBanner = useBudgetClosureBannerStore((s) => s.dismiss);
   const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("home.errorWhat") });
   const isCardPayment = useIsCardPayment(household?.id);
   const pending = usePendingMutations();
@@ -360,6 +369,29 @@ export function useHomeDataState(): HomeDataState {
   const showRecurringDueBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && dueManualRecurringCount > 0;
   const showReminderBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && !showRecurringDueBanner && !!activeReminder;
 
+  // Banner de cierre de período — la prioridad MÁS BAJA de la cadena: solo
+  // aparece cuando ninguno de los cuatro banners de arriba (offline,
+  // conflicto, cumpleaños, recurrentes vencidos) ni el recordatorio
+  // informativo están ocupando el lugar. Entre todos los presupuestos
+  // activos, `pickBudgetClosureCandidate` elige el de MAYOR DESVÍO del
+  // límite — decisión de producto documentada en `budget-closure.ts`, no
+  // especificada en el encargo original.
+  const budgetsEnabled = household.enabledModules.includes("budgets");
+  const closureCandidate =
+    budgetsEnabled && budgets && budgets.length > 0
+      ? pickBudgetClosureCandidate(budgets.filter((b) => !b.archivedAt), allTransactions, household.periodStartDay || 1, now, categories)
+      : null;
+  const closureKey = closureCandidate ? budgetClosureKey(closureCandidate.budget.id, closureCandidate.closure.periodEnd) : null;
+  const showBudgetClosureBanner =
+    !showBirthdayBanner &&
+    !(pending && pending > 0) &&
+    conflicts.length === 0 &&
+    !showRecurringDueBanner &&
+    !showReminderBanner &&
+    !!closureCandidate &&
+    !!closureKey &&
+    !dismissedClosureKeys.includes(closureKey);
+
   return {
     status: "ready",
     data: {
@@ -376,6 +408,9 @@ export function useHomeDataState(): HomeDataState {
       showRecurringDueBanner,
       dueManualRecurringCount,
       dueManualRecurringRuleId,
+      showBudgetClosureBanner,
+      closureCandidate,
+      dismissClosureBanner,
       household,
       baseCurrency,
       netWorth,

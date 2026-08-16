@@ -1853,7 +1853,20 @@
   "deleted": "Orçamento excluído",
   "delete": "Excluir orçamento",
   "remaining": "Ainda tem",
-  "over": "Passou em"
+  "over": "Passou em",
+  "rolloverTitle": "Arraste entre períodos",
+  "rolloverSurplusLabel": "Arrastar sobra para o próximo período",
+  "rolloverDeficitLabel": "Arrastar excesso para o próximo período",
+  "carryPositive": "Arraste do período anterior: +",
+  "carryNegative": "Arraste do período anterior: −",
+  "closureBanner": {
+   "underTitle": "{name}: fechou dentro do limite",
+   "overTitle": "{name}: passou do limite",
+   "underBody": "Sobrou",
+   "overBody": "Passou em",
+   "action": "Ver orçamento",
+   "dismiss": "Fechar aviso"
+  }
  },
  "goalsPage": {
   "loadError": "Não conseguimos carregar suas metas.",

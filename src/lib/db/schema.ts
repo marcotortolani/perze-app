@@ -466,6 +466,11 @@ export interface BudgetRow {
   updatedAt: string;
   /** C10 — antes hardcodeado a 1 en todos los repos salvo transactions: la detección de conflictos era ficticia. */
   clientRev: number;
+  /** Auditoría de rollover — opt-in, apagados por default. Ver `src/lib/analytics/budget-rollover.ts`. */
+  rolloverSurplus: boolean;
+  rolloverDeficit: boolean;
+  /** Fecha (YYYY-MM-DD) desde la que el rollover cuenta — `null` mientras ninguno de los dos flags se activó nunca. Nunca retroactivo. */
+  rolloverSince: string | null;
 }
 
 export interface GoalRow {

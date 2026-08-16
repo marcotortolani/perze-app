@@ -1853,7 +1853,20 @@
   "deleted": "Presupuesto eliminado",
   "delete": "Eliminar presupuesto",
   "remaining": "Te queda",
-  "over": "Te pasaste por"
+  "over": "Te pasaste por",
+  "rolloverTitle": "Arrastre entre períodos",
+  "rolloverSurplusLabel": "Arrastrar sobrante al próximo período",
+  "rolloverDeficitLabel": "Arrastrar exceso al próximo período",
+  "carryPositive": "Arrastre del período anterior: +",
+  "carryNegative": "Arrastre del período anterior: −",
+  "closureBanner": {
+   "underTitle": "{name}: cerraste bajo el límite",
+   "overTitle": "{name}: te pasaste del límite",
+   "underBody": "Sobraron",
+   "overBody": "Te pasaste por",
+   "action": "Ver presupuesto",
+   "dismiss": "Cerrar aviso"
+  }
  },
  "goalsPage": {
   "loadError": "No pudimos cargar tus metas.",

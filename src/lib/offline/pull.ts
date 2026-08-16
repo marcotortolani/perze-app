@@ -247,7 +247,10 @@ async function refreshPayees(householdId: string): Promise<{ count: number; prun
 async function refreshBudgets(householdId: string): Promise<{ count: number; pruned: number }> {
   const db = getDb();
   const supabase = createClient();
-  const raw = await fetchPaged<RawBudget>((f, t) => supabase.from("budgets").select(BUDGETS_COLUMNS).eq("household_id", householdId).order("id").range(f, t));
+  // `as any` temporal — mismo motivo que en `hydrate.ts`: `pnpm db:types`
+  // pendiente para `rollover_surplus`/`rollover_deficit`/`rollover_since`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ver el comentario de arriba
+  const raw = await fetchPaged<RawBudget>((f, t) => (supabase.from("budgets").select(BUDGETS_COLUMNS) as any).eq("household_id", householdId).order("id").range(f, t));
   return commitSimpleTable<BudgetRow>(db.budgets, "budgets", householdId, raw.map(budgetFromRow));
 }
 

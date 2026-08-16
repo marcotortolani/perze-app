@@ -24,7 +24,7 @@ export const TAGS_COLUMNS = "id, household_id, name, color, client_rev";
 export const PAYEES_COLUMNS = "id, household_id, name, default_category_id, default_account_id, logo_url, aliases, client_rev";
 
 export const BUDGETS_COLUMNS =
-  "id, household_id, category_id, name, amount_limit::text, currency_code, archived_at, created_by, created_at, updated_at, client_rev";
+  "id, household_id, category_id, name, amount_limit::text, currency_code, archived_at, created_by, created_at, updated_at, client_rev, rollover_surplus, rollover_deficit, rollover_since";
 
 export const GOALS_COLUMNS =
   "id, household_id, name, icon, color, target_amount::text, currency_code, target_date, account_id, archived_at, created_by, created_at, updated_at, client_rev";

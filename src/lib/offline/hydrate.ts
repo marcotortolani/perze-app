@@ -479,6 +479,9 @@ export interface RawBudget {
   created_at: string;
   updated_at: string;
   client_rev: number;
+  rollover_surplus: boolean;
+  rollover_deficit: boolean;
+  rollover_since: string | null;
 }
 
 export function budgetFromRow(row: RawBudget): BudgetRow {
@@ -494,6 +497,9 @@ export function budgetFromRow(row: RawBudget): BudgetRow {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     clientRev: row.client_rev,
+    rolloverSurplus: row.rollover_surplus,
+    rolloverDeficit: row.rollover_deficit,
+    rolloverSince: row.rollover_since,
   };
 }
 
@@ -745,7 +751,14 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
     fetchPaged((f, t) => scoped(supabase.from("categories").select(CATEGORIES_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("tags").select(TAGS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("payees").select(PAYEES_COLUMNS).order("id")).range(f, t)),
-    fetchPaged((f, t) => scoped(supabase.from("budgets").select(BUDGETS_COLUMNS).order("id")).range(f, t)),
+    // `as any` temporal — `rollover_surplus`/`rollover_deficit`/`rollover_since`
+    // (`20260816090000_budget_rollover.sql`) todavía no están en los tipos
+    // generados (`pnpm db:types` pendiente, requiere credenciales remotas
+    // que esta sesión no tiene). `RawBudget` sigue siendo la fuente de
+    // verdad del shape real de la fila — sacar este cast en cuanto se
+    // regeneren los tipos.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ver el comentario de arriba
+    fetchPaged<RawBudget>((f, t) => scoped(supabase.from("budgets").select(BUDGETS_COLUMNS) as any).order("id").range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("goals").select(GOALS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("recurring_rules").select(RECURRING_RULES_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("rules").select(RULES_COLUMNS).order("id")).range(f, t)),

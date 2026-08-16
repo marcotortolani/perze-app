@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closedPeriodsCount, daysOfHistory, daysUntilPeriodCloses, monthsOfHistory } from "./history";
+import { closedPeriodsCount, currentPeriodBounds, daysOfHistory, daysUntilPeriodCloses, monthsOfHistory, periodBoundsAt, previousClosedPeriodBounds } from "./history";
 
 describe("daysOfHistory", () => {
   it("returns 0 with no transactions", () => {
@@ -42,6 +42,29 @@ describe("closedPeriodsCount", () => {
 describe("daysUntilPeriodCloses", () => {
   it("counts down to the next close day", () => {
     expect(daysUntilPeriodCloses(25, new Date(2026, 6, 20))).toBe(5);
+  });
+});
+
+describe("periodBoundsAt", () => {
+  it("offset 0 matches currentPeriodBounds", () => {
+    const now = new Date(2026, 6, 20);
+    expect(periodBoundsAt(1, now, 0)).toEqual(currentPeriodBounds(1, now));
+  });
+
+  it("offset -1 matches previousClosedPeriodBounds", () => {
+    const now = new Date(2026, 6, 20);
+    expect(periodBoundsAt(1, now, -1)).toEqual(previousClosedPeriodBounds(1, now));
+  });
+
+  it("walks N periods back with a non-1st start day", () => {
+    // 20/jul < 25 → el período en curso es 25/jun-25/jul, no 25/jul-25/ago.
+    const now = new Date(2026, 6, 20);
+    expect(periodBoundsAt(25, now, -2)).toEqual({ start: new Date(2026, 3, 25), end: new Date(2026, 4, 25) });
+  });
+
+  it("offset positivo mira hacia adelante", () => {
+    const now = new Date(2026, 6, 20);
+    expect(periodBoundsAt(1, now, 1)).toEqual({ start: new Date(2026, 7, 1), end: new Date(2026, 8, 1) });
   });
 });
 

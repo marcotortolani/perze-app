@@ -4,7 +4,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, CategoryBubble, EmptyState, Keypad, Skeleton, usePageHeader } from "@/design-system";
+import { Button, CategoryBubble, EmptyState, Keypad, Skeleton, Switch, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import type { CategoryRow } from "@/lib/db/schema";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -16,6 +16,7 @@ import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { formatAmount } from "@/lib/money/format";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { amountToExpression } from "@/features/capture/AmountStep";
+import { todayIso } from "@/lib/dates/today";
 
 /**
  * F3 — editar un presupuesto existente: mismo layout que crear (`new/page.tsx`),
@@ -42,6 +43,9 @@ export default function EditBudgetPage({ params }: { params: Promise<{ id: strin
   const [expandedParent, setExpandedParent] = useState<CategoryRow | null>(null);
   const [expr, setExpr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // `undefined` = todavía sin tocar, usa el valor vigente del presupuesto.
+  const [rolloverSurplusOverride, setRolloverSurplusOverride] = useState<boolean | undefined>(undefined);
+  const [rolloverDeficitOverride, setRolloverDeficitOverride] = useState<boolean | undefined>(undefined);
 
   // Mismo motivo que `new/page.tsx`: con `cacheComponents: true` esta
   // pantalla queda oculta (no desmontada) al volver — se resetea el
@@ -53,6 +57,8 @@ export default function EditBudgetPage({ params }: { params: Promise<{ id: strin
       setExpandedParent(null);
       setExpr(null);
       setSaving(false);
+      setRolloverSurplusOverride(undefined);
+      setRolloverDeficitOverride(undefined);
     };
   }, []);
 
@@ -72,6 +78,8 @@ export default function EditBudgetPage({ params }: { params: Promise<{ id: strin
   if (!budget) return <EmptyState message={t("budgetsPage.notFound")} actionLabel={t("budgetsPage.back")} onAction={() => router.push("/budgets")} />;
 
   const categoryId = categoryIdOverride === undefined ? budget.categoryId : categoryIdOverride;
+  const rolloverSurplus = rolloverSurplusOverride ?? budget.rolloverSurplus;
+  const rolloverDeficit = rolloverDeficitOverride ?? budget.rolloverDeficit;
   const displayExpr = expr ?? amountToExpression(budget.amountLimit, budget.currencyCode, locale);
   const canSave = displayExpr.trim() !== "";
   const decimalSeparator = decimalSeparatorForLocale(locale);
@@ -84,10 +92,18 @@ export default function EditBudgetPage({ params }: { params: Promise<{ id: strin
     try {
       const limit = evaluateKeypadExpression(displayExpr, budget.currencyCode, numberLocale);
       const category = categories.find((c) => c.id === categoryId);
+      // Ancla `rolloverSince` a HOY recién la primera vez que cualquiera de
+      // los dos flags se activa — si el presupuesto ya tenía uno, nunca se
+      // lo pisa: eso correría la fecha "desde" hacia adelante y el
+      // arrastre acumulado hasta acá se perdería en silencio.
+      const rolloverSince = rolloverSurplus || rolloverDeficit ? (budget.rolloverSince ?? todayIso()) : budget.rolloverSince;
       await budgetsRepo.update(budget.id, {
         categoryId,
         name: category ? categoryLabel(category) : t("budgetsPage.wholeHousehold"),
         amountLimit: limit.amount,
+        rolloverSurplus,
+        rolloverDeficit,
+        rolloverSince,
       });
       invalidateBudgets();
       toast(t("budgetsPage.updated"));
@@ -133,6 +149,14 @@ export default function EditBudgetPage({ params }: { params: Promise<{ id: strin
         <div style={{ textAlign: "center" }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("budgetsPage.amount")}</div>
           <div style={{ marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 32 }}>{heroAmount}</div>
+        </div>
+
+        <div>
+          <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 10 }}>{t("budgetsPage.rolloverTitle")}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Switch checked={rolloverSurplus} onChange={setRolloverSurplusOverride} label={t("budgetsPage.rolloverSurplusLabel")} id="rollover-surplus-label" />
+            <Switch checked={rolloverDeficit} onChange={setRolloverDeficitOverride} label={t("budgetsPage.rolloverDeficitLabel")} id="rollover-deficit-label" />
+          </div>
         </div>
 
         <div style={{ marginTop: "auto" }}>

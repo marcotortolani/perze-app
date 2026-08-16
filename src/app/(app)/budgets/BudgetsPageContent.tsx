@@ -9,8 +9,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
-import { currentPeriodBounds } from "@/lib/analytics/history";
-import { computeBudgetProgress } from "@/lib/analytics/budget-progress";
+import { computeBudgetProgressWithRollover } from "@/lib/analytics/budget-rollover";
 import { money } from "@/lib/money/money";
 
 /** F1 — presupuestos: progreso de cada uno en el período en curso. Separado de `page.tsx` para que `<ModuleGate>` pueda diferirlo con `next/dynamic` (C15/C16) — sin esto, los hooks de datos de acá corrían aunque el módulo estuviera apagado. */
@@ -44,9 +43,10 @@ export default function BudgetsPageContent() {
     return <EmptyState message={t("budgetsPage.empty")} actionLabel={t("budgetsPage.emptyAction")} onAction={() => router.push("/budgets/new")} />;
   }
 
-  const { start, end } = currentPeriodBounds(household.periodStartDay || 1, new Date());
+  const now = new Date();
+  const periodStartDay = household.periodStartDay || 1;
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const excludedTotal = budgets.reduce((sum, b) => sum + computeBudgetProgress(b, transactions, start, end, categories).excludedCount, 0);
+  const excludedTotal = budgets.reduce((sum, b) => sum + computeBudgetProgressWithRollover(b, transactions, periodStartDay, now, categories).excludedCount, 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 8, paddingBottom: 24 }}>
@@ -54,7 +54,7 @@ export default function BudgetsPageContent() {
       <ListRow icon="plus" label={t("budgetsPage.newBudget")} variant="action" onClick={() => router.push("/budgets/new")} />
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {budgets.map((budget) => {
-          const progress = computeBudgetProgress(budget, transactions, start, end, categories);
+          const progress = computeBudgetProgressWithRollover(budget, transactions, periodStartDay, now, categories);
           const category = budget.categoryId ? categoryById.get(budget.categoryId) : undefined;
           return (
             <Card key={budget.id} padding={16} style={{ cursor: "pointer" }}>
@@ -64,7 +64,7 @@ export default function BudgetsPageContent() {
                   <div style={{ fontSize: 16, color: "var(--text-primary)" }}>{category ? categoryLabel(category) : budget.name}</div>
                   <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>
                     <Amount value={money(progress.spent, budget.currencyCode)} size="label" showSign={false} polarity="neutral" tabular /> {t("budgetsPage.of")}{" "}
-                    <Amount value={money(budget.amountLimit, budget.currencyCode)} size="label" showSign={false} polarity="neutral" tabular />
+                    <Amount value={money(budget.amountLimit + progress.carry, budget.currencyCode)} size="label" showSign={false} polarity="neutral" tabular />
                   </div>
                 </div>
               </button>

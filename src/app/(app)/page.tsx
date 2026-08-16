@@ -8,6 +8,9 @@ import { AnimatedBanner, PageEnter } from "@/components/motion";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { BirthdayBanner } from "@/components/birthday-banner";
 import { ReminderBanner } from "@/components/reminder-banner";
+import { BudgetClosureBanner } from "@/components/budget-closure-banner";
+import { useCategoryLabel } from "@/hooks/use-category-label";
+import { budgetClosureKey } from "@/stores/budget-closure-banner-store";
 import { HomeDataProvider, useHomeDataState } from "@/features/home/home-data";
 import { HomeBlocksLayout } from "@/features/home/HomeBlocksLayout";
 
@@ -16,6 +19,7 @@ export default function HomePage() {
   const router = useRouter();
   const t = useTranslations();
   const state = useHomeDataState();
+  const categoryLabel = useCategoryLabel();
   // `HomeBlocksLayout` (montado solo en el estado "ready") registra su
   // propio header con el botón "Personalizar" — como es un HIJO de este
   // componente, su efecto corre ANTES que el de acá (React dispara
@@ -44,7 +48,13 @@ export default function HomePage() {
     showRecurringDueBanner,
     dueManualRecurringCount,
     dueManualRecurringRuleId,
+    showBudgetClosureBanner,
+    closureCandidate,
+    dismissClosureBanner,
+    categoryById,
   } = data;
+  const closureCategory = closureCandidate?.budget.categoryId ? categoryById.get(closureCandidate.budget.categoryId) : undefined;
+  const closureBudgetName = closureCandidate ? (closureCategory ? categoryLabel(closureCategory) : closureCandidate.budget.name) : "";
 
   return (
     // `PageEnter`: entrada suave del dashboard. Envuelve el retorno CON
@@ -112,6 +122,23 @@ export default function HomePage() {
       <AnimatedBanner show={showReminderBanner}>
         <ReminderBanner reminder={activeReminder} />
       </AnimatedBanner>
+      {/* Cierre de período de presupuesto — la prioridad MÁS BAJA de toda
+          la cadena: nunca compite con el recordatorio informativo de
+          arriba (los dos son "aviso de baja urgencia", así que solo uno
+          se muestra a la vez — ver el criterio exacto en `home-data.tsx`,
+          `showBudgetClosureBanner`). Entre presupuestos candidatos, el que
+          se muestra es el de mayor desvío del límite (`budget-closure.ts`). */}
+      {closureCandidate ? (
+        <AnimatedBanner show={showBudgetClosureBanner}>
+          <BudgetClosureBanner
+            budgetId={closureCandidate.budget.id}
+            budgetName={closureBudgetName}
+            currencyCode={closureCandidate.budget.currencyCode}
+            closure={closureCandidate.closure}
+            onDismiss={() => dismissClosureBanner(budgetClosureKey(closureCandidate.budget.id, closureCandidate.closure.periodEnd))}
+          />
+        </AnimatedBanner>
+      ) : null}
 
       <HomeDataProvider data={data}>
         <HomeBlocksLayout />
