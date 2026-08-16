@@ -1,0 +1,12 @@
+-- Auditoría de outbox de inversiones — `trades` escribía directo a
+-- Supabase, sin pasar por Dexie/outbox (a diferencia de `transactions` y
+-- `budgets`): una operación de bolsa cargada sin conexión se perdía, lo
+-- que rompe la promesa de "la app nunca pierde un movimiento" para ese
+-- dominio. Se migra `trades-repo.ts` al patrón local-first, y para eso
+-- hace falta la misma columna que ya tienen accounts/categories/tags/
+-- payees/budgets/goals/recurring_rules/rules/households desde
+-- `20260801150000_client_rev_conflict_sensitive.sql`: sin `client_rev`,
+-- `conflictSensitive` no tiene contra qué comparar la revisión del
+-- servidor y dos miembros editando el mismo trade se pisarían en
+-- silencio con "el último que sincroniza gana".
+ALTER TABLE public.trades ADD COLUMN client_rev integer NOT NULL DEFAULT 1;

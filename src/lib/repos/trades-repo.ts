@@ -1,41 +1,25 @@
-import { createClient } from "../supabase/client";
-import type { FxSourceValue } from "../db/schema";
+import { getDb } from "../db/client";
+import type { FxSourceValue, TradeRow } from "../db/schema";
+import { outbox } from "../offline/outbox";
 import { parseRate } from "../fx/rate";
+import { newId, nowIso } from "./ids";
 
-export type TradeKind =
-  | "buy"
-  | "sell"
-  | "dividend"
-  | "coupon"
-  | "amortization"
-  | "interest"
-  | "split"
-  | "merger"
-  | "fee"
-  | "tax"
-  | "deposit"
-  | "withdrawal"
-  | "transfer_in"
-  | "transfer_out"
-  | "revaluation";
+export type TradeKind = TradeRow["kind"];
 
-export interface Trade {
-  id: string;
-  portfolioId: string;
-  instrumentId: string;
-  kind: TradeKind;
-  executedAt: string;
-  quantity: number;
-  price: number;
-  currencyCode: string;
-  grossAmount: bigint;
-  netAmount: bigint;
-  settlementAccountId: string | null;
-  amountBase: bigint | null;
-  /** `ScaledRate` (`src/lib/fx/rate.ts`) — mismo formato interno que `fx_rate`. */
-  fxRate: bigint | null;
-  fxSource: FxSourceValue;
-}
+/**
+ * Auditoría de outbox de inversiones — antes este repo escribía directo a
+ * Supabase (`portfolios-repo.ts` documentaba a `trades-repo.ts` como "el
+ * repo que hay que migrar a local-first si hace falta cargar una operación
+ * sin conexión"). Ahora sí: mismo patrón Dexie + outbox que
+ * `transactions-repo.ts`/`budgets-repo.ts` — guardar no puede fallar por
+ * falta de señal, la red es un detalle del sync loop.
+ *
+ * `Trade` es literalmente `TradeRow` (la fila de Dexie) — no hace falta un
+ * mapeo propio porque los callers ya consumían exactamente esta forma
+ * (bigint para plata, `fxRate` como `ScaledRate`) desde antes de esta
+ * migración.
+ */
+export type Trade = TradeRow;
 
 export interface NewTradeInput {
   portfolioId: string;
@@ -50,138 +34,118 @@ export interface NewTradeInput {
   netAmount: bigint;
   settlementAccountId: string | null;
   amountBase: bigint | null;
+  /** Decimal plano ("1234.567890123456"), formato en que `fxRepo.resolve()`/`formatRate()` lo entregan — nunca `ScaledRate` crudo. */
   fxRate: string | null;
-  fxSource: "identity" | "api" | "manual" | "inherited" | "pending";
+  fxSource: FxSourceValue;
 }
 
 /** Igual que `NewTradeInput` sin `portfolioId`/`instrumentId`/`createdBy`: a qué instrumento y portfolio pertenece una operación no se edita, solo sus datos. */
 export type TradeUpdateInput = Omit<NewTradeInput, "portfolioId" | "instrumentId" | "createdBy">;
 
-interface TradeRow {
-  id: string;
-  portfolio_id: string;
-  instrument_id: string;
-  kind: string;
-  executed_at: string;
-  quantity: number;
-  price: number;
-  currency_code: string;
-  gross_amount: string;
-  net_amount: string;
-  settlement_account_id: string | null;
-  amount_base: string | null;
-  fx_rate: string | null;
-  fx_source: string;
-}
-
-const SELECT_COLUMNS =
-  "id, portfolio_id, instrument_id, kind, executed_at, quantity, price, currency_code, gross_amount::text, net_amount::text, settlement_account_id, amount_base::text, fx_rate::text, fx_source";
-
-function fromRow(row: TradeRow): Trade {
-  return {
-    id: row.id,
-    portfolioId: row.portfolio_id,
-    instrumentId: row.instrument_id,
-    kind: row.kind as TradeKind,
-    executedAt: row.executed_at,
-    quantity: row.quantity,
-    price: row.price,
-    currencyCode: row.currency_code,
-    grossAmount: BigInt(row.gross_amount),
-    netAmount: BigInt(row.net_amount),
-    settlementAccountId: row.settlement_account_id,
-    amountBase: row.amount_base === null ? null : BigInt(row.amount_base),
-    fxRate: row.fx_rate === null ? null : parseRate(row.fx_rate),
-    fxSource: row.fx_source as FxSourceValue,
-  };
+async function enqueueTrade(op: "insert" | "update", row: TradeRow): Promise<void> {
+  await outbox.enqueue({ table: "trades", op, entityId: row.id, payload: row, clientRev: row.clientRev });
 }
 
 export const tradesRepo = {
-  /** Detalle de transacción (`kind: 'investing'`) → editar el trade, no la transacción: hace falta `portfolioId` para armar esa URL y la fila de settlement no lo tiene. */
+  /** Detalle de transacción (`kind: 'investing'`) → editar el trade, no la transacción: hace falta `portfolioId` para armar esa URL y la fila de settlement no lo tiene. `null`, no `undefined` — mismo criterio que `transactionsRepo.get` (TanStack Query no acepta `undefined` de un `queryFn`). */
   async get(id: string): Promise<Trade | null> {
-    const supabase = createClient();
-    const { data, error } = await supabase.from("trades").select(SELECT_COLUMNS).eq("id", id).is("deleted_at", null).maybeSingle<TradeRow>();
-    if (error) throw error;
-    return data ? fromRow(data) : null;
+    const row = await getDb().trades.get(id);
+    if (!row || row.deletedAt !== null) return null;
+    return row;
   },
 
   async listForPortfolio(portfolioId: string): Promise<Trade[]> {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("trades")
-      .select(SELECT_COLUMNS)
-      .eq("portfolio_id", portfolioId)
-      .is("deleted_at", null)
-      .order("executed_at", { ascending: false })
-      .returns<TradeRow[]>();
-    if (error) throw error;
-    return (data ?? []).map(fromRow);
+    const rows = await getDb().trades.where("portfolioId").equals(portfolioId).toArray();
+    return rows.filter((t) => t.deletedAt === null).sort((a, b) => (a.executedAt < b.executedAt ? 1 : -1));
   },
 
   async create(input: NewTradeInput): Promise<Trade> {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("trades")
-      .insert({
-        id: crypto.randomUUID(),
-        portfolio_id: input.portfolioId,
-        instrument_id: input.instrumentId,
-        created_by: input.createdBy,
-        kind: input.kind,
-        executed_at: input.executedAt,
-        quantity: input.quantity,
-        price: input.price,
-        currency_code: input.currencyCode,
-        gross_amount: input.grossAmount.toString(),
-        net_amount: input.netAmount.toString(),
-        settlement_account_id: input.settlementAccountId,
-        amount_base: input.amountBase === null ? null : input.amountBase.toString(),
-        fx_rate: input.fxRate,
-        fx_source: input.fxSource,
-        fx_resolved_at: input.amountBase === null ? null : new Date().toISOString(),
-      } as never)
-      .select(SELECT_COLUMNS)
-      .single<TradeRow>();
-    if (error) throw error;
-    return fromRow(data);
+    const db = getDb();
+    const now = nowIso();
+    const row: TradeRow = {
+      portfolioId: input.portfolioId,
+      instrumentId: input.instrumentId,
+      createdBy: input.createdBy,
+      kind: input.kind,
+      executedAt: input.executedAt,
+      quantity: input.quantity,
+      price: input.price,
+      currencyCode: input.currencyCode,
+      grossAmount: input.grossAmount,
+      netAmount: input.netAmount,
+      settlementAccountId: input.settlementAccountId,
+      amountBase: input.amountBase,
+      fxRate: input.fxRate === null ? null : parseRate(input.fxRate),
+      fxSource: input.fxSource,
+      fxResolvedAt: input.amountBase === null ? null : now,
+      note: null,
+      id: newId(),
+      createdAt: now,
+      deletedAt: null,
+      clientRev: 1,
+    };
+
+    await db.transaction("rw", db.trades, db.outbox, async () => {
+      await db.trades.add(row);
+      await enqueueTrade("insert", row);
+    });
+
+    return row;
   },
 
-  /** No cambia `instrumentId`/`portfolioId` — a qué instrumento pertenece una operación no se edita, solo sus datos (I4). */
+  /** No cambia `instrumentId`/`portfolioId`/`createdBy` — a qué instrumento pertenece una operación no se edita, solo sus datos (I4). */
   async update(id: string, input: TradeUpdateInput): Promise<Trade> {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("trades")
-      .update({
+    const db = getDb();
+    let updated!: TradeRow;
+
+    await db.transaction("rw", db.trades, db.outbox, async () => {
+      const existing = await db.trades.get(id);
+      if (!existing) throw new Error(`Trade ${id} no encontrado`);
+
+      updated = {
+        ...existing,
         kind: input.kind,
-        executed_at: input.executedAt,
+        executedAt: input.executedAt,
         quantity: input.quantity,
         price: input.price,
-        currency_code: input.currencyCode,
-        gross_amount: input.grossAmount.toString(),
-        net_amount: input.netAmount.toString(),
-        settlement_account_id: input.settlementAccountId,
-        amount_base: input.amountBase === null ? null : input.amountBase.toString(),
-        fx_rate: input.fxRate,
-        fx_source: input.fxSource,
-        fx_resolved_at: input.amountBase === null ? null : new Date().toISOString(),
-      } as never)
-      .eq("id", id)
-      .select(SELECT_COLUMNS)
-      .single<TradeRow>();
-    if (error) throw error;
-    return fromRow(data);
+        currencyCode: input.currencyCode,
+        grossAmount: input.grossAmount,
+        netAmount: input.netAmount,
+        settlementAccountId: input.settlementAccountId,
+        amountBase: input.amountBase,
+        fxRate: input.fxRate === null ? null : parseRate(input.fxRate),
+        fxSource: input.fxSource,
+        fxResolvedAt: input.amountBase === null ? null : nowIso(),
+        clientRev: existing.clientRev + 1,
+      };
+
+      await db.trades.put(updated);
+      await enqueueTrade("update", updated);
+    });
+
+    return updated;
   },
 
-  /** Soft delete (`deleted_at`) — mismo patrón que `transactionsRepo`/`portfoliosRepo`, con `restore()` para el "Deshacer" del toast. */
+  /** Soft delete (`deleted_at`) — mismo patrón que `transactionsRepo`/`portfoliosRepo`, con `restore()` para el "Deshacer" del toast. Reversible, no confirmable: nunca un diálogo, siempre toast + deshacer. */
   async softDelete(id: string): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase.from("trades").update({ deleted_at: new Date().toISOString() } as never).eq("id", id);
-    if (error) throw error;
+    const db = getDb();
+    await db.transaction("rw", db.trades, db.outbox, async () => {
+      const existing = await db.trades.get(id);
+      if (!existing || existing.deletedAt !== null) return;
+      const updated: TradeRow = { ...existing, deletedAt: nowIso(), clientRev: existing.clientRev + 1 };
+      await db.trades.put(updated);
+      await enqueueTrade("update", updated);
+    });
   },
 
   async restore(id: string): Promise<void> {
-    const supabase = createClient();
-    const { error } = await supabase.from("trades").update({ deleted_at: null } as never).eq("id", id);
-    if (error) throw error;
+    const db = getDb();
+    await db.transaction("rw", db.trades, db.outbox, async () => {
+      const existing = await db.trades.get(id);
+      if (!existing || existing.deletedAt === null) return;
+      const updated: TradeRow = { ...existing, deletedAt: null, clientRev: existing.clientRev + 1 };
+      await db.trades.put(updated);
+      await enqueueTrade("update", updated);
+    });
   },
 };

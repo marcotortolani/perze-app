@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.6 — 16 de agosto de 2026
+
+### Arreglado
+
+- Cargar una compra, venta u otra operación de inversión ahora funciona igual
+  que cargar un gasto: si te quedás sin conexión, la operación no se pierde y
+  se sincroniza sola apenas vuelva la señal.
+
 ## 0.36.5 — 16 de agosto de 2026
 
 ### Mejorado

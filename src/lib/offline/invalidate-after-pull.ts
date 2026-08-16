@@ -18,6 +18,15 @@ import type { PullResult } from "./pull";
  * - `prunedTotal` cuenta borrados detectados por diff de ids — siempre un
  *   cambio real cuando es > 0.
  *
+ * Mismo criterio que accounts/categories/budgets/goals/etc.: su `count`
+ * fetch-completo no entra en `changed`, así que una alta pura en otro
+ * dispositivo (sin ningún borrado ni movimiento nuevo en el mismo tick) no
+ * dispara invalidación — igual que siempre pasó con el resto de esas
+ * tablas. `trades` (auditoría de outbox de inversiones) se suma a este
+ * mismo criterio: SALE de `NEVER_TOUCHED_BY_PULL` porque ahora
+ * `pullFromRemote` sí la sincroniza — antes estaba excluida porque
+ * `useTrades`/`useTrade` leían Supabase directo y el pull nunca la tocaba.
+ *
  * Cuando ninguna de las dos señala novedad (el caso normal: nadie está
  * editando nada en ningún dispositivo ahora mismo), no se invalida nada —
  * es el 95% de los ticks. Cuando sí hay novedad, se invalida TODO el cache
@@ -34,7 +43,6 @@ const NEVER_TOUCHED_BY_PULL: readonly (readonly unknown[])[] = [
   ["auth"],
   ["asset-classes"],
   ["portfolios"],
-  ["trades"],
   ["instruments"],
 ];
 

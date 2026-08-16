@@ -375,4 +375,40 @@ export const SYNC_TABLES: Record<string, SyncTableConfig> = {
       client_rev: p.clientRev,
     }),
   },
+
+  /**
+   * Auditoría de outbox de inversiones — antes escribía directo a
+   * Supabase desde `trades-repo.ts` (`docs/plan-de-trabajo.md`, hoy
+   * corregido). `portfolio_id`/`instrument_id` inmutables, igual que en
+   * el `WITH CHECK` de `trades_update` — el repo nunca los manda en un
+   * `patch` de `update()`. Sin `updated_at`: `trades` no tiene esa
+   * columna (ver `TradeRow`).
+   */
+  trades: {
+    supabaseTable: "trades",
+    deletedAtColumn: "deleted_at",
+    conflictSensitive: true,
+    toRow: (p) => ({
+      id: p.id,
+      portfolio_id: p.portfolioId,
+      instrument_id: p.instrumentId,
+      created_by: p.createdBy,
+      kind: p.kind,
+      executed_at: p.executedAt,
+      quantity: p.quantity,
+      price: p.price,
+      currency_code: p.currencyCode,
+      gross_amount: bigintToString(p.grossAmount),
+      net_amount: bigintToString(p.netAmount),
+      settlement_account_id: p.settlementAccountId,
+      fx_rate: p.fxRate === null ? null : rateToString(p.fxRate),
+      fx_source: p.fxSource,
+      fx_resolved_at: p.fxResolvedAt,
+      amount_base: p.amountBase === null ? null : bigintToString(p.amountBase),
+      note: p.note,
+      created_at: p.createdAt,
+      deleted_at: p.deletedAt,
+      client_rev: p.clientRev,
+    }),
+  },
 };
