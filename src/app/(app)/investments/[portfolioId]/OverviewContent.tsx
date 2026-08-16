@@ -373,6 +373,7 @@ export default function OverviewContent({ portfolioId, initialExpandedInstrument
           `portfolios?.[0]` puertas adentro (bug real en un household con
           más de un portfolio, que el schema y el repo ya soportan). */}
       <ListRow icon="target" label={t("allocationPage.title")} onClick={() => router.push(`/investments/allocation?portfolio=${portfolio.id}`)} />
+      <ListRow icon="scales" label={t("rebalancePage.title")} onClick={() => router.push(`/investments/rebalance?portfolio=${portfolio.id}`)} />
       <ListRow icon="trend" label={t("performancePage.title")} onClick={() => router.push(`/investments/performance?portfolio=${portfolio.id}`)} />
       <ListRow icon="calendar" label={t("futureIncomePage.title")} onClick={() => router.push(`/investments/future-income?portfolio=${portfolio.id}`)} />
       {/* "Agregar instrumento" se movió adentro de "Instrumentos" — ya no

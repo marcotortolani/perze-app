@@ -2342,6 +2342,36 @@
   "intensityLess": "Menos peso",
   "intensityMore": "Más peso"
  },
+ "rebalancePage": {
+  "title": "Rebalanceo",
+  "disclaimer": "Esto sugiere, no ejecuta: no hay integración con ningún broker. La decisión y la operación son tuyas.",
+  "dimension": {
+   "asset_class": "Clase de activo",
+   "currency": "Moneda",
+   "risk": "Riesgo"
+  },
+  "risk": {
+   "low": "Bajo",
+   "medium": "Medio",
+   "high": "Alto"
+  },
+  "unassigned": "Sin clasificar",
+  "driftSectionTitle": "Desvío contra el objetivo",
+  "defineSectionTitle": "Definir objetivo",
+  "noTargets": "Todavía no definiste un objetivo para esta dimensión. Definilo abajo para ver el desvío.",
+  "noHoldingsForDimension": "No hay posiciones en esta cartera para definir un objetivo por acá todavía.",
+  "actualVsTarget": "{actual}% actual · {target}% objetivo",
+  "driftPct": "{drift}pp",
+  "outOfBand": "Fuera de banda",
+  "currentSum": "Suma {sum}%",
+  "sumError": "Los porcentajes suman {sum}% — tienen que sumar 100% para guardar.",
+  "targetPctLabel": "% objetivo",
+  "removeRow": "Sacar esta fila",
+  "save": "Guardar objetivo",
+  "saved": "Objetivo guardado",
+  "noPortfolio": "Todavía no tenés una cartera de inversión.",
+  "loadError": "No pudimos cargar el rebalanceo de esta cartera."
+ },
  "performancePage": {
   "title": "Rendimiento",
   "empty": "Todavía no cargaste operaciones en esta cartera.",

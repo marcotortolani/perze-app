@@ -2342,6 +2342,36 @@
   "intensityLess": "Less weight",
   "intensityMore": "More weight"
  },
+ "rebalancePage": {
+  "title": "Rebalancing",
+  "disclaimer": "This suggests, it doesn't execute: there's no broker integration. The decision and the trade are yours.",
+  "dimension": {
+   "asset_class": "Asset class",
+   "currency": "Currency",
+   "risk": "Risk"
+  },
+  "risk": {
+   "low": "Low",
+   "medium": "Medium",
+   "high": "High"
+  },
+  "unassigned": "Unclassified",
+  "driftSectionTitle": "Drift against the target",
+  "defineSectionTitle": "Define target",
+  "noTargets": "You haven't set a target for this dimension yet. Set one below to see the drift.",
+  "noHoldingsForDimension": "This portfolio has no holdings yet to define a target here.",
+  "actualVsTarget": "{actual}% actual · {target}% target",
+  "driftPct": "{drift}pp",
+  "outOfBand": "Out of band",
+  "currentSum": "Sum {sum}%",
+  "sumError": "The percentages add up to {sum}% — they need to add up to 100% to save.",
+  "targetPctLabel": "% target",
+  "removeRow": "Remove this row",
+  "save": "Save target",
+  "saved": "Target saved",
+  "noPortfolio": "You don't have an investment portfolio yet.",
+  "loadError": "We couldn't load the rebalancing for this portfolio."
+ },
  "performancePage": {
   "title": "Performance",
   "empty": "You haven't logged any trades in this portfolio yet.",

@@ -7,6 +7,7 @@ import { tradesRepo, type Trade } from "@/lib/repos/trades-repo";
 import { tradeLotAllocationsRepo } from "@/lib/repos/trade-lot-allocations-repo";
 import { instrumentsRepo } from "@/lib/repos/instruments-repo";
 import { priceSnapshotsRepo } from "@/lib/repos/price-snapshots-repo";
+import { targetAllocationsRepo, type TargetAllocationDimension } from "@/lib/repos/target-allocations-repo";
 
 export function usePortfolios(householdId: string | undefined) {
   return useQuery({
@@ -120,4 +121,18 @@ export function usePreviousClose(instrumentIds: string[]) {
 export function useInvalidateLatestPrices(instrumentIds: string[]) {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: ["latest-prices", [...instrumentIds].sort()], refetchType: "all" });
+}
+
+/** Bloque I (rebalanceo) — objetivos de cartera de UNA dimensión ('asset_class', 'currency', 'risk', ...). Cada dimensión es una vista independiente que suma 100% por su cuenta. */
+export function useTargetAllocations(portfolioId: string | undefined, dimension: TargetAllocationDimension) {
+  return useQuery({
+    queryKey: ["target-allocations", portfolioId ?? "", dimension],
+    queryFn: () => targetAllocationsRepo.list(portfolioId!, dimension),
+    enabled: !!portfolioId,
+  });
+}
+
+export function useInvalidateTargetAllocations(portfolioId: string | undefined, dimension: TargetAllocationDimension) {
+  const queryClient = useQueryClient();
+  return () => portfolioId && queryClient.invalidateQueries({ queryKey: ["target-allocations", portfolioId, dimension], refetchType: "all" });
 }
