@@ -6,6 +6,31 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.7] — 2026-08-16
+
+### Arreglado — modal de rutas interceptadas trabado en aperturas repetidas
+
+`Modal.tsx` (usado por `/add`, `/accounts/new`) llevaba el estado de animación
+(`visible`/`closing`) en un `useEffect` con dependencias `[]` — corría una sola
+vez, asumiendo que el componente siempre monta fresco. Next a veces reutiliza
+el mismo fiber del slot `@modal` interceptado entre una apertura y la
+siguiente (cache de segmentos/back instantáneo del router), así que la
+segunda apertura heredaba `closing: true` de la vez anterior y el panel
+quedaba con `translateY(100%)` — en el DOM pero empujado fuera de la
+pantalla, sin ninguna animación que lo trajera de vuelta. Reproducido y
+confirmado en Chrome antes del fix (`transform: matrix(1,0,0,1,0,997)`
+persistente en la segunda apertura).
+
+Fix: el efecto de reset ahora está atado a `usePathname()` en vez de `[]` —
+fuerza `closing: false` + `visible: false → true` cada vez que la URL vuelve
+a apuntar a esta ruta, sea el mismo fiber o uno nuevo. Se suma un
+`setTimeout(50ms)` de contención junto al `requestAnimationFrame`: si la
+pestaña queda oculta justo al abrir (la app vuelve de background, se abre
+desde una notificación con la pantalla recién prendida), el navegador
+suspende `requestAnimationFrame` por completo y el panel quedaría invisible
+indefinidamente en vez de solo tarde — `setTimeout` no se suspende igual
+(se clampa a ~1s en pestañas ocultas, nunca se detiene del todo).
+
 ## [0.35.6] — 2026-08-16
 
 ### Arreglado — nueve detalles de UI reportados: navegación, animaciones, filtros y tarjetas

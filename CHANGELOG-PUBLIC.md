@@ -40,6 +40,12 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.7 — 16 de agosto de 2026
+
+### Arreglado
+
+- El botón "+" para cargar un movimiento a veces se quedaba trabado y no abría bien después de cerrarlo y volver a tocarlo.
+
 ## 0.35.6 — 16 de agosto de 2026
 
 ### Nuevo

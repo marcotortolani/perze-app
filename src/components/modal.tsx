@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/design-system/core/Icon";
@@ -75,6 +75,7 @@ export function useModalClose(): () => void {
  */
 export function Modal({ children, contained = false }: { children: ReactNode; contained?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations();
   const intensity = useMotionIntensity();
   const duration = intensity === "minimal" ? 0 : TRANSITION_MS;
@@ -87,11 +88,49 @@ export function Modal({ children, contained = false }: { children: ReactNode; co
   // "entrando"/"saliendo" lo lleva este componente solo, entre el montaje y
   // el momento en que algo pide cerrar.
   const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
   const [closing, setClosing] = useState(false);
+
+  // El efecto de reset va atado a `pathname`, no a `[]` (solo-al-montar):
+  // Next reutiliza a veces el mismo fiber de `Modal` entre una apertura de
+  // esta ruta interceptada y la siguiente — cerrar y volver a tocar el "+"
+  // no siempre desmonta y remonta de verdad (cache de segmentos/back
+  // instantáneo del router). Con `[]`, la segunda apertura heredaba
+  // `closing: true` de la vez anterior y el panel quedaba trabado con
+  // `translateY(100%)` — visible en el DOM pero empujado fuera de la
+  // pantalla, sin ninguna animación que lo trajera de vuelta. Atarlo a
+  // `pathname` fuerza el reset cada vez que la URL vuelve a apuntar acá,
+  // sea el mismo fiber o uno nuevo — `setVisible(false)` primero para que
+  // incluso un fiber reusado (que ya estaba en `visible: true`) vuelva a
+  // pasar por el estado de partida antes del frame que lo anima a `true`.
+  useEffect(() => {
+    // Sincronización genuina con `pathname`, no derivable del render: es
+    // justo la reapertura de esta ruta (mismo fiber o no) la que hay que
+    // resetear, y eso solo se sabe DESPUÉS de que `pathname` cambió —
+    // mismo criterio que el reset de `dragY` al abrir en `Overlay.tsx`.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setClosing(false);
+    setVisible(false);
+    let entered = false;
+    const raf = requestAnimationFrame(() => {
+      entered = true;
+      setVisible(true);
+    });
+    // Red de contención: si la pestaña queda oculta justo al abrir (la app
+    // vuelve de background, se abre desde una notificación con la pantalla
+    // recién encendida), el navegador suspende `requestAnimationFrame` del
+    // todo hasta volver a primer plano — sin esto el panel quedaría
+    // invisible indefinidamente en vez de solo tarde. `setTimeout` no se
+    // suspende igual (como mucho se clampa a ~1s en pestañas ocultas), así
+    // que sirve de red sin competir con el camino normal — `entered` evita
+    // el trabajo doble cuando el rAF sí llegó a tiempo.
+    const timeout = setTimeout(() => {
+      if (!entered) setVisible(true);
+    }, 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timeout);
+    };
+  }, [pathname]);
 
   // `router.back()` real se retrasa `duration` — tiempo para que el panel
   // termine de deslizarse afuera antes de que Next desmonte el slot
