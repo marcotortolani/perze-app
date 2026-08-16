@@ -14,7 +14,12 @@ const STATUS_MAP: Record<
 > = {
   neutral: { color: "var(--text-secondary)", background: "var(--surface-2)", icon: "clock" },
   good: { color: "var(--good)", icon: "check" },
-  warning: { color: "var(--warning)", icon: "alert" },
+  // `--warning-text`, no `--warning`: este color pinta el texto de la
+  // píldora, y `--warning` (#fab219) da 1,76:1 contra `--page` en modo
+  // claro — falla AA. El fondo (`background` de abajo, `color-mix` al 15%)
+  // sigue derivando de `--warning` sin tocar, ahí el contraste requerido
+  // es el de un elemento gráfico, no el de texto.
+  warning: { color: "var(--warning-text)", background: "color-mix(in srgb, var(--warning) 15%, transparent)", icon: "alert" },
   serious: { color: "var(--serious)", icon: "arrow-up" },
   critical: { color: "var(--critical)", icon: "close" },
 };

@@ -8,6 +8,7 @@ import { debtsRepo, type Debt } from "@/lib/repos/debts-repo";
 import { saveDraftAsTransaction, resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
 import { effectiveCardCycleConfig, isCreditCardAccount } from "@/lib/analytics/card-cycle";
 import type { CaptureDraft } from "@/stores/capture-draft-store";
+import { todayIso } from "@/lib/dates/today";
 
 export class PayCardError extends Error {}
 
@@ -121,7 +122,11 @@ export async function payCard(params: PayCardParams): Promise<PayCardResult> {
       // pasa por la cadena real (override → cotización del día → última
       // conocida → `pending`), nunca por un ternario "identity o pending"
       // a mano — este ajuste tampoco es una compra en otra moneda.
-      const adjustmentFx = await resolveFxForAccountCurrency(household, card.currencyCode, money(reconciliationDelta, card.currencyCode), new Date().toISOString().slice(0, 10));
+      // `todayIso()`, no `new Date().toISOString().slice(0,10)` — mismo
+      // motivo que en `/accounts/[id]/reconcile/page.tsx` (D10): el slice
+      // toma el día en UTC y pide la cotización de mañana en cualquier
+      // huso negativo entre las 21:00 y las 00:00 locales.
+      const adjustmentFx = await resolveFxForAccountCurrency(household, card.currencyCode, money(reconciliationDelta, card.currencyCode), todayIso());
       adjustment = await transactionsRepo.create({
         householdId: household.id,
         createdBy: userId,

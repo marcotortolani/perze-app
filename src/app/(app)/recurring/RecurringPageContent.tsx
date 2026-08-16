@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, Button, Chip, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatTile, usePageHeader } from "@/design-system";
+import { Amount, Button, Chip, EmptyState, ErrorState, ListRow, NeedsFxBanner, SkeletonRow, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
 import { useRecurringOccurrences } from "@/hooks/use-transactions";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { computeMonthlyCommitted, computeUpcomingCharges } from "@/lib/analytics/recurring-schedule";
 import { occurrencesBetween } from "@/lib/recurring/occurrences";
 import { relativeDayLabel } from "@/lib/recurring/format-date-label";
@@ -38,8 +39,10 @@ export default function RecurringPageContent() {
   const searchParams = useSearchParams();
   const { data: household } = useCurrentHousehold();
   const userId = useEffectiveUserId();
-  const { data: rules } = useRecurringRules(household?.id);
-  const { data: accounts = [] } = useAccounts(household?.id);
+  const rulesQuery = useRecurringRules(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const { data: rules } = rulesQuery;
+  const { data: accounts = [] } = accountsQuery;
   const { data: recurringOccurrences = [] } = useRecurringOccurrences(household?.id);
   const accountFilter = searchParams.get("accountId");
   const currencyFilter = searchParams.get("currency");
@@ -52,6 +55,9 @@ export default function RecurringPageContent() {
 
   // Subpágina de `/more`: header propio con "volver", registrado vía `usePageHeader`.
   usePageHeader({ title: t("morePage.recurring"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  const errorState = useQueryErrorState(rulesQuery.isError ? rulesQuery : accountsQuery, { what: t("recurringPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !rules || !userId) {
     return (

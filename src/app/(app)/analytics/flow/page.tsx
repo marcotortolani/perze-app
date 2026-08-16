@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { EmptyState, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
+import { EmptyState, ErrorState, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
 const Sankey = dynamic(() => import("@/design-system/charts/Sankey").then((m) => m.Sankey), { ssr: false });
@@ -12,6 +12,7 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryDirectory } from "@/hooks/use-category-directory";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { closedPeriodsCount, daysUntilPeriodCloses, previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { computeMoneyFlow } from "@/lib/analytics/money-flow";
 
@@ -21,8 +22,10 @@ export default function MoneyFlowPage() {
   const router = useRouter();
   usePageHeader({ title: t("moneyFlowPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
-  const { data: accounts } = useAccounts(household?.id);
-  const { data: transactions } = useTransactions(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: accounts } = accountsQuery;
+  const { data: transactions } = transactionsQuery;
   const categoryLabel = useCategoryDirectory(household?.id);
 
   const firstOccurredAt = (transactions ?? []).reduce<string | undefined>((min, tx) => (min === undefined || tx.occurredAt < min ? tx.occurredAt : min), undefined);
@@ -45,6 +48,9 @@ export default function MoneyFlowPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, accounts, transactions, closedPeriods]);
+
+  const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("moneyFlowPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !accounts || !transactions) return <Skeleton height={320} style={{ marginTop: 16 }} />;
 

@@ -1745,6 +1745,7 @@
  },
  "categoriesAnalyticsPage": {
   "title": "Categorías",
+  "loadError": "No pudimos cargar el análisis por categoría.",
   "other": "Otros"
  },
  "calendarAnalyticsPage": {
@@ -1756,11 +1757,13 @@
  },
  "netWorthAnalyticsPage": {
   "title": "Patrimonio neto",
+  "loadError": "No pudimos cargar el patrimonio neto.",
   "current": "Patrimonio neto",
   "last30": "{amount} en los últimos 30 días"
  },
  "moneyFlowPage": {
   "title": "Flujo de dinero",
+  "loadError": "No pudimos cargar el flujo de dinero.",
   "needsClosedPeriod": "El flujo necesita un período cerrado para que el reparto sea real. Faltan {days} días.",
   "empty": "Todavía no hay ingresos y gastos suficientes para armar el flujo de este período.",
   "otherIncome": "Otros ingresos",
@@ -1838,6 +1841,7 @@
   "csvBalance": "Saldo"
  },
  "budgetsPage": {
+  "loadError": "No pudimos cargar tus presupuestos.",
   "empty": "Todavía no cargaste ningún presupuesto.",
   "emptyAction": "Crear presupuesto",
   "newBudget": "Nuevo presupuesto",
@@ -1856,6 +1860,7 @@
   "over": "Te pasaste por"
  },
  "goalsPage": {
+  "loadError": "No pudimos cargar tus metas.",
   "empty": "Todavía no cargaste ninguna meta.",
   "emptyAction": "Crear meta",
   "newGoal": "Nueva meta",
@@ -1880,6 +1885,7 @@
   "useCushion": "Usar colchón de 3 meses ({amount})"
  },
  "recurringPage": {
+  "loadError": "No pudimos cargar tus recurrentes.",
   "dueHomeBanner": "{count, plural, one {Tenés # recurrente manual pendiente de cargar.} other {Tenés # recurrentes manuales pendientes de cargar.}}",
   "dueHomeBannerAction": "Cargar",
   "empty": "Todavía no cargaste ninguna recurrente.",
@@ -1951,6 +1957,7 @@
   "noneThatDay": "Nada vence este día."
  },
  "debtsPage": {
+  "loadError": "No pudimos cargar tus deudas.",
   "empty": "No tenés deudas ni tarjetas con saldo pendiente.",
   "emptyAction": "Agregar cuenta",
   "newDebt": "Nueva deuda",
@@ -2029,6 +2036,7 @@
   "noEstimate": "Suma solo las cuotas ya comprometidas. No estima consumos nuevos."
  },
  "familyPage": {
+  "loadError": "No pudimos cargar el grupo familiar.",
   "householdName": "Nombre del hogar",
   "householdIcon": "Ícono del hogar",
   "householdNameSheetTitle": "Editar el hogar",
@@ -2174,6 +2182,7 @@
   "revoked": "{granter} le sacó el acceso a {member} a {subject}"
  },
  "investmentsPage": {
+  "loadError": "No pudimos cargar tus portfolios.",
   "noPortfolio": "Todavía no tenés un portfolio de inversiones.",
   "createPortfolio": "Crear portfolio",
   "defaultPortfolioName": "Mi portfolio",

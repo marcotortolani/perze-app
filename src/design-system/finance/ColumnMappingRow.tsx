@@ -34,7 +34,10 @@ export function ColumnMappingRow({ rawHeader, destination, onClick, style }: Col
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawHeader}</div>
-        <div style={{ fontSize: 15, color: destination ? "var(--text-primary)" : "var(--warning)", marginTop: 2 }}>{destination ?? "—"}</div>
+        {/* `--warning-text`, no `--warning`: es texto (15px), y `--warning`
+            da 1,76:1 contra `--page` en claro — falla AA. El ícono de
+            abajo es gráfico (3:1 alcanza), sigue en `--warning`. */}
+        <div style={{ fontSize: 15, color: destination ? "var(--text-primary)" : "var(--warning-text)", marginTop: 2 }}>{destination ?? "—"}</div>
       </div>
       <Icon name={destination ? "check" : "alert"} size={18} color={destination ? "var(--good)" : "var(--warning)"} />
     </button>

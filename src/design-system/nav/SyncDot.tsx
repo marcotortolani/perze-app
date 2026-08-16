@@ -23,7 +23,10 @@ export function SyncDot({ state = "synced", pending = 0, style }: SyncDotProps) 
         }}
       />
       {state === "offline" && pending > 0 ? (
-        <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 11, color: "var(--warning)" }}>{pending}</span>
+        // `--warning-text`, no `--warning`: acá sí es texto (el conteo),
+        // y `--warning` da 1,76:1 contra `--page` en claro — falla AA. El
+        // punto de arriba es gráfico (3:1 alcanza), sigue en `--warning`.
+        <span style={{ fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontSize: 11, color: "var(--warning-text)" }}>{pending}</span>
       ) : null}
       <style>{"@keyframes ds-sync-pulse{0%,100%{opacity:1}50%{opacity:.3}}"}</style>
     </span>

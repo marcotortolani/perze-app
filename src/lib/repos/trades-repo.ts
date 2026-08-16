@@ -1,4 +1,6 @@
 import { createClient } from "../supabase/client";
+import type { FxSourceValue } from "../db/schema";
+import { parseRate } from "../fx/rate";
 
 export type TradeKind =
   | "buy"
@@ -30,6 +32,9 @@ export interface Trade {
   netAmount: bigint;
   settlementAccountId: string | null;
   amountBase: bigint | null;
+  /** `ScaledRate` (`src/lib/fx/rate.ts`) — mismo formato interno que `fx_rate`. */
+  fxRate: bigint | null;
+  fxSource: FxSourceValue;
 }
 
 export interface NewTradeInput {
@@ -65,9 +70,12 @@ interface TradeRow {
   net_amount: string;
   settlement_account_id: string | null;
   amount_base: string | null;
+  fx_rate: string | null;
+  fx_source: string;
 }
 
-const SELECT_COLUMNS = "id, portfolio_id, instrument_id, kind, executed_at, quantity, price, currency_code, gross_amount::text, net_amount::text, settlement_account_id, amount_base::text";
+const SELECT_COLUMNS =
+  "id, portfolio_id, instrument_id, kind, executed_at, quantity, price, currency_code, gross_amount::text, net_amount::text, settlement_account_id, amount_base::text, fx_rate::text, fx_source";
 
 function fromRow(row: TradeRow): Trade {
   return {
@@ -83,6 +91,8 @@ function fromRow(row: TradeRow): Trade {
     netAmount: BigInt(row.net_amount),
     settlementAccountId: row.settlement_account_id,
     amountBase: row.amount_base === null ? null : BigInt(row.amount_base),
+    fxRate: row.fx_rate === null ? null : parseRate(row.fx_rate),
+    fxSource: row.fx_source as FxSourceValue,
   };
 }
 

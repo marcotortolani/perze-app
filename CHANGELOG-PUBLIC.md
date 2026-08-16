@@ -40,6 +40,23 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.8 — 16 de agosto de 2026
+
+### Mejorado
+
+- Los avisos del inicio (sin conexión, conflictos, recurrentes pendientes) ahora
+  desaparecen con una transición suave en vez de saltar de golpe.
+- Mejoramos la legibilidad de los avisos amarillos de advertencia en modo claro.
+- Si una pantalla de presupuestos, recurrentes, inversiones, familia, deudas, metas
+  o análisis no puede cargar por un problema de red, ahora te avisa y te deja
+  reintentar en vez de quedarse cargando para siempre.
+
+### Arreglado
+
+- Al editar una operación de inversión ya cargada (cambiar la cuenta, corregir un
+  dato), la cotización usada para convertir a tu moneda base ya no se recalculaba
+  por accidente contra el día de hoy.
+
 ## 0.35.7 — 16 de agosto de 2026
 
 ### Arreglado

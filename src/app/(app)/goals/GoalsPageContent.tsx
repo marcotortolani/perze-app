@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, Card, EmptyState, ListRow, ProgressBar, SkeletonRow, usePageHeader } from "@/design-system";
+import { Amount, Card, EmptyState, ErrorState, ListRow, ProgressBar, SkeletonRow, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useGoals } from "@/hooks/use-goals";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { money } from "@/lib/money/money";
 
 /** F5 — metas: progreso de cada una, medido por el saldo de la cuenta que la respalda. Separado de `page.tsx` — ver el comentario en `budgets/BudgetsPageContent.tsx`. */
@@ -13,9 +14,14 @@ export default function GoalsPageContent() {
   const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const { data: goals } = useGoals(household?.id);
-  const { data: accounts } = useAccounts(household?.id);
+  const goalsQuery = useGoals(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const { data: goals } = goalsQuery;
+  const { data: accounts } = accountsQuery;
   usePageHeader({ title: t("morePage.goals"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  const errorState = useQueryErrorState(goalsQuery.isError ? goalsQuery : accountsQuery, { what: t("goalsPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !goals || !accounts) {
     return (

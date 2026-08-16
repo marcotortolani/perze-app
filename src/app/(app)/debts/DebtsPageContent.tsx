@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, StatusBadge, usePageHeader } from "@/design-system";
+import { Amount, EmptyState, ErrorState, ListRow, NeedsFxBanner, SkeletonRow, StatusBadge, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useDebts } from "@/hooks/use-debts";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { money } from "@/lib/money/money";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { DEBT_KIND_MESSAGE_KEY } from "@/lib/reference/debt-labels";
@@ -24,11 +25,19 @@ export default function DebtsPageContent() {
   const t = useTranslations();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
-  const { data: accounts } = useAccounts(household?.id);
-  const { data: transactions } = useTransactions(household?.id);
-  const { data: debts } = useDebts(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const debtsQuery = useDebts(household?.id);
+  const { data: accounts } = accountsQuery;
+  const { data: transactions } = transactionsQuery;
+  const { data: debts } = debtsQuery;
 
   usePageHeader({ title: t("morePage.debts"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery.isError ? transactionsQuery : debtsQuery, {
+    what: t("debtsPage.loadError"),
+  });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !accounts || !transactions || !debts) {
     return (

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { Skeleton, usePageHeader } from "@/design-system";
+import { ErrorState, Skeleton, usePageHeader } from "@/design-system";
 import { SeriesLegend } from "@/design-system/charts";
 
 // C15/auditoría — ver el mismo comentario en `analytics/trends/page.tsx`.
@@ -12,6 +12,7 @@ const Donut = dynamic(() => import("@/design-system/charts/Donut").then((m) => m
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryDirectory, useKnownCategoryIds } from "@/hooks/use-category-directory";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { expenseByCategory } from "@/lib/analytics/period-summary";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -23,7 +24,8 @@ export default function CategoriesAnalyticsPage() {
   const router = useRouter();
   usePageHeader({ title: t("categoriesAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
-  const { data: transactions } = useTransactions(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: transactions } = transactionsQuery;
   const categoryLabel = useCategoryDirectory(household?.id);
   const knownCategoryIds = useKnownCategoryIds(household?.id);
 
@@ -50,6 +52,9 @@ export default function CategoriesAnalyticsPage() {
     return [...top5, { label: t("categoriesAnalyticsPage.other"), value: Number(restTotal), total: restTotal }];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, transactions, knownCategoryIds]);
+
+  const errorState = useQueryErrorState(transactionsQuery, { what: t("categoriesAnalyticsPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !transactions) return <Skeleton height={300} style={{ marginTop: 16 }} />;
 

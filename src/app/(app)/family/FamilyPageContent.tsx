@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, Icon, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Button, EmptyState, ErrorState, Icon, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { HouseholdIconPicker } from "@/features/household/HouseholdIconPicker";
 import { useCurrentHousehold, useInvalidateHousehold } from "@/hooks/use-current-household";
 import { useRemoteHouseholdMembers, useInvalidateRemoteHouseholdMembers } from "@/hooks/use-remote-household-members";
 import { useInvites } from "@/hooks/use-invites";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { markHouseholdMemberFormer } from "@/lib/repos/household-members-remote";
 import { householdsRepo } from "@/lib/repos/households-repo";
 import { transactionSharesRepo } from "@/lib/repos/transaction-shares-repo";
@@ -30,9 +31,11 @@ export default function FamilyPageContent() {
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
   const invalidateHousehold = useInvalidateHousehold();
-  const { data: members } = useRemoteHouseholdMembers(household?.id);
+  const membersQuery = useRemoteHouseholdMembers(household?.id);
+  const { data: members } = membersQuery;
   const invalidateMembers = useInvalidateRemoteHouseholdMembers(household?.id);
-  const { data: invites } = useInvites(household?.id);
+  const invitesQuery = useInvites(household?.id);
+  const { data: invites } = invitesQuery;
   usePageHeader({ title: t("morePage.family"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -40,6 +43,9 @@ export default function FamilyPageContent() {
   const [nameDraft, setNameDraft] = useState("");
   const [iconDraft, setIconDraft] = useState<IconName>("users");
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const errorState = useQueryErrorState(membersQuery.isError ? membersQuery : invitesQuery, { what: t("familyPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !members || !invites) {
     return <Skeleton height={200} style={{ marginTop: 16 }} />;

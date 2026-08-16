@@ -200,6 +200,20 @@ html[data-backdrop-intensity="vivid"] {
 
   --good: var(--status-good);
   --warning: var(--status-warning);
+  /*
+   * Auditoría: `--warning` (#fab219) da 1,76:1 contra `--page` en modo
+   * claro — falla AA para texto (el fix puntual de `Banner.tsx` ya lo
+   * esquivaba coloreando el texto con `--text-primary` en vez de
+   * `--warning`, pero esa corrección no se generalizó — `StatusBadge`,
+   * `SyncDot`, `ColumnMappingRow` y `EditTransactionFlow` seguían pintando
+   * texto pequeño con `--warning` directo). En oscuro #fab219 sobre
+   * `--n-page-dark` (#0a0a0b) ya pasa AA de sobra, así que acá hereda el
+   * mismo valor sin redeclarar — `.light` más abajo sí lo overridea.
+   * `--warning` en sí queda intacto para ícono/fill, donde el contraste
+   * requerido es más laxo (3:1, elemento gráfico) y el color de marca sí
+   * importa mantenerlo.
+   */
+  --warning-text: var(--warning);
   --serious: var(--status-serious);
   /*
    * D7/auditoría: `--status-critical` (#d03b3b) pasa AA en claro pero da
@@ -272,6 +286,9 @@ html[data-backdrop-intensity="vivid"] {
   --money-positive: var(--aqua-light);
   --money-negative: var(--n-ink1-light);
   --money-negative-emphasis: var(--orange-light);
+
+  /* 4,79:1 contra `--n-page-light` (#fafaf9) — pasa AA para texto normal. */
+  --warning-text: #9a6400;
 
   --shadow-sheet: 0 8px 32px rgba(11, 11, 11, 0.1);
   --scrim: rgba(11, 11, 11, 0.45);
@@ -545,6 +562,7 @@ html[data-backdrop-intensity="vivid"] {
 
   --color-status-good: var(--good);
   --color-status-warning: var(--warning);
+  --color-status-warning-text: var(--warning-text);
   --color-status-serious: var(--serious);
   --color-status-critical: var(--critical);
 

@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Amount, BudgetRing, Card, EmptyState, ListRow, NeedsFxBanner, SkeletonRow, usePageHeader } from "@/design-system";
+import { Amount, BudgetRing, Card, EmptyState, ErrorState, ListRow, NeedsFxBanner, SkeletonRow, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { currentPeriodBounds } from "@/lib/analytics/history";
 import { computeBudgetProgress } from "@/lib/analytics/budget-progress";
 import { money } from "@/lib/money/money";
@@ -19,9 +20,16 @@ export default function BudgetsPageContent() {
   const router = useRouter();
   const categoryLabel = useCategoryLabel();
   const { data: household } = useCurrentHousehold();
-  const { data: budgets } = useBudgets(household?.id);
-  const { data: categories } = useCategories(household?.id);
-  const { data: transactions } = useTransactions(household?.id);
+  const budgetsQuery = useBudgets(household?.id);
+  const categoriesQuery = useCategories(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: budgets } = budgetsQuery;
+  const { data: categories } = categoriesQuery;
+  const { data: transactions } = transactionsQuery;
+
+  const failedQuery = budgetsQuery.isError ? budgetsQuery : categoriesQuery.isError ? categoriesQuery : transactionsQuery;
+  const errorState = useQueryErrorState(failedQuery, { what: t("budgetsPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !budgets || !categories || !transactions) {
     return (

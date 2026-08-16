@@ -14,7 +14,6 @@ import { tradesRepo, type TradeKind } from "@/lib/repos/trades-repo";
 import { deleteSettlementTransaction, resyncSettlementTransaction } from "@/lib/investments/create-settlement-transaction";
 import { tradeMovesCash } from "@/lib/investments/trade-settlement-policy";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { todayIso } from "@/lib/repos/ids";
 import { convert, formatRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
@@ -126,21 +125,36 @@ export default function EditTradePage({ params }: { params: Promise<{ portfolioI
       const netAmount = BigInt(kind === "sell" ? -grossAmount : grossAmount);
       let amountBase: bigint | null = null;
       let fxRate: string | null = null;
-      // Siempre por `fxRepo.resolve()` — ver el comentario largo en
-      // `trades/new/page.tsx`: el atajo manual para `base === quote` dejaba
-      // `fxRate` en `null` con `amountBase` puesto, violando
-      // `trades_fx_pair` y devolviendo 400 en cualquier trade en la
-      // moneda base del household.
-      const resolution = await fxRepo.resolve({ householdId: household.id, base: trade.currencyCode, quote: household.baseCurrency, date: todayIso() });
-      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
-      if (resolution.rate) {
-        amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, resolution.rate).amount;
-        // `formatRate()`, no `.toString()` — ver el comentario largo en
-        // `trades/new/page.tsx`: `.toString()` deja el entero crudo
-        // escalado en vez del decimal y desborda `numeric(24,12)`.
-        fxRate = formatRate(resolution.rate);
-      } else {
-        fxSource = "pending";
+      let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = trade.fxSource;
+      // CLAUDE.md § "el rate se congela": un trade que YA tiene rate
+      // (`fxSource !== 'pending'`) no vuelve a llamar a `fxRepo.resolve()`
+      // solo porque se edita algo — antes cualquier edición (cambiar la
+      // cuenta de liquidación, corregir la cantidad) volvía a resolver FX
+      // contra HOY, pisando en silencio el rate histórico ya congelado.
+      // Recién se re-resuelve cuando la fecha de la operación cambió de
+      // verdad (es un hecho distinto, necesita su propia cotización) o
+      // cuando el trade seguía `pending` (resolver un pendiente es el
+      // único caso legítimo de escribir `amount_base` después del alta).
+      const dateChanged = executedDate !== trade.executedAt.slice(0, 10);
+      if (fxSource === "pending" || dateChanged) {
+        // `executedDate`, no `todayIso()` — mismo motivo que en `trades/new`.
+        const resolution = await fxRepo.resolve({ householdId: household.id, base: trade.currencyCode, quote: household.baseCurrency, date: executedDate });
+        fxSource = resolution.source;
+        if (resolution.rate) {
+          amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, resolution.rate).amount;
+          // `formatRate()`, no `.toString()` — ver el comentario largo en
+          // `trades/new/page.tsx`: `.toString()` deja el entero crudo
+          // escalado en vez del decimal y desborda `numeric(24,12)`.
+          fxRate = formatRate(resolution.rate);
+        } else {
+          fxSource = "pending";
+        }
+      } else if (trade.fxRate !== null) {
+        // Rate ya congelado y todavía vigente para esta fecha: se
+        // reaplica tal cual sobre el monto nuevo (si cantidad/precio
+        // cambiaron), sin pedir una cotización nueva.
+        amountBase = convert(money(netAmount, trade.currencyCode), household.baseCurrency, trade.fxRate).amount;
+        fxRate = formatRate(trade.fxRate);
       }
 
       await tradesRepo.update(trade.id, {

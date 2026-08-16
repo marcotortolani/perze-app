@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
+import { Button, EmptyState, ErrorState, Input, ListRow, Sheet, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useInvalidatePortfolios, usePortfolios } from "@/hooks/use-investments";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { portfoliosRepo } from "@/lib/repos/portfolios-repo";
 
 /**
@@ -23,12 +24,16 @@ export default function PortfoliosListContent() {
   const router = useRouter();
   const userId = useEffectiveUserId();
   const { data: household } = useCurrentHousehold();
-  const { data: portfolios } = usePortfolios(household?.id);
+  const portfoliosQuery = usePortfolios(household?.id);
+  const { data: portfolios } = portfoliosQuery;
   const invalidatePortfolios = useInvalidatePortfolios(household?.id);
 
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const errorState = useQueryErrorState(portfoliosQuery, { what: t("investmentsPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !portfolios || !userId) return <Skeleton height={280} style={{ marginTop: 16 }} />;
 

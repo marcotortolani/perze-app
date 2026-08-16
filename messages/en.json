@@ -1745,6 +1745,7 @@
  },
  "categoriesAnalyticsPage": {
   "title": "Categories",
+  "loadError": "We couldn't load the category breakdown.",
   "other": "Other"
  },
  "calendarAnalyticsPage": {
@@ -1756,11 +1757,13 @@
  },
  "netWorthAnalyticsPage": {
   "title": "Net worth",
+  "loadError": "We couldn't load your net worth.",
   "current": "Net worth",
   "last30": "{amount} over the last 30 days"
  },
  "moneyFlowPage": {
   "title": "Money flow",
+  "loadError": "We couldn't load the money flow.",
   "needsClosedPeriod": "The flow needs a closed period for the split to be real. {days} days left.",
   "empty": "Not enough income and expenses yet to build this period's flow.",
   "otherIncome": "Other income",
@@ -1838,6 +1841,7 @@
   "csvBalance": "Balance"
  },
  "budgetsPage": {
+  "loadError": "We couldn't load your budgets.",
   "empty": "You haven't set up any budget yet.",
   "emptyAction": "Create budget",
   "newBudget": "New budget",
@@ -1856,6 +1860,7 @@
   "over": "You're over by"
  },
  "goalsPage": {
+  "loadError": "We couldn't load your goals.",
   "empty": "You haven't set up any goal yet.",
   "emptyAction": "Create goal",
   "newGoal": "New goal",
@@ -1880,6 +1885,7 @@
   "useCushion": "Use a 3-month cushion ({amount})"
  },
  "recurringPage": {
+  "loadError": "We couldn't load your recurring charges.",
   "dueHomeBanner": "{count, plural, one {You have # manual recurring charge pending.} other {You have # manual recurring charges pending.}}",
   "dueHomeBannerAction": "Log it",
   "empty": "You haven't set up any recurring charge yet.",
@@ -1951,6 +1957,7 @@
   "noneThatDay": "Nothing due that day."
  },
  "debtsPage": {
+  "loadError": "We couldn't load your debts.",
   "empty": "No debts or cards with a pending balance.",
   "emptyAction": "Add account",
   "newDebt": "New debt",
@@ -2029,6 +2036,7 @@
   "noEstimate": "Only adds up what's already committed. Doesn't estimate new spending."
  },
  "familyPage": {
+  "loadError": "We couldn't load your family group.",
   "householdName": "Household name",
   "householdIcon": "Household icon",
   "householdNameSheetTitle": "Edit household",
@@ -2174,6 +2182,7 @@
   "revoked": "{granter} removed {member}'s access to {subject}"
  },
  "investmentsPage": {
+  "loadError": "We couldn't load your portfolios.",
   "noPortfolio": "You don't have an investment portfolio yet.",
   "createPortfolio": "Create portfolio",
   "defaultPortfolioName": "My portfolio",

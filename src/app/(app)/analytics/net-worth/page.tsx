@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { ErrorState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { Sparkline } from "@/design-system/charts";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useNetWorth } from "@/hooks/use-net-worth";
+import { useQueryErrorState } from "@/hooks/use-query-error-state";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 import { classifyCashFlow } from "@/lib/analytics/cash-flow";
@@ -25,9 +26,14 @@ export default function NetWorthAnalyticsPage() {
   const router = useRouter();
   usePageHeader({ title: t("netWorthAnalyticsPage.title"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
   const { data: household } = useCurrentHousehold();
-  const { data: accounts } = useAccounts(household?.id);
-  const { data: transactions } = useTransactions(household?.id);
+  const accountsQuery = useAccounts(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const { data: accounts } = accountsQuery;
+  const { data: transactions } = transactionsQuery;
   const netWorth = useNetWorth(household?.id, household?.baseCurrency, accounts ?? [], household?.enabledModules.includes("investments"));
+
+  const errorState = useQueryErrorState(accountsQuery.isError ? accountsQuery : transactionsQuery, { what: t("netWorthAnalyticsPage.loadError") });
+  if (errorState) return <ErrorState {...errorState} />;
 
   if (!household || !accounts || !transactions) return <Skeleton height={200} style={{ marginTop: 16 }} />;
 

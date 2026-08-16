@@ -6,6 +6,58 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.8] — 2026-08-16
+
+### Arreglado — resolución del Nivel 1 de la auditoría (seguridad + frontend)
+
+**FX de trades resuelto contra la fecha de ejecución, no contra hoy.**
+`trades/new/page.tsx` y `trades/[tradeId]/edit/page.tsx` llamaban a `fxRepo.resolve()`
+con `date: todayIso()` en vez de `executedDate` — un trade backdateado congelaba el
+rate del día de carga, no el de la operación. En edición además se reescribía
+`amount_base`/`fx_rate` en CADA guardado, incluso por un cambio no monetario (cuenta
+de liquidación, corrección de un typo), violando "el rate se congela, nunca se
+recalcula". Ahora: `trades-repo.ts` expone `fxRate`/`fxSource` del trade (antes no
+se seleccionaban), y la edición solo vuelve a resolver FX si el trade seguía
+`pending` o si la fecha de ejecución cambió de verdad — el resto de las ediciones
+reaplica el rate ya congelado sobre el monto nuevo.
+
+**Dependencias.** `sharp` `^0.34.5` → `^0.35.0` (CVEs de libvips sin parchear,
+dependencia real de producción vía Next Image). `shadcn` movido de `dependencies`
+a `devDependencies` (es una CLI de generación de código, nunca se importa en
+runtime, pero arrastraba 15 vulnerabilidades transitivas al install de producción).
+Queda pendiente `nanoid@3.3.16` vía `next > postcss` — vulnerable solo si se llama
+`customAlphabet` con `size=0`, nada en la app lo hace; no hay override de pnpm que
+lo resuelva porque es una dependencia vendorizada del propio Next.
+
+**Dos bugs de `todayIso()` con impacto real en FX.** `accounts/[id]/reconcile/page.tsx:57`
+y `features/cards/pay-card.ts:124` usaban `new Date().toISOString().slice(0,10)` para
+resolver la cotización de un ajuste de conciliación — en husos negativos (UY/AR),
+entre las 21:00 y las 00:00 locales, eso pide la cotización de mañana. Mismo bug D10
+documentado en `src/lib/dates/today.ts` como resuelto en 14 sitios; estos dos quedaron
+afuera.
+
+**9 pantallas sin manejo de error de query.** `budgets`, `recurring`, `investments`
+(`PortfoliosListContent`), `family`, `debts`, `goals`, `analytics/categories`,
+`analytics/flow`, `analytics/net-worth` no usaban `useQueryErrorState`/`ErrorState`
+— quedaban en skeleton infinito si la query fallaba. El mecanismo ya existía (CON-20),
+usado en home/accounts/transactions/more-categories; se aplicó el mismo patrón a
+las 9, con su clave `loadError` en `es`/`en`/`pt`.
+
+**Contraste de `--warning` sobre texto — fallaba AA.** `#fab219` da 1,76:1 contra
+`--page` en modo claro. Se agrega el token `--warning-text` (idéntico a `--warning`
+en oscuro, `#9a6400` en claro — 4,79:1, pasa AA) y se aplica en `StatusBadge`,
+`SyncDot`, `ColumnMappingRow` y `EditTransactionFlow`, dejando `--warning` para
+íconos/fills (3:1, donde ya pasaba).
+
+**Banners del home sin animación de salida.** Mismo patrón `{cond ? <X/> : null}`
+que tenían `Overlay`/`Modal` antes de arreglarse (v0.35.6) — animaban al entrar pero
+desaparecían de golpe, con salto de layout en lo de abajo. Nuevo componente
+`AnimatedBanner` (`src/components/motion/`) envuelve los 5 banners del home con
+`AnimatePresence`. `NeedsFxBanner` (usado en ~10 pantallas) suma animación de
+entrada — la de salida queda pendiente porque la mayoría de sus ~10 callers lo
+montan/desmontan por fuera en vez de pasarle `count=0`, así que un `AnimatePresence`
+adentro del componente no llegaría a animar la salida sin tocar cada caller.
+
 ## [0.35.7] — 2026-08-16
 
 ### Arreglado — modal de rutas interceptadas trabado en aperturas repetidas

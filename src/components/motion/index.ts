@@ -1,4 +1,5 @@
 export { Pressable, type PressableProps } from "./Pressable";
+export { AnimatedBanner, type AnimatedBannerProps } from "./AnimatedBanner";
 export { CountUp, type CountUpProps } from "./CountUp";
 export { StaggerList, type StaggerListProps } from "./StaggerList";
 export { MorphButton, type MorphButtonProps } from "./MorphButton";

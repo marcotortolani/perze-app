@@ -15,6 +15,7 @@ import { transactionsRepo } from "@/lib/repos/transactions-repo";
 import { resolveFxForAccountCurrency } from "@/features/capture/save-transaction";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { todayIso } from "@/lib/dates/today";
 
 /** E5 — conciliación: "¿cuánto dice tu banco que tenés?" → diferencia → ajuste. Bloque E, Fase 8. */
 export default function ReconcileAccountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,7 +55,11 @@ export default function ReconcileAccountPage({ params }: { params: Promise<{ id:
       // (override → cotización del día → última conocida → `pending`) que
       // cualquier captura normal — nunca "identity o pending" a mano: eso
       // dejaba `pending` un ajuste aunque ya hubiera cotización disponible.
-      const fx = await resolveFxForAccountCurrency(household, account.currencyCode, diff, new Date().toISOString().slice(0, 10));
+      // `todayIso()`, no `new Date().toISOString().slice(0,10)` — ese slice
+      // toma el día en UTC y en cualquier huso negativo (UY/AR) adelanta la
+      // fecha entre las 21:00 y las 00:00 locales, pidiendo la cotización
+      // del día equivocado (D10, `src/lib/dates/today.ts`).
+      const fx = await resolveFxForAccountCurrency(household, account.currencyCode, diff, todayIso());
       await transactionsRepo.create({
         householdId: household.id,
         createdBy: userId,

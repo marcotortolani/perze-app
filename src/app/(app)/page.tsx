@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Banner, EmptyState, ErrorState, usePageHeader } from "@/design-system";
-import { PageEnter } from "@/components/motion";
+import { AnimatedBanner, PageEnter } from "@/components/motion";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { BirthdayBanner } from "@/components/birthday-banner";
 import { ReminderBanner } from "@/components/reminder-banner";
@@ -61,7 +61,14 @@ export default function HomePage() {
         className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8 scroll-gutter-right"
         style={{ height: "100%", minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 8 }}
       >
-      {showBirthdayBanner ? <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} /> : null}
+      {/* `AnimatedBanner`: los 5 banners de acá abajo aparecían con su
+          propia animación de montaje pero desaparecían de golpe (mismo
+          patrón que `Overlay`/`Modal` tenían antes de arreglarse), con un
+          salto de layout en todo lo de abajo. Ver el comentario del
+          componente para el detalle. */}
+      <AnimatedBanner show={showBirthdayBanner}>
+        <BirthdayBanner age={birthdayAge} onDismiss={() => dismissBirthdayBanner(now.getFullYear())} />
+      </AnimatedBanner>
       {/* `margin` asimétrico, no `0 calc(-1 * var(--screen-padding))` en
           los dos lados: este banner vive DENTRO del scroller
           `scroll-gutter-right` de más arriba, que estira su propia caja
@@ -72,22 +79,22 @@ export default function HomePage() {
           globals.css). Un `margin: 0 -20px` simétrico solo cancelaba el
           lado izquierdo — el derecho quedaba 8px corto y el banner se
           veía sangrado torcido. */}
-      {pending && pending > 0 ? (
+      <AnimatedBanner show={!!pending && pending > 0}>
         <Banner status="offline" pending={pending} style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }} />
-      ) : null}
-      {conflicts.length > 0 ? (
+      </AnimatedBanner>
+      <AnimatedBanner show={conflicts.length > 0}>
         <Banner
           status="error"
           message={t("conflictsPage.homeBanner", { count: conflicts.length })}
           action={{ label: t("conflictsPage.homeBannerAction"), onClick: () => router.push("/more/sync") }}
           style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }}
         />
-      ) : null}
+      </AnimatedBanner>
       {/* Recurrentes manuales (auto_post=false) vencidos o que vencen hoy —
           mismo criterio de prioridad que los banners de arriba. Un tap va
           directo al detalle si hay una sola regla pendiente, o al listado
           de `/recurring` (agrupado en "Manuales") si hay más de una. */}
-      {showRecurringDueBanner ? (
+      <AnimatedBanner show={showRecurringDueBanner}>
         <Banner
           status="warning"
           message={t("recurringPage.dueHomeBanner", { count: dueManualRecurringCount })}
@@ -97,12 +104,14 @@ export default function HomePage() {
           }}
           style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }}
         />
-      ) : null}
+      </AnimatedBanner>
       {/* El recordatorio informativo solo aparece si no hay ya otro banner
           arriba — offline/conflicto/cumpleaños/recurrentes vencidos son más
           urgentes, y apilar avisos es exactamente el ruido que este banner
           intenta evitar. */}
-      {showReminderBanner ? <ReminderBanner reminder={activeReminder} /> : null}
+      <AnimatedBanner show={showReminderBanner}>
+        <ReminderBanner reminder={activeReminder} />
+      </AnimatedBanner>
 
       <HomeDataProvider data={data}>
         <HomeBlocksLayout />

@@ -304,7 +304,12 @@ function NewTradeForm({ portfolioId, prefillInstrumentId, prefillKind, prefillLo
       // `trades_fx_pair CHECK ((fx_rate IS NULL) = (amount_base IS NULL))`
       // y el insert vuelve 400 en CUALQUIER trade en la moneda base del
       // household, no solo `transfer_in`.
-      const resolution = await fxRepo.resolve({ householdId: household.id, base: instrument.currencyCode, quote: household.baseCurrency, date: todayIso() });
+      // `executedDate`, no `todayIso()` — CLAUDE.md § "el rate se congela":
+      // un trade backdateado tiene que resolver la cotización de SU fecha,
+      // no la de hoy. Con `todayIso()` acá, cargar hoy una compra de hace
+      // tres meses congelaba el rate del día de carga, no el de la
+      // operación — contaminaba XIRR, retorno de portfolio y patrimonio neto.
+      const resolution = await fxRepo.resolve({ householdId: household.id, base: instrument.currencyCode, quote: household.baseCurrency, date: executedDate });
       let fxSource: "identity" | "api" | "manual" | "inherited" | "pending" = resolution.source;
       if (resolution.rate) {
         amountBase = convert(money(netAmount, instrument.currencyCode), household.baseCurrency, resolution.rate).amount;

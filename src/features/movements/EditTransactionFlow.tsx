@@ -230,7 +230,9 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
       {isStale ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 12, borderRadius: "var(--radius-card)", background: "color-mix(in srgb, var(--warning) 12%, transparent)" }}>
           <Icon name="alert" size={16} color="var(--warning)" />
-          <span style={{ fontSize: 13, color: "var(--warning)" }}>{t("movements.editFlow.stale")}</span>
+          {/* `--warning-text`, no `--warning`: es texto y `--warning` da
+              1,76:1 contra `--page` en claro — falla AA. */}
+          <span style={{ fontSize: 13, color: "var(--warning-text)" }}>{t("movements.editFlow.stale")}</span>
         </div>
       ) : null}
 
