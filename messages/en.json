@@ -1087,6 +1087,10 @@
    "householdJoined": {
     "label": "New member in your household",
     "description": "When someone accepts your invitation"
+   },
+   "settleUpReminders": {
+    "label": "Balance reminder",
+    "description": "Once per period, if you owe or are owed by someone in the household"
    }
   },
   "emailSection": "By email",
@@ -1434,6 +1438,10 @@
     "title": "Net worth",
     "subtitle": "Are you going up?"
    },
+   "balanceProjection": {
+    "title": "Balance projection",
+    "subtitle": "How much will you have in 30, 60, 90 days?"
+   },
    "categories": {
     "title": "Categories",
     "subtitle": "Where's the money going?"
@@ -1760,6 +1768,17 @@
   "loadError": "We couldn't load your net worth.",
   "current": "Net worth",
   "last30": "{amount} over the last 30 days"
+ },
+ "balanceProjectionPage": {
+  "title": "Balance projection",
+  "loadError": "We couldn't calculate the balance projection.",
+  "empty": "Add an account to project your available balance.",
+  "current": "Available balance today",
+  "chartTitle": "Projection",
+  "horizon": "{days} days",
+  "breakdown": "What makes it up",
+  "noCommitments": "No recurring charges or installments committed over the next 90 days — the projected balance is today's.",
+  "noEstimate": "Only what's already committed: pending installments, recurring charges, and contractual fixed income. Not a new-spending estimate."
  },
  "moneyFlowPage": {
   "title": "Money flow",

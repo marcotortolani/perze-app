@@ -1601,6 +1601,7 @@ export type Database = {
           monthly_summary_email: boolean
           profile_id: string
           recurring_reminders: boolean
+          settle_up_reminders: boolean
           updated_at: string
           weekly_summary: boolean
         }
@@ -1615,6 +1616,7 @@ export type Database = {
           monthly_summary_email?: boolean
           profile_id: string
           recurring_reminders?: boolean
+          settle_up_reminders?: boolean
           updated_at?: string
           weekly_summary?: boolean
         }
@@ -1629,6 +1631,7 @@ export type Database = {
           monthly_summary_email?: boolean
           profile_id?: string
           recurring_reminders?: boolean
+          settle_up_reminders?: boolean
           updated_at?: string
           weekly_summary?: boolean
         }
@@ -3208,6 +3211,7 @@ export type Database = {
       trigger_daily_inflation_sync: { Args: never; Returns: undefined }
       trigger_daily_price_sync: { Args: never; Returns: undefined }
       trigger_monthly_summaries: { Args: never; Returns: undefined }
+      trigger_settle_up_reminders: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

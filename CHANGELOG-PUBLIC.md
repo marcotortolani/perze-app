@@ -40,6 +40,18 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.37.0 — 16 de agosto de 2026
+
+### Nuevo
+
+- Nueva pantalla en Análisis: proyección de saldo a 30, 60 y 90 días,
+  sumando solo lo que ya sabés que va a pasar (cuotas pendientes,
+  recurrentes, renta fija) — nunca una estimación de gasto nuevo.
+- En Familia, si te deben o le debés a alguien, ahora te llega un
+  recordatorio una vez por período (activable/desactivable en
+  Ajustes → Notificaciones) en vez de depender de que te acuerdes de
+  entrar a mirar.
+
 ## 0.36.4 — 16 de agosto de 2026
 
 ### Mejorado

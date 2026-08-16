@@ -91,6 +91,9 @@ export default function AnalyticsPage() {
   if (hasTrendsHistory) AVAILABLE.push({ key: "trends", route: "/analytics/trends", title: t("analyticsPage.cards.trends.title"), subtitle: t("analyticsPage.cards.trends.subtitle") });
   if (hasTrendsHistory) AVAILABLE.push({ key: "calendar", route: "/analytics/calendar", title: t("analyticsPage.cards.calendar.title"), subtitle: t("analyticsPage.cards.calendar.subtitle") });
   if (netWorthHistoryOk) AVAILABLE.push({ key: "netWorth", route: "/analytics/net-worth", title: t("analyticsPage.cards.netWorth.title"), subtitle: t("analyticsPage.cards.netWorth.subtitle") });
+  // Proyección de saldo — no depende de historial: es forward-looking sobre
+  // lo ya comprometido (recurrentes, cuotas), no una tendencia pasada.
+  AVAILABLE.push({ key: "balanceProjection", route: "/analytics/balance-projection", title: t("analyticsPage.cards.balanceProjection.title"), subtitle: t("analyticsPage.cards.balanceProjection.subtitle") });
   if (hasClosedPeriod) {
     AVAILABLE.push({ key: "categories", route: "/analytics/categories", title: t("analyticsPage.cards.categories.title"), subtitle: t("analyticsPage.cards.categories.subtitle") });
     AVAILABLE.push({ key: "merchants", route: "/analytics/merchants", title: t("analyticsPage.cards.merchants.title"), subtitle: t("analyticsPage.cards.merchants.subtitle") });

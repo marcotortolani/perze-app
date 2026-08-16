@@ -1087,6 +1087,10 @@
    "householdJoined": {
     "label": "Nuevo miembro en tu hogar",
     "description": "Cuando alguien acepta tu invitación"
+   },
+   "settleUpReminders": {
+    "label": "Recordatorio de saldo",
+    "description": "Una vez por período, si te deben o le debés a alguien del hogar"
    }
   },
   "emailSection": "Por mail",
@@ -1434,6 +1438,10 @@
     "title": "Patrimonio neto",
     "subtitle": "¿Vas para arriba?"
    },
+   "balanceProjection": {
+    "title": "Proyección de saldo",
+    "subtitle": "¿Cuánto vas a tener en 30, 60 y 90 días?"
+   },
    "categories": {
     "title": "Categorías",
     "subtitle": "¿En qué se te va la plata?"
@@ -1760,6 +1768,17 @@
   "loadError": "No pudimos cargar el patrimonio neto.",
   "current": "Patrimonio neto",
   "last30": "{amount} en los últimos 30 días"
+ },
+ "balanceProjectionPage": {
+  "title": "Proyección de saldo",
+  "loadError": "No pudimos calcular la proyección de saldo.",
+  "empty": "Agregá una cuenta para proyectar tu saldo disponible.",
+  "current": "Saldo disponible hoy",
+  "chartTitle": "Proyección",
+  "horizon": "{days} días",
+  "breakdown": "Qué lo compone",
+  "noCommitments": "No hay recurrentes ni cuotas comprometidas en los próximos 90 días — el saldo proyectado es el de hoy.",
+  "noEstimate": "Solo lo ya comprometido: cuotas pendientes, recurrentes y renta fija contractual. No es una estimación de consumo nuevo."
  },
  "moneyFlowPage": {
   "title": "Flujo de dinero",
