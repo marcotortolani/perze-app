@@ -6,6 +6,21 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.1] — 2026-08-16
+
+### Arreglado — orden de reglas recurrentes
+
+`RecurringPageContent.tsx`: dentro de cada sección (Automáticos/Manuales),
+las reglas quedaban en el orden que devolvía el repo (creación) — una
+vencida hoy y una que recién entra el mes que viene se veían intercaladas,
+sin ninguna pista de cuál mirar primero. Se agrega `byNextDate`, que reusa
+`nextUnchargedDate` (ya calculaba "próxima ocurrencia sin saldar" para
+cualquier regla, auto o manual — un auto-registro también tiene sus
+ocurrencias pasadas marcadas en `chargedByRule`) como clave de orden
+ascendente; sin próxima ocurrencia (regla terminada) queda al final.
+Verificado en el navegador: la sección Manuales pasó de un orden sin
+criterio a hoy → hoy → hoy → hoy → hoy → jueves 20 → 7 sept → 13 sept.
+
 ## [0.36.0] — 2026-08-16
 
 ### Agregado — auto-detección de recurrentes (Nivel 2 #2 de la auditoría)

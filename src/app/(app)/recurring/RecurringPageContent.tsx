@@ -124,8 +124,26 @@ export default function RecurringPageContent() {
   const filteredRules = rules.filter((r) => (!accountFilter || r.accountId === accountFilter) && (!currencyFilter || r.currencyCode === currencyFilter));
   // La única forma de distinguir a simple vista qué se carga solo de qué
   // hay que cargar a mano — antes era una sola lista mezclada por fecha.
-  const autoRules = filteredRules.filter((r) => r.autoPost);
-  const manualRules = filteredRules.filter((r) => !r.autoPost);
+  // Dentro de cada sección, antes quedaba en el orden que devolviera el
+  // repo (creación) — un recurrente vencido HOY y uno que recién entra el
+  // mes que viene se veían intercalados, sin ninguna pista de cuál mirar
+  // primero. `nextUnchargedDate` ya sabe calcular "próxima ocurrencia sin
+  // saldar" para CUALQUIER regla (auto o manual — un auto-registro también
+  // tiene sus ocurrencias pasadas marcadas en `chargedByRule`, así que
+  // sigue dando la próxima real) — se reusa como clave de orden en vez de
+  // limitarse a los 30 días de `computeUpcomingCharges` (esa función solo
+  // alimenta el texto "Próximo: ..." de arriba, con su propia ventana).
+  // Sin próxima ocurrencia (regla ya terminada) queda al final.
+  const byNextDate = (a: (typeof rules)[number], b: (typeof rules)[number]) => {
+    const da = nextUnchargedDate(a);
+    const db = nextUnchargedDate(b);
+    if (da === null && db === null) return 0;
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return da < db ? -1 : da > db ? 1 : 0;
+  };
+  const autoRules = filteredRules.filter((r) => r.autoPost).sort(byNextDate);
+  const manualRules = filteredRules.filter((r) => !r.autoPost).sort(byNextDate);
 
   const setFilter = (key: "accountId" | "currency", value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());

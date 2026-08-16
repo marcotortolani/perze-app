@@ -40,6 +40,14 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.1 — 16 de agosto de 2026
+
+### Arreglado
+
+- En Recurrentes, ahora los que están dentro de cada sección (Automáticos y
+  Manuales) se ordenan por cercanía a su fecha — primero los más próximos, al
+  final los que recién entran el mes que viene.
+
 ## 0.36.0 — 16 de agosto de 2026
 
 ### Nuevo
