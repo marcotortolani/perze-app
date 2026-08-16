@@ -1972,7 +1972,11 @@
   "linkedAccount": "Cuenta vinculada",
   "noLinkedAccount": "Sin cuenta vinculada",
   "created": "Deuda creada",
-  "fromTransactionDefaultName": "Consumo en cuotas"
+  "fromTransactionDefaultName": "Consumo en cuotas",
+  "hasInterest": "¿Tiene interés?",
+  "annualRate": "Tasa anual (%)",
+  "systemFrench": "Cuota fija (francés)",
+  "systemGerman": "Capital fijo (alemán)"
  },
  "debtDetailPage": {
   "notFound": "No encontramos esta deuda.",
@@ -1982,7 +1986,14 @@
   "nextDue": "Próximo vencimiento",
   "schedule": "Cronograma",
   "noSchedule": "Esta deuda no tiene cuotas cargadas.",
-  "installmentNumber": "Cuota {number} de {total}"
+  "installmentNumber": "Cuota {number} de {total}",
+  "installmentPaidOn": "Pagada el {date}",
+  "installmentMarked": "Cuota marcada como pagada",
+  "installmentUnmarked": "Cuota marcada como pendiente",
+  "editDebt": "Editar deuda",
+  "updated": "Deuda actualizada",
+  "editInstallmentsHint": "Ya hay {paid} cuotas pagas — no se pueden reducir por debajo de esa cantidad.",
+  "editFrozenNotice": "Las {paid} cuotas ya pagas quedan como están: solo se recalculan las pendientes."
  },
  "cardCyclePage": {
   "notFound": "Esta cuenta no es una tarjeta de crédito.",

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, usePageHeader, ZMark } from "@/design-system";
+import { Button, Input, Keypad, ListRow, SegmentedControl, Sheet, Switch, usePageHeader, ZMark } from "@/design-system";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
@@ -13,7 +13,7 @@ import { useTransaction } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useInvalidateDebts } from "@/hooks/use-debts";
 import { debtsRepo, type DebtKind } from "@/lib/repos/debts-repo";
-import { generateEvenSchedule } from "@/lib/analytics/installment-schedule";
+import { generateSchedule, type AmortizationSystem } from "@/lib/analytics/installment-schedule";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { toMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { todayIso } from "@/lib/repos/ids";
@@ -22,8 +22,11 @@ import { DEBT_KIND_MESSAGE_KEY } from "@/lib/reference/debt-labels";
 const KINDS: DebtKind[] = ["installment_plan", "loan", "personal", "credit_line"];
 
 /**
- * G6/G6a — nueva deuda o plan de cuotas. Sin amortización real: cuota
- * pareja, el resto de la división cae en la última. Con `?fromTransaction=`
+ * G6/G6a — nueva deuda o plan de cuotas. Default: cuota pareja de
+ * capital, sin interés (`none`) — el caso más común, cero fricción
+ * nueva. El interés es una casilla opcional que revela la tasa anual y
+ * el sistema de amortización (`french` por default, `german` como
+ * alternativa) — ver `installment-schedule.ts`. Con `?fromTransaction=`
  * (G6a, el picker vive en la pantalla de la cuenta de tarjeta) prefila
  * nombre, monto, cuenta y fecha desde ese movimiento y lo vincula como
  * `originTransactionId`.
@@ -49,6 +52,12 @@ export default function NewDebtPage() {
   const [accountIdOverride, setAccountIdOverride] = useState<string | null | undefined>(undefined);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  // El interés es una casilla opcional que revela lo demás — el default
+  // no cambia (cuotas parejas, sin interés) hasta que se activa. `french`
+  // es el default al activarla: es el sistema de casi todo préstamo real.
+  const [hasInterest, setHasInterest] = useState(false);
+  const [interestRateExpr, setInterestRateExpr] = useState("");
+  const [amortizationSystem, setAmortizationSystem] = useState<AmortizationSystem>("french");
 
   const sourceCategory = useMemo(() => (sourceTransaction?.categoryId ? categories.find((c) => c.id === sourceTransaction.categoryId) : undefined), [sourceTransaction, categories]);
 
@@ -66,6 +75,8 @@ export default function NewDebtPage() {
   const accountId = accountIdOverride === undefined ? defaultAccountId : accountIdOverride;
   const account = accounts.find((a) => a.id === accountId);
   const installmentCount = Math.max(1, Number(installments) || 1);
+  const interestRate = hasInterest ? Number(interestRateExpr.replace(",", ".")) || 0 : null;
+  const effectiveSystem: AmortizationSystem = hasInterest && interestRate && interestRate > 0 ? amortizationSystem : "none";
   const canSave = name.trim() !== "" && expr.trim() !== "";
 
   const handleSave = async () => {
@@ -81,17 +92,18 @@ export default function NewDebtPage() {
         name: name.trim(),
         principal: principal.amount,
         currencyCode: household.baseCurrency,
-        interestRate: null,
+        interestRate,
         termMonths: kind === "installment_plan" ? installmentCount : null,
         startDate: todayIso(),
         counterpart: null,
         direction: "owe",
         originTransactionId: fromTransactionId ?? null,
         installmentCount: kind === "installment_plan" ? installmentCount : null,
+        amortizationSystem: effectiveSystem,
         createdBy: userId,
       });
       if (kind === "installment_plan") {
-        const schedule = generateEvenSchedule(principal.amount, installmentCount, startDate);
+        const schedule = generateSchedule(effectiveSystem, { principal: principal.amount, installments: installmentCount, startDate, annualRatePct: interestRate });
         await debtsRepo.createSchedule(schedule.map((s) => ({ debtId: debt.id, dueDate: s.dueDate, number: s.number, principalAmount: s.principalAmount, interestAmount: s.interestAmount, paidAt: null, transactionId: null })));
       }
       invalidateDebts();
@@ -126,6 +138,30 @@ export default function NewDebtPage() {
             <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("debtsPage.linkedAccount")}</div>
             <div style={{ marginTop: 2, color: "var(--text-primary)", fontSize: 15 }}>{account ? account.name : t("goalsPage.chooseAccount")}</div>
           </button>
+
+          <div className="flex items-center justify-between" style={{ background: "var(--surface-2)", borderRadius: "var(--radius-card)", padding: 14 }}>
+            <div id="debt-has-interest-label" style={{ color: "var(--text-primary)", fontSize: 15 }}>{t("debtsPage.hasInterest")}</div>
+            <Switch checked={hasInterest} onChange={setHasInterest} id="debt-has-interest-label" />
+          </div>
+
+          {hasInterest ? (
+            <>
+              <Input
+                label={t("debtsPage.annualRate")}
+                placeholder="60"
+                value={interestRateExpr}
+                onChange={(e) => setInterestRateExpr(e.target.value.replace(/[^\d,.]/g, ""))}
+              />
+              <SegmentedControl
+                options={[
+                  { id: "french", label: t("debtsPage.systemFrench") },
+                  { id: "german", label: t("debtsPage.systemGerman") },
+                ]}
+                value={amortizationSystem}
+                onChange={(id) => setAmortizationSystem(id as AmortizationSystem)}
+              />
+            </>
+          ) : null}
 
           <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 32 }}>
             {household.baseCurrency} {expr || "0"}

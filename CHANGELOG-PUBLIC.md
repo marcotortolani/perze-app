@@ -40,6 +40,21 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.37.0 — 16 de agosto de 2026
+
+### Nuevo
+
+- Al cargar una deuda o un plan de cuotas ahora podés indicar si tiene
+  interés: elegís la tasa anual y cómo se reparte (cuota fija o capital
+  fijo), y las cuotas se calculan con eso en vez de repartir el capital
+  parejo sin más. Si no tocás nada, sigue funcionando exactamente igual
+  que antes.
+- Las deudas ahora se pueden editar (nombre, cuenta, tasa, cantidad de
+  cuotas) sin tener que borrarlas y volver a cargarlas. Las cuotas ya
+  pagadas quedan como estaban; solo se recalculan las que faltan.
+- En el detalle de una deuda podés marcar (o desmarcar) una cuota como
+  pagada a mano, con la opción de deshacerlo.
+
 ## 0.36.4 — 16 de agosto de 2026
 
 ### Mejorado

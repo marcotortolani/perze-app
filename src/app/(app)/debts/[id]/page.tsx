@@ -2,16 +2,24 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Amount, EmptyState, ListRow, ProgressBar, Skeleton, StatTile, usePageHeader } from "@/design-system";
-import { useDebt, useDebtSchedule } from "@/hooks/use-debts";
+import { Amount, Button, EmptyState, ListRow, ProgressBar, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { useDebt, useDebtSchedule, useInvalidateDebt } from "@/hooks/use-debts";
+import { debtsRepo } from "@/lib/repos/debts-repo";
 import { formatDateShort } from "@/i18n/formatting";
 import type { Locale } from "@/i18n/formatting";
 import { money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
 import { DEBT_KIND_MESSAGE_KEY } from "@/lib/reference/debt-labels";
 
-/** G5 — detalle de una deuda: cronograma de cuotas, progreso pagado/pendiente. */
+/**
+ * G5 — detalle de una deuda: cronograma de cuotas, progreso
+ * pagado/pendiente. Cada cuota pendiente se puede marcar pagada a mano
+ * (fuera del flujo de pago de tarjeta) — reversible con Deshacer por
+ * `sonner`, mismo patrón que `useDeleteTransactionWithUndo`: se
+ * ejecuta y se ofrece deshacer, nunca un diálogo de confirmación.
+ */
 export default function DebtDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations();
@@ -19,7 +27,29 @@ export default function DebtDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const { data: debt, isLoading: debtLoading } = useDebt(id);
   const { data: schedule, isLoading: scheduleLoading } = useDebtSchedule(id);
+  const invalidateDebt = useInvalidateDebt(id);
   usePageHeader({ ...(debt ? { title: debt.name } : {}), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  const toggleInstallmentPaid = async (scheduleId: string, currentlyPaid: boolean) => {
+    if (currentlyPaid) {
+      await debtsRepo.unmarkInstallmentPaid(scheduleId);
+      invalidateDebt();
+      toast(t("debtDetailPage.installmentUnmarked"));
+      return;
+    }
+    await debtsRepo.markInstallmentPaidManually(scheduleId);
+    invalidateDebt();
+    toast(t("debtDetailPage.installmentMarked"), {
+      duration: 5000,
+      action: {
+        label: t("transactions.list.undo"),
+        onClick: async () => {
+          await debtsRepo.unmarkInstallmentPaid(scheduleId);
+          invalidateDebt();
+        },
+      },
+    });
+  };
 
   if (debtLoading || scheduleLoading) return <Skeleton height={300} style={{ marginTop: 16 }} />;
   if (!debt) return <EmptyState message={t("debtDetailPage.notFound")} actionLabel={t("recurringPage.back")} onAction={() => router.push("/debts")} />;
@@ -62,18 +92,27 @@ export default function DebtDetailPage({ params }: { params: Promise<{ id: strin
           {items.length === 0 ? (
             <p className="t-body" style={{ color: "var(--text-muted)", marginTop: 8 }}>{t("debtDetailPage.noSchedule")}</p>
           ) : (
-            [...items].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map((item) => (
-              <ListRow
-                key={item.id}
-                label={t("debtDetailPage.installmentNumber", { number: item.number, total: debt.installmentCount ?? items.length })}
-                meta={formatDateShort(locale, new Date(item.dueDate))}
-                variant="value"
-                value={<Amount value={money(item.principalAmount + item.interestAmount, debt.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
-                disabled={item.paidAt !== null}
-              />
-            ))
+            [...items].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map((item) => {
+              const isPaid = item.paidAt !== null;
+              return (
+                <ListRow
+                  key={item.id}
+                  label={t("debtDetailPage.installmentNumber", { number: item.number, total: debt.installmentCount ?? items.length })}
+                  meta={isPaid ? t("debtDetailPage.installmentPaidOn", { date: formatDateShort(locale, new Date(item.paidAt!)) }) : formatDateShort(locale, new Date(item.dueDate))}
+                  variant="value"
+                  icon={isPaid ? "check" : undefined}
+                  iconBackground={isPaid ? "var(--good)" : undefined}
+                  value={<Amount value={money(item.principalAmount + item.interestAmount, debt.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />}
+                  onClick={() => toggleInstallmentPaid(item.id, isPaid)}
+                />
+              );
+            })
           )}
         </div>
+
+        <Button variant="secondary" fullWidth={false} onClick={() => router.push(`/debts/${debt.id}/edit`)}>
+          {t("debtDetailPage.editDebt")}
+        </Button>
       </div>
     </div>
   );

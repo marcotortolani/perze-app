@@ -6,6 +6,83 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.37.0] — 2026-08-16
+
+### Agregado — amortización real de deudas + edición + marcar cuota a mano
+
+Hasta ahora una deuda (`debts`) siempre se repartía en cuotas iguales de
+capital con interés cero, sin importar la tasa cargada — el comentario
+del propio código lo admitía. `debt_schedule` ya separaba
+`principal_amount`/`interest_amount` por cuota pero nada la usaba de
+verdad.
+
+- **Migración** `20260816090000_debts_amortization_system.sql`: agrega
+  `debts.amortization_system` (`'none' | 'french' | 'german'`, default
+  `'none'` — el default no cambia, sigue siendo cuotas parejas sin
+  interés). `interest_rate`/`term_months`/`start_date` ya existían en la
+  tabla, solo dejan de hardcodearse en el cliente.
+- **`src/lib/analytics/installment-schedule.ts`** — reescrito de una
+  sola función (`generateEvenSchedule`) a un dispatcher de tres sistemas
+  (`generateSchedule(system, input)`): `none` (la lógica de siempre),
+  `german` (capital constante, interés = saldo × tasa mensual, cuota
+  decreciente) y `french` (cuota total constante vía la fórmula estándar
+  de anualidad, capital creciente/interés decreciente). Los cálculos
+  intermedios de `french`/`german` pasan por floating point —no hay
+  forma de resolver una anualidad en `bigint` puro— pero el resultado de
+  cada cuota se redondea a `bigint` antes de salir de la función; la
+  última cuota de cada sistema ajusta para que el capital total cierre
+  exacto. De paso se reaplicó acá el fix de fecha de
+  `feat/auditoria-fase-1-2-mecanico` (mediodía UTC + clamp de fin de
+  mes), que esta rama no tenía por partir de `main` sin ese commit.
+- **`debtsRepo.update()`** (nuevo) — actualiza los campos editables de
+  una deuda (nunca `household_id`/`created_by`, que revienta el trigger
+  `debts_immutable`) y, si el patch toca tasa/sistema/cantidad de
+  cuotas, regenera el cronograma. Regenera SOLO las cuotas con `paid_at
+  IS NULL` (`debtsRepo.replacePendingSchedule()`, borra e inserta) sobre
+  el capital que queda (`principal - Σ principalAmount` de las pagadas)
+  y arranca la primera fecha nueva desde el último vencimiento ya pago.
+  Las cuotas pagadas nunca se tocan — mismo principio que `fx_rate`.
+- **`debtsRepo.markInstallmentPaidManually()` / `unmarkInstallmentPaid()`**
+  (nuevos) — marcar/desmarcar una cuota a mano desde
+  `debts/[id]/page.tsx`, hoy read-only fuera del flujo de pago de
+  tarjeta (`pay-card.ts`, el único lugar que llamaba a
+  `markInstallmentPaid` hasta ahora). Reversible: mismo patrón que
+  `useDeleteTransactionWithUndo` — se ejecuta y se ofrece "Deshacer" por
+  `sonner` (5 s), nunca un diálogo de confirmación.
+- **`debts/new/page.tsx`** — casilla opcional "¿Tiene interés?" que
+  revela tasa anual + selector de sistema (`french` default, `german`
+  alternativa). Con la casilla apagada el comportamiento es idéntico al
+  de antes: cero fricción nueva para el caso simple (12 cuotas sin
+  interés). No se agregó edición de fecha de inicio real en este
+  formulario — no hay un componente de fecha en el design system para
+  eso y `CLAUDE.md` prohíbe inventar uno sin pararlo antes; sigue
+  hardcodeada a hoy, igual que antes.
+- **`debts/[id]/edit/page.tsx`** (nueva pantalla, mismo molde que
+  `budgets/[id]/edit/page.tsx`) — edita nombre, cuenta vinculada, tasa,
+  sistema y cantidad de cuotas. Capital y fecha de inicio NO son
+  editables: si ya hay cuotas pagadas son la base sobre la que se
+  calculó lo ya pago, y tocarlos rompería el historial — la restricción
+  se documenta en la UI (`editFrozenNotice`) en vez de escondida en
+  silencio.
+- `src/lib/supabase/database.types.ts` — `amortization_system` agregado
+  a mano a la tabla `debts` (Row/Insert/Update) porque esta rama no
+  corre `db push` contra el remoto; hay que correr `pnpm db:types`
+  después de pushear la migración para que quede generado de verdad.
+- Claves i18n nuevas en `es`/`en`/`pt`: `debtsPage.hasInterest`,
+  `annualRate`, `systemFrench`, `systemGerman`; `debtDetailPage.editDebt`,
+  `updated`, `editInstallmentsHint`, `editFrozenNotice`,
+  `installmentMarked`, `installmentUnmarked`, `installmentPaidOn`.
+- Tests: `installment-schedule.test.ts` reescrito para los 3 sistemas —
+  suma de `principalAmount` exacta al capital en los tres, interés total
+  de `french` contra la fórmula cerrada dentro de tolerancia de
+  redondeo, `german`/`french` con tasa 0 caen a `none`, y el clamp de
+  fin de mes.
+- Falla preexistente sin relación:
+  `src/app/api/emails/monthly-summary/route.test.ts` — "usa el asunto y
+  el título del año, no los del mes" espera `"Tu año en Perze"` y recibe
+  `"Tu año en PERZE: ..."` (mayúsculas). No se tocó nada de ese archivo
+  en este trabajo.
+
 ## [0.36.4] — 2026-08-16
 
 ### Arreglado — ventana de evolución de cuentas, 90 → 30 días

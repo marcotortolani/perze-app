@@ -1972,7 +1972,11 @@
   "linkedAccount": "Linked account",
   "noLinkedAccount": "No linked account",
   "created": "Debt created",
-  "fromTransactionDefaultName": "Installment purchase"
+  "fromTransactionDefaultName": "Installment purchase",
+  "hasInterest": "Does it have interest?",
+  "annualRate": "Annual rate (%)",
+  "systemFrench": "Fixed payment (French)",
+  "systemGerman": "Fixed principal (German)"
  },
  "debtDetailPage": {
   "notFound": "We couldn't find this debt.",
@@ -1982,7 +1986,14 @@
   "nextDue": "Next due",
   "schedule": "Schedule",
   "noSchedule": "This debt has no installments logged.",
-  "installmentNumber": "Installment {number} of {total}"
+  "installmentNumber": "Installment {number} of {total}",
+  "installmentPaidOn": "Paid on {date}",
+  "installmentMarked": "Installment marked as paid",
+  "installmentUnmarked": "Installment marked as pending",
+  "editDebt": "Edit debt",
+  "updated": "Debt updated",
+  "editInstallmentsHint": "{paid} installments are already paid — you can't go below that count.",
+  "editFrozenNotice": "The {paid} already-paid installments stay as they are: only the pending ones are recalculated."
  },
  "cardCyclePage": {
   "notFound": "This account isn't a credit card.",

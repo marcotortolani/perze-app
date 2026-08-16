@@ -43,3 +43,13 @@ export function useInvalidateDebts(householdId: string | undefined) {
   const queryClient = useQueryClient();
   return () => householdId && queryClient.invalidateQueries({ queryKey: debtsKey(householdId), refetchType: "all" });
 }
+
+/** Invalida una deuda puntual + su cronograma — usado por la edición y por marcar/desmarcar una cuota a mano. */
+export function useInvalidateDebt(id: string | undefined) {
+  const queryClient = useQueryClient();
+  return () => {
+    if (!id) return;
+    queryClient.invalidateQueries({ queryKey: ["debt", id], refetchType: "all" });
+    queryClient.invalidateQueries({ queryKey: ["debt-schedule", id], refetchType: "all" });
+  };
+}
