@@ -778,6 +778,7 @@ export type Database = {
       debts: {
         Row: {
           account_id: string | null
+          amortization_system: string
           counterpart: string | null
           created_at: string
           created_by: string
@@ -798,6 +799,7 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          amortization_system?: string
           counterpart?: string | null
           created_at?: string
           created_by: string
@@ -818,6 +820,7 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          amortization_system?: string
           counterpart?: string | null
           created_at?: string
           created_by?: string

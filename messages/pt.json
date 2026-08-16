@@ -1990,7 +1990,11 @@
   "linkedAccount": "Conta vinculada",
   "noLinkedAccount": "Sem conta vinculada",
   "created": "Dívida criada",
-  "fromTransactionDefaultName": "Compra parcelada"
+  "fromTransactionDefaultName": "Compra parcelada",
+  "hasInterest": "Tem juros?",
+  "annualRate": "Taxa anual (%)",
+  "systemFrench": "Parcela fixa (francês)",
+  "systemGerman": "Amortização fixa (alemão)"
  },
  "debtDetailPage": {
   "notFound": "Não encontramos essa dívida.",
@@ -2000,7 +2004,14 @@
   "nextDue": "Próximo vencimento",
   "schedule": "Cronograma",
   "noSchedule": "Essa dívida não tem parcelas cadastradas.",
-  "installmentNumber": "Parcela {number} de {total}"
+  "installmentNumber": "Parcela {number} de {total}",
+  "installmentPaidOn": "Paga em {date}",
+  "installmentMarked": "Parcela marcada como paga",
+  "installmentUnmarked": "Parcela marcada como pendente",
+  "editDebt": "Editar dívida",
+  "updated": "Dívida atualizada",
+  "editInstallmentsHint": "Já há {paid} parcelas pagas — não é possível reduzir abaixo dessa quantidade.",
+  "editFrozenNotice": "As {paid} parcelas já pagas continuam como estão: só as pendentes são recalculadas."
  },
  "cardCyclePage": {
   "notFound": "Essa conta não é um cartão de crédito.",
