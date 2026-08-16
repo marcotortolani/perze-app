@@ -6,6 +6,75 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.5] — 2026-08-16
+
+### Arreglado — `trades` pasa a local-first (Dexie + outbox)
+
+`trades-repo.ts` escribía directo a Supabase, a diferencia de
+`transactions-repo.ts`/`budgets-repo.ts`: una operación de bolsa cargada
+sin conexión se perdía, rompiendo la promesa central de "la app nunca
+pierde un movimiento" para ese dominio. Se migra al mismo patrón que el
+resto — Dexie primero, outbox para el push, `pullFromRemote`/
+`hydrateFromRemote` para el pull.
+
+- **Migración** `20260816090000_trades_client_rev.sql` — agrega
+  `trades.client_rev integer NOT NULL DEFAULT 1`, mismo patrón que
+  `20260801150000_client_rev_conflict_sensitive.sql` usó para
+  accounts/categories/tags/payees/budgets/goals/recurring_rules/rules/
+  households. **Pendiente `supabase db push --linked`** — no se corrió
+  desde acá (sin credenciales del proyecto remoto en este entorno).
+- **`db/schema.ts`** — `TradeRow` nueva: hija de `portfolios` (Patrón B),
+  sin `householdId` propio a propósito — el acceso se resuelve con
+  `portfolioId`, igual que en RLS. Sin `updatedAt`: la tabla en Postgres
+  nunca tuvo esa columna, y `detectRevisionConflict` compara solo
+  `client_rev`.
+- **`db/client.ts`** — store `trades` nuevo, `version(11)`, indexado por
+  `id, portfolioId, instrumentId, deletedAt, executedAt` (no por
+  `householdId`: `portfolios` no vive en Dexie todavía).
+- **`offline/sync-columns.ts`/`hydrate.ts`/`sync-config.ts`** —
+  `TRADES_COLUMNS`, `RawTrade`/`tradeFromRow()`, entrada `trades` en
+  `SYNC_TABLES` (`conflictSensitive: true`, `toRow()` camel→snake). Sin
+  `fees`/`taxes`: el cliente nunca los leyó ni los escribió antes de este
+  cambio, quedan en su default de Postgres, mismo comportamiento que
+  tenía el repo viejo.
+- **`hydrate.ts`/`pull.ts`** — `trades` se hidrata/sincroniza scopeado por
+  la lista de portfolios del household (una lectura puntual a
+  `portfolios`, que sigue sin ser local-first — decisión explícita fuera
+  de este alcance), no por `householdId` directo. `refreshTrades()` en
+  `pull.ts` sigue el mismo criterio de fetch-completo + poda por diff de
+  ids que `commitSimpleTable`, pero sin poder reusarlo (ese helper indexa
+  por `householdId`, que `trades` no tiene).
+- **`offline/invalidate-after-pull.ts`** — `["trades"]` sale de
+  `NEVER_TOUCHED_BY_PULL`: antes estaba excluida porque `useTrades`/
+  `useTrade` leían Supabase directo y el pull nunca la tocaba: ahora sí.
+- **`trades-repo.ts`** reescrito entero: `Trade` pasa a ser literalmente
+  `TradeRow` (ya tenía la misma forma que consumían los callers). `id`
+  generado en el cliente (UUID v7, `newId()`), `fxRate` de `NewTradeInput`/
+  `TradeUpdateInput` sigue siendo el decimal plano que entrega
+  `fxRepo.resolve()`/`formatRate()`, convertido a `ScaledRate` internamente
+  con `parseRate()` para guardarlo en Dexie (la conversión de vuelta a
+  decimal para el outbox vive en `sync-config.ts`, `rateToString()`). El
+  resto de los métodos (`get`/`listForPortfolio`/`create`/`update`/
+  `softDelete`/`restore`) sigue el mismo patrón `db.transaction("rw", ...)`
+  seguido de `outbox.enqueue()` que `budgets-repo.ts`.
+- **Callers** (`trades/new`, `trades/[tradeId]/edit`, `use-investments.ts`,
+  `ActivityList.tsx`, `PositionsTable.tsx`, `InstrumentDetailContent.tsx`,
+  `positions.ts`, `lots.ts`, `investments-trend.ts`, `net-worth-value.ts`)
+  no necesitaron cambios — el shape de `Trade`/`NewTradeInput`/
+  `TradeUpdateInput` se mantuvo idéntico a propósito.
+- **Test nuevo** `trades-repo.test.ts`, mismo criterio que
+  `accounts-repo.test.ts`: create/update/softDelete/restore encolan lo
+  esperado, `update()` sobre un id inexistente lanza en vez de resolver en
+  silencio, y el redondeo de `fxRate` decimal → `ScaledRate` queda cubierto.
+- **Cast temporal `as unknown as`** en `hydrate.ts`/`pull.ts` alrededor del
+  `select` de `trades`: los tipos generados de Supabase (`database.types.ts`)
+  todavía no conocen `client_rev` — **pendiente `pnpm db:types --linked`**
+  después de aplicar la migración. Sacar el cast en cuanto corra.
+- `pnpm exec tsc --noEmit`, `pnpm lint` y `pnpm build` pasan limpios con el
+  cast puesto. `pnpm test` pasa completo salvo un fallo preexistente y no
+  relacionado en `monthly-summary/route.test.ts` (mayúsculas de "Perze" en
+  el asunto del email anual — falla igual en `main`, sin tocar).
+
 ## [0.36.4] — 2026-08-16
 
 ### Arreglado — ventana de evolución de cuentas, 90 → 30 días

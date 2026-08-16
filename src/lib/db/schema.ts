@@ -528,6 +528,59 @@ export interface RuleActions {
   payeeId: string | null;
 }
 
+/**
+ * Bloque I — operaciones de portfolio (`trades`, `20260801011010_investments.sql`).
+ * Hija de `portfolios` (Patrón B, `CLAUDE.md` § schema decisión 6): sin
+ * `householdId` propio, nunca se duplica — a qué household pertenece un
+ * trade se resuelve con `EXISTS` sobre `portfolios`, igual que en RLS.
+ * `portfolios` todavía no es local-first (`portfolios-repo.ts` sigue yendo
+ * directo a Supabase, decisión explícita fuera de este alcance), así que
+ * acá el índice útil es `portfolioId`, no `householdId`.
+ *
+ * A diferencia de la mayoría de las filas raíz/hija del sistema, `trades`
+ * no tiene `updated_at` en Postgres (solo `created_at`) — la detección de
+ * conflictos (`detectRevisionConflict`) compara únicamente `client_rev`,
+ * nunca timestamps, así que no hace falta acá tampoco.
+ */
+export interface TradeRow {
+  id: string;
+  portfolioId: string;
+  instrumentId: string;
+  createdBy: string;
+  kind:
+    | "buy"
+    | "sell"
+    | "dividend"
+    | "coupon"
+    | "amortization"
+    | "interest"
+    | "split"
+    | "merger"
+    | "fee"
+    | "tax"
+    | "deposit"
+    | "withdrawal"
+    | "transfer_in"
+    | "transfer_out"
+    | "revaluation";
+  executedAt: string; // ISO datetime
+  quantity: number; // numeric(38,12) — cantidad de instrumento, no plata
+  price: number; // numeric(38,12) — idem
+  currencyCode: string;
+  grossAmount: bigint;
+  netAmount: bigint;
+  settlementAccountId: string | null;
+  /** Misma forma que `transactions`: needs_fx aplica acá también (`CLAUDE.md` § FX). */
+  fxRate: bigint | null; // ScaledRate — NULL = needs_fx
+  fxSource: FxSourceValue;
+  fxResolvedAt: string | null;
+  amountBase: bigint | null; // (fxRate === null) === (amountBase === null)
+  note: string | null;
+  createdAt: string;
+  deletedAt: string | null;
+  clientRev: number;
+}
+
 /** K7 — auto-categorización. `match`/`actions` viven en columnas jsonb en Supabase, ver `20260801011100_system.sql`. */
 export interface CategorizationRuleRow {
   id: string;

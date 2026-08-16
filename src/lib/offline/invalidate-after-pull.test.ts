@@ -15,6 +15,7 @@ const EMPTY_RESULT: PullResult = {
   recurringRules: 0,
   rules: 0,
   members: 1,
+  trades: 0,
   prunedTotal: 0,
 };
 
@@ -57,6 +58,9 @@ describe("invalidateAfterPull", () => {
     expect(isStale(client, ["accounts", "h1"])).toBe(true);
     expect(isStale(client, ["net-worth", "h1", "UYU"])).toBe(true);
     expect(isStale(client, ["conflicts", "h1"])).toBe(true);
+    // Auditoría de outbox de inversiones — `trades` ya no está en
+    // `NEVER_TOUCHED_BY_PULL`: `pullFromRemote` la sincroniza como al resto.
+    expect(isStale(client, ["trades", "p1"])).toBe(true);
   });
 
   it("invalida el resto del cache cuando el pull detectó borrados aunque no haya transacciones nuevas", () => {
@@ -75,7 +79,6 @@ describe("invalidateAfterPull", () => {
     expect(isStale(client, ["auth", "own-access", "u1"])).toBe(false);
     expect(isStale(client, ["asset-classes"])).toBe(false);
     expect(isStale(client, ["portfolios", "h1"])).toBe(false);
-    expect(isStale(client, ["trades", "p1"])).toBe(false);
     expect(isStale(client, ["instruments", "h1"])).toBe(false);
   });
 });

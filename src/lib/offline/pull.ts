@@ -18,6 +18,7 @@ import {
   RECURRING_RULES_COLUMNS,
   RULES_COLUMNS,
   TAGS_COLUMNS,
+  TRADES_COLUMNS,
   TRANSACTIONS_COLUMNS,
 } from "./sync-columns";
 import {
@@ -32,6 +33,7 @@ import {
   recurringRuleFromRow,
   ruleFromRow,
   tagFromRow,
+  tradeFromRow,
   transactionFromRow,
   type RawAccount,
   type RawAccountGroup,
@@ -44,6 +46,7 @@ import {
   type RawRecurringRule,
   type RawRule,
   type RawTag,
+  type RawTrade,
   type RawTransaction,
 } from "./hydrate";
 import type { AccountGroupRow, BudgetRow, CategorizationRuleRow, CategoryRow, GoalRow, OutboxEntryRow, PayeeRow, RecurringRuleRow, TagRow } from "../db/schema";
@@ -270,6 +273,59 @@ async function refreshRules(householdId: string): Promise<{ count: number; prune
 }
 
 // ---------------------------------------------------------------------------
+// trades — hija de `portfolios` (Patrón B), sin `householdId` propio, así
+// que no puede usar `commitSimpleTable` (que indexa por ese campo). Mismo
+// criterio de fetch-completo + poda por diff de ids, pero scopeado por la
+// lista de portfolios del household en vez de una columna directa.
+// `portfolios` no vive en Dexie (fuera de este alcance, ver `hydrate.ts`),
+// así que sus ids se piden acá con una lectura puntual.
+// ---------------------------------------------------------------------------
+
+async function refreshTrades(householdId: string): Promise<{ count: number; pruned: number }> {
+  const db = getDb();
+  const supabase = createClient();
+
+  const { data: rawPortfolios, error: portfoliosError } = await supabase
+    .from("portfolios")
+    .select("id")
+    .eq("household_id", householdId)
+    .is("deleted_at", null);
+  if (portfoliosError) throw portfoliosError;
+  const portfolioIds = (rawPortfolios ?? []).map((p) => (p as { id: string }).id);
+
+  if (portfolioIds.length === 0) {
+    // Sin portfolios, no hay nada que preservar ni podar localmente para
+    // este household — a diferencia de `commitSimpleTable`, acá no hay
+    // forma de acotar `db.trades` por household para podar lo que
+    // eventualmente pudo quedar de un portfolio borrado.
+    return { count: 0, pruned: 0 };
+  }
+
+  // `as unknown as` — mismo motivo que en `hydrate.ts`: `client_rev` es
+  // columna nueva (`20260816090000_trades_client_rev.sql`), pendiente de
+  // `db push`/`db:types`. Quitar el cast en cuanto los tipos estén al día.
+  const raw = await fetchPaged<RawTrade>(
+    (f, t) =>
+      supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t) as unknown as PromiseLike<{
+        data: RawTrade[] | null;
+        error: import("@supabase/supabase-js").PostgrestError | null;
+      }>
+  );
+  const rows = raw.map(tradeFromRow);
+
+  const fetchedIds = new Set(rows.map((r) => r.id));
+  const localIds = (await db.trades.where("portfolioId").anyOf(portfolioIds).primaryKeys()) as string[];
+  const blocked = await blockedEntityIds(localIds, "trades");
+
+  await db.trades.bulkPut(rows);
+
+  const toPrune = localIds.filter((id) => !fetchedIds.has(id) && !blocked.has(id));
+  if (toPrune.length) await db.trades.bulkDelete(toPrune);
+
+  return { count: rows.length, pruned: toPrune.length };
+}
+
+// ---------------------------------------------------------------------------
 // transactions — la única tabla incremental. Cursor por watermark (`meta`),
 // paginado dentro del ciclo por keyset (`fetchKeyset`).
 // ---------------------------------------------------------------------------
@@ -340,6 +396,7 @@ export interface PullResult {
   recurringRules: number;
   rules: number;
   members: number;
+  trades: number;
   prunedTotal: number;
 }
 
@@ -361,6 +418,7 @@ const PURGE_RECONCILED_RESULT: PullResult = {
   recurringRules: 0,
   rules: 0,
   members: 0,
+  trades: 0,
   prunedTotal: 1,
 };
 
@@ -405,8 +463,9 @@ export async function pullFromRemote(householdId: string): Promise<PullResult> {
   const goals = await refreshGoals(householdId);
   const recurringRules = await refreshRecurringRules(householdId);
   const rules = await refreshRules(householdId);
+  const trades = await refreshTrades(householdId);
 
-  const prunedTotal = [members, accounts, accountGroups, categories, tags, payees, budgets, goals, recurringRules, rules].reduce((sum, r) => sum + r.pruned, 0);
+  const prunedTotal = [members, accounts, accountGroups, categories, tags, payees, budgets, goals, recurringRules, rules, trades].reduce((sum, r) => sum + r.pruned, 0);
 
   return {
     transactions: tx.count,
@@ -420,6 +479,7 @@ export async function pullFromRemote(householdId: string): Promise<PullResult> {
     recurringRules: recurringRules.count,
     rules: rules.count,
     members: members.count,
+    trades: trades.count,
     prunedTotal,
   };
 }

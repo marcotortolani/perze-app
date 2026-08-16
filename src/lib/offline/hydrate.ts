@@ -1,3 +1,4 @@
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "../supabase/client";
 import { getDb } from "../db/client";
 import { withoutOutbox } from "./outbox";
@@ -14,6 +15,7 @@ import {
   RECURRING_RULES_COLUMNS,
   RULES_COLUMNS,
   TAGS_COLUMNS,
+  TRADES_COLUMNS,
   TRANSACTIONS_COLUMNS,
 } from "./sync-columns";
 import { parseRate } from "../fx/rate";
@@ -40,6 +42,7 @@ import type {
   RuleActions,
   RuleMatch,
   TagRow,
+  TradeRow,
   TransactionKind,
   TransactionRow,
   TransactionSource,
@@ -610,6 +613,56 @@ export function ruleFromRow(row: RawRule): CategorizationRuleRow {
   };
 }
 
+export interface RawTrade {
+  id: string;
+  portfolio_id: string;
+  instrument_id: string;
+  created_by: string;
+  kind: string;
+  executed_at: string;
+  quantity: number;
+  price: number;
+  currency_code: string;
+  gross_amount: string;
+  net_amount: string;
+  settlement_account_id: string | null;
+  fx_rate: string | null;
+  fx_source: string;
+  fx_resolved_at: string | null;
+  amount_base: string | null;
+  note: string | null;
+  created_at: string;
+  deleted_at: string | null;
+  client_rev: number;
+}
+
+export function tradeFromRow(row: RawTrade): TradeRow {
+  return {
+    id: row.id,
+    portfolioId: row.portfolio_id,
+    instrumentId: row.instrument_id,
+    createdBy: row.created_by,
+    kind: row.kind as TradeRow["kind"],
+    executedAt: row.executed_at,
+    quantity: row.quantity,
+    price: row.price,
+    currencyCode: row.currency_code,
+    grossAmount: bigOf(row.gross_amount),
+    netAmount: bigOf(row.net_amount),
+    settlementAccountId: row.settlement_account_id,
+    // El rate viene congelado del servidor y se guarda congelado — nunca se
+    // recalcula (`CLAUDE.md` § FX). Un NULL acá ES un needs_fx legítimo.
+    fxRate: rateOfN(row.fx_rate),
+    fxSource: row.fx_source as FxSourceValue,
+    fxResolvedAt: row.fx_resolved_at,
+    amountBase: bigOfN(row.amount_base),
+    note: row.note,
+    createdAt: row.created_at,
+    deletedAt: row.deleted_at,
+    clientRev: row.client_rev,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Runner
 // ---------------------------------------------------------------------------
@@ -700,6 +753,36 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
 
   const rawTransactions = await fetchPaged((f, t) => scoped(supabase.from("transactions").select(TRANSACTIONS_COLUMNS).order("occurred_at").order("id")).range(f, t));
 
+  // `trades` es hija de `portfolios` (Patrón B), sin `household_id` propio
+  // — `portfolios` todavía no vive en Dexie (`portfolios-repo.ts` sigue
+  // yendo directo a Supabase, fuera de este alcance), así que acá se
+  // resuelve el scope con una lectura puntual de sus ids antes de pedir
+  // las operaciones. Sin portfolios, no hay trades que bajar.
+  const { data: rawPortfolios, error: portfoliosError } = await supabase
+    .from("portfolios")
+    .select("id")
+    .eq("household_id", scopeId)
+    .is("deleted_at", null);
+  if (portfoliosError) throw portfoliosError;
+  const portfolioIds = (rawPortfolios ?? []).map((p) => (p as { id: string }).id);
+  // `as unknown as` — `client_rev` es columna nueva de
+  // `20260816090000_trades_client_rev.sql`, todavía sin aplicar contra el
+  // proyecto remoto (`supabase db push` pendiente) ni regenerada en
+  // `database.types.ts` (`pnpm db:types` pendiente, ambos documentados en
+  // el reporte de esta migración). Sin el cast, el tipo generado todavía
+  // no reconoce la columna y el `select` completo colapsa a
+  // `SelectQueryError`. Quitar el cast en cuanto los tipos estén al día.
+  const rawTrades =
+    portfolioIds.length > 0
+      ? await fetchPaged<RawTrade>(
+          (f, t) =>
+            supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t) as unknown as PromiseLike<{
+              data: RawTrade[] | null;
+              error: PostgrestError | null;
+            }>
+        )
+      : [];
+
   const members = rawMembers.filter((m) => m.status === "active").map(memberFromRow);
   const accounts = rawAccounts.map(accountFromRow);
   const accountGroups = rawAccountGroups.map(accountGroupFromRow);
@@ -711,11 +794,12 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
   const recurringRules = rawRecurring.map(recurringRuleFromRow);
   const rules = rawRules.map(ruleFromRow);
   const transactions = rawTransactions.map(transactionFromRow);
+  const trades = rawTrades.map(tradeFromRow);
 
   await withoutOutbox(async () => {
     await db.transaction(
       "rw",
-      [db.households, db.householdMembers, db.accounts, db.accountGroups, db.categories, db.tags, db.payees, db.transactions, db.budgets, db.goals, db.recurringRules, db.categorizationRules, db.meta],
+      [db.households, db.householdMembers, db.accounts, db.accountGroups, db.categories, db.tags, db.payees, db.transactions, db.budgets, db.goals, db.recurringRules, db.categorizationRules, db.trades, db.meta],
       async () => {
         await db.households.bulkPut(households);
         await db.householdMembers.bulkPut(members);
@@ -729,6 +813,7 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
         await db.goals.bulkPut(goals);
         await db.recurringRules.bulkPut(recurringRules);
         await db.categorizationRules.bulkPut(rules);
+        await db.trades.bulkPut(trades);
         // Último paso, adentro de la misma transacción (mismo criterio que
         // `complete-onboarding.ts`): solo se activa un household completo.
         await db.meta.put({ key: "currentHouseholdId", value: activeHouseholdId });

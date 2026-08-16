@@ -21,6 +21,7 @@ import type {
   RecurringRuleRow,
   SettlementRow,
   TagRow,
+  TradeRow,
   TransactionRow,
   TransactionShareRow,
   TransactionSplitRow,
@@ -66,6 +67,7 @@ export class PerzeDatabase extends Dexie {
   recurringRules!: EntityTable<RecurringRuleRow, "id">;
   categorizationRules!: EntityTable<CategorizationRuleRow, "id">;
   conflicts!: EntityTable<ConflictRecordRow, "id">;
+  trades!: EntityTable<TradeRow, "id">;
 
   constructor(name = "perze") {
     super(name);
@@ -240,6 +242,18 @@ export class PerzeDatabase extends Dexie {
     this.version(10).stores({
       accounts: "id, householdId, [householdId+archivedAt], currencyCode, deletedAt, accountGroupId",
       accountGroups: "id, householdId, deletedAt",
+    });
+
+    /**
+     * Auditoría de outbox de inversiones — `trades` pasa a local-first
+     * (antes escribía directo a Supabase). Hija de `portfolios`
+     * (Patrón B): índice por `portfolioId`, no `householdId` — `portfolios`
+     * no vive en Dexie todavía (ver la nota de `TradeRow` en `schema.ts`).
+     * `instrumentId` indexado porque `positions.ts`/`lots.ts` filtran por
+     * instrumento dentro de un portfolio.
+     */
+    this.version(11).stores({
+      trades: "id, portfolioId, instrumentId, deletedAt, executedAt",
     });
   }
 }
