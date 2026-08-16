@@ -27,7 +27,8 @@ import { todayIso } from "@/lib/dates/today";
 import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, RATE_SCALE, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { money } from "@/lib/money/money";
-import { decimalSeparatorForLocale, type Locale } from "@/i18n/formatting";
+import { decimalSeparatorForLocale, formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 /**
  * "1 <moneda fuerte> = N <moneda débil>", que es como se lee un tipo de
@@ -71,6 +72,7 @@ const FX_SOURCE_MESSAGE_KEY = {
 export function TransactionDetailContent({ id }: { id: string }) {
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const categoryLabel = useCategoryLabel();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -317,7 +319,7 @@ export function TransactionDetailContent({ id }: { id: string }) {
             onClick={() => router.push(`/recurring/${transaction.recurringId}`)}
           />
         ) : null}
-        <ListRow icon="calendar" label={new Date(transaction.occurredAt).toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })} meta={t("transactions.detail.date")} variant="value" />
+        <ListRow icon="calendar" label={formatNumericDate(locale, new Date(transaction.occurredAt), dateFormat)} meta={t("transactions.detail.date")} variant="value" />
         {/* K2b — quién cargó el movimiento. Solo con más de un miembro
             activo: en un household de una sola persona "cargado por vos"
             es ruido, no información (presupuesto de ruido de CLAUDE.md). */}
@@ -384,9 +386,13 @@ export function TransactionDetailContent({ id }: { id: string }) {
       ) : null}
 
       <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-        {t("transactions.detail.createdOn", { date: new Date(transaction.createdAt).toLocaleString(locale) })}
+        {t("transactions.detail.createdOn", {
+          date: `${formatNumericDate(locale, new Date(transaction.createdAt), dateFormat)} ${formatTimeOfDay(locale, new Date(transaction.createdAt))}`,
+        })}
         {transaction.updatedAt !== transaction.createdAt
-          ? t("transactions.detail.editedOn", { date: new Date(transaction.updatedAt).toLocaleString(locale) })
+          ? t("transactions.detail.editedOn", {
+              date: `${formatNumericDate(locale, new Date(transaction.updatedAt), dateFormat)} ${formatTimeOfDay(locale, new Date(transaction.updatedAt))}`,
+            })
           : ""}
       </div>
 

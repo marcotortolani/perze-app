@@ -210,11 +210,15 @@ export default function SettingsPage() {
     // (antes dependía del `<main>` compartido del shell) para poder tener
     // el mismo fade de `/accounts` — hay que sumarla a `OWN_SCROLLER_ROUTES`
     // en `(app)/layout.tsx`.
-    <div className="scroll-fade-bottom" data-scroll-overflow={overflowing} style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%" } as CSSProperties}>
+    <div
+      className="scroll-fade-bottom flex flex-col h-full"
+      data-scroll-overflow={overflowing}
+      style={{ "--scroll-fade-inset-right": "8px" } as CSSProperties}
+    >
       <div
         ref={scrollerRef}
-        className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8 scroll-gutter-right"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", paddingTop: 12 }}
+        className="pb-[calc(var(--block-gap)_+_18px)] lg:pb-8 scroll-gutter-right pt-3"
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain" }}
       >
         {/* `lg`+: se agrupa por afinidad real en vez de una sola lista
             plana de 12 filas — Datos a la izquierda (todo lo que cambia CÓMO
@@ -222,10 +226,10 @@ export default function SettingsPage() {
             a la derecha (idioma, tema, el resto de apariencia — nada de eso
             toca un cálculo). Cada fila se queda con su nota/caption
             condicional pegada abajo, como ya estaba. */}
-        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section>
-            <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>{t("settingsPage.dataSection")}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="t-caption text-text-muted px-1 pb-2">{t("settingsPage.dataSection")}</div>
+            <div className="flex flex-col gap-1">
               <ListRow
                 icon="wallet"
                 label={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")}
@@ -235,9 +239,9 @@ export default function SettingsPage() {
                 onClick={() => isOwnerOrAdmin && setBaseCurrencySheetOpen(true)}
               />
               {!isOwnerOrAdmin ? (
-                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyRestricted")}</p>
+                <p className="t-caption text-text-muted px-1">{t("settingsPage.baseCurrencyRestricted")}</p>
               ) : hasTransactions ? (
-                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.baseCurrencyNote")}</p>
+                <p className="t-caption text-text-muted px-1">{t("settingsPage.baseCurrencyNote")}</p>
               ) : null}
               <ListRow
                 icon="globe"
@@ -269,14 +273,14 @@ export default function SettingsPage() {
                 onClick={() => isOwnerOrAdmin && setCloseDaySheetOpen(true)}
               />
               {!isOwnerOrAdmin ? (
-                <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.closeDayRestricted")}</p>
+                <p className="t-caption text-text-muted px-1">{t("settingsPage.closeDayRestricted")}</p>
               ) : null}
             </div>
           </section>
 
           <section>
-            <div className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px 8px" }}>{t("settingsPage.visualSection")}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="t-caption text-text-muted px-1 pb-2">{t("settingsPage.visualSection")}</div>
+            <div className="flex flex-col gap-1">
             <ListRow
               icon="globe"
               label={t("morePage.language")}
@@ -304,7 +308,7 @@ export default function SettingsPage() {
               label={t("settingsPage.backdrop")}
               right={<Switch id="backdrop-switch" checked={backdropPreference.enabled} onChange={handleToggleBackdrop} />}
             />
-            <p className="t-caption" style={{ color: "var(--text-muted)", padding: "0 4px" }}>{t("settingsPage.backdropHint")}</p>
+            <p className="t-caption text-text-muted px-1">{t("settingsPage.backdropHint")}</p>
             {backdropPreference.enabled ? (
               <>
                 <ListRow
@@ -327,7 +331,7 @@ export default function SettingsPage() {
       </div>
 
       <Sheet open={languageSheetOpen} title={t("morePage.languageSheetTitle")} onClose={() => setLanguageSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {routing.locales.map((candidate) => (
             <ListRow
               key={candidate}
@@ -342,7 +346,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={themeSheetOpen} title={t("profilePage.themeSheetTitle")} onClose={() => setThemeSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {THEME_OPTIONS.map((option) => (
             <ListRow
               key={option}
@@ -356,7 +360,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={backdropDensitySheetOpen} title={t("settingsPage.backdropDensity")} onClose={() => setBackdropDensitySheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {BACKDROP_DENSITIES.map((option) => (
             <ListRow
               key={option}
@@ -370,7 +374,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={backdropIntensitySheetOpen} title={t("settingsPage.backdropIntensity")} onClose={() => setBackdropIntensitySheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {BACKDROP_INTENSITIES.map((option) => (
             <ListRow
               key={option}
@@ -393,14 +397,14 @@ export default function SettingsPage() {
         onClose={() => (applyingBaseCurrency ? null : setBaseCurrencyConfirm(null))}
       >
         {baseCurrencyConfirm ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <p className="t-body" style={{ margin: 0, color: "var(--text-secondary)" }}>
+          <div className="flex flex-col gap-5">
+            <p className="t-body m-0 text-text-secondary">
               {t("settingsPage.baseCurrencyConfirmBody", {
                 resolvedCount: baseCurrencyConfirm.preflight.identityCount + baseCurrencyConfirm.preflight.settlementsIdentityCount,
                 pendingCount: baseCurrencyConfirm.preflight.resetCount + baseCurrencyConfirm.preflight.settlementsResetCount,
               })}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="flex flex-col gap-2">
               <Button variant="primary" disabled={applyingBaseCurrency} onClick={confirmBaseCurrencyChange}>
                 {t("settingsPage.baseCurrencyConfirmAction")}
               </Button>
@@ -413,7 +417,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={tabSheetOpen} title={t("settingsPage.fourthTab")} onClose={() => setTabSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {tabOptions.map((option) => (
             <ListRow
               key={option}
@@ -430,8 +434,8 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={baseCurrencySheetOpen} title={t(isMultiCurrency ? "settingsPage.baseCurrency" : "settingsPage.yourCurrency")} onClose={() => setBaseCurrencySheetOpen(false)} height={420}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.baseCurrencyHint")}</p>
+        <div className="flex flex-col">
+          <p className="t-body mt-0 mx-0 mb-2 text-text-secondary">{t("settingsPage.baseCurrencyHint")}</p>
           {CURRENCIES.map((c) => (
             <ListRow
               key={c.code}
@@ -447,8 +451,8 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={closeDaySheetOpen} title={t("settingsPage.closeDay")} onClose={() => setCloseDaySheetOpen(false)} height={420}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.closeDayHint")}</p>
+        <div className="flex flex-col">
+          <p className="t-body mt-0 mx-0 mb-2 text-text-secondary">{t("settingsPage.closeDayHint")}</p>
           {CLOSE_DAYS.map((day) => (
             <ListRow
               key={day}
@@ -463,8 +467,8 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={decimalSheetOpen} title={t("settingsPage.decimalSeparator")} onClose={() => setDecimalSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.decimalSeparatorHint")}</p>
+        <div className="flex flex-col">
+          <p className="t-body mt-0 mx-0 mb-2 text-text-secondary">{t("settingsPage.decimalSeparatorHint")}</p>
           {DECIMAL_SEPARATOR_OPTIONS.map((pref) => (
             <ListRow
               key={pref}
@@ -482,8 +486,8 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={dateFormatSheetOpen} title={t("settingsPage.dateFormat")} onClose={() => setDateFormatSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <p className="t-body" style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>{t("settingsPage.dateFormatHint")}</p>
+        <div className="flex flex-col">
+          <p className="t-body mt-0 mx-0 mb-2 text-text-secondary">{t("settingsPage.dateFormatHint")}</p>
           {DATE_FORMAT_OPTIONS.map((pref) => (
             <ListRow
               key={pref}
@@ -501,7 +505,7 @@ export default function SettingsPage() {
       </Sheet>
 
       <Sheet open={weekStartSheetOpen} title={t("settingsPage.weekStart")} onClose={() => setWeekStartSheetOpen(false)}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className="flex flex-col">
           {WEEK_START_OPTIONS.map((pref) => (
             <ListRow
               key={pref}

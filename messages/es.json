@@ -360,11 +360,8 @@
   "insufficientFunds": "Saldo insuficiente en {account}",
   "editRate": "Editar tipo de cambio",
   "voice": "Voz",
-  "photo": "Foto",
   "details": "Detalles",
   "voiceLabel": "Cargar por voz",
-  "photoLabel": "Foto del ticket",
-  "photoComingSoon": "La foto de ticket todavía no está disponible — próximamente.",
   "next": "Siguiente",
   "save": "Guardar",
   "savedPendingFx": "Guardado sin tipo de cambio — se resuelve solo al reconectar.",
@@ -450,8 +447,7 @@
    "next": "Siguiente",
    "saveChanges": "Guardar cambios",
    "updated": "Movimiento actualizado",
-   "voiceUnavailable": "La captura por voz no está disponible al editar.",
-   "photoComingSoon": "La foto de ticket todavía no está disponible."
+   "voiceUnavailable": "La captura por voz no está disponible al editar."
   }
  },
  "accounts": {
@@ -1928,6 +1924,7 @@
   "fallbackAccount": "Cuenta de respaldo",
   "chargePreviewTitle": "Confirmar cargo",
   "chargePreviewDebited": "Se descuenta de {name}",
+  "chargePreviewSuggestedAmount": "Usar promedio reciente: {amount}",
   "fallbackAccountHint": "Se usa solo si la cuenta principal no alcanza el día de la carga",
   "fallbackAccountNone": "Ninguna",
   "chargedToFallback": "{name} se cargó en la cuenta de respaldo — la principal no tenía fondos",

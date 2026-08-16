@@ -76,6 +76,21 @@ export function formatMonthYear(locale: Locale, date: Date): string {
 }
 
 /**
+ * Nombre de mes suelto, sin año — para selectores mes→mes que ya conocen el
+ * año por otro lado (ej. un dropdown "Enero"…"Diciembre" dentro de un año ya
+ * elegido). El año de referencia sale del reloj real (`new Date()`, día 15
+ * a mediodía UTC para no cruzar de mes en ningún huso): antes cada call site
+ * hardcodeaba un año fijo ("2026") solo para tener una fecha válida que
+ * alimentar a `Intl`, lo que en unos años queda mostrando el mes correcto
+ * pero es una trampa que ningún test detecta hasta que alguien lee el año.
+ */
+export function formatMonthName(locale: Locale, month1: number): string {
+  return new Intl.DateTimeFormat(locale, { month: "long" }).format(
+    new Date(Date.UTC(new Date().getUTCFullYear(), month1 - 1, 15, 12)),
+  );
+}
+
+/**
  * Mes + año para encabezados de navegación ("Septiembre 2026"), sin el
  * conector narrativo de `formatMonthYear` ("septiembre de 2026" — correcto
  * en una oración, pero no en un título). `text-transform: capitalize` de

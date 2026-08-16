@@ -40,6 +40,20 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.5 — 16 de agosto de 2026
+
+### Mejorado
+
+- Al cargar ahora una recurrente de monto variable (agua, luz, gas), te
+  sugerimos el promedio de tus últimos 3 pagos como atajo, en vez de
+  obligarte a escribir el monto desde cero.
+
+### Arreglado
+
+- Se sacó el botón de foto de ticket en la carga de gastos: todavía no hace
+  nada (no leemos la foto), así que no tiene sentido dejarlo ahí para que
+  toques y no pase nada.
+
 ## 0.36.4 — 16 de agosto de 2026
 
 ### Mejorado

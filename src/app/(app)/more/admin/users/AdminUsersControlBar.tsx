@@ -92,7 +92,7 @@ export function AdminUsersControlBar({ criteria, onQueryChange, onStatusChange, 
           aria-label={t("adminPage.users.searchPlaceholder")}
           style={{ minWidth: 0, flex: 1, border: 0, background: "transparent", fontSize: 16, color: "var(--text-primary)", outline: "none" }}
         />
-        {criteria.query ? <IconButton icon="close" size={32} iconSize={16} ariaLabel={t("adminPage.users.searchClear")} onClick={() => onQueryChange("")} /> : null}
+        {criteria.query ? <IconButton icon="close" size={44} iconSize={16} ariaLabel={t("adminPage.users.searchClear")} onClick={() => onQueryChange("")} /> : null}
       </div>
 
       {/* Pills de estado + país + orden — scroll horizontal en mobile, nada

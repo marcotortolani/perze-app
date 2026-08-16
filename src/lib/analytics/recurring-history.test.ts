@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { amountSeries, detectPriceIncrease, RECURRING_HISTORY_MIN_POINTS } from "./recurring-history";
+import { amountSeries, detectPriceIncrease, RECURRING_HISTORY_MIN_POINTS, suggestedNextAmount } from "./recurring-history";
 
 function tx(occurredAt: string, amount: bigint, deletedAt: string | null = null) {
   return { occurredAt, amount, deletedAt };
@@ -36,5 +36,22 @@ describe("detectPriceIncrease", () => {
   it("null si el monto bajó", () => {
     const series = amountSeries([tx("2026-01-01T12:00:00Z", 3100n), tx("2026-02-01T12:00:00Z", 3100n), tx("2026-03-01T12:00:00Z", 2400n)]);
     expect(detectPriceIncrease(series, "monthly")).toBeNull();
+  });
+});
+
+describe("suggestedNextAmount", () => {
+  it("null con menos del mínimo de puntos", () => {
+    const series = amountSeries([tx("2026-01-01T12:00:00Z", 100n), tx("2026-02-01T12:00:00Z", 200n)]);
+    expect(suggestedNextAmount(series)).toBeNull();
+  });
+
+  it("promedia los últimos 3 cargos, ignorando los más viejos", () => {
+    const series = amountSeries([
+      tx("2026-01-01T12:00:00Z", 900n), // fuera del promedio
+      tx("2026-02-01T12:00:00Z", 1000n),
+      tx("2026-03-01T12:00:00Z", 1100n),
+      tx("2026-04-01T12:00:00Z", 1200n),
+    ]);
+    expect(suggestedNextAmount(series)).toBe((1000n + 1100n + 1200n) / 3n);
   });
 });

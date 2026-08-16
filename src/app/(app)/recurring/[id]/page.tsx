@@ -35,6 +35,7 @@ import {
   amountSeries,
   detectPriceIncrease,
   RECURRING_HISTORY_MIN_POINTS,
+  suggestedNextAmount,
 } from '@/lib/analytics/recurring-history'
 import {
   isChargeDue,
@@ -111,6 +112,7 @@ export default function RecurringRuleDetailPage({
 
   const series = amountSeries(history ?? [])
   const increase = detectPriceIncrease(series, rule.frequency)
+  const suggestedAmount = suggestedNextAmount(series)
   const today = todayIso()
   // Clave de idempotencia real: `recurringOccurrenceDate`, no `occurredAt`
   // (que en `series`/el gráfico es la fecha real de pago — puede ser
@@ -463,6 +465,7 @@ export default function RecurringRuleDetailPage({
           targetAccount={chargeTargetAccount(rule, account, fallbackAccount ?? null)}
           locale={locale}
           saving={charging}
+          suggestedAmount={suggestedAmount}
           onClose={() => setPreviewOpen(false)}
           onConfirm={(rate, originAmount) => void confirmCharge(rate, originAmount)}
         />

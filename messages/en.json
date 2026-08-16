@@ -360,11 +360,8 @@
   "insufficientFunds": "Insufficient funds in {account}",
   "editRate": "Edit exchange rate",
   "voice": "Voice",
-  "photo": "Photo",
   "details": "Details",
   "voiceLabel": "Add by voice",
-  "photoLabel": "Receipt photo",
-  "photoComingSoon": "Receipt photo isn't available yet — coming soon.",
   "next": "Next",
   "save": "Save",
   "savedPendingFx": "Saved without an exchange rate — it'll resolve once you're back online.",
@@ -450,8 +447,7 @@
    "next": "Next",
    "saveChanges": "Save changes",
    "updated": "Transaction updated",
-   "voiceUnavailable": "Voice capture isn't available while editing.",
-   "photoComingSoon": "Receipt photo isn't available yet."
+   "voiceUnavailable": "Voice capture isn't available while editing."
   }
  },
  "accounts": {
@@ -1928,6 +1924,7 @@
   "fallbackAccount": "Backup account",
   "chargePreviewTitle": "Confirm charge",
   "chargePreviewDebited": "Debited from {name}",
+  "chargePreviewSuggestedAmount": "Use recent average: {amount}",
   "fallbackAccountHint": "Only used if the main account can't cover it on the day you charge it",
   "fallbackAccountNone": "None",
   "chargedToFallback": "{name} was charged to the backup account — the main one didn't have funds",

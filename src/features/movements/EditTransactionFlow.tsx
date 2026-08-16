@@ -262,7 +262,6 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
           onOpenCategoryPicker={() => setStep("category")}
           onOpenDetails={() => setSheet("details")}
           onVoice={() => toast(t("movements.editFlow.voiceUnavailable"))}
-          onPhoto={() => toast(t("movements.editFlow.photoComingSoon"))}
           footerButton={nextOrSaveButton}
         />
       ) : (

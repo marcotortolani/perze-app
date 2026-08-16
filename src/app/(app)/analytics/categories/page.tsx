@@ -63,13 +63,11 @@ export default function CategoriesAnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {excludedCount > 0 ? (
-        <NeedsFxBanner
-          count={excludedCount}
-          onResolve={() => router.push("/accounts/resolve-fx")}
-          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
-        />
-      ) : null}
+      <NeedsFxBanner
+        count={excludedCount}
+        onResolve={() => router.push("/accounts/resolve-fx")}
+        style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+      />
       <div style={{ paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
         <Donut slices={slices} dimension={formatAmountCompact(money(grandTotal, baseCurrency), { showSign: false })} />
         <SeriesLegend

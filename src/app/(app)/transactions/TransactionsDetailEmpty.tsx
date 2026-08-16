@@ -91,7 +91,7 @@ export function TransactionsDetailEmpty() {
           <div className="t-caption" style={{ marginTop: 24, color: "var(--text-muted)", textTransform: "uppercase", textAlign: "center" }}>
             {t(isCurrentPeriod ? "transactions.detail.categoryRadarTitleCurrent" : "transactions.detail.categoryRadarTitle")}
           </div>
-          {excludedCount > 0 ? <NeedsFxBanner count={excludedCount} style={{ marginTop: 12, justifyContent: "center", padding: "10px 0" }} /> : null}
+          <NeedsFxBanner count={excludedCount} style={{ marginTop: 12, justifyContent: "center", padding: "10px 0" }} />
           <div style={{ marginTop: 12 }}>
             <CategoryRadarChart data={radarData} />
           </div>
