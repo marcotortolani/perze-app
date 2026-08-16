@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, CategoryBubble, Keypad, usePageHeader } from "@/design-system";
+import { Button, CategoryBubble, Keypad, Switch, usePageHeader } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import type { CategoryRow } from "@/lib/db/schema";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
@@ -16,6 +16,7 @@ import { budgetsRepo } from "@/lib/repos/budgets-repo";
 import { evaluateKeypadExpression } from "@/lib/money/keypad";
 import { formatAmount } from "@/lib/money/format";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
+import { todayIso } from "@/lib/dates/today";
 
 /** F2 — crear presupuesto: elegir categoría (o el household entero) y el límite. */
 export default function NewBudgetPage() {
@@ -33,6 +34,13 @@ export default function NewBudgetPage() {
   const [expandedParent, setExpandedParent] = useState<CategoryRow | null>(null);
   const [expr, setExpr] = useState("");
   const [saving, setSaving] = useState(false);
+  // Auditoría de rollover — apagados por default. `rolloverSince` se ancla
+  // recién al guardar, con la fecha de HOY, la primera vez que cualquiera
+  // de los dos pasa a `true` (ver `handleSave`) — nunca antes, para que un
+  // usuario que prende y apaga el switch sin guardar no fije un ancla que
+  // después no puede ver ni entender.
+  const [rolloverSurplus, setRolloverSurplus] = useState(false);
+  const [rolloverDeficit, setRolloverDeficit] = useState(false);
 
   // Con `cacheComponents: true` (Next 16), `router.back()` no desmonta esta
   // pantalla — la deja oculta (`Activity`, modo hidden) con su `useState`
@@ -47,6 +55,8 @@ export default function NewBudgetPage() {
       setExpandedParent(null);
       setExpr("");
       setSaving(false);
+      setRolloverSurplus(false);
+      setRolloverDeficit(false);
     };
   }, []);
 
@@ -86,6 +96,9 @@ export default function NewBudgetPage() {
         amountLimit: limit.amount,
         currencyCode: household.baseCurrency,
         createdBy: userId,
+        rolloverSurplus,
+        rolloverDeficit,
+        rolloverSince: rolloverSurplus || rolloverDeficit ? todayIso() : null,
       });
       invalidateBudgets();
       toast(t("budgetsPage.created"));
@@ -135,6 +148,14 @@ export default function NewBudgetPage() {
         <div style={{ textAlign: "center" }}>
           <div className="t-caption" style={{ color: "var(--text-muted)" }}>{t("budgetsPage.amount")}</div>
           <div style={{ marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 32 }}>{heroAmount}</div>
+        </div>
+
+        <div>
+          <div className="t-caption" style={{ color: "var(--text-muted)", marginBottom: 10 }}>{t("budgetsPage.rolloverTitle")}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Switch checked={rolloverSurplus} onChange={setRolloverSurplus} label={t("budgetsPage.rolloverSurplusLabel")} id="rollover-surplus-label" />
+            <Switch checked={rolloverDeficit} onChange={setRolloverDeficit} label={t("budgetsPage.rolloverDeficitLabel")} id="rollover-deficit-label" />
+          </div>
         </div>
 
         <div style={{ marginTop: "auto" }}>

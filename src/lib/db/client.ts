@@ -241,6 +241,29 @@ export class PerzeDatabase extends Dexie {
       accounts: "id, householdId, [householdId+archivedAt], currencyCode, deletedAt, accountGroupId",
       accountGroups: "id, householdId, deletedAt",
     });
+
+    /**
+     * Auditoría de rollover de presupuesto — `BudgetRow` suma
+     * `rolloverSurplus`/`rolloverDeficit`/`rolloverSince` (ver
+     * `src/lib/analytics/budget-rollover.ts` y la migración
+     * `20260816090000_budget_rollover.sql`). Sin índice nuevo — nada lee
+     * por esas columnas —, pero las filas de `budgets` ya guardadas en
+     * IndexedDB no las tienen: sin este backfill quedarían `undefined` en
+     * vez de `false`/`null` hasta el próximo hydrate completo, y
+     * `BudgetRow` las declara no-opcionales.
+     */
+    this.version(11)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx
+          .table("budgets")
+          .toCollection()
+          .modify((budget: BudgetRow) => {
+            budget.rolloverSurplus ??= false;
+            budget.rolloverDeficit ??= false;
+            budget.rolloverSince ??= null;
+          });
+      });
   }
 }
 

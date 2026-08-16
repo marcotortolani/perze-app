@@ -1857,7 +1857,20 @@
   "deleted": "Budget deleted",
   "delete": "Delete budget",
   "remaining": "You have left",
-  "over": "You're over by"
+  "over": "You're over by",
+  "rolloverTitle": "Rollover between periods",
+  "rolloverSurplusLabel": "Carry surplus to next period",
+  "rolloverDeficitLabel": "Carry deficit to next period",
+  "carryPositive": "Carried from last period: +",
+  "carryNegative": "Carried from last period: −",
+  "closureBanner": {
+   "underTitle": "{name}: closed under budget",
+   "overTitle": "{name}: went over budget",
+   "underBody": "You had",
+   "overBody": "You're over by",
+   "action": "View budget",
+   "dismiss": "Dismiss"
+  }
  },
  "goalsPage": {
   "loadError": "We couldn't load your goals.",

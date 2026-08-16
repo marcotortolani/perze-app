@@ -64,16 +64,28 @@ export function daysUntilPeriodCloses(periodStartDay: number, now: Date): number
   return Math.max(0, Math.ceil((nextClose.getTime() - now.getTime()) / DAY_MS));
 }
 
+/**
+ * [inicio, fin) del período que empieza `offset` períodos del household
+ * antes (o después, con `offset` positivo) del que contiene `now`.
+ * `offset = 0` es el período EN CURSO (`currentPeriodBounds`), `offset = -1`
+ * el ÚLTIMO CERRADO (`previousClosedPeriodBounds`), `offset = -2` el
+ * anterior a ese, etc. — generaliza las dos funciones de abajo para el
+ * rollover de presupuesto, que necesita iterar N períodos cerrados hacia
+ * atrás desde que se activó, no solo el inmediato anterior.
+ */
+export function periodBoundsAt(periodStartDay: number, now: Date, offset: number): { start: Date; end: Date } {
+  const currentStart = periodStart(now, periodStartDay);
+  const start = new Date(currentStart.getFullYear(), currentStart.getMonth() + offset, periodStartDay);
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, periodStartDay);
+  return { start, end };
+}
+
 /** [inicio, fin) del ÚLTIMO período cerrado — el mes en curso miente para tasa de ahorro/cashflow. */
 export function previousClosedPeriodBounds(periodStartDay: number, now: Date): { start: Date; end: Date } {
-  const end = periodStart(now, periodStartDay);
-  const start = new Date(end.getFullYear(), end.getMonth() - 1, periodStartDay);
-  return { start, end };
+  return periodBoundsAt(periodStartDay, now, -1);
 }
 
 /** [inicio, fin) del período EN CURSO — para presupuestos, que se leen mientras el mes todavía corre. */
 export function currentPeriodBounds(periodStartDay: number, now: Date): { start: Date; end: Date } {
-  const start = periodStart(now, periodStartDay);
-  const end = new Date(start.getFullYear(), start.getMonth() + 1, periodStartDay);
-  return { start, end };
+  return periodBoundsAt(periodStartDay, now, 0);
 }

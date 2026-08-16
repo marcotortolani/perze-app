@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.5 — 16 de agosto de 2026
+
+### Nuevo
+
+- Los presupuestos ahora pueden arrastrar el sobrante o el exceso al próximo
+  período — dos opciones independientes, apagadas por default, en la
+  pantalla de crear/editar un presupuesto.
+- Cuando cierra un período, un aviso te cuenta si terminaste bajo el límite
+  o si te pasaste — en el inicio y en el detalle del presupuesto.
+
 ## 0.36.4 — 16 de agosto de 2026
 
 ### Mejorado

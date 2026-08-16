@@ -6,6 +6,75 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.5] — 2026-08-16
+
+### Nuevo — rollover de presupuesto + banner de cierre de período
+
+Auditoría del bloque F: hasta ahora un presupuesto se reseteaba cada
+período sin arrastrar el sobrante ni el exceso — la razón número uno por
+la que un presupuesto tipo YNAB se abandona. Se agrega opt-in, apagado
+por default, con dos flags **independientes** por presupuesto:
+
+- `rolloverSurplus` — arrastra el sobrante (lo no gastado) al próximo
+  período.
+- `rolloverDeficit` — arrastra el exceso (resta del límite del próximo
+  período).
+
+Migración `20260816090000_budget_rollover.sql` (**pendiente de aplicar**,
+`supabase db push --linked`): suma `rollover_surplus`/`rollover_deficit`
+(boolean, default `false`) y `rollover_since` (date, nullable) a
+`public.budgets`. Sin policy RLS nueva — las de `budgets` cubren la fila
+entera, no columna por columna — y el trigger `budgets_immutable` no las
+toca (solo protege `household_id`/`created_by`).
+
+**No retroactivo**: activar cualquiera de los dos flags ancla
+`rolloverSince` a la fecha de HOY (`todayIso()`), la primera vez, y solo
+cuenta períodos que arrancaron en o después de esa fecha.
+
+`src/lib/analytics/history.ts` — `periodBoundsAt(periodStartDay, now, offset)`
+generaliza `currentPeriodBounds` (offset 0) y `previousClosedPeriodBounds`
+(offset -1) a N períodos atrás/adelante — las dos funciones existentes se
+reescriben sobre esta sin cambiar su firma pública.
+
+`src/lib/analytics/budget-rollover.ts` (nuevo) — `computeBudgetRollover()`
+itera los períodos cerrados desde `rolloverSince` con
+`computeBudgetProgress()` sobre transacciones en memoria (sin round-trip
+de red) y acumula `carry_i = clamp(amountLimit + carry_{i-1} - spent_i)`,
+con el clamp dependiendo de qué flags están activos. El `excludedCount` de
+`needs_fx` de cada período que entra en el cálculo se SUMA al del período
+en curso — un arrastre calculado sobre datos parciales es tan parcial
+como el gastado del mes. `computeBudgetProgressWithRollover()` e
+`identifyBudgetAlertsWithRollover()` combinan el límite efectivo
+(`amountLimit + carry`) con las funciones existentes de
+`budget-progress.ts`, sin tocar sus firmas — los callers que no quieren
+rollover pueden seguir usando las originales.
+
+`src/lib/analytics/budget-closure.ts` (nuevo) — `computeBudgetClosureStatus()`
+calcula cómo cerró el ÚLTIMO período completo de un presupuesto contra el
+límite efectivo QUE REGÍA en ese momento (el carry acumulado hasta antes
+de ese período, no el de hoy). `pickBudgetClosureCandidate()` elige, entre
+varios presupuestos candidatos para el banner del home, el de MAYOR
+DESVÍO del límite (`|spent/effectiveLimit - 1|`) — decisión de producto no
+especificada en el encargo, documentada en el propio módulo.
+
+Pipeline de sync de `budgets` (`schema.ts`, Dexie `client.ts` versión 11
+con backfill de las tres columnas nuevas, `sync-columns.ts`,
+`hydrate.ts`, `sync-config.ts`) suma los tres campos. `pull.ts`/`hydrate.ts`
+llevan un cast `as any` temporal en el `.select()` de `budgets` — los
+tipos generados de Supabase (`pnpm db:types`) todavía no conocen las
+columnas nuevas porque requiere credenciales remotas que esta sesión no
+tenía; sacar el cast en cuanto se regeneren.
+
+UI: `budgets/new` y `budgets/[id]/edit` suman dos `Switch` para los dos
+flags. `budgets/[id]` muestra el arrastre en línea propia (nunca fundido
+en el límite) y el banner de cierre inline. Banner nuevo
+(`BudgetClosureBanner`, mismo molde de card que `ReminderBanner`) también
+en el home, con la prioridad MÁS BAJA de la cadena — después del
+recordatorio informativo, nunca junto a él. Descarte persistido en
+`useBudgetClosureBannerStore` (mismo molde que `birthday-banner-store.ts`),
+con clave `"${budgetId}:${periodEnd}"` para que no reaparezca por
+presupuesto+período ya visto.
+
 ## [0.36.4] — 2026-08-16
 
 ### Arreglado — ventana de evolución de cuentas, 90 → 30 días
