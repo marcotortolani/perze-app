@@ -30,7 +30,21 @@ export default function HomePage() {
   if (state.status === "empty") return <EmptyState message={state.message} actionLabel={state.actionLabel} onAction={state.onAction} />;
 
   const { data } = state;
-  const { scrollerRef, overflowing, showBirthdayBanner, birthdayAge, dismissBirthdayBanner, now, pending, conflicts, showReminderBanner, activeReminder } = data;
+  const {
+    scrollerRef,
+    overflowing,
+    showBirthdayBanner,
+    birthdayAge,
+    dismissBirthdayBanner,
+    now,
+    pending,
+    conflicts,
+    showReminderBanner,
+    activeReminder,
+    showRecurringDueBanner,
+    dueManualRecurringCount,
+    dueManualRecurringRuleId,
+  } = data;
 
   return (
     // `PageEnter`: entrada suave del dashboard. Envuelve el retorno CON
@@ -69,9 +83,25 @@ export default function HomePage() {
           style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }}
         />
       ) : null}
+      {/* Recurrentes manuales (auto_post=false) vencidos o que vencen hoy —
+          mismo criterio de prioridad que los banners de arriba. Un tap va
+          directo al detalle si hay una sola regla pendiente, o al listado
+          de `/recurring` (agrupado en "Manuales") si hay más de una. */}
+      {showRecurringDueBanner ? (
+        <Banner
+          status="warning"
+          message={t("recurringPage.dueHomeBanner", { count: dueManualRecurringCount })}
+          action={{
+            label: t("recurringPage.dueHomeBannerAction"),
+            onClick: () => router.push(dueManualRecurringRuleId ? `/recurring/${dueManualRecurringRuleId}` : "/recurring"),
+          }}
+          style={{ marginLeft: "calc(-1 * var(--screen-padding))", marginRight: "calc(-1 * var(--screen-padding) - 8px)", borderRadius: 0 }}
+        />
+      ) : null}
       {/* El recordatorio informativo solo aparece si no hay ya otro banner
-          arriba — offline/conflicto/cumpleaños son más urgentes, y apilar
-          avisos es exactamente el ruido que este banner intenta evitar. */}
+          arriba — offline/conflicto/cumpleaños/recurrentes vencidos son más
+          urgentes, y apilar avisos es exactamente el ruido que este banner
+          intenta evitar. */}
       {showReminderBanner ? <ReminderBanner reminder={activeReminder} /> : null}
 
       <HomeDataProvider data={data}>

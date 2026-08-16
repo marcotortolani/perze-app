@@ -40,6 +40,25 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.35.5 — 16 de agosto de 2026
+
+### Nuevo
+
+- Cuando tenés un recurrente manual (de esos que cargás vos, no los automáticos) vencido o que
+  vence hoy, ahora te avisamos en el inicio y con una notificación, para que no se te pase.
+
+### Mejorado
+
+- Al cargar un movimiento, ahora se recuerda también la última moneda que usaste, no solo la
+  última cuenta.
+
+### Arreglado
+
+- La fecha que se preseleccionaba al cargar un gasto ya no salta al día siguiente cuando cargás
+  entrada la noche.
+- Algunos errores que quedaban trabados para siempre en Ajustes → Estado de sincronización ahora
+  se resuelven solos o, si no se pueden resolver, muestran el motivo real.
+
 ## 0.35.2 — 13 de agosto de 2026
 
 ### Arreglado

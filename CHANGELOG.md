@@ -6,6 +6,51 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.35.5] — 2026-08-16
+
+### Arreglado — cinco bugs reportados sobre recurrentes, captura y sync
+
+**Fecha por defecto de `/add` mal calculada en husos negativos.** `capture-draft-store.tsx`
+inicializaba `occurredAt` con `new Date().toISOString()` (UTC puro) en vez de `todayIso()`.
+Cerca de medianoche UTC (21:00–00:00 en UYU/ARS), eso cae en el día siguiente en UTC, así que
+`/add → Detalles` mostraba "mañana" preseleccionado aunque el `DateStrip` de arriba (que sí usa
+`todayIso()`) marcara bien "hoy". Mismo patrón del bug documentado en `src/lib/dates/today.ts` —
+ahora unificado en la misma fuente.
+
+**`/add` no recordaba la última moneda usada.** La cuenta por defecto ya se derivaba del último
+movimiento cargado (`CaptureFlow.tsx`); la moneda capturada (`draft.currency`) siempre arrancaba
+en `""` y caía a la moneda de la cuenta elegida. Se agrega un efecto de una sola vez por montaje
+que aplica la última moneda distinta usada, solo cuando difiere de la cuenta por defecto — no se
+puede resolver por derivación pura como la cuenta porque `""` es ambiguo (también significa
+"elegí explícitamente la misma moneda de la cuenta").
+
+**Recordatorio de recurrentes manuales — dos causas separadas:**
+
+- No existía ningún aviso visual en el home para un recurrente `auto_post = false` vencido o que
+  vence hoy. Nuevo banner en `page.tsx`/`home-data.tsx` (mismo patrón que offline/conflictos),
+  con el mismo cálculo (`occurrencesBetween` + `isChargeDue`) que ya usaba `recurring/[id]`, ahora
+  de una sola pasada sobre todas las reglas.
+- La push notification tenía una causa de raíz en SQL: `20260812090000_account_groups_card_multicurrency.sql`
+  reescribió `dispatch_due_notifications()` completo copiándola desde una versión anterior a
+  `20260807170000_recurring_manual_reminders.sql`, borrando sin querer el loop entero de avisos
+  de recurrentes manuales (día previo/día exacto/día posterior). Cero filas
+  `action = 'recurring_manual_reminder'` en `audit_log` desde el 12/08, confirmado contra el
+  proyecto remoto, aunque el cron corría bien todos los días. `20260815220000_restore_recurring_manual_reminders.sql`
+  fusiona las dos versiones y ya está aplicada en remoto.
+
+**Dos errores acumulados y persistentes en Estado de sincronización (`sync-worker.ts`):**
+
+- `transaction_tags` (`23505` en insert): el chequeo de idempotencia post-conflicto hacía
+  `.select("id").eq("id", entry.entityId)`, pero esa tabla no tiene columna `id` (PK compuesta
+  `transaction_id, tag_id`) — PostgREST devolvía `column transaction_tags.id does not exist` en
+  cada reintento, sin converger nunca. Ahora usa la clave compuesta para esa tabla.
+- `accounts` (RLS en `UPDATE`): cuando el `UPDATE` puro afectaba 0 filas, el código asumía
+  siempre "la fila no existe todavía" y caía a un `INSERT` de respaldo — pero 0 filas también
+  significa "la fila existe y la policy de `UPDATE` la bloqueó" (miembro sin permiso de
+  escritura vigente en el household), y ese `INSERT` fallaba con un error de RLS distinto y
+  confuso al real, reintentando para siempre. Ahora se distinguen los dos casos: si la fila
+  existe, se tira un error explícito de permiso en vez de intentar el insert.
+
 ## [0.35.4] — 2026-08-14
 
 ### Actualizado — Next.js 16.2.6 → 16.3.1

@@ -12,7 +12,10 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
 import { useTransactionTagsFor } from "@/hooks/use-transaction-tags";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions, useRecurringOccurrences } from "@/hooks/use-transactions";
+import { useRecurringRules } from "@/hooks/use-recurring-rules";
+import { occurrencesBetween, isChargeDue } from "@/lib/recurring/occurrences";
+import { todayIso } from "@/lib/dates/today";
 import { useNetWorth } from "@/hooks/use-net-worth";
 import { useInvestmentsTrend } from "@/hooks/use-investments-trend";
 import { useNetWorthInCurrency } from "@/hooks/use-net-worth-in-currency";
@@ -53,6 +56,12 @@ function dayBounds(now: Date, daysAgo: number): [Date, Date] {
   return [start, end];
 }
 
+/** Mismo helper duplicado en `RecurringPageContent.tsx` y `recurring/[id]/page.tsx` — techo del horizonte de búsqueda de la próxima ocurrencia sin saldar. */
+function addYears(iso: string, years: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${y! + years}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 /**
  * Todo lo que un bloque del home puede necesitar, ya resuelto — el cuerpo
  * de cálculo que antes vivía inline en `HomePage()` (hooks de React Query,
@@ -73,6 +82,10 @@ export interface HomeDataReady {
   conflicts: ReturnType<typeof useConflicts>["conflicts"];
   showReminderBanner: boolean;
   activeReminder: ReminderId | null;
+  showRecurringDueBanner: boolean;
+  dueManualRecurringCount: number;
+  /** Solo cuando hay exactamente una regla vencida — a dónde navega el banner. `null` con 0 o ≥2 (ahí va a `/recurring`). */
+  dueManualRecurringRuleId: string | null;
 
   // Datos de negocio — los consumen los bloques vía `useHomeData()`.
   household: HouseholdRow;
@@ -204,6 +217,8 @@ export function useHomeDataState(): HomeDataState {
   const pending = usePendingMutations();
   const { conflicts } = useConflicts(household?.id);
   const activeReminder = useActiveReminder({ hasExactBirthDate: !!profile?.birthDate && profile.birthDatePrecision === "exact", enabledModules: household?.enabledModules });
+  const { data: recurringRules } = useRecurringRules(household?.id);
+  const { data: recurringOccurrences } = useRecurringOccurrences(household?.id);
 
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const accountById = useMemo(() => new Map((accounts ?? []).map((a: AccountRowData) => [a.id, a])), [accounts]);
@@ -315,10 +330,35 @@ export function useHomeDataState(): HomeDataState {
 
   const showBirthdayBanner = !!profile?.birthDate && isBirthdayToday(profile.birthDate, profile.birthDatePrecision ?? null, now) && dismissedYear !== now.getFullYear();
   const birthdayAge = profile?.birthDate ? ageFromBirthDate(profile.birthDate, now) : 0;
-  // Más urgente gana: offline/conflicto/cumpleaños se muestran arriba del
-  // recordatorio informativo, nunca los dos apilados — el recordatorio es
-  // ayuda de baja prioridad, no otra alarma.
-  const showReminderBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && !!activeReminder;
+
+  // Recurrentes manuales (auto_post = false) vencidos o que vencen hoy —
+  // mismo cálculo que `recurring/[id]/page.tsx` (`occurrencesBetween` +
+  // `isChargeDue`), pero de una sola pasada sobre todas las reglas en vez
+  // de una query por regla. `recurringOccurrenceDate`, no `occurredAt`: una
+  // carga manual tardía no debe seguir contando como "pendiente" solo
+  // porque se pagó después de la fecha del período.
+  const today = todayIso();
+  const chargedByRule = new Map<string, Set<string>>();
+  for (const o of recurringOccurrences ?? []) {
+    if (!chargedByRule.has(o.recurringId)) chargedByRule.set(o.recurringId, new Set());
+    chargedByRule.get(o.recurringId)!.add(o.occurrenceDate);
+  }
+  const dueManualRules = (recurringRules ?? [])
+    .filter((r) => !r.autoPost && r.archivedAt === null)
+    .map((r) => ({
+      rule: r,
+      nextChargeableDate: occurrencesBetween(r, r.anchorDate, addYears(today, 2)).find((d) => !chargedByRule.get(r.id)?.has(d)) ?? null,
+    }))
+    .filter(({ nextChargeableDate }) => isChargeDue(false, nextChargeableDate, today));
+  const dueManualRecurringCount = dueManualRules.length;
+  const dueManualRecurringRuleId = dueManualRecurringCount === 1 ? dueManualRules[0]!.rule.id : null;
+
+  // Más urgente gana: offline/conflicto/cumpleaños se muestran arriba de
+  // cualquier otro aviso, nunca apilados. El de recurrentes vencidos pisa
+  // al recordatorio informativo genérico (mismo motivo: es información
+  // accionable de plata, no un tip de producto) pero nunca al revés.
+  const showRecurringDueBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && dueManualRecurringCount > 0;
+  const showReminderBanner = !showBirthdayBanner && !(pending && pending > 0) && conflicts.length === 0 && !showRecurringDueBanner && !!activeReminder;
 
   return {
     status: "ready",
@@ -333,6 +373,9 @@ export function useHomeDataState(): HomeDataState {
       conflicts,
       showReminderBanner,
       activeReminder,
+      showRecurringDueBanner,
+      dueManualRecurringCount,
+      dueManualRecurringRuleId,
       household,
       baseCurrency,
       netWorth,

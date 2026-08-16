@@ -191,8 +191,33 @@ async function syncOne(
       // identificado) se trataba como éxito y borraba la entrada del
       // outbox, dejando la fila local sin protección contra la poda del
       // próximo pull — desaparición silenciosa, sin rastro en ningún lado.
-      const { data: serverRow, error: checkError } = await supabase.from(config.supabaseTable).select("id").eq("id", entry.entityId).maybeSingle();
-      if (checkError) throw checkError;
+      //
+      // `transaction_tags` es la única tabla sin columna `id` (PK
+      // compuesta `transaction_id, tag_id`, ver el `op === "delete"` de
+      // arriba) — `entry.entityId` acá es `"transactionId:tagId"`, no un
+      // uuid. Un `.select("id")` genérico contra esa tabla nunca llega a
+      // comprobar nada: PostgREST rechaza la query con "column
+      // transaction_tags.id does not exist" antes de poder decidir si la
+      // fila ya existe, y ese error de esquema quedaba pisando al 23505
+      // original en cada reintento, sin converger nunca.
+      const serverRow =
+        entry.table === "transaction_tags"
+          ? await (async () => {
+              const [transactionId, tagId] = entry.entityId.split(":");
+              const { data, error: checkError } = await supabase
+                .from(config.supabaseTable)
+                .select("transaction_id")
+                .eq("transaction_id", transactionId!)
+                .eq("tag_id", tagId!)
+                .maybeSingle();
+              if (checkError) throw checkError;
+              return data;
+            })()
+          : await (async () => {
+              const { data, error: checkError } = await supabase.from(config.supabaseTable).select("id").eq("id", entry.entityId).maybeSingle();
+              if (checkError) throw checkError;
+              return data;
+            })();
       if (!serverRow) {
         console.error(`[sync] 23505 en insert de ${entry.table}/${entry.entityId} pero la fila no existe en el servidor — no se descarta`, error);
         throw error;
@@ -220,10 +245,25 @@ async function syncOne(
   const { error, data } = await supabase.from(config.supabaseTable).update(row).eq("id", entry.entityId).select("id");
   if (error) throw error;
   if (!data || data.length === 0) {
-    // Caso borde real que el upsert original quería cubrir: la fila no
-    // existe en el servidor (se perdió, o el insert previo nunca llegó).
-    // Recién acá vale la pena un insert — y ahí sí corresponde que la
-    // policy de INSERT se aplique de verdad.
+    // 0 filas afectadas es ambiguo: o la fila no existe todavía en el
+    // servidor (se perdió, o el insert previo nunca llegó — ahí sí vale
+    // un insert, y corresponde que la policy de INSERT se aplique de
+    // verdad), o la fila SÍ existe pero el `USING` de la policy de UPDATE
+    // la bloqueó (el miembro perdió permiso de escritura en el household,
+    // o directamente ya no es miembro activo). Sin distinguir los dos
+    // casos, el segundo caía igual al insert de abajo — que vuelve a
+    // fallar, pero ahora contra la policy de INSERT (`created_by =
+    // auth.uid()`), mostrando "RLS en accounts" en Estado de sincronización
+    // sin que el mensaje tenga nada que ver con la causa real (permiso de
+    // escritura, no de alta), y reintentando para siempre sin que nada
+    // pueda resolverlo solo.
+    const { data: existing, error: existsError } = await supabase.from(config.supabaseTable).select("id").eq("id", entry.entityId).maybeSingle();
+    if (existsError) throw existsError;
+    if (existing) {
+      throw new Error(
+        `No se pudo editar ${entry.table}/${entry.entityId}: la fila existe pero la política de escritura la rechazó (sin permiso vigente en el household).`
+      );
+    }
     const { error: insertError } = await supabase.from(config.supabaseTable).insert(row);
     if (insertError) throw insertError;
   }

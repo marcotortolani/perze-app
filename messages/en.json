@@ -1879,6 +1879,8 @@
   "useCushion": "Use a 3-month cushion ({amount})"
  },
  "recurringPage": {
+  "dueHomeBanner": "{count, plural, one {You have # manual recurring charge pending.} other {You have # manual recurring charges pending.}}",
+  "dueHomeBannerAction": "Log it",
   "empty": "You haven't set up any recurring charge yet.",
   "emptyAction": "Create recurring charge",
   "newRule": "New recurring charge",

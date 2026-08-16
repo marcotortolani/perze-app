@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
@@ -146,6 +146,29 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
   // Se necesita acá para el gate de saldo insuficiente, independiente de
   // que `AmountStep` lo use para su propia vista previa.
   const suggestedRate = useSuggestedFxRate(household?.id, account?.currencyCode, counterAccount?.currencyCode);
+
+  // Moneda por defecto: mismo criterio que la cuenta arriba (último
+  // movimiento cargado), pero acá sí hay que escribir al store una vez
+  // resueltos los datos, porque `""` es un valor válido y ambiguo —
+  // significa tanto "todavía no se tocó" como "elegí explícitamente la
+  // misma moneda de la cuenta" (`CurrencyPickerSheet`). Sin esta escritura
+  // no hay forma de distinguir los dos casos derivando en cada render, a
+  // diferencia de `accountId` que arranca en `null`. Se aplica una sola vez
+  // por montaje (guardado en el ref) y solo si la última moneda usada fue
+  // distinta a la de la cuenta por defecto — si coinciden, `""` ya resuelve
+  // exactamente lo mismo sin necesidad de fijarla.
+  const appliedDefaultCurrencyRef = useRef(false);
+  useEffect(() => {
+    if (appliedDefaultCurrencyRef.current || draft.kind === "transfer") return;
+    if (transactions === undefined) return;
+    appliedDefaultCurrencyRef.current = true;
+    if (draft.currency) return;
+    const last = transactions[0];
+    const lastUsedCurrency = last?.originalCurrency ?? last?.currencyCode;
+    if (lastUsedCurrency && lastUsedCurrency !== defaultAccount?.currencyCode) {
+      setField("currency", lastUsedCurrency);
+    }
+  }, [transactions, draft.currency, draft.kind, defaultAccount, setField]);
 
   // La OTRA conversión (`CLAUDE.md` § "son dos conversiones, no una"): de
   // la moneda en que se tipeó a la de la cuenta. Solo existe cuando el

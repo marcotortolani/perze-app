@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { createStore, useStore, type StoreApi } from "zustand";
+import { todayIso } from "@/lib/dates/today";
 
 export type CaptureKind = "expense" | "income" | "transfer";
 
@@ -87,7 +88,7 @@ function emptyDraft(): CaptureDraft {
     captureFxRateOverride: null,
     amountPinnedTo: "account",
     categoryId: null,
-    occurredAt: new Date().toISOString(),
+    occurredAt: `${todayIso()}T12:00:00.000Z`,
     payeeName: "",
     payeeId: null,
     note: "",

@@ -1879,6 +1879,8 @@
   "useCushion": "Usar colchón de 3 meses ({amount})"
  },
  "recurringPage": {
+  "dueHomeBanner": "{count, plural, one {Tenés # recurrente manual pendiente de cargar.} other {Tenés # recurrentes manuales pendientes de cargar.}}",
+  "dueHomeBannerAction": "Cargar",
   "empty": "Todavía no cargaste ninguna recurrente.",
   "emptyAction": "Crear recurrente",
   "newRule": "Nuevo recurrente",
