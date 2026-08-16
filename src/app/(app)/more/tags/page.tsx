@@ -86,11 +86,16 @@ export default function TagsAndPayeesPage() {
         </section>
       </div>
 
+      {/* Sin `height` fijo: 240/320 quedaban al límite (o por debajo) de lo
+          que el formulario real mide apenas el título envuelve a dos
+          líneas o el dispositivo tiene safe-area — forzaba un scroll
+          interno en un sheet que se ve chico. El default `"auto"` de
+          `Sheet` crece con el contenido hasta 80dvh, que es el patrón que
+          el propio componente documenta como el correcto. */}
       <Sheet
         open={editing !== null}
         title={t(editing?.id ? "tagsPayeesPage.editTitle" : "tagsPayeesPage.newTitle")}
         onClose={() => setEditing(null)}
-        height={editing?.id ? 320 : 240}
       >
         {editing ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.2 — 16 de agosto de 2026
+
+### Arreglado
+
+- El cuadro para crear o editar un tag o un comercio ya no queda chico con un
+  scroll de más — se ajusta al contenido.
+- La evolución de una cuenta (gráfico y tabla) ahora mide día por día en vez de
+  cada una semana, para que se note un movimiento puntual en vez de perderse
+  entre mediciones muy separadas.
+
 ## 0.36.1 — 16 de agosto de 2026
 
 ### Arreglado

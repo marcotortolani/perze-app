@@ -6,6 +6,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.2] — 2026-08-16
+
+### Arreglado — dos ítems de la cola
+
+**Sheet de crear/editar Tag y Comercio, muy chico con scroll innecesario.**
+`src/app/(app)/more/tags/page.tsx:93` — `height={editing?.id ? 320 : 240}`
+fijaba una altura en px al límite (o por debajo) de lo que el formulario
+real necesita; cualquier título que envolviera a dos líneas o safe-area de
+dispositivo lo hacía saltar a un scroll interno chico. Se saca la prop
+`height` y cae al default `"auto"` de `Sheet` (crece con el contenido
+hasta 80dvh), que es el patrón que el propio componente ya documenta como
+correcto.
+
+**Evolución de cuentas — muestreo semanal en vez de diario, gráfico y
+tabla.** `src/lib/analytics/account-evolution.ts:86` — `i % 7 === 0`
+empujaba un punto cada 7 días en una ventana de 90 días (~14 puntos),
+escondiendo movimientos puntuales de un día específico detrás de una línea
+que solo se movía semanalmente. Se saca la condición: ahora un punto por
+día (hasta 91 en 90 días). `LineChart` no dibuja un label por punto (solo
+máximo/mínimo + tooltip del activo), así que no hay amontonamiento en el
+eje. La tabla debajo del gráfico usa el mismo array — un solo lugar
+arregla las dos vistas — pero `DataList` no trae scroll propio, así que se
+agrega un contenedor `maxHeight: 320, overflowY: "auto"` en
+`AccountDetailContent.tsx` para que 91 filas no empujen el resto de la
+pantalla.
+
+### Investigado, sin cambio de código — "from PERZE" en push notifications
+
+El sufijo "from &lt;origen&gt;" que agregan Chrome/Android sobre cualquier
+notificación push web es UI nativa del navegador/SO (atribución de
+seguridad de origen, como el indicador de permisos de cámara/ubicación) —
+ni `send-push/index.ts` ni `sw.ts` generan o controlan ese texto, y la
+Notifications API no da forma de suprimirlo o traducirlo desde el código.
+Usa el idioma del navegador/SO del usuario, no el de la app.
+
 ## [0.36.1] — 2026-08-16
 
 ### Arreglado — orden de reglas recurrentes

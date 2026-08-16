@@ -222,17 +222,23 @@ export function AccountDetailContent({ id }: { id: string }) {
           chartLabel={t("ds.chartCard.chartView")}
           tableLabel={t("ds.chartCard.tableView")}
           table={
-            <DataList
-              columns={[
-                { key: "label", label: t("accountsPage.detail.evolutionDateColumn") },
-                { key: "value", label: t("accountsPage.detail.evolutionBalanceColumn") },
-              ]}
-              rows={evolution.map((p, i) => ({
-                label: p.label,
-                value: formatAmountCompact(money(fromMajorUnitsUnsafe(p.value, account.currencyCode), account.currencyCode), { showSign: false }),
-                emphasis: i === evolution.length - 1,
-              }))}
-            />
+            // Muestreo diario (antes semanal, ver `account-evolution.ts`):
+            // hasta 91 filas en una ventana de 90 días en vez de ~14 —
+            // `DataList` no trae scroll propio, así que sin este tope la
+            // tabla empujaba el resto de la pantalla hacia abajo.
+            <div style={{ maxHeight: 320, overflowY: "auto" }}>
+              <DataList
+                columns={[
+                  { key: "label", label: t("accountsPage.detail.evolutionDateColumn") },
+                  { key: "value", label: t("accountsPage.detail.evolutionBalanceColumn") },
+                ]}
+                rows={evolution.map((p, i) => ({
+                  label: p.label,
+                  value: formatAmountCompact(money(fromMajorUnitsUnsafe(p.value, account.currencyCode), account.currencyCode), { showSign: false }),
+                  emphasis: i === evolution.length - 1,
+                }))}
+              />
+            </div>
           }
         >
           {/* Tarjeta de crédito: `computeAccountEvolution` (D66) YA invierte

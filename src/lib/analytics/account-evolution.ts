@@ -78,14 +78,13 @@ export function computeAccountEvolution({ account, transactions, windowDays, now
     // saldo real, es la ausencia de cuenta. Se omite en vez de graficar
     // `opening_balance` como si hubiera estado ahí todo el tiempo.
     if (account.openingDate && iso < account.openingDate) continue;
-    // `iso === openingDate` fuerza el punto exacto de arranque aunque no
-    // caiga en el muestreo semanal — sin esto, el primer punto visible
-    // podía ser varios días después del arranque real (hasta el próximo
-    // múltiplo de 7), escondiendo el salto real de "no existía" a
-    // `opening_balance`.
-    if (i % 7 === 0 || i === 0 || iso === account.openingDate) {
-      points.push({ isoDate: iso, value: sign * toMajorUnitsUnsafe(money(running, account.currencyCode as CurrencyCode)) });
-    }
+    // Un punto por día, no por semana — el muestreo semanal (`i % 7 === 0`)
+    // escondía movimientos puntuales de un día específico detrás de una
+    // línea que solo se movía cada ~7 días, exactamente lo que esta
+    // evolución debería mostrar. `LineChart` no dibuja un label por punto
+    // (solo máximo/mínimo + tooltip del punto activo), así que no hay
+    // amontonamiento por pasar de ~14 a hasta 91 puntos en 90 días.
+    points.push({ isoDate: iso, value: sign * toMajorUnitsUnsafe(money(running, account.currencyCode as CurrencyCode)) });
   }
   return points;
 }
