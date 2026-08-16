@@ -13,6 +13,7 @@ import { useScopeStore } from "@/stores/scope-store";
 import { accountMatchesScope } from "@/lib/scope/match-scope";
 import { closedPeriodsCount, daysOfHistory, daysUntilPeriodCloses, monthsOfHistory, previousClosedPeriodBounds } from "@/lib/analytics/history";
 import { averageDailyExpense, summarizePeriod } from "@/lib/analytics/period-summary";
+import { MIN_CATEGORY_TRANSACTIONS } from "@/lib/analytics/anomaly-detection";
 import { formatAmountCompact, formatNumber } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
 
@@ -87,6 +88,17 @@ export default function AnalyticsPage() {
   const hasCurrencyHistory = historyMonths >= MIN_INFLATION_MULTI_CURRENCY_MONTHS;
   const netWorthHistoryOk = history >= 7;
 
+  // Anomalías (H-anomalías, auditoría técnica 16-ago-2026): mínimo de
+  // historial propio, no atado al período cerrado — 20 movimientos EN UNA
+  // MISMA categoría, sin importar cuántos períodos abarquen.
+  const categoryTxCounts = new Map<string, number>();
+  for (const tx of transactions) {
+    if (tx.deletedAt !== null || tx.status === "void" || tx.kind !== "expense" || !tx.categoryId || tx.amountBase === null) continue;
+    categoryTxCounts.set(tx.categoryId, (categoryTxCounts.get(tx.categoryId) ?? 0) + 1);
+  }
+  const maxCategoryTxCount = categoryTxCounts.size > 0 ? Math.max(...categoryTxCounts.values()) : 0;
+  const hasAnomaliesHistory = maxCategoryTxCount >= MIN_CATEGORY_TRANSACTIONS;
+
   const AVAILABLE: { key: string; route: string; title: string; subtitle: string }[] = [];
   if (hasTrendsHistory) AVAILABLE.push({ key: "trends", route: "/analytics/trends", title: t("analyticsPage.cards.trends.title"), subtitle: t("analyticsPage.cards.trends.subtitle") });
   if (hasTrendsHistory) AVAILABLE.push({ key: "calendar", route: "/analytics/calendar", title: t("analyticsPage.cards.calendar.title"), subtitle: t("analyticsPage.cards.calendar.subtitle") });
@@ -106,6 +118,9 @@ export default function AnalyticsPage() {
   if (closedPeriods >= 12) {
     AVAILABLE.push({ key: "wrapped", route: "/analytics/wrapped", title: t("analyticsPage.cards.wrapped.title"), subtitle: t("analyticsPage.cards.wrapped.subtitle") });
   }
+  if (hasAnomaliesHistory) {
+    AVAILABLE.push({ key: "anomalies", route: "/analytics/anomalies", title: t("analyticsPage.cards.anomalies.title"), subtitle: t("analyticsPage.cards.anomalies.subtitle") });
+  }
 
   const NOT_YET: { key: string; title: string; note: string }[] = [];
   if (!hasClosedPeriod) {
@@ -116,6 +131,13 @@ export default function AnalyticsPage() {
       key: "currencyAnalyses",
       title: t("analyticsPage.gaps.currencyAnalyses"),
       note: t("analyticsPage.missingMonths", { days: Math.max(0, (MIN_INFLATION_MULTI_CURRENCY_MONTHS - historyMonths) * 30) }),
+    });
+  }
+  if (!hasAnomaliesHistory) {
+    NOT_YET.push({
+      key: "anomaliesAnalyses",
+      title: t("analyticsPage.gaps.anomaliesAnalyses"),
+      note: t("analyticsPage.missingCategoryTransactions", { count: Math.max(0, MIN_CATEGORY_TRANSACTIONS - maxCategoryTxCount) }),
     });
   }
 

@@ -40,6 +40,16 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.38.0 — 16 de agosto de 2026
+
+### Nuevo
+
+- Perze ahora te avisa cuando un gasto se sale bastante de lo habitual en
+  su categoría (por ejemplo, un gasto mucho más alto que lo normal en
+  Restaurantes). Se necesitan al menos 20 movimientos en la categoría para
+  que empiece a detectarlos. Podés ver todos en Análisis → Anomalías, y
+  descartar los que no te interesen.
+
 ## 0.37.0 — 16 de agosto de 2026
 
 ### Nuevo

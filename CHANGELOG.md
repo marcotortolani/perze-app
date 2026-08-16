@@ -6,6 +6,58 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.38.0] — 2026-08-16
+
+### Nuevo — detección de anomalías (auditoría técnica, gap declarado)
+
+`lib/analytics/anomaly-detection.ts` — marca un movimiento individual
+atípico dentro de su categoría, no una tendencia agregada de categoría.
+Método: mediana + MAD (median absolute deviation), z-score modificado de
+Iglewicz-Hoaglin (`mz = 0.6745 * (x - mediana) / MAD`, umbral canónico
+`MODIFIED_Z_THRESHOLD = 3.5`). Se marca anomalía cuando se cumplen las
+tres condiciones a la vez: `mz >= 3.5`, `monto >= 2.5 * mediana`
+(`NOTABLE_MULTIPLIER` — sin este segundo filtro, una categoría con gasto
+muy parejo dispara por diferencias chicas) y la categoría tiene al menos
+`MIN_CATEGORY_TRANSACTIONS = 20` movimientos, el mínimo de historial
+declarado para este análisis. Solo `kind === "expense"`, excluyendo
+`needs_fx` (se cuenta, nunca se trata como 0 — CLAUDE.md § needs_fx). El
+`amountBase` se convierte a `Number` solo para la aritmética estadística
+intermedia; el monto que se muestra siempre sale del `bigint` original.
+
+- Pantalla nueva `/analytics/anomalies`, mismo molde que
+  `analytics/inflation/page.tsx`: gate por historial ("faltan N
+  movimientos en una categoría" en vez de un análisis vacío),
+  `NeedsFxBanner` cuando hay excluidos, cada anomalía en un `InsightCard`
+  descartable. Se registra en el hub (`analytics/page.tsx`) en
+  `AVAILABLE`/`NOT_YET` según si alguna categoría llega al mínimo.
+- `stores/anomaly-dismissals-store.ts` — descarte permanente por
+  `transactionId`, mismo molde que `recurring-suggestions-store.ts`
+  (`sanitizedPersist`/`stringArrayOr`, `name: "perze-anomaly-dismissals"`,
+  `version: 1`).
+- Enganche en el home (`InsightBlock.tsx`): la anomalía más reciente sin
+  descartar dentro de los últimos 14 días (`ANOMALY_RECENT_DAYS` en
+  `home-data.tsx` — mismo horizonte que el sparkline del héroe) entra a la
+  cadena de prioridad del bloque de insight, entre "movimientos sin
+  cotizar" y "categoría con más gasto" — es información específica y
+  accionable sobre UN movimiento, no un resumen genérico. `dismiss` local
+  del bloque sigue efímero de sesión; descartar la anomalía puntual desde
+  ahí también la manda al store persistente.
+- Tests en `anomaly-detection.test.ts`: <20 movimientos no dispara nada,
+  un movimiento ~3x la mediana con `mz >= 3.5` dispara, un movimiento
+  1.2x la mediana con `mz` alto pero bajo `NOTABLE_MULTIPLIER` NO dispara
+  (el caso que justifica el segundo filtro), `needs_fx` se excluye del
+  cálculo y se cuenta, ingresos/borrados/anulados quedan afuera.
+- Claves nuevas en `es`/`en`/`pt`: `analyticsPage.cards.anomalies`,
+  `analyticsPage.gaps.anomaliesAnalyses`,
+  `analyticsPage.missingCategoryTransactions`, namespace `anomaliesPage`
+  completo, `home.anomalyInsight`/`home.seeAnomaly`. El copy explica la
+  anomalía por el síntoma ("gastaste bastante más de lo habitual en
+  Restaurantes: $X vs. tu típico $Y"), nunca menciona mediana/MAD/z-score.
+
+Falla preexistente conocida, no de este cambio:
+`monthly-summary/route.test.ts` — "usa el asunto y el título del año, no
+los del mes" espera "Tu año en Perze" y recibe "Tu año en PERZE" (casing).
+
 ## [0.37.0] — 2026-08-16
 
 ### Nuevo — rollover de presupuesto + banner de cierre de período

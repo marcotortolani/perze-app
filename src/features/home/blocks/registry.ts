@@ -82,7 +82,7 @@ export const HOME_BLOCK_REGISTRY: Record<HomeBlockId, HomeBlockDef> = {
     id: "insight",
     labelKey: "home.customize.blocks.insight",
     Component: InsightBlock,
-    isAvailable: (data) => data.budgetAlerts.length > 0 || data.needsFxCount > 0 || !!data.topCategory,
+    isAvailable: (data) => data.budgetAlerts.length > 0 || data.needsFxCount > 0 || !!data.recentAnomaly || !!data.topCategory,
   },
   "recent-transactions": {
     id: "recent-transactions",

@@ -1402,7 +1402,9 @@
    "formatHow": "Ajustalo a como estás acostumbrado — Ajustes → Formato.",
    "backdropTitle": "Fondo de puntos",
    "backdropHow": "Un detalle visual opcional para el dashboard — Ajustes → Fondo."
-  }
+  },
+  "anomalyInsight": "Gastaste bastante más de lo habitual en {category}: {amount} vs. tu típico {typical}.",
+  "seeAnomaly": "Ver anomalía"
  },
  "analyticsPage": {
   "unavailable": "El análisis todavía no está disponible en esta versión.",
@@ -1465,12 +1467,18 @@
    "wrapped": {
     "title": "Tu año en números",
     "subtitle": "Doce meses, seis pantallas"
+   },
+   "anomalies": {
+    "title": "Anomalías",
+    "subtitle": "¿Qué gasto se te escapó?"
    }
   },
   "gaps": {
    "closedPeriodAnalyses": "Categorías, flujo y comercios",
-   "currencyAnalyses": "Inflación y multi-moneda"
-  }
+   "currencyAnalyses": "Inflación y multi-moneda",
+   "anomaliesAnalyses": "Anomalías"
+  },
+  "missingCategoryTransactions": "Necesita 20 movimientos en una misma categoría. Faltan {count, plural, one {# movimiento} other {# movimientos}}."
  },
  "offlinePage": {
   "title": "Sin conexión",
@@ -2105,14 +2113,14 @@
  },
  "emails": {
   "monthlySummary": {
-  "annualSubject": "Tu año en PERZE: {period}",
-  "annualPreview": "Cómo te fue en {period}",
-  "annualTitle": "Tu resumen del año",
-  "annualNoComparison": "Es tu primer año completo, así que todavía no hay con qué comparar.",
-  "annualSpentMore": "Gastaste {change} más que el año anterior.",
-  "annualSpentLess": "Gastaste {change} menos que el año anterior.",
-  "annualSpentSame": "Gastaste prácticamente lo mismo que el año anterior.",
-  "biggestMonthTitle": "Tu mes más caro",
+   "annualSubject": "Tu año en PERZE: {period}",
+   "annualPreview": "Cómo te fue en {period}",
+   "annualTitle": "Tu resumen del año",
+   "annualNoComparison": "Es tu primer año completo, así que todavía no hay con qué comparar.",
+   "annualSpentMore": "Gastaste {change} más que el año anterior.",
+   "annualSpentLess": "Gastaste {change} menos que el año anterior.",
+   "annualSpentSame": "Gastaste prácticamente lo mismo que el año anterior.",
+   "biggestMonthTitle": "Tu mes más caro",
    "subject": "Tu resumen de {period}",
    "preview": "Cómo te fue en {period}",
    "title": "Tu resumen del período",
@@ -2371,5 +2379,13 @@
   "global": "Global",
   "globalEditNote": "Es una clase global. Guardar crea tu propia copia — la plantilla original no se toca.",
   "reorder": "Reordenar {name}"
+ },
+ "anomaliesPage": {
+  "title": "Anomalías",
+  "loadError": "No pudimos revisar tus movimientos en busca de anomalías.",
+  "needsHistory": "Necesitamos 20 movimientos en una misma categoría para detectar anomalías. Faltan {count, plural, one {# movimiento} other {# movimientos}}.",
+  "empty": "No encontramos movimientos atípicos por ahora.",
+  "item": "Gastaste bastante más de lo habitual en {category} el {date}: {amount} vs. tu típico {typical}.",
+  "seeTransaction": "Ver movimiento"
  }
 }
