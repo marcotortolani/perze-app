@@ -1,3 +1,5 @@
+import { classifyCashFlow } from "@/lib/analytics/cash-flow";
+
 export interface MoneyFlowTransaction {
   kind: "income" | "expense" | "transfer" | "adjustment" | "investing";
   accountId: string;
@@ -48,16 +50,15 @@ export function computeMoneyFlow(
 
   for (const tx of transactions) {
     if (tx.kind === "investing") {
-      if (tx.amountBase === null) {
+      const { bucket, magnitude } = classifyCashFlow(tx);
+      if (bucket === "needsFx") {
         excludedCount++;
-        continue;
+      } else if (bucket === "outflow") {
+        investingBuyByAccount.set(tx.accountId, (investingBuyByAccount.get(tx.accountId) ?? 0n) + magnitude);
+      } else if (bucket === "inflow") {
+        investingSellByAccount.set(tx.accountId, (investingSellByAccount.get(tx.accountId) ?? 0n) + magnitude);
       }
-      if (tx.amountBase < 0n) {
-        investingBuyByAccount.set(tx.accountId, (investingBuyByAccount.get(tx.accountId) ?? 0n) - tx.amountBase);
-      } else if (tx.amountBase > 0n) {
-        investingSellByAccount.set(tx.accountId, (investingSellByAccount.get(tx.accountId) ?? 0n) + tx.amountBase);
-      }
-      // amountBase === 0n: placeholder de needs_capture_fx, no es un movimiento real todavía.
+      // bucket === "structural": amountBase === 0n, placeholder de needs_capture_fx, no es un movimiento real todavía.
       continue;
     }
     if (tx.kind !== "income" && tx.kind !== "expense") continue;

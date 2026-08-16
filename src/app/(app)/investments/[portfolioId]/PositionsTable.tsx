@@ -41,7 +41,11 @@ export interface PositionsTableProps {
 // (una posición de varios millones de pesos, p. ej.) — antes Posiciones
 // tenía la porción más grande de la grilla sin necesitarla, y Valor
 // quedaba apretado.
-const GRID_COLUMNS = "minmax(100px,1fr) minmax(90px,1fr) minmax(70px,0.7fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(140px,1.6fr) 104px";
+// 148px (antes 104px) — ancho suficiente para tres `IconButton` a 44×44
+// (target táctil mínimo, CLAUDE.md) sin que se pisen entre sí. La fila del
+// instrumento solo pone un chevron ahí y le sobra aire; eso es preferible a
+// unos íconos de acción imposibles de tocar con precisión.
+const GRID_COLUMNS = "minmax(100px,1fr) minmax(90px,1fr) minmax(70px,0.7fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(140px,1.6fr) 148px";
 
 /**
  * Monto arriba (color por polaridad, nunca rojo — CLAUDE.md: fuera del
@@ -243,18 +247,16 @@ export default function PositionsTable({ portfolioId, initialExpandedInstrumentI
                         <DeltaCell amount={lotGain} pct={lotEvolutionPct} currencyCode={instrument.currencyCode} />
                       </span>
                       <span style={{ textAlign: "right" }}>{lotValue !== null ? <Amount value={money(lotValue, instrument.currencyCode)} size="label" showSign={false} polarity="neutral" tabular /> : <span className="t-caption" style={{ color: "var(--text-muted)" }}>—</span>}</span>
-                      <span style={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+                      <span style={{ display: "flex", justifyContent: "flex-end" }}>
                         <IconButton
                           icon="minus"
-                          size={28}
                           iconSize={15}
                           ariaLabel={t("positionsTablePage.sellFromThisLot")}
                           onClick={() => router.push(`/investments/${portfolioId}/trades/new?instrumentId=${instrument.id}&kind=sell&lotId=${lot.buyTradeId}`)}
                         />
-                        <IconButton icon="edit" size={28} iconSize={15} ariaLabel={t("positionsTablePage.editTrade")} onClick={() => router.push(`/investments/${portfolioId}/trades/${lot.buyTradeId}/edit`)} />
+                        <IconButton icon="edit" iconSize={15} ariaLabel={t("positionsTablePage.editTrade")} onClick={() => router.push(`/investments/${portfolioId}/trades/${lot.buyTradeId}/edit`)} />
                         <IconButton
                           icon="trash"
-                          size={28}
                           iconSize={15}
                           ariaLabel={t("positionsTablePage.deleteTrade")}
                           onClick={() => setConfirmingDelete({ tradeId: lot.buyTradeId, symbol: instrument.symbol, date: lot.executedAt })}

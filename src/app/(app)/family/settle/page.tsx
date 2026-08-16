@@ -83,7 +83,7 @@ export default function SettleUpPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-        {excludedCount > 0 ? <NeedsFxBanner count={excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 6px", borderRadius: 0 }} /> : null}
+        <NeedsFxBanner count={excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 6px", borderRadius: 0 }} />
         {balances.length === 0 ? (
           <EmptyState message={t("settlePage.allSettled")} />
         ) : (

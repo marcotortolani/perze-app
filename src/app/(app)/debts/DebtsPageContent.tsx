@@ -58,7 +58,7 @@ export default function DebtsPageContent() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 8, paddingBottom: 24 }}>
-      {needsFxCount > 0 ? <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 8px", borderRadius: 0 }} /> : null}
+      <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding)) 8px", borderRadius: 0 }} />
       <ListRow icon="plus" label={t("debtsPage.newDebt")} variant="action" onClick={() => router.push("/debts/new")} />
       {debts.map((debt) => (
         <ListRow

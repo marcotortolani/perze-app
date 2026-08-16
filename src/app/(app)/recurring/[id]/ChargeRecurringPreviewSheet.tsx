@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Amount, Button, FxEditor, Icon, Keypad, SegmentedControl, Sheet } from '@/design-system'
+import { Amount, Button, Chip, FxEditor, Icon, Keypad, SegmentedControl, Sheet } from '@/design-system'
 import { useSuggestedFxRate } from '@/hooks/use-fx-rate'
 import { convert, formatRateTrimmed, invertRate, rateFromAmounts, roundRateForDisplay, type ScaledRate } from '@/lib/fx/rate'
 import { appendKeypadRateDigit, parseKeypadRate } from '@/lib/fx/rate-keypad'
@@ -12,6 +12,7 @@ import { money } from '@/lib/money/money'
 import { amountToExpression } from '@/features/capture/AmountStep'
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import type { AccountRow, HouseholdRow, RecurringRuleRow } from '@/lib/db/schema'
+import { formatAmountCompact } from '@/lib/money/format'
 
 export interface ChargeRecurringPreviewSheetProps {
   open: boolean
@@ -21,6 +22,16 @@ export interface ChargeRecurringPreviewSheetProps {
   targetAccount: AccountRow
   locale: Locale
   saving: boolean
+  /**
+   * Promedio de los últimos 3 cargos reales de la regla
+   * (`suggestedNextAmount`, `src/lib/analytics/recurring-history.ts`) —
+   * `null` sin historial suficiente. Para servicios de monto variable
+   * (agua, luz, gas) suele estar más cerca del próximo cargo que
+   * `rule.expectedAmount`, que solo cambia cuando el usuario confirma un
+   * monto distinto. Se ofrece como atajo en el teclado de "monto de
+   * origen", nunca se aplica solo.
+   */
+  suggestedAmount?: bigint | null
   onClose: () => void
   /** Siempre lo que se veía en pantalla al confirmar — WYSIWYG, nunca se vuelve a resolver después. `originAmount` es el monto pactado, tal cual quedó (el de la regla o el corregido). */
   onConfirm: (rate: ScaledRate, originAmount: bigint) => void
@@ -64,7 +75,7 @@ type View = 'preview' | 'rateKeypad' | 'originKeypad' | 'debitedKeypad'
  * toggle de dirección deja al usuario cambiarlo en cualquier momento,
  * igual que en `/accounts/resolve-fx`.
  */
-export function ChargeRecurringPreviewSheet({ open, household, rule, targetAccount, locale, saving, onClose, onConfirm }: ChargeRecurringPreviewSheetProps) {
+export function ChargeRecurringPreviewSheet({ open, household, rule, targetAccount, locale, saving, suggestedAmount = null, onClose, onConfirm }: ChargeRecurringPreviewSheetProps) {
   const t = useTranslations()
   const numberLocale = numberLocaleForUiLocale(locale)
   const decimalSeparator = decimalSeparatorForLocale(locale)
@@ -237,6 +248,19 @@ export function ChargeRecurringPreviewSheet({ open, household, rule, targetAccou
           <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 28 }}>
             {rule.currencyCode} {originExpr || '0'}
           </div>
+          {/* Atajo con el promedio de los últimos 3 cargos — en vez de
+              forzar a tipear desde cero un servicio que cambia cada ciclo
+              (agua, luz, gas). Solo un prellenado: el usuario lo toca y
+              sigue pudiendo corregir con el teclado, nunca se aplica solo. */}
+          {suggestedAmount !== null ? (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Chip icon="trend" onClick={() => setOriginExpr(amountToExpression(suggestedAmount, rule.currencyCode, locale))}>
+                {t('recurringPage.chargePreviewSuggestedAmount', {
+                  amount: formatAmountCompact(money(suggestedAmount, rule.currencyCode), { showSign: false }),
+                })}
+              </Chip>
+            </div>
+          ) : null}
           <Keypad operators={false} onKey={(k) => setOriginExpr((s) => (k === 'backspace' ? s.slice(0, -1) : s + k))} onClear={() => setOriginExpr('')} />
           <div style={{ display: 'flex', gap: 12 }}>
             <Button variant="secondary" onClick={() => setView('preview')}>

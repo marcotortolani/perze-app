@@ -80,7 +80,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
 
   if (!household || isLoading) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 16 }}>
+      <div className="flex flex-col gap-1 pt-4">
         <Skeleton width={160} height={40} style={{ marginBottom: 16 }} />
         <SkeletonRow />
         <SkeletonRow />
@@ -125,20 +125,20 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
 
   return (
     <div
-      className="scroll-fade-bottom"
+      className="scroll-fade-bottom flex flex-col h-full"
       data-scroll-overflow={overflowing}
-      style={{ "--scroll-fade-inset-right": "8px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 } as CSSProperties}
+      style={{ "--scroll-fade-inset-right": "8px", minHeight: 0 } as CSSProperties}
     >
       <div style={{ flexShrink: 0, textAlign: "center", paddingTop: 16 }}>
-        <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.netWorth")}</span>
+        <span className="t-caption text-text-muted">{t("accountsPage.list.netWorth")}</span>
         {netWorth.data ? (
-          <div style={{ marginTop: 4 }}>
+          <div className="mt-1">
             <Amount value={netWorth.data.netWorth} size="hero" fit showSign={false} polarity="neutral" />
           </div>
         ) : (
           <Skeleton width={140} height={32} style={{ margin: "4px auto 0" }} />
         )}
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+        <div className="flex justify-center gap-5 mt-2 text-text-secondary" style={{ fontSize: 13 }}>
           <span>
             {t("accountsPage.list.assets")} <Amount value={assetsTotal} size="label" showSign={false} polarity="neutral" tabular />
           </span>
@@ -175,8 +175,8 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
             const subtotal = group.reduce((s, a) => s + a.currentBalance, 0n);
             return (
               <div key={currency}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                  <span className="t-label" style={{ color: "var(--text-secondary)" }}>{currency}</span>
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="t-label text-text-secondary">{currency}</span>
                   <Amount value={money(subtotal, currency)} size="label" showSign={false} polarity="neutral" tabular />
                 </div>
                 {renderGroup(group, i === grouped.length - 1 ? newAccountCard : undefined)}
@@ -187,7 +187,7 @@ export function AccountsListContent({ activeId }: AccountsListContentProps) {
 
         {archived.length > 0 ? (
           <div>
-            <span className="t-label" style={{ color: "var(--text-muted)" }}>{t("accountsPage.list.archived")}</span>
+            <span className="t-label text-text-muted">{t("accountsPage.list.archived")}</span>
             {archived.map((a) => (
               <AccountCard key={a.id} account={a} onClick={() => router.push(`/accounts?account=${a.id}`, { scroll: false })} muted />
             ))}
@@ -239,7 +239,7 @@ function DesktopAccountCard({
       }}
       onClick={onClick}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="flex justify-between items-start">
         {iconBackground ? (
           <span style={{ width: 36, height: 36, borderRadius: 10, background: iconBackground, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={18} color="#ffffff" />
@@ -247,7 +247,7 @@ function DesktopAccountCard({
         ) : (
           <Icon name={ACCOUNT_KIND_ICON[account.kind]} size={22} color="var(--text-secondary)" />
         )}
-        <div style={{ display: "flex", gap: 2 }}>
+        <div className="flex gap-0.5">
           <button
             type="button"
             aria-label={t("accountsPage.moveUp")}
@@ -270,7 +270,7 @@ function DesktopAccountCard({
       </div>
       <div>
         <div className="t-body" style={{ fontWeight: 600, color: "var(--text-primary)" }}>{account.name}</div>
-        <div className="t-caption" style={{ color: "var(--text-muted)" }}>
+        <div className="t-caption text-text-muted">
           {t(ACCOUNT_KIND_MESSAGE_KEY[account.kind])}
           {account.countryCode && account.countryCode in COUNTRY_MESSAGE_KEY ? ` · ${t(COUNTRY_MESSAGE_KEY[account.countryCode as keyof typeof COUNTRY_MESSAGE_KEY])}` : ""}
         </div>
@@ -361,7 +361,7 @@ function AccountCard({ account, active = false, onClick, muted = false }: { acco
           <div style={{ textAlign: "right" }}>
             <Amount value={money(account.currentBalance, account.currencyCode)} size="body" showSign={false} polarity="neutral" tabular />
             {usage !== null ? (
-              <div style={{ marginTop: 2 }}>
+              <div className="mt-0.5">
                 <StatusBadge status={usage >= 1 ? "critical" : usage >= 0.8 ? "warning" : "neutral"}>
                   {t("accountsPage.list.creditLimitUsage", { percent: Math.round(usage * 100) })}
                 </StatusBadge>

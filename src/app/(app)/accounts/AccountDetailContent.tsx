@@ -29,7 +29,7 @@ import { accountsRepo } from "@/lib/repos/accounts-repo";
 import { computeAccountEvolution } from "@/lib/analytics/account-evolution";
 import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
 import { formatAmountCompact } from "@/lib/money/format";
-import { formatNumericDate, numberLocaleForUiLocale } from "@/i18n/formatting";
+import { formatDateShort, formatNumericDate, numberLocaleForUiLocale } from "@/i18n/formatting";
 import { useDateFormatPreference } from "@/stores/format-preferences-store";
 import { ACCOUNT_KIND_MESSAGE_KEY } from "@/lib/reference/account-kind-labels";
 import { COUNTRY_MESSAGE_KEY } from "@/lib/reference/countries-currencies";
@@ -102,7 +102,7 @@ export function AccountDetailContent({ id }: { id: string }) {
     if (!account) return [];
     const points = computeAccountEvolution({ account, transactions, windowDays: EVOLUTION_DAYS, now: new Date() });
     return points.map((p) => ({
-      label: new Date(`${p.isoDate}T12:00:00Z`).toLocaleDateString(locale, { day: "2-digit", month: "short", timeZone: "UTC" }),
+      label: formatDateShort(locale, new Date(`${p.isoDate}T12:00:00Z`)),
       value: p.value,
     }));
   }, [account, transactions, locale]);

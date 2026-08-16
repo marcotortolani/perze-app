@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button, EmptyState, StatusBadge, usePageHeader } from "@/design-system";
 import { getDb } from "@/lib/db/client";
 import { outbox } from "@/lib/offline/outbox";
@@ -19,6 +19,8 @@ import { conflictsRepo } from "@/lib/repos/conflicts-repo";
 import type { ConflictRecordRow } from "@/lib/db/schema";
 import { formatAmountCompact } from "@/lib/money/format";
 import { money } from "@/lib/money/money";
+import { formatNumericDate, formatTimeOfDay, type Locale } from "@/i18n/formatting";
+import { useDateFormatPreference } from "@/stores/format-preferences-store";
 
 const BADGE_STATUS: Record<OutboxStatus, "neutral" | "warning" | "critical"> = {
   pending: "neutral",
@@ -46,6 +48,8 @@ function summarize(payload: Record<string, unknown>, categoryLabel: (id: string 
  */
 export default function SyncPage() {
   const t = useTranslations();
+  const locale = useLocale() as Locale;
+  const dateFormat = useDateFormatPreference();
   const router = useRouter();
   const { data: household } = useCurrentHousehold();
   const { conflicts, refresh } = useConflicts(household?.id);
@@ -195,7 +199,9 @@ export default function SyncPage() {
                   <StatusBadge status={BADGE_STATUS[entry.status]}>{t(`syncDiagnosticsPage.statuses.${entry.status}`)}</StatusBadge>
                 </div>
                 <div className="t-caption" style={{ color: "var(--text-muted)" }}>
-                  {t("syncDiagnosticsPage.createdAt", { when: new Date(entry.createdAt).toLocaleString() })}
+                  {t("syncDiagnosticsPage.createdAt", {
+                    when: `${formatNumericDate(locale, new Date(entry.createdAt), dateFormat)} ${formatTimeOfDay(locale, new Date(entry.createdAt))}`,
+                  })}
                 </div>
                 {entry.attempts > 0 ? (
                   <div className="t-caption" style={{ color: "var(--text-muted)" }}>

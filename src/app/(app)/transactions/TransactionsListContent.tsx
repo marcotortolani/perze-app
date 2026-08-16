@@ -30,7 +30,7 @@ import { useDeleteTransactionWithUndo } from "@/features/movements/use-delete-tr
 import { countActiveFilters, defaultMovementsFilters, MovementsFiltersSheet, type MovementsFilters } from "@/features/movements/MovementsFiltersSheet";
 import { dayKeyOf, noonUtc, periodStartFor } from "@/features/movements/calendar-scope";
 import { matchesNonDateFilters } from "@/features/movements/filter-predicate";
-import { formatDateMedium } from "@/i18n/formatting";
+import { formatDateMedium, formatMonthYear } from "@/i18n/formatting";
 import { useCalendarView, useHistoryView } from "./use-calendar-view";
 import { useIsDesktop, SPLIT_BREAKPOINT } from "@/hooks/use-is-desktop";
 import { TransactionsSummaryStrip } from "./TransactionsSummaryStrip";
@@ -603,7 +603,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, histo
               flexShrink: 0,
             }}
           >
-            {new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(noonUtc(`${history.selectedMonth}-01`))}
+            {formatMonthYear(locale, noonUtc(`${history.selectedMonth}-01`))}
             <Icon name="close" size={14} color="var(--text-secondary)" />
           </button>
         ) : null}
@@ -758,7 +758,7 @@ export function MovementsListContent({ calendarSlot, calendarOpen = false, histo
                   {item.type === "header" ? (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "16px 0 6px", background: "var(--page)" }}>
                       <span className="t-label" style={{ color: "var(--text-secondary)" }}>
-                        {new Date(`${item.date}T00:00:00`).toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "short" })}
+                        {formatDateMedium(locale, noonUtc(item.date))}
                         {/* El conteo solo con el calendario abierto: ahí el
                             día es el alcance elegido y saber cuántos son
                             informa. En la lista normal, repetido en cada

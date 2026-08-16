@@ -33,7 +33,7 @@ import { recurringRulesRepo } from '@/lib/repos/recurring-rules-repo'
 import { evaluateKeypadExpression, firstOperand, hasKeypadOperator } from '@/lib/money/keypad'
 import { money } from '@/lib/money/money'
 import { formatRateTrimmed } from '@/lib/fx/rate'
-import { numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
+import { formatMonthName, numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import { todayIso } from '@/lib/repos/ids'
 import type { RecurringFrequency } from '@/lib/db/schema'
 import { amountToExpression } from '@/features/capture/AmountStep'
@@ -49,9 +49,7 @@ const FREQUENCIES: RecurringFrequency[] = [
 const EQUALS_TRANSITION = { duration: 0.24, ease: [0.24, 1.05, 0.32, 1] as const }
 
 function monthName(locale: Locale, month1: number): string {
-  return new Intl.DateTimeFormat(locale, { month: 'long' }).format(
-    new Date(2026, month1 - 1, 1),
-  )
+  return formatMonthName(locale, month1)
 }
 
 /**

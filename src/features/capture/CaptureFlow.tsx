@@ -395,7 +395,6 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
           onOpenCategoryPicker={() => setStep("category")}
           onOpenDetails={() => setSheet("details")}
           onVoice={() => setSheet("voice")}
-          onPhoto={() => toast(t("capture.photoComingSoon"))}
           footerButton={nextOrSaveButton}
         />
       ) : (

@@ -57,13 +57,11 @@ export default function InsightsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {insights.excludedCount > 0 ? (
-        <NeedsFxBanner
-          count={insights.excludedCount}
-          onResolve={() => router.push("/accounts/resolve-fx")}
-          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
-        />
-      ) : null}
+      <NeedsFxBanner
+        count={insights.excludedCount}
+        onResolve={() => router.push("/accounts/resolve-fx")}
+        style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+      />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {!hasAny ? <EmptyState message={t("insightsPage.empty")} /> : null}
         {insights.streak >= 2 ? (

@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, paddingTop: 8, paddingBottom: 24 }}>
-      {needsFxCount > 0 ? <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
+      <NeedsFxBanner count={needsFxCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} />
 
       {/* 60/40, no 50/50: "patrimonio neto" es la cifra que más se estira
           (moneda + miles), "tasa de ahorro"/"gasto diario" son casi

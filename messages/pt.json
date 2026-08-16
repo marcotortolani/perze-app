@@ -360,11 +360,8 @@
   "insufficientFunds": "Saldo insuficiente em {account}",
   "editRate": "Editar taxa de câmbio",
   "voice": "Voz",
-  "photo": "Foto",
   "details": "Detalhes",
   "voiceLabel": "Lançar por voz",
-  "photoLabel": "Foto do recibo",
-  "photoComingSoon": "A foto do recibo ainda não está disponível — em breve.",
   "next": "Avançar",
   "save": "Salvar",
   "savedPendingFx": "Salvo sem taxa de câmbio — resolve sozinho ao reconectar.",
@@ -450,8 +447,7 @@
    "next": "Avançar",
    "saveChanges": "Salvar alterações",
    "updated": "Movimentação atualizada",
-   "voiceUnavailable": "A captura por voz não está disponível ao editar.",
-   "photoComingSoon": "A foto do recibo ainda não está disponível."
+   "voiceUnavailable": "A captura por voz não está disponível ao editar."
   }
  },
  "accounts": {
@@ -1928,6 +1924,7 @@
   "fallbackAccount": "Conta de respaldo",
   "chargePreviewTitle": "Confirmar cobrança",
   "chargePreviewDebited": "Debitado de {name}",
+  "chargePreviewSuggestedAmount": "Usar média recente: {amount}",
   "fallbackAccountHint": "Só é usada se a conta principal não tiver saldo no dia da cobrança",
   "fallbackAccountNone": "Nenhuma",
   "chargedToFallback": "{name} foi cobrado na conta de respaldo — a principal não tinha saldo",

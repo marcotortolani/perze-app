@@ -6,6 +6,64 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.5] — 2026-08-16
+
+### Arreglado — auditoría fase 1/2, 9 ítems mecánicos independientes
+
+- **Fechas fuera de los helpers oficiales.** 8 sitios reemplazados por
+  `formatMonthYear`/`formatDateMedium`/`formatDateShort`/`formatNumericDate`
+  de `@/i18n/formatting` (`TransactionsListContent.tsx`,
+  `TransactionsHistoryPanel.tsx`, `TransactionDetailContent.tsx` — este
+  último pasa además a `formatNumericDate`+`dateFormat` en vez de un
+  `toLocaleDateString`/`toLocaleString` suelto —, `AccountDetailContent.tsx`,
+  `recurring/new/page.tsx`, `recurring/[id]/edit/page.tsx`,
+  `more/sync/page.tsx`). Se agrega `formatMonthName(locale, month1)` a
+  `i18n/formatting.ts` y reemplaza el `new Date(2026, month1 - 1, 1)`
+  hardcodeado que había en tres call sites (año fijo usado solo para tener
+  una fecha válida — se corrige a `new Date().getUTCFullYear()`).
+- **Bug de fecha en `installment-schedule.ts`.** `generateEvenSchedule`
+  construía `dueDate` a medianoche local con `new Date(y, m, d).toISOString()`
+  (cae en el día anterior en husos negativos) y sin clamp de día — un plan
+  arrancando el 31 en un mes de 30 días desbordaba en silencio al mes
+  siguiente. Ahora construye con `Date.UTC(year, month, day, 12)` (mediodía
+  UTC) y clampea al último día real del mes destino. Tests nuevos para huso
+  UTC-3 y para el clamp (mes corto + año bisiesto).
+- **`style={{}}` → Tailwind** en `more/settings/page.tsx` (~25 usos) y
+  `accounts/AccountsListContent.tsx` (10 usos) — solo `display`,
+  `flexDirection`, `gap`, `padding`, `margin`, `alignItems`,
+  `justifyContent` y colores de token, dejando intactos los `style` que son
+  prop de un componente del DS, valores dinámicos/calculados en runtime, o
+  custom properties.
+- **Sankey por `classifyCashFlow`.** `money-flow.ts` reimplementaba a mano
+  el signo de `investing` (compra resta, venta suma) en vez de usar el
+  helper central de `cash-flow.ts` — mismo comportamiento observable,
+  `money-flow.test.ts` sigue en verde.
+- **Targets táctiles <44×44.** `AdminUsersControlBar.tsx` (un `IconButton`
+  a 32) y `PositionsTable.tsx` (tres `IconButton` a 28, columna de acciones
+  del lote ensanchada de 104px a 148px para que entren a 44 sin pisarse).
+- **Salida animada de `NeedsFxBanner`.** El componente ahora se monta
+  siempre y decide internamente mostrar/ocultar con `AnimatedBanner`
+  (`count > 0`) en vez de que cada uno de sus ~13 callers lo
+  monte/desmonte por fuera con `{count > 0 ? <NeedsFxBanner/> : null}` —
+  mismo patrón que ya resuelve la salida animada de los banners del home.
+- **Transición en `CategoryStep.tsx`.** El swap entre la grilla raíz y la
+  vista de subcategorías expandidas (mantener presionada una burbuja con
+  hijas) ahora pasa por `DetailPanelTransition` en vez de reemplazarse de
+  golpe — mismo componente que ya anima el panel de detalle de
+  `/transactions` y `/accounts`, respeta intensidad de motion y
+  `prefers-reduced-motion`.
+- **Foto de ticket sin acción.** Se saca el botón "Foto" de `AmountStep`
+  (prop `onPhoto`, sin reemplazo hasta que exista OCR real) y sus dos
+  callers (`CaptureFlow.tsx`, `EditTransactionFlow.tsx`). Claves
+  `capture.photo`, `capture.photoLabel`, `capture.photoComingSoon` y
+  `movements.editFlow.photoComingSoon` retiradas de `es`/`en`/`pt`.
+- **Sugerencia de monto en recurrentes de monto variable.** Nueva
+  `suggestedNextAmount(series)` en `recurring-history.ts` — promedio de los
+  últimos 3 cargos reales de la regla. `ChargeRecurringPreviewSheet`
+  (`recurring/[id]/`) la muestra como un `Chip` atajo en el teclado de
+  "monto de origen": un tap prellena el monto con el promedio en vez de
+  forzar a tipearlo desde cero, y sigue siendo editable después.
+
 ## [0.36.4] — 2026-08-16
 
 ### Arreglado — ventana de evolución de cuentas, 90 → 30 días

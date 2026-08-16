@@ -29,7 +29,7 @@ import { recurringRulesRepo } from '@/lib/repos/recurring-rules-repo'
 import { transactionsRepo } from '@/lib/repos/transactions-repo'
 import { evaluateKeypadExpression, hasKeypadOperator } from '@/lib/money/keypad'
 import { formatRateTrimmed } from '@/lib/fx/rate'
-import { numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
+import { formatMonthName, numberLocaleForUiLocale, type Locale } from '@/i18n/formatting'
 import type { RecurringFrequency } from '@/lib/db/schema'
 import { todayIso } from '@/lib/repos/ids'
 import { amountToExpression } from '@/features/capture/AmountStep'
@@ -47,9 +47,7 @@ const EQUALS_TRANSITION = {
 }
 
 function monthName(locale: Locale, month1: number): string {
-  return new Intl.DateTimeFormat(locale, { month: 'long' }).format(
-    new Date(2026, month1 - 1, 1),
-  )
+  return formatMonthName(locale, month1)
 }
 
 /** G3 — nueva regla recurrente: nombre, cuenta, frecuencia, monto esperado, auto-registro. */

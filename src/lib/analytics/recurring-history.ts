@@ -35,6 +35,24 @@ export function amountSeries(transactions: readonly { occurredAt: string; amount
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
+/**
+ * Sugerencia de próximo monto para una regla de monto variable (agua, luz,
+ * gas, cualquier servicio que no cobra siempre lo mismo): promedio de los
+ * últimos 3 cargos reales de la serie. Existe para que "Cargar ahora" no
+ * fuerce a tipear el monto desde cero en cada ciclo — el promedio reciente
+ * suele estar más cerca del próximo cargo que el `expectedAmount` de la
+ * regla, que solo se actualiza cuando el usuario confirma un monto
+ * distinto. `null` con el mismo mínimo que `detectPriceIncrease`
+ * (`RECURRING_HISTORY_MIN_POINTS`): un promedio de 1-2 cargos no es una
+ * sugerencia, es ruido.
+ */
+export function suggestedNextAmount(series: readonly AmountPoint[]): bigint | null {
+  if (series.length < RECURRING_HISTORY_MIN_POINTS) return null;
+  const lastThree = series.slice(-3);
+  const sum = lastThree.reduce((s, p) => s + p.amount, 0n);
+  return sum / BigInt(lastThree.length);
+}
+
 /** Aumento entre el último monto y el anterior monto DISTINTO — nunca entre dos puntos iguales. `null` si no hay suficiente historial o el cambio no llega al umbral. */
 export function detectPriceIncrease(series: readonly AmountPoint[], frequency: RecurringFrequency): PriceIncrease | null {
   if (series.length < RECURRING_HISTORY_MIN_POINTS) return null;

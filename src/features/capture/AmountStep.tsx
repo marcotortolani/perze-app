@@ -45,7 +45,6 @@ export interface AmountStepProps {
   onOpenCategoryPicker: () => void;
   onOpenDetails: () => void;
   onVoice: () => void;
-  onPhoto: () => void;
   /**
    * El `MorphButton` de "Siguiente"/"Guardar" del caller — se dibuja en la
    * misma fila que "=", no debajo, para ahorrar el alto que le cuesta al
@@ -104,7 +103,6 @@ export function AmountStep({
   onOpenCategoryPicker,
   onOpenDetails,
   onVoice,
-  onPhoto,
   footerButton,
 }: AmountStepProps) {
   const t = useTranslations();
@@ -437,12 +435,6 @@ export function AmountStep({
           <Icon name="mic" size={20} color="var(--text-secondary)" />
           <span className="t-caption" style={{ color: "var(--text-muted)" }}>
             {t("capture.voice")}
-          </span>
-        </button>
-        <button type="button" onClick={onPhoto} aria-label={t("capture.photoLabel")} style={{ background: "none", border: 0, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <Icon name="camera" size={20} color="var(--text-secondary)" />
-          <span className="t-caption" style={{ color: "var(--text-muted)" }}>
-            {t("capture.photo")}
           </span>
         </button>
         <button

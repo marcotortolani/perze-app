@@ -49,13 +49,11 @@ export default function TrendsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {excludedCount > 0 ? (
-        <NeedsFxBanner
-          count={excludedCount}
-          onResolve={() => router.push("/accounts/resolve-fx")}
-          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
-        />
-      ) : null}
+      <NeedsFxBanner
+        count={excludedCount}
+        onResolve={() => router.push("/accounts/resolve-fx")}
+        style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+      />
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile
           label={t("trendsPage.thisWeek")}

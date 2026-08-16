@@ -122,7 +122,7 @@ export default function WrappedPage() {
           meterlo en cada frame competiría con "una cifra, una pantalla" —
           la razón de ser de este diseño. Se avisa una sola vez, al
           arrancar, en vez de en cada cifra que pueda estar subcontada. */}
-      {frame === 0 && summary.excludedCount > 0 ? (
+      {frame === 0 ? (
         <NeedsFxBanner
           count={summary.excludedCount}
           onResolve={() => router.push("/accounts/resolve-fx")}

@@ -165,7 +165,7 @@ export default function RecurringPageContent() {
           value={committedQuery.data ? formatAmountCompact(money(committedQuery.data.total, household.baseCurrency), { showSign: false }) : "—"}
           style={{ marginBottom: 4 }}
         />
-        {committedQuery.data ? <NeedsFxBanner count={committedQuery.data.excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} style={{ marginBottom: 8 }} /> : null}
+        <NeedsFxBanner count={committedQuery.data?.excludedCount ?? 0} onResolve={() => router.push("/accounts/resolve-fx")} style={{ marginBottom: 8 }} />
 
         {next && nextRule ? (
           <p className="t-body mt-1 mb-3 text-text-secondary">

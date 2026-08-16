@@ -50,7 +50,7 @@ export default function BudgetsPageContent() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingTop: 8, paddingBottom: 24 }}>
-      {excludedTotal > 0 ? <NeedsFxBanner count={excludedTotal} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} /> : null}
+      <NeedsFxBanner count={excludedTotal} onResolve={() => router.push("/accounts/resolve-fx")} style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }} />
       <ListRow icon="plus" label={t("budgetsPage.newBudget")} variant="action" onClick={() => router.push("/budgets/new")} />
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {budgets.map((budget) => {

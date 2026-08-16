@@ -10,7 +10,7 @@ import { useScopedTransactions } from "@/hooks/use-scoped-transactions";
 import { dayKeyOf, localMidnightIso, monthOfDay } from "@/features/movements/calendar-scope";
 import { add, money, subtract, zero } from "@/lib/money/money";
 import { classifyCashFlow } from "@/lib/analytics/cash-flow";
-import type { Locale } from "@/i18n/formatting";
+import { formatMonthName, type Locale } from "@/i18n/formatting";
 
 /** Techo compartido con `TransactionsMonthCalendar` — las dos vistas ocupan la misma columna. */
 const PANEL_MAX_WIDTH = 480;
@@ -29,7 +29,7 @@ const PANEL_MAX_WIDTH = 480;
 const SELECTION_BLEED = 12;
 
 function monthName(locale: Locale, month1: number): string {
-  return new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(2026, month1 - 1, 1));
+  return formatMonthName(locale, month1);
 }
 
 export interface TransactionsHistoryPanelProps {
@@ -121,7 +121,7 @@ export function TransactionsHistoryPanel({ selectedMonth, onSelectMonth }: Trans
         <div className="mt-0.5 text-[15px] text-text-primary">{year}</div>
       </button>
 
-      {excludedCount > 0 ? <NeedsFxBanner count={excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} /> : null}
+      <NeedsFxBanner count={excludedCount} onResolve={() => router.push("/accounts/resolve-fx")} />
 
       <div className="flex flex-col">
         {!txLoading
