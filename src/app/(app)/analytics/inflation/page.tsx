@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { EmptyState, Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { EmptyState, NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useTransactions } from "@/hooks/use-transactions";
 import { usePriceIndex } from "@/hooks/use-price-index";
@@ -54,6 +54,13 @@ export default function InflationPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {summary.excludedCount > 0 ? (
+        <NeedsFxBanner
+          count={summary.excludedCount}
+          onResolve={() => router.push("/accounts/resolve-fx")}
+          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+        />
+      ) : null}
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ display: "flex", gap: 16 }}>
           <StatTile label={t("inflationPage.nominal")} value={formatAmountCompact(money(summary.expenseTotal, household.baseCurrency), { showSign: false })} style={{ flex: 1 }} />

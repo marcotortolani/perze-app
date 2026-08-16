@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, Skeleton, StoryFrame } from "@/design-system";
+import { Button, EmptyState, NeedsFxBanner, Skeleton, StoryFrame } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useAccounts } from "@/hooks/use-accounts";
 import { usePayees } from "@/hooks/use-payees";
@@ -117,6 +117,18 @@ export default function WrappedPage() {
   return (
     <div style={{ position: "fixed", inset: 0, background: "var(--page)" }}>
       {frames[frame]}
+      {/* Solo en la portada (frame 0): `StoryFrame` no tiene un slot para
+          esto (`figure`/`line`/`cover` nada más, ver el componente) y
+          meterlo en cada frame competiría con "una cifra, una pantalla" —
+          la razón de ser de este diseño. Se avisa una sola vez, al
+          arrancar, en vez de en cada cifra que pueda estar subcontada. */}
+      {frame === 0 && summary.excludedCount > 0 ? (
+        <NeedsFxBanner
+          count={summary.excludedCount}
+          onResolve={() => router.push("/accounts/resolve-fx")}
+          style={{ position: "absolute", top: "env(safe-area-inset-top)", left: 0, right: 0, zIndex: 1 }}
+        />
+      ) : null}
       <button
         type="button"
         aria-label={t("wrappedPage.back")}

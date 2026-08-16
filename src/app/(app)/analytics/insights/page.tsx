@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Card, EmptyState, Skeleton, usePageHeader } from "@/design-system";
+import { Card, EmptyState, NeedsFxBanner, Skeleton, usePageHeader } from "@/design-system";
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCategories } from "@/hooks/use-categories";
@@ -33,13 +33,16 @@ export default function InsightsPage() {
     const streak = computeLoggingStreak(transactions, now);
     const { start, end } = currentPeriodBounds(household.periodStartDay || 1, now);
     const activeBudgets = budgets.filter((b) => !b.archivedAt);
+    let excludedCount = 0;
     const paceInputs = activeBudgets.map((b) => {
       const progress = computeBudgetProgress({ categoryId: b.categoryId, amountLimit: b.amountLimit }, transactions, start, end, categories);
+      excludedCount += progress.excludedCount;
       return { categoryId: b.categoryId, amountLimit: b.amountLimit, spent: progress.spent };
     });
     const pace = computeBudgetPaceInsights(paceInputs, start, end, now);
     return {
       streak,
+      excludedCount,
       pace: pace.map((p) => ({
         label: p.categoryId ? categoryLabel(p.categoryId) : t("insightsPage.wholeHousehold"),
         date: p.projectedOverspendDate,
@@ -54,6 +57,13 @@ export default function InsightsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {insights.excludedCount > 0 ? (
+        <NeedsFxBanner
+          count={insights.excludedCount}
+          onResolve={() => router.push("/accounts/resolve-fx")}
+          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+        />
+      ) : null}
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {!hasAny ? <EmptyState message={t("insightsPage.empty")} /> : null}
         {insights.streak >= 2 ? (

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
-import { Skeleton, StatTile, usePageHeader } from "@/design-system";
+import { NeedsFxBanner, Skeleton, StatTile, usePageHeader } from "@/design-system";
 
 // C15/auditoría: importar `BarChart` directo de su archivo (no del barrel
 // `@/design-system`, que re-exporta los 13 componentes de charts juntos)
@@ -31,11 +31,14 @@ export default function TrendsPage() {
 
   const now = new Date();
   const baseCurrency = household.baseCurrency;
+  const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (DAYS - 1)).toISOString().slice(0, 10);
+  const windowExpenses = transactions.filter((tx) => tx.kind === "expense" && tx.occurredAt.slice(0, 10) >= cutoff);
+  const excludedCount = windowExpenses.filter((tx) => tx.amountBase === null).length;
   const days = Array.from({ length: DAYS }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (DAYS - 1 - i));
     const iso = d.toISOString().slice(0, 10);
-    const total = transactions
-      .filter((tx) => tx.kind === "expense" && tx.amountBase !== null && tx.occurredAt.slice(0, 10) === iso)
+    const total = windowExpenses
+      .filter((tx) => tx.amountBase !== null && tx.occurredAt.slice(0, 10) === iso)
       .reduce((s, tx) => s + tx.amountBase!, 0n);
     return { date: d, total };
   });
@@ -46,6 +49,13 @@ export default function TrendsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {excludedCount > 0 ? (
+        <NeedsFxBanner
+          count={excludedCount}
+          onResolve={() => router.push("/accounts/resolve-fx")}
+          style={{ margin: "0 calc(-1 * var(--screen-padding))", borderRadius: 0 }}
+        />
+      ) : null}
       <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
         <StatTile
           label={t("trendsPage.thisWeek")}

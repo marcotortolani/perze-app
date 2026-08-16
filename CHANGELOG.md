@@ -6,6 +6,54 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.0] — 2026-08-16
+
+### Agregado — auto-detección de recurrentes (Nivel 2 #2 de la auditoría)
+
+`src/lib/analytics/recurring-detection.ts` — agrupa el historial por
+`payeeId` + `kind`, detecta periodicidad (weekly/biweekly/monthly/yearly,
+ventanas de tolerancia en días entre cargos consecutivos, tolera un
+outlier) y estabilidad de monto (±15% del monto mediano — deja pasar una
+factura de luz que varía mes a mes), con mínimo 3 repeticiones dentro de
+una ventana de 6 meses. Excluye comercios que ya tienen una regla activa
+(por nombre) o que ya tienen algún movimiento vinculado vía `recurringId`.
+10 tests (`recurring-detection.test.ts`).
+
+`src/stores/recurring-suggestions-store.ts` — descarte de una sugerencia
+sin persistir en DB (mismo patrón que `reminder-banner-store.ts`,
+`dismissedForever`-style: no reaparece salvo que el patrón real cambie —
+la `key` incluye el monto, así que un cambio real de monto es una
+sugerencia nueva, no la misma reapareciendo).
+
+`RecurringPageContent.tsx` — nueva sección "¿Es esto un recurrente?"
+antes de las secciones Auto/Manual existentes, con "Crear regla"
+(navega a `/recurring/new` prefilleado) y "No, gracias" (descarta). Con
+household sin ninguna regla pero con sugerencias detectadas, ya no cae al
+`EmptyState` genérico — se muestran las sugerencias.
+
+`/recurring/new/page.tsx` — nuevos query params `suggestedName`/
+`suggestedFrequency` (validado contra la lista real de `RecurringFrequency`)
+/`suggestedDay`, prefilleando lo que el prefill existente de
+`fromTransaction` no cubría (el nombre nunca se prefilleaba ahí).
+
+### Arreglado — `NeedsFxBanner` en 7 pantallas de analytics (Nivel 2 #5)
+
+Categorías, comercios, tendencias, inflación, wrapped, insights y
+calendario agregaban plata sin declarar cuántos movimientos `needs_fx`
+excluyeron — en ningún caso el bug era "se suma como si valiera 0" (ya
+estaban bien excluidos), el problema era la falta de declaración:
+
+- **Categorías, inflación, insights**: la función de analytics YA
+  calculaba `excludedCount` (`expenseByCategory`, `summarizePeriod`,
+  `computeBudgetProgress` sumado por presupuesto activo) y la pantalla lo
+  descartaba sin renderizarlo.
+- **Comercios, tendencias, calendario**: el filtrado de `needs_fx` era
+  inline y nunca contaba cuántos excluía — se agrega el contador.
+- **Wrapped**: layout de `StoryFrame` (una cifra por pantalla) sin slot
+  para un banner — se muestra solo en el frame de portada (frame 0), como
+  overlay, para no competir con "una cifra, una pantalla" del resto de
+  los frames.
+
 ## [0.35.8] — 2026-08-16
 
 ### Arreglado — resolución del Nivel 1 de la auditoría (seguridad + frontend)

@@ -40,6 +40,21 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.0 — 16 de agosto de 2026
+
+### Nuevo
+
+- En Recurrentes, ahora te avisamos cuando detectamos un pago que se repite todos
+  los meses con el mismo monto (por ejemplo una suscripción), para que puedas
+  crear la regla con un toque en vez de armarla a mano. Si no te interesa, podés
+  descartar el aviso y no vuelve a aparecer.
+
+### Mejorado
+
+- En Categorías, Comercios, Tendencias, Inflación, Insights, Calendario y el
+  resumen anual (Wrapped), ahora te avisamos cuando hay movimientos sin
+  cotización que quedaron afuera del total, con acceso directo a resolverlos.
+
 ## 0.35.8 — 16 de agosto de 2026
 
 ### Mejorado

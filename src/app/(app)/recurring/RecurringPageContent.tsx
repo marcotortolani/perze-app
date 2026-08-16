@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,9 +9,12 @@ import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useRecurringRules } from "@/hooks/use-recurring-rules";
-import { useRecurringOccurrences } from "@/hooks/use-transactions";
+import { useRecurringOccurrences, useTransactions } from "@/hooks/use-transactions";
+import { usePayees } from "@/hooks/use-payees";
 import { useQueryErrorState } from "@/hooks/use-query-error-state";
+import { useRecurringSuggestionsStore } from "@/stores/recurring-suggestions-store";
 import { computeMonthlyCommitted, computeUpcomingCharges } from "@/lib/analytics/recurring-schedule";
+import { detectRecurringCandidates } from "@/lib/analytics/recurring-detection";
 import { occurrencesBetween } from "@/lib/recurring/occurrences";
 import { relativeDayLabel } from "@/lib/recurring/format-date-label";
 import { formatAmountCompact } from "@/lib/money/format";
@@ -44,6 +48,8 @@ export default function RecurringPageContent() {
   const { data: rules } = rulesQuery;
   const { data: accounts = [] } = accountsQuery;
   const { data: recurringOccurrences = [] } = useRecurringOccurrences(household?.id);
+  const transactionsQuery = useTransactions(household?.id);
+  const payeesQuery = usePayees(household?.id);
   const accountFilter = searchParams.get("accountId");
   const currencyFilter = searchParams.get("currency");
 
@@ -55,6 +61,20 @@ export default function RecurringPageContent() {
 
   // Subpágina de `/more`: header propio con "volver", registrado vía `usePageHeader`.
   usePageHeader({ title: t("morePage.recurring"), onBack: () => router.back(), backLabel: t("ds.appHeader.back") });
+
+  // Auto-detección (docs/00-producto.md § "Goteo de suscripciones") —
+  // agrupa el historial por comercio y sugiere crear una regla cuando el
+  // patrón de fecha+monto ya se repitió 3 veces o más. Antes de la lista
+  // de reglas EXISTENTES para no competir con ella en jerarquía, pero
+  // hooks primero: tiene que calcularse acá arriba, no después del
+  // `if (!household...)` de más abajo.
+  const dismissedKeys = useRecurringSuggestionsStore((s) => s.dismissedKeys);
+  const dismissSuggestion = useRecurringSuggestionsStore((s) => s.dismiss);
+  const payeeNameById = useMemo(() => new Map((payeesQuery.data ?? []).map((p) => [p.id, p.name])), [payeesQuery.data]);
+  const suggestions = useMemo(() => {
+    if (!transactionsQuery.data || !rules) return [];
+    return detectRecurringCandidates(transactionsQuery.data, payeeNameById, rules, todayIso()).filter((c) => !dismissedKeys.includes(c.key));
+  }, [transactionsQuery.data, payeeNameById, rules, dismissedKeys]);
 
   const errorState = useQueryErrorState(rulesQuery.isError ? rulesQuery : accountsQuery, { what: t("recurringPage.loadError") });
   if (errorState) return <ErrorState {...errorState} />;
@@ -68,7 +88,12 @@ export default function RecurringPageContent() {
     );
   }
 
-  if (rules.length === 0) {
+  // Con sugerencias detectadas, no hay "todavía no cargaste ninguna
+  // recurrente" que valga — hay una acción mejor que ofrecer que el
+  // `EmptyState` genérico, así que se deja pasar al render completo (las
+  // secciones Auto/Manual, vacías, caen solas al `emptyFiltered` de más
+  // abajo).
+  if (rules.length === 0 && suggestions.length === 0) {
     return <EmptyState message={t("recurringPage.empty")} actionLabel={t("recurringPage.emptyAction")} onAction={() => router.push("/recurring/new")} />;
   }
 
@@ -138,6 +163,55 @@ export default function RecurringPageContent() {
         <div className="lg:hidden">
           <ListRow icon="calendar" label={t("recurringPage.viewCalendar")} onClick={() => router.push("/recurring/calendar")} />
         </div>
+
+        {/* Sugerencias detectadas — antes de los filtros/secciones de
+            reglas YA creadas, porque son la acción proactiva de la
+            pantalla ("¿creamos una regla?"), no parte de lo existente. */}
+        {suggestions.length > 0 ? (
+          <div className="mt-3 mb-1 flex flex-col gap-2">
+            <div className="t-caption text-text-muted">{t("recurringPage.suggestionsSection")}</div>
+            {suggestions.map((c) => (
+              <div key={c.key} className="rounded-card bg-surface-2 flex flex-col gap-3 p-3.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[15px] text-text-primary">
+                      {t("recurringPage.suggestionDetected", { name: c.payeeName, frequency: t(`recurringPage.frequency.${c.frequency}`).toLowerCase() })}
+                    </div>
+                    <div className="t-caption text-text-muted">{t("recurringPage.suggestionMatchCount", { count: c.matchCount })}</div>
+                  </div>
+                  <Amount
+                    value={money(c.kind === "expense" ? -c.expectedAmount : c.expectedAmount, c.currencyCode)}
+                    size="body"
+                    polarity={c.kind === "income" ? "positive" : "negative"}
+                    tabular
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => dismissSuggestion(c.key)} style={{ flex: 1 }}>
+                    {t("recurringPage.suggestionDismiss")}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // `fromTransaction` reusa el prefill que ya existe en
+                      // `/recurring/new` (nombre no incluido ahí — lo suma
+                      // `suggestedName`); `suggestedFrequency`/`suggestedDay`
+                      // son nuevos, del patrón que ya detectamos acá.
+                      const params = new URLSearchParams();
+                      params.set("fromTransaction", c.lastTransactionId);
+                      params.set("suggestedName", c.payeeName);
+                      params.set("suggestedFrequency", c.frequency);
+                      if (c.dayOfMonth !== null) params.set("suggestedDay", String(c.dayOfMonth));
+                      router.push(`/recurring/new?${params.toString()}`);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    {t("recurringPage.suggestionCreateRule")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {accountsWithRules.length > 1 ? (
           <div className="flex flex-wrap gap-2 py-2">

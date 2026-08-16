@@ -60,6 +60,21 @@ export default function NewRecurringRulePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromTransactionId = searchParams.get('fromTransaction') ?? undefined
+  // Prefill desde una sugerencia de auto-detección
+  // (`recurring-detection.ts`) — `fromTransaction` de arriba ya resuelve
+  // cuenta/categoría/monto/kind vía `origin` más abajo, pero no el nombre
+  // (nunca lo necesitó el caso "desde un movimiento" que lo originó). Se
+  // leen una sola vez del `useState` inicial: son strings de la URL, no
+  // dependen de un fetch async como `origin`, así que no hace falta el
+  // mismo guard de `prefilledFromOrigin`.
+  const suggestedName = searchParams.get('suggestedName')
+  const suggestedFrequencyRaw = searchParams.get('suggestedFrequency')
+  const suggestedFrequency = FREQUENCIES.includes(
+    suggestedFrequencyRaw as RecurringFrequency,
+  )
+    ? (suggestedFrequencyRaw as RecurringFrequency)
+    : null
+  const suggestedDay = searchParams.get('suggestedDay')
   const categoryLabel = useCategoryLabel()
   const { data: household } = useCurrentHousehold()
   const userId = useEffectiveUserId()
@@ -68,15 +83,17 @@ export default function NewRecurringRulePage() {
   const { data: origin } = useTransaction(fromTransactionId)
   const invalidateRules = useInvalidateRecurringRules(household?.id)
 
-  const [name, setName] = useState('')
+  const [name, setName] = useState(suggestedName ?? '')
   const [kind, setKind] = useState<'expense' | 'income'>('expense')
   const [accountId, setAccountId] = useState<string | null>(null)
   const [fallbackAccountId, setFallbackAccountId] = useState<string | null>(
     null,
   )
   const [categoryId, setCategoryId] = useState<string | null>(null)
-  const [frequency, setFrequency] = useState<RecurringFrequency>('monthly')
-  const [dayOfMonth, setDayOfMonth] = useState('1')
+  const [frequency, setFrequency] = useState<RecurringFrequency>(
+    suggestedFrequency ?? 'monthly',
+  )
+  const [dayOfMonth, setDayOfMonth] = useState(suggestedDay ?? '1')
   const [yearlyMonth, setYearlyMonth] = useState(() =>
     Number(todayIso().split('-')[1]),
   )
