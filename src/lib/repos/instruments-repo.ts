@@ -9,6 +9,8 @@ export interface AssetClass {
   sortOrder: number | null;
   /** `null` = plantilla global sembrada; nunca se edita ni se borra directo, se clona (Patrón C). */
   householdId: string | null;
+  /** `'low' | 'medium' | 'high' | null` — dimensión `risk` del rebalanceo de cartera agrupa por acá, nunca se calcula en la pantalla. */
+  defaultRisk: string | null;
 }
 
 export interface AmortizationStep {
@@ -45,9 +47,9 @@ export interface Instrument {
 export const instrumentsRepo = {
   async listAssetClasses(): Promise<AssetClass[]> {
     const supabase = createClient();
-    const { data, error } = await supabase.from("asset_classes").select("id, name, icon, color, sort_order, household_id").order("sort_order", { ascending: true });
+    const { data, error } = await supabase.from("asset_classes").select("id, name, icon, color, sort_order, household_id, default_risk").order("sort_order", { ascending: true });
     if (error) throw error;
-    return (data ?? []).map((row) => ({ id: row.id, name: row.name, icon: row.icon, color: row.color, sortOrder: row.sort_order, householdId: row.household_id }));
+    return (data ?? []).map((row) => ({ id: row.id, name: row.name, icon: row.icon, color: row.color, sortOrder: row.sort_order, householdId: row.household_id, defaultRisk: row.default_risk }));
   },
 
   /** I8 — clona una clase global al editarla por primera vez (copy-on-write, nunca se muta la plantilla). */
@@ -61,10 +63,11 @@ export const instrumentsRepo = {
       color: patch.color ?? source.color,
       sort_order: source.sortOrder,
       source_id: source.id,
+      default_risk: source.defaultRisk,
     };
     const { error } = await supabase.from("asset_classes").insert(row as never);
     if (error) throw error;
-    return { id: row.id, name: row.name, icon: row.icon, color: row.color, sortOrder: row.sort_order, householdId };
+    return { id: row.id, name: row.name, icon: row.icon, color: row.color, sortOrder: row.sort_order, householdId, defaultRisk: row.default_risk };
   },
 
   /** Edita una clase ya propia del household (no la plantilla global). */
@@ -79,7 +82,7 @@ export const instrumentsRepo = {
     const row = { id: newId(), household_id: householdId, name, icon: null, color: null, sort_order: sortOrder, source_id: null };
     const { error } = await supabase.from("asset_classes").insert(row as never);
     if (error) throw error;
-    return { id: row.id, name: row.name, icon: null, color: null, sortOrder: row.sort_order, householdId };
+    return { id: row.id, name: row.name, icon: null, color: null, sortOrder: row.sort_order, householdId, defaultRisk: null };
   },
 
   async deleteOwn(id: string): Promise<void> {

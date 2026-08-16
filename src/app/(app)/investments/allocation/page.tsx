@@ -11,13 +11,13 @@ import { useAssetClassLabel } from "@/hooks/use-asset-class-label";
 import { useCachedLatestPrices } from "@/hooks/use-cached-latest-prices";
 import { useElementSize } from "@/hooks/use-element-size";
 import { computePositions } from "@/lib/analytics/positions";
+import { valuePositionsInBase } from "@/lib/analytics/position-valuation";
 import { squarify } from "@/lib/layout/treemap";
 import { heatMixPercent } from "@/features/movements/calendar-scope";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { convert } from "@/lib/fx/rate";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
-import { fromMajorUnitsUnsafe, money } from "@/lib/money/money";
+import { money } from "@/lib/money/money";
 import { formatNumber } from "@/lib/money/format";
 
 interface AllocationBlock {
@@ -93,35 +93,13 @@ export default function AllocationPage() {
   const assetClassById = new Map(assetClasses.map((a) => [a.id, a]));
   const positions = computePositions(trades.map((tr) => ({ id: tr.id, instrumentId: tr.instrumentId, kind: tr.kind, quantity: tr.quantity, price: tr.price, netAmount: tr.netAmount, executedAt: tr.executedAt })));
 
-  const toBase = (value: bigint, currencyCode: string): bigint | null => {
-    if (currencyCode === household.baseCurrency) return value;
-    const resolution = fxRatesQuery.data?.get(currencyCode);
-    if (!resolution?.rate) return null;
-    return convert(money(value, currencyCode), household.baseCurrency, resolution.rate).amount;
-  };
-
-  let totalValue = 0n;
-  let excludedFxCount = 0;
-  let excludedNoPriceCount = 0;
-  const items: { instrumentId: string; baseValue: bigint }[] = [];
-  for (const [instrumentId, position] of positions) {
-    if (position.quantity <= 0) continue;
-    const instrument = instrumentById.get(instrumentId);
-    const price = prices.get(instrumentId);
-    if (!instrument) continue;
-    if (!price) {
-      excludedNoPriceCount += 1;
-      continue;
-    }
-    const value = fromMajorUnitsUnsafe(position.quantity * price.close, instrument.currencyCode);
-    const baseValue = toBase(value, instrument.currencyCode);
-    if (baseValue === null) {
-      excludedFxCount += 1;
-      continue;
-    }
-    totalValue += baseValue;
-    items.push({ instrumentId, baseValue });
-  }
+  const { items, totalValue, excludedFxCount, excludedNoPriceCount } = valuePositionsInBase({
+    positions,
+    instrumentById,
+    prices,
+    baseCurrency: household.baseCurrency,
+    fxResolutions: fxRatesQuery.data ?? new Map(),
+  });
 
   const blocks: AllocationBlock[] = items.map(({ instrumentId, baseValue }) => {
     const instrument = instrumentById.get(instrumentId)!;

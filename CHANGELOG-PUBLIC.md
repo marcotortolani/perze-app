@@ -40,6 +40,15 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.37.0 — 16 de agosto de 2026
+
+### Nuevo
+
+- Nueva pantalla de rebalanceo de inversiones: definí un objetivo por
+  porcentaje (por clase de activo, moneda o riesgo) y mirá cuánto te
+  desviaste, con el monto sugerido para volver al objetivo. Solo sugiere —
+  no ejecuta ninguna operación.
+
 ## 0.36.4 — 16 de agosto de 2026
 
 ### Mejorado

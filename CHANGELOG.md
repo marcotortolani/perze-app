@@ -6,6 +6,74 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.37.0] — 2026-08-16
+
+### Agregado — rebalanceo de inversiones (`target_allocations`)
+
+`target_allocations` existía en el schema desde el Bloque I pero no tenía
+repo, hook ni pantalla. Se cierra con:
+
+- `supabase/migrations/20260816000000_target_allocations_risk_dimension.sql`
+  suma `'risk'` al `CHECK` de `dimension` (antes solo `asset_class` |
+  `currency` | `country` | `instrument` | `sector`). El `CHECK` original es
+  inline y sin nombre explícito — se asume el nombre por convención de
+  Postgres (`target_allocations_dimension_check`, mismo patrón que
+  `portfolios_visibility_check` en la misma migración de origen) y el
+  `DROP` va con `IF EXISTS` como red de seguridad: sin acceso a la DB real
+  desde este entorno (proyecto remoto sin Docker) no hay forma de
+  confirmarlo con `\d`, y el `ADD` recrea el constraint con nombre propio
+  de cualquier forma. **No se corrió `db push` — pendiente de aplicar.**
+- `src/lib/repos/target-allocations-repo.ts` — CRUD directo a Supabase
+  (sin Dexie/outbox, mismo patrón que `instruments-repo.ts`/`asset_classes`:
+  se edita con poca frecuencia, no compite con el objetivo de 5s).
+  `upsertMany` reemplaza TODOS los targets de una dimensión de una — la
+  pantalla siempre edita la lista completa, así que un diff de updates
+  individuales no ahorraba nada.
+- `useTargetAllocations`/`useInvalidateTargetAllocations` en
+  `use-investments.ts`.
+- `AssetClass.defaultRisk` (`instruments-repo.ts`) — la columna
+  `default_risk` ya existía en `asset_classes` (poblada en las 12 clases
+  sembradas) pero el repo no la leía. Se propaga también en
+  `cloneForEdit`/`createCustom`.
+- `src/lib/analytics/position-valuation.ts` — extrae `valuePositionsInBase`
+  del loop de FX/precio que antes vivía inline en
+  `investments/allocation/page.tsx`. Ahora `allocation/page.tsx` y el
+  rebalanceo llaman al mismo helper: antes de esto cada pantalla
+  reimplementaba el mismo cálculo, y una quedando desactualizada es
+  exactamente el tipo de bug que `cash-flow.ts` ya documenta para el signo
+  de flujo.
+- `src/lib/analytics/rebalance.ts` (`computeRebalance`, función pura,
+  tests en `rebalance.test.ts`) — agrupa posiciones valuadas por la `key`
+  de la dimensión elegida (asset_class → `assetClassId`; risk →
+  `assetClass.defaultRisk`; currency → `instrument.currencyCode`;
+  instrument → el propio id) y calcula `actualPct`/`driftPct`/
+  `withinBand` (banda ±5pp, `band_pct` de la fila) más
+  `suggestedAmount: bigint` vía `scaleByFraction`/`subtract` de
+  `lib/money` — nunca `number`. `excludedCount` se propaga tal cual desde
+  la valuación (`needs_fx`, CLAUDE.md: nunca se cuenta como si valiera 0).
+- `/investments/rebalance?portfolio=<id>` — dos secciones en una pantalla:
+  "Definir objetivo" (filas editables por dimensión, suma en vivo, save
+  bloqueado si no cierra 100% ±0.01 — se eligió bloquear en vez de
+  renormalizar en silencio los números del usuario) y "Ver desvío"
+  (desvío en pp + monto sugerido vía `<Amount>`, fila fuera de banda con
+  `StatusBadge status="warning"`, nunca violeta de marca ni paleta de
+  datos). `NeedsFxBanner` cuando hay `excludedFxCount > 0`. Los 5 estados:
+  `ErrorState` vía `useQueryErrorState` (offline lo cubre el layout
+  global, `useOnlineStatus`, igual que el resto del módulo), `Skeleton`,
+  `EmptyState` (sin portfolio, sin targets, sin holdings para la
+  dimensión), con datos. Enlazada desde `OverviewContent.tsx` junto a
+  "Asignación".
+- El estado de edición se reinicia con `key={dimension}-{dataUpdatedAt}`
+  en un subcomponente (`DefineTargetsSection`) en vez de un
+  `useEffect`+`setState` — el lint del repo (`react-hooks/set-state-in-effect`)
+  lo marca como error, no advertencia.
+- Claves i18n nuevas en `rebalancePage.*`, es/en/pt.
+- Alcance: **solo asesora, no ejecuta nada** — sin integración de broker,
+  aclarado en la pantalla. Dimensiones expuestas en la UI: clase de
+  activo, moneda, riesgo. `country`/`instrument`/`sector` quedan en el
+  `CHECK` del schema para más adelante (`country` no tiene columna en
+  `instruments` hoy; `instrument`/`sector` no se programaron por tiempo).
+
 ## [0.36.4] — 2026-08-16
 
 ### Arreglado — ventana de evolución de cuentas, 90 → 30 días
