@@ -6,6 +6,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.4] — 2026-08-16
+
+### Arreglado — ventana de evolución de cuentas, 90 → 30 días
+
+`AccountDetailContent.tsx` — con el muestreo diario agregado en v0.36.2,
+90 días daban 91 puntos: una lista larga sin agregar mucho sobre lo que
+ya dice "30 días" (dentro de un mes es donde un movimiento puntual se lee
+bien contra el resto, y coincide con cómo se piensa "el mes" en el resto
+de la app). `EVOLUTION_DAYS` pasa de 90 a 30, con el texto
+`evolutionTitle` actualizado en `es`/`en`/`pt`.
+
 ## [0.36.3] — 2026-08-16
 
 ### Arreglado — tab "Más" no respondía al tocarlo de nuevo

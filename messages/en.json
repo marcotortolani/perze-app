@@ -646,7 +646,7 @@
   "moveDown": "Move down",
   "detail": {
    "selectPrompt": "Pick an account from the list to see its detail here.",
-   "evolutionTitle": "Evolution · last 90 days",
+   "evolutionTitle": "Evolution · last 30 days",
    "evolutionDateColumn": "Date",
    "evolutionBalanceColumn": "Balance",
    "back": "Back",

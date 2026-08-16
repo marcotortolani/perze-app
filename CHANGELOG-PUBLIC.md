@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.4 — 16 de agosto de 2026
+
+### Mejorado
+
+- El gráfico de evolución de una cuenta ahora muestra los últimos 30 días en
+  vez de 90 — más fácil de leer y más relevante para ver cómo viene el mes.
+
 ## 0.36.3 — 16 de agosto de 2026
 
 ### Arreglado

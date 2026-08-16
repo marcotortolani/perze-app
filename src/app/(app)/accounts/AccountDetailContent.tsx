@@ -37,7 +37,11 @@ import type { Locale } from "@/i18n/formatting";
 import { useHouseholdsList } from "@/hooks/use-households-list";
 import { moveAccountsRepo, type MovePreflight } from "@/lib/repos/move-accounts-repo";
 
-const EVOLUTION_DAYS = 90;
+// 90 días con muestreo diario (`account-evolution.ts`) daba 91 puntos —
+// una lista larga sin mucho más para decir que "30 días" no diga ya:
+// dentro de un mes es donde un movimiento puntual se lee bien contra el
+// resto, y coincide con cómo se piensa "el mes" en el resto de la app.
+const EVOLUTION_DAYS = 30;
 
 /**
  * E2 (detalle + evolución) y E4 (resumen de tarjeta) — Bloque E, Fase 8.

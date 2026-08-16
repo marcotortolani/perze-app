@@ -646,7 +646,7 @@
   "moveDown": "Mover para baixo",
   "detail": {
    "selectPrompt": "Escolha uma conta da lista para ver o detalhe aqui.",
-   "evolutionTitle": "Evolução · últimos 90 dias",
+   "evolutionTitle": "Evolução · últimos 30 dias",
    "evolutionDateColumn": "Data",
    "evolutionBalanceColumn": "Saldo",
    "back": "Voltar",
