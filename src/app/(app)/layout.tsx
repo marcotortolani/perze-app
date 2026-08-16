@@ -86,6 +86,22 @@ export default function AppShellLayout({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // "Más" se comporta como un panel que se abre/cierra con el mismo tab,
+  // no como una pestaña persistente — tocarlo estando ya en la raíz
+  // `/more` vuelve a la última pantalla que NO era de "Más", en vez de
+  // quedarse en un `<Link href="/more">` a la misma URL (no-op de
+  // Next.js: no pasa nada, y eso se leía como "no responde/no cierra").
+  // `useState` ajustado durante el render (mismo patrón que `lastActive`/
+  // `pendingActive` en `TabBar.tsx` — un `ref` mutado en render está
+  // prohibido por el compilador de React), no un efecto: así el valor
+  // está listo ANTES de que el tab bar de abajo arme el `href` de este
+  // mismo render, sin el frame de desfasaje que un `useEffect` metería.
+  const [lastPathname, setLastPathname] = useState<string | null>(null);
+  const [previousNonMoreRoute, setPreviousNonMoreRoute] = useState("/");
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    if (!pathname.startsWith("/more")) setPreviousNonMoreRoute(pathname);
+  }
   const fourthTab = useNavStore((s) => s.fourthTab);
   const scope = useScopeStore((s) => s.scope);
   const setScope = useScopeStore((s) => s.setScope);
@@ -287,7 +303,11 @@ export default function AppShellLayout({
       id: "more",
       label: t("nav.more"),
       icon: "more",
-      href: "/more",
+      // Estando ya EN la raíz de "Más", el tab vuelve a la última pantalla
+      // no-"Más" (toggle) — desde cualquier subruta (`/more/settings`, etc.)
+      // sigue yendo a la raíz `/more` como siempre, ese es el "volver al
+      // índice" que ya funcionaba.
+      href: pathname === "/more" ? previousNonMoreRoute : "/more",
       // CON-13 — el operador (y solo el operador: el hook queda deshabilitado
       // para cualquier otro) ve acá cuántas solicitudes de acceso están
       // esperando, sin tener que entrar a "Más" para enterarse.

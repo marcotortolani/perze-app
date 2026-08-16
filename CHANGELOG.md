@@ -6,6 +6,26 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.36.3] — 2026-08-16
+
+### Arreglado — tab "Más" no respondía al tocarlo de nuevo
+
+`(app)/layout.tsx`: "Más" navega a `/more` como una página completa, no
+un panel — tocar el tab ya activo era un `<Link href="/more">` a la
+misma URL en la que ya se estaba, que Next.js no hace nada visible con
+(no remonta, no resetea scroll), y eso se leía como "no responde/no
+cierra". Se agrega seguimiento de la última ruta NO-"Más" visitada
+(`useState` derivado durante el render, mismo patrón que `lastActive`/
+`pendingActive` de `TabBar.tsx` — un `ref` mutado en render está
+prohibido por el compilador de React) y el `href` del tab pasa a ser
+dinámico: estando en la raíz `/more`, vuelve a esa última pantalla
+(toggle real); desde cualquier subruta (`/more/settings`, etc.) sigue
+yendo a la raíz `/more` como siempre. No se pudo verificar con clicks
+reales en este entorno (el navegador de la sesión no renderiza el layout
+mobile pese a los intentos de resize) — la lógica se trazó a mano contra
+varios escenarios (Home→Más→toggle, Movimientos→Más→subpágina→toggle,
+deep-link directo a `/more`) y pasa `tsc`/`eslint`/build.
+
 ## [0.36.2] — 2026-08-16
 
 ### Arreglado — dos ítems de la cola

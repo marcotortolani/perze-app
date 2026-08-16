@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.36.3 — 16 de agosto de 2026
+
+### Arreglado
+
+- En mobile, tocar el tab "Más" estando ya adentro ahora te devuelve a la
+  pantalla en la que estabas antes, en vez de no hacer nada.
+
 ## 0.36.2 — 16 de agosto de 2026
 
 ### Arreglado
