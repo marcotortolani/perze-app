@@ -247,10 +247,7 @@ async function refreshPayees(householdId: string): Promise<{ count: number; prun
 async function refreshBudgets(householdId: string): Promise<{ count: number; pruned: number }> {
   const db = getDb();
   const supabase = createClient();
-  // `as any` temporal — mismo motivo que en `hydrate.ts`: `pnpm db:types`
-  // pendiente para `rollover_surplus`/`rollover_deficit`/`rollover_since`.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ver el comentario de arriba
-  const raw = await fetchPaged<RawBudget>((f, t) => (supabase.from("budgets").select(BUDGETS_COLUMNS) as any).eq("household_id", householdId).order("id").range(f, t));
+  const raw = await fetchPaged<RawBudget>((f, t) => supabase.from("budgets").select(BUDGETS_COLUMNS).eq("household_id", householdId).order("id").range(f, t));
   return commitSimpleTable<BudgetRow>(db.budgets, "budgets", householdId, raw.map(budgetFromRow));
 }
 
@@ -304,16 +301,7 @@ async function refreshTrades(householdId: string): Promise<{ count: number; prun
     return { count: 0, pruned: 0 };
   }
 
-  // `as unknown as` — mismo motivo que en `hydrate.ts`: `client_rev` es
-  // columna nueva (`20260816090000_trades_client_rev.sql`), pendiente de
-  // `db push`/`db:types`. Quitar el cast en cuanto los tipos estén al día.
-  const raw = await fetchPaged<RawTrade>(
-    (f, t) =>
-      supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t) as unknown as PromiseLike<{
-        data: RawTrade[] | null;
-        error: import("@supabase/supabase-js").PostgrestError | null;
-      }>
-  );
+  const raw = await fetchPaged<RawTrade>((f, t) => supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t));
   const rows = raw.map(tradeFromRow);
 
   const fetchedIds = new Set(rows.map((r) => r.id));

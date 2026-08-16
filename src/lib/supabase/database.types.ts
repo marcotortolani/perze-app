@@ -444,6 +444,9 @@ export type Database = {
           household_id: string
           id: string
           name: string
+          rollover_deficit: boolean
+          rollover_since: string | null
+          rollover_surplus: boolean
           updated_at: string
         }
         Insert: {
@@ -457,6 +460,9 @@ export type Database = {
           household_id: string
           id: string
           name: string
+          rollover_deficit?: boolean
+          rollover_since?: string | null
+          rollover_surplus?: boolean
           updated_at?: string
         }
         Update: {
@@ -470,6 +476,9 @@ export type Database = {
           household_id?: string
           id?: string
           name?: string
+          rollover_deficit?: boolean
+          rollover_since?: string | null
+          rollover_surplus?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -2476,6 +2485,7 @@ export type Database = {
       trades: {
         Row: {
           amount_base: number | null
+          client_rev: number
           created_at: string
           created_by: string
           currency_code: string
@@ -2499,6 +2509,7 @@ export type Database = {
         }
         Insert: {
           amount_base?: number | null
+          client_rev?: number
           created_at?: string
           created_by: string
           currency_code: string
@@ -2522,6 +2533,7 @@ export type Database = {
         }
         Update: {
           amount_base?: number | null
+          client_rev?: number
           created_at?: string
           created_by?: string
           currency_code?: string

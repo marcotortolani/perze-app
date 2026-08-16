@@ -6,6 +6,64 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.41.1] — 2026-08-16
+
+### Mantenimiento — cierre del merge de las 7 ramas de auditoría + migraciones aplicadas
+
+Integra a `main` las siete ramas de cierre de la auditoría técnica
+(v0.36.5 → v0.41.0: barrido mecánico, outbox de inversiones, rollover de
+presupuesto, detección de anomalías, amortización de deudas, rebalanceo de
+inversiones, proyección de saldo + settle-up), resuelve los conflictos de
+`package.json`/`CHANGELOG.md`/`CHANGELOG-PUBLIC.md` que dejó bumpear la
+versión en paralelo desde el mismo punto de `main` en cada rama, y aplica
+lo que quedaba pendiente contra el proyecto remoto:
+
+- **Colisión de timestamps de migración detectada antes de aplicar**:
+  `20260816000000_target_allocations_risk_dimension.sql` compartía
+  timestamp con `20260816000000_settle_up_reminders.sql` (esta última ya
+  aplicada), y `20260816090000_budget_rollover.sql` /
+  `_debts_amortization_system.sql` / `_trades_client_rev.sql` compartían
+  timestamp entre sí — cuatro ramas independientes eligieron el mismo
+  minuto sin verse entre ellas. Renombradas a
+  `20260816000100`/`20260816090000`/`20260816090100`/`20260816090200`
+  antes de `supabase db push --linked` (que ya había fallado una vez por
+  esto, sin efecto en la DB — el error fue en el `INSERT` de
+  `schema_migrations`, no en el DDL).
+- `supabase db push --linked` aplicó las 4 migraciones pendientes;
+  `pnpm db:types` regeneró `database.types.ts`. Se sacaron los casts
+  temporales (`as any`/`as unknown as`) que las ramas de rollover y
+  outbox de inversiones habían dejado documentados en `hydrate.ts`/
+  `pull.ts` a la espera de este paso.
+- **Conflictos de merge en `src/lib/db/client.ts`**: `feat/auditoria-outbox-inversiones`
+  y `feat/auditoria-rollover-presupuesto` declararon cada una su propio
+  `this.version(11)` de Dexie sin verse entre sí. La de rollover pasa a
+  `version(12)`.
+- **Conflicto en `budgets/[id]/page.tsx`**: la rama de rollover todavía
+  montaba `NeedsFxBanner` condicionalmente por fuera (`{count > 0 ? ... : null}`),
+  patrón que la fase 1/2 ya había invertido (el componente ahora decide
+  solo, vía `AnimatePresence` interno). Se resolvió a favor del patrón
+  nuevo, sumando el banner de cierre de presupuesto de la rama de rollover.
+- **Conflicto en `installment-schedule.ts`/`.test.ts`**: la rama de deudas
+  reescribió el archivo entero (dispatcher de 3 sistemas de amortización)
+  reaplicando por su cuenta el fix de fecha de la fase 1/2, al haber
+  partido de `main` sin ese commit — se tomó esa versión completa como
+  superset, sin pérdida del fix.
+- Versiones renumeradas de forma secuencial al mergear (cada rama había
+  bumpeado independientemente desde `0.36.4`): 0.36.5 → 0.36.6 → 0.37.0 →
+  0.38.0 → 0.39.0 → 0.40.0 → 0.41.0, con las entradas de `CHANGELOG.md`/
+  `CHANGELOG-PUBLIC.md` reordenadas para que coincidan.
+- `pnpm exec tsc --noEmit`, `pnpm lint` (0 errores) y `pnpm build` limpios
+  después del merge completo y de sacar los casts temporales. `pnpm test`:
+  1358/1359, la única falla es la preexistente de `monthly-summary/route.test.ts`
+  (casing "Perze"/"PERZE"), sin relación con este trabajo.
+
+**Nota aparte, ya conocida**: la migración de `settle_up_reminders`
+(`20260816000000_settle_up_reminders.sql`) se había aplicado contra el
+proyecto remoto en una sesión anterior a este merge, por un error de
+consigna puntual — ver la entrada `[0.41.0]` de más abajo para el detalle.
+El resto de las migraciones de este cierre nunca se había aplicado hasta
+este commit.
+
 ## [0.41.0] — 2026-08-16
 
 ### Nuevo — proyección de saldo 30/60/90 días

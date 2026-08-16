@@ -1,4 +1,3 @@
-import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "../supabase/client";
 import { getDb } from "../db/client";
 import { withoutOutbox } from "./outbox";
@@ -751,14 +750,7 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
     fetchPaged((f, t) => scoped(supabase.from("categories").select(CATEGORIES_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("tags").select(TAGS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("payees").select(PAYEES_COLUMNS).order("id")).range(f, t)),
-    // `as any` temporal — `rollover_surplus`/`rollover_deficit`/`rollover_since`
-    // (`20260816090000_budget_rollover.sql`) todavía no están en los tipos
-    // generados (`pnpm db:types` pendiente, requiere credenciales remotas
-    // que esta sesión no tiene). `RawBudget` sigue siendo la fuente de
-    // verdad del shape real de la fila — sacar este cast en cuanto se
-    // regeneren los tipos.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ver el comentario de arriba
-    fetchPaged<RawBudget>((f, t) => scoped(supabase.from("budgets").select(BUDGETS_COLUMNS) as any).order("id").range(f, t)),
+    fetchPaged<RawBudget>((f, t) => scoped(supabase.from("budgets").select(BUDGETS_COLUMNS)).order("id").range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("goals").select(GOALS_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("recurring_rules").select(RECURRING_RULES_COLUMNS).order("id")).range(f, t)),
     fetchPaged((f, t) => scoped(supabase.from("rules").select(RULES_COLUMNS).order("id")).range(f, t)),
@@ -778,22 +770,9 @@ export async function hydrateFromRemote(options: HydrateOptions = {}): Promise<H
     .is("deleted_at", null);
   if (portfoliosError) throw portfoliosError;
   const portfolioIds = (rawPortfolios ?? []).map((p) => (p as { id: string }).id);
-  // `as unknown as` — `client_rev` es columna nueva de
-  // `20260816090000_trades_client_rev.sql`, todavía sin aplicar contra el
-  // proyecto remoto (`supabase db push` pendiente) ni regenerada en
-  // `database.types.ts` (`pnpm db:types` pendiente, ambos documentados en
-  // el reporte de esta migración). Sin el cast, el tipo generado todavía
-  // no reconoce la columna y el `select` completo colapsa a
-  // `SelectQueryError`. Quitar el cast en cuanto los tipos estén al día.
   const rawTrades =
     portfolioIds.length > 0
-      ? await fetchPaged<RawTrade>(
-          (f, t) =>
-            supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t) as unknown as PromiseLike<{
-              data: RawTrade[] | null;
-              error: PostgrestError | null;
-            }>
-        )
+      ? await fetchPaged<RawTrade>((f, t) => supabase.from("trades").select(TRADES_COLUMNS).in("portfolio_id", portfolioIds).order("id").range(f, t))
       : [];
 
   const members = rawMembers.filter((m) => m.status === "active").map(memberFromRow);
