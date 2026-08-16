@@ -1406,7 +1406,9 @@
    "formatHow": "Set it to how you're used to reading it — Settings → Format.",
    "backdropTitle": "Dot background",
    "backdropHow": "An optional visual touch for the dashboard — Settings → Background."
-  }
+  },
+  "anomalyInsight": "You spent noticeably more than usual on {category}: {amount} vs. your typical {typical}.",
+  "seeAnomaly": "See anomaly"
  },
  "analyticsPage": {
   "unavailable": "Analytics isn't available yet in this version.",
@@ -1469,12 +1471,18 @@
    "wrapped": {
     "title": "Your year in numbers",
     "subtitle": "Twelve months, six screens"
+   },
+   "anomalies": {
+    "title": "Anomalies",
+    "subtitle": "Which expense got away from you?"
    }
   },
   "gaps": {
    "closedPeriodAnalyses": "Categories, cashflow and merchants",
-   "currencyAnalyses": "Inflation and multi-currency"
-  }
+   "currencyAnalyses": "Inflation and multi-currency",
+   "anomaliesAnalyses": "Anomalies"
+  },
+  "missingCategoryTransactions": "These need 20 transactions in the same category. {count, plural, one {# transaction} other {# transactions}} left."
  },
  "offlinePage": {
   "title": "You're offline",
@@ -2095,14 +2103,14 @@
  },
  "emails": {
   "monthlySummary": {
-  "annualSubject": "Your year in PERZE: {period}",
-  "annualPreview": "How your year went: {period}",
-  "annualTitle": "Your year in review",
-  "annualNoComparison": "This is your first full year, so there's nothing to compare against yet.",
-  "annualSpentMore": "You spent {change} more than last year.",
-  "annualSpentLess": "You spent {change} less than last year.",
-  "annualSpentSame": "You spent about the same as last year.",
-  "biggestMonthTitle": "Your priciest month",
+   "annualSubject": "Your year in PERZE: {period}",
+   "annualPreview": "How your year went: {period}",
+   "annualTitle": "Your year in review",
+   "annualNoComparison": "This is your first full year, so there's nothing to compare against yet.",
+   "annualSpentMore": "You spent {change} more than last year.",
+   "annualSpentLess": "You spent {change} less than last year.",
+   "annualSpentSame": "You spent about the same as last year.",
+   "biggestMonthTitle": "Your priciest month",
    "subject": "Your {period} summary",
    "preview": "How {period} went",
    "title": "Your period summary",
@@ -2361,5 +2369,13 @@
   "global": "Global",
   "globalEditNote": "This is a global class. Saving creates your own copy — the original template stays untouched.",
   "reorder": "Reorder {name}"
+ },
+ "anomaliesPage": {
+  "title": "Anomalies",
+  "loadError": "We couldn't check your transactions for anomalies.",
+  "needsHistory": "We need 20 transactions in the same category to detect anomalies. {count, plural, one {# transaction} other {# transactions}} left.",
+  "empty": "No unusual transactions found for now.",
+  "item": "You spent noticeably more than usual on {category} on {date}: {amount} vs. your typical {typical}.",
+  "seeTransaction": "See transaction"
  }
 }

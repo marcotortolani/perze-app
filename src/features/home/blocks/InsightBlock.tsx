@@ -7,19 +7,30 @@ import { InsightCard } from "@/design-system";
 import { Sparkline } from "@/design-system/charts";
 import type { IconName } from "@/design-system/core/Icon";
 import { useCategoryLabel } from "@/hooks/use-category-label";
+import { useCategoryDirectory } from "@/hooks/use-category-directory";
+import { useAnomalyDismissalsStore } from "@/stores/anomaly-dismissals-store";
+import { formatAmountCompact } from "@/lib/money/format";
+import { money } from "@/lib/money/money";
 import { useHomeData } from "../home-data";
 
 /**
  * Cadena de prioridad: alerta de presupuesto → movimientos sin cotizar →
- * categoría con más gasto. `insightDismissed` queda local a este bloque
- * (no sube al contexto compartido): es un descarte efímero de sesión, no
- * un dato que otro bloque necesite leer.
+ * anomalía reciente (últimos `ANOMALY_RECENT_DAYS` días, ver `home-data.tsx`)
+ * → categoría con más gasto. La anomalía va antes que la categoría con más
+ * gasto porque es información específica y accionable sobre UN movimiento
+ * (como needsFx), no un resumen genérico del período. `insightDismissed`
+ * queda local a este bloque (no sube al contexto compartido): es un
+ * descarte efímero de sesión, no un dato que otro bloque necesite leer —
+ * el descarte PERMANENTE de una anomalía puntual pasa por
+ * `useAnomalyDismissalsStore`, abajo.
  */
 export function InsightBlock() {
   const t = useTranslations();
   const router = useRouter();
   const categoryLabel = useCategoryLabel();
-  const { budgetAlerts, categoryById, needsFxCount, topCategory, heroTrend } = useHomeData();
+  const { budgetAlerts, categoryById, needsFxCount, recentAnomaly, topCategory, heroTrend, baseCurrency, household } = useHomeData();
+  const anomalyCategoryLabel = useCategoryDirectory(household.id);
+  const dismissAnomaly = useAnomalyDismissalsStore((s) => s.dismiss);
   const [insightDismissed, setInsightDismissed] = useState(false);
 
   if (insightDismissed) return null;
@@ -50,6 +61,27 @@ export function InsightBlock() {
         actionLabel={t("home.seeTransactions")}
         onAction={() => router.push("/transactions?pending=1")}
         onDismiss={() => setInsightDismissed(true)}
+        dismissLabel={t("ds.insightCard.dismiss")}
+      />
+    );
+  }
+
+  if (recentAnomaly) {
+    return (
+      <InsightCard
+        status="warning"
+        icon="alert"
+        text={t("home.anomalyInsight", {
+          category: anomalyCategoryLabel(recentAnomaly.categoryId),
+          amount: formatAmountCompact(money(recentAnomaly.amountBase, baseCurrency), { showSign: false }),
+          typical: formatAmountCompact(money(recentAnomaly.medianAmountBase, baseCurrency), { showSign: false }),
+        })}
+        actionLabel={t("home.seeAnomaly")}
+        onAction={() => router.push("/analytics/anomalies")}
+        onDismiss={() => {
+          dismissAnomaly(recentAnomaly.transactionId);
+          setInsightDismissed(true);
+        }}
         dismissLabel={t("ds.insightCard.dismiss")}
       />
     );

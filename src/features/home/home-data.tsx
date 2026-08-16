@@ -8,6 +8,8 @@ import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { profilesRepo } from "@/lib/repos/profiles-repo";
 import { ageFromBirthDate, isBirthdayToday } from "@/lib/analytics/age";
 import { cashFlowNetBase, classifyCashFlow } from "@/lib/analytics/cash-flow";
+import { detectAnomalies, type AnomalyResult } from "@/lib/analytics/anomaly-detection";
+import { useAnomalyDismissalsStore } from "@/stores/anomaly-dismissals-store";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useCategories } from "@/hooks/use-categories";
 import { useTags } from "@/hooks/use-tags";
@@ -43,6 +45,9 @@ import type { AccountRow as AccountRowData, TransactionRow as TransactionRecord,
 import type { BudgetAlert } from "@/lib/analytics/budget-progress";
 import type { BudgetRow } from "@/lib/db/schema";
 import type { ReminderId } from "@/lib/reminders/definitions";
+
+/** "Reciente" para el enganche del home — mismo horizonte que el sparkline del héroe (14 días) más abajo en este archivo, así los dos comparten la noción de "esta quincena" sin dos ventanas distintas que confundir. */
+const ANOMALY_RECENT_DAYS = 14;
 
 function startOfPeriod(now: Date, startDay: number): Date {
   const start = new Date(now.getFullYear(), now.getMonth(), startDay);
@@ -115,6 +120,8 @@ export interface HomeDataReady {
   accountById: Map<string, AccountRowData>;
   needsFxCount: number;
   topCategory: CategoryRow | undefined;
+  /** Anomalía más reciente sin descartar dentro de `ANOMALY_RECENT_DAYS` — `null` si no hay ninguna. */
+  recentAnomaly: AnomalyResult | null;
   recentTransactions: TransactionRecord[];
   tagNamesByTx: Map<string, string[]>;
   isCardPayment: (tx: TransactionRecord) => boolean;
@@ -143,6 +150,7 @@ export function useHomeDataState(): HomeDataState {
   const { data: profile } = useQuery({ queryKey: ["profile", userId], queryFn: () => profilesRepo.getOwn(userId!), enabled: !!userId });
   const dismissedYear = useBirthdayBannerStore((s) => s.dismissedYear);
   const dismissBirthdayBanner = useBirthdayBannerStore((s) => s.dismiss);
+  const dismissedAnomalyIds = useAnomalyDismissalsStore((s) => s.dismissedIds);
   const accountsQuery = useAccounts(household?.id);
   const { data: accounts, isLoading: accountsLoading } = accountsQuery;
   const { data: categories = [] } = useCategories(household?.id);
@@ -298,6 +306,15 @@ export function useHomeDataState(): HomeDataState {
   const topCategoryEntry = [...spendByCategory.entries()].sort((a, b) => (b[1] > a[1] ? 1 : -1))[0];
   const topCategory = topCategoryEntry ? categoryById.get(topCategoryEntry[0]) : undefined;
 
+  // Anomalías: se calcula sobre TODO el historial (el detector necesita
+  // ver las 20 movimientos de la categoría para tener mediana/MAD reales),
+  // pero solo se ofrece la más reciente sin descartar dentro de
+  // `ANOMALY_RECENT_DAYS` — mostrar una de hace tres meses en el home no
+  // es información accionable hoy.
+  const anomalyCutoff = new Date(now.getTime() - ANOMALY_RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const recentAnomaly =
+    detectAnomalies(allTransactions).anomalies.find((a) => a.occurredAt >= anomalyCutoff && !dismissedAnomalyIds.includes(a.transactionId)) ?? null;
+
   // Las tarjetas de crédito no son liquidez: no tenés esa plata disponible,
   // vas acumulando un gasto pendiente de pagar. Van a su propia sección más
   // abajo, no al carrusel de cuentas — mezclarlas ahí las hacía leerse como
@@ -403,6 +420,7 @@ export function useHomeDataState(): HomeDataState {
       accountById,
       needsFxCount,
       topCategory,
+      recentAnomaly,
       recentTransactions,
       tagNamesByTx,
       isCardPayment,

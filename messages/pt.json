@@ -1406,7 +1406,9 @@
    "formatHow": "Ajuste do jeito que você está acostumado — Ajustes → Formato.",
    "backdropTitle": "Fundo de pontos",
    "backdropHow": "Um detalhe visual opcional para o painel — Ajustes → Fundo."
-  }
+  },
+  "anomalyInsight": "Você gastou bem mais do que o habitual em {category}: {amount} vs. seu típico {typical}.",
+  "seeAnomaly": "Ver anomalia"
  },
  "analyticsPage": {
   "unavailable": "A análise ainda não está disponível nesta versão.",
@@ -1469,12 +1471,18 @@
    "wrapped": {
     "title": "Seu ano em números",
     "subtitle": "Doze meses, seis telas"
+   },
+   "anomalies": {
+    "title": "Anomalias",
+    "subtitle": "Que gasto escapou do seu padrão?"
    }
   },
   "gaps": {
    "closedPeriodAnalyses": "Categorias, fluxo e comércios",
-   "currencyAnalyses": "Inflação e multi-moeda"
-  }
+   "currencyAnalyses": "Inflação e multi-moeda",
+   "anomaliesAnalyses": "Anomalias"
+  },
+  "missingCategoryTransactions": "Precisa de 20 lançamentos na mesma categoria. Faltam {count, plural, one {# lançamento} other {# lançamentos}}."
  },
  "offlinePage": {
   "title": "Sem conexão",
@@ -2095,14 +2103,14 @@
  },
  "emails": {
   "monthlySummary": {
-  "annualSubject": "Seu ano no PERZE: {period}",
-  "annualPreview": "Como foi seu ano: {period}",
-  "annualTitle": "Seu resumo do ano",
-  "annualNoComparison": "É seu primeiro ano completo, então ainda não há com o que comparar.",
-  "annualSpentMore": "Você gastou {change} a mais que no ano anterior.",
-  "annualSpentLess": "Você gastou {change} a menos que no ano anterior.",
-  "annualSpentSame": "Você gastou praticamente o mesmo que no ano anterior.",
-  "biggestMonthTitle": "Seu mês mais caro",
+   "annualSubject": "Seu ano no PERZE: {period}",
+   "annualPreview": "Como foi seu ano: {period}",
+   "annualTitle": "Seu resumo do ano",
+   "annualNoComparison": "É seu primeiro ano completo, então ainda não há com o que comparar.",
+   "annualSpentMore": "Você gastou {change} a mais que no ano anterior.",
+   "annualSpentLess": "Você gastou {change} a menos que no ano anterior.",
+   "annualSpentSame": "Você gastou praticamente o mesmo que no ano anterior.",
+   "biggestMonthTitle": "Seu mês mais caro",
    "subject": "Seu resumo de {period}",
    "preview": "Como foi {period}",
    "title": "Seu resumo do período",
@@ -2361,5 +2369,13 @@
   "global": "Global",
   "globalEditNote": "Essa é uma classe global. Salvar cria sua própria cópia — o modelo original não é alterado.",
   "reorder": "Reordenar {name}"
+ },
+ "anomaliesPage": {
+  "title": "Anomalias",
+  "loadError": "Não conseguimos revisar seus lançamentos em busca de anomalias.",
+  "needsHistory": "Precisamos de 20 lançamentos na mesma categoria para detectar anomalias. Faltam {count, plural, one {# lançamento} other {# lançamentos}}.",
+  "empty": "Não encontramos lançamentos atípicos por enquanto.",
+  "item": "Você gastou bem mais do que o habitual em {category} em {date}: {amount} vs. seu típico {typical}.",
+  "seeTransaction": "Ver lançamento"
  }
 }
