@@ -9,6 +9,8 @@ import { Button, EmptyState, FxEditor, Icon, IconButton, Input, Keypad, ListRow,
 import { useCurrentHousehold } from "@/hooks/use-current-household";
 import { useEffectiveUserId } from "@/hooks/use-current-user";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useTransactions } from "@/hooks/use-transactions";
+import { useTrackedCurrencies } from "@/hooks/use-tracked-currencies";
 import { fxRepo } from "@/lib/repos/fx-repo";
 import { RATE_SCALE, formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
@@ -35,6 +37,7 @@ export default function CurrenciesPage() {
   const { data: household } = useCurrentHousehold();
   const userId = useEffectiveUserId();
   const { data: accounts = [] } = useAccounts(household?.id);
+  const { data: transactions } = useTransactions(household?.id);
   const [editingPair, setEditingPair] = useState<string | null>(null);
   /**
    * Qué dirección se muestra CADA fila de la lista — puramente de vista,
@@ -88,29 +91,17 @@ export default function CurrenciesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al entrar a la pantalla o cambiar de household, no en cada cambio de `currencies`/`baseCurrency` derivado
   }, [household?.id]);
 
-  const overridesQuery = useQuery({
-    queryKey: ["fx-override-currencies", household?.id, baseCurrency],
-    queryFn: () => fxRepo.listOverrideCurrencies(household!.id, baseCurrency),
-    enabled: !!household,
-  });
-
   // D32 — una moneda agregada sin cuenta propia (p. ej. EUR solo para
   // trackear su cotización) queda anclada acá si el usuario aceptó la
   // cotización sugerida (sin override, ver `handleSaveOverride`) o si
   // volvió a "Estándar"/blue/CCL desde un override (`handleSelectQuoteKind`
   // ya guarda la preferencia, antes solo `listOverrideCurrencies` decidía
   // quién aparece y esa acción la borraba de la lista sin querer).
-  const preferencesQuery = useQuery({
-    queryKey: ["fx-preference-currencies", household?.id, baseCurrency],
-    queryFn: () => fxRepo.listPreferenceCurrencies(household!.id, baseCurrency),
-    enabled: !!household,
-  });
-
-  const currencies = useMemo(() => {
-    const set = new Set([...accounts.map((a) => a.currencyCode), ...(overridesQuery.data ?? []), ...(preferencesQuery.data ?? [])]);
-    set.delete(baseCurrency);
-    return [...set].sort();
-  }, [accounts, overridesQuery.data, preferencesQuery.data, baseCurrency]);
+  // `useTrackedCurrencies` (`hooks/use-tracked-currencies.ts`) — misma
+  // fuente que usa el picker de moneda de `/add`, para que agregar una
+  // moneda acá la haga aparecer también en la captura.
+  const { currencies: trackedWithBase } = useTrackedCurrencies(household?.id, baseCurrency, accounts, transactions);
+  const currencies = useMemo(() => trackedWithBase.filter((c) => c !== baseCurrency), [trackedWithBase, baseCurrency]);
 
   const ratesQuery = useQuery({
     queryKey: ["fx-rates", household?.id, baseCurrency, currencies],

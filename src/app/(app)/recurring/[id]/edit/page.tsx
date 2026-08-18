@@ -613,6 +613,8 @@ export default function EditRecurringRulePage({
       <CurrencyPickerSheet
         open={sheet === 'currency'}
         onClose={() => setSheet('none')}
+        householdId={household.id}
+        baseCurrency={household.baseCurrency}
         accounts={accounts}
         transactions={undefined}
         accountCurrency={account?.currencyCode}

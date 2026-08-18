@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
-import { IconButton } from "@/design-system";
+import { Button, IconButton } from "@/design-system";
 import { numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 import { MorphButton } from "@/components/motion";
 import { ScreenShell } from "@/components/screen-shell";
@@ -35,6 +35,7 @@ import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
 import { buildNewCategoryInput } from "./create-category";
 import { useFrequentCategories } from "./use-frequent-categories";
 import { dedupeCategoriesByIdentity } from "@/lib/analytics/category-usage";
+import { lastUsedAccount } from "@/lib/analytics/account-usage";
 import { useFrequentTags } from "./use-frequent-tags";
 import { useFrequentPayees } from "./use-frequent-payees";
 
@@ -121,24 +122,42 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
   // después ✕) forma de reportar "sí se guardó algo" en vez de "cancelado".
   const lastSavedKind = useRef<CaptureKind | null>(null);
 
-  // Cuenta por defecto: la de el último movimiento cargado, no
-  // `accounts[0]` (un orden sin ningún criterio — ni siquiera el
-  // `sortOrder` que sí respeta la lista de `/accounts`). Quien paga
-  // siempre con el mismo medio no tiene que reelegirlo cada vez.
-  // `transactions` ya viene ordenada por `occurredAt` descendente
-  // (`transactionsRepo.list`), así que el primer elemento es el último
-  // cargado — sin query aparte. Si esa cuenta ya no existe (archivada/
-  // borrada) o todavía no hay ningún movimiento, cae a `accounts[0]`.
-  // Se resuelve derivado, nunca escribiendo al store durante el render: si
-  // el usuario no eligió ninguna, `doSave` cae a esta misma cuenta por
-  // default sin necesidad de persistirla antes de guardar. En una
-  // transferencia NO se aplica este fallback: elegir el origen es una
-  // decisión real de plata (de qué cuenta sale), nunca un default
-  // silencioso — antes `accounts[0]` quedaba de "origen" sin que el
-  // usuario lo hubiera tocado, incluso en flujos precargados como
-  // "pagar tarjeta" donde el pedido es justamente dejarlo sin elegir.
-  const lastUsedAccountId = (transactions ?? [])[0]?.accountId;
-  const defaultAccount = accounts.find((a) => a.id === lastUsedAccountId) ?? accounts[0];
+  // `modal.tsx` ya documenta que Next reutiliza a veces el mismo fiber de
+  // `Modal` entre una apertura de la ruta interceptada y la siguiente —
+  // cerrar y volver a tocar el "+" no siempre desmonta/remonta de verdad.
+  // Sin este efecto, `step`/`sheet` (estado local, no del draft) quedaban
+  // vivos de la visita anterior: volver a entrar a `/add` después de elegir
+  // una categoría desde "Otras" mostraba otra vez la grilla en vez del
+  // keypad. Atado a `pathname`, no a `[]`, por el mismo motivo que ahí.
+  const pathname = usePathname();
+  useEffect(() => {
+    // Sincronización genuina con `pathname`, no derivable del render — mismo
+    // criterio que el reset de `Modal` (`components/modal.tsx`): es justo
+    // la reapertura de esta ruta (mismo fiber o no) la que hay que
+    // resetear, y eso solo se sabe DESPUÉS de que `pathname` cambió.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStep("amount");
+    setSheet("none");
+  }, [pathname]);
+
+  // Cuenta por defecto: la del último movimiento CARGADO (`createdAt`, no
+  // `occurredAt`) — `lastUsedAccount()` (`lib/analytics/account-usage.ts`),
+  // cayendo a la primera cuenta ACTIVA por `sortOrder` si esa cuenta ya no
+  // existe, está archivada, o todavía no hay ningún movimiento. Antes esto
+  // leía `transactions[0]` (ordenada por `occurredAt` desc), así que cargar
+  // un gasto con fecha atrasada dejaba a esa cuenta fuera del `[0]` y el
+  // default "saltaba" a otra sin que el usuario hubiera cambiado nada; y el
+  // fallback era `accounts[0]` sin ningún criterio, ni siquiera `sortOrder`,
+  // pudiendo caer en una cuenta archivada. Se resuelve derivado, nunca
+  // escribiendo al store durante el render: si el usuario no eligió
+  // ninguna, `doSave` cae a esta misma cuenta por default sin necesidad de
+  // persistirla antes de guardar. En una transferencia NO se aplica este
+  // fallback: elegir el origen es una decisión real de plata (de qué
+  // cuenta sale), nunca un default silencioso — antes `accounts[0]` quedaba
+  // de "origen" sin que el usuario lo hubiera tocado, incluso en flujos
+  // precargados como "pagar tarjeta" donde el pedido es justamente dejarlo
+  // sin elegir.
+  const defaultAccount = lastUsedAccount(accounts, transactions ?? []);
   const account = accounts.find((a) => a.id === draft.accountId) ?? (draft.kind === "transfer" ? undefined : defaultAccount);
   const counterAccount = accounts.find((a) => a.id === draft.counterAccountId);
   // Mismo hook que usa `AmountStep` para el `FxEditor` — mismo `queryKey`,
@@ -160,7 +179,12 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
   const appliedDefaultCurrencyRef = useRef(false);
   useEffect(() => {
     if (appliedDefaultCurrencyRef.current || draft.kind === "transfer") return;
-    if (transactions === undefined) return;
+    // Antes solo esperaba a `transactions` — si `useAccounts` todavía no
+    // había resuelto, `defaultAccount` era `undefined` y la comparación de
+    // abajo pasaba siempre, fijando una moneda de sobra (o, según cómo
+    // cayera la carrera, ninguna). Con las dos queries resueltas, la
+    // comparación contra `defaultAccount?.currencyCode` es siempre la real.
+    if (transactions === undefined || accounts.length === 0) return;
     appliedDefaultCurrencyRef.current = true;
     if (draft.currency) return;
     const last = transactions[0];
@@ -168,7 +192,7 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
     if (lastUsedCurrency && lastUsedCurrency !== defaultAccount?.currencyCode) {
       setField("currency", lastUsedCurrency);
     }
-  }, [transactions, draft.currency, draft.kind, defaultAccount, setField]);
+  }, [transactions, accounts.length, draft.currency, draft.kind, defaultAccount, setField]);
 
   // La OTRA conversión (`CLAUDE.md` § "son dos conversiones, no una"): de
   // la moneda en que se tipeó a la de la cuenta. Solo existe cuando el
@@ -286,6 +310,12 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
       setStep("amount");
     } else {
       reset();
+      // Sin esto, guardar desde el paso de categoría (elegida vía "Otras")
+      // dejaba `step === "category"` cuando el fiber de esta pantalla se
+      // reutiliza en la próxima apertura (ver el efecto atado a `pathname`
+      // más arriba) — la próxima vez que se abría `/add` aparecía la grilla
+      // en vez del keypad.
+      setStep("amount");
       onClose?.({ saved: true, kind: lastSavedKind.current ?? draft.kind });
     }
   };
@@ -309,9 +339,12 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
     );
   }
 
-  // Un solo botón, en dos lugares: al lado de "=" en el paso del monto
-  // (`AmountStep.footerButton`) y solo en el paso de categoría, donde no
-  // hay keypad con quien compartir fila.
+  // El botón de guardar vive SOLO en el paso del monto (al lado de "=" en
+  // `AmountStep.footerButton`) — guardar nunca ocurre desde la grilla de
+  // categorías. Antes este mismo botón se reusaba en el paso de categoría
+  // y ahí caía siempre a "Guardar": elegir una categoría desde "Otras"
+  // disparaba el movimiento en el acto, sin que la persona pudiera
+  // completar nota/comercio/fecha ni arrepentirse de cargarlo todavía.
   const nextOrSaveButton = (
     <MorphButton
       disabled={!canSave()}
@@ -326,6 +359,16 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
     >
       {step === "amount" && draft.kind !== "transfer" && !draft.categoryId ? t("capture.next") : t("capture.save")}
     </MorphButton>
+  );
+
+  // El botón de la grilla de categorías SOLO acepta la selección y vuelve
+  // al monto — nunca guarda. Deshabilitado sin categoría elegida todavía
+  // (la burbuja "Usar '{name}' en general" al entrar a subcategorías ya
+  // deja una marcada, así que no es un caso raro llegar acá sin ninguna).
+  const categoryConfirmButton = (
+    <Button variant="primary" disabled={!draft.categoryId} onClick={() => setStep("amount")}>
+      {t("capture.category.confirm")}
+    </Button>
   );
 
   return (
@@ -352,9 +395,12 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
           draft={draft}
           accounts={accounts}
           frequent={frequentCategories}
+          categories={sameKindCategories}
           account={account}
           counterAccount={counterAccount}
           householdId={household.id}
+          baseCurrency={household.baseCurrency}
+          transactions={transactions}
           onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
           onCaptureFxRateChange={(rate) => setField("captureFxRateOverride", rate)}
           onOpenCurrencyPicker={() => setSheet("currency")}
@@ -405,13 +451,15 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
             onSelect={(c) => setField("categoryId", c.id)}
             onCreate={handleCreateCategory}
           />
-          <div style={{ marginTop: "auto" }}>{nextOrSaveButton}</div>
+          <div style={{ marginTop: "auto" }}>{categoryConfirmButton}</div>
         </>
       )}
 
       <CurrencyPickerSheet
         open={sheet === "currency"}
         onClose={() => setSheet("none")}
+        householdId={household.id}
+        baseCurrency={household.baseCurrency}
         accounts={accounts}
         transactions={transactions}
         accountCurrency={account?.currencyCode}
@@ -429,6 +477,8 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
         open={sheet === "account"}
         title={t("capture.accountPicker.sourceTitle")}
         accounts={accounts.filter((a: AccountRow) => a.id !== draft.counterAccountId)}
+        transactions={transactions}
+        baseCurrency={household.baseCurrency}
         onSelect={(a) => {
           setField("accountId", a.id);
           setField("counterFxRateOverride", null);
@@ -447,6 +497,8 @@ function CaptureFlowInner({ onClose }: CaptureFlowProps) {
         open={sheet === "counterAccount"}
         title={t("capture.accountPicker.destinationTitle")}
         accounts={accounts.filter((a: AccountRow) => a.id !== draft.accountId)}
+        transactions={transactions}
+        baseCurrency={household.baseCurrency}
         onSelect={(a) => {
           setField("counterAccountId", a.id);
           setField("counterFxRateOverride", null);

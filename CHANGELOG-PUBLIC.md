@@ -40,6 +40,36 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.42.0 — 18 de agosto de 2026
+
+### Nuevo
+
+- Ahora podés cargar un gasto en cualquier moneda, aunque ninguna de tus
+  cuentas esté en esa moneda — útil para un viaje, donde todo lo pagás en
+  euros desde una cuenta en dólares. Si todavía no hay cotización para esa
+  moneda, podés cargarla vos mismo al toque, sin salir de la carga.
+
+### Mejorado
+
+- El selector de cuenta ahora te muestra primero las que más usás, y
+  agrupa el resto por moneda — antes era una lista sin ningún orden.
+- Si elegís una categoría que no está entre tus 5 más usadas, ahora la ves
+  marcada en su lugar al volver a la pantalla de carga.
+
+### Arreglado
+
+- Elegir una categoría desde "Otras" ya no guarda el gasto de inmediato —
+  ahora confirma la elección y te deja seguir completando el resto antes
+  de guardar.
+- Volver a entrar a la pantalla de carga después de elegir una categoría
+  desde "Otras" ya no te deja atascado en esa grilla.
+- Mantener presionada una categoría con subcategorías ya no seleccionaba
+  por accidente una subcategoría al azar, ni marcaba el texto como si
+  fuera para copiar.
+- Se corrigió un recorte visual en el borde de la categoría seleccionada.
+- La última cuenta y la última moneda usadas ahora aparecen siempre bien
+  precargadas al abrir la pantalla de carga.
+
 ## 0.41.2 — 18 de agosto de 2026
 
 ### Nuevo

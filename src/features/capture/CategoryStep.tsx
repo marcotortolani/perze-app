@@ -93,7 +93,11 @@ export function CategoryStep({ categories, selectedId, onSelect, onCreate }: Cat
       <DetailPanelTransition transitionKey={expandedParent.id}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, gap: 16, paddingTop: 8 }}>
           <ListRow icon="chevron-left" label={t("capture.category.backToCategories")} chevron={false} onClick={() => setExpandedParent(null)} style={{ marginTop: -4 }} />
-          <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+          {/* Padding en el scroller, no en la grilla: sin esto la burbuja
+              seleccionada (anillo + `scale(1.04)` sobre 64px) se recortaba
+              contra el borde del contenedor en la primera fila y en los
+              costados — más notorio en desktop, pero pasa igual en mobile. */}
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "6px 4px 8px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
               <CategoryBubble
                 icon={expandedParent.icon as IconName}
@@ -124,7 +128,7 @@ export function CategoryStep({ categories, selectedId, onSelect, onCreate }: Cat
         <div ref={searchWrapperRef}>
           <Input placeholder={t("capture.category.searchPlaceholder")} value={query} onChange={(e) => setQuery(e.target.value)} maxLength={60} />
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "6px 4px 8px" }}>
           {filtered.length === 0 && !searching ? (
             <p className="t-body" style={{ color: "var(--text-muted)", textAlign: "center", marginTop: 24 }}>
               {t("capture.category.noResults")}
@@ -141,7 +145,20 @@ export function CategoryStep({ categories, selectedId, onSelect, onCreate }: Cat
                     label={categoryLabel(c)}
                     selected={c.id === selectedId}
                     hasChildren={hasKids}
-                    onLongPress={hasKids ? () => setExpandedParent(c) : undefined}
+                    // Mantener presionado deja la general marcada Y abre sus
+                    // hijas — no una cosa o la otra. Soltar sin tocar
+                    // ninguna hija ya deja la categoría elegida y el botón
+                    // "Listo" habilitado; la burbuja "Usar '{name}' en
+                    // general" de la vista de hijas se dibuja seleccionada
+                    // sola, porque `selectedId` ya cambió acá.
+                    onLongPress={
+                      hasKids
+                        ? () => {
+                            onSelect(c);
+                            setExpandedParent(c);
+                          }
+                        : undefined
+                    }
                     onClick={() => handleSelect(c)}
                   />
                 );

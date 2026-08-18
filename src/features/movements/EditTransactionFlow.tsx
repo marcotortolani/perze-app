@@ -241,9 +241,12 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
           draft={draft}
           accounts={accounts}
           frequent={frequentCategories}
+          categories={sameKindCategories}
           account={account}
           counterAccount={counterAccount}
           householdId={household.id}
+          baseCurrency={household.baseCurrency}
+          transactions={transactions}
           onCounterFxRateChange={(rate) => setField("counterFxRateOverride", rate)}
           onCaptureFxRateChange={(rate) => setField("captureFxRateOverride", rate)}
           onOpenCurrencyPicker={() => setSheet("currency")}
@@ -279,6 +282,8 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
       <CurrencyPickerSheet
         open={sheet === "currency"}
         onClose={() => setSheet("none")}
+        householdId={household.id}
+        baseCurrency={household.baseCurrency}
         accounts={accounts}
         transactions={transactions}
         accountCurrency={account?.currencyCode}
@@ -289,11 +294,21 @@ function EditTransactionFlowInner({ transaction, household, accounts, categories
         }}
       />
 
-      <AccountPickerSheet open={sheet === "account"} title={t("capture.accountPicker.sourceTitle")} accounts={accounts.filter((a) => a.id !== draft.counterAccountId)} onSelect={(a) => setField("accountId", a.id)} onClose={() => setSheet("none")} />
+      <AccountPickerSheet
+        open={sheet === "account"}
+        title={t("capture.accountPicker.sourceTitle")}
+        accounts={accounts.filter((a) => a.id !== draft.counterAccountId)}
+        transactions={transactions}
+        baseCurrency={household.baseCurrency}
+        onSelect={(a) => setField("accountId", a.id)}
+        onClose={() => setSheet("none")}
+      />
       <AccountPickerSheet
         open={sheet === "counterAccount"}
         title={t("capture.accountPicker.destinationTitle")}
         accounts={accounts.filter((a) => a.id !== draft.accountId)}
+        transactions={transactions}
+        baseCurrency={household.baseCurrency}
         onSelect={(a) => setField("counterAccountId", a.id)}
         onClose={() => setSheet("none")}
       />

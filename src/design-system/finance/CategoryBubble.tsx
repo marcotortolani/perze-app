@@ -30,6 +30,21 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
         longPressFired.current = true;
         if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(8);
         onLongPress();
+        // El propio `onLongPress` puede reemplazar el árbol entero (el
+        // picker de categorías abre la vista de subcategorías) — este
+        // botón se desmonta antes de que el dedo se levante, así que el
+        // `click` nativo del mismo gesto cae sobre lo que haya quedado
+        // debajo, en la vista NUEVA, y esa burbuja recibía la selección
+        // sin que el usuario la haya tocado. Un listener de captura de un
+        // solo uso en el documento intercepta ese click fantasma sea cual
+        // sea el elemento donde termine.
+        if (typeof document !== "undefined") {
+          const suppressGhostClick = (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
+          document.addEventListener("click", suppressGhostClick, { capture: true, once: true });
+        }
       }, 500);
     }
   };
@@ -65,6 +80,13 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
         cursor: "pointer",
         transform: pressed ? "scale(var(--press-scale))" : "scale(1)",
         transition: "transform var(--duration-fast) var(--ease-spring-snappy)",
+        // Sin esto, mantener presionado ~500ms para el long-press marca el
+        // label como si fuera texto seleccionable (el navegador lo
+        // interpreta como una selección larga, no como una pulsación).
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+        touchAction: "manipulation",
         ...style,
       }}
     >

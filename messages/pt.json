@@ -354,7 +354,8 @@
    "editIcon": "Ícone",
    "selectGeneral": "Usar \"{name}\" em geral",
    "addNew": "Adicionar categoria",
-   "backToCategories": "Voltar"
+   "backToCategories": "Voltar",
+   "confirm": "Pronto"
   },
   "chooseAccount": "Escolher conta",
   "from": "DE",
@@ -373,7 +374,8 @@
   "undo": "Desfazer",
   "accountPicker": {
    "sourceTitle": "Escolher conta",
-   "destinationTitle": "Conta de destino"
+   "destinationTitle": "Conta de destino",
+   "frequent": "Mais usadas"
   },
   "details_sheet": {
    "title": "Detalhes",
@@ -417,8 +419,11 @@
   },
   "currencySheetTitle": "Em qual moeda?",
   "currencySameAsAccount": "moeda da conta",
+  "currencySheetInUse": "EM USO",
+  "currencySheetSearchPlaceholder": "Buscar outra moeda…",
   "changeCurrency": "Mudar a moeda do valor",
   "captureRatePending": "Sem cotação: salva assim mesmo e fica pendente",
+  "captureRateSetManually": "Sem cotação — toque para informar a taxa de câmbio",
   "editDebit": "Quanto sai da conta",
   "savedOffline": "Salvo no telefone. Sai assim que reconectar.",
   "noLocalDataOffline": "Este dispositivo ainda não tem os dados da sua conta e não há conexão para buscá-los. Conecte uma vez e você vai poder lançar gastos sem internet."

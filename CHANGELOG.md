@@ -6,7 +6,73 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [0.41.2] — 2026-08-18
+## [0.42.0] — 2026-08-18
+
+### Revisión de `/add` — defaults, categorías y captura multi-moneda
+
+Seis problemas reportados sobre uso real de la captura, más uno encontrado
+al investigarlos: el picker de moneda solo ofrecía las de las cuentas, y
+tipear en una moneda sin cotización no dejaba forma de cargar la tasa a
+mano desde la captura.
+
+#### Agregado
+
+- `src/lib/analytics/account-usage.ts` — ranking de cuentas por uso real
+  (`countAccountUsage`/`rankAccountsByUsage`/`rankRecentAccountsByUsage`/
+  `lastUsedAccount`), espejo de `category-usage.ts` pero ordenado por
+  `createdAt` del movimiento (cuándo se cargó), no por `occurredAt` (la
+  fecha que se le puso al gasto) — antes cargar un gasto con fecha atrasada
+  hacía "saltar" el default de cuenta a otra sin que el usuario cambiara
+  nada.
+- `src/hooks/use-tracked-currencies.ts` — monedas "trackeadas" de un
+  household (cuentas activas ∪ movimientos ∪ overrides ∪ preferencias de
+  `/currencies` ∪ moneda base), extraído de la lógica que ya tenía
+  `/currencies` para que el picker de moneda de `/add` use la misma fuente.
+- `AccountPickerSheet` ahora muestra una sección "Más usadas" (top 3 por
+  uso real, solo con ≥5 cuentas activas y ≥2 con uso) más el resto
+  agrupado por moneda — antes era la lista cruda de `accounts`, sin ningún
+  orden.
+- `CurrencyPickerSheet` suma una sección "En uso" con las monedas
+  trackeadas (antes solo miraba cuentas y movimientos) y un buscador sobre
+  el catálogo global de monedas al pie — un household con una sola cuenta
+  ya puede tipear en una moneda que no tiene, con la conversión resuelta
+  por FX. El chip que abre el picker (`AmountStep`) ya no depende de tener
+  más de una cuenta con moneda distinta, sino de la lista trackeada.
+- Sin cotización para la moneda tipeada, la línea "sin cotización" del
+  keypad ahora es tocable y abre el mismo teclado de tasa que ya existía —
+  antes era texto muerto y no había ninguna forma de cargar el tipo de
+  cambio a mano desde la captura (`needs_capture_fx` no tiene, todavía,
+  una pantalla de resolución en lote como sí tiene `needs_fx`).
+- El paso de categoría (grilla completa) reemplaza el último de los 5 chips
+  de "más usadas" por la categoría recién elegida cuando no estaba entre
+  ellas — antes esa selección no se veía en ningún lado al volver al paso
+  del monto.
+
+#### Corregido
+
+- Botón "Guardar" en la grilla de categorías: elegir una categoría desde
+  "Otras" guardaba el movimiento en el acto, sin dejar completar nota,
+  comercio o fecha. Ahora ese paso tiene su propio botón ("Listo") que solo
+  confirma la selección y vuelve al monto; guardar vive únicamente en el
+  paso del monto.
+- Volver a entrar a `/add` después de elegir una categoría desde "Otras"
+  dejaba la grilla abierta en vez del keypad — Next reutiliza a veces el
+  mismo fiber de `Modal` entre aperturas (mismo mecanismo que ya documentaba
+  `components/modal.tsx`), y el estado local (`step`/`sheet`) sobrevivía.
+- Mantener presionada una categoría con subcategorías podía seleccionar una
+  hija por accidente (la posición del dedo/mouse caía sobre la vista nueva
+  al reemplazarse el árbol) y marcaba el texto como si fuera seleccionable.
+  Ahora el long-press deja la general marcada y abre las hijas sin disparar
+  un click fantasma, y el texto/ícono de `CategoryBubble` no es marcable.
+- Recorte de la burbuja seleccionada (anillo + escala) contra el borde del
+  contenedor, en la grilla raíz y en la de subcategorías — faltaba padding
+  en el scroller.
+- Default de cuenta y de moneda en `/add`, que a veces no coincidían con lo
+  último usado: el default de cuenta caía a `transactions[0]` (ordenada por
+  `occurredAt`, no por cuándo se cargó) sin filtrar archivadas, y el efecto
+  que fija la moneda por defecto podía correr antes de que las cuentas
+  terminaran de resolver, fijando una moneda de sobra o ninguna según cómo
+  cayera la carrera.
 
 ### Agregado
 

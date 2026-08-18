@@ -12,12 +12,13 @@ import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { CURRENCY_SYMBOLS, formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
 import { money } from "@/lib/money/money";
-import type { AccountRow, CategoryRow } from "@/lib/db/schema";
+import type { AccountRow, CategoryRow, TransactionRow } from "@/lib/db/schema";
 import type { CaptureDraft, CaptureKind } from "@/stores/capture-draft-store";
 import { computeExpenseDebitAmount, computeTransferDebitAmount, resolveAmountCurrency } from "./save-transaction";
 import { LIABILITY_ACCOUNT_KINDS } from "@/lib/analytics/balances";
 import { useCategoryLabel } from "@/hooks/use-category-label";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
+import { useTrackedCurrencies } from "@/hooks/use-tracked-currencies";
 import { decimalSeparatorForLocale, numberLocaleForUiLocale, type Locale } from "@/i18n/formatting";
 
 export interface AmountStepProps {
@@ -25,10 +26,27 @@ export interface AmountStepProps {
   accounts: AccountRow[];
   /** Top de más usadas (`useFrequentCategories`, calculado una vez en `CaptureFlow`) — mismo conjunto que ve `CategoryStep`. */
   frequent: CategoryRow[];
+  /**
+   * Todas las categorías del `kind` actual (`CaptureFlow.sameKindCategories`)
+   * — hace falta para poder mostrar la elegida cuando NO está entre las 5
+   * más usadas (una elegida desde "Otras"). Sin esto, esa selección
+   * quedaba invisible al volver al paso del monto.
+   */
+  categories: CategoryRow[];
   account: AccountRow | undefined;
   counterAccount: AccountRow | undefined;
   /** Solo para resolver el rate sugerido de `FxEditor` en una transferencia entre monedas distintas. */
   householdId: string | undefined;
+  /**
+   * Moneda base del household y movimientos ya cargados — solo para
+   * calcular si hay más de una moneda "trackeada" (`useTrackedCurrencies`)
+   * y así decidir si mostrar el chip que abre `CurrencyPickerSheet`. Antes
+   * ese gate miraba solo `accounts`, así que un household con una sola
+   * cuenta pero con otra moneda ya configurada en Ajustes → Monedas (sin
+   * cuenta propia, p. ej. EUR para un viaje) nunca podía abrir el picker.
+   */
+  baseCurrency: string;
+  transactions: TransactionRow[] | undefined;
   onCounterFxRateChange: (rate: bigint) => void;
   /** Override de la conversión de CAPTURA (moneda tipeada → moneda de la cuenta). */
   onCaptureFxRateChange: (rate: bigint) => void;
@@ -87,9 +105,12 @@ export function AmountStep({
   draft,
   accounts,
   frequent,
+  categories,
   account,
   counterAccount,
   householdId,
+  baseCurrency,
+  transactions,
   onCounterFxRateChange,
   onCaptureFxRateChange,
   onOpenCurrencyPicker,
@@ -213,14 +234,27 @@ export function AmountStep({
   // 41,500000000291), y eso terminaba impreso tal cual debajo del monto.
   const toCaptureDisplay = (internal: ScaledRate) => roundRateForDisplay(captureNumeratorIsCaptured ? internal : invertRate(internal));
   const toCaptureInternal = (display: ScaledRate) => (captureNumeratorIsCaptured ? display : invertRate(display));
-  // El chip de moneda solo si el household usa más de una: "cantidad de
+  // El chip de moneda solo si el household trackea más de una: "cantidad de
   // monedas en uso" es uno de los flags de progresividad de `CLAUDE.md`, y
   // en un hogar mono-moneda esto no debe sumar un elemento al presupuesto
-  // de ruido del keypad.
-  const multiCurrency = new Set(accounts.map((a) => a.currencyCode)).size > 1;
+  // de ruido del keypad. Antes esto miraba solo `accounts`, así que un
+  // household con una sola cuenta pero con otra moneda ya trackeada en
+  // Ajustes → Monedas (override o preferencia, sin cuenta propia) no podía
+  // abrir el picker — exactamente el caso de un viaje pagado con la única
+  // cuenta que hay, en una moneda que esa cuenta no tiene.
+  const { currencies: trackedCurrencies } = useTrackedCurrencies(householdId, baseCurrency, accounts, transactions);
+  const multiCurrency = trackedCurrencies.length > 1;
   const expenseDebit = draft.kind === "expense" ? computeExpenseDebitAmount(draft, account, captureRate.data?.rate ?? null, numberLocale) : null;
   const expenseInsufficientFunds =
     draft.kind === "expense" && !!account && !LIABILITY_ACCOUNT_KINDS.has(account.kind) && expenseDebit !== null && expenseDebit > account.currentBalance;
+
+  // Una categoría elegida desde "Otras" que no está entre las 5 más usadas
+  // no se veía en ningún lado al volver acá — reemplaza al último chip de
+  // `frequent`, marcada, en vez de sumar una 3ª fila o sacar "Otras" (el
+  // presupuesto de ruido de la pantalla no se mueve). Si ya está entre las
+  // 5, la lista no cambia.
+  const selectedCategory = categories.find((c) => c.id === draft.categoryId);
+  const shownCategories = selectedCategory && !frequent.some((c) => c.id === selectedCategory.id) ? [...frequent.slice(0, 4), selectedCategory] : frequent;
 
   // Mismo patrón que `/currencies`: arranca el teclado desde el rate que
   // ya se está mostrando (no el interno), sin ceros finales.
@@ -407,8 +441,18 @@ export function AmountStep({
             </>
           ) : (
             // Sin cotización no se bloquea nada: se guarda igual y queda
-            // pendiente de resolver (`needs_capture_fx`).
-            <span className="t-caption" style={{ color: "var(--text-muted)" }}>{t("capture.captureRatePending")}</span>
+            // pendiente de resolver (`needs_capture_fx`) — pero antes esto
+            // era un `<span>` muerto sin forma de cargarla en el momento, y
+            // no hay ninguna pantalla en la app que resuelva
+            // `needs_capture_fx` después (a diferencia de `needs_fx`
+            // cuenta→base, que sí tiene `/accounts/resolve-fx`). Tocarlo
+            // abre el mismo teclado de tasa que la rama de arriba, arrancando
+            // en 1 — la persona que ya sabe el tipo de cambio del día
+            // (viaje, ticket con la conversión impresa) puede cargarlo sin
+            // salir de la captura.
+            <button type="button" onClick={openCaptureRateKeypad} className="t-caption" style={{ background: "none", border: 0, cursor: "pointer", padding: 4, color: "var(--text-muted)" }}>
+              {t("capture.captureRateSetManually")}
+            </button>
           )}
         </div>
       ) : null}
@@ -419,7 +463,7 @@ export function AmountStep({
         // "Supermercado"/"Entretenimiento" empujaban a una 3ª fila. El
         // `title` lleva el nombre completo: el truncado es solo visual.
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-          {frequent.map((c) => (
+          {shownCategories.map((c) => (
             <Chip key={c.id} icon={c.icon as IconName} maxWidth={104} title={categoryLabel(c)} selected={c.id === draft.categoryId} onClick={() => onQuickCategory(c)}>
               {categoryLabel(c)}
             </Chip>
