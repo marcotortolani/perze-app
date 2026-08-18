@@ -44,6 +44,15 @@ export function CategoryBubble({ icon = "cart", label, selected = false, onClick
             e.stopPropagation();
           };
           document.addEventListener("click", suppressGhostClick, { capture: true, once: true });
+          // Red de contención: varios motores táctiles NO sintetizan un
+          // `click` tras el `touchend` cuando el nodo bajo el dedo cambió
+          // entre el `touchstart` y el `touchend` — justo lo que hace este
+          // swap de árbol. Sin esto, el listener quedaba vivo esperando el
+          // PRÓXIMO click de cualquier lado, y se comía el primer tap real
+          // sobre una subcategoría (había que tocarla dos veces). Se
+          // autolimpia si nada la consumió a tiempo — `removeEventListener`
+          // sobre un listener ya disparado por `once` es un no-op inofensivo.
+          setTimeout(() => document.removeEventListener("click", suppressGhostClick, { capture: true }), 400);
         }
       }, 500);
     }

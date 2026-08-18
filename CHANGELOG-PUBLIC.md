@@ -40,6 +40,19 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.42.1 — 18 de agosto de 2026
+
+### Arreglado
+
+- El tipo de cambio que se mostraba al elegir una moneda en la carga de un
+  gasto (y en Tipos de cambio) a veces quedaba con un montón de decimales
+  y del lado incómodo de leer — "1 peso argentino = 0,0006 dólares" en vez
+  de "1 dólar = 1555 pesos". Ahora siempre se muestra del lado que se
+  entiende de un vistazo.
+- Elegir una subcategoría (dentro de "Otras") a veces pedía tocarla dos
+  veces para que quedara marcada. Ahora queda seleccionada con un solo
+  toque.
+
 ## 0.42.0 — 18 de agosto de 2026
 
 ### Nuevo

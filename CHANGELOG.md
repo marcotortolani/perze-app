@@ -6,6 +6,32 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.42.1] — 2026-08-18
+
+### Corregido — tipo de cambio ilegible y doble tap en subcategorías
+
+Dos regresiones detectadas al probar en vivo lo que entregó v0.42.0.
+
+- **El picker de moneda de `/add` (y `/currencies`) mostraba el tipo de
+  cambio siempre anclado en la moneda tipeada** ("1 ARS = 0,000643 USD"),
+  aunque valiera menos que la otra — ilegible. Ahora ancla en la moneda que
+  vale más, cualquiera sea ("1 USD = 1555 ARS", "1 BTC = 64737 USD", "1 EUR
+  = 1,1576 USD"), con `shouldInvertRateForDisplay` nuevo en `lib/fx/rate.ts`.
+  El mismo criterio hardcodeado a "ancla en USD" vivía triplicado —
+  `AmountStep` (transferencia y conversión de captura) y `/currencies` lo
+  reimplementaban cada uno a su manera — y se consolidó en un solo lugar.
+  De paso se corrigió que el rate invertido se mostraba con ruido de
+  redondeo ("1554,999999323575" en vez de "1555").
+- **Elegir una subcategoría en la grilla de "Otras" pedía dos toques.** El
+  supresor de "click fantasma" agregado para el long-press (v0.42.0) asumía
+  que el navegador siempre sintetiza un `click` después del gesto — en
+  mobile real, cuando el nodo bajo el dedo cambia entre el `touchstart` y
+  el `touchend` (justo lo que hace el swap a la vista de subcategorías),
+  varios motores táctiles no lo sintetizan, y el listener quedaba vivo
+  esperando el próximo click de cualquier lado: se comía el primer tap real
+  sobre una subcategoría. Ahora se autolimpia sola a los 400ms si nada la
+  consumió antes.
+
 ## [0.42.0] — 2026-08-18
 
 ### Revisión de `/add` — defaults, categorías y captura multi-moneda

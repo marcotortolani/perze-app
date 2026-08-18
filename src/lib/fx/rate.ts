@@ -95,6 +95,25 @@ export function roundRateForDisplay(rate: ScaledRate): ScaledRate {
   return roundHalfEven(rate, divisor) * divisor;
 }
 
+/**
+ * ¿Conviene invertir este rate para mostrarlo? `rate` va siempre en la
+ * convención interna de toda la app ("unidades de `quote` por 1 de
+ * `base`"). Cuando esa cifra es menor a 1 — 1 `base` vale menos que 1
+ * `quote`, como ARS frente a USD — el número se lee mejor anclado en
+ * `quote`: "1 USD = 1547,70 ARS" en vez de "1 ARS = 0,000643 USD".
+ *
+ * Reemplaza el criterio que había hasta ahora, hardcodeado a "ancla en USD
+ * si USD participa" (duplicado en `AmountStep` para la transferencia y la
+ * conversión de captura). Ese acierta con pares fiat contra USD porque USD
+ * suele valer más, pero se rompe apenas participa una moneda que vale MÁS
+ * que USD — BTC, EUR — mostrando "1 USD = 0,86 EUR" en vez de "1 EUR = 1,16
+ * USD". El criterio correcto no depende de qué código de moneda es: ancla
+ * siempre en la que vale más, sea cual sea.
+ */
+export function shouldInvertRateForDisplay(rate: ScaledRate): boolean {
+  return rate > 0n && rate < RATE_SCALE;
+}
+
 /** `1 / rate`, útil cuando un proveedor cotiza el par en la dirección opuesta. */
 export function invertRate(rate: ScaledRate): ScaledRate {
   if (rate === 0n) throw new Error("No se puede invertir un rate en cero");

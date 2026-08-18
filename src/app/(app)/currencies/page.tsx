@@ -12,7 +12,7 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useTrackedCurrencies } from "@/hooks/use-tracked-currencies";
 import { fxRepo } from "@/lib/repos/fx-repo";
-import { RATE_SCALE, formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
+import { formatRateTrimmed, invertRate, rateFromInteger, roundRateForDisplay, shouldInvertRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate, parseTypedRate } from "@/lib/fx/rate-keypad";
 import { todayIso } from "@/lib/repos/ids";
 import type { FxResolution } from "@/lib/fx/resolve";
@@ -395,7 +395,7 @@ export default function CurrenciesPage() {
           // la base (el caso común: ARS/UYU contra USD) arrancaba
           // mostrando una fracción minúscula. El botón de flip sigue
           // pisando este default una vez que el usuario lo toca.
-          const defaultInverted = resolution.rate !== null && resolution.rate < RATE_SCALE;
+          const defaultInverted = resolution.rate !== null && shouldInvertRateForDisplay(resolution.rate);
           const showInverted = invertedDisplay[currency] ?? defaultInverted;
           const displayRate = roundRateForDisplay(showInverted ? invertRate(resolution.rate) : resolution.rate);
           const displayPair = showInverted ? `${baseCurrency} → ${currency}` : `${currency} → ${baseCurrency}`;

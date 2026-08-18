@@ -7,7 +7,7 @@ import type { AccountRow, TransactionRow } from "@/lib/db/schema";
 import { useCurrencies } from "@/hooks/use-currencies";
 import { useTrackedCurrencies } from "@/hooks/use-tracked-currencies";
 import { useSuggestedFxRate } from "@/hooks/use-fx-rate";
-import { formatRateTrimmed } from "@/lib/fx/rate";
+import { formatRateTrimmed, invertRate, roundRateForDisplay, shouldInvertRateForDisplay } from "@/lib/fx/rate";
 import { normalize } from "@/lib/search/rank";
 
 export interface CurrencyPickerSheetProps {
@@ -138,7 +138,23 @@ function TrackedCurrencyRow({
 }) {
   const t = useTranslations();
   const rate = useSuggestedFxRate(householdId, code, quote);
-  const hint = !quote || code === quote ? undefined : rate.data?.rate != null ? `1 ${code} = ${formatRateTrimmed(rate.data.rate)} ${quote}` : t("capture.captureRatePending");
+  // Ancla en la moneda que vale más, no siempre en `code` — "1 ARS =
+  // 0,000643 USD" es ilegible; "1 USD = 1547,70 ARS" se lee al toque.
+  // `shouldInvertRateForDisplay` (`lib/fx/rate.ts`) decide con el valor
+  // real del rate, así que BTC y EUR (que valen más que USD) se muestran
+  // sin invertir — solo se ancla en `quote` cuando `code` vale menos.
+  const hint =
+    !quote || code === quote
+      ? undefined
+      : rate.data?.rate != null
+        ? shouldInvertRateForDisplay(rate.data.rate)
+          ? // `roundRateForDisplay` antes de invertir: el recíproco de un
+            // rate de 12 decimales rara vez cae en un número redondo
+            // (1/0,000643086817 ≈ 1554,9999923575), y sin este paso ese
+            // ruido de la división terminaba impreso tal cual.
+            `1 ${quote} = ${formatRateTrimmed(roundRateForDisplay(invertRate(rate.data.rate)))} ${code}`
+          : `1 ${code} = ${formatRateTrimmed(rate.data.rate)} ${quote}`
+        : t("capture.captureRatePending");
   return <CurrencyRow code={code} hint={hint} selected={selected} onClick={onClick} />;
 }
 

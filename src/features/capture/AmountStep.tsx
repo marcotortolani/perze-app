@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { AmountScrubber, Button, Chip, FxEditor, Icon, Keypad, KeypadKey, SegmentedControl, Sheet } from "@/design-system";
 import type { IconName } from "@/design-system/core/Icon";
 import { evaluateKeypadExpression, firstOperand, formatKeypadExpressionPreview, hasKeypadOperator } from "@/lib/money/keypad";
-import { convert, formatRateTrimmed, invertRate, rateFromAmounts, rateFromInteger, roundRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
+import { convert, formatRateTrimmed, invertRate, rateFromAmounts, rateFromInteger, roundRateForDisplay, shouldInvertRateForDisplay, type ScaledRate } from "@/lib/fx/rate";
 import { appendKeypadRateDigit, parseKeypadRate } from "@/lib/fx/rate-keypad";
 import { CURRENCY_SYMBOLS, formatAmount, formatAmountCompact } from "@/lib/money/format";
 import { decimalsFor } from "@/lib/money/decimals";
@@ -195,12 +195,16 @@ export function AmountStep({
   const suggestedRate = useSuggestedFxRate(householdId, account?.currencyCode, counterAccount?.currencyCode);
   // El rate interno siempre es "unidades de destino por 1 de origen"
   // (`convert(monto_en_origen, destino, rate)`) — para un par USD/ARS eso
-  // da "1 ARS = 0,00066 USD", ilegible. `docs/02-design-system.md`/
-  // `/currencies` ya resolvieron esto para el resto de la app: mostrar
-  // siempre "1 USD = X" cuando USD participa (moneda ancla del Cono Sur,
-  // `CLAUDE.md`), invirtiendo solo para MOSTRAR/EDITAR — nunca lo que se
-  // guarda, que sigue siendo el rate interno de siempre.
-  const rateNumeratorIsSource = !(account && counterAccount && counterAccount.currencyCode === "USD" && account.currencyCode !== "USD");
+  // da "1 ARS = 0,00066 USD", ilegible. Se ancla en la moneda que vale más
+  // (`shouldInvertRateForDisplay`, `lib/fx/rate.ts`), invirtiendo solo para
+  // MOSTRAR/EDITAR — nunca lo que se guarda, que sigue siendo el rate
+  // interno de siempre. Antes esto hardcodeaba "ancla en USD si USD
+  // participa": acierta para fiat contra USD (que suele valer más), pero
+  // con una cuenta en EUR o BTC mostraba "1 USD = 0,86 EUR" al revés de
+  // como se lee — el criterio real no depende de qué código es, depende de
+  // cuál vale más. Mientras el rate no resolvió, arranca sin invertir (no
+  // hay nada todavía que decida lo contrario).
+  const rateNumeratorIsSource = !(suggestedRate.data?.rate != null && shouldInvertRateForDisplay(suggestedRate.data.rate));
   const toInternalRate = (displayRate: bigint) => (rateNumeratorIsSource ? displayRate : invertRate(displayRate));
   const toDisplayRate = (internalRate: bigint) => (rateNumeratorIsSource ? internalRate : invertRate(internalRate));
   // Cuánto sale REALMENTE de la cuenta de origen — mismo cálculo que usa
@@ -225,10 +229,10 @@ export function AmountStep({
   // Cuánto se debita de la cuenta. Es lo que hoy el usuario tiene que ir a
   // averiguar afuera de la app antes de poder cargar el gasto.
   const capturedDebit = capturedCrossCurrency && effectiveCaptureRate !== null ? convert(evaluated, account.currencyCode, effectiveCaptureRate) : null;
-  // Misma convención de anclaje que el resto de la app: "1 USD = X" cuando
-  // el dólar participa, invirtiendo solo para mostrar/editar. El rate
-  // interno sigue siendo siempre "moneda de cuenta por 1 de la capturada".
-  const captureNumeratorIsCaptured = !(account && account.currencyCode === "USD" && currency !== "USD");
+  // Mismo criterio que `rateNumeratorIsSource` de arriba: ancla en la
+  // moneda que vale más, no en USD a ciegas. El rate interno sigue siendo
+  // siempre "moneda de cuenta por 1 de la capturada".
+  const captureNumeratorIsCaptured = !(captureRate.data?.rate != null && shouldInvertRateForDisplay(captureRate.data.rate));
   // `roundRateForDisplay` acá y no solo al editar: invertir una tasa
   // arrastra ruido de la división (1/41,5 invertido vuelve como
   // 41,500000000291), y eso terminaba impreso tal cual debajo del monto.

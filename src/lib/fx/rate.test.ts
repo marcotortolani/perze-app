@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { money } from "../money/money";
-import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromAmounts, rateFromInteger, roundRateForDisplay } from "./rate";
+import { convert, formatRate, formatRateTrimmed, invertRate, parseRate, rateFromAmounts, rateFromInteger, roundRateForDisplay, shouldInvertRateForDisplay } from "./rate";
 
 describe("parseRate / formatRate", () => {
   it("ida y vuelta sin pérdida", () => {
@@ -95,6 +95,25 @@ describe("invertRate", () => {
   it("invertir dos veces vuelve (aprox, redondeo half-even)", () => {
     const r = parseRate("3.333333333333");
     expect(invertRate(invertRate(r))).toBe(r);
+  });
+});
+
+describe("shouldInvertRateForDisplay", () => {
+  it("un rate menor a 1 (ARS por USD, chiquito) pide invertir — se ve mejor '1 USD = X ARS'", () => {
+    // 1 ARS = 0,000643 USD
+    expect(shouldInvertRateForDisplay(parseRate("0.000643086817"))).toBe(true);
+  });
+
+  it("un rate mayor a 1 (BTC vale más que USD) NO pide invertir — '1 BTC = X USD' ya es legible", () => {
+    expect(shouldInvertRateForDisplay(rateFromInteger(64751))).toBe(false);
+  });
+
+  it("un rate mayor a 1 pero chico (EUR vale más que USD) tampoco invierte", () => {
+    expect(shouldInvertRateForDisplay(parseRate("1.1576"))).toBe(false);
+  });
+
+  it("exactamente 1 no invierte", () => {
+    expect(shouldInvertRateForDisplay(rateFromInteger(1))).toBe(false);
   });
 });
 
