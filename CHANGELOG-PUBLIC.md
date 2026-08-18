@@ -40,6 +40,13 @@ inventes de memoria.
   un documento vivo. Una corrección de producto entra como una entrada nueva en la versión
   siguiente.
 
+## 0.41.2 — 18 de agosto de 2026
+
+### Nuevo
+
+- Cuatro íconos nuevos para tus categorías: ferry, parque, peaje y
+  museo.
+
 ## 0.41.0 — 16 de agosto de 2026
 
 ### Nuevo

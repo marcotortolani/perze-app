@@ -6,6 +6,25 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.41.2] — 2026-08-18
+
+### Agregado
+
+- Cuatro íconos nuevos al picker de categorías: `ferry` (`BoatIcon`),
+  `park` (`ParkIcon`), `toll` (`BarricadeIcon`) y `museum` (reutiliza
+  `BankIcon`, mismo patrón que `cart`/`shopping-cart` — Phosphor no tiene
+  glifo de museo). `ferry` y `toll` se suman al grupo `transport`; `park`
+  y `museum` al grupo `leisure`. Traducciones en `es`/`en`/`pt`.
+
+### Cambiado
+
+- El ícono `road` (`RoadHorizonIcon`) estaba etiquetado "Peaje"/"Toll
+  road" pese a ser un glifo genérico de ruta — no había mejor opción en
+  Phosphor. Ahora que `toll` (`BarricadeIcon`) representa mejor una
+  barrera de peaje, se le reasignó esa etiqueta y `road` pasó a
+  "Ruta"/"Road"/"Estrada". No rompe categorías existentes que ya usan
+  `icon: "road"`, solo cambia el texto mostrado en el picker.
+
 ## [0.41.1] — 2026-08-16
 
 ### Mantenimiento — cierre del merge de las 7 ramas de auditoría + migraciones aplicadas
